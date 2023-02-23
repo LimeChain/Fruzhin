@@ -1,4 +1,4 @@
-package org.limechain;
+package com.limechain;
 
 public class Main {
     public static void main(String[] args) {
