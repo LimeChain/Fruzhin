@@ -12,7 +12,8 @@ public class AppConfig {
     private static final String CONFIG_FILE_NAME = "app.config";
     public String genesisPath;
     public Chain chain;
-    public AppConfig(String[] args) {
+
+    public AppConfig (String[] args) {
         // Setup CLI arguments
         Options options = new Options();
         Option input = new Option("n", "network", true, "client network");
@@ -33,7 +34,7 @@ public class AppConfig {
         }
 
         // Get the network argument
-        String network  = cmd.getOptionValue("network","");
+        String network = cmd.getOptionValue("network", "");
 
         // Read configuration file
         try (FileInputStream fis = new FileInputStream(CONFIG_FILE_NAME)) {
