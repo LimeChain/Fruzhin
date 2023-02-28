@@ -3,17 +3,14 @@ package org.limechain.config;
 import org.apache.commons.cli.*;
 import org.limechain.chain.Chain;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Properties;
 
-public class AppConfig {
-    private static final String CONFIG_FILE_NAME = "app.config";
+public class HostConfig extends Config {
     public String genesisPath;
     public Chain chain;
 
-    public AppConfig (String[] args) {
+    public HostConfig (String[] args) {
         // Setup CLI arguments
         Options options = new Options();
         Option input = new Option("n", "network", true, "client network");
@@ -36,35 +33,31 @@ public class AppConfig {
         // Get the network argument
         String network = cmd.getOptionValue("network", "");
 
+        Properties properties = this.readConfig();
         // Read configuration file
-        try (FileInputStream fis = new FileInputStream(CONFIG_FILE_NAME)) {
-            Properties prop = new Properties();
-            prop.load(fis);
-
-            // Map network argument to chain spec patch
+        // Map network argument to chain spec patch
+        try {
             switch (network.toLowerCase()) {
                 case "polkadot" -> {
-                    this.genesisPath = prop.get("POLKADOT_GENESIS_PATH").toString();
+                    this.genesisPath = properties.get("POLKADOT_GENESIS_PATH").toString();
                     this.chain = Chain.POLKADOT;
                 }
                 case "kusama" -> {
-                    this.genesisPath = prop.get("KUSAMA_GENESIS_PATH").toString();
+                    this.genesisPath = properties.get("KUSAMA_GENESIS_PATH").toString();
                     this.chain = Chain.KUSAMA;
                 }
                 // Empty string case because we want the default network to be Westend
                 case "", "westend" -> {
-                    this.genesisPath = prop.get("WESTEND_GENESIS_PATH").toString();
+                    this.genesisPath = properties.get("WESTEND_GENESIS_PATH").toString();
                     this.chain = Chain.WESTEND;
                 }
                 default -> throw new IOException("Unsupported or unknown network");
             }
-            System.out.printf("✅️Loaded app config for chain %s%n", chain);
-        } catch (FileNotFoundException ex) {
-            System.out.printf("Failed to find the config file(%s)%n", CONFIG_FILE_NAME);
-            System.exit(1);
-        } catch (IOException ex) {
-            System.out.printf("Failed to read the config file(%s)%n", CONFIG_FILE_NAME);
+        } catch (IOException ioException) {
+            System.out.println("Failed to load genesis path");
             System.exit(1);
         }
+
+        System.out.printf("✅️Loaded app config for chain %s%n", chain);
     }
 }

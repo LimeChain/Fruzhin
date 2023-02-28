@@ -5,7 +5,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
 
 @SpringBootApplication
-//@ImportResource("./beans.xml")
 public class RPC {
     private ConfigurableApplicationContext springCtx;
 

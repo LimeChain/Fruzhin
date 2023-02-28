@@ -1,15 +1,15 @@
 package org.limechain.chain;
 
-import org.limechain.config.AppConfig;
+import org.limechain.config.HostConfig;
 
 import java.io.IOException;
 
 public class ChainService {
     public ChainSpec genesis;
 
-    public ChainService (AppConfig appConfig) {
+    public ChainService (HostConfig hostConfig) {
         try {
-            this.genesis = ChainSpec.NewFromJSON(appConfig.genesisPath);
+            this.genesis = ChainSpec.NewFromJSON(hostConfig.genesisPath);
             System.out.println("✅️Loaded chain spec");
         } catch (IOException e) {
             System.out.println("Failed to load chain spec");
