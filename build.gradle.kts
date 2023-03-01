@@ -4,7 +4,13 @@ plugins {
     // See: https://stackoverflow.com/questions/74760350/application-fails-on-run-in-a-new-release-of-springboot-3-0-0
     id("org.springframework.boot") version "2.7.3"
     id("io.spring.dependency-management") version "1.1.0"
+    id("application")
 }
+
+application {
+    mainClass.set("org.limechain.Main")
+}
+
 
 group = "org.limechain"
 version = "1.0-SNAPSHOT"

@@ -1,23 +1,55 @@
 package org.limechain.rpc.system;
 
-import com.googlecode.jsonrpc4j.JsonRpcService;
+import com.googlecode.jsonrpc4j.JsonRpcMethod;
 
 import java.util.Map;
 
-@JsonRpcService("/")
 public interface SystemRPC {
-    String system_name ();
+    @JsonRpcMethod("system_name")
+    String systemName ();
 
-    String system_version ();
+    @JsonRpcMethod("system_version")
+    String systemVersion ();
 
-    String system_chain ();
+    @JsonRpcMethod("system_chain")
+    String systemChain ();
 
-    String system_chainType ();
+    @JsonRpcMethod("system_chainType")
+    String systemChainType ();
 
     //TODO: Change return type to be specific class
-    Map<String, Object> system_properties ();
+    @JsonRpcMethod("system_properties")
+    Map<String, Object> systemProperties ();
 
-    String[] system_nodeRoles ();
+    @JsonRpcMethod("system_nodeRoles")
+    String[] systemNodeRoles ();
+
+    @JsonRpcMethod("system_health")
+    Map<String, Object> systemHealth ();
+
+    @JsonRpcMethod("system_localPeerId")
+    String systemLocalPeerId ();
+
+    @JsonRpcMethod("system_localListenAddress")
+    String[] systemLocalListenAddress ();
+
+    @JsonRpcMethod("system_peers")
+    String[] systemSystemPeers ();
+
+    @JsonRpcMethod("system_addReservedPeer")
+    String systemAddReservedPeer (String peerId);
+
+    @JsonRpcMethod("system_removeReservedPeer")
+    String systemRemoveReservedPeer (String peerId);
+
+    @JsonRpcMethod("system_syncState")
+    Map<String, Object> systemSyncState ();
+
+    @JsonRpcMethod("system_accountNextIndex")
+    String systemAccountNextIndex (String accountAddress);
+
+    @JsonRpcMethod("system_dryRun")
+    String systemDryRun (String extrinsic, String blockHash);
 
 
 }

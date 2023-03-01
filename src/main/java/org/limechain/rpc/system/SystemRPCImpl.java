@@ -1,6 +1,5 @@
 package org.limechain.rpc.system;
 
-import com.googlecode.jsonrpc4j.spring.AutoJsonRpcServiceImpl;
 import org.limechain.chain.ChainService;
 import org.limechain.config.SystemInfo;
 import org.springframework.stereotype.Service;
@@ -8,8 +7,7 @@ import org.springframework.stereotype.Service;
 import java.util.Map;
 
 @Service
-@AutoJsonRpcServiceImpl
-public class SystemRPCImpl implements SystemRPC {
+public class SystemRPCImpl {
 
     private final ChainService chainService;
     private final SystemInfo systemInfo;
@@ -19,34 +17,73 @@ public class SystemRPCImpl implements SystemRPC {
         this.systemInfo = systemInfo;
     }
 
-    @Override
-    public String system_name () {
+    public String systemName () {
         return this.systemInfo.hostName;
     }
 
-    @Override
-    public String system_version () {
+    public String systemVersion () {
         return this.systemInfo.hostVersion;
     }
 
-    @Override
-    public String system_chain () {
+    public String systemChain () {
         return this.chainService.genesis.name;
     }
 
-    @Override
-    public String system_chainType () {
+    public String systemChainType () {
         return this.chainService.genesis.chainType;
     }
 
-    @Override
-    public Map<String, Object> system_properties () {
+    public Map<String, Object> systemProperties () {
         return this.chainService.genesis.properties;
     }
 
-    @Override
-    public String[] system_nodeRoles () {
+    public String[] systemNodeRoles () {
         return new String[]{this.systemInfo.role};
+    }
+
+    // TODO: Implement in M2.
+    public Map<String, Object> systemHealth () {
+        return null;
+    }
+
+    // TODO: Implement in M2.
+    public String systemLocalPeerId () {
+        return null;
+    }
+
+    // TODO: Implement in M2.
+    public String[] systemLocalListenAddress () {
+        return new String[0];
+    }
+
+    // TODO: Implement in M2.
+    public String[] systemSystemPeers () {
+        return new String[0];
+    }
+
+    // TODO: Implement in M2.
+    public String systemAddReservedPeer (String peerId) {
+        return null;
+    }
+
+    // TODO: Implement in M2.
+    public String systemRemoveReservedPeer (String peerId) {
+        return null;
+    }
+
+    // TODO: Implement in M2.
+    public Map<String, Object> systemSyncState () {
+        return null;
+    }
+
+    // TODO: Implement in M2.
+    public String systemAccountNextIndex (String accountAddress) {
+        return null;
+    }
+
+    // TODO: Implement in M2.
+    public String systemDryRun (String extrinsic, String blockHash) {
+        return null;
     }
 
 }
