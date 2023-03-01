@@ -1,13 +1,11 @@
 package com.limechain.storage;
 
 
+import org.junit.jupiter.api.Test;
 import org.limechain.storage.RocksDBInitializer;
 import org.limechain.storage.RocksDBTable;
-import org.rocksdb.Options;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
-import org.junit.jupiter.api.Test;
-import org.rocksdb.Status;
 
 import static org.junit.jupiter.api.Assertions.*;
 

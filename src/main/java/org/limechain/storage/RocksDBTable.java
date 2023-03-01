@@ -4,9 +4,9 @@ import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
 
 public class RocksDBTable {
-    RocksDB db;
-    String prefix;
-    byte[] prefixBytes;
+    private RocksDB db;
+    private String prefix;
+    private byte[] prefixBytes;
 
     public RocksDBTable(RocksDB db, String prefix) {
         this.db = db;
