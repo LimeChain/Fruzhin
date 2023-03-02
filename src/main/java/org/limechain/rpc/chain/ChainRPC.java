@@ -4,7 +4,7 @@ import com.googlecode.jsonrpc4j.JsonRpcMethod;
 
 public interface ChainRPC {
     @JsonRpcMethod("chainHead_unstable_follow")
-    String chainUnstableFollow ();
+    void chainUnstableFollow ();
 
     @JsonRpcMethod("chainHead_unstable_unfollow")
     String chainUnstableUnfollow ();

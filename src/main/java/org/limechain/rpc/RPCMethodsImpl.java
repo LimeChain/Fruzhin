@@ -1,14 +1,18 @@
 package org.limechain.rpc;
 
 import com.googlecode.jsonrpc4j.spring.AutoJsonRpcServiceImpl;
-import org.limechain.rpc.chain.ChainRPCImpl;
+import org.limechain.rpc.chain.events.ChainRPCImpl;
 import org.limechain.rpc.system.SystemRPCImpl;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.util.Map;
 
+import static org.springframework.web.bind.annotation.RequestMethod.GET;
+
 @Service
 @AutoJsonRpcServiceImpl
+
 public class RPCMethodsImpl implements RPCMethods {
 
     private final SystemRPCImpl systemRPC;
@@ -20,11 +24,13 @@ public class RPCMethodsImpl implements RPCMethods {
     }
 
     @Override
+    @RequestMapping(value = "/", method = GET, headers = {"Connection!=upgrade", "Connection!=Upgrade"})
     public String systemName () {
         return systemRPC.systemName();
     }
 
     @Override
+    @RequestMapping(value = "/", method = GET, headers = {"Connection!=upgrade", "Connection!=Upgrade"})
     public String systemVersion () {
         return systemRPC.systemVersion();
     }
@@ -101,8 +107,8 @@ public class RPCMethodsImpl implements RPCMethods {
     }
 
     @Override
-    public String chainUnstableFollow () {
-        return chainRPC.chainUnstableFollow();
+    public void chainUnstableFollow () {
+        chainRPC.chainUnstableFollow();
     }
 
     @Override
