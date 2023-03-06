@@ -5,9 +5,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.Map;
 
-public class ChainSpec {
+public class ChainSpec implements Serializable {
     public String name;
     public String id;
     public String chainType;
@@ -29,7 +30,7 @@ public class ChainSpec {
         return gen;
     }
 
-    public class Fields {
+    public class Fields implements Serializable {
         public Map<String, Map<String, String>> raw;
         public Map<String, Map<String, Object>> runtime;
     }

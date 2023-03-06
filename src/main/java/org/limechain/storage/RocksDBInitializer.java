@@ -1,5 +1,6 @@
 package org.limechain.storage;
 
+import org.limechain.config.HostConfig;
 import org.rocksdb.Options;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
@@ -20,6 +21,13 @@ public class RocksDBInitializer {
             System.out.println(e.getMessage());
             return null;
         }
+    }
+
+    public static RocksDB initialize(HostConfig hostConfig){
+        if (hostConfig.rocksDbPath != ""){
+            return initialize(hostConfig.rocksDbPath);
+        }
+        return initialize(defaultDirectory);
     }
 
     public static RocksDB initialize(){

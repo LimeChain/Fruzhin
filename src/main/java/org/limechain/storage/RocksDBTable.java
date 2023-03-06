@@ -37,7 +37,7 @@ public class RocksDBTable {
             }
     };
 
-    public boolean has(byte[] key) throws RocksDBException {
+    public boolean has(byte[] key) {
         byte[] value = this.get(key);
         if (value != null) {
             return true;
