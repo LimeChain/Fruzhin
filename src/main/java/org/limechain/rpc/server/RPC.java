@@ -1,0 +1,29 @@
+package org.limechain.rpc.server;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.context.annotation.ComponentScan;
+
+import java.util.Collections;
+
+@SpringBootApplication
+@ComponentScan(basePackages = {"org.limechain.methods", "org.limechain.rpc.server"})
+public class RPC {
+    private ConfigurableApplicationContext springCtx;
+
+    public void start () {
+        SpringApplication app = new SpringApplication(RPC.class);
+        app.setDefaultProperties(Collections.singletonMap("server.port", "9933"));
+        ConfigurableApplicationContext ctx = app.run();
+        this.springCtx = ctx;
+    }
+
+    public void stop () {
+        if (this.springCtx != null) {
+            this.springCtx.stop();
+        }
+    }
+
+
+}
