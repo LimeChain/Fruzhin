@@ -13,6 +13,7 @@ public class ChainService {
             System.out.println("✅️Loaded chain spec");
         } catch (IOException e) {
             System.out.println("Failed to load chain spec");
+            System.out.println(e.getMessage());
             System.exit(1);
         }
     }

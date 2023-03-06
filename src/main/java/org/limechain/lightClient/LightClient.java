@@ -7,16 +7,18 @@ public class LightClient {
     // TODO: Add service dependencies i.e rpc, sync, network, etc.
     private final RPC rpc;
     private final WebSocketRPC wsrpc;
+    private final String[] cliArgs;
 
-    public LightClient (RPC rpc, WebSocketRPC wsrpc) {
+    public LightClient (String[] cliArgs, RPC rpc, WebSocketRPC wsrpc) {
+        this.cliArgs = cliArgs;
         this.rpc = rpc;
         this.wsrpc = wsrpc;
     }
 
     public void start () {
         // TODO: Add business logic
-        this.rpc.start();
-        this.wsrpc.start();
+        this.rpc.start(cliArgs);
+        this.wsrpc.start(cliArgs);
         System.out.println("\uD83D\uDE80Started light client!");
 
         // We can access Spring Beans using the RPC Context!

@@ -12,10 +12,10 @@ import java.util.Collections;
 public class RPC {
     private ConfigurableApplicationContext springCtx;
 
-    public void start () {
+    public void start (String[] cliArgs) {
         SpringApplication app = new SpringApplication(RPC.class);
         app.setDefaultProperties(Collections.singletonMap("server.port", "9933"));
-        ConfigurableApplicationContext ctx = app.run();
+        ConfigurableApplicationContext ctx = app.run(cliArgs);
         this.springCtx = ctx;
     }
 
