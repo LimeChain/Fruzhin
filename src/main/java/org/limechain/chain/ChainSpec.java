@@ -20,7 +20,6 @@ public class ChainSpec implements Serializable {
     public String[] forkBlocks;
     public String[] badBlocks;
     public String consensusEngine;
-    public Map<String, String>[] codeSubstitutes;
 
     public static ChainSpec NewFromJSON (String pathToChainSpecJSON) throws IOException {
         ObjectMapper objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);

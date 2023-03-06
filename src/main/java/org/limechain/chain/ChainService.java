@@ -26,6 +26,7 @@ public class ChainService {
             }
         } catch (IOException e) {
             System.out.println("Failed to load chain spec");
+            System.out.println(e.getMessage());
             System.exit(1);
         }
     }
