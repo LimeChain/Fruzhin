@@ -24,10 +24,7 @@ public class RocksDBInitializer {
     }
 
     public static RocksDB initialize(HostConfig hostConfig){
-        if (hostConfig.rocksDbPath != ""){
-            return initialize(hostConfig.rocksDbPath);
-        }
-        return initialize(defaultDirectory);
+        return initialize(hostConfig.rocksDbPath);
     }
 
     public static RocksDB initializeTestDatabase(){
