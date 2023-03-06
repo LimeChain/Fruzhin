@@ -4,7 +4,9 @@ import com.googlecode.jsonrpc4j.spring.AutoJsonRpcServiceImplExporter;
 import org.limechain.chain.ChainService;
 import org.limechain.config.HostConfig;
 import org.limechain.config.SystemInfo;
+import org.limechain.storage.RocksDBInitializer;
 import org.limechain.ws.client.WebSocketClient;
+import org.rocksdb.RocksDB;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,8 +30,13 @@ public class WebSocketConfig {
     }
 
     @Bean
-    public ChainService chainService (HostConfig hostConfig) {
-        return new ChainService(hostConfig);
+    public ChainService chainService (HostConfig hostConfig, RocksDB rocksDb) {
+        return new ChainService(hostConfig, rocksDb);
+    }
+    
+    @Bean
+    public RocksDB rocksDb (HostConfig hostConfig) {
+        return  RocksDBInitializer.initialize(hostConfig);
     }
 
     @Bean

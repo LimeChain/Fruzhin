@@ -2,6 +2,7 @@ package org.limechain.config;
 
 import org.apache.commons.cli.*;
 import org.limechain.chain.Chain;
+import org.limechain.storage.RocksDBInitializer;
 
 import java.io.IOException;
 import java.util.Properties;
@@ -9,14 +10,19 @@ import java.util.Properties;
 public class HostConfig extends Config {
     public String genesisPath;
     public Chain chain;
+    public String rocksDbPath;
     public String helperNodeAddress;
 
     public HostConfig (String[] args) {
         // Setup CLI arguments
         Options options = new Options();
         Option input = new Option("n", "network", true, "client network");
+        Option rocksDbPathOption = new Option(null, "db-path", true, "RocksDB path");
         input.setRequired(false);
+        rocksDbPathOption.setRequired(false);
+
         options.addOption(input);
+        options.addOption(rocksDbPathOption);
 
         HelpFormatter formatter = new HelpFormatter();
         CommandLine cmd = null; // Not a good practice probably
@@ -60,6 +66,9 @@ public class HostConfig extends Config {
             System.out.println("Failed to load genesis path");
             System.exit(1);
         }
+
+
+        this.rocksDbPath = cmd.getOptionValue("rocksdb", RocksDBInitializer.defaultDirectory);
 
         System.out.printf("✅️Loaded app config for chain %s%n", chain);
     }
