@@ -1,4 +1,4 @@
-package org.limechain.rpc.system.dto;
+package org.limechain.methods.system.dto;
 
 public class SystemProperties {
     private Integer ss58Format;

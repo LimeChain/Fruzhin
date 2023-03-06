@@ -1,12 +1,14 @@
 package org.limechain;
 
 import org.limechain.lightClient.LightClient;
-import org.limechain.rpc.RPC;
+import org.limechain.rpc.server.RPC;
+import org.limechain.ws.server.WebSocketRPC;
 
 public class Main {
     public static void main (String[] args) {
         RPC rpc = new RPC();
-        LightClient client = new LightClient(rpc);
+        WebSocketRPC wsrpc = new WebSocketRPC();
+        LightClient client = new LightClient(rpc, wsrpc);
         client.start();
     }
 }

@@ -1,7 +1,6 @@
 package org.limechain.chain;
 
 import org.limechain.config.HostConfig;
-import org.limechain.rpc.RPCContext;
 import org.limechain.storage.ConfigTable;
 import org.rocksdb.RocksDB;
 
