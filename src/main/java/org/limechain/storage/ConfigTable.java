@@ -4,7 +4,11 @@ import org.limechain.chain.ChainSpec;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 
 public class ConfigTable extends RocksDBTable{
     public ConfigTable(RocksDB db) {

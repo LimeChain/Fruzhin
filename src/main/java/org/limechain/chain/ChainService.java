@@ -3,9 +3,7 @@ package org.limechain.chain;
 import org.limechain.config.HostConfig;
 import org.limechain.rpc.RPCContext;
 import org.limechain.storage.ConfigTable;
-import org.limechain.storage.RocksDBTable;
 import org.rocksdb.RocksDB;
-import org.rocksdb.RocksDBException;
 
 import java.io.*;
 

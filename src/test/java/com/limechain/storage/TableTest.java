@@ -7,7 +7,9 @@ import org.limechain.storage.RocksDBTable;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TableTest {
     @Test
