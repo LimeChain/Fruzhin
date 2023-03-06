@@ -30,10 +30,6 @@ public class RocksDBInitializer {
         return initialize(defaultDirectory);
     }
 
-    public static RocksDB initialize(){
-        return initialize(defaultDirectory);
-    }
-
     public static RocksDB initializeTestDatabase(){
         return initialize(testDirectory);
     }
