@@ -16,13 +16,13 @@ public class HostConfig extends Config {
     public HostConfig (String[] args) {
         // Setup CLI arguments
         Options options = new Options();
-        Option input = new Option("n", "network", true, "client network");
-        Option rocksDbPathOption = new Option(null, "db-path", true, "RocksDB path");
-        input.setRequired(false);
-        rocksDbPathOption.setRequired(false);
+        Option networkOption = new Option("n", "network", true, "client network");
+        Option dbPathOption = new Option(null, "db-path", true, "RocksDB path");
+        networkOption.setRequired(false);
+        dbPathOption.setRequired(false);
 
-        options.addOption(input);
-        options.addOption(rocksDbPathOption);
+        options.addOption(networkOption);
+        options.addOption(dbPathOption);
 
         HelpFormatter formatter = new HelpFormatter();
         CommandLine cmd = null; // Not a good practice probably
@@ -68,7 +68,7 @@ public class HostConfig extends Config {
         }
 
 
-        this.rocksDbPath = cmd.getOptionValue("rocksdb", RocksDBInitializer.defaultDirectory);
+        this.rocksDbPath = cmd.getOptionValue("db-path", RocksDBInitializer.defaultDirectory);
 
         System.out.printf("✅️Loaded app config for chain %s%n", chain);
     }

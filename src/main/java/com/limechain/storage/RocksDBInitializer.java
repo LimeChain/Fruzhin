@@ -9,12 +9,16 @@ public class RocksDBInitializer {
 
     public static String testDirectory = "./test-rocks-db";
     public static String defaultDirectory = "./rocks-db";
+    private static RocksDB db;
 
     public static RocksDB initialize (String path) {
         RocksDB.loadLibrary();
+        if (db != null) {
+            return db;
+        }
 
         try (final Options options = new Options().setCreateIfMissing(true)) {
-            final RocksDB db = RocksDB.open(options, path);
+            db = RocksDB.open(options, path);
             return db;
 
         } catch (RocksDBException e) {
