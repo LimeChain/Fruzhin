@@ -33,6 +33,7 @@ public class WebSocketConfig {
     public ChainService chainService (HostConfig hostConfig, RocksDB rocksDb) {
         return new ChainService(hostConfig, rocksDb);
     }
+    
     @Bean
     public RocksDB rocksDb (HostConfig hostConfig) {
         return  RocksDBInitializer.initialize(hostConfig);
