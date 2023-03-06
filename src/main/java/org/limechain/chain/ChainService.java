@@ -5,7 +5,7 @@ import org.limechain.rpc.RPCContext;
 import org.limechain.storage.ConfigTable;
 import org.rocksdb.RocksDB;
 
-import java.io.*;
+import java.io.IOException;
 
 public class ChainService {
     public ChainSpec genesis;
