@@ -8,11 +8,11 @@ plugins {
 }
 
 application {
-    mainClass.set("org.limechain.Main")
+    mainClass.set("com.limechain.Main")
 }
 
 
-group = "org.limechain"
+group = "com.limechain"
 version = "1.0-SNAPSHOT"
 java.sourceCompatibility = JavaVersion.VERSION_17
 
