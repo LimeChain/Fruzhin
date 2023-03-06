@@ -9,6 +9,7 @@ import java.util.Properties;
 public class HostConfig extends Config {
     public String genesisPath;
     public Chain chain;
+    public String helperNodeAddress;
 
     public HostConfig (String[] args) {
         // Setup CLI arguments
@@ -34,6 +35,8 @@ public class HostConfig extends Config {
         String network = cmd.getOptionValue("network", "");
 
         Properties properties = this.readConfig();
+
+        this.helperNodeAddress = properties.get("HELPER_NODE_ADDRESS").toString();
         // Read configuration file
         // Map network argument to chain spec patch
         try {

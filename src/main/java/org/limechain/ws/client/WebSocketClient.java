@@ -15,13 +15,12 @@ public class WebSocketClient {
 
     private final PolkadotApi api;
 
-    public WebSocketClient () {
+    public WebSocketClient (String helperNodeAddress) {
         try {
             JavaHttpSubscriptionAdapter wsAdapter = JavaHttpSubscriptionAdapter
                     .newBuilder()
                     // Currently requires smoldot node to be running
-                    // Should be passed from app.config
-                    .connectTo("ws://127.0.0.1:9944/westend2")
+                    .connectTo(helperNodeAddress)
                     .build();
 
             PolkadotApi api = PolkadotApi

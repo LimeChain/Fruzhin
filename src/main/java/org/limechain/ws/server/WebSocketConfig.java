@@ -21,7 +21,7 @@ public class WebSocketConfig {
     }
 
     @Bean
-    public HostConfig appConfig (ApplicationArguments arguments) {
+    public HostConfig hostConfig (ApplicationArguments arguments) {
         String[] commandLineArguments = arguments.getSourceArgs();
         System.out.println(commandLineArguments);
         return new HostConfig(commandLineArguments);
@@ -38,8 +38,8 @@ public class WebSocketConfig {
     }
 
     @Bean
-    public WebSocketClient wsClient () {
-        return new WebSocketClient();
+    public WebSocketClient wsClient (HostConfig hostConfig) {
+        return new WebSocketClient(hostConfig.helperNodeAddress);
     }
 
 }
