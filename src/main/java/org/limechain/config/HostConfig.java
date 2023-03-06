@@ -16,7 +16,7 @@ public class HostConfig extends Config {
         // Setup CLI arguments
         Options options = new Options();
         Option input = new Option("n", "network", true, "client network");
-        Option rocksDbPathOption = new Option("rocksdb", "rocks-db-path", true, "RocksDB path");
+        Option rocksDbPathOption = new Option(null, "db-path", true, "RocksDB path");
         input.setRequired(false);
         rocksDbPathOption.setRequired(false);
 
