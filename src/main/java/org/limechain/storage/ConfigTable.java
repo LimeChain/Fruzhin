@@ -20,7 +20,7 @@ public class ConfigTable extends RocksDBTable{
              ObjectOutputStream oos = new ObjectOutputStream(bos)) {
             oos.writeObject(genesis);
             put("genesis".getBytes(), bos.toByteArray());
-        } catch (RocksDBException | IOException saveError){
+        } catch (IOException saveError){
             System.out.println("Warning: Could not save chain spec to database");
         }
     }

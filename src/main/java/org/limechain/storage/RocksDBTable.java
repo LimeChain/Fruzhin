@@ -28,7 +28,7 @@ public class RocksDBTable {
 
     }
 
-    public void put(byte[] key, byte[] value) throws RocksDBException {
+    public void put(byte[] key, byte[] value) {
             byte[] prefixedKey = this.prependPrefixToKey(key);
             try {
                 this.db.put(prefixedKey, value);
