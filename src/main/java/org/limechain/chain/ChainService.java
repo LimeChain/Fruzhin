@@ -22,9 +22,9 @@ public class ChainService {
                     ByteArrayInputStream genesisBytesStream = new ByteArrayInputStream(genesisBytes);
                     ObjectInputStream genesisObjectStream = new ObjectInputStream(genesisBytesStream);
                     this.genesis = (ChainSpec) genesisObjectStream.readObject();
-                    System.out.println("✅️Loaded chain spec from database.");
+                    System.out.println("✅️Loaded chain spec from database");
                 } else {
-                    throw new IllegalStateException("No chain spec data in database.");
+                    throw new IllegalStateException("No chain spec data in database");
                 }
             } catch (ClassNotFoundException | IllegalStateException | IOException e) {
                 System.out.println("Error loading chain spec from database. Loading from json...");
@@ -36,9 +36,9 @@ public class ChainService {
                      ObjectOutputStream oos = new ObjectOutputStream(bos)) {
                     oos.writeObject(this.genesis);
                     configTable.put("genesis".getBytes(), bos.toByteArray());
-                    System.out.println("Saved chain spec to database.");
+                    System.out.println("Saved chain spec to database");
                 } catch (RocksDBException | IOException saveError){
-                    System.out.println("Warning: Could not save chain spec to database.");
+                    System.out.println("Warning: Could not save chain spec to database");
                 }
             }
         } catch (IOException e) {
