@@ -1,6 +1,5 @@
 package com.limechain.storage;
 
-
 import org.junit.jupiter.api.Test;
 import org.limechain.storage.RocksDBInitializer;
 import org.limechain.storage.RocksDBTable;
