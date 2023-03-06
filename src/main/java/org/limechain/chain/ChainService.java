@@ -10,9 +10,8 @@ import java.io.IOException;
 public class ChainService {
     public ChainSpec genesis;
 
-    public ChainService (HostConfig hostConfig) {
+    public ChainService (HostConfig hostConfig, RocksDB db) {
         try {
-            RocksDB db = RPCContext.getBean(RocksDB.class);
             ConfigTable configTable = new ConfigTable(db);
             try {
                 System.out.println("Loading chain spec from database");

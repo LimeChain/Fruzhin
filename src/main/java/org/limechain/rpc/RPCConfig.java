@@ -31,7 +31,7 @@ public class RPCConfig {
 
     @Bean
     public ChainService chainService (HostConfig hostConfig) {
-        return new ChainService(hostConfig);
+        return new ChainService(hostConfig, rocksDb(hostConfig));
     }
 
     @Bean
