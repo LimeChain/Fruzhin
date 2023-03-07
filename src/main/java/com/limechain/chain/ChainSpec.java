@@ -22,7 +22,8 @@ public class ChainSpec implements Serializable {
     public String consensusEngine;
 
     public static ChainSpec newFromJSON(String pathToChainSpecJSON) throws IOException {
-        ObjectMapper objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        final boolean failOnUnknownProperties = false;
+        ObjectMapper objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, failOnUnknownProperties);
         var file = new File(pathToChainSpecJSON);
 
         ChainSpec gen = objectMapper.readValue(file, ChainSpec.class);
