@@ -1,25 +1,32 @@
 package com.limechain.rpc.methods.chain.events;
 
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Getter
+@Setter
+@NoArgsConstructor
 public class FollowEvent {
-    public String event;
+    private String event;
 
     // Start "initialized" event params
-    public String finalizedBlockHash;
-    public RuntimeInfo finalizedBlockRuntime;
+    private String finalizedBlockHash;
+    private RuntimeInfo finalizedBlockRuntime;
     // End "initialized" event params
 
     // Start "newBlock" event params
-    public String blockHash;
-    public String parentBlockHash;
-    public RuntimeInfo newRuntime;
+    private String blockHash;
+    private String parentBlockHash;
+    private RuntimeInfo newRuntime;
     // End "newBlock" event params
 
     // Start "bestBlockChanged" event params
-    public String bestBlockHash;
+    private String bestBlockHash;
     // End "bestBlockChanged" event params
 
     // Start "finalized" event params
-    public String[] finalizedBlockHashes;
-    public String[] prunedBlockHashes;
+    private String[] finalizedBlockHashes;
+    private String[] prunedBlockHashes;
     // End "finalized" event params
 }
