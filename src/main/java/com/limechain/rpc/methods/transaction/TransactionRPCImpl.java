@@ -1,4 +1,11 @@
 package com.limechain.rpc.methods.transaction;
 
-public class TransactionRPCImpl {
+import org.springframework.stereotype.Service;
+
+@Service
+public class TransactionRPCImpl implements TransactionRPC {
+    @Override
+    public String transactionUnstableSubmitAndWatch () {
+        return null;
+    }
 }
