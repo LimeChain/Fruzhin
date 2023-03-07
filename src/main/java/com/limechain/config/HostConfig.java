@@ -80,18 +80,18 @@ public class HostConfig {
     }
 
     private boolean storeMatchedNetwork(String network) {
-        if (network == POLKADOT.getValue()) {
+        if (network.equals(POLKADOT.getValue())) {
             this.genesisPath = polkadotGenesisPath;
             this.chain = POLKADOT;
             return true;
         }
-        if (network == KUSAMA.getValue()) {
+        if (network.equals(KUSAMA.getValue())) {
             this.genesisPath = kusamaGenesisPath;
             this.chain = Chain.KUSAMA;
             return true;
         }
         // Empty string case because we want the default network to be Westend
-        if (network == WESTEND.getValue() || network.isEmpty()) {
+        if (network.equals(WESTEND.getValue()) || network.isEmpty()) {
             this.genesisPath = westendGenesisPath;
             this.chain = Chain.WESTEND;
             return true;
