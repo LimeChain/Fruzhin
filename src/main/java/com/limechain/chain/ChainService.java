@@ -18,7 +18,7 @@ public class ChainService {
                 System.out.println("✅️Loaded chain spec");
             } catch (ClassNotFoundException | IllegalStateException | IOException e) {
                 System.out.println("Error loading chain spec from database. Loading from json...");
-                this.genesis = ChainSpec.NewFromJSON(hostConfig.genesisPath);
+                this.genesis = ChainSpec.newFromJSON(hostConfig.genesisPath);
                 System.out.println("✅️Loaded chain spec");
 
                 configTable.putGenesis(this.genesis);
