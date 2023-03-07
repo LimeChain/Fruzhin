@@ -1,7 +1,7 @@
 package com.limechain.lightclient;
 
-import com.limechain.rpc.server.RPC;
-import com.limechain.ws.server.WebSocketRPC;
+import com.limechain.rpc.http.server.HttpRpc;
+import com.limechain.rpc.ws.server.WebSocketRPC;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -9,19 +9,19 @@ import java.util.logging.Logger;
 public class LightClient {
     // TODO: Add service dependencies i.e rpc, sync, network, etc.
     private static final Logger LOGGER = Logger.getLogger(LightClient.class.getName());
-    private final RPC rpc;
+    private final HttpRpc httpRpc;
     private final WebSocketRPC wsRpc;
     private final String[] cliArgs;
 
-    public LightClient (String[] cliArgs, RPC rpc, WebSocketRPC wsRpc) {
+    public LightClient (String[] cliArgs, HttpRpc httpRpc, WebSocketRPC wsRpc) {
         this.cliArgs = cliArgs;
-        this.rpc = rpc;
+        this.httpRpc = httpRpc;
         this.wsRpc = wsRpc;
     }
 
     public void start () {
         // TODO: Add business logic
-        this.rpc.start(cliArgs);
+        this.httpRpc.start(cliArgs);
         this.wsRpc.start(cliArgs);
         LOGGER.log(Level.INFO, "\uD83D\uDE80Started light client!");
 
@@ -31,7 +31,7 @@ public class LightClient {
 
     public void stop () {
         // TODO: Stop running services
-        this.rpc.stop();
+        this.httpRpc.stop();
         this.wsRpc.stop();
         LOGGER.log(Level.INFO, "\uD83D\uDED1Stopped light client!");
     }

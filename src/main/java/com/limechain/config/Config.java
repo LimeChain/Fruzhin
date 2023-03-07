@@ -16,7 +16,7 @@ public abstract class Config {
             properties = new Properties();
             properties.load(fis);
         } catch (IOException ex) {
-            LOGGER.log(Level.WARNING, "Failed to find the config file(%s)%n", CONFIG_FILE_NAME);
+            LOGGER.log(Level.WARNING, String.format("Failed to find the config file(%s)%n", CONFIG_FILE_NAME));
             System.exit(1);
         }
         return properties;

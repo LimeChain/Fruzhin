@@ -2,7 +2,13 @@ package com.limechain.config;
 
 import com.limechain.chain.Chain;
 import com.limechain.storage.RocksDBInitializer;
-import org.apache.commons.cli.*;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 
 import java.io.IOException;
 import java.util.Properties;
@@ -73,6 +79,6 @@ public class HostConfig extends Config {
 
         this.rocksDbPath = cmd.getOptionValue("db-path", RocksDBInitializer.defaultDirectory);
 
-        LOGGER.log(Level.INFO, "✅️Loaded app config for chain %s%n", chain);
+        LOGGER.log(Level.INFO, String.format("✅️Loaded app config for chain %s%n", chain));
     }
 }
