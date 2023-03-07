@@ -14,11 +14,11 @@ import java.util.logging.Logger;
 public class ConfigTable extends RocksDBTable {
     private static final Logger LOGGER = Logger.getLogger(ConfigTable.class.getName());
 
-    public ConfigTable (RocksDB db) {
+    public ConfigTable(RocksDB db) {
         super(db, "config");
     }
 
-    public void putGenesis (ChainSpec genesis) {
+    public void putGenesis(ChainSpec genesis) {
         try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
              ObjectOutputStream oos = new ObjectOutputStream(bos)) {
             oos.writeObject(genesis);
@@ -28,13 +28,15 @@ public class ConfigTable extends RocksDBTable {
         }
     }
 
-    public ChainSpec getGenesis () throws IllegalStateException, IOException, ClassNotFoundException {
+    public ChainSpec getGenesis() throws IllegalStateException {
         if (has("genesis".getBytes())) {
             byte[] genesisBytes = get("genesis".getBytes());
-            ByteArrayInputStream genesisBytesStream = new ByteArrayInputStream(genesisBytes);
-            ObjectInputStream genesisObjectStream = new ObjectInputStream(genesisBytesStream);
-            ChainSpec genesis = (ChainSpec) genesisObjectStream.readObject();
-            return genesis;
+            try (ByteArrayInputStream genesisBytesStream = new ByteArrayInputStream(genesisBytes);
+                 ObjectInputStream genesisObjectStream = new ObjectInputStream(genesisBytesStream)) {
+                return (ChainSpec) genesisObjectStream.readObject();
+            } catch (IOException | ClassNotFoundException e) {
+                throw new IllegalStateException("Error loading chain spec from database");
+            }
         } else {
             throw new IllegalStateException("No chain spec data in database");
         }
