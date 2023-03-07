@@ -51,5 +51,4 @@ public interface SystemRPC {
     @JsonRpcMethod("system_dryRun")
     String systemDryRun (String extrinsic, String blockHash);
 
-
 }
