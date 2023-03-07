@@ -65,7 +65,6 @@ public class HostConfig extends Config {
             System.exit(1);
         }
 
-
         this.rocksDbPath = cmd.getOptionValue("db-path", RocksDBInitializer.defaultDirectory);
 
         System.out.printf("✅️Loaded app config for chain %s%n", chain);
