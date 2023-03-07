@@ -7,6 +7,10 @@ public enum Chain {
 
     private final String value;
 
+    Chain(String value) {
+        this.value = value;
+    }
+
     public static Chain fromString(String chain) {
         for (Chain type : values()) {
             if (type.getValue() == chain) {
@@ -14,10 +18,6 @@ public enum Chain {
             }
         }
         return null;
-    }
-
-    Chain(String value) {
-        this.value = value;
     }
 
     public final String getValue() {
