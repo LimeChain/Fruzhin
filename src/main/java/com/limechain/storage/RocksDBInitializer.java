@@ -9,10 +9,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class RocksDBInitializer {
-
     private static final Logger LOGGER = Logger.getLogger(RocksDBInitializer.class.getName());
-    public static String testDirectory = "./test-rocks-db";
-    public static String defaultDirectory = "./rocks-db";
+    public static final String testDirectory = "./test-rocks-db";
+    public static final String defaultDirectory = "./rocks-db";
     private static RocksDB db;
 
     public static RocksDB initialize (String path) {
