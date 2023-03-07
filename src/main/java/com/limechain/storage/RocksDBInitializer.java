@@ -5,8 +5,12 @@ import org.rocksdb.Options;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 public class RocksDBInitializer {
 
+    private static final Logger LOGGER = Logger.getLogger(RocksDBInitializer.class.getName());
     public static String testDirectory = "./test-rocks-db";
     public static String defaultDirectory = "./rocks-db";
     private static RocksDB db;
@@ -22,7 +26,7 @@ public class RocksDBInitializer {
             return db;
 
         } catch (RocksDBException e) {
-            System.out.println(e.getMessage());
+            LOGGER.log(Level.SEVERE, "RocksDB initialize exception caught!", e);
             return null;
         }
     }

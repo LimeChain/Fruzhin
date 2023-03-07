@@ -1,6 +1,6 @@
 package com.limechain;
 
-import com.limechain.lightClient.LightClient;
+import com.limechain.lightclient.LightClient;
 import com.limechain.rpc.server.RPC;
 import com.limechain.ws.server.WebSocketRPC;
 

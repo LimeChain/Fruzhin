@@ -3,7 +3,11 @@ package com.limechain.storage;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 public class RocksDBTable {
+    private static final Logger LOGGER = Logger.getLogger(RocksDBTable.class.getName());
     private final RocksDB db;
     private final String prefix;
     private final byte[] prefixBytes;
@@ -19,7 +23,7 @@ public class RocksDBTable {
 
         System.arraycopy(prefixBytes, 0, prefixedKey, 0, prefixBytes.length);
 
-        System.arraycopy(key, prefixBytes.length - prefixBytes.length, prefixedKey, prefixBytes.length, key.length + prefixBytes.length - prefixBytes.length);
+        System.arraycopy(key, 0, prefixedKey, prefixBytes.length, key.length + prefixBytes.length - prefixBytes.length);
 
         return prefixedKey;
 
@@ -30,7 +34,7 @@ public class RocksDBTable {
         try {
             this.db.put(prefixedKey, value);
         } catch (RocksDBException e) {
-            System.out.println(e.getMessage());
+            LOGGER.log(Level.SEVERE, "Failed to put key-value pair in DB", e);
         }
     }
 
@@ -44,7 +48,7 @@ public class RocksDBTable {
         try {
             return this.db.get(prefixedKey);
         } catch (RocksDBException e) {
-            System.out.println(e.getMessage());
+            LOGGER.log(Level.SEVERE, "Failed to get key from DB", e);
             return null;
         }
     }

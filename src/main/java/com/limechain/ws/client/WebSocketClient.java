@@ -32,13 +32,8 @@ public class WebSocketClient {
 
             wsAdapter.connect().get(5, TimeUnit.SECONDS);
             this.api = api;
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        } catch (ExecutionException e) {
-            throw new RuntimeException(e);
-        } catch (TimeoutException e) {
+        } catch (URISyntaxException | InterruptedException | ExecutionException | RuntimeException |
+                 TimeoutException e) {
             throw new RuntimeException(e);
         }
     }
@@ -49,11 +44,7 @@ public class WebSocketClient {
             Subscription<T> subscription = null;
             subscription = hashFuture.get(30, TimeUnit.SECONDS);
             return subscription;
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        } catch (ExecutionException e) {
-            throw new RuntimeException(e);
-        } catch (TimeoutException e) {
+        } catch (InterruptedException | ExecutionException | TimeoutException e) {
             throw new RuntimeException(e);
         }
     }

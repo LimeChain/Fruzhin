@@ -6,8 +6,11 @@ import org.apache.commons.cli.*;
 
 import java.io.IOException;
 import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class HostConfig extends Config {
+    private static final Logger LOGGER = Logger.getLogger(HostConfig.class.toString());
     public String genesisPath;
     public Chain chain;
     public String rocksDbPath;
@@ -32,7 +35,7 @@ public class HostConfig extends Config {
             CommandLineParser parser = new DefaultParser();
             cmd = parser.parse(options, args);
         } catch (ParseException e) {
-            System.out.println(e.getMessage());
+            LOGGER.log(Level.SEVERE, "Failed to parse cli arguments", e);
             formatter.printHelp("Specify the network name - polkadot, kusama, westend", options);
             System.exit(1);
         }
@@ -62,14 +65,14 @@ public class HostConfig extends Config {
                 }
                 default -> throw new IOException("Unsupported or unknown network");
             }
-        } catch (IOException ioException) {
-            System.out.println("Failed to load genesis path");
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "Failed to load genesis path", e);
             System.exit(1);
         }
 
 
         this.rocksDbPath = cmd.getOptionValue("db-path", RocksDBInitializer.defaultDirectory);
 
-        System.out.printf("✅️Loaded app config for chain %s%n", chain);
+        LOGGER.log(Level.INFO, "✅️Loaded app config for chain %s%n", chain);
     }
 }
