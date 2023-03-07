@@ -12,12 +12,15 @@ import org.apache.commons.cli.ParseException;
 
 import java.io.IOException;
 import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import static com.limechain.chain.Chain.KUSAMA;
 import static com.limechain.chain.Chain.POLKADOT;
 import static com.limechain.chain.Chain.WESTEND;
 
 public class HostConfig extends Config {
+    private static final Logger LOGGER = Logger.getLogger(HostConfig.class.toString());
     public String genesisPath;
     public Chain chain;
     public String rocksDbPath;
@@ -35,16 +38,16 @@ public class HostConfig extends Config {
         options.addOption(dbPathOption);
 
         HelpFormatter formatter = new HelpFormatter();
-        CommandLine cmd = null; // Not a good practice probably
+        CommandLine cmd; // Not a good practice probably
 
         // Try to parse the arguments
         try {
             CommandLineParser parser = new DefaultParser();
             cmd = parser.parse(options, args);
         } catch (ParseException e) {
-            System.out.println(e.getMessage());
+            LOGGER.log(Level.SEVERE, "Failed to parse cli arguments", e);
             formatter.printHelp("Specify the network name - polkadot, kusama, westend", options);
-            System.exit(1);
+            throw new RuntimeException();
         }
 
         // Get the network argument
@@ -60,14 +63,14 @@ public class HostConfig extends Config {
             if (!isNetworkStored) {
                 throw new IOException("Unsupported or unknown network");
             }
-        } catch (IOException ioException) {
-            System.out.println("Failed to load genesis path");
-            System.exit(1);
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "Failed to load genesis path", e);
+            throw new RuntimeException();
         }
 
         this.rocksDbPath = cmd.getOptionValue("db-path", RocksDBInitializer.defaultDirectory);
 
-        System.out.printf("✅️Loaded app config for chain %s%n", chain);
+        LOGGER.log(Level.INFO, String.format("✅️Loaded app config for chain %s%n", chain));
     }
 
     private boolean storeMatchedNetwork(String network, Properties properties) {

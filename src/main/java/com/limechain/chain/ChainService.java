@@ -5,29 +5,29 @@ import com.limechain.storage.ConfigTable;
 import org.rocksdb.RocksDB;
 
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class ChainService {
+    private static final Logger LOGGER = Logger.getLogger(ChainService.class.getName());
     public ChainSpec genesis;
 
     public ChainService (HostConfig hostConfig, RocksDB db) {
         try {
             ConfigTable configTable = new ConfigTable(db);
             try {
-                System.out.println("Loading chain spec from database");
                 this.genesis = configTable.getGenesis();
-                System.out.println("✅️Loaded chain spec");
-            } catch (IllegalStateException e) {
-                System.out.println("Error loading chain spec from database. Loading from json...");
-                this.genesis = ChainSpec.newFromJSON(hostConfig.genesisPath);
-                System.out.println("✅️Loaded chain spec");
+                LOGGER.log(Level.INFO, "✅️Loaded chain spec from DB");
+            } catch (ClassNotFoundException | IllegalStateException | IOException e) {
+                this.genesis = ChainSpec.NewFromJSON(hostConfig.genesisPath);
+                LOGGER.log(Level.INFO, "✅️Loaded chain spec from JSON");
 
                 configTable.putGenesis(this.genesis);
-                System.out.println("Saved chain spec to database");
+                LOGGER.log(Level.FINE, "Saved chain spec to database");
             }
         } catch (IOException e) {
-            System.out.println("Failed to load chain spec");
-            System.out.println(e.getMessage());
-            System.exit(1);
+            LOGGER.log(Level.SEVERE, "Failed to load chain spec", e);
+            throw new RuntimeException();
         }
     }
 }
