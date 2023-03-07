@@ -27,7 +27,7 @@ public class ChainService {
             }
         } catch (IOException e) {
             LOGGER.log(Level.SEVERE, "Failed to load chain spec", e);
-            System.exit(1);
+            throw new RuntimeException();
         }
     }
 }

@@ -34,7 +34,7 @@ public class HostConfig extends Config {
         options.addOption(dbPathOption);
 
         HelpFormatter formatter = new HelpFormatter();
-        CommandLine cmd = null; // Not a good practice probably
+        CommandLine cmd; // Not a good practice probably
 
         // Try to parse the arguments
         try {
@@ -43,7 +43,7 @@ public class HostConfig extends Config {
         } catch (ParseException e) {
             LOGGER.log(Level.SEVERE, "Failed to parse cli arguments", e);
             formatter.printHelp("Specify the network name - polkadot, kusama, westend", options);
-            System.exit(1);
+            throw new RuntimeException();
         }
 
         // Get the network argument
@@ -73,7 +73,7 @@ public class HostConfig extends Config {
             }
         } catch (IOException e) {
             LOGGER.log(Level.SEVERE, "Failed to load genesis path", e);
-            System.exit(1);
+            throw new RuntimeException();
         }
 
 
