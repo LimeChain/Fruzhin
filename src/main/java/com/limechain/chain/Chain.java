@@ -1,7 +1,9 @@
 package com.limechain.chain;
 
 public enum Chain {
-    POLKADOT("polkadot"), KUSAMA("kusama"), WESTEND("westend");
+    POLKADOT("polkadot"),
+    KUSAMA("kusama"),
+    WESTEND("westend");
 
     private final String value;
 
