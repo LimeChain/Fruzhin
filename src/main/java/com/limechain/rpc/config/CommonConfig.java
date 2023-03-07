@@ -44,7 +44,7 @@ public class CommonConfig {
 
     @Bean
     public WebSocketClient wsClient (HostConfig hostConfig) {
-        return new WebSocketClient(hostConfig.helperNodeAddress);
+        return new WebSocketClient(hostConfig.getHelperNodeAddress());
     }
 
 }

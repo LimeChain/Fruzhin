@@ -3,21 +3,17 @@ package com.limechain.rpc.methods;
 import com.googlecode.jsonrpc4j.spring.AutoJsonRpcServiceImpl;
 import com.limechain.rpc.methods.chain.ChainRPCImpl;
 import com.limechain.rpc.methods.system.SystemRPCImpl;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
 
 @Service
 @AutoJsonRpcServiceImpl
+@AllArgsConstructor
 public class RPCMethodsImpl implements RPCMethods {
-
     private final SystemRPCImpl systemRPC;
     private final ChainRPCImpl chainRPC;
-
-    public RPCMethodsImpl (SystemRPCImpl systemRPC, ChainRPCImpl chainRPC) {
-        this.systemRPC = systemRPC;
-        this.chainRPC = chainRPC;
-    }
 
     @Override
     public String systemName () {

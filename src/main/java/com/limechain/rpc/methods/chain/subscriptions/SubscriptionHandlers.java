@@ -2,36 +2,35 @@ package com.limechain.rpc.methods.chain.subscriptions;
 
 import com.limechain.rpc.methods.chain.events.FollowEvent;
 import io.emeraldpay.polkaj.api.Subscription;
+import lombok.extern.java.Log;
 
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
+@Log
 public class SubscriptionHandlers {
-    private static final Logger LOGGER = Logger.getLogger(SubscriptionHandlers.class.getName());
-
     public static void unstableFollowHandler (Subscription.Event<FollowEvent> event) {
         // TODO: Change handler logic to have meaningful logic
         FollowEvent header = event.getResult();
         if (header.getEvent().equals("initialized")) {
-            LOGGER.log(Level.INFO, "Initialized Event:");
-            LOGGER.log(Level.INFO, String.format("Finalized block hash: %s%n", header.getFinalizedBlockHash()));
-            LOGGER.log(Level.INFO, String.format("Finalized block runtime: %s%n%n", header.getFinalizedBlockRuntime()));
+            log.log(Level.INFO, "Initialized Event:");
+            log.log(Level.INFO, String.format("Finalized block hash: %s%n", header.getFinalizedBlockHash()));
+            log.log(Level.INFO, String.format("Finalized block runtime: %s%n%n", header.getFinalizedBlockRuntime()));
         } else if (header.getEvent().equals("newBlock")) {
-            LOGGER.log(Level.INFO, "New block Event:");
-            LOGGER.log(Level.INFO, String.format("New block hash: %s%n", header.getBlockHash()));
-            LOGGER.log(Level.INFO, String.format("Parent block hash: %s%n", header.getParentBlockHash()));
-            LOGGER.log(Level.INFO, String.format("New runtime: %s%n%n", header.getNewRuntime()));
+            log.log(Level.INFO, "New block Event:");
+            log.log(Level.INFO, String.format("New block hash: %s%n", header.getBlockHash()));
+            log.log(Level.INFO, String.format("Parent block hash: %s%n", header.getParentBlockHash()));
+            log.log(Level.INFO, String.format("New runtime: %s%n%n", header.getNewRuntime()));
         } else if (header.getEvent().equals("bestBlockChanged")) {
-            LOGGER.log(Level.INFO, "Best block changed Event:");
-            LOGGER.log(Level.INFO, String.format("Best block hash: %s%n%n", header.getBestBlockHash()));
+            log.log(Level.INFO, "Best block changed Event:");
+            log.log(Level.INFO, String.format("Best block hash: %s%n%n", header.getBestBlockHash()));
         } else if (header.getEvent().equals("finalized")) {
-            LOGGER.log(Level.INFO, "Finalized block Event:");
-            LOGGER.log(Level.INFO, String.format("Finalized block hashes: %s%n", header.getFinalizedBlockHash().toString()));
-            LOGGER.log(Level.INFO, String.format("Pruned block hashes: %s%n%n", header.getPrunedBlockHashes().toString()));
+            log.log(Level.INFO, "Finalized block Event:");
+            log.log(Level.INFO, String.format("Finalized block hashes: %s%n", header.getFinalizedBlockHash()));
+            log.log(Level.INFO, String.format("Pruned block hashes: %s%n%n", header.getPrunedBlockHashes().toString()));
         } else if (header.getEvent().equals("stop")) {
-            LOGGER.log(Level.INFO, "Stop event received!%n");
+            log.log(Level.INFO, "Stop event received!%n");
         } else {
-            LOGGER.log(Level.INFO, String.format("Unknown event received (%s)%n", header.getEvent()));
+            log.log(Level.INFO, String.format("Unknown event received (%s)%n", header.getEvent()));
         }
     }
 }

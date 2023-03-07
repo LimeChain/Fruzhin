@@ -2,31 +2,35 @@ package com.limechain.chain;
 
 import com.limechain.config.HostConfig;
 import com.limechain.storage.ConfigTable;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.extern.java.Log;
 import org.rocksdb.RocksDB;
 
 import java.io.IOException;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
+@Getter
+@Setter
+@Log
 public class ChainService {
-    private static final Logger LOGGER = Logger.getLogger(ChainService.class.getName());
-    public ChainSpec genesis;
+    private ChainSpec genesis;
 
-    public ChainService(HostConfig hostConfig, RocksDB db) {
+    public ChainService (HostConfig hostConfig, RocksDB db) {
         try {
             ConfigTable configTable = new ConfigTable(db);
             try {
-                this.genesis = configTable.getGenesis();
-                LOGGER.log(Level.INFO, "✅️Loaded chain spec from DB");
+                this.setGenesis(configTable.getGenesis());
+                log.log(Level.INFO, "✅️Loaded chain spec from DB");
             } catch (IllegalStateException e) {
-                this.genesis = ChainSpec.newFromJSON(hostConfig.genesisPath);
-                LOGGER.log(Level.INFO, "✅️Loaded chain spec from JSON");
+                this.setGenesis(ChainSpec.newFromJSON(hostConfig.getGenesisPath()));
+                log.log(Level.INFO, "✅️Loaded chain spec from JSON");
 
-                configTable.putGenesis(this.genesis);
-                LOGGER.log(Level.FINE, "Saved chain spec to database");
+                configTable.putGenesis(this.getGenesis());
+                log.log(Level.FINE, "Saved chain spec to database");
             }
         } catch (IOException e) {
-            LOGGER.log(Level.SEVERE, "Failed to load chain spec", e);
+            log.log(Level.SEVERE, "Failed to load chain spec", e);
             throw new RuntimeException();
         }
     }

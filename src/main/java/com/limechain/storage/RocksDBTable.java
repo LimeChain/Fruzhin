@@ -1,13 +1,13 @@
 package com.limechain.storage;
 
+import lombok.extern.java.Log;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
 
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
+@Log
 public class RocksDBTable {
-    private static final Logger LOGGER = Logger.getLogger(RocksDBTable.class.getName());
     private final RocksDB db;
     private final String prefix;
     private final byte[] prefixBytes;
@@ -34,7 +34,7 @@ public class RocksDBTable {
         try {
             this.db.put(prefixedKey, value);
         } catch (RocksDBException e) {
-            LOGGER.log(Level.SEVERE, "Failed to put key-value pair in DB", e);
+            log.log(Level.WARNING, "Failed to put key-value pair in DB", e);
         }
     }
 
@@ -48,7 +48,7 @@ public class RocksDBTable {
         try {
             return this.db.get(prefixedKey);
         } catch (RocksDBException e) {
-            LOGGER.log(Level.SEVERE, "Failed to get key from DB", e);
+            log.log(Level.WARNING, "Failed to get key from DB", e);
             return null;
         }
     }

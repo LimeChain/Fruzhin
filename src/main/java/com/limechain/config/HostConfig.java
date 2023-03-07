@@ -2,6 +2,8 @@ package com.limechain.config;
 
 import com.limechain.chain.Chain;
 import com.limechain.storage.RocksDBInitializer;
+import lombok.Getter;
+import lombok.extern.java.Log;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -13,20 +15,18 @@ import org.apache.commons.cli.ParseException;
 import java.io.IOException;
 import java.util.Properties;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
-import static com.limechain.chain.Chain.KUSAMA;
-import static com.limechain.chain.Chain.POLKADOT;
-import static com.limechain.chain.Chain.WESTEND;
+import static com.limechain.chain.Chain.*;
 
+@Log
+@Getter
 public class HostConfig extends Config {
-    private static final Logger LOGGER = Logger.getLogger(HostConfig.class.toString());
-    public String genesisPath;
-    public Chain chain;
-    public String rocksDbPath;
-    public String helperNodeAddress;
+    private final String rocksDbPath;
+    private final String helperNodeAddress;
+    private String genesisPath;
+    private Chain chain;
 
-    public HostConfig(String[] args) {
+    public HostConfig (String[] args) {
         // Setup CLI arguments
         Options options = new Options();
         Option networkOption = new Option("n", "network", true, "client network");
@@ -45,7 +45,7 @@ public class HostConfig extends Config {
             CommandLineParser parser = new DefaultParser();
             cmd = parser.parse(options, args);
         } catch (ParseException e) {
-            LOGGER.log(Level.SEVERE, "Failed to parse cli arguments", e);
+            log.log(Level.SEVERE, "Failed to parse cli arguments", e);
             formatter.printHelp("Specify the network name - polkadot, kusama, westend", options);
             throw new RuntimeException();
         }
@@ -64,28 +64,28 @@ public class HostConfig extends Config {
                 throw new IOException("Unsupported or unknown network");
             }
         } catch (IOException e) {
-            LOGGER.log(Level.SEVERE, "Failed to load genesis path", e);
+            log.log(Level.SEVERE, "Failed to load genesis path", e);
             throw new RuntimeException();
         }
 
         this.rocksDbPath = cmd.getOptionValue("db-path", RocksDBInitializer.defaultDirectory);
 
-        LOGGER.log(Level.INFO, String.format("✅️Loaded app config for chain %s%n", chain));
+        log.log(Level.INFO, String.format("✅️Loaded app config for chain %s%n", chain));
     }
 
-    private boolean storeMatchedNetwork(String network, Properties properties) {
-        if (network == POLKADOT.getValue()) {
+    private boolean storeMatchedNetwork (String network, Properties properties) {
+        if (network.equals(POLKADOT.getValue())) {
             this.genesisPath = properties.get("POLKADOT_GENESIS_PATH").toString();
             this.chain = POLKADOT;
             return true;
         }
-        if (network == KUSAMA.getValue()) {
+        if (network.equals(KUSAMA.getValue())) {
             this.genesisPath = properties.get("KUSAMA_GENESIS_PATH").toString();
             this.chain = Chain.KUSAMA;
             return true;
         }
         // Empty string case because we want the default network to be Westend
-        if (network == WESTEND.getValue() || network.isEmpty()) {
+        if (network.equals(WESTEND.getValue()) || network.isEmpty()) {
             this.genesisPath = properties.get("WESTEND_GENESIS_PATH").toString();
             this.chain = Chain.WESTEND;
             return true;

@@ -1,7 +1,10 @@
 package com.limechain.config;
 
+import lombok.Getter;
+
 import java.util.Properties;
 
+@Getter
 public class SystemInfo extends Config {
     public final String hostName;
     public final String hostVersion;
@@ -17,6 +20,5 @@ public class SystemInfo extends Config {
 
         // TODO: In the future this will be set depending on CLI params
         this.role = "LightClient";
-
     }
 }

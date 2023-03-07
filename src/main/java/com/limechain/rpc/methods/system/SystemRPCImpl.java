@@ -2,43 +2,40 @@ package com.limechain.rpc.methods.system;
 
 import com.limechain.chain.ChainService;
 import com.limechain.config.SystemInfo;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
 
 @Service
+@AllArgsConstructor
 public class SystemRPCImpl {
 
     private final ChainService chainService;
     private final SystemInfo systemInfo;
 
-    public SystemRPCImpl (ChainService chainService, SystemInfo systemInfo) {
-        this.chainService = chainService;
-        this.systemInfo = systemInfo;
-    }
-
     public String systemName () {
-        return this.systemInfo.hostName;
+        return this.systemInfo.getHostName();
     }
 
     public String systemVersion () {
-        return this.systemInfo.hostVersion;
+        return this.systemInfo.getHostVersion();
     }
 
     public String systemChain () {
-        return this.chainService.genesis.name;
+        return this.chainService.getGenesis().getName();
     }
 
     public String systemChainType () {
-        return this.chainService.genesis.chainType;
+        return this.chainService.getGenesis().getChainType();
     }
 
     public Map<String, Object> systemProperties () {
-        return this.chainService.genesis.properties;
+        return this.chainService.getGenesis().getProperties();
     }
 
     public String[] systemNodeRoles () {
-        return new String[]{this.systemInfo.role};
+        return new String[]{this.systemInfo.getRole()};
     }
 
     // TODO: Implement in M2.
