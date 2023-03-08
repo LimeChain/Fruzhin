@@ -9,9 +9,9 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.io.IOException;
-import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -19,11 +19,20 @@ import static com.limechain.chain.Chain.KUSAMA;
 import static com.limechain.chain.Chain.POLKADOT;
 import static com.limechain.chain.Chain.WESTEND;
 
-public class HostConfig extends Config {
+public class HostConfig {
     private static final Logger LOGGER = Logger.getLogger(HostConfig.class.toString());
     public String genesisPath;
     public Chain chain;
     public String rocksDbPath;
+
+    @Value("${genesis.path.polkadot}")
+    private String polkadotGenesisPath;
+    @Value("${genesis.path.kusama}")
+    private String kusamaGenesisPath;
+    @Value("${genesis.path.westend}")
+    private String westendGenesisPath;
+
+    @Value("${helper.node.address}")
     public String helperNodeAddress;
 
     public HostConfig(String[] args) {
@@ -53,13 +62,10 @@ public class HostConfig extends Config {
         // Get the network argument
         String network = cmd.getOptionValue("network", "").toLowerCase();
 
-        Properties properties = this.readConfig();
-
-        this.helperNodeAddress = properties.get("HELPER_NODE_ADDRESS").toString();
         // Read configuration file
         // Map network argument to chain spec patch
         try {
-            boolean isNetworkStored = storeMatchedNetwork(network, properties);
+            boolean isNetworkStored = storeMatchedNetwork(network);
             if (!isNetworkStored) {
                 throw new IOException("Unsupported or unknown network");
             }
@@ -73,20 +79,20 @@ public class HostConfig extends Config {
         LOGGER.log(Level.INFO, String.format("✅️Loaded app config for chain %s%n", chain));
     }
 
-    private boolean storeMatchedNetwork(String network, Properties properties) {
-        if (network == POLKADOT.getValue()) {
-            this.genesisPath = properties.get("POLKADOT_GENESIS_PATH").toString();
+    private boolean storeMatchedNetwork(String network) {
+        if (network.equals(POLKADOT.getValue())) {
+            this.genesisPath = polkadotGenesisPath;
             this.chain = POLKADOT;
             return true;
         }
-        if (network == KUSAMA.getValue()) {
-            this.genesisPath = properties.get("KUSAMA_GENESIS_PATH").toString();
+        if (network.equals(KUSAMA.getValue())) {
+            this.genesisPath = kusamaGenesisPath;
             this.chain = Chain.KUSAMA;
             return true;
         }
         // Empty string case because we want the default network to be Westend
-        if (network == WESTEND.getValue() || network.isEmpty()) {
-            this.genesisPath = properties.get("WESTEND_GENESIS_PATH").toString();
+        if (network.equals(WESTEND.getValue()) || network.isEmpty()) {
+            this.genesisPath = westendGenesisPath;
             this.chain = Chain.WESTEND;
             return true;
         }

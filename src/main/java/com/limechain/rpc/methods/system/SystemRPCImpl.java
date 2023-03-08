@@ -18,11 +18,11 @@ public class SystemRPCImpl {
     }
 
     public String systemName () {
-        return this.systemInfo.hostName;
+        return this.systemInfo.getHostName();
     }
 
     public String systemVersion () {
-        return this.systemInfo.hostVersion;
+        return this.systemInfo.getHostVersion();
     }
 
     public String systemChain () {
@@ -38,7 +38,7 @@ public class SystemRPCImpl {
     }
 
     public String[] systemNodeRoles () {
-        return new String[]{this.systemInfo.role};
+        return new String[]{this.systemInfo.getRole()};
     }
 
     // TODO: Implement in M2.
