@@ -22,7 +22,13 @@ public class Cli {
     private final HelpFormatter formatter = new HelpFormatter();
 
 
-    public Cli () {
+    public Cli() {
+        Options options = buildOptions();
+        this.options = options;
+
+    }
+
+    private Options buildOptions() {
         Options options = new Options();
         Option networkOption = new Option("n", "network", true, "Client network");
         Option dbPathOption = new Option(null, "db-path", true, "RocksDB path");
@@ -31,12 +37,10 @@ public class Cli {
 
         options.addOption(networkOption);
         options.addOption(dbPathOption);
-
-        this.options = options;
-
+        return options;
     }
 
-    public CliArguments parseArgs (String[] args) {
+    public CliArguments parseArgs(String[] args) {
         try {
             CommandLineParser parser = new DefaultParser();
             CommandLine cmd = parser.parse(options, args);
