@@ -7,11 +7,11 @@ public enum Chain {
 
     private final String value;
 
-    Chain (String value) {
+    Chain(String value) {
         this.value = value;
     }
 
-    public static Chain fromString (String chain) {
+    public static Chain fromString(String chain) {
         for (Chain type : values()) {
             if (type.getValue().equals(chain)) {
                 return type;
@@ -20,7 +20,7 @@ public enum Chain {
         return null;
     }
 
-    public final String getValue () {
+    public final String getValue() {
         return value;
     }
 }

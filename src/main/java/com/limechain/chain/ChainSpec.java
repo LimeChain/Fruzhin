@@ -25,7 +25,7 @@ public class ChainSpec implements Serializable {
     private String[] badBlocks;
     private String consensusEngine;
 
-    public static ChainSpec newFromJSON (String pathToChainSpecJSON) throws IOException {
+    public static ChainSpec newFromJSON(String pathToChainSpecJSON) throws IOException {
         final boolean failOnUnknownProperties = false;
         ObjectMapper objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, failOnUnknownProperties);
         var file = new File(pathToChainSpecJSON);
