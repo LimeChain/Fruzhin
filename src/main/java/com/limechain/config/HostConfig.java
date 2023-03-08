@@ -28,16 +28,16 @@ public class HostConfig {
     private String helperNodeAddress;
 
 
-    public HostConfig (CliArguments cliArguments) {
-        this.setRocksDbPath(cliArguments.getDbPath());
-        boolean isNetworkSet = setMatchedNetwork(cliArguments.getNetwork());
+    public HostConfig(CliArguments cliArguments) {
+        this.setRocksDbPath(cliArguments.dbPath());
+        boolean isNetworkSet = setMatchedNetwork(cliArguments.network());
         if (!isNetworkSet) {
             throw new RuntimeException("Unsupported or unknown network");
         }
         log.log(Level.INFO, String.format("✅️Loaded app config for chain %s%n", chain));
     }
 
-    private boolean setMatchedNetwork (String network) {
+    private boolean setMatchedNetwork(String network) {
         if (network.equals(POLKADOT.getValue())) {
             this.setGenesisPath(polkadotGenesisPath);
             this.setChain(POLKADOT);
