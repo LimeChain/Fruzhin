@@ -17,7 +17,7 @@ public class ConfigTable extends RocksDBTable {
         super(db, "config");
     }
 
-    public void putGenesis (ChainSpec genesis) {
+    public void putGenesi   s(ChainSpec genesis) {
         try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
              ObjectOutputStream oos = new ObjectOutputStream(bos)) {
             oos.writeObject(genesis);
@@ -27,7 +27,7 @@ public class ConfigTable extends RocksDBTable {
         }
     }
 
-    public ChainSpec getGenesis () throws IllegalStateException {
+    public ChainSpec getGenesis() throws IllegalStateException {
         if (has("genesis".getBytes())) {
             byte[] genesisBytes = get("genesis".getBytes());
             try (ByteArrayInputStream genesisBytesStream = new ByteArrayInputStream(genesisBytes);
