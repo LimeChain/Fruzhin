@@ -16,7 +16,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class CommonConfig {
     @Bean
-    public static AutoJsonRpcServiceImplExporter autoJsonRpcServiceImplExporter () {
+    public static AutoJsonRpcServiceImplExporter autoJsonRpcServiceImplExporter() {
         AutoJsonRpcServiceImplExporter exp = new AutoJsonRpcServiceImplExporter();
         // in here you can provide custom HTTP status code providers etc. eg:
         // exp.setHttpStatusCodeProvider();
@@ -25,28 +25,28 @@ public class CommonConfig {
     }
 
     @Bean
-    public HostConfig hostConfig (ApplicationArguments arguments) {
+    public HostConfig hostConfig(ApplicationArguments arguments) {
         CliArguments cliArgs = new Cli().parseArgs(arguments.getSourceArgs());
         return new HostConfig(cliArgs);
     }
 
     @Bean
-    public ChainService chainService (HostConfig hostConfig, RocksDB db) {
+    public ChainService chainService(HostConfig hostConfig, RocksDB db) {
         return new ChainService(hostConfig, db);
     }
 
     @Bean
-    public RocksDB rocksDb (HostConfig hostConfig) {
+    public RocksDB rocksDb(HostConfig hostConfig) {
         return RocksDBInitializer.initialize(hostConfig);
     }
 
     @Bean
-    public SystemInfo systemInfo (HostConfig hostConfig) {
+    public SystemInfo systemInfo(HostConfig hostConfig) {
         return new SystemInfo();
     }
 
     @Bean
-    public WebSocketClient wsClient (HostConfig hostConfig) {
+    public WebSocketClient wsClient(HostConfig hostConfig) {
         return new WebSocketClient(hostConfig.getHelperNodeAddress());
     }
 

@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class TableTest {
     @Test
-    public void Table () throws RocksDBException {
+    public void Table() throws RocksDBException {
         byte[] key = new byte[]{1, 1, 1};
         byte[] value = new byte[]{4, 5, 6};
 

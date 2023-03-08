@@ -1,6 +1,6 @@
 package com.limechain.cli;
 
-import com.limechain.storage.DbInitializer;
+import com.limechain.storage.RocksDBInitializer;
 import org.apache.commons.cli.Options;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -53,23 +53,17 @@ public class CliTest {
     @Test
     public void parseArgs_returns_defaultDbPathParameter() {
         CliArguments arguments = cli.parseArgs(new String[]{});
-        assertEquals(arguments.dbPath(), DbInitializer.defaultDirectory);
+        assertEquals(arguments.dbPath(), RocksDBInitializer.defaultDirectory);
     }
 
     @Test
     public void parseArgs_throws_whenInvalidArguments() {
 
-        assertThrows(RuntimeException.class, () -> {
-            cli.parseArgs(new String[]{"--network"});
-        });
+        assertThrows(RuntimeException.class, () -> cli.parseArgs(new String[]{"--network"}));
 
-        assertThrows(RuntimeException.class, () -> {
-            cli.parseArgs(new String[]{"-network"});
-        });
+        assertThrows(RuntimeException.class, () -> cli.parseArgs(new String[]{"-network"}));
 
-        assertThrows(RuntimeException.class, () -> {
-            cli.parseArgs(new String[]{"--unsupportedParam"});
-        });
+        assertThrows(RuntimeException.class, () -> cli.parseArgs(new String[]{"--unsupportedParam"}));
 
     }
 

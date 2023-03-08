@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 public class StorageTest {
 
     @Test
-    public void initializeStorageTest () {
+    public void initializeStorageTest() {
         RocksDB db = RocksDBInitializer.initializeTestDatabase();
         assertNotNull(db);
         db.close();
