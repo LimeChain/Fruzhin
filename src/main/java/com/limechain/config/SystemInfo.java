@@ -6,9 +6,9 @@ import org.springframework.beans.factory.annotation.Value;
 @Getter
 public class SystemInfo {
     private final String role;
-    @Value("host.name")
+    @Value("${host.name}")
     private String hostName;
-    @Value("host.version")
+    @Value("${host.version}")
     private String hostVersion;
 
     public SystemInfo () {

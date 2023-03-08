@@ -13,7 +13,7 @@ import java.util.logging.Level;
 
 @Log
 public class ConfigTable extends RocksDBTable {
-    public ConfigTable (RocksDB db) {
+    public ConfigTable(RocksDB db) {
         super(db, "config");
     }
 

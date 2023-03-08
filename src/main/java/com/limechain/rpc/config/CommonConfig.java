@@ -2,6 +2,8 @@ package com.limechain.rpc.config;
 
 import com.googlecode.jsonrpc4j.spring.AutoJsonRpcServiceImplExporter;
 import com.limechain.chain.ChainService;
+import com.limechain.cli.Cli;
+import com.limechain.cli.CliArguments;
 import com.limechain.config.HostConfig;
 import com.limechain.config.SystemInfo;
 import com.limechain.rpc.ws.client.WebSocketClient;
@@ -24,7 +26,8 @@ public class CommonConfig {
 
     @Bean
     public HostConfig hostConfig (ApplicationArguments arguments) {
-        return new HostConfig(arguments.getSourceArgs());
+        CliArguments cliArgs = new Cli().parseArgs(arguments.getSourceArgs());
+        return new HostConfig(cliArgs);
     }
 
     @Bean
