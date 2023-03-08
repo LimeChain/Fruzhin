@@ -1,6 +1,7 @@
 package com.limechain.storage;
 
 import com.limechain.chain.ChainSpec;
+import lombok.extern.java.Log;
 import org.rocksdb.RocksDB;
 
 import java.io.ByteArrayInputStream;
@@ -9,11 +10,9 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
+@Log
 public class ConfigTable extends RocksDBTable {
-    private static final Logger LOGGER = Logger.getLogger(ConfigTable.class.getName());
-
     public ConfigTable(RocksDB db) {
         super(db, "config");
     }
@@ -24,7 +23,7 @@ public class ConfigTable extends RocksDBTable {
             oos.writeObject(genesis);
             put("genesis".getBytes(), bos.toByteArray());
         } catch (IOException saveError) {
-            LOGGER.log(Level.WARNING, "Could not save chain spec to database");
+            log.log(Level.WARNING, "Could not save chain spec to database");
         }
     }
 

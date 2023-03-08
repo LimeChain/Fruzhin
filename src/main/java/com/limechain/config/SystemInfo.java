@@ -5,15 +5,14 @@ import org.springframework.beans.factory.annotation.Value;
 
 @Getter
 public class SystemInfo {
-    @Value("host.name")
+    private final String role;
+    @Value("${host.name}")
     private String hostName;
-    @Value("host.version")
+    @Value("${host.version}")
     private String hostVersion;
-    private String role;
 
     public SystemInfo() {
         // TODO: In the future this will be set depending on CLI params
         this.role = "LightClient";
-
     }
 }

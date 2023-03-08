@@ -13,7 +13,7 @@ public enum Chain {
 
     public static Chain fromString(String chain) {
         for (Chain type : values()) {
-            if (type.getValue() == chain) {
+            if (type.getValue().equals(chain)) {
                 return type;
             }
         }

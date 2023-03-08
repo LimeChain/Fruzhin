@@ -1,15 +1,15 @@
 package com.limechain.storage;
 
 import com.limechain.config.HostConfig;
+import lombok.extern.java.Log;
 import org.rocksdb.Options;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
 
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
+@Log
 public class RocksDBInitializer {
-    private static final Logger LOGGER = Logger.getLogger(RocksDBInitializer.class.getName());
     public static final String testDirectory = "./test-rocks-db";
     public static final String defaultDirectory = "./rocks-db";
     private static RocksDB db;
@@ -25,13 +25,13 @@ public class RocksDBInitializer {
             return db;
 
         } catch (RocksDBException e) {
-            LOGGER.log(Level.SEVERE, "RocksDB initialize exception caught!", e);
+            log.log(Level.SEVERE, "RocksDB initialize exception caught!", e);
             return null;
         }
     }
 
     public static RocksDB initialize (HostConfig hostConfig) {
-        return initialize(hostConfig.rocksDbPath);
+        return initialize(hostConfig.getRocksDbPath());
     }
 
     public static RocksDB initializeTestDatabase () {
