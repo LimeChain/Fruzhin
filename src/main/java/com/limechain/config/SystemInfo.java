@@ -11,7 +11,7 @@ public class SystemInfo {
     @Value("${host.version}")
     private String hostVersion;
 
-    public SystemInfo () {
+    public SystemInfo() {
         // TODO: In the future this will be set depending on CLI params
         this.role = "LightClient";
     }
