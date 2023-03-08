@@ -16,8 +16,8 @@ import static com.limechain.chain.Chain.*;
 @Setter
 public class HostConfig {
     private String rocksDbPath;
-    private String genesisPath;
     private Chain chain;
+
     @Value("${genesis.path.polkadot}")
     private String polkadotGenesisPath;
     @Value("${genesis.path.kusama}")
@@ -30,30 +30,28 @@ public class HostConfig {
 
     public HostConfig(CliArguments cliArguments) {
         this.setRocksDbPath(cliArguments.dbPath());
-        boolean isNetworkSet = setMatchedNetwork(cliArguments.network());
-        if (!isNetworkSet) {
+        String network = cliArguments.network();
+        chain = network.isEmpty()? WESTEND : fromString(network);
+        if (chain == null) {
             throw new RuntimeException("Unsupported or unknown network");
         }
         log.log(Level.INFO, String.format("✅️Loaded app config for chain %s%n", chain));
     }
 
-    private boolean setMatchedNetwork(String network) {
-        if (network.equals(POLKADOT.getValue())) {
-            this.setGenesisPath(polkadotGenesisPath);
-            this.setChain(POLKADOT);
-            return true;
+    public String getGenesisPath() {
+        switch (chain) {
+            case POLKADOT -> {
+                return polkadotGenesisPath;
+            }
+            case KUSAMA -> {
+                return kusamaGenesisPath;
+            }
+            case WESTEND -> {
+                return westendGenesisPath;
+            }
+            default -> {
+                throw new IllegalStateException("Invalid Chain in host configuration");
+            }
         }
-        if (network.equals(KUSAMA.getValue())) {
-            this.setGenesisPath(kusamaGenesisPath);
-            this.setChain(Chain.KUSAMA);
-            return true;
-        }
-        // Empty string case because we want the default network to be Westend
-        if (network.equals(WESTEND.getValue()) || network.isEmpty()) {
-            this.setGenesisPath(westendGenesisPath);
-            this.setChain(Chain.WESTEND);
-            return true;
-        }
-        return false;
     }
 }
