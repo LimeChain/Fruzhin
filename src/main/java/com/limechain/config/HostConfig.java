@@ -3,6 +3,7 @@ package com.limechain.config;
 import com.limechain.chain.Chain;
 import com.limechain.storage.RocksDBInitializer;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.java.Log;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -11,20 +12,29 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.io.IOException;
-import java.util.Properties;
 import java.util.logging.Level;
 
 import static com.limechain.chain.Chain.*;
 
 @Log
 @Getter
-public class HostConfig extends Config {
-    private final String rocksDbPath;
-    private final String helperNodeAddress;
+@Setter
+public class HostConfig {
+    private String rocksDbPath;
     private String genesisPath;
     private Chain chain;
+    @Value("${genesis.path.polkadot}")
+    private String polkadotGenesisPath;
+    @Value("${genesis.path.kusama}")
+    private String kusamaGenesisPath;
+    @Value("${genesis.path.westend}")
+    private String westendGenesisPath;
+    @Value("${helper.node.address}")
+    private String helperNodeAddress;
+
 
     public HostConfig (String[] args) {
         // Setup CLI arguments
@@ -53,13 +63,10 @@ public class HostConfig extends Config {
         // Get the network argument
         String network = cmd.getOptionValue("network", "").toLowerCase();
 
-        Properties properties = this.readConfig();
-
-        this.helperNodeAddress = properties.get("HELPER_NODE_ADDRESS").toString();
         // Read configuration file
         // Map network argument to chain spec patch
         try {
-            boolean isNetworkStored = storeMatchedNetwork(network, properties);
+            boolean isNetworkStored = setMatchedNetwork(network);
             if (!isNetworkStored) {
                 throw new IOException("Unsupported or unknown network");
             }
@@ -68,26 +75,26 @@ public class HostConfig extends Config {
             throw new RuntimeException();
         }
 
-        this.rocksDbPath = cmd.getOptionValue("db-path", RocksDBInitializer.defaultDirectory);
+        this.setRocksDbPath(cmd.getOptionValue("db-path", RocksDBInitializer.defaultDirectory));
 
         log.log(Level.INFO, String.format("✅️Loaded app config for chain %s%n", chain));
     }
 
-    private boolean storeMatchedNetwork (String network, Properties properties) {
+    private boolean setMatchedNetwork (String network) {
         if (network.equals(POLKADOT.getValue())) {
-            this.genesisPath = properties.get("POLKADOT_GENESIS_PATH").toString();
-            this.chain = POLKADOT;
+            this.setGenesisPath(polkadotGenesisPath);
+            this.setChain(POLKADOT);
             return true;
         }
         if (network.equals(KUSAMA.getValue())) {
-            this.genesisPath = properties.get("KUSAMA_GENESIS_PATH").toString();
-            this.chain = Chain.KUSAMA;
+            this.setGenesisPath(kusamaGenesisPath);
+            this.setChain(Chain.KUSAMA);
             return true;
         }
         // Empty string case because we want the default network to be Westend
         if (network.equals(WESTEND.getValue()) || network.isEmpty()) {
-            this.genesisPath = properties.get("WESTEND_GENESIS_PATH").toString();
-            this.chain = Chain.WESTEND;
+            this.setGenesisPath(westendGenesisPath);
+            this.setChain(Chain.WESTEND);
             return true;
         }
         return false;

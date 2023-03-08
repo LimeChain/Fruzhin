@@ -1,23 +1,17 @@
 package com.limechain.config;
 
 import lombok.Getter;
-
-import java.util.Properties;
+import org.springframework.beans.factory.annotation.Value;
 
 @Getter
-public class SystemInfo extends Config {
-    public final String hostName;
-    public final String hostVersion;
-    public final String role;
+public class SystemInfo {
+    private final String role;
+    @Value("host.name")
+    private String hostName;
+    @Value("host.version")
+    private String hostVersion;
 
     public SystemInfo () {
-        Properties properties = this.readConfig();
-
-        // Map host name and version
-        // TODO: This could throw an error if the props aren't defined in the config
-        this.hostName = properties.get("HOST_NAME").toString();
-        this.hostVersion = properties.get("HOST_VERSION").toString();
-
         // TODO: In the future this will be set depending on CLI params
         this.role = "LightClient";
     }

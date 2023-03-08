@@ -7,8 +7,8 @@ import com.limechain.rpc.ws.server.WebSocketRPC;
 public class Main {
     public static void main (String[] args) {
         HttpRpc httpRpc = new HttpRpc();
-        WebSocketRPC wsrpc = new WebSocketRPC();
-        LightClient client = new LightClient(args, httpRpc, wsrpc);
+        WebSocketRPC wsRpc = new WebSocketRPC();
+        LightClient client = new LightClient(args, httpRpc, wsRpc);
         client.start();
     }
 }
