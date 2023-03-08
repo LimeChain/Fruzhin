@@ -17,7 +17,7 @@ public class ConfigTable extends RocksDBTable {
         super(db, "config");
     }
 
-    public void putGenesi   s(ChainSpec genesis) {
+    public void putGenesis(ChainSpec genesis) {
         try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
              ObjectOutputStream oos = new ObjectOutputStream(bos)) {
             oos.writeObject(genesis);
