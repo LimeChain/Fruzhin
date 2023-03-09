@@ -1,7 +1,7 @@
 package com.limechain.cli;
 
 
-import com.limechain.storage.RocksDBInitializer;
+import com.limechain.storage.DBInitializer;
 import lombok.Getter;
 import lombok.extern.java.Log;
 import org.apache.commons.cli.CommandLine;
@@ -23,8 +23,7 @@ public class Cli {
 
 
     public Cli() {
-        Options options = buildOptions();
-        this.options = options;
+        this.options = buildOptions();
     }
 
     private Options buildOptions() {
@@ -44,7 +43,7 @@ public class Cli {
             CommandLineParser parser = new DefaultParser();
             CommandLine cmd = parser.parse(options, args);
             String network = cmd.getOptionValue("network", "").toLowerCase();
-            String dbPath = cmd.getOptionValue("db-path", RocksDBInitializer.defaultDirectory);
+            String dbPath = cmd.getOptionValue("db-path", DBInitializer.defaultDirectory);
 
             return new CliArguments(network, dbPath);
         } catch (ParseException e) {
