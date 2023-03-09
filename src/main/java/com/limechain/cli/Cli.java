@@ -25,7 +25,6 @@ public class Cli {
     public Cli() {
         Options options = buildOptions();
         this.options = options;
-
     }
 
     private Options buildOptions() {
