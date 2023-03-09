@@ -1,5 +1,6 @@
 package com.limechain.rpc.ws.server;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -17,9 +18,12 @@ import java.util.Collections;
 public class WebSocketRPC {
     private ConfigurableApplicationContext springCtx;
 
+    @Value("${rpc.ws.server.port}")
+    private int serverPort;
+
     public void start(String[] cliArgs) {
         SpringApplication app = new SpringApplication(WebSocketRPC.class);
-        app.setDefaultProperties(Collections.singletonMap("server.port", "9922"));
+        app.setDefaultProperties(Collections.singletonMap("server.port", serverPort));
         ConfigurableApplicationContext ctx = app.run(cliArgs);
         this.springCtx = ctx;
     }
