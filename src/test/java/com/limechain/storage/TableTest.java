@@ -20,7 +20,6 @@ public class TableTest {
     @AfterEach
     public void close() {
         RocksDBInitializer.closeInstances();
-
     }
 
     @Test
