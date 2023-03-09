@@ -35,7 +35,6 @@ public class CommonConfig {
         return DBInitializer.initialize(hostConfig.getRocksDbPath());
     }
 
-
     @Bean
     public ChainService chainService(HostConfig hostConfig, KVRepository<String, Object> repository) {
         return new ChainService(hostConfig, repository);

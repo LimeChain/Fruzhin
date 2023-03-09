@@ -12,7 +12,6 @@ application {
     mainClass.set("com.limechain.Main")
 }
 
-
 group = "com.limechain"
 version = "1.0-SNAPSHOT"
 java.sourceCompatibility = JavaVersion.VERSION_17

@@ -5,7 +5,10 @@ import org.apache.commons.cli.Options;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class CliTest {
     private Cli cli;
@@ -48,7 +51,6 @@ public class CliTest {
         CliArguments arguments = cli.parseArgs(new String[]{"--db-path", "./test-path-somewhere"});
         assertEquals(arguments.dbPath(), "./test-path-somewhere");
     }
-
 
     @Test
     public void parseArgs_returns_defaultDbPathParameter() {

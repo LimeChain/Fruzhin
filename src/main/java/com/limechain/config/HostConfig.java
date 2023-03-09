@@ -9,7 +9,8 @@ import org.springframework.beans.factory.annotation.Value;
 
 import java.util.logging.Level;
 
-import static com.limechain.chain.Chain.*;
+import static com.limechain.chain.Chain.WESTEND;
+import static com.limechain.chain.Chain.fromString;
 
 @Log
 @Getter
@@ -27,11 +28,10 @@ public class HostConfig {
     @Value("${helper.node.address}")
     private String helperNodeAddress;
 
-
     public HostConfig(CliArguments cliArguments) {
         this.setRocksDbPath(cliArguments.dbPath());
         String network = cliArguments.network();
-        this.setChain(network.isEmpty()? WESTEND : fromString(network));
+        this.setChain(network.isEmpty() ? WESTEND : fromString(network));
         if (chain == null) {
             throw new RuntimeException("Unsupported or unknown network");
         }
