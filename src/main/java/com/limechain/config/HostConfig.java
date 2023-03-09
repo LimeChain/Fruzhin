@@ -9,9 +9,8 @@ import org.springframework.beans.factory.annotation.Value;
 
 import java.util.logging.Level;
 
-import static com.limechain.chain.Chain.KUSAMA;
-import static com.limechain.chain.Chain.POLKADOT;
 import static com.limechain.chain.Chain.WESTEND;
+import static com.limechain.chain.Chain.fromString;
 
 @Log
 @Getter
