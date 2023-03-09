@@ -28,7 +28,10 @@ public class DBRepository implements KVRepository<String, Object> {
             db = RocksDB.open(options, baseDir.getAbsolutePath());
             log.log(Level.INFO, "\uD83E\uDEA8RocksDB initialized");
         } catch (IOException | RocksDBException e) {
-            log.log(Level.SEVERE, String.format("Error initializing RocksDB. Exception: '%s', message: '%s'", e.getCause(), e.getMessage()), e);
+            log.log(Level.SEVERE, String.format("Error initializing RocksDB. Exception: '%s', message: '%s'",
+                            e.getCause(),
+                            e.getMessage()),
+                    e);
         }
     }
 
@@ -38,7 +41,8 @@ public class DBRepository implements KVRepository<String, Object> {
         try {
             db.put(key.getBytes(), SerializationUtils.serialize(value));
         } catch (RocksDBException e) {
-            log.log(Level.WARNING, String.format("Error saving entry. Cause: '%s', message: '%s'", e.getCause(), e.getMessage()));
+            log.log(Level.WARNING,
+                    String.format("Error saving entry. Cause: '%s', message: '%s'", e.getCause(), e.getMessage()));
             return false;
         }
         return true;
@@ -70,7 +74,8 @@ public class DBRepository implements KVRepository<String, Object> {
         try {
             db.delete(key.getBytes());
         } catch (RocksDBException e) {
-            log.log(Level.SEVERE, String.format("Error deleting entry, cause: '%s', message: '%s'", e.getCause(), e.getMessage()));
+            log.log(Level.SEVERE,
+                    String.format("Error deleting entry, cause: '%s', message: '%s'", e.getCause(), e.getMessage()));
             return false;
         }
         return true;

@@ -43,7 +43,7 @@ public class Cli {
             CommandLineParser parser = new DefaultParser();
             CommandLine cmd = parser.parse(options, args);
             String network = cmd.getOptionValue("network", "").toLowerCase();
-            String dbPath = cmd.getOptionValue("db-path", DBInitializer.defaultDirectory);
+            String dbPath = cmd.getOptionValue("db-path", DBInitializer.DEFAULT_DIRECTORY);
 
             return new CliArguments(network, dbPath);
         } catch (ParseException e) {

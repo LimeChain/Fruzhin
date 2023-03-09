@@ -7,7 +7,7 @@ import java.util.Map;
 
 @Log
 public class DBInitializer {
-    public static final String defaultDirectory = "./rocks-db";
+    public static final String DEFAULT_DIRECTORY = "./rocks-db";
     private static Map<String, DBRepository> instances = new HashMap<>();
 
     public static DBRepository initialize(String path) {

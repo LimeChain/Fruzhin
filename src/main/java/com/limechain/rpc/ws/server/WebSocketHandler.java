@@ -30,7 +30,8 @@ public class WebSocketHandler extends TextWebSocketHandler {
     public void handleTextMessage(WebSocketSession session, TextMessage message) throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         InputStream in = new ByteArrayInputStream(message.asBytes());
-        // Known issue: WS handler doesn't use interface method names (system_name) but uses implementation ones (systemName)
+        // Known issue: WS handler doesn't use interface
+        // method names (system_name) but uses implementation ones (systemName)
         server.handleRequest(in, out);
         session.sendMessage(new TextMessage(out.toByteArray()));
 

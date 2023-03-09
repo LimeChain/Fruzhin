@@ -13,6 +13,10 @@ application {
     mainClass.set("com.limechain.Main")
 }
 
+checkstyle {
+    config = resources.text.fromFile("checkstyle.xml")
+}
+
 group = "com.limechain"
 version = "1.0-SNAPSHOT"
 java.sourceCompatibility = JavaVersion.VERSION_17

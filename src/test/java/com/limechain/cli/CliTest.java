@@ -55,7 +55,7 @@ public class CliTest {
     @Test
     public void parseArgs_returns_defaultDbPathParameter() {
         CliArguments arguments = cli.parseArgs(new String[]{});
-        assertEquals(arguments.dbPath(), DBInitializer.defaultDirectory);
+        assertEquals(arguments.dbPath(), DBInitializer.DEFAULT_DIRECTORY);
     }
 
     @Test
