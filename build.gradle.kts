@@ -6,10 +6,15 @@ plugins {
     id("org.springframework.boot") version "2.7.3"
     id("io.spring.dependency-management") version "1.1.0"
     id("application")
+    id("checkstyle")
 }
 
 application {
     mainClass.set("com.limechain.Main")
+}
+
+checkstyle {
+    config = resources.text.fromFile("checkstyle.xml")
 }
 
 group = "com.limechain"
