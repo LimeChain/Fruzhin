@@ -13,7 +13,7 @@ application {
 }
 
 checkstyle {
-    config = resources.text.fromFile("src/main/java/com/limechain/config/checkstyle.xml")
+    config = resources.text.fromFile("checkstyle.xml")
 }
 
 group = "com.limechain"
