@@ -1,0 +1,39 @@
+{
+  "name": "Polkadot",
+  "id": "polkadot",
+  "chainType": "Live",
+  "bootNodes": [
+    "/dns/polkadot-connect-0.parity.io/tcp/443/wss/p2p/12D3KooWEPmjoRpDSUuiTjvyNDd8fejZ9eNWH5bE965nyBMDrB4o",
+    "/dns/cc1-1.parity.tech/tcp/30333/p2p/12D3KooWFN2mhgpkJsDBuNuE5427AcDrsib8EoqGMZmkxWwx3Md4"
+  ],
+  "telemetryEndpoints": [
+    [
+      "wss://telemetry.polkadot.io/submit/",
+      0
+    ]
+  ],
+  "protocolId": "dot",
+  "properties": {
+    "ss58Format": 0,
+    "tokenDecimals": 10,
+    "tokenSymbol": "DOT"
+  },
+  "forkBlocks": null,
+  "badBlocks": null,
+  "consensusEngine": null,
+  "genesis": {
+    "raw": {
+      "top": {
+        "0x9c5d795d0297be56027a4b2464e3339763e6d3c1fb15805edfd024172ea4817d9e40ca7bd1fd588ca534ee6b96a65ca8a53ec232dda838cc3cd2bd1887904906": "0x11bc2c7ea454e083cea1186239abc83733200e78",
+        "0x9c5d795d0297be56027a4b2464e333979c5d795d0297be56027a4b2464e33397eb0718ce75762eeba4570943d5b2de2afb9085b6": "0x000e760ff72301000000000000000000"
+      },
+      "childrenDefault": {}
+    }
+  },
+  "lightSyncState": {
+    "babeEpochChanges": "0x045b5ad8c1dcec0b19d70f5255bd200",
+    "babeFinalizedBlockWeight": 2880292,
+    "finalizedBlockHeader": "0x486e93538fbbaf1982",
+    "grandpaAuthoritySet": "0xa50497es005ff7af00"
+  }
+}
