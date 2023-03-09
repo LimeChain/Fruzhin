@@ -50,7 +50,7 @@ public class HostConfig {
                 return westendGenesisPath;
             }
             default -> {
-                throw new IllegalStateException("Invalid Chain in host configuration");
+                throw new RuntimeException("Invalid Chain in host configuration");
             }
         }
     }
