@@ -66,7 +66,7 @@ public class ChainSpecTest {
             expectedTopValue.put("0x9c5d795d0297be56027a4b2464e333979c5d795d0297be56027a4b2464e33397eb0718ce75762eeba4570943d5b2de2afb9085b6", "0x000e760ff72301000000000000000000");
             assertEquals(expectedTopValue, actualTopValue);
 
-            Map actualChildrenDefault = chainSpec.getGenesçis().getRaw().get("childrenDefault");
+            Map actualChildrenDefault = chainSpec.getGenesis().getRaw().get("childrenDefault");
             Map expectedChildrenDefault = new LinkedHashMap();
             assertEquals(expectedChildrenDefault, actualChildrenDefault);
 
