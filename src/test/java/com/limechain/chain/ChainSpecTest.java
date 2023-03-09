@@ -80,7 +80,6 @@ public class ChainSpecTest {
             expectedProperties.put("tokenSymbol", "DOT");
 
             assertEquals(expectedProperties, actualProperties);
-f
         } catch (IOException e) {
             log.log(Level.SEVERE, "Error loading chain spec from json", e);
             fail();
