@@ -12,13 +12,13 @@ public class RocksDBTable {
     private final String prefix;
     private final byte[] prefixBytes;
 
-    public RocksDBTable (RocksDB db, String prefix) {
+    public RocksDBTable(RocksDB db, String prefix) {
         this.db = db;
         this.prefix = prefix;
         this.prefixBytes = prefix.getBytes();
     }
 
-    private byte[] prependPrefixToKey (byte[] key) {
+    private byte[] prependPrefixToKey(byte[] key) {
         byte[] prefixedKey = new byte[key.length + this.prefix.length()];
 
         System.arraycopy(prefixBytes, 0, prefixedKey, 0, prefixBytes.length);
@@ -29,7 +29,7 @@ public class RocksDBTable {
 
     }
 
-    public void put (byte[] key, byte[] value) {
+    public void put(byte[] key, byte[] value) {
         byte[] prefixedKey = this.prependPrefixToKey(key);
         try {
             this.db.put(prefixedKey, value);
@@ -38,12 +38,12 @@ public class RocksDBTable {
         }
     }
 
-    public boolean has (byte[] key) {
+    public boolean has(byte[] key) {
         byte[] value = this.get(key);
         return value != null;
     }
 
-    public byte[] get (byte[] key) {
+    public byte[] get(byte[] key) {
         byte[] prefixedKey = this.prependPrefixToKey(key);
         try {
             return this.db.get(prefixedKey);
@@ -53,12 +53,12 @@ public class RocksDBTable {
         }
     }
 
-    public void del (byte[] key) throws RocksDBException {
+    public void del(byte[] key) throws RocksDBException {
         byte[] prefixedKey = this.prependPrefixToKey(key);
         this.db.delete(prefixedKey);
     }
 
-    public void close () {
+    public void close() {
         this.db.close();
     }
 }

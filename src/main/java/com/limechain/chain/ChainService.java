@@ -16,7 +16,7 @@ import java.util.logging.Level;
 public class ChainService {
     private ChainSpec genesis;
 
-    public ChainService (HostConfig hostConfig, RocksDB db) {
+    public ChainService(HostConfig hostConfig, RocksDB db) {
         try {
             ConfigTable configTable = new ConfigTable(db);
             try {

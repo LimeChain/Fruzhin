@@ -8,7 +8,7 @@ import java.util.logging.Level;
 
 @Log
 public class SubscriptionHandlers {
-    public static void unstableFollowHandler (Subscription.Event<FollowEvent> event) {
+    public static void unstableFollowHandler(Subscription.Event<FollowEvent> event) {
         // TODO: Change handler logic to have meaningful logic
         FollowEvent header = event.getResult();
         if (header.getEvent().equals("initialized")) {

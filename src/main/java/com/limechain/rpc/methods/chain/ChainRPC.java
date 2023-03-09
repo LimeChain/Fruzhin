@@ -4,22 +4,22 @@ import com.googlecode.jsonrpc4j.JsonRpcMethod;
 
 public interface ChainRPC {
     @JsonRpcMethod("chainHead_unstable_follow")
-    void chainUnstableFollow ();
+    void chainUnstableFollow();
 
     @JsonRpcMethod("chainHead_unstable_unfollow")
-    String chainUnstableUnfollow ();
+    String chainUnstableUnfollow();
 
     @JsonRpcMethod("chainHead_unstable_unpin")
-    String chainUnstableUnpin ();
+    String chainUnstableUnpin();
 
     @JsonRpcMethod("chainHead_unstable_storage")
-    String chainUnstableStorage ();
+    String chainUnstableStorage();
 
     @JsonRpcMethod("chainHead_unstable_call")
-    String chainUnstableCall ();
+    String chainUnstableCall();
 
     @JsonRpcMethod("chainHead_unstable_stopCall")
-    String chainUnstableStopCall ();
+    String chainUnstableStopCall();
 
 
 }

@@ -14,72 +14,72 @@ public class SystemRPCImpl {
     private final ChainService chainService;
     private final SystemInfo systemInfo;
 
-    public String systemName () {
+    public String systemName() {
         return this.systemInfo.getHostName();
     }
 
-    public String systemVersion () {
+    public String systemVersion() {
         return this.systemInfo.getHostVersion();
     }
 
-    public String systemChain () {
+    public String systemChain() {
         return this.chainService.getGenesis().getName();
     }
 
-    public String systemChainType () {
+    public String systemChainType() {
         return this.chainService.getGenesis().getChainType();
     }
 
-    public Map<String, Object> systemProperties () {
+    public Map<String, Object> systemProperties() {
         return this.chainService.getGenesis().getProperties();
     }
 
-    public String[] systemNodeRoles () {
+    public String[] systemNodeRoles() {
         return new String[]{this.systemInfo.getRole()};
     }
 
     // TODO: Implement in M2.
-    public Map<String, Object> systemHealth () {
+    public Map<String, Object> systemHealth() {
         return null;
     }
 
     // TODO: Implement in M2.
-    public String systemLocalPeerId () {
+    public String systemLocalPeerId() {
         return null;
     }
 
     // TODO: Implement in M2.
-    public String[] systemLocalListenAddress () {
+    public String[] systemLocalListenAddress() {
         return new String[0];
     }
 
     // TODO: Implement in M2.
-    public String[] systemSystemPeers () {
+    public String[] systemSystemPeers() {
         return new String[0];
     }
 
     // TODO: Implement in M2.
-    public String systemAddReservedPeer (String peerId) {
+    public String systemAddReservedPeer(String peerId) {
         return null;
     }
 
     // TODO: Implement in M2.
-    public String systemRemoveReservedPeer (String peerId) {
+    public String systemRemoveReservedPeer(String peerId) {
         return null;
     }
 
     // TODO: Implement in M2.
-    public Map<String, Object> systemSyncState () {
+    public Map<String, Object> systemSyncState() {
         return null;
     }
 
     // TODO: Implement in M2.
-    public String systemAccountNextIndex (String accountAddress) {
+    public String systemAccountNextIndex(String accountAddress) {
         return null;
     }
 
     // TODO: Implement in M2.
-    public String systemDryRun (String extrinsic, String blockHash) {
+    public String systemDryRun(String extrinsic, String blockHash) {
         return null;
     }
 

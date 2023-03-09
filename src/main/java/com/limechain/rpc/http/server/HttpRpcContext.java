@@ -20,19 +20,19 @@ public class HttpRpcContext implements ApplicationContextAware {
      * @param beanClass
      * @return
      */
-    public static <T extends Object> T getBean (Class<T> beanClass) {
+    public static <T extends Object> T getBean(Class<T> beanClass) {
         return context.getBean(beanClass);
     }
 
     /**
      * Private method context setting (better practice for setting a static field in a bean instance).
      */
-    private static synchronized void setContext (ApplicationContext context) {
+    private static synchronized void setContext(ApplicationContext context) {
         HttpRpcContext.context = context;
     }
 
     @Override
-    public void setApplicationContext (ApplicationContext context) throws BeansException {
+    public void setApplicationContext(ApplicationContext context) throws BeansException {
         // store ApplicationContext reference to access required beans later on
         setContext(context);
     }

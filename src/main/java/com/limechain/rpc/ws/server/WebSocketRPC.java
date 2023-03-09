@@ -12,14 +12,14 @@ import java.util.Collections;
 public class WebSocketRPC {
     private ConfigurableApplicationContext springCtx;
 
-    public void start (String[] cliArgs) {
+    public void start(String[] cliArgs) {
         SpringApplication app = new SpringApplication(WebSocketRPC.class);
         app.setDefaultProperties(Collections.singletonMap("server.port", "9922"));
         ConfigurableApplicationContext ctx = app.run(cliArgs);
         this.springCtx = ctx;
     }
 
-    public void stop () {
+    public void stop() {
         if (this.springCtx != null) {
             this.springCtx.stop();
         }

@@ -11,16 +11,16 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 public class WebSocketRoutingConfig implements WebSocketConfigurer {
     private final RPCMethods rpcMethods;
 
-    public WebSocketRoutingConfig (RPCMethods rpcMethods) {
+    public WebSocketRoutingConfig(RPCMethods rpcMethods) {
         this.rpcMethods = rpcMethods;
     }
 
     @Override
-    public void registerWebSocketHandlers (WebSocketHandlerRegistry registry) {
+    public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         registry.addHandler(webSocketHandler(), "/");
     }
 
-    public WebSocketHandler webSocketHandler () {
+    public WebSocketHandler webSocketHandler() {
         return new WebSocketHandler(rpcMethods);
     }
 }
