@@ -2,7 +2,7 @@ package com.limechain.config;
 
 import com.limechain.chain.Chain;
 import com.limechain.cli.CliArguments;
-import com.limechain.storage.RocksDBInitializer;
+import com.limechain.storage.DBInitializer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -17,14 +17,14 @@ public class HostConfigTest {
     private CliArguments cliArguments;
 
     @BeforeEach
-    public void setup(){
+    public void setup() {
         cliArguments = mock(CliArguments.class);
     }
 
     @Test
     public void HostConfig_Succeeds_PassedCliArguments() {
         when(cliArguments.network()).thenReturn(Chain.WESTEND.getValue());
-        when(cliArguments.dbPath()).thenReturn(RocksDBInitializer.testDirectory);
+        when(cliArguments.dbPath()).thenReturn(DBInitializer.DEFAULT_DIRECTORY);
 
         HostConfig hostConfig = new HostConfig(cliArguments);
         assertEquals(Chain.WESTEND, hostConfig.getChain());
@@ -38,7 +38,7 @@ public class HostConfigTest {
     @Test
     public void HostConfig_throwsException_whenNetworkInvalid() {
         when(cliArguments.network()).thenReturn("invalidNetwork");
-        when(cliArguments.dbPath()).thenReturn(RocksDBInitializer.testDirectory);
+        when(cliArguments.dbPath()).thenReturn(DBInitializer.DEFAULT_DIRECTORY);
         Exception exception = assertThrows(RuntimeException.class, () -> {
             new HostConfig(cliArguments);
         });
