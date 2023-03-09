@@ -27,7 +27,8 @@ public class ChainSpec implements Serializable {
 
     public static ChainSpec newFromJSON(String pathToChainSpecJSON) throws IOException {
         final boolean failOnUnknownProperties = false;
-        ObjectMapper objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, failOnUnknownProperties);
+        ObjectMapper objectMapper = new ObjectMapper()
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, failOnUnknownProperties);
         var file = new File(pathToChainSpecJSON);
 
         return objectMapper.readValue(file, ChainSpec.class);

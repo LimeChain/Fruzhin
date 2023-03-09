@@ -40,5 +40,4 @@ public class LightClientTest {
         verify(httpRpc, times(1)).stop();
         verify(wsRpc, times(1)).stop();
     }
-
 }

@@ -7,8 +7,8 @@ import com.limechain.cli.CliArguments;
 import com.limechain.config.HostConfig;
 import com.limechain.config.SystemInfo;
 import com.limechain.rpc.ws.client.WebSocketClient;
-import com.limechain.storage.RocksDBInitializer;
-import org.rocksdb.RocksDB;
+import com.limechain.storage.DBInitializer;
+import com.limechain.storage.KVRepository;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -31,13 +31,13 @@ public class CommonConfig {
     }
 
     @Bean
-    public ChainService chainService(HostConfig hostConfig, RocksDB db) {
-        return new ChainService(hostConfig, db);
+    public KVRepository<String, Object> repository(HostConfig hostConfig) {
+        return DBInitializer.initialize(hostConfig.getRocksDbPath());
     }
 
     @Bean
-    public RocksDB rocksDb(HostConfig hostConfig) {
-        return RocksDBInitializer.initialize(hostConfig);
+    public ChainService chainService(HostConfig hostConfig, KVRepository<String, Object> repository) {
+        return new ChainService(hostConfig, repository);
     }
 
     @Bean

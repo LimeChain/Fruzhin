@@ -31,7 +31,7 @@ public class HostConfig {
     public HostConfig(CliArguments cliArguments) {
         this.setRocksDbPath(cliArguments.dbPath());
         String network = cliArguments.network();
-        this.setChain(network.isEmpty()? WESTEND : fromString(network));
+        this.setChain(network.isEmpty() ? WESTEND : fromString(network));
         if (chain == null) {
             throw new RuntimeException("Unsupported or unknown network");
         }

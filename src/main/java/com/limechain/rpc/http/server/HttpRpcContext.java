@@ -6,7 +6,7 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
 
 // Not used anywhere currently. Could be helpful in the future.
-// Pattern from: https://confluence.jaytaala.com/display/TKB/Super+simple+approach+to+accessing+Spring+beans+from+non-Spring+managed+classes+and+POJOs
+// Pattern from: https://bit.ly/3yqYkX0
 @Component
 public class HttpRpcContext implements ApplicationContextAware {
 

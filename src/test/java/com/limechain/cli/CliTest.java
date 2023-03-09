@@ -1,6 +1,6 @@
 package com.limechain.cli;
 
-import com.limechain.storage.RocksDBInitializer;
+import com.limechain.storage.DBInitializer;
 import org.apache.commons.cli.Options;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -55,7 +55,7 @@ public class CliTest {
     @Test
     public void parseArgs_returns_defaultDbPathParameter() {
         CliArguments arguments = cli.parseArgs(new String[]{});
-        assertEquals(arguments.dbPath(), RocksDBInitializer.defaultDirectory);
+        assertEquals(arguments.dbPath(), DBInitializer.DEFAULT_DIRECTORY);
     }
 
     @Test

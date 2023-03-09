@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class ChainRPCImpl {
-    private final String NodeEndpoint = "";
+    private final String nodeEndpoint = "";
 
     private final WebSocketClient wsClient;
 
