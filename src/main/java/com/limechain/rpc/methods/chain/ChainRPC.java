@@ -21,5 +21,4 @@ public interface ChainRPC {
     @JsonRpcMethod("chainHead_unstable_stopCall")
     String chainUnstableStopCall();
 
-
 }

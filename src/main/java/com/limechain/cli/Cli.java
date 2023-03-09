@@ -1,6 +1,5 @@
 package com.limechain.cli;
 
-
 import com.limechain.storage.RocksDBInitializer;
 import lombok.Getter;
 import lombok.extern.java.Log;
@@ -20,7 +19,6 @@ public class Cli {
 
     private final Options options;
     private final HelpFormatter formatter = new HelpFormatter();
-
 
     public Cli() {
         Options options = buildOptions();

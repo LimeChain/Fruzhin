@@ -5,7 +5,9 @@ import com.limechain.rpc.ws.server.WebSocketRPC;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 public class LightClientTest {
     private LightClient lightClient;
@@ -38,6 +40,5 @@ public class LightClientTest {
         verify(httpRpc, times(1)).stop();
         verify(wsRpc, times(1)).stop();
     }
-
 
 }

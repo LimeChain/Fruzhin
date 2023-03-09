@@ -41,7 +41,6 @@ public class SystemRPCImplTest {
         assertEquals(systemRPC.systemVersion(), "0.1");
     }
 
-
     @Test
     public void systemNodeRoles() {
         when(systemInfo.getRole()).thenReturn("Light Client");
