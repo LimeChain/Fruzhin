@@ -7,6 +7,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
@@ -31,5 +33,19 @@ public class HostConfigTest {
         setField(hostConfig, "westendGenesisPath", westendGenesisPath);
 
         assertEquals(westendGenesisPath, hostConfig.getGenesisPath());
+    }
+
+    @Test
+    public void HostConfig_throwsException_whenNetworkInvalid() {
+        when(cliArguments.network()).thenReturn("invalidNetwork");
+        when(cliArguments.dbPath()).thenReturn(RocksDBInitializer.testDirectory);
+        Exception exception = assertThrows(RuntimeException.class, () -> {
+            new HostConfig(cliArguments);
+        });
+
+        String expectedMessage = "Unsupported or unknown network";
+        String actualMessage = exception.getMessage();
+
+        assertTrue(actualMessage.contains(expectedMessage));
     }
 }
