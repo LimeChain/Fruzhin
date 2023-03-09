@@ -9,7 +9,9 @@ import org.springframework.beans.factory.annotation.Value;
 
 import java.util.logging.Level;
 
-import static com.limechain.chain.Chain.*;
+import static com.limechain.chain.Chain.KUSAMA;
+import static com.limechain.chain.Chain.POLKADOT;
+import static com.limechain.chain.Chain.WESTEND;
 
 @Log
 @Getter
@@ -26,7 +28,6 @@ public class HostConfig {
     private String westendGenesisPath;
     @Value("${helper.node.address}")
     private String helperNodeAddress;
-
 
     public HostConfig(CliArguments cliArguments) {
         this.setRocksDbPath(cliArguments.dbPath());

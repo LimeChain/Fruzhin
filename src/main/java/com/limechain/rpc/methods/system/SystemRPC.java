@@ -6,49 +6,49 @@ import java.util.Map;
 
 public interface SystemRPC {
     @JsonRpcMethod("system_name")
-    String systemName ();
+    String systemName();
 
     @JsonRpcMethod("system_version")
-    String systemVersion ();
+    String systemVersion();
 
     @JsonRpcMethod("system_chain")
-    String systemChain ();
+    String systemChain();
 
     @JsonRpcMethod("system_chainType")
-    String systemChainType ();
+    String systemChainType();
 
     //TODO: Change return type to be specific class
     @JsonRpcMethod("system_properties")
-    Map<String, Object> systemProperties ();
+    Map<String, Object> systemProperties();
 
     @JsonRpcMethod("system_nodeRoles")
-    String[] systemNodeRoles ();
+    String[] systemNodeRoles();
 
     @JsonRpcMethod("system_health")
-    Map<String, Object> systemHealth ();
+    Map<String, Object> systemHealth();
 
     @JsonRpcMethod("system_localPeerId")
-    String systemLocalPeerId ();
+    String systemLocalPeerId();
 
     @JsonRpcMethod("system_localListenAddress")
-    String[] systemLocalListenAddress ();
+    String[] systemLocalListenAddress();
 
     @JsonRpcMethod("system_peers")
-    String[] systemSystemPeers ();
+    String[] systemSystemPeers();
 
     @JsonRpcMethod("system_addReservedPeer")
-    String systemAddReservedPeer (String peerId);
+    String systemAddReservedPeer(String peerId);
 
     @JsonRpcMethod("system_removeReservedPeer")
-    String systemRemoveReservedPeer (String peerId);
+    String systemRemoveReservedPeer(String peerId);
 
     @JsonRpcMethod("system_syncState")
-    Map<String, Object> systemSyncState ();
+    Map<String, Object> systemSyncState();
 
     @JsonRpcMethod("system_accountNextIndex")
-    String systemAccountNextIndex (String accountAddress);
+    String systemAccountNextIndex(String accountAddress);
 
     @JsonRpcMethod("system_dryRun")
-    String systemDryRun (String extrinsic, String blockHash);
+    String systemDryRun(String extrinsic, String blockHash);
 
 }

@@ -15,20 +15,19 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-
 @Component
 public class WebSocketHandler extends TextWebSocketHandler {
 
     private final JsonRpcBasicServer server;
     private final List<WebSocketSession> sessions = new CopyOnWriteArrayList<>();
 
-    public WebSocketHandler (RPCMethods rpcMethods) {
+    public WebSocketHandler(RPCMethods rpcMethods) {
         ObjectMapper mapper = new ObjectMapper();
         this.server = new JsonRpcBasicServer(mapper, rpcMethods);
     }
 
     @Override
-    public void handleTextMessage (WebSocketSession session, TextMessage message) throws IOException {
+    public void handleTextMessage(WebSocketSession session, TextMessage message) throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         InputStream in = new ByteArrayInputStream(message.asBytes());
         // Known issue: WS handler doesn't use interface method names (system_name) but uses implementation ones (systemName)
@@ -38,7 +37,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
     }
 
     @Override
-    public void afterConnectionEstablished (WebSocketSession session) {
+    public void afterConnectionEstablished(WebSocketSession session) {
         // The messages will be broadcast to all users.
         sessions.add(session);
     }

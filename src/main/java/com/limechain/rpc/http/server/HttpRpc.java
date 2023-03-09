@@ -13,14 +13,14 @@ import java.util.Collections;
 public class HttpRpc {
     private ConfigurableApplicationContext springCtx;
 
-    public void start (String[] cliArgs) {
+    public void start(String[] cliArgs) {
         SpringApplication app = new SpringApplication(HttpRpc.class);
         app.setDefaultProperties(Collections.singletonMap("server.port", "9933"));
         ConfigurableApplicationContext ctx = app.run(cliArgs);
         this.springCtx = ctx;
     }
 
-    public void stop () {
+    public void stop() {
         if (this.springCtx != null) {
             RocksDB db = this.springCtx.getBean(RocksDB.class);
             db.close();

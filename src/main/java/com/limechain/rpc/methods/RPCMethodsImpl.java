@@ -16,118 +16,118 @@ public class RPCMethodsImpl implements RPCMethods {
     private final ChainRPCImpl chainRPC;
 
     @Override
-    public String systemName () {
+    public String systemName() {
         return systemRPC.systemName();
     }
 
     @Override
-    public String systemVersion () {
+    public String systemVersion() {
         return systemRPC.systemVersion();
     }
 
     @Override
-    public String systemChain () {
+    public String systemChain() {
         return systemRPC.systemChain();
     }
 
     @Override
-    public String systemChainType () {
+    public String systemChainType() {
         return systemRPC.systemChainType();
     }
 
     @Override
-    public Map<String, Object> systemProperties () {
+    public Map<String, Object> systemProperties() {
         return systemRPC.systemProperties();
     }
 
     @Override
-    public String[] systemNodeRoles () {
+    public String[] systemNodeRoles() {
         return systemRPC.systemNodeRoles();
     }
 
     @Override
-    public Map<String, Object> systemHealth () {
+    public Map<String, Object> systemHealth() {
         return systemRPC.systemHealth();
     }
 
     @Override
-    public String systemLocalPeerId () {
+    public String systemLocalPeerId() {
         return systemRPC.systemLocalPeerId();
     }
 
     @Override
-    public String[] systemLocalListenAddress () {
+    public String[] systemLocalListenAddress() {
         return systemRPC.systemLocalListenAddress();
     }
 
     @Override
-    public String[] systemSystemPeers () {
+    public String[] systemSystemPeers() {
         return systemRPC.systemSystemPeers();
     }
 
     @Override
-    public String systemAddReservedPeer (String peerId) {
+    public String systemAddReservedPeer(String peerId) {
         return systemRPC.systemAddReservedPeer(peerId);
     }
 
     @Override
-    public String systemRemoveReservedPeer (String peerId) {
+    public String systemRemoveReservedPeer(String peerId) {
         return systemRPC.systemRemoveReservedPeer(peerId);
     }
 
     @Override
-    public Map<String, Object> systemSyncState () {
+    public Map<String, Object> systemSyncState() {
         return systemRPC.systemSyncState();
     }
 
     @Override
-    public String systemAccountNextIndex (String accountAddress) {
+    public String systemAccountNextIndex(String accountAddress) {
         return systemRPC.systemAccountNextIndex(accountAddress);
     }
 
     @Override
-    public String systemDryRun (String extrinsic, String blockHash) {
+    public String systemDryRun(String extrinsic, String blockHash) {
         return systemRPC.systemDryRun(extrinsic, blockHash);
     }
 
     @Override
-    public String[] rpcMethods () {
+    public String[] rpcMethods() {
         //TODO: Use reflection in order to not hard code
         return new String[0];
     }
 
     @Override
-    public void chainUnstableFollow () {
+    public void chainUnstableFollow() {
         chainRPC.chainUnstableFollow();
     }
 
     @Override
-    public String chainUnstableUnfollow () {
+    public String chainUnstableUnfollow() {
         return null;
     }
 
     @Override
-    public String chainUnstableUnpin () {
+    public String chainUnstableUnpin() {
         return null;
     }
 
     @Override
-    public String chainUnstableStorage () {
+    public String chainUnstableStorage() {
         return null;
     }
 
     @Override
-    public String chainUnstableCall () {
+    public String chainUnstableCall() {
         return null;
     }
 
     @Override
-    public String chainUnstableStopCall () {
+    public String chainUnstableStopCall() {
         return null;
     }
 
     @Override
-    public String transactionUnstableSubmitAndWatch () {
+    public String transactionUnstableSubmitAndWatch() {
         return null;
     }
 }

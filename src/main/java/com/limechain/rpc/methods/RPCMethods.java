@@ -12,6 +12,6 @@ import com.limechain.rpc.methods.transaction.TransactionRPC;
 @JsonRpcService("/")
 public interface RPCMethods extends SystemRPC, ChainRPC, TransactionRPC {
     @JsonRpcMethod("rpc_methods")
-    String[] rpcMethods ();
+    String[] rpcMethods();
 
 }

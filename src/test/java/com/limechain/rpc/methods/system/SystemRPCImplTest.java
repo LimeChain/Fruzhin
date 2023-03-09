@@ -20,7 +20,7 @@ public class SystemRPCImplTest {
     private SystemInfo systemInfo;
 
     @BeforeEach
-    public void setup () {
+    public void setup() {
         chainService = mock(ChainService.class);
         systemInfo = mock(SystemInfo.class);
 
@@ -28,29 +28,28 @@ public class SystemRPCImplTest {
     }
 
     @Test
-    public void systemName () {
+    public void systemName() {
         when(systemInfo.getHostName()).thenReturn("Java Host");
 
         assertEquals(systemRPC.systemName(), "Java Host");
     }
 
     @Test
-    public void systemVersion () {
+    public void systemVersion() {
         when(systemInfo.getHostVersion()).thenReturn("0.1");
 
         assertEquals(systemRPC.systemVersion(), "0.1");
     }
 
-
     @Test
-    public void systemNodeRoles () {
+    public void systemNodeRoles() {
         when(systemInfo.getRole()).thenReturn("Light Client");
 
         assertArrayEquals(systemRPC.systemNodeRoles(), new String[]{"Light Client"});
     }
 
     @Test
-    public void systemChain () {
+    public void systemChain() {
         ChainSpec chainSpec = new ChainSpec();
         chainSpec.setName("Polkadot");
         when(chainService.getGenesis()).thenReturn(chainSpec);
@@ -59,7 +58,7 @@ public class SystemRPCImplTest {
     }
 
     @Test
-    public void systemChainType () {
+    public void systemChainType() {
         ChainSpec chainSpec = new ChainSpec();
         chainSpec.setChainType("Polkadot - Live");
         when(chainService.getGenesis()).thenReturn(chainSpec);
