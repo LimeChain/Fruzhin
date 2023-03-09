@@ -21,7 +21,6 @@ public class Cli {
     private final Options options;
     private final HelpFormatter formatter = new HelpFormatter();
 
-
     public Cli() {
         this.options = buildOptions();
     }
