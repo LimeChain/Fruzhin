@@ -8,7 +8,7 @@ import org.springframework.context.annotation.ComponentScan;
 import java.util.Collections;
 
 @SpringBootApplication
-@ComponentScan(basePackages = {"com.limechain.rpc.config", "com.limechain.rpc.methods", "com.limechain.rpc.ws.server"})
+@ComponentScan(basePackages = {"com.limechain.rpc.config", "com.limechain.rpc.methods", "com.limechain.rpc.ws.server", "com.limechain.storage"})
 public class WebSocketRPC {
     private ConfigurableApplicationContext springCtx;
 
