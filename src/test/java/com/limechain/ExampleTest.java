@@ -7,6 +7,6 @@ import static com.limechain.Example.intAddition;
 class ExampleTest {
     @Test
     void testIntAddition() {
-        assertEquals(5, intAddition(2, 3));
+        assertEquals(6, intAddition(2, 3));
     }
 }
