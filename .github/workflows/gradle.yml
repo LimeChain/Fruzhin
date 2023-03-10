@@ -33,13 +33,5 @@ jobs:
       - name: Run Tests
         run: ./gradlew test --tests "*"
 
-  test:
-    name: Test
-    runs-on: ubuntu-latest
-    needs:
-      - build
-    steps:
-      - name: Run Tests
-        run: ./gradlew test --tests "*"
 
 
