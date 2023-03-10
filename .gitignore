@@ -18,3 +18,7 @@ out/
 
 ### Mac OS ###
 .DS_Store
+
+### Rocks DB ###
+/rocks-db
+/test-rocks-db
