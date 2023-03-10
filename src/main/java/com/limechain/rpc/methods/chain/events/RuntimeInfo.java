@@ -6,7 +6,6 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@NoArgsConstructor
 public class RuntimeInfo {
     private String type;
     private RuntimeSpec spec;

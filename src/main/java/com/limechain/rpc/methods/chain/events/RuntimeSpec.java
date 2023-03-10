@@ -8,7 +8,6 @@ import java.util.Map;
 
 @Getter
 @Setter
-@NoArgsConstructor
 public class RuntimeSpec {
     private String specName;
     private String implName;
