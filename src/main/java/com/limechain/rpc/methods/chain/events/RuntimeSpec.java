@@ -1,7 +1,6 @@
 package com.limechain.rpc.methods.chain.events;
 
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.Map;
