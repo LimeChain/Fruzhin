@@ -42,9 +42,9 @@ jobs:
         uses: gradle/gradle-build-action@67421db6bd0bf253fb4bd25b31ebb98943c375e1
         with:
           arguments: build
-      - name: Run the Gradle package task
+      - name: Run the Gradle test task
         uses: gradle/gradle-build-action@67421db6bd0bf253fb4bd25b31ebb98943c375e1
         with:
-          arguments: -b ci.gradle tedt
+          arguments: -b ci.gradle test
 
 
