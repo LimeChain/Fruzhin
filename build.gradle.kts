@@ -14,6 +14,7 @@ application {
 
 checkstyle {
     config = resources.text.fromFile("checkstyle.xml")
+    toolVersion = "9.3"
 }
 
 group = "com.limechain"
