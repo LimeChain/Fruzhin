@@ -30,4 +30,5 @@ jobs:
       env:
         VALIDATE_ALL_CODEBASE: true
         LINTER_RULES_PATH: configs/
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
