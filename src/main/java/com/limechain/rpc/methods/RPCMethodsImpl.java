@@ -98,7 +98,6 @@ public class RPCMethodsImpl implements RPCMethods {
 
     @Override
     public void chainUnstableFollow() {
-        chainRPC.chainUnstableFollow();
     }
 
     @Override
