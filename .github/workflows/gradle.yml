@@ -25,7 +25,9 @@ jobs:
       with:
         java-version: '17'
         distribution: 'corretto'
-    - name: Build with Gradle
-      uses: gradle/gradle-build-action@67421db6bd0bf253fb4bd25b31ebb98943c375e1
-      with:
-        arguments: build
+    - name: Lint code
+      uses: github/super-linter@v4
+      env:
+        VALIDATE_ALL_CODEBASE: true
+        LINTER_RULES_PATH: configs/
+
