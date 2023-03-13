@@ -2,12 +2,14 @@ package com.limechain.rpc.config;
 
 import com.googlecode.jsonrpc4j.spring.AutoJsonRpcServiceImplExporter;
 import com.limechain.chain.ChainService;
+import com.limechain.chain.ChainServiceInitializer;
 import com.limechain.cli.Cli;
 import com.limechain.cli.CliArguments;
 import com.limechain.config.HostConfig;
 import com.limechain.config.SystemInfo;
 import com.limechain.rpc.ws.client.WebSocketClient;
 import com.limechain.rpc.ws.pubsub.PubSubService;
+import com.limechain.rpc.ws.pubsub.PubSubServiceSingleton;
 import com.limechain.storage.DBInitializer;
 import com.limechain.storage.KVRepository;
 import org.springframework.boot.ApplicationArguments;
@@ -40,7 +42,7 @@ public class CommonConfig {
 
     @Bean
     public ChainService chainService(HostConfig hostConfig, KVRepository<String, Object> repository) {
-        return new ChainService(hostConfig, repository);
+        return ChainServiceInitializer.initialize(hostConfig, repository);
     }
 
     @Bean
@@ -55,7 +57,7 @@ public class CommonConfig {
 
     @Bean
     public PubSubService pubSubService() {
-        return new PubSubService();
+        return PubSubServiceSingleton.getInstance();
     }
 
 }

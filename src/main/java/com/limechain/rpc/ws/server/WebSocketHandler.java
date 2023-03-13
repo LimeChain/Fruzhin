@@ -1,6 +1,5 @@
 package com.limechain.rpc.ws.server;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.googlecode.jsonrpc4j.JsonRpcBasicServer;
 import com.limechain.rpc.methods.RPCMethods;
@@ -25,6 +24,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
     private final JsonRpcBasicServer server;
     private final PubSubService pubSubService;
+    private final ObjectMapper mapper = new ObjectMapper();
 
     public WebSocketHandler(RPCMethods rpcMethods, PubSubService pubSubService) {
         ObjectMapper mapper = new ObjectMapper();
@@ -34,31 +34,26 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
     @Override
     public void handleTextMessage(WebSocketSession session, TextMessage message) throws IOException {
-        // Known issue: WS handler doesn't use interface
-        // method names (system_name) but uses implementation ones (systemName)
-        //TODO: Remove any leftover println
-        System.out.println("SESSION ID: " + session.getId());
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        InputStream in = new ByteArrayInputStream(message.asBytes());
-        log.log(Level.INFO, "Handling ws request");
-
-        // TODO: Extract this into a separate function
-        JsonNode result = new ObjectMapper().readValue(in, JsonNode.class);
-        String method = result.get("method").toString();
-        switch (method) {
-            case "\"chainHeadUnstableFollow\"" -> {
+        log.log(Level.INFO, "SESSION ID: " + session.getId());
+        InputStream messageStream = new ByteArrayInputStream(message.asBytes());
+        RpcRequest rpcRequest = mapper.readValue(messageStream, RpcRequest.class);
+        switch (rpcRequest.method) {
+            case "chainHead_unstable_follow" -> {
                 log.log(Level.INFO, "Subscribing for follow event");
                 pubSubService.addSubscriber(Topic.UNSTABLE_FOLLOW, session);
             }
-            case "\"chainUnstableUnfollow\"" -> {
+            case "chainHead_unstable_unfollow" -> {
                 log.log(Level.INFO, "Unsubscribing from follow event");
                 pubSubService.removeSubscriber(Topic.UNSTABLE_FOLLOW, session.getId());
             }
             default -> {
                 // Server should only handle requests if it's not a sub/unsub request
+                // Known issue: WS handler doesn't use interface method names (system_name)
+                // instead it uses implementation ones (systemName)
                 log.log(Level.INFO, "Handling the WS request using the normal RPC routes");
-                server.handleRequest(in, out);
-                session.sendMessage(new TextMessage(out.toByteArray()));
+                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                server.handleRequest(messageStream, outputStream);
+                session.sendMessage(new TextMessage(outputStream.toByteArray()));
             }
         }
     }

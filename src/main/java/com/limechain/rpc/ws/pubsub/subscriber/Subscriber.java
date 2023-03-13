@@ -5,17 +5,20 @@ import com.limechain.rpc.ws.pubsub.PubSubService;
 import com.limechain.rpc.ws.pubsub.Topic;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.java.Log;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 
 // Subscribers are the entities who subscribe to messages on a topic.
 
 @Getter
 @Setter
+@Log
 public abstract class Subscriber {
     private final List<WebSocketSession> sessions = new ArrayList<>();
     //store all messages received by the subscriber
@@ -32,7 +35,7 @@ public abstract class Subscriber {
 
     //Print all messages received by the subscriber
     public void notifySubscribers() throws IOException {
-        System.out.println("Sending messages to subscribers...");
+        log.log(Level.FINE, "Sending messages to subscribers...");
         // What happens if PubSubService tries to add new messages while we're in the for loop?
         // Option 1. Messages get added normally (highly unlikely since there's no lock on subscriberMessages)
         // Option 2. Messages get added and processed on the next run of printMessages
@@ -40,7 +43,7 @@ public abstract class Subscriber {
         // Option 4. Option 2 and 3 depending on the timing
         for (Message message : pendingMessages) {
             TextMessage wsMessage = new TextMessage(message.getPayload().getBytes());
-            System.out.println(
+            log.log(Level.FINE,
                     "Notifying " + sessions.size() + " subscribers about message topic -> " + message.getTopic() +
                             " : " +
                             message.getPayload());

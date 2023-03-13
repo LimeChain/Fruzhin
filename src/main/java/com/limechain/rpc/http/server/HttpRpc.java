@@ -1,6 +1,7 @@
 package com.limechain.rpc.http.server;
 
 import org.rocksdb.RocksDB;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -17,6 +18,8 @@ import java.util.Collections;
 })
 public class HttpRpc {
     private ConfigurableApplicationContext springCtx;
+    @Value("${rpc.http.server.port}")
+    private int serverPort;
 
     public void start(String[] cliArgs) {
         SpringApplication app = new SpringApplication(HttpRpc.class);

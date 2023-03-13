@@ -2,6 +2,7 @@ package com.limechain.rpc.ws.pubsub;
 
 import com.limechain.rpc.ws.pubsub.subscriber.Subscriber;
 import com.limechain.rpc.ws.pubsub.subscriber.SubscriberImpl;
+import lombok.extern.java.Log;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -11,7 +12,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.logging.Level;
 
+@Log
 public class PubSubService {
     //Keeps set of subscriber topic wise, using set to prevent duplicates
     Map<Topic, Subscriber> subscribersTopicMap = new HashMap<>() {{
@@ -54,7 +57,7 @@ public class PubSubService {
     @Scheduled(fixedDelay = 2000)
     public void broadcast() {
         if (messagesQueue.isEmpty()) {
-            System.out.println("No messages from publishers to broadcast to subscribers");
+            log.log(Level.INFO, "No messages from publishers to broadcast to subscribers");
         } else {
             while (!messagesQueue.isEmpty()) {
                 Message message = messagesQueue.remove();
@@ -80,7 +83,7 @@ public class PubSubService {
     // Sends messages about a topic for subscriber at any point
     public void getMessagesForSubscriberOfTopic(Topic topic, Subscriber subscriber) {
         if (messagesQueue.isEmpty()) {
-            System.out.println("No messages from publishers to display");
+            log.log(Level.INFO, "No messages from publishers to display");
             return;
         }
 

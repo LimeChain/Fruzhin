@@ -23,7 +23,7 @@ public class WebSocketRPC {
 
     public void start(String[] cliArgs) {
         SpringApplication app = new SpringApplication(WebSocketRPC.class);
-        app.setDefaultProperties(Collections.singletonMap("server.port", serverPort));
+        app.setDefaultProperties(Collections.singletonMap("server.port", "9922"));
         ConfigurableApplicationContext ctx = app.run(cliArgs);
         this.springCtx = ctx;
     }
