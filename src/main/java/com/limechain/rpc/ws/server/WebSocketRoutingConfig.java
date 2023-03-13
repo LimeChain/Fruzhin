@@ -3,7 +3,6 @@ package com.limechain.rpc.ws.server;
 import com.limechain.config.HostConfig;
 import com.limechain.rpc.methods.RPCMethods;
 import com.limechain.rpc.subscriptions.chainhead.ChainHeadRpcImpl;
-import com.limechain.rpc.ws.client.WebSocketClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
@@ -21,7 +20,7 @@ public class WebSocketRoutingConfig implements WebSocketConfigurer {
         this.rpcMethods = rpcMethods;
         this.hostConfig = hostConfig;
     }
-
+    
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         registry.addHandler(webSocketHandler(), "/");
@@ -33,12 +32,7 @@ public class WebSocketRoutingConfig implements WebSocketConfigurer {
 
     @Bean
     public ChainHeadRpcImpl chainHeadRpc() {
-        return new ChainHeadRpcImpl(wsClient(hostConfig));
-    }
-
-    @Bean
-    public WebSocketClient wsClient(HostConfig hostConfig) {
-        return new WebSocketClient(hostConfig.getHelperNodeAddress());
+        return new ChainHeadRpcImpl(hostConfig.getHelperNodeAddress());
     }
 
 }

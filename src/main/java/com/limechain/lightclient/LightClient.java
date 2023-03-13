@@ -17,7 +17,7 @@ public class LightClient {
 
     public void start() {
         // TODO: Add business logic
-        this.httpRpc.start(cliArgs);
+//        this.httpRpc.start(cliArgs);
         this.wsRpc.start(cliArgs);
         log.log(Level.INFO, "\uD83D\uDE80Started light client!");
 

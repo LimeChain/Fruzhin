@@ -39,17 +39,18 @@ public class WebSocketHandler extends TextWebSocketHandler {
         log.log(Level.INFO, "SESSION ID: " + session.getId());
         InputStream messageStream = new ByteArrayInputStream(message.asBytes());
         RpcRequest rpcRequest = mapper.readValue(messageStream, RpcRequest.class);
+        log.log(Level.INFO, "METHOD: " + rpcRequest.method);
+        log.log(Level.INFO, "PARAMS: " + String.join(",", rpcRequest.params));
         switch (rpcRequest.method) {
             case "chainHead_unstable_follow" -> {
                 log.log(Level.INFO, "Subscribing for follow event");
                 pubSubService.addSubscriber(Topic.UNSTABLE_FOLLOW, session);
-
                 // This is temporary in order to simulate that our node "processes" blocks
-                this.chainHeadRpc.chainUnstableFollow(false);
+                this.chainHeadRpc.chainUnstableFollow(Boolean.parseBoolean(rpcRequest.params[0]));
             }
             case "chainHead_unstable_unfollow" -> {
-                // TODO: close ws client connection
                 log.log(Level.INFO, "Unsubscribing from follow event");
+                this.chainHeadRpc.chainUnstableUnfollow(rpcRequest.params[0]);
                 pubSubService.removeSubscriber(Topic.UNSTABLE_FOLLOW, session.getId());
             }
             default -> {

@@ -1,14 +1,15 @@
 package com.limechain.rpc.ws.client;
 
+import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 
 import java.net.URI;
 import java.nio.ByteBuffer;
 
-public class EmptyClient extends WebSocketClient {
+public class BaseClient extends WebSocketClient {
 
-    public EmptyClient(URI serverURI) {
-        super(String.valueOf(serverURI));
+    public BaseClient(URI serverURI) {
+        super(serverURI);
     }
 
     @Override
@@ -36,4 +37,10 @@ public class EmptyClient extends WebSocketClient {
         System.err.println("an error occurred:" + ex);
     }
 
+    public void send(String method, String[] params) {
+        String message =
+                "{\"id\":1,\"jsonrpc\":\"2.0\",\"method\":\"" + method + "\",\"params\":[" + String.join(",", params) +
+                        "]}";
+        super.send(message);
+    }
 }

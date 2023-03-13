@@ -34,7 +34,7 @@ public abstract class Subscriber {
     public abstract void getMessagesForSubscriberOfTopic(Topic topic, PubSubService pubSubService);
 
     // Print all messages received by the subscriber
-    public void notifySubscribers() throws IOException {
+    public synchronized void notifySubscribers() throws IOException {
         log.log(Level.FINE, "Sending messages to subscribers...");
         // What happens if PubSubService tries to add new messages while we're in the for loop?
         // Option 1. Messages get added normally (highly unlikely since there's no lock on subscriberMessages)
