@@ -7,9 +7,8 @@ import com.limechain.cli.Cli;
 import com.limechain.cli.CliArguments;
 import com.limechain.config.HostConfig;
 import com.limechain.config.SystemInfo;
+import com.limechain.rpc.pubsub.PubSubService;
 import com.limechain.rpc.ws.client.WebSocketClient;
-import com.limechain.rpc.ws.pubsub.PubSubService;
-import com.limechain.rpc.ws.pubsub.PubSubServiceSingleton;
 import com.limechain.storage.DBInitializer;
 import com.limechain.storage.KVRepository;
 import org.springframework.boot.ApplicationArguments;
@@ -57,7 +56,7 @@ public class CommonConfig {
 
     @Bean
     public PubSubService pubSubService() {
-        return PubSubServiceSingleton.getInstance();
+        return PubSubService.getInstance();
     }
 
 }

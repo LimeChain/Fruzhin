@@ -1,7 +1,7 @@
 package com.limechain.rpc.ws.server;
 
 import com.limechain.rpc.methods.RPCMethods;
-import com.limechain.rpc.ws.pubsub.PubSubService;
+import com.limechain.rpc.pubsub.PubSubService;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;

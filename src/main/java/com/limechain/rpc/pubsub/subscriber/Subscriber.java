@@ -1,8 +1,8 @@
-package com.limechain.rpc.ws.pubsub.subscriber;
+package com.limechain.rpc.pubsub.subscriber;
 
-import com.limechain.rpc.ws.pubsub.Message;
-import com.limechain.rpc.ws.pubsub.PubSubService;
-import com.limechain.rpc.ws.pubsub.Topic;
+import com.limechain.rpc.pubsub.Message;
+import com.limechain.rpc.pubsub.PubSubService;
+import com.limechain.rpc.pubsub.Topic;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.java.Log;

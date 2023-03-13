@@ -1,7 +1,7 @@
-package com.limechain.rpc.ws.pubsub.publisher;
+package com.limechain.rpc.pubsub.publisher;
 
-import com.limechain.rpc.ws.pubsub.Message;
-import com.limechain.rpc.ws.pubsub.PubSubService;
+import com.limechain.rpc.pubsub.Message;
+import com.limechain.rpc.pubsub.PubSubService;
 
 // Publishers are the entities who create/publish a message on a topic.
 public interface Publisher {

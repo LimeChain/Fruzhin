@@ -1,7 +1,7 @@
-package com.limechain.rpc.ws.pubsub.publisher;
+package com.limechain.rpc.pubsub.publisher;
 
-import com.limechain.rpc.ws.pubsub.Message;
-import com.limechain.rpc.ws.pubsub.PubSubService;
+import com.limechain.rpc.pubsub.Message;
+import com.limechain.rpc.pubsub.PubSubService;
 
 public class PublisherImpl implements Publisher {
     //Publishes new message to PubSubService

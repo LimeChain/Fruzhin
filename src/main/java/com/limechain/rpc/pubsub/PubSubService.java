@@ -1,7 +1,7 @@
-package com.limechain.rpc.ws.pubsub;
+package com.limechain.rpc.pubsub;
 
-import com.limechain.rpc.ws.pubsub.subscriber.Subscriber;
-import com.limechain.rpc.ws.pubsub.subscriber.SubscriberImpl;
+import com.limechain.rpc.pubsub.subscriber.Subscriber;
+import com.limechain.rpc.pubsub.subscriber.SubscriberImpl;
 import lombok.extern.java.Log;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.socket.WebSocketSession;
@@ -16,14 +16,22 @@ import java.util.logging.Level;
 
 @Log
 public class PubSubService {
+    private static final PubSubService INSTANCE = new PubSubService();
     //Keeps set of subscriber topic wise, using set to prevent duplicates
     Map<Topic, Subscriber> subscribersTopicMap = new HashMap<>() {{
         // TODO: Instantiate more subscriber channels in the future
         put(Topic.UNSTABLE_FOLLOW, new SubscriberImpl());
     }};
-
     //Holds messages published by publishers
     Queue<Message> messagesQueue = new LinkedList<>();
+
+    // private constructor to avoid client applications using the constructor
+    private PubSubService() {
+    }
+
+    public static PubSubService getInstance() {
+        return INSTANCE;
+    }
 
     //Adds message sent by publisher to queue
     public void addMessageToQueue(Message message) {

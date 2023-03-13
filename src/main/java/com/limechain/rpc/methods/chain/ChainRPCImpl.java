@@ -7,12 +7,12 @@ import com.googlecode.jsonrpc4j.JsonResponse;
 import com.googlecode.jsonrpc4j.JsonRpcResponseGenerator;
 import com.limechain.rpc.methods.chain.events.FollowEvent;
 import com.limechain.rpc.methods.chain.subscriptions.SubscriptionCalls;
+import com.limechain.rpc.pubsub.Message;
+import com.limechain.rpc.pubsub.PubSubService;
+import com.limechain.rpc.pubsub.Topic;
+import com.limechain.rpc.pubsub.publisher.Publisher;
+import com.limechain.rpc.pubsub.publisher.PublisherImpl;
 import com.limechain.rpc.ws.client.WebSocketClient;
-import com.limechain.rpc.ws.pubsub.Message;
-import com.limechain.rpc.ws.pubsub.PubSubService;
-import com.limechain.rpc.ws.pubsub.Topic;
-import com.limechain.rpc.ws.pubsub.publisher.Publisher;
-import com.limechain.rpc.ws.pubsub.publisher.PublisherImpl;
 import io.emeraldpay.polkaj.api.Subscription;
 import org.springframework.stereotype.Service;
 

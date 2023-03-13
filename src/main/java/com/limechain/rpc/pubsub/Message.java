@@ -1,4 +1,4 @@
-package com.limechain.rpc.ws.pubsub;
+package com.limechain.rpc.pubsub;
 
 public class Message {
     private String topic;

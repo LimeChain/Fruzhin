@@ -1,4 +1,4 @@
-package com.limechain.rpc.ws.pubsub;
+package com.limechain.rpc.pubsub;
 
 public enum Topic {
     UNSTABLE_FOLLOW("unstable_follow");
