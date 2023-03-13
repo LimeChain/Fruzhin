@@ -33,7 +33,9 @@ public class ChainHeadRpcImpl {
 
         subscription.handler((Subscription.Event<FollowEvent> event) -> {
             FollowEvent header = event.getResult();
-            String response = RpcResponse.create("2.0", "1", mapper.valueToTree(header));
+            String response =
+                    RpcResponse.createForSubscription("chainHead_unstable_followEvent", mapper.valueToTree(header),
+                            "2.0");
             System.out.println(response);
             chainPublisher.publish(new Message(Topic.UNSTABLE_FOLLOW.getValue(), response), pubSubService);
 

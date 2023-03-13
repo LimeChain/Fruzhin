@@ -7,12 +7,14 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.math.BigDecimal;
 
 public class RpcResponse {
     public static final String JSONRPC = "jsonrpc";
     public static final String ID = "id";
     public static final String RESULT = "result";
+    public static final String METHOD = "method";
+    public static final String PARAMS = "params";
+    public static final String SUBSCRIPTION = "subscription";
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private static void writeAndFlushValue(OutputStream output, JsonNode value) throws IOException {
@@ -24,24 +26,17 @@ public class RpcResponse {
         output.write('\n');
     }
 
-    public static String create(String jsonRpc, Object id, JsonNode result) {
+    public static String createForSubscription(String method, JsonNode result, String jsonRpc) {
         ObjectNode response = MAPPER.createObjectNode();
         response.put(JSONRPC, jsonRpc);
-        if (id instanceof Integer) {
-            response.put(ID, ((Integer) id).intValue());
-        } else if (id instanceof Long) {
-            response.put(ID, ((Long) id).longValue());
-        } else if (id instanceof Float) {
-            response.put(ID, ((Float) id).floatValue());
-        } else if (id instanceof Double) {
-            response.put(ID, ((Double) id).doubleValue());
-        } else if (id instanceof BigDecimal) {
-            response.put(ID, (BigDecimal) id);
-        } else {
-            response.put(ID, (String) id);
-        }
+        response.put(METHOD, method);
 
-        response.set(RESULT, result);
+        ObjectNode params = MAPPER.createObjectNode();
+        params.put(SUBSCRIPTION, "123");
+        params.put(RESULT, result);
+
+        response.put(PARAMS, params);
+
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
         try {

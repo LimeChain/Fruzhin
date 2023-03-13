@@ -4,14 +4,16 @@ import io.emeraldpay.polkaj.api.PolkadotApi;
 import io.emeraldpay.polkaj.api.SubscribeCall;
 import io.emeraldpay.polkaj.api.Subscription;
 import io.emeraldpay.polkaj.apiws.JavaHttpSubscriptionAdapter;
+import org.java_websocket.handshake.ServerHandshake;
 
 import java.net.URISyntaxException;
+import java.nio.ByteBuffer;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-public class WebSocketClient {
+public abstract class WebSocketClient {
 
     private final String helperNodeAddress;
     private PolkadotApi api;
@@ -55,4 +57,14 @@ public class WebSocketClient {
             throw new RuntimeException(e);
         }
     }
+
+    public abstract void onOpen(ServerHandshake handshakedata);
+
+    public abstract void onClose(int code, String reason, boolean remote);
+
+    public abstract void onMessage(String message);
+
+    public abstract void onMessage(ByteBuffer message);
+
+    public abstract void onError(Exception ex);
 }

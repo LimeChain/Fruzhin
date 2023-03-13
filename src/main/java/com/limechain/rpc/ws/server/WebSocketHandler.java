@@ -41,13 +41,14 @@ public class WebSocketHandler extends TextWebSocketHandler {
         RpcRequest rpcRequest = mapper.readValue(messageStream, RpcRequest.class);
         switch (rpcRequest.method) {
             case "chainHead_unstable_follow" -> {
-                // This is temporary in order to simulate that our node processes blocks
-                this.chainHeadRpc.chainUnstableFollow(false);
-
                 log.log(Level.INFO, "Subscribing for follow event");
                 pubSubService.addSubscriber(Topic.UNSTABLE_FOLLOW, session);
+
+                // This is temporary in order to simulate that our node "processes" blocks
+                this.chainHeadRpc.chainUnstableFollow(false);
             }
             case "chainHead_unstable_unfollow" -> {
+                // TODO: close ws client connection
                 log.log(Level.INFO, "Unsubscribing from follow event");
                 pubSubService.removeSubscriber(Topic.UNSTABLE_FOLLOW, session.getId());
             }
