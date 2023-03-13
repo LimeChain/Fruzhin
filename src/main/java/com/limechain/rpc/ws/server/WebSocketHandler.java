@@ -36,11 +36,13 @@ public class WebSocketHandler extends TextWebSocketHandler {
     public void handleTextMessage(WebSocketSession session, TextMessage message) throws IOException {
         // Known issue: WS handler doesn't use interface
         // method names (system_name) but uses implementation ones (systemName)
+        //TODO: Remove any leftover println
         System.out.println("SESSION ID: " + session.getId());
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         InputStream in = new ByteArrayInputStream(message.asBytes());
         log.log(Level.INFO, "Handling ws request");
 
+        // TODO: Extract this into a separate function
         JsonNode result = new ObjectMapper().readValue(in, JsonNode.class);
         String method = result.get("method").toString();
         switch (method) {
