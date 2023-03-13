@@ -16,6 +16,11 @@
         <property name="files" value=".*[\\/]src[\\/]test[\\/]"/>
     </module>
 
+    <module name="SuppressWithPlainTextCommentFilter">
+        <property name="offCommentFormat" value="CHECKSTYLE.OFF"/>
+        <property name="onCommentFormat" value="CHECKSTYLE.ON"/>
+    </module>
+
     <module name="LineLength">
         <property name="fileExtensions" value="java"/>
         <property name="max" value="120"/>
