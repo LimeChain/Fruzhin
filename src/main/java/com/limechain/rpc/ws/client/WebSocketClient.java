@@ -13,9 +13,14 @@ import java.util.concurrent.TimeoutException;
 
 public class WebSocketClient {
 
-    private final PolkadotApi api;
+    private final String helperNodeAddress;
+    private PolkadotApi api;
 
-    public WebSocketClient (String helperNodeAddress) {
+    public WebSocketClient(String helperNodeAddress) {
+        this.helperNodeAddress = helperNodeAddress;
+    }
+
+    public WebSocketClient connect() {
         try {
             JavaHttpSubscriptionAdapter wsAdapter = JavaHttpSubscriptionAdapter
                     .newBuilder()
@@ -32,13 +37,15 @@ public class WebSocketClient {
 
             wsAdapter.connect().get(5, TimeUnit.SECONDS);
             this.api = api;
+            return this;
         } catch (URISyntaxException | InterruptedException | ExecutionException | RuntimeException |
                  TimeoutException e) {
             throw new RuntimeException(e);
         }
+
     }
 
-    public <T> Subscription<T> subscribeToEvent (SubscribeCall<T> subscriptionCall) {
+    public <T> Subscription<T> subscribeToEvent(SubscribeCall<T> subscriptionCall) {
         try {
             Future<Subscription<T>> hashFuture = api.subscribe(subscriptionCall);
             Subscription<T> subscription = null;

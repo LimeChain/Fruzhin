@@ -7,17 +7,13 @@ import com.limechain.cli.Cli;
 import com.limechain.cli.CliArguments;
 import com.limechain.config.HostConfig;
 import com.limechain.config.SystemInfo;
-import com.limechain.rpc.pubsub.PubSubService;
-import com.limechain.rpc.ws.client.WebSocketClient;
 import com.limechain.storage.DBInitializer;
 import com.limechain.storage.KVRepository;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.scheduling.annotation.EnableScheduling;
 
 @Configuration
-@EnableScheduling
 public class CommonConfig {
     @Bean
     public static AutoJsonRpcServiceImplExporter autoJsonRpcServiceImplExporter() {
@@ -47,16 +43,6 @@ public class CommonConfig {
     @Bean
     public SystemInfo systemInfo(HostConfig hostConfig) {
         return new SystemInfo();
-    }
-
-    @Bean
-    public WebSocketClient wsClient(HostConfig hostConfig) {
-        return new WebSocketClient(hostConfig.getHelperNodeAddress());
-    }
-
-    @Bean
-    public PubSubService pubSubService() {
-        return PubSubService.getInstance();
     }
 
 }

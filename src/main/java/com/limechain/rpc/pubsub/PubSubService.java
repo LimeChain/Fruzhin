@@ -3,7 +3,6 @@ package com.limechain.rpc.pubsub;
 import com.limechain.rpc.pubsub.subscriber.Subscriber;
 import com.limechain.rpc.pubsub.subscriber.SubscriberImpl;
 import lombok.extern.java.Log;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
@@ -62,11 +61,11 @@ public class PubSubService {
 
     // Broadcast new messages added in queue to All subscribers of the topic.
     // messagesQueue will be empty after broadcasting.
-    @Scheduled(fixedDelay = 2000)
     public void broadcast() {
         if (messagesQueue.isEmpty()) {
             log.log(Level.INFO, "No messages from publishers to broadcast to subscribers");
         } else {
+            log.log(Level.INFO, "BROADCASTING!");
             while (!messagesQueue.isEmpty()) {
                 Message message = messagesQueue.remove();
                 String topic = message.getTopic();
@@ -80,10 +79,13 @@ public class PubSubService {
     }
 
     // Iterate over all subscriber channels and send all pending messages to each subscriber
-    @Scheduled(fixedDelay = 5000)
-    public void notifySubscribers() throws IOException {
+    public void notifySubscribers() {
         for (Map.Entry<Topic, Subscriber> set : subscribersTopicMap.entrySet()) {
-            set.getValue().notifySubscribers();
+            try {
+                set.getValue().notifySubscribers();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 

@@ -1,6 +1,6 @@
-package com.limechain.rpc.methods.chain.subscriptions;
+package com.limechain.rpc.subscriptions;
 
-import com.limechain.rpc.methods.chain.events.FollowEvent;
+import com.limechain.rpc.subscriptions.chainhead.events.FollowEvent;
 import io.emeraldpay.polkaj.api.Subscription;
 import lombok.extern.java.Log;
 

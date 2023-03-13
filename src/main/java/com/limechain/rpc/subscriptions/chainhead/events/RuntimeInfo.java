@@ -1,4 +1,4 @@
-package com.limechain.rpc.methods.chain.events;
+package com.limechain.rpc.subscriptions.chainhead.events;
 
 import lombok.Getter;
 import lombok.Setter;

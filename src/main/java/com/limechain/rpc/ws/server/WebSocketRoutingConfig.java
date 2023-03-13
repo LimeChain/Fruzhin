@@ -1,7 +1,10 @@
 package com.limechain.rpc.ws.server;
 
-import com.limechain.rpc.methods.RPCMethods;
-import com.limechain.rpc.pubsub.PubSubService;
+import com.limechain.config.HostConfig;
+import com.limechain.rpc.methods.RpcMethods;
+import com.limechain.rpc.subscriptions.chainhead.ChainHeadRpcImpl;
+import com.limechain.rpc.ws.client.WebSocketClient;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
@@ -10,12 +13,13 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 @Configuration
 @EnableWebSocket
 public class WebSocketRoutingConfig implements WebSocketConfigurer {
-    private final RPCMethods rpcMethods;
-    private final PubSubService pubSubService;
+    // These dependencies will be injected from the common configuration
+    private final RpcMethods rpcMethods;
+    private final HostConfig hostConfig;
 
-    public WebSocketRoutingConfig(RPCMethods rpcMethods, PubSubService pubSubService) {
+    public WebSocketRoutingConfig(RpcMethods rpcMethods, HostConfig hostConfig) {
         this.rpcMethods = rpcMethods;
-        this.pubSubService = pubSubService;
+        this.hostConfig = hostConfig;
     }
 
     @Override
@@ -24,6 +28,17 @@ public class WebSocketRoutingConfig implements WebSocketConfigurer {
     }
 
     public WebSocketHandler webSocketHandler() {
-        return new WebSocketHandler(rpcMethods, pubSubService);
+        return new WebSocketHandler(rpcMethods, chainHeadRpc());
     }
+
+    @Bean
+    public ChainHeadRpcImpl chainHeadRpc() {
+        return new ChainHeadRpcImpl(wsClient(hostConfig));
+    }
+
+    @Bean
+    public WebSocketClient wsClient(HostConfig hostConfig) {
+        return new WebSocketClient(hostConfig.getHelperNodeAddress());
+    }
+
 }

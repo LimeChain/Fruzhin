@@ -43,7 +43,7 @@ public abstract class Subscriber {
         // Option 4. Option 2 and 3 depending on the timing
         for (Message message : pendingMessages) {
             TextMessage wsMessage = new TextMessage(message.getPayload().getBytes());
-            log.log(Level.FINE,
+            log.log(Level.INFO,
                     "Notifying " + sessions.size() + " subscribers about message topic -> " + message.getTopic() +
                             " : " +
                             message.getPayload());

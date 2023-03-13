@@ -2,9 +2,10 @@ package com.limechain.rpc.ws.server;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.googlecode.jsonrpc4j.JsonRpcBasicServer;
-import com.limechain.rpc.methods.RPCMethods;
+import com.limechain.rpc.methods.RpcMethods;
 import com.limechain.rpc.pubsub.PubSubService;
 import com.limechain.rpc.pubsub.Topic;
+import com.limechain.rpc.subscriptions.chainhead.ChainHeadRpcImpl;
 import lombok.extern.java.Log;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
@@ -23,13 +24,14 @@ import java.util.logging.Level;
 public class WebSocketHandler extends TextWebSocketHandler {
 
     private final JsonRpcBasicServer server;
-    private final PubSubService pubSubService;
+    private final PubSubService pubSubService = PubSubService.getInstance();
     private final ObjectMapper mapper = new ObjectMapper();
+    private final ChainHeadRpcImpl chainHeadRpc;
 
-    public WebSocketHandler(RPCMethods rpcMethods, PubSubService pubSubService) {
+    public WebSocketHandler(RpcMethods rpcMethods, ChainHeadRpcImpl chainHeadRpc) {
         ObjectMapper mapper = new ObjectMapper();
         this.server = new JsonRpcBasicServer(mapper, rpcMethods);
-        this.pubSubService = pubSubService;
+        this.chainHeadRpc = chainHeadRpc;
     }
 
     @Override
@@ -39,6 +41,9 @@ public class WebSocketHandler extends TextWebSocketHandler {
         RpcRequest rpcRequest = mapper.readValue(messageStream, RpcRequest.class);
         switch (rpcRequest.method) {
             case "chainHead_unstable_follow" -> {
+                // This is temporary in order to simulate that our node processes blocks
+                this.chainHeadRpc.chainUnstableFollow(false);
+
                 log.log(Level.INFO, "Subscribing for follow event");
                 pubSubService.addSubscriber(Topic.UNSTABLE_FOLLOW, session);
             }
