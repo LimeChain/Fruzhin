@@ -1,15 +1,11 @@
 package com.limechain.rpc.methods.chain.events;
 
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.io.Serializable;
 
 @Getter
 @Setter
-@NoArgsConstructor
-public class FollowEvent implements Serializable {
+public class FollowEvent {
     private String event;
 
     // Start "initialized" event params

@@ -1,6 +1,5 @@
 package com.limechain.cli;
 
-
 import com.limechain.storage.DBInitializer;
 import lombok.Getter;
 import lombok.extern.java.Log;
