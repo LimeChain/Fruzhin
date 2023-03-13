@@ -16,15 +16,17 @@ import java.util.logging.Level;
 @Log
 public class PubSubService {
     private static final PubSubService INSTANCE = new PubSubService();
-    //Keeps set of subscriber topic wise, using set to prevent duplicates
-    Map<Topic, Subscriber> subscribersTopicMap = new HashMap<>() {{
+
+    // Keeps set of subscriber topic wise, using set to prevent duplicates
+    private final Map<Topic, Subscriber> subscribersTopicMap = new HashMap<>() {{
         // TODO: Instantiate more subscriber channels in the future
         put(Topic.UNSTABLE_FOLLOW, new SubscriberImpl());
     }};
-    //Holds messages published by publishers
-    Queue<Message> messagesQueue = new LinkedList<>();
 
-    // private constructor to avoid client applications using the constructor
+    // Holds messages published by publishers
+    private final Queue<Message> messagesQueue = new LinkedList<>();
+
+    // Private constructor to avoid client applications using the constructor
     private PubSubService() {
     }
 
@@ -32,21 +34,21 @@ public class PubSubService {
         return INSTANCE;
     }
 
-    //Adds message sent by publisher to queue
+    // Adds message sent by publisher to queue
     public void addMessageToQueue(Message message) {
         messagesQueue.add(message);
     }
 
-    //Add a new Subscriber for a topic
+    // Add a new Subscriber for a topic
     public void addSubscriber(Topic topic, WebSocketSession session) {
-        //TODO: We shouldn't allow client to subscribe more than once for the same event.
+        // TODO: We shouldn't allow client to subscribe more than once for the same event.
         // We can do that by checking if the sessionId already exists in the subscriber list
         if (subscribersTopicMap.containsKey(topic)) {
             subscribersTopicMap.get(topic).addSubscriber(topic, session);
         }
     }
 
-    //Remove an existing subscriber for a topic
+    // Remove an existing subscriber for a topic
     public void removeSubscriber(Topic topic, String sessionId) {
         if (subscribersTopicMap.containsKey(topic)) {
             Subscriber subscriber = subscribersTopicMap.get(topic);

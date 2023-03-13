@@ -10,7 +10,7 @@ import java.util.Map;
 @Service
 @AutoJsonRpcServiceImpl
 @AllArgsConstructor
-public class RpcMethodsImpl implements RpcMethods {
+public class RPCMethodsImpl implements RPCMethods {
     private final SystemRPCImpl systemRPC;
 
     @Override
@@ -93,7 +93,7 @@ public class RpcMethodsImpl implements RpcMethods {
         //TODO: Use reflection in order to not hard code
         return new String[0];
     }
-    
+
     @Override
     public String transactionUnstableSubmitAndWatch() {
         return null;

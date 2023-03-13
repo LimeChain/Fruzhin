@@ -2,7 +2,6 @@ package com.limechain.rpc.config;
 
 import com.googlecode.jsonrpc4j.spring.AutoJsonRpcServiceImplExporter;
 import com.limechain.chain.ChainService;
-import com.limechain.chain.ChainServiceInitializer;
 import com.limechain.cli.Cli;
 import com.limechain.cli.CliArguments;
 import com.limechain.config.HostConfig;
@@ -37,7 +36,7 @@ public class CommonConfig {
 
     @Bean
     public ChainService chainService(HostConfig hostConfig, KVRepository<String, Object> repository) {
-        return ChainServiceInitializer.initialize(hostConfig, repository);
+        return new ChainService(hostConfig, repository);
     }
 
     @Bean

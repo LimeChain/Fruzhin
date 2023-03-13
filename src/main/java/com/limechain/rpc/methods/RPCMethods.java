@@ -9,7 +9,7 @@ import com.limechain.rpc.methods.transaction.TransactionRPC;
 // Instead, it will overwrite each new one resulting in only one interface being mapped to the endpoint
 // Therefore, we have to combine them into a single interface 🤷
 @JsonRpcService("/")
-public interface RpcMethods extends SystemRPC, TransactionRPC {
+public interface RPCMethods extends SystemRPC, TransactionRPC {
     @JsonRpcMethod("rpc_methods")
     String[] rpcMethods();
 

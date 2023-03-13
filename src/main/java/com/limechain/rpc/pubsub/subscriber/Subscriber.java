@@ -21,19 +21,19 @@ import java.util.logging.Level;
 @Log
 public abstract class Subscriber {
     private final List<WebSocketSession> sessions = new ArrayList<>();
-    //store all messages received by the subscriber
+    // Store all messages received by the subscriber
     private List<Message> pendingMessages = new ArrayList<>();
 
-    //Add subscriber with PubSubService for a topic
+    // Add subscriber with PubSubService for a topic
     public abstract void addSubscriber(Topic topic, WebSocketSession session);
 
-    //Unsubscribe subscriber with PubSubService for a topic
+    // Unsubscribe subscriber with PubSubService for a topic
     public abstract void unsubscribe(Topic topic, WebSocketSession session);
 
-    //Request specifically for messages related to topic from PubSubService
+    // Request specifically for messages related to topic from PubSubService
     public abstract void getMessagesForSubscriberOfTopic(Topic topic, PubSubService pubSubService);
 
-    //Print all messages received by the subscriber
+    // Print all messages received by the subscriber
     public void notifySubscribers() throws IOException {
         log.log(Level.FINE, "Sending messages to subscribers...");
         // What happens if PubSubService tries to add new messages while we're in the for loop?

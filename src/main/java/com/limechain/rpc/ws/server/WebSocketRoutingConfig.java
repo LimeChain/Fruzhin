@@ -1,7 +1,7 @@
 package com.limechain.rpc.ws.server;
 
 import com.limechain.config.HostConfig;
-import com.limechain.rpc.methods.RpcMethods;
+import com.limechain.rpc.methods.RPCMethods;
 import com.limechain.rpc.subscriptions.chainhead.ChainHeadRpcImpl;
 import com.limechain.rpc.ws.client.WebSocketClient;
 import org.springframework.context.annotation.Bean;
@@ -14,10 +14,10 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 @EnableWebSocket
 public class WebSocketRoutingConfig implements WebSocketConfigurer {
     // These dependencies will be injected from the common configuration
-    private final RpcMethods rpcMethods;
+    private final RPCMethods rpcMethods;
     private final HostConfig hostConfig;
 
-    public WebSocketRoutingConfig(RpcMethods rpcMethods, HostConfig hostConfig) {
+    public WebSocketRoutingConfig(RPCMethods rpcMethods, HostConfig hostConfig) {
         this.rpcMethods = rpcMethods;
         this.hostConfig = hostConfig;
     }

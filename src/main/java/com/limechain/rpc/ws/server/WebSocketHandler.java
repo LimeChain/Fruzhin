@@ -2,7 +2,7 @@ package com.limechain.rpc.ws.server;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.googlecode.jsonrpc4j.JsonRpcBasicServer;
-import com.limechain.rpc.methods.RpcMethods;
+import com.limechain.rpc.methods.RPCMethods;
 import com.limechain.rpc.pubsub.PubSubService;
 import com.limechain.rpc.pubsub.Topic;
 import com.limechain.rpc.subscriptions.chainhead.ChainHeadRpcImpl;
@@ -28,7 +28,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
     private final ObjectMapper mapper = new ObjectMapper();
     private final ChainHeadRpcImpl chainHeadRpc;
 
-    public WebSocketHandler(RpcMethods rpcMethods, ChainHeadRpcImpl chainHeadRpc) {
+    public WebSocketHandler(RPCMethods rpcMethods, ChainHeadRpcImpl chainHeadRpc) {
         ObjectMapper mapper = new ObjectMapper();
         this.server = new JsonRpcBasicServer(mapper, rpcMethods);
         this.chainHeadRpc = chainHeadRpc;
