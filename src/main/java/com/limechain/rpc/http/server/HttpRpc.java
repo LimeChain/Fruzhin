@@ -1,7 +1,6 @@
 package com.limechain.rpc.http.server;
 
 import org.rocksdb.RocksDB;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -17,13 +16,12 @@ import java.util.Collections;
         "com.limechain.storage"
 })
 public class HttpRpc {
+    private final String serverPort = "9933";
     private ConfigurableApplicationContext springCtx;
-    @Value("${rpc.http.server.port}")
-    private int serverPort;
 
     public void start(String[] cliArgs) {
         SpringApplication app = new SpringApplication(HttpRpc.class);
-        app.setDefaultProperties(Collections.singletonMap("server.port", "9933"));
+        app.setDefaultProperties(Collections.singletonMap("server.port", serverPort));
         ConfigurableApplicationContext ctx = app.run(cliArgs);
         this.springCtx = ctx;
     }
