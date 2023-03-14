@@ -48,9 +48,11 @@ public class ChainSpecTest {
             assertNull(actualConsensusEngine);
 
             String[] actualBootNodes = chainSpec.getBootNodes();
+            //CHECKSTYLE.OFF
             String[] expectedBootNodes = new String[]{
                     "/dns/polkadot-connect-0.parity.io/tcp/443/wss/p2p/12D3KooWEPmjoRpDSUuiTjvyNDd8fejZ9eNWH5bE965nyBMDrB4o",
                     "/dns/cc1-1.parity.tech/tcp/30333/p2p/12D3KooWFN2mhgpkJsDBuNuE5427AcDrsib8EoqGMZmkxWwx3Md4"};
+            //CHECKSTYLE.ON
             assertArrayEquals(expectedBootNodes, actualBootNodes);
 
             Object[] actualTelemetryEndpoints = chainSpec.getTelemetryEndpoints();
@@ -62,8 +64,10 @@ public class ChainSpecTest {
 
             Map actualTopValue = chainSpec.getGenesis().getRaw().get("top");
             Map expectedTopValue = new LinkedHashMap();
+            //CHECKSTYLE.OFF
             expectedTopValue.put("0x9c5d795d0297be56027a4b2464e3339763e6d3c1fb15805edfd024172ea4817d9e40ca7bd1fd588ca534ee6b96a65ca8a53ec232dda838cc3cd2bd1887904906", "0x11bc2c7ea454e083cea1186239abc83733200e78");
             expectedTopValue.put("0x9c5d795d0297be56027a4b2464e333979c5d795d0297be56027a4b2464e33397eb0718ce75762eeba4570943d5b2de2afb9085b6", "0x000e760ff72301000000000000000000");
+            //CHECKSTYLE.ON
             assertEquals(expectedTopValue, actualTopValue);
 
             Map actualChildrenDefault = chainSpec.getGenesis().getRaw().get("childrenDefault");
