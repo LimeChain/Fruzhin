@@ -1,7 +1,6 @@
 package com.limechain.rpc.methods;
 
 import com.googlecode.jsonrpc4j.spring.AutoJsonRpcServiceImpl;
-import com.limechain.rpc.methods.chain.ChainRPCImpl;
 import com.limechain.rpc.methods.system.SystemRPCImpl;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -13,7 +12,6 @@ import java.util.Map;
 @AllArgsConstructor
 public class RPCMethodsImpl implements RPCMethods {
     private final SystemRPCImpl systemRPC;
-    private final ChainRPCImpl chainRPC;
 
     @Override
     public String systemName() {
@@ -94,36 +92,6 @@ public class RPCMethodsImpl implements RPCMethods {
     public String[] rpcMethods() {
         //TODO: Use reflection in order to not hard code
         return new String[0];
-    }
-
-    @Override
-    public void chainUnstableFollow() {
-        chainRPC.chainUnstableFollow();
-    }
-
-    @Override
-    public String chainUnstableUnfollow() {
-        return null;
-    }
-
-    @Override
-    public String chainUnstableUnpin() {
-        return null;
-    }
-
-    @Override
-    public String chainUnstableStorage() {
-        return null;
-    }
-
-    @Override
-    public String chainUnstableCall() {
-        return null;
-    }
-
-    @Override
-    public String chainUnstableStopCall() {
-        return null;
     }
 
     @Override

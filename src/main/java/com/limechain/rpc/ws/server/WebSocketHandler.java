@@ -2,8 +2,14 @@ package com.limechain.rpc.ws.server;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.googlecode.jsonrpc4j.JsonRpcBasicServer;
+import com.limechain.rpc.config.SubscriptionName;
 import com.limechain.rpc.methods.RPCMethods;
+import com.limechain.rpc.pubsub.PubSubService;
+import com.limechain.rpc.pubsub.Topic;
+import com.limechain.rpc.subscriptions.chainhead.ChainHeadRpcImpl;
+import lombok.extern.java.Log;
 import org.springframework.stereotype.Component;
+import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
@@ -12,34 +18,59 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.logging.Level;
 
 @Component
+@Log
 public class WebSocketHandler extends TextWebSocketHandler {
 
     private final JsonRpcBasicServer server;
-    private final List<WebSocketSession> sessions = new CopyOnWriteArrayList<>();
+    private final PubSubService pubSubService = PubSubService.getInstance();
+    private final ObjectMapper mapper = new ObjectMapper();
+    private final ChainHeadRpcImpl chainHeadRpc;
 
-    public WebSocketHandler(RPCMethods rpcMethods) {
+    public WebSocketHandler(RPCMethods rpcMethods, ChainHeadRpcImpl chainHeadRpc) {
         ObjectMapper mapper = new ObjectMapper();
         this.server = new JsonRpcBasicServer(mapper, rpcMethods);
+        this.chainHeadRpc = chainHeadRpc;
     }
 
     @Override
     public void handleTextMessage(WebSocketSession session, TextMessage message) throws IOException {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        InputStream in = new ByteArrayInputStream(message.asBytes());
-        // Known issue: WS handler doesn't use interface
-        // method names (system_name) but uses implementation ones (systemName)
-        server.handleRequest(in, out);
-        session.sendMessage(new TextMessage(out.toByteArray()));
+        InputStream messageStream = new ByteArrayInputStream(message.asBytes());
+        RpcRequest rpcRequest = mapper.readValue(messageStream, RpcRequest.class);
+        log.log(Level.INFO, "SESSION ID: " + session.getId());
+        log.log(Level.INFO, "METHOD: " + rpcRequest.getMethod());
+        log.log(Level.INFO, "PARAMS: " + String.join(",", rpcRequest.getParams()));
 
+        SubscriptionName method = SubscriptionName.fromString(rpcRequest.getMethod());
+        switch (method) {
+            case CHAIN_HEAD_UNSTABLE_FOLLOW -> {
+                log.log(Level.INFO, "Subscribing for follow event");
+                pubSubService.addSubscriber(Topic.UNSTABLE_FOLLOW, session);
+                // This is temporary in order to simulate that our node "processes" blocks
+                this.chainHeadRpc.chainUnstableFollow(Boolean.parseBoolean(rpcRequest.getParams()[0]));
+            }
+            case CHAIN_HEAD_UNSTABLE_UNFOLLOW -> {
+                log.log(Level.INFO, "Unsubscribing from follow event");
+                this.chainHeadRpc.chainUnstableUnfollow(rpcRequest.getParams()[0]);
+                pubSubService.removeSubscriber(Topic.UNSTABLE_FOLLOW, session.getId());
+            }
+            default -> {
+                // Server should only handle requests if it's not a sub/unsub request
+                // Known issue: WS handler doesn't use interface method names (system_name)
+                // instead it uses implementation ones (systemName)
+                log.log(Level.INFO, "Handling the WS request using the normal RPC routes");
+                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                server.handleRequest(messageStream, outputStream);
+                session.sendMessage(new TextMessage(outputStream.toByteArray()));
+            }
+        }
     }
 
     @Override
-    public void afterConnectionEstablished(WebSocketSession session) {
-        // The messages will be broadcast to all users.
-        sessions.add(session);
+    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
+        // TODO: Search PubSubService for subscribers that have the closed session id
+        // as a subscriber and remove it from the their subscription list
     }
 }

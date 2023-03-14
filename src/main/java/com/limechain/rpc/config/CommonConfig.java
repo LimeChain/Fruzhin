@@ -6,7 +6,6 @@ import com.limechain.cli.Cli;
 import com.limechain.cli.CliArguments;
 import com.limechain.config.HostConfig;
 import com.limechain.config.SystemInfo;
-import com.limechain.rpc.ws.client.WebSocketClient;
 import com.limechain.storage.DBInitializer;
 import com.limechain.storage.KVRepository;
 import org.springframework.boot.ApplicationArguments;
@@ -43,11 +42,6 @@ public class CommonConfig {
     @Bean
     public SystemInfo systemInfo(HostConfig hostConfig) {
         return new SystemInfo();
-    }
-
-    @Bean
-    public WebSocketClient wsClient(HostConfig hostConfig) {
-        return new WebSocketClient(hostConfig.getHelperNodeAddress());
     }
 
 }
