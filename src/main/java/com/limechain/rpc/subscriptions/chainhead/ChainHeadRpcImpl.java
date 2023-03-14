@@ -1,5 +1,6 @@
 package com.limechain.rpc.subscriptions.chainhead;
 
+import com.limechain.rpc.config.SubscriptionName;
 import com.limechain.rpc.pubsub.Topic;
 import com.limechain.rpc.pubsub.publisher.PublisherImpl;
 import com.limechain.rpc.ws.client.SubscriptionRpcClient;
@@ -24,12 +25,14 @@ public class ChainHeadRpcImpl implements ChainHeadRpc {
     }
 
     public void chainUnstableFollow(boolean runtimeUpdates) {
-        wsClient.send("chainHead_unstable_follow", new String[]{String.valueOf(runtimeUpdates)});
+        wsClient.send(SubscriptionName.CHAIN_HEAD_UNSTABLE_FOLLOW.getValue(),
+                new String[]{String.valueOf(runtimeUpdates)});
     }
 
     public void chainUnstableUnfollow(String subscriptionId) {
         // Weird workaround because "0" is passed as 0 in the params which breaks request
-        wsClient.send("chainHead_unstable_unfollow", new String[]{'"' + subscriptionId + '"'});
+        wsClient.send(SubscriptionName.CHAIN_HEAD_UNSTABLE_UNFOLLOW.getValue(),
+                new String[]{'"' + subscriptionId + '"'});
     }
 
     public void chainUnstableUnpin() {

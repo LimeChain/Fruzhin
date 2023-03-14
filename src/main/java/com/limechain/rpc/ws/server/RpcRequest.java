@@ -1,9 +1,12 @@
 package com.limechain.rpc.ws.server;
 
+import lombok.Getter;
+
+@Getter
 public class RpcRequest {
-    public String id;
-    public String method;
-    public String[] params;
-    public String jsonrpc;
+    private String id;
+    private String method;
+    private String[] params;
+    private String jsonrpc;
 
 }

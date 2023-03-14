@@ -2,6 +2,7 @@ package com.limechain.rpc.ws.server;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.googlecode.jsonrpc4j.JsonRpcBasicServer;
+import com.limechain.rpc.config.SubscriptionName;
 import com.limechain.rpc.methods.RPCMethods;
 import com.limechain.rpc.pubsub.PubSubService;
 import com.limechain.rpc.pubsub.Topic;
@@ -39,18 +40,20 @@ public class WebSocketHandler extends TextWebSocketHandler {
         InputStream messageStream = new ByteArrayInputStream(message.asBytes());
         RpcRequest rpcRequest = mapper.readValue(messageStream, RpcRequest.class);
         log.log(Level.INFO, "SESSION ID: " + session.getId());
-        log.log(Level.INFO, "METHOD: " + rpcRequest.method);
-        log.log(Level.INFO, "PARAMS: " + String.join(",", rpcRequest.params));
-        switch (rpcRequest.method) {
-            case "chainHead_unstable_follow" -> {
+        log.log(Level.INFO, "METHOD: " + rpcRequest.getMethod());
+        log.log(Level.INFO, "PARAMS: " + String.join(",", rpcRequest.getParams()));
+
+        SubscriptionName method = SubscriptionName.fromString(rpcRequest.getMethod());
+        switch (method) {
+            case CHAIN_HEAD_UNSTABLE_FOLLOW -> {
                 log.log(Level.INFO, "Subscribing for follow event");
                 pubSubService.addSubscriber(Topic.UNSTABLE_FOLLOW, session);
                 // This is temporary in order to simulate that our node "processes" blocks
-                this.chainHeadRpc.chainUnstableFollow(Boolean.parseBoolean(rpcRequest.params[0]));
+                this.chainHeadRpc.chainUnstableFollow(Boolean.parseBoolean(rpcRequest.getParams()[0]));
             }
-            case "chainHead_unstable_unfollow" -> {
+            case CHAIN_HEAD_UNSTABLE_UNFOLLOW -> {
                 log.log(Level.INFO, "Unsubscribing from follow event");
-                this.chainHeadRpc.chainUnstableUnfollow(rpcRequest.params[0]);
+                this.chainHeadRpc.chainUnstableUnfollow(rpcRequest.getParams()[0]);
                 pubSubService.removeSubscriber(Topic.UNSTABLE_FOLLOW, session.getId());
             }
             default -> {
