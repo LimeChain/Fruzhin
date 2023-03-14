@@ -1,7 +1,7 @@
 package com.limechain.rpc.pubsub;
 
-import com.limechain.rpc.pubsub.subscriber.Subscriber;
-import com.limechain.rpc.pubsub.subscriber.SubscriberImpl;
+import com.limechain.rpc.pubsub.subscriber.AbstractSubscriberChannel;
+import com.limechain.rpc.pubsub.subscriber.SubscriberChannel;
 import lombok.extern.java.Log;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -17,10 +17,10 @@ import java.util.logging.Level;
 public class PubSubService {
     private static final PubSubService INSTANCE = new PubSubService();
 
-    // Keeps set of subscriber topic wise, using set to prevent duplicates
-    private final Map<Topic, Subscriber> subscribersTopicMap = new HashMap<>() {{
+    // Keeps map of subscriber topic wise, using map to prevent duplicates
+    private final Map<Topic, AbstractSubscriberChannel> subscribersTopicMap = new HashMap<>() {{
         // TODO: Instantiate more subscriber channels in the future
-        put(Topic.UNSTABLE_FOLLOW, new SubscriberImpl());
+        put(Topic.UNSTABLE_FOLLOW, new SubscriberChannel());
     }};
 
     // Holds messages published by publishers
@@ -51,12 +51,12 @@ public class PubSubService {
     // Remove an existing subscriber for a topic
     public void removeSubscriber(Topic topic, String sessionId) {
         if (subscribersTopicMap.containsKey(topic)) {
-            Subscriber subscriber = subscribersTopicMap.get(topic);
+            AbstractSubscriberChannel subscriber = subscribersTopicMap.get(topic);
             subscriber.getSessions()
                     .stream()
                     .filter(s -> s.getId().equals(sessionId))
                     .findFirst()
-                    .ifPresent(session -> subscriber.unsubscribe(topic, session));
+                    .ifPresent(session -> subscriber.removeSubscriber(topic, session));
 
         }
     }
@@ -71,7 +71,7 @@ public class PubSubService {
                 Message message = messagesQueue.remove();
                 String topic = message.topic();
 
-                Subscriber subscriber = subscribersTopicMap.get(Topic.fromString(topic));
+                AbstractSubscriberChannel subscriber = subscribersTopicMap.get(Topic.fromString(topic));
                 List<Message> subscriberMessages = subscriber.getPendingMessages();
                 subscriberMessages.add(message);
                 subscriber.setPendingMessages(subscriberMessages);
@@ -81,7 +81,7 @@ public class PubSubService {
 
     // Iterate over all subscriber channels and send all pending messages to each subscriber
     public void notifySubscribers() {
-        for (Map.Entry<Topic, Subscriber> set : subscribersTopicMap.entrySet()) {
+        for (Map.Entry<Topic, AbstractSubscriberChannel> set : subscribersTopicMap.entrySet()) {
             try {
                 set.getValue().notifySubscribers();
             } catch (IOException e) {
@@ -92,7 +92,7 @@ public class PubSubService {
 
 
     // Sends messages about a topic for subscriber at any point
-    public void getMessagesForSubscriberOfTopic(Topic topic, Subscriber subscriber) {
+    public void getMessagesForSubscriberOfTopic(Topic topic, AbstractSubscriberChannel subscriber) {
         if (messagesQueue.isEmpty()) {
             log.log(Level.FINE, "No messages from publishers to display");
             return;

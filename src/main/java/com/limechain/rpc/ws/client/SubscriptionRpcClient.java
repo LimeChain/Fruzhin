@@ -7,12 +7,12 @@ import com.limechain.rpc.pubsub.publisher.Publisher;
 
 import java.net.URI;
 
-public class SubscriptionClient extends BaseClient {
+public class SubscriptionRpcClient extends WebSocketRpcClient {
     private final Publisher chainPublisher;
     private final PubSubService pubSubService = PubSubService.getInstance();
     private final Topic topic;
 
-    public SubscriptionClient(URI serverURI, Publisher chainPublisher, Topic topic) {
+    public SubscriptionRpcClient(URI serverURI, Publisher chainPublisher, Topic topic) {
         super(serverURI);
         this.chainPublisher = chainPublisher;
         this.topic = topic;

@@ -6,9 +6,9 @@ import org.java_websocket.handshake.ServerHandshake;
 import java.net.URI;
 import java.nio.ByteBuffer;
 
-public class BaseClient extends WebSocketClient {
+public class WebSocketRpcClient extends WebSocketClient {
 
-    public BaseClient(URI serverURI) {
+    public WebSocketRpcClient(URI serverURI) {
         super(serverURI);
     }
 

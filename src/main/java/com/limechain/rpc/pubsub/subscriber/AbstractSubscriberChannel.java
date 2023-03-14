@@ -19,7 +19,7 @@ import java.util.logging.Level;
 @Getter
 @Setter
 @Log
-public abstract class Subscriber {
+public abstract class AbstractSubscriberChannel {
     private final List<WebSocketSession> sessions = new ArrayList<>();
     // Store all messages received by the subscriber
     private List<Message> pendingMessages = new ArrayList<>();
@@ -28,7 +28,7 @@ public abstract class Subscriber {
     public abstract void addSubscriber(Topic topic, WebSocketSession session);
 
     // Unsubscribe subscriber with PubSubService for a topic
-    public abstract void unsubscribe(Topic topic, WebSocketSession session);
+    public abstract void removeSubscriber(Topic topic, WebSocketSession session);
 
     // Request specifically for messages related to topic from PubSubService
     public abstract void getMessagesForSubscriberOfTopic(Topic topic, PubSubService pubSubService);

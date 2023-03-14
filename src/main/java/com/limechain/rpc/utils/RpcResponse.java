@@ -17,15 +17,6 @@ public class RpcResponse {
     public static final String SUBSCRIPTION = "subscription";
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    private static void writeAndFlushValue(OutputStream output, JsonNode value) throws IOException {
-        if (value == null) {
-            return;
-        }
-
-        new ObjectMapper().writeValue(output, value);
-        output.write('\n');
-    }
-
     public static String createForSubscription(String method, JsonNode result, String jsonRpc) {
         ObjectNode response = MAPPER.createObjectNode();
         response.put(JSONRPC, jsonRpc);
@@ -48,5 +39,13 @@ public class RpcResponse {
         return out.toString();
     }
 
+    private static void writeAndFlushValue(OutputStream output, JsonNode value) throws IOException {
+        if (value == null) {
+            return;
+        }
 
+        MAPPER.writeValue(output, value);
+        output.write("%n".getBytes());
+    }
+    
 }
