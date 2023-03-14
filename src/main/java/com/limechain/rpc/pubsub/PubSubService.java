@@ -90,7 +90,6 @@ public class PubSubService {
         }
     }
 
-
     // Sends messages about a topic for subscriber at any point
     public void getMessagesForSubscriberOfTopic(Topic topic, AbstractSubscriberChannel subscriber) {
         if (messagesQueue.isEmpty()) {
