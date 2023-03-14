@@ -42,11 +42,11 @@ public abstract class Subscriber {
         // Option 3. Messages get added but overwritten by new ArrayList<>() at the end of this function
         // Option 4. Option 2 and 3 depending on the timing
         for (Message message : pendingMessages) {
-            TextMessage wsMessage = new TextMessage(message.getPayload().getBytes());
-            log.log(Level.INFO,
-                    "Notifying " + sessions.size() + " subscribers about message topic -> " + message.getTopic() +
+            TextMessage wsMessage = new TextMessage(message.payload().getBytes());
+            log.log(Level.FINE,
+                    "Notifying " + sessions.size() + " subscribers about message topic -> " + message.topic() +
                             " : " +
-                            message.getPayload());
+                            message.payload());
             for (WebSocketSession session : sessions) {
                 session.sendMessage(wsMessage);
             }

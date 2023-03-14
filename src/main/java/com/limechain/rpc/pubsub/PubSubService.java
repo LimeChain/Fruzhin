@@ -65,12 +65,11 @@ public class PubSubService {
     // messagesQueue will be empty after broadcasting.
     public void broadcast() {
         if (messagesQueue.isEmpty()) {
-            log.log(Level.INFO, "No messages from publishers to broadcast to subscribers");
+            log.log(Level.FINE, "No messages from publishers to broadcast to subscribers");
         } else {
-            log.log(Level.INFO, "BROADCASTING!");
             while (!messagesQueue.isEmpty()) {
                 Message message = messagesQueue.remove();
-                String topic = message.getTopic();
+                String topic = message.topic();
 
                 Subscriber subscriber = subscribersTopicMap.get(Topic.fromString(topic));
                 List<Message> subscriberMessages = subscriber.getPendingMessages();
@@ -95,13 +94,13 @@ public class PubSubService {
     // Sends messages about a topic for subscriber at any point
     public void getMessagesForSubscriberOfTopic(Topic topic, Subscriber subscriber) {
         if (messagesQueue.isEmpty()) {
-            log.log(Level.INFO, "No messages from publishers to display");
+            log.log(Level.FINE, "No messages from publishers to display");
             return;
         }
 
         while (!messagesQueue.isEmpty()) {
             Message message = messagesQueue.remove();
-            if (message.getTopic().equalsIgnoreCase(topic.getValue())) {
+            if (message.topic().equalsIgnoreCase(topic.getValue())) {
                 if (subscribersTopicMap.get(topic).equals(subscriber)) {
                     // Add broadcast message to subscriber message queue
                     List<Message> subscriberMessages = subscriber.getPendingMessages();

@@ -36,9 +36,9 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
     @Override
     public void handleTextMessage(WebSocketSession session, TextMessage message) throws IOException {
-        log.log(Level.INFO, "SESSION ID: " + session.getId());
         InputStream messageStream = new ByteArrayInputStream(message.asBytes());
         RpcRequest rpcRequest = mapper.readValue(messageStream, RpcRequest.class);
+        log.log(Level.INFO, "SESSION ID: " + session.getId());
         log.log(Level.INFO, "METHOD: " + rpcRequest.method);
         log.log(Level.INFO, "PARAMS: " + String.join(",", rpcRequest.params));
         switch (rpcRequest.method) {
@@ -67,7 +67,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
-        //TODO: Search PubSubService for subscribers that have the closed session id
+        // TODO: Search PubSubService for subscribers that have the closed session id
         // as a subscriber and remove it from the their subscription list
     }
 }

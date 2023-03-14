@@ -7,12 +7,12 @@ import com.limechain.rpc.pubsub.publisher.Publisher;
 
 import java.net.URI;
 
-public class ChainHeadFollowClient extends BaseClient {
+public class SubscriptionClient extends BaseClient {
     private final Publisher chainPublisher;
     private final PubSubService pubSubService = PubSubService.getInstance();
     private final Topic topic;
 
-    public ChainHeadFollowClient(URI serverURI, Publisher chainPublisher, Topic topic) {
+    public SubscriptionClient(URI serverURI, Publisher chainPublisher, Topic topic) {
         super(serverURI);
         this.chainPublisher = chainPublisher;
         this.topic = topic;
@@ -21,7 +21,7 @@ public class ChainHeadFollowClient extends BaseClient {
     @Override
     public void onMessage(String message) {
         // For now, we'll be forwarding the message we've received
-        // In the future - after sync module is completed
+        // In the future, after sync module is completed
         // this functionality will be replaced with self-emitting events
         chainPublisher.publish(new Message(topic.getValue(), message), pubSubService);
 
