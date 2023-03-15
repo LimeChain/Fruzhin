@@ -1,7 +1,8 @@
 package com.limechain.rpc.pubsub;
 
 public enum Topic {
-    UNSTABLE_FOLLOW("unstable_follow");
+    UNSTABLE_FOLLOW("unstable_follow"),
+    UNSTABLE_TRANSACTION_WATCH("transaction_watch");
     private final String value;
 
     Topic(String value) {

@@ -1,10 +1,15 @@
 package com.limechain.rpc.methods;
 
+import com.googlecode.jsonrpc4j.JsonRpcMethod;
 import com.googlecode.jsonrpc4j.spring.AutoJsonRpcServiceImpl;
+import com.limechain.rpc.methods.system.SystemRPC;
 import com.limechain.rpc.methods.system.SystemRPCImpl;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Map;
 
 @Service
@@ -90,12 +95,11 @@ public class RPCMethodsImpl implements RPCMethods {
 
     @Override
     public String[] rpcMethods() {
-        //TODO: Use reflection in order to not hard code
-        return new String[0];
-    }
+        ArrayList<Method> methods = new ArrayList<>();
 
-    @Override
-    public String transactionUnstableSubmitAndWatch() {
-        return null;
+        Collections.addAll(methods, RPCMethods.class.getDeclaredMethods());
+        Collections.addAll(methods, SystemRPC.class.getDeclaredMethods());
+
+        return methods.stream().map(m -> m.getAnnotation(JsonRpcMethod.class).value()).toArray(String[]::new);
     }
 }

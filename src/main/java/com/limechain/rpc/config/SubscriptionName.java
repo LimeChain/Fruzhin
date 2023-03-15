@@ -10,8 +10,8 @@ public enum SubscriptionName {
     CHAIN_HEAD_UNSTABLE_STORAGE("chainHead_unstable_storage"),
     CHAIN_HEAD_UNSTABLE_CALL("chainHead_unstable_call"),
     CHAIN_HEAD_UNSTABLE_STOP_CALL("chainHead_unstable_stopCall"),
-    CHAIN_HEAD_UNSTABLE_SUBMIT_AND_WATCH("transaction_unstable_submitAndWatch"),
-    CHAIN_HEAD_UNSTABLE_UNWATCH("transaction_unstable_unwatch");
+    TRANSACTION_UNSTABLE_SUBMIT_AND_WATCH("transaction_unstable_submitAndWatch"),
+    TRANSACTION_UNSTABLE_UNWATCH("transaction_unstable_unwatch");
 
     private final String value;
 

@@ -6,7 +6,8 @@ import com.limechain.rpc.config.SubscriptionName;
 import com.limechain.rpc.methods.RPCMethods;
 import com.limechain.rpc.pubsub.PubSubService;
 import com.limechain.rpc.pubsub.Topic;
-import com.limechain.rpc.subscriptions.chainhead.ChainHeadRpcImpl;
+import com.limechain.rpc.subscriptions.chainhead.ChainHeadRpc;
+import com.limechain.rpc.subscriptions.transaction.TransactionRpc;
 import lombok.extern.java.Log;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
@@ -18,6 +19,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Objects;
 import java.util.logging.Level;
 
 @Component
@@ -27,12 +29,14 @@ public class WebSocketHandler extends TextWebSocketHandler {
     private final JsonRpcBasicServer server;
     private final PubSubService pubSubService = PubSubService.getInstance();
     private final ObjectMapper mapper = new ObjectMapper();
-    private final ChainHeadRpcImpl chainHeadRpc;
+    private final ChainHeadRpc chainHeadRpc;
+    private final TransactionRpc transactionRpc;
 
-    public WebSocketHandler(RPCMethods rpcMethods, ChainHeadRpcImpl chainHeadRpc) {
+    public WebSocketHandler(RPCMethods rpcMethods, ChainHeadRpc chainHeadRpc, TransactionRpc transactionRpc) {
         ObjectMapper mapper = new ObjectMapper();
         this.server = new JsonRpcBasicServer(mapper, rpcMethods);
         this.chainHeadRpc = chainHeadRpc;
+        this.transactionRpc = transactionRpc;
     }
 
     @Override
@@ -44,7 +48,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
         log.log(Level.INFO, "PARAMS: " + String.join(",", rpcRequest.getParams()));
 
         SubscriptionName method = SubscriptionName.fromString(rpcRequest.getMethod());
-        switch (method) {
+        switch (Objects.requireNonNull(method)) {
             case CHAIN_HEAD_UNSTABLE_FOLLOW -> {
                 log.log(Level.INFO, "Subscribing for follow event");
                 pubSubService.addSubscriber(Topic.UNSTABLE_FOLLOW, session);
@@ -55,6 +59,34 @@ public class WebSocketHandler extends TextWebSocketHandler {
                 log.log(Level.INFO, "Unsubscribing from follow event");
                 this.chainHeadRpc.chainUnstableUnfollow(rpcRequest.getParams()[0]);
                 pubSubService.removeSubscriber(Topic.UNSTABLE_FOLLOW, session.getId());
+            }
+            case CHAIN_HEAD_UNSTABLE_UNPIN -> {
+                log.log(Level.INFO, "Unpinning block");
+                this.chainHeadRpc.chainUnstableUnpin(rpcRequest.getParams()[0], rpcRequest.getParams()[1]);
+            }
+            case CHAIN_HEAD_UNSTABLE_STORAGE -> {
+                log.log(Level.INFO, "Querying storage");
+                this.chainHeadRpc.chainUnstableStorage(rpcRequest.getParams()[0], rpcRequest.getParams()[1],
+                        rpcRequest.getParams()[2]);
+            }
+            case CHAIN_HEAD_UNSTABLE_CALL -> {
+                log.log(Level.INFO, "Executing unstable_call");
+                this.chainHeadRpc.chainUnstableCall(rpcRequest.getParams()[0], rpcRequest.getParams()[1],
+                        rpcRequest.getParams()[2], rpcRequest.getParams()[3]);
+            }
+            case CHAIN_HEAD_UNSTABLE_STOP_CALL -> {
+                log.log(Level.INFO, "Executing unstable_stopCall");
+                this.chainHeadRpc.chainUnstableStopCall(rpcRequest.getParams()[0]);
+            }
+            case TRANSACTION_UNSTABLE_SUBMIT_AND_WATCH -> {
+                log.log(Level.INFO, "Executing submitAndWatch");
+                pubSubService.addSubscriber(Topic.UNSTABLE_TRANSACTION_WATCH, session);
+                this.transactionRpc.transactionUnstableSubmitAndWatch(rpcRequest.getParams()[0]);
+            }
+            case TRANSACTION_UNSTABLE_UNWATCH -> {
+                log.log(Level.INFO, "Executing unstable_unwatch");
+                this.transactionRpc.transactionUnstableWatch(rpcRequest.getParams()[0]);
+                pubSubService.removeSubscriber(Topic.UNSTABLE_TRANSACTION_WATCH, session.getId());
             }
             default -> {
                 // Server should only handle requests if it's not a sub/unsub request

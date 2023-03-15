@@ -5,11 +5,11 @@ public interface ChainHeadRpc {
 
     void chainUnstableUnfollow(String subscriptionId);
 
-    void chainUnstableUnpin();
+    void chainUnstableUnpin(String subscriptionId, String blockHash);
 
-    void chainUnstableStorage();
+    void chainUnstableCall(String subscriptionId, String blockHash, String function, String callParameters);
 
-    void chainUnstableCall();
+    void chainUnstableStorage(String subscriptionId, String blockHash, String key);
 
-    void chainUnstableStopCall();
+    void chainUnstableStopCall(String subscriptionId);
 }

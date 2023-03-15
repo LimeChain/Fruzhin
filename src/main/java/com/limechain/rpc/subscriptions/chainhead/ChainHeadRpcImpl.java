@@ -3,6 +3,7 @@ package com.limechain.rpc.subscriptions.chainhead;
 import com.limechain.rpc.config.SubscriptionName;
 import com.limechain.rpc.pubsub.Topic;
 import com.limechain.rpc.pubsub.publisher.PublisherImpl;
+import com.limechain.rpc.subscriptions.utils.Utils;
 import com.limechain.rpc.ws.client.SubscriptionRpcClient;
 import org.springframework.stereotype.Service;
 
@@ -24,26 +25,41 @@ public class ChainHeadRpcImpl implements ChainHeadRpc {
         }
     }
 
+    @Override
     public void chainUnstableFollow(boolean runtimeUpdates) {
         wsClient.send(SubscriptionName.CHAIN_HEAD_UNSTABLE_FOLLOW.getValue(),
                 new String[]{String.valueOf(runtimeUpdates)});
     }
 
+    @Override
     public void chainUnstableUnfollow(String subscriptionId) {
-        // Weird workaround because "0" is passed as 0 in the params which breaks request
         wsClient.send(SubscriptionName.CHAIN_HEAD_UNSTABLE_UNFOLLOW.getValue(),
-                new String[]{'"' + subscriptionId + '"'});
+                new String[]{Utils.wrapWithDoubleQuotes(subscriptionId)});
     }
 
-    public void chainUnstableUnpin() {
+    @Override
+    public void chainUnstableUnpin(String subscriptionId, String blockHash) {
+        wsClient.send(SubscriptionName.CHAIN_HEAD_UNSTABLE_UNPIN.getValue(),
+                new String[]{Utils.wrapWithDoubleQuotes(subscriptionId), Utils.wrapWithDoubleQuotes(blockHash)});
     }
 
-    public void chainUnstableStorage() {
+    @Override
+    public void chainUnstableCall(String subscriptionId, String blockHash, String function, String callParameters) {
+        wsClient.send(SubscriptionName.CHAIN_HEAD_UNSTABLE_CALL.getValue(),
+                new String[]{Utils.wrapWithDoubleQuotes(subscriptionId), Utils.wrapWithDoubleQuotes(blockHash),
+                        Utils.wrapWithDoubleQuotes(function), Utils.wrapWithDoubleQuotes(callParameters)});
     }
 
-    public void chainUnstableCall() {
+    @Override
+    public void chainUnstableStorage(String subscriptionId, String blockHash, String key) {
+        wsClient.send(SubscriptionName.CHAIN_HEAD_UNSTABLE_STORAGE.getValue(),
+                new String[]{Utils.wrapWithDoubleQuotes(subscriptionId), Utils.wrapWithDoubleQuotes(blockHash),
+                        Utils.wrapWithDoubleQuotes(key)});
     }
 
-    public void chainUnstableStopCall() {
+    @Override
+    public void chainUnstableStopCall(String subscriptionId) {
+        wsClient.send(SubscriptionName.CHAIN_HEAD_UNSTABLE_STOP_CALL.getValue(),
+                new String[]{Utils.wrapWithDoubleQuotes(subscriptionId)});
     }
 }
