@@ -47,7 +47,7 @@ public class PubSubService {
             return;
         }
 
-        log.log(Level.WARNING, "Didn't subscribe session to topic. Topic doesn't exist");
+        log.log(Level.WARNING, "Didn't subscribe session to topic. Topic doesn't exist: " + topic.getValue());
     }
 
     // Remove an existing subscriber for a topic
