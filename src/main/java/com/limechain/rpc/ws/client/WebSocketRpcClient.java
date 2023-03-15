@@ -1,11 +1,14 @@
 package com.limechain.rpc.ws.client;
 
+import lombok.extern.java.Log;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 
 import java.net.URI;
 import java.nio.ByteBuffer;
+import java.util.logging.Level;
 
+@Log
 public class WebSocketRpcClient extends WebSocketClient {
 
     public WebSocketRpcClient(URI serverURI) {
@@ -14,27 +17,27 @@ public class WebSocketRpcClient extends WebSocketClient {
 
     @Override
     public void onOpen(ServerHandshake handshake) {
-        System.out.println("new connection opened");
+        log.log(Level.INFO, "new WS connection opened");
     }
 
     @Override
     public void onClose(int code, String reason, boolean remote) {
-        System.out.println("closed with exit code " + code + " additional info: " + reason);
+        log.log(Level.INFO, "closed with exit code " + code + " additional info: " + reason);
     }
 
     @Override
     public void onMessage(String message) {
-        System.out.println("received message: " + message);
+        log.log(Level.FINE, "received message: " + message);
     }
 
     @Override
     public void onMessage(ByteBuffer message) {
-        System.out.println("received ByteBuffer");
+        log.log(Level.FINE, "received ByteBuffer");
     }
 
     @Override
     public void onError(Exception ex) {
-        System.err.println("an error occurred:" + ex);
+        log.log(Level.SEVERE, "an error occurred:", ex);
     }
 
     public void send(String method, String[] params) {

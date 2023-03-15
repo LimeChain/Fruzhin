@@ -4,9 +4,12 @@ import com.limechain.rpc.pubsub.Message;
 import com.limechain.rpc.pubsub.PubSubService;
 import com.limechain.rpc.pubsub.Topic;
 import com.limechain.rpc.pubsub.publisher.Publisher;
+import lombok.extern.java.Log;
 
 import java.net.URI;
+import java.util.logging.Level;
 
+@Log
 public class SubscriptionRpcClient extends WebSocketRpcClient {
     private final Publisher chainPublisher;
     private final PubSubService pubSubService = PubSubService.getInstance();
@@ -20,6 +23,7 @@ public class SubscriptionRpcClient extends WebSocketRpcClient {
 
     @Override
     public void onMessage(String message) {
+        log.log(Level.INFO, "RECEIVED MESSAGE: " + message);
         // For now, we'll be forwarding the message we've received
         // In the future, after sync module is completed
         // this functionality will be replaced with self-emitting events

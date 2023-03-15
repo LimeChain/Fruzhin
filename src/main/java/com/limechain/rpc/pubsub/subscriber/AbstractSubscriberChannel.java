@@ -20,18 +20,24 @@ import java.util.logging.Level;
 @Setter
 @Log
 public abstract class AbstractSubscriberChannel {
+    private final Topic topic;
     private final List<WebSocketSession> sessions = new ArrayList<>();
-    // Store all messages received by the subscriber
-    private List<Message> pendingMessages = new ArrayList<>();
+    private final List<Message> pendingMessages = new ArrayList<>();
+
+    public AbstractSubscriberChannel(Topic topic) {
+        this.topic = topic;
+    }
 
     // Add subscriber with PubSubService for a topic
-    public abstract void addSubscriber(Topic topic, WebSocketSession session);
+    // TODO: Channels should be topic specific --> set topic in constructor
+    // No need to pass it as a parameter
+    public abstract void addSubscriber(WebSocketSession session);
 
     // Unsubscribe subscriber with PubSubService for a topic
-    public abstract void removeSubscriber(Topic topic, WebSocketSession session);
+    public abstract void removeSubscriber(WebSocketSession session);
 
     // Request specifically for messages related to topic from PubSubService
-    public abstract void getMessagesForSubscriberOfTopic(Topic topic, PubSubService pubSubService);
+    public abstract void getMessagesForSubscriberOfTopic(PubSubService pubSubService);
 
     // Print all messages received by the subscriber
     public synchronized void notifySubscribers() throws IOException {
@@ -52,7 +58,7 @@ public abstract class AbstractSubscriberChannel {
             }
         }
         // Empty the pending messages
-        pendingMessages = new ArrayList<>();
+        this.getPendingMessages().clear();
     }
 }
 

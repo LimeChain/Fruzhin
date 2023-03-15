@@ -8,7 +8,6 @@ import org.springframework.web.socket.WebSocketSession;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.logging.Level;
@@ -20,7 +19,8 @@ public class PubSubService {
     // Keeps map of subscriber topic wise, using map to prevent duplicates
     private final Map<Topic, AbstractSubscriberChannel> subscribersTopicMap = new HashMap<>() {{
         // TODO: Instantiate more subscriber channels in the future
-        put(Topic.UNSTABLE_FOLLOW, new SubscriberChannel());
+        put(Topic.UNSTABLE_FOLLOW, new SubscriberChannel(Topic.UNSTABLE_FOLLOW));
+        put(Topic.UNSTABLE_TRANSACTION_WATCH, new SubscriberChannel(Topic.UNSTABLE_TRANSACTION_WATCH));
     }};
 
     // Holds messages published by publishers
@@ -41,22 +41,25 @@ public class PubSubService {
 
     // Add a new Subscriber for a topic
     public void addSubscriber(Topic topic, WebSocketSession session) {
-        // TODO: We shouldn't allow client to subscribe more than once for the same event.
-        // We can do that by checking if the sessionId already exists in the subscriber list
         if (subscribersTopicMap.containsKey(topic)) {
-            subscribersTopicMap.get(topic).addSubscriber(topic, session);
+            AbstractSubscriberChannel subscriberChannel = subscribersTopicMap.get(topic);
+            subscriberChannel.addSubscriber(session);
+            return;
         }
+
+        log.log(Level.WARNING, "Didn't subscribe session to topic. Topic doesn't exist");
     }
 
     // Remove an existing subscriber for a topic
     public void removeSubscriber(Topic topic, String sessionId) {
         if (subscribersTopicMap.containsKey(topic)) {
-            AbstractSubscriberChannel subscriber = subscribersTopicMap.get(topic);
-            subscriber.getSessions()
+            AbstractSubscriberChannel subscriberChannel = subscribersTopicMap.get(topic);
+            subscriberChannel
+                    .getSessions()
                     .stream()
                     .filter(s -> s.getId().equals(sessionId))
                     .findFirst()
-                    .ifPresent(session -> subscriber.removeSubscriber(topic, session));
+                    .ifPresent(subscriberChannel::removeSubscriber);
 
         }
     }
@@ -71,10 +74,11 @@ public class PubSubService {
                 Message message = messagesQueue.remove();
                 String topic = message.topic();
 
-                AbstractSubscriberChannel subscriber = subscribersTopicMap.get(Topic.fromString(topic));
-                List<Message> subscriberMessages = subscriber.getPendingMessages();
-                subscriberMessages.add(message);
-                subscriber.setPendingMessages(subscriberMessages);
+                AbstractSubscriberChannel subscriberChannel = subscribersTopicMap.get(Topic.fromString(topic));
+                // If subscriberChannel is null, the message will get lost
+                if (subscriberChannel != null) {
+                    subscriberChannel.getPendingMessages().add(message);
+                }
             }
         }
     }
@@ -91,7 +95,7 @@ public class PubSubService {
     }
 
     // Sends messages about a topic for subscriber at any point
-    public void getMessagesForSubscriberOfTopic(Topic topic, AbstractSubscriberChannel subscriber) {
+    public void getMessagesForSubscriberOfTopic(AbstractSubscriberChannel subscriber) {
         if (messagesQueue.isEmpty()) {
             log.log(Level.FINE, "No messages from publishers to display");
             return;
@@ -99,12 +103,10 @@ public class PubSubService {
 
         while (!messagesQueue.isEmpty()) {
             Message message = messagesQueue.remove();
-            if (message.topic().equalsIgnoreCase(topic.getValue())) {
-                if (subscribersTopicMap.get(topic).equals(subscriber)) {
+            if (message.topic().equalsIgnoreCase(subscriber.getTopic().getValue())) {
+                if (subscribersTopicMap.get(subscriber.getTopic()).equals(subscriber)) {
                     // Add broadcast message to subscriber message queue
-                    List<Message> subscriberMessages = subscriber.getPendingMessages();
-                    subscriberMessages.add(message);
-                    subscriber.setPendingMessages(subscriberMessages);
+                    subscriber.getPendingMessages().add(message);
                 }
             }
         }
