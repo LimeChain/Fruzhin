@@ -20,7 +20,6 @@ jobs:
         with:
           java-version: '17'
           distribution: 'corretto'
-          cache: gradle
 #      - name: Build gradle
 #      - run: ./gradlew build
       - name: Validate Gradle wrapper
