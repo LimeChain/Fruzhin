@@ -10,6 +10,10 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 public class TransactionRpcImpl implements TransactionRpc {
+
+    /**
+     * WebSocket client which forwards the requests to smoldot
+     */
     private final SubscriptionRpcClient wsClient;
 
     public TransactionRpcImpl(String forwardNodeAddress) {
@@ -31,7 +35,7 @@ public class TransactionRpcImpl implements TransactionRpc {
     }
 
     @Override
-    public void transactionUnstableWatch(String subscriptionId) {
+    public void transactionUnstableUnwatch(String subscriptionId) {
         wsClient.send(SubscriptionName.TRANSACTION_UNSTABLE_UNWATCH.getValue(),
                 new String[]{Utils.wrapWithDoubleQuotes(subscriptionId)});
     }

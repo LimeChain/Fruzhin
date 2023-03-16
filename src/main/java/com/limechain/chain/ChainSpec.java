@@ -10,6 +10,9 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.Map;
 
+/**
+ * Holds information parsed from the chain spec(genesis) file
+ */
 @Getter
 @Setter
 public class ChainSpec implements Serializable {
@@ -25,6 +28,13 @@ public class ChainSpec implements Serializable {
     private String[] badBlocks;
     private String consensusEngine;
 
+    /**
+     * Reads file from path parameter and tries to map its fields
+     *
+     * @param pathToChainSpecJSON path to the chain specification json file
+     * @return class instance mapped to the json file
+     * @throws IOException If path is invalid
+     */
     public static ChainSpec newFromJSON(String pathToChainSpecJSON) throws IOException {
         final boolean failOnUnknownProperties = false;
         ObjectMapper objectMapper = new ObjectMapper()

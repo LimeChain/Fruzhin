@@ -85,7 +85,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
             }
             case TRANSACTION_UNSTABLE_UNWATCH -> {
                 log.log(Level.INFO, "Executing unstable_unwatch");
-                this.transactionRpc.transactionUnstableWatch(rpcRequest.getParams()[0]);
+                this.transactionRpc.transactionUnstableUnwatch(rpcRequest.getParams()[0]);
                 pubSubService.removeSubscriber(Topic.UNSTABLE_TRANSACTION_WATCH, session.getId());
             }
             default -> {

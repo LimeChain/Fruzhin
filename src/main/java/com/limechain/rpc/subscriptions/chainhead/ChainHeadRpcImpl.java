@@ -10,8 +10,18 @@ import org.springframework.stereotype.Service;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+/**
+ * Implementation for chainHead rpc methods family.
+ * <p>
+ * For now requests are forwarded to the local running smoldot node since we don't have
+ * the services implemented to facilitate the execution of the business logic
+ */
 @Service
 public class ChainHeadRpcImpl implements ChainHeadRpc {
+    
+    /**
+     * WebSocket client which forwards the requests to smoldot
+     */
     private final SubscriptionRpcClient wsClient;
 
     public ChainHeadRpcImpl(String forwardNodeAddress) {

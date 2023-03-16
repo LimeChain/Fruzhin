@@ -12,9 +12,19 @@ import java.nio.file.Files;
 import java.util.Optional;
 import java.util.logging.Level;
 
+/**
+ * Implementation for Key-Value DB interface with String as key and Object as value types
+ */
 @Log
 public class DBRepository implements KVRepository<String, Object> {
+    /**
+     * Main DB file
+     */
     private final static String FILE_NAME = "db";
+
+    /**
+     * Connection to the DB
+     */
     private RocksDB db;
 
     public DBRepository(String path) {

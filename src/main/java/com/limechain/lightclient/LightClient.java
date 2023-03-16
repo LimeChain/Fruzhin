@@ -7,6 +7,10 @@ import lombok.extern.java.Log;
 
 import java.util.logging.Level;
 
+/**
+ * Main light client class that starts and stops execution of
+ * the client and hold references to dependencies
+ */
 @Log
 @AllArgsConstructor
 public class LightClient {
@@ -15,16 +19,19 @@ public class LightClient {
     private final HttpRpc httpRpc;
     private final WebSocketRPC wsRpc;
 
+    /**
+     * Starts the light client by instantiating all dependencies and services
+     */
     public void start() {
         // TODO: Add business logic
         this.httpRpc.start(cliArgs);
         this.wsRpc.start(cliArgs);
         log.log(Level.INFO, "\uD83D\uDE80Started light client!");
-
-        // We can access Spring Beans using the RPC Context!
-        // log.log(Level.INFO, RPCContext.getBean(SystemRPCImpl.class).system_name());
     }
 
+    /**
+     * Stops the light client by shutting down all running services
+     */
     public void stop() {
         // TODO: Stop running services
         this.httpRpc.stop();

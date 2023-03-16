@@ -4,6 +4,11 @@ import com.googlecode.jsonrpc4j.JsonRpcMethod;
 
 import java.util.Map;
 
+/**
+ * Interface which holds all system rpc methods and their interfaces
+ *
+ * @JsonRpcMethod Sets the method name used whenever jsonrpc request is received
+ */
 public interface SystemRPC {
     @JsonRpcMethod("system_name")
     String systemName();
@@ -37,10 +42,10 @@ public interface SystemRPC {
     String[] systemSystemPeers();
 
     @JsonRpcMethod("system_addReservedPeer")
-    String systemAddReservedPeer(String peerId);
+    void systemAddReservedPeer(String peerId);
 
     @JsonRpcMethod("system_removeReservedPeer")
-    String systemRemoveReservedPeer(String peerId);
+    void systemRemoveReservedPeer(String peerId);
 
     @JsonRpcMethod("system_syncState")
     Map<String, Object> systemSyncState();

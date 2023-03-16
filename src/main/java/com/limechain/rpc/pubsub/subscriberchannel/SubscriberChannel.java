@@ -1,4 +1,4 @@
-package com.limechain.rpc.pubsub.subscriber;
+package com.limechain.rpc.pubsub.subscriberchannel;
 
 import com.limechain.rpc.pubsub.PubSubService;
 import com.limechain.rpc.pubsub.Topic;
@@ -9,24 +9,21 @@ public class SubscriberChannel extends AbstractSubscriberChannel {
         super(topic);
     }
 
-    // Add subscriber with PubSubService for a topic
     public void addSubscriber(WebSocketSession session) {
         // We shouldn't allow client to subscribe more than once for the same event.
-        if (this.getSessions()
+        if (this.getSubscribers()
                 .stream()
                 .anyMatch(s -> s.getId().equals(session.getId()))) {
             return;
         }
-        this.getSessions().add(session);
+        this.getSubscribers().add(session);
     }
 
-    // Unsubscribe subscriber with PubSubService for a topic
     public void removeSubscriber(WebSocketSession session) {
-        this.getSessions().removeIf(s -> s.getId().equals(session.getId()));
+        this.getSubscribers().removeIf(s -> s.getId().equals(session.getId()));
     }
 
-    // Request specifically for messages related to topic from PubSubService
     public void getMessagesForSubscriberOfTopic(PubSubService pubSubService) {
-        pubSubService.getMessagesForSubscriberOfTopic(this);
+        pubSubService.sendMessagesToChannel(this);
     }
 }

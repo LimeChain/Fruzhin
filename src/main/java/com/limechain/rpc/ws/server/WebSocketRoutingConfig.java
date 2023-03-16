@@ -12,10 +12,16 @@ import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 
+/**
+ * Additional Spring configuration class for the ws rpc server
+ */
 @Configuration
 @EnableWebSocket
 public class WebSocketRoutingConfig implements WebSocketConfigurer {
-    // These dependencies will be injected from the common configuration
+
+    /**
+     * Dependencies will be injected from {@link com.limechain.rpc.config.CommonConfig}
+     */
     private final RPCMethods rpcMethods;
     private final HostConfig hostConfig;
 
@@ -24,15 +30,24 @@ public class WebSocketRoutingConfig implements WebSocketConfigurer {
         this.hostConfig = hostConfig;
     }
 
+    /**
+     * Exposes ws routing handler on "/" route
+     */
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         registry.addHandler(webSocketHandler(), "/");
     }
 
+    /**
+     * The handler that will be executed when ws request is received
+     */
     public WebSocketHandler webSocketHandler() {
         return new WebSocketHandler(rpcMethods, chainHeadRpc(), transactionRpc());
     }
 
+    /**
+     * Additional beans used by {@link WebSocketHandler}
+     */
     @Bean
     public ChainHeadRpc chainHeadRpc() {
         return new ChainHeadRpcImpl(hostConfig.getHelperNodeAddress());

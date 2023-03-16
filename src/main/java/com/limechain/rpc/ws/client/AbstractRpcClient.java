@@ -8,10 +8,13 @@ import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.logging.Level;
 
+/**
+ * Extension class for {@link WebSocketClient}. Able to send RPC messages and log incoming data
+ */
 @Log
-public class WebSocketRpcClient extends WebSocketClient {
+public abstract class AbstractRpcClient extends WebSocketClient {
 
-    public WebSocketRpcClient(URI serverURI) {
+    public AbstractRpcClient(URI serverURI) {
         super(serverURI);
     }
 
@@ -40,6 +43,12 @@ public class WebSocketRpcClient extends WebSocketClient {
         log.log(Level.SEVERE, "an error occurred:", ex);
     }
 
+    /**
+     * Creates a json rpc request and sends it to the server
+     *
+     * @param method method to be invoked
+     * @param params method parameters
+     */
     public void send(String method, String[] params) {
         String message =
                 "{\"id\":1,\"jsonrpc\":\"2.0\",\"method\":\"" + method + "\",\"params\":[" + String.join(",", params) +
