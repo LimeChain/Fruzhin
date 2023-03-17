@@ -24,7 +24,6 @@ class AbstractSubscriberChannelTest {
         this.channel = new SubscriberChannel(topic);
     }
 
-
     @Test
     public void constructor_setsTopic() {
         assertEquals(new SubscriberChannel(Topic.UNSTABLE_TRANSACTION_WATCH).getTopic(),
