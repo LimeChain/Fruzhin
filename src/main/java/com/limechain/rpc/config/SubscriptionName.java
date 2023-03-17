@@ -2,6 +2,9 @@ package com.limechain.rpc.config;
 
 import lombok.Getter;
 
+/**
+ * Holds pub-sub rpc method names
+ */
 @Getter
 public enum SubscriptionName {
     CHAIN_HEAD_UNSTABLE_FOLLOW("chainHead_unstable_follow"),
@@ -13,15 +16,24 @@ public enum SubscriptionName {
     TRANSACTION_UNSTABLE_SUBMIT_AND_WATCH("transaction_unstable_submitAndWatch"),
     TRANSACTION_UNSTABLE_UNWATCH("transaction_unstable_unwatch");
 
+    /**
+     * Holds the name of the rpc method
+     */
     private final String value;
 
     SubscriptionName(String value) {
         this.value = value;
     }
 
-    public static SubscriptionName fromString(String chain) {
+    /**
+     * Tries to map string parameter to an enum value
+     *
+     * @param subscriptionName name of the enum value to map
+     * @return {@link SubscriptionName} or null if mapping is unsuccessful
+     */
+    public static SubscriptionName fromString(String subscriptionName) {
         for (SubscriptionName type : values()) {
-            if (type.getValue().equals(chain)) {
+            if (type.getValue().equals(subscriptionName)) {
                 return type;
             }
         }

@@ -12,10 +12,19 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Map;
 
+/**
+ * Implementation class for each rpc method. This class will become very large in the future
+ * when we support more rpc methods, however due to the limitations of jsonrpc4j described in {@link RPCMethods},
+ * there's nothing we can do about splitting up the class into several ones for now
+ */
 @Service
 @AutoJsonRpcServiceImpl
 @AllArgsConstructor
 public class RPCMethodsImpl implements RPCMethods {
+    
+    /**
+     * References to rpc method implementation classes
+     */
     private final SystemRPCImpl systemRPC;
 
     @Override
@@ -69,13 +78,13 @@ public class RPCMethodsImpl implements RPCMethods {
     }
 
     @Override
-    public String systemAddReservedPeer(String peerId) {
-        return systemRPC.systemAddReservedPeer(peerId);
+    public void systemAddReservedPeer(String peerId) {
+        systemRPC.systemAddReservedPeer(peerId);
     }
 
     @Override
-    public String systemRemoveReservedPeer(String peerId) {
-        return systemRPC.systemRemoveReservedPeer(peerId);
+    public void systemRemoveReservedPeer(String peerId) {
+        systemRPC.systemRemoveReservedPeer(peerId);
     }
 
     @Override

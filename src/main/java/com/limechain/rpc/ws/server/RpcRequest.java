@@ -2,6 +2,9 @@ package com.limechain.rpc.ws.server;
 
 import lombok.Getter;
 
+/**
+ * Represents a jsonrpc request body
+ */
 @Getter
 public class RpcRequest {
     private String id;

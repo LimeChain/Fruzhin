@@ -13,29 +13,30 @@ import org.apache.commons.cli.ParseException;
 
 import java.util.logging.Level;
 
+/**
+ * Abstraction class around apache.commons.cli used to set arguments rules and parse node arguments
+ */
 @Getter
 @Log
 public class Cli {
-
+    /**
+     * Holds CLI options
+     */
     private final Options options;
+
     private final HelpFormatter formatter = new HelpFormatter();
 
     public Cli() {
         this.options = buildOptions();
     }
 
-    private Options buildOptions() {
-        Options options = new Options();
-        Option networkOption = new Option("n", "network", true, "Client network");
-        Option dbPathOption = new Option(null, "db-path", true, "RocksDB path");
-        networkOption.setRequired(false);
-        dbPathOption.setRequired(false);
-
-        options.addOption(networkOption);
-        options.addOption(dbPathOption);
-        return options;
-    }
-
+    /**
+     * Parses node launch arguments.
+     *
+     * @param args launch arguments coming from the console
+     * @return {@link CliArguments} that contain the successfully parsed arguments
+     * @throws RuntimeException if arguments don't follow the argument rules set by {@link #buildOptions()}
+     */
     public CliArguments parseArgs(String[] args) {
         try {
             CommandLineParser parser = new DefaultParser();
@@ -49,6 +50,23 @@ public class Cli {
             formatter.printHelp("Specify the network name - polkadot, kusama, westend", options);
             throw new RuntimeException();
         }
+    }
+
+    /**
+     * Configures and builds argument rules accepted when running the node.
+     *
+     * @return configured options
+     */
+    private Options buildOptions() {
+        Options options = new Options();
+        Option networkOption = new Option("n", "network", true, "Client network");
+        Option dbPathOption = new Option(null, "db-path", true, "RocksDB path");
+        networkOption.setRequired(false);
+        dbPathOption.setRequired(false);
+
+        options.addOption(networkOption);
+        options.addOption(dbPathOption);
+        return options;
     }
 
 }

@@ -9,10 +9,20 @@ import lombok.extern.java.Log;
 import java.net.URI;
 import java.util.logging.Level;
 
+/**
+ * Rpc client with additional functionality to communicate with pub-sub services
+ */
 @Log
-public class SubscriptionRpcClient extends WebSocketRpcClient {
+public class SubscriptionRpcClient extends AbstractRpcClient {
+    /**
+     * Publishes message when event is received
+     */
     private final Publisher chainPublisher;
     private final PubSubService pubSubService = PubSubService.getInstance();
+
+    /**
+     * Topic of the message. {@link SubscriptionRpcClient} can have only one topic
+     */
     private final Topic topic;
 
     public SubscriptionRpcClient(URI serverURI, Publisher chainPublisher, Topic topic) {
@@ -21,6 +31,11 @@ public class SubscriptionRpcClient extends WebSocketRpcClient {
         this.topic = topic;
     }
 
+    /**
+     * Publishes, broadcasts and notifies subscribers about the message
+     *
+     * @param message The UTF-8 decoded message that was received.
+     */
     @Override
     public void onMessage(String message) {
         log.log(Level.INFO, "RECEIVED MESSAGE: " + message);

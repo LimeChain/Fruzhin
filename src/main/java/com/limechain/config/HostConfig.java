@@ -12,11 +12,21 @@ import java.util.logging.Level;
 import static com.limechain.chain.Chain.WESTEND;
 import static com.limechain.chain.Chain.fromString;
 
+/**
+ * Configuration class used to store any Host specific information
+ */
 @Log
 @Getter
 @Setter
 public class HostConfig {
+    /**
+     * File path under which the DB will be created
+     */
     private String rocksDbPath;
+
+    /**
+     * Chain the Host is running on
+     */
     private Chain chain;
 
     @Value("${genesis.path.polkadot}")
@@ -38,6 +48,13 @@ public class HostConfig {
         log.log(Level.INFO, String.format("✅️Loaded app config for chain %s%n", chain));
     }
 
+    /**
+     * Gets the genesis file path based on the chain the node is configured
+     *
+     * @return genesis(chain spec) file path
+     * @throws RuntimeException if chain is invalid.
+     *                          This shouldn't be possible in practice because of preceding validations.
+     */
     public String getGenesisPath() {
         switch (chain) {
             case POLKADOT -> {
