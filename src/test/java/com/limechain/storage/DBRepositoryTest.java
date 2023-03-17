@@ -21,7 +21,6 @@ public class DBRepositoryTest {
     @AfterEach
     public void close() {
         dbRepository = null;
-        DBInitializer.closeInstances();
     }
 
     @Test

@@ -2,6 +2,7 @@ package com.limechain.rpc.pubsub;
 
 import com.limechain.rpc.pubsub.subscriberchannel.AbstractSubscriberChannel;
 import com.limechain.rpc.pubsub.subscriberchannel.SubscriberChannel;
+import org.assertj.core.util.VisibleForTesting;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.socket.WebSocketSession;
@@ -23,17 +24,11 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 class PubSubServiceTest {
-    // Accessing private fields. Not a good idea in general
-    private static Object getPrivateField(PubSubService service, String fieldName)
-            throws NoSuchFieldException, IllegalAccessException {
-        Field privateField = PubSubService.class.getDeclaredField(fieldName);
-        privateField.setAccessible(true);
-
-        return privateField.get(service);
-    }
+    @VisibleForTesting
+    private final PubSubService service = PubSubService.getInstance();
 
     // Setting private fields. Not a good idea in general
-    private static void setPrivateField(PubSubService service, String fieldName, Object value)
+    private void setPrivateField(String fieldName, Object value)
             throws NoSuchFieldException, IllegalAccessException {
         Field privateField = PubSubService.class.getDeclaredField(fieldName);
         privateField.setAccessible(true);
@@ -41,17 +36,26 @@ class PubSubServiceTest {
         privateField.set(service, value);
     }
 
+    // Accessing private fields. Not a good idea in general
+    private Object getPrivateField(String fieldName)
+            throws NoSuchFieldException, IllegalAccessException {
+        Field privateField = PubSubService.class.getDeclaredField(fieldName);
+        privateField.setAccessible(true);
+
+        return privateField.get(service);
+    }
+
     @BeforeEach
     public void setup() throws NoSuchFieldException, IllegalAccessException {
         // Reset state of singleton manually before each state
         // Not the best approach but can't reset it using new PubSubService() because of private constructor
-        setPrivateField(PubSubService.getInstance(), "subscribersTopicMap", new HashMap<>() {{
+        setPrivateField("subscribersTopicMap", new HashMap<>() {{
             // TODO: Instantiate more subscriber channels in the future
             put(Topic.UNSTABLE_FOLLOW, new SubscriberChannel(Topic.UNSTABLE_FOLLOW));
             put(Topic.UNSTABLE_TRANSACTION_WATCH, new SubscriberChannel(Topic.UNSTABLE_TRANSACTION_WATCH));
         }});
 
-        setPrivateField(PubSubService.getInstance(), "messagesQueue", new LinkedList<>());
+        setPrivateField("messagesQueue", new LinkedList<>());
     }
 
     @Test
@@ -64,14 +68,13 @@ class PubSubServiceTest {
 
     @Test
     public void AddMessageToQueue_addsMessage() throws NoSuchFieldException, IllegalAccessException {
-        PubSubService service = PubSubService.getInstance();
         Message message = new Message(Topic.UNSTABLE_TRANSACTION_WATCH.getValue(), "test payload");
 
         // How to proceed? Can't verify since messagesQueue is private
 
         service.addMessageToQueue(message);
 
-        Queue<Message> messageQueue = (Queue<Message>) getPrivateField(service, "messagesQueue");
+        Queue<Message> messageQueue = (Queue<Message>) getPrivateField("messagesQueue");
 
         assertEquals(1, messageQueue.size());
         assertEquals(message, messageQueue.remove());
@@ -80,12 +83,11 @@ class PubSubServiceTest {
     @Test
     public void AddSubscriber_callsChannelAddSubscriber_whenTopicExists()
             throws NoSuchFieldException, IllegalAccessException {
-        PubSubService service = PubSubService.getInstance();
         SubscriberChannel channel = mock(SubscriberChannel.class);
         WebSocketSession session = mock(WebSocketSession.class);
 
         Map<Topic, AbstractSubscriberChannel> map =
-                (Map<Topic, AbstractSubscriberChannel>) getPrivateField(service, "subscribersTopicMap");
+                (Map<Topic, AbstractSubscriberChannel>) getPrivateField("subscribersTopicMap");
 
         // Overwrite channel with mocked channel
         map.put(Topic.UNSTABLE_FOLLOW, channel);
@@ -98,16 +100,14 @@ class PubSubServiceTest {
     @Test
     public void AddSubscriber_doesNotCallChannelAddSubscriber_whenTopicDoesNotExist()
             throws NoSuchFieldException, IllegalAccessException {
-        PubSubService service = PubSubService.getInstance();
         SubscriberChannel channel = mock(SubscriberChannel.class);
         WebSocketSession session = mock(WebSocketSession.class);
-
 
         // Simulate that we don't have a channel for a topic
         HashMap<Object, Object> map = new HashMap<>() {{
             put(Topic.UNSTABLE_FOLLOW, channel);
         }};
-        setPrivateField(service, "subscribersTopicMap", map);
+        setPrivateField("subscribersTopicMap", map);
 
         service.addSubscriber(Topic.UNSTABLE_TRANSACTION_WATCH, session);
 
@@ -117,7 +117,6 @@ class PubSubServiceTest {
     @Test
     public void RemoveSubscriber_callsChannelRemoveSubscriber_whenSessionExist()
             throws NoSuchFieldException, IllegalAccessException {
-        PubSubService service = PubSubService.getInstance();
         SubscriberChannel channel = mock(SubscriberChannel.class);
         WebSocketSession session = mock(WebSocketSession.class);
 
@@ -127,7 +126,7 @@ class PubSubServiceTest {
         }}).when(channel).getSubscribers();
 
         Map<Topic, AbstractSubscriberChannel> map =
-                (Map<Topic, AbstractSubscriberChannel>) getPrivateField(service, "subscribersTopicMap");
+                (Map<Topic, AbstractSubscriberChannel>) getPrivateField("subscribersTopicMap");
 
         // Overwrite channel with mocked channel
         map.put(Topic.UNSTABLE_FOLLOW, channel);
@@ -140,7 +139,6 @@ class PubSubServiceTest {
     @Test
     public void RemoveSubscriber_doesNotCallChannelRemoveSubscriber_whenSessionDoesNotExist()
             throws NoSuchFieldException, IllegalAccessException {
-        PubSubService service = PubSubService.getInstance();
         SubscriberChannel channel = mock(SubscriberChannel.class);
         WebSocketSession session = mock(WebSocketSession.class);
 
@@ -148,7 +146,7 @@ class PubSubServiceTest {
         doReturn(new ArrayList<>()).when(channel).getSubscribers();
 
         Map<Topic, AbstractSubscriberChannel> map =
-                (Map<Topic, AbstractSubscriberChannel>) getPrivateField(service, "subscribersTopicMap");
+                (Map<Topic, AbstractSubscriberChannel>) getPrivateField("subscribersTopicMap");
 
         // Overwrite channel with mocked channel
         map.put(Topic.UNSTABLE_FOLLOW, channel);
@@ -161,7 +159,6 @@ class PubSubServiceTest {
     @Test
     public void RemoveSubscriber_doesNotCallChannelRemoveSubscriber_whenTopicDoesNotExist()
             throws NoSuchFieldException, IllegalAccessException {
-        PubSubService service = PubSubService.getInstance();
         SubscriberChannel channel = mock(SubscriberChannel.class);
         WebSocketSession session = mock(WebSocketSession.class);
 
@@ -171,7 +168,7 @@ class PubSubServiceTest {
         HashMap<Object, Object> map = new HashMap<>() {{
             put(Topic.UNSTABLE_FOLLOW, channel);
         }};
-        setPrivateField(service, "subscribersTopicMap", map);
+        setPrivateField("subscribersTopicMap", map);
 
         service.removeSubscriber(Topic.UNSTABLE_TRANSACTION_WATCH, session.getId());
 
@@ -180,7 +177,6 @@ class PubSubServiceTest {
 
     @Test
     public void broadcast_emptiesMessageQueue_whenCalled() throws NoSuchFieldException, IllegalAccessException {
-        PubSubService service = PubSubService.getInstance();
         Message message1 = new Message(Topic.UNSTABLE_FOLLOW.getValue(), "message1");
         Message message2 = new Message(Topic.UNSTABLE_FOLLOW.getValue(), "message2");
         Message message3 = new Message(Topic.UNSTABLE_TRANSACTION_WATCH.getValue(), "message3");
@@ -189,7 +185,7 @@ class PubSubServiceTest {
         service.addMessageToQueue(message2);
         service.addMessageToQueue(message3);
 
-        Queue<Message> map = (Queue<Message>) getPrivateField(service, "messagesQueue");
+        Queue<Message> map = (Queue<Message>) getPrivateField("messagesQueue");
 
         assertEquals(3, map.size());
 
@@ -198,15 +194,13 @@ class PubSubServiceTest {
         assertEquals(0, map.size());
     }
 
-
     @Test
     public void notifySubscribers_callsNotifySubscribers_forAllChannels()
             throws NoSuchFieldException, IllegalAccessException, IOException {
-        PubSubService service = PubSubService.getInstance();
         SubscriberChannel channel1 = mock(SubscriberChannel.class);
         SubscriberChannel channel2 = mock(SubscriberChannel.class);
 
-        setPrivateField(service, "subscribersTopicMap", new HashMap<>() {{
+        setPrivateField("subscribersTopicMap", new HashMap<>() {{
             put(Topic.UNSTABLE_FOLLOW, channel1);
             put(Topic.UNSTABLE_TRANSACTION_WATCH, channel2);
         }});
@@ -220,10 +214,9 @@ class PubSubServiceTest {
     @Test
     public void notifySubscribers_throwsRuntimeException_whenNotifySubscribersFails()
             throws NoSuchFieldException, IllegalAccessException, IOException {
-        PubSubService service = PubSubService.getInstance();
         SubscriberChannel channel1 = mock(SubscriberChannel.class);
         doThrow(new IOException()).when(channel1).notifySubscribers();
-        setPrivateField(service, "subscribersTopicMap", new HashMap<>() {{
+        setPrivateField("subscribersTopicMap", new HashMap<>() {{
             put(Topic.UNSTABLE_FOLLOW, channel1);
         }});
 
