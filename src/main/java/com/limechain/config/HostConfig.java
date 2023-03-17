@@ -66,9 +66,7 @@ public class HostConfig {
             case WESTEND -> {
                 return westendGenesisPath;
             }
-            default -> {
-                throw new RuntimeException("Invalid Chain in host configuration");
-            }
         }
+        throw new RuntimeException("Invalid Chain in host configuration");
     }
 }
