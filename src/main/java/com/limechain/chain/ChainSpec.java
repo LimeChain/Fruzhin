@@ -29,7 +29,7 @@ public class ChainSpec implements Serializable {
     private String consensusEngine;
 
     /**
-     * Reads file from path parameter and tries to map its fields
+     * Loads chain specification data from json file and maps its fields
      *
      * @param pathToChainSpecJSON path to the chain specification json file
      * @return class instance mapped to the json file

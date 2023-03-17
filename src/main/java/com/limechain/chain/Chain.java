@@ -24,7 +24,7 @@ public enum Chain {
      * Tries to map string parameter to an enum value
      *
      * @param chain name of the enum value to map
-     * @return enum value or null if mapping is unsuccessful
+     * @return {@link Chain} or null if mapping is unsuccessful
      */
     public static Chain fromString(String chain) {
         for (Chain type : values()) {

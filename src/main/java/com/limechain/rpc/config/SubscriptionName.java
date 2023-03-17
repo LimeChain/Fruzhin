@@ -29,7 +29,7 @@ public enum SubscriptionName {
      * Tries to map string parameter to an enum value
      *
      * @param subscriptionName name of the enum value to map
-     * @return enum value or null if mapping is unsuccessful
+     * @return {@link SubscriptionName} or null if mapping is unsuccessful
      */
     public static SubscriptionName fromString(String subscriptionName) {
         for (SubscriptionName type : values()) {

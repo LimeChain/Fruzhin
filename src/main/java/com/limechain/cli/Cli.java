@@ -23,7 +23,7 @@ public class Cli {
      * Holds CLI options
      */
     private final Options options;
-    
+
     private final HelpFormatter formatter = new HelpFormatter();
 
     public Cli() {
@@ -31,7 +31,7 @@ public class Cli {
     }
 
     /**
-     * Tries to parse node launch arguments.
+     * Parses node launch arguments.
      *
      * @param args launch arguments coming from the console
      * @return {@link CliArguments} that contain the successfully parsed arguments
