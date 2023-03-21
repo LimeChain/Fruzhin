@@ -23,6 +23,8 @@ java.sourceCompatibility = JavaVersion.VERSION_17
 
 repositories {
     mavenCentral()
+    maven { setUrl("https://jitpack.io") }
+    maven { setUrl("https://jcenter.bintray.com/") }
 }
 
 dependencies {
@@ -53,6 +55,20 @@ dependencies {
 
     // Websockets
     implementation("org.springframework.boot:spring-boot-starter-websocket")
+
+//    implementation("com.github.peergos:nabu:-SNAPSHOT")
+    implementation("com.github.multiformats:java-multiaddr:v1.4.11")
+    implementation("com.github.peergos:jvm-libp2p:0.9.7")
+    implementation("org.bouncycastle:bcprov-jdk15on:1.70")
+    implementation("org.bouncycastle:bcpkix-jdk15on:1.70")
+    implementation("org.apache.commons:commons-lang3:3.6")
+    implementation("org.apache.commons:commons-collections4:4.1")
+    implementation("com.github.dnsjava:dnsjava:v3.5.2")
+    implementation("com.offbynull.portmapper:portmapper:2.0.6")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.21")
+    implementation("com.h2database:h2:2.1.214")
+
+
 }
 
 tasks.getByName<Test>("test") {
