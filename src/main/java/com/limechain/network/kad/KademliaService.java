@@ -29,7 +29,8 @@ public class KademliaService {
         HostBuilder hostBuilder = (new HostBuilder()).generateIdentity().listenLocalhost(1001);
         Multihash peerId = Multihash.deserialize(hostBuilder.getPeerId().getBytes());
         Kademlia dht =
-                new Kademlia(new KademliaEngine(peerId, new RamProviderStore(), new RamRecordStore()), protocolId);
+                new Kademlia(new KademliaEngine(peerId, new RamProviderStore(), new RamRecordStore()), protocolId, 20,
+                        3);
         hostBuilder.addProtocols(List.of(new Ping(), new AutonatProtocol.Binding(), dht));
         var host = hostBuilder.build();
 
