@@ -46,7 +46,7 @@ public class Cli {
             return new CliArguments(network, dbPath);
         } catch (ParseException e) {
             log.log(Level.SEVERE, "Failed to parse cli arguments", e);
-            formatter.printHelp("Specify the network name - polkadot, kusama, westend", options);
+            formatter.printHelp("Specify the network name - polkadot, kusama, westend, local", options);
             throw new RuntimeException();
         }
     }

@@ -1,15 +1,27 @@
 package com.limechain.network;
 
+import com.limechain.chain.ChainService;
+import com.limechain.chain.ChainSpec;
 import com.limechain.config.HostConfig;
 import com.limechain.network.kad.KademliaService;
+import com.offbynull.kademlia.Id;
+import io.ipfs.multihash.Multihash;
+import io.libp2p.core.AddressBook;
+import io.libp2p.core.Host;
+import io.libp2p.core.PeerId;
+import io.libp2p.core.multiformats.Multiaddr;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.java.Log;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 import java.util.logging.Level;
 
 @Component
@@ -19,11 +31,9 @@ import java.util.logging.Level;
 public class Network {
     private static Network network;
     public static KademliaService kademliaService;
-    LinkedHashMap<String, String> peerAddresses;
 
-    private Network(HostConfig hostConfig) {
-        kademliaService = new KademliaService("/dot/kad", hostConfig.getBootstrapNodes());
-        peerAddresses = new LinkedHashMap<>();
+    private Network(ChainService chainService) {
+        kademliaService = new KademliaService("/dot/kad", List.of(chainService.getGenesis().getBootNodes()));
     }
 
     public static Network getInstance() {
@@ -33,12 +43,12 @@ public class Network {
         throw new AssertionError("Network not initialized.");
     }
 
-    public static Network initialize(HostConfig hostConfig) {
+    public static Network initialize(ChainService chainService) {
         if (network != null) {
             log.log(Level.WARNING, "Network module already initialized.");
             return network;
         }
-        network = new Network(hostConfig);
+        network = new Network(chainService);
         log.log(Level.INFO, "Initialized network module!");
         return network;
     }
@@ -46,14 +56,10 @@ public class Network {
     @Scheduled(fixedDelay = 10000)
     public void findPeers() throws InterruptedException {
         log.log(Level.INFO, "Finding peers");
-        try{
-            kademliaService.findNewPeers(peerAddresses);
-        } catch (Exception e){
-            log.log(Level.SEVERE, "Error: "+ e.getMessage());
-        }
-        log.log(Level.INFO, "Peers: " + peerAddresses.size());
-        if(peerAddresses.size()>2){
-            Thread.sleep(10000);
+        try {
+            kademliaService.findNewPeers();
+        } catch (Exception e) {
+            log.log(Level.SEVERE, "Error: " + e.getMessage());
         }
     }
 }

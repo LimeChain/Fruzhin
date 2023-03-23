@@ -23,3 +23,6 @@ out/
 ### Rocks DB ###
 /rocks-db
 /test
+
+### Local Chain Spec
+/genesis/westend-local.json

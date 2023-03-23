@@ -27,42 +27,44 @@ import java.util.logging.Level;
 @Getter
 @Setter
 public class KademliaService {
-
+    public static final int MIN_PEER = 20;
     private List<KademliaController> peers = new ArrayList<>();
     private Kademlia dht;
     private Host host;
     private HostBuilder hostBuilder;
 
+    LinkedHashMap<String, String> peerAddresses;
+
     public KademliaService(String protocolId, List<String> bootstrapNodes) {
         this.initialize(protocolId, bootstrapNodes);
     }
 
-    private void initialize(String protocolId, List<String> boostrapNodes) {
+    private void initialize(String protocolId, List<String> bootstrapNodes) {
         hostBuilder = (new HostBuilder()).generateIdentity().listenLocalhost(1001);
-        Multihash peerId = Multihash.deserialize(hostBuilder.getPeerId().getBytes());
-        Kademlia dht =
-                new Kademlia(new KademliaEngine(peerId, new RamProviderStore(), new RamRecordStore()), protocolId, 20,
-                        3);
+        Multihash hostId = Multihash.deserialize(hostBuilder.getPeerId().getBytes());
+        dht = new Kademlia(new KademliaEngine(hostId, new RamProviderStore(), new RamRecordStore()), protocolId,
+                20, 3);
         hostBuilder.addProtocols(List.of(new Ping(), new AutonatProtocol.Binding(), dht));
         host = hostBuilder.build();
-
-        for (String bootNode : boostrapNodes) {
+        peerAddresses = new LinkedHashMap<>();
+        for (String bootNode : bootstrapNodes) {
             try {
-                KademliaController dialResult = dht.dial(host, Multiaddr.fromString(bootNode)).getController().join();
-                peers.add(dialResult);
+                KademliaController kademliaController = dht.dial(host, Multiaddr.fromString(bootNode)).getController().join();
+                peers.add(kademliaController);
             } catch (Exception e) {
-                log.log(Level.SEVERE, "Failed to connect to boot node", e);
+                log.log(Level.WARNING, "Could not connect to bootstrap node: " + bootNode, e);
             }
+
+            log.log(Level.INFO, String.format("Kad boostrap finished. Connected to %s peers", peers.size()));
         }
-        log.log(Level.INFO, String.format("Kad boostrap finished. Connected to %s peers", peers.size()));
     }
 
-    public void findNewPeers(LinkedHashMap<String, String> peerAddresses) {
+    public void findNewPeers() {
         byte[] hash = new byte[32];
         (new Random()).nextBytes(hash);
         Multihash randomPeerId = new Multihash(Multihash.Type.sha2_256, hash);
         try {
-            List<PeerAddresses> closestPeers = dht.findClosestPeers(randomPeerId, 10, host);
+            List<PeerAddresses> closestPeers = dht.findClosestPeers(randomPeerId, 20, host);
 
             for (PeerAddresses peer : closestPeers) {
                 String peerId = peer.peerId.toString();
@@ -80,8 +82,9 @@ public class KademliaService {
                     }
                 }
             }
-        } catch (Exception e){
+        } catch (Exception e) {
             log.log(Level.SEVERE, "Error finding closest peers", e);
         }
+        log.log(Level.INFO, "Total peers: "+peerAddresses.size());
     }
 }

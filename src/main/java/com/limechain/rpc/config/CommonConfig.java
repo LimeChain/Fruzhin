@@ -47,8 +47,8 @@ public class CommonConfig {
     }
 
     @Bean
-    public Network network(HostConfig hostConfig) {
-        return Network.initialize(hostConfig);
+    public Network network(ChainService chainService) {
+        return Network.initialize(chainService);
     }
 
     @Bean

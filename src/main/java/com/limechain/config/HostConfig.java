@@ -20,16 +20,14 @@ public class HostConfig {
     private String rocksDbPath;
     private Chain chain;
     //TODO Make bootstrapNodes not hardcoded
-    private List<String> bootstrapNodes = List.of(
-            "/ip4/127.0.0.1/tcp/7001/p2p/12D3KooWR41K1S62Dy6pwMJzeEDKh1KkKtHYc2pW4ZNKPC1Ddg9t"
-    );
-
     @Value("${genesis.path.polkadot}")
     private String polkadotGenesisPath;
     @Value("${genesis.path.kusama}")
     private String kusamaGenesisPath;
     @Value("${genesis.path.westend}")
     private String westendGenesisPath;
+    @Value("${genesis.path.local}")
+    private String localGenesisPath;
     @Value("${helper.node.address}")
     private String helperNodeAddress;
 
@@ -53,6 +51,9 @@ public class HostConfig {
             }
             case WESTEND -> {
                 return westendGenesisPath;
+            }
+            case LOCAL ->{
+                return localGenesisPath;
             }
             default -> {
                 throw new RuntimeException("Invalid Chain in host configuration");

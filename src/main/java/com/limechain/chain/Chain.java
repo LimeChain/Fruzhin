@@ -3,6 +3,7 @@ package com.limechain.chain;
 public enum Chain {
     POLKADOT("polkadot"),
     KUSAMA("kusama"),
+    LOCAL("local"),
     WESTEND("westend");
 
     private final String value;
