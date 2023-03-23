@@ -7,6 +7,7 @@ import lombok.Setter;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Value;
 
+import java.util.List;
 import java.util.logging.Level;
 
 import static com.limechain.chain.Chain.WESTEND;
@@ -18,6 +19,10 @@ import static com.limechain.chain.Chain.fromString;
 public class HostConfig {
     private String rocksDbPath;
     private Chain chain;
+    //TODO Make bootstrapNodes not hardcoded
+    private List<String> bootstrapNodes = List.of(
+            "/ip4/127.0.0.1/tcp/7001/p2p/12D3KooWR41K1S62Dy6pwMJzeEDKh1KkKtHYc2pW4ZNKPC1Ddg9t"
+    );
 
     @Value("${genesis.path.polkadot}")
     private String polkadotGenesisPath;

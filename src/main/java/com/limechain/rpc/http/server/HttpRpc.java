@@ -5,6 +5,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.util.Collections;
 
@@ -15,6 +16,7 @@ import java.util.Collections;
         "com.limechain.rpc.http.server",
         "com.limechain.storage"
 })
+@EnableScheduling
 public class HttpRpc {
     private ConfigurableApplicationContext springCtx;
 

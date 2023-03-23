@@ -6,6 +6,7 @@ import com.limechain.cli.Cli;
 import com.limechain.cli.CliArguments;
 import com.limechain.config.HostConfig;
 import com.limechain.config.SystemInfo;
+import com.limechain.network.Network;
 import com.limechain.rpc.ws.client.WebSocketClient;
 import com.limechain.storage.DBInitializer;
 import com.limechain.storage.KVRepository;
@@ -43,6 +44,11 @@ public class CommonConfig {
     @Bean
     public SystemInfo systemInfo(HostConfig hostConfig) {
         return new SystemInfo();
+    }
+
+    @Bean
+    public Network network(HostConfig hostConfig) {
+        return Network.initialize(hostConfig);
     }
 
     @Bean
