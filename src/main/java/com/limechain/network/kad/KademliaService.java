@@ -18,9 +18,7 @@ import org.peergos.protocol.dht.RamProviderStore;
 import org.peergos.protocol.dht.RamRecordStore;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.logging.Level;
@@ -42,7 +40,9 @@ public class KademliaService {
     private void initialize(String protocolId, List<String> boostrapNodes) {
         hostBuilder = (new HostBuilder()).generateIdentity().listenLocalhost(1001);
         Multihash peerId = Multihash.deserialize(hostBuilder.getPeerId().getBytes());
-        dht = new Kademlia(new KademliaEngine(peerId, new RamProviderStore(), new RamRecordStore()), protocolId);
+        Kademlia dht =
+                new Kademlia(new KademliaEngine(peerId, new RamProviderStore(), new RamRecordStore()), protocolId, 20,
+                        3);
         hostBuilder.addProtocols(List.of(new Ping(), new AutonatProtocol.Binding(), dht));
         host = hostBuilder.build();
 
