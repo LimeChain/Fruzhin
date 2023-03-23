@@ -2,7 +2,6 @@ package com.limechain.rpc.pubsub;
 
 import com.limechain.rpc.pubsub.subscriberchannel.AbstractSubscriberChannel;
 import com.limechain.rpc.pubsub.subscriberchannel.SubscriberChannel;
-import org.assertj.core.util.VisibleForTesting;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.socket.WebSocketSession;
@@ -24,7 +23,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 class PubSubServiceTest {
-    @VisibleForTesting
     private final PubSubService service = PubSubService.getInstance();
 
     // Setting private fields. Not a good idea in general

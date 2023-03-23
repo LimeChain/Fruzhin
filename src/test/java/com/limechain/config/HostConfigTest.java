@@ -71,28 +71,5 @@ public class HostConfigTest {
         hostConfig = new HostConfig(cliArguments);
         setField(hostConfig, "polkadotGenesisPath", polkadotGenesisPath);
         assertEquals(hostConfig.getGenesisPath(), polkadotGenesisPath);
-
-        // Unknown network
-//        Chain unknownChain = mock(Chain.class);
-//        when(unknownChain.ordinal()).thenReturn(3).thenReturn(3).thenReturn(3);
-//        when(unknownChain.getValue()).thenReturn("unknown").thenReturn("unknown").thenReturn("unknown");
-//
-//
-//        mockStatic(Chain.class);
-//        when(Chain.values())
-//                .thenReturn(new Chain[]{Chain.POLKADOT, Chain.KUSAMA, Chain.WESTEND, unknownChain})
-//                .thenReturn(new Chain[]{Chain.POLKADOT, Chain.KUSAMA, Chain.WESTEND, unknownChain})
-//                .thenReturn(new Chain[]{Chain.POLKADOT, Chain.KUSAMA, Chain.WESTEND, unknownChain});
-//
-//        when(Chain.fromString("unknown")).thenReturn(unknownChain).thenReturn(unknownChain).thenReturn(unknownChain);
-//
-//        when(cliArguments.network()).thenReturn("unknown");
-//        hostConfig = new HostConfig(cliArguments);
-//
-//        HostConfig finalHostConfig = hostConfig;
-//        Exception exception = assertThrows(RuntimeException.class, () -> finalHostConfig.getGenesisPath());
-//
-//        assertEquals("Invalid Chain in host configuration", exception.getMessage());
-
     }
 }
