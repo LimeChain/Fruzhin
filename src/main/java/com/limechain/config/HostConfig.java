@@ -7,7 +7,6 @@ import lombok.Setter;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Value;
 
-import java.util.List;
 import java.util.logging.Level;
 
 import static com.limechain.chain.Chain.WESTEND;
