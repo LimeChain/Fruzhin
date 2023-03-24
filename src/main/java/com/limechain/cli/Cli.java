@@ -54,7 +54,7 @@ public class Cli {
             return new CliArguments(network, dbPath);
         } catch (ParseException e) {
             log.log(Level.SEVERE, "Failed to parse cli arguments", e);
-            formatter.printHelp("Specify the network name - " + validChains.toString(), options);
+            formatter.printHelp("Specify the network name - " + String.join(", ", validChains), options);
             throw new RuntimeException();
         }
     }
