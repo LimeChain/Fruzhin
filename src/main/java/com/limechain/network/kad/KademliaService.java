@@ -30,7 +30,8 @@ public class KademliaService {
     }
 
     private void initialize(String protocolId, Multihash hostId, boolean localEnabled) {
-        dht = new Kademlia(new KademliaEngine(hostId, new RamProviderStore(), new RamRecordStore()), protocolId, REPLICATION, ALPHA, localEnabled);
+        dht = new Kademlia(new KademliaEngine(hostId, new RamProviderStore(), new RamRecordStore()),
+                protocolId, REPLICATION, ALPHA, localEnabled);
     }
 
     public void connectBootNodes(String[] bootNodes) {
