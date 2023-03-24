@@ -7,14 +7,18 @@ import com.limechain.cli.CliArguments;
 import com.limechain.config.HostConfig;
 import com.limechain.config.SystemInfo;
 import com.limechain.network.Network;
-import com.limechain.rpc.ws.client.WebSocketClient;
 import com.limechain.storage.DBInitializer;
 import com.limechain.storage.KVRepository;
-import io.libp2p.core.Host;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * Spring configuration class used to instantiate beans used by both http and ws rpc modules.
+ * <p>
+ * <b>IMPORTANT: This class is invoked twice on Host startup. This means that unless beans are singletons,
+ * the http and ws spring apps will hold different bean references.</b>
+ */
 @Configuration
 public class CommonConfig {
     @Bean
@@ -50,11 +54,6 @@ public class CommonConfig {
     @Bean
     public Network network(ChainService chainService, HostConfig hostConfig) {
         return Network.initialize(chainService, hostConfig);
-    }
-
-    @Bean
-    public WebSocketClient wsClient(HostConfig hostConfig) {
-        return new WebSocketClient(hostConfig.getHelperNodeAddress());
     }
 
 }

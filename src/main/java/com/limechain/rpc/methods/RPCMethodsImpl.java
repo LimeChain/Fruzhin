@@ -1,19 +1,31 @@
 package com.limechain.rpc.methods;
 
+import com.googlecode.jsonrpc4j.JsonRpcMethod;
 import com.googlecode.jsonrpc4j.spring.AutoJsonRpcServiceImpl;
-import com.limechain.rpc.methods.chain.ChainRPCImpl;
+import com.limechain.rpc.methods.system.SystemRPC;
 import com.limechain.rpc.methods.system.SystemRPCImpl;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Map;
 
+/**
+ * Implementation class for each rpc method. This class will become very large in the future
+ * when we support more rpc methods, however due to the limitations of jsonrpc4j described in {@link RPCMethods},
+ * there's nothing we can do about splitting up the class into several ones for now
+ */
 @Service
 @AutoJsonRpcServiceImpl
 @AllArgsConstructor
 public class RPCMethodsImpl implements RPCMethods {
+    
+    /**
+     * References to rpc method implementation classes
+     */
     private final SystemRPCImpl systemRPC;
-    private final ChainRPCImpl chainRPC;
 
     @Override
     public String systemName() {
@@ -66,13 +78,13 @@ public class RPCMethodsImpl implements RPCMethods {
     }
 
     @Override
-    public String systemAddReservedPeer(String peerId) {
-        return systemRPC.systemAddReservedPeer(peerId);
+    public void systemAddReservedPeer(String peerId) {
+        systemRPC.systemAddReservedPeer(peerId);
     }
 
     @Override
-    public String systemRemoveReservedPeer(String peerId) {
-        return systemRPC.systemRemoveReservedPeer(peerId);
+    public void systemRemoveReservedPeer(String peerId) {
+        systemRPC.systemRemoveReservedPeer(peerId);
     }
 
     @Override
@@ -92,42 +104,11 @@ public class RPCMethodsImpl implements RPCMethods {
 
     @Override
     public String[] rpcMethods() {
-        //TODO: Use reflection in order to not hard code
-        return new String[0];
-    }
+        ArrayList<Method> methods = new ArrayList<>();
 
-    @Override
-    public void chainUnstableFollow() {
-        chainRPC.chainUnstableFollow();
-    }
+        Collections.addAll(methods, RPCMethods.class.getDeclaredMethods());
+        Collections.addAll(methods, SystemRPC.class.getDeclaredMethods());
 
-    @Override
-    public String chainUnstableUnfollow() {
-        return null;
-    }
-
-    @Override
-    public String chainUnstableUnpin() {
-        return null;
-    }
-
-    @Override
-    public String chainUnstableStorage() {
-        return null;
-    }
-
-    @Override
-    public String chainUnstableCall() {
-        return null;
-    }
-
-    @Override
-    public String chainUnstableStopCall() {
-        return null;
-    }
-
-    @Override
-    public String transactionUnstableSubmitAndWatch() {
-        return null;
+        return methods.stream().map(m -> m.getAnnotation(JsonRpcMethod.class).value()).toArray(String[]::new);
     }
 }

@@ -10,17 +10,32 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.logging.Level;
 
+/**
+ * Service used to read/write chain spec(genesis) info to/from the DB
+ */
 @Getter
 @Setter
 @Log
 public class ChainService {
+    /**
+     * Key under which the value is stored
+     */
+    private final String genesisKey = "genesis";
+
+    /**
+     * Key-value repository that stores the chain spec info
+     */
     private final KVRepository<String, Object> repository;
+
+    /**
+     * Instance that holds the chain spec info
+     */
     private ChainSpec genesis;
 
     public ChainService(HostConfig hostConfig, KVRepository<String, Object> repository) {
         this.repository = repository;
 
-        Optional<Object> genesis = repository.find("genesis" + hostConfig.getChain().getValue());
+        Optional<Object> genesis = repository.find(genesisKey + hostConfig.getChain().getValue());
         if (genesis.isPresent()) {
             this.setGenesis((ChainSpec) genesis.get());
             log.log(Level.INFO, "✅️Loaded chain spec from DB");
@@ -31,7 +46,7 @@ public class ChainService {
             this.setGenesis(ChainSpec.newFromJSON(hostConfig.getGenesisPath()));
             log.log(Level.INFO, "✅️Loaded chain spec from JSON");
 
-            repository.save("genesis", this.getGenesis());
+            repository.save(genesisKey, this.getGenesis());
             log.log(Level.FINE, "Saved chain spec to database");
         } catch (IOException e) {
             throw new RuntimeException(e);

@@ -3,6 +3,9 @@ package com.limechain.config;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 
+/**
+ * Configuration class used to hold and information used by the system rpc methods
+ */
 @Getter
 public class SystemInfo {
     private final String role;

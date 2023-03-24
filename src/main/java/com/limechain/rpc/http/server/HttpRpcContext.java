@@ -5,8 +5,13 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
 
-// Not used anywhere currently. Could be helpful in the future.
-// Pattern from: https://bit.ly/3yqYkX0
+/**
+ * @deprecated Spring application pattern allowing runtime code to access any bean in the application
+ * <p>
+ * Not used anywhere currently. Could be helpful in the future.
+ * <p>
+ * Pattern taken from <a href="https://bit.ly/3yqYkX0">here</a>
+ */
 @Component
 public class HttpRpcContext implements ApplicationContextAware {
 
@@ -15,9 +20,6 @@ public class HttpRpcContext implements ApplicationContextAware {
     /**
      * Returns the Spring managed bean instance of the given class type if it exists.
      * Returns null otherwise.
-     *
-     * @param beanClass
-     * @return
      */
     public static <T extends Object> T getBean(Class<T> beanClass) {
         return context.getBean(beanClass);

@@ -54,6 +54,7 @@ dependencies {
     // Websockets
     implementation("org.springframework.boot:spring-boot-starter-websocket")
 
+    implementation("org.java-websocket:Java-WebSocket:1.5.3")
 }
 
 tasks.getByName<Test>("test") {
