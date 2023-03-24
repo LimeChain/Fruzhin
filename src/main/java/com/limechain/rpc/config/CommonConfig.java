@@ -10,6 +10,7 @@ import com.limechain.network.Network;
 import com.limechain.rpc.ws.client.WebSocketClient;
 import com.limechain.storage.DBInitializer;
 import com.limechain.storage.KVRepository;
+import io.libp2p.core.Host;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -47,8 +48,8 @@ public class CommonConfig {
     }
 
     @Bean
-    public Network network(ChainService chainService) {
-        return Network.initialize(chainService);
+    public Network network(ChainService chainService, HostConfig hostConfig) {
+        return Network.initialize(chainService, hostConfig);
     }
 
     @Bean

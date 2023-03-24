@@ -3,6 +3,7 @@ package com.limechain.network.kad;
 import io.ipfs.multiaddr.MultiAddress;
 import io.ipfs.multihash.Multihash;
 import io.libp2p.core.Host;
+import io.libp2p.core.PeerId;
 import io.libp2p.core.multiformats.Multiaddr;
 import io.libp2p.protocol.Ping;
 import lombok.Getter;
@@ -35,17 +36,13 @@ public class KademliaService {
 
     LinkedHashMap<String, String> peerAddresses;
 
-    public KademliaService(String protocolId, List<String> bootstrapNodes) {
-        this.initialize(protocolId, bootstrapNodes);
+    public KademliaService(String protocolId, List<String> bootstrapNodes, Multihash hostId, boolean localDht) {
+        this.initialize(protocolId, hostId, localDht, bootstrapNodes);
     }
 
-    private void initialize(String protocolId, List<String> bootstrapNodes) {
-        hostBuilder = (new HostBuilder()).generateIdentity().listenLocalhost(1001);
-        Multihash hostId = Multihash.deserialize(hostBuilder.getPeerId().getBytes());
+    private void initialize(String protocolId, Multihash hostId, boolean localEnabled, List<String> bootstrapNodes) {
         dht = new Kademlia(new KademliaEngine(hostId, new RamProviderStore(), new RamRecordStore()), protocolId,
-                20, 3);
-        hostBuilder.addProtocols(List.of(new Ping(), new AutonatProtocol.Binding(), dht));
-        host = hostBuilder.build();
+                20, 3, localEnabled);
         peerAddresses = new LinkedHashMap<>();
         for (String bootNode : bootstrapNodes) {
             try {
@@ -85,6 +82,6 @@ public class KademliaService {
         } catch (Exception e) {
             log.log(Level.SEVERE, "Error finding closest peers", e);
         }
-        log.log(Level.INFO, "Total peers: "+peerAddresses.size());
+        log.log(Level.INFO, "Total peers: " + peerAddresses.size());
     }
 }
