@@ -23,6 +23,7 @@ import java.util.logging.Level;
 @Getter
 @Setter
 public class Network {
+    private static final int SEARCH_PEERS_TIME_PERIOD=10000;
     private static Network network;
     public static KademliaService kademliaService;
 
@@ -59,7 +60,7 @@ public class Network {
         return network;
     }
 
-    @Scheduled(fixedDelay = 10000)
+    @Scheduled(fixedDelay = SEARCH_PEERS_TIME_PERIOD)
     public void findPeers() throws InterruptedException {
         log.log(Level.INFO, "Searching for nodes...");
         try {
