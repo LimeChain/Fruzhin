@@ -19,7 +19,6 @@ import static com.limechain.chain.Chain.fromString;
 public class HostConfig {
     private String rocksDbPath;
     private Chain chain;
-    //TODO Make bootstrapNodes not hardcoded
     @Value("${genesis.path.polkadot}")
     private String polkadotGenesisPath;
     @Value("${genesis.path.kusama}")
