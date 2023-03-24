@@ -2,15 +2,10 @@ package com.limechain.network;
 
 import com.limechain.chain.Chain;
 import com.limechain.chain.ChainService;
-import com.limechain.chain.ChainSpec;
 import com.limechain.config.HostConfig;
 import com.limechain.network.kad.KademliaService;
-import com.offbynull.kademlia.Id;
 import io.ipfs.multihash.Multihash;
-import io.libp2p.core.AddressBook;
 import io.libp2p.core.Host;
-import io.libp2p.core.PeerId;
-import io.libp2p.core.multiformats.Multiaddr;
 import io.libp2p.protocol.Ping;
 import lombok.Getter;
 import lombok.Setter;
@@ -20,12 +15,7 @@ import org.peergos.protocol.autonat.AutonatProtocol;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Random;
 import java.util.logging.Level;
 
 @Component
@@ -40,13 +30,16 @@ public class Network {
     private Host host;
 
     private Network(ChainService chainService, HostConfig hostConfig) {
+        boolean isLocalEnabled = hostConfig.getChain() == Chain.LOCAL;
         hostBuilder = (new HostBuilder()).generateIdentity().listenLocalhost(1001);
         Multihash hostId = Multihash.deserialize(hostBuilder.getPeerId().getBytes());
-        boolean isLocalEnabled = hostConfig.getChain() == Chain.LOCAL;
-        kademliaService = new KademliaService("/dot/kad", List.of(chainService.getGenesis().getBootNodes()), hostId, isLocalEnabled);
+        kademliaService = new KademliaService("/dot/kad", hostId, isLocalEnabled);
         hostBuilder.addProtocols(List.of(new Ping(), new AutonatProtocol.Binding(), kademliaService.getDht()));
-        host = hostBuilder.build();
 
+        host = hostBuilder.build();
+        kademliaService.setHost(host);
+
+        kademliaService.connectBootNodes(chainService.getGenesis().getBootNodes());
     }
 
     public static Network getInstance() {
@@ -68,7 +61,7 @@ public class Network {
 
     @Scheduled(fixedDelay = 10000)
     public void findPeers() throws InterruptedException {
-        log.log(Level.INFO, "Finding peers");
+        log.log(Level.INFO, "Searching for nodes...");
         try {
             kademliaService.findNewPeers();
         } catch (Exception e) {
