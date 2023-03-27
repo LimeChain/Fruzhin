@@ -24,6 +24,7 @@ import java.util.logging.Level;
 @Setter
 public class Network {
     private static final int TEN_SECONDS_IN_MS = 10000;
+    private static final int HOST_PORT = 1001;
     private static Network network;
     public static KademliaService kademliaService;
 
@@ -32,10 +33,10 @@ public class Network {
 
     private Network(ChainService chainService, HostConfig hostConfig) {
         boolean isLocalEnabled = hostConfig.getChain() == Chain.LOCAL;
-        hostBuilder = (new HostBuilder()).generateIdentity().listenLocalhost(1001);
+        hostBuilder = (new HostBuilder()).generateIdentity().listenLocalhost(HOST_PORT);
         Multihash hostId = Multihash.deserialize(hostBuilder.getPeerId().getBytes());
         kademliaService = new KademliaService("/dot/kad", hostId, isLocalEnabled);
-        hostBuilder.addProtocols(List.of(new Ping(), new AutonatProtocol.Binding(), kademliaService.getDht()));
+        hostBuilder.addProtocols(List.of(new Ping(), kademliaService.getDht()));
 
         host = hostBuilder.build();
         kademliaService.setHost(host);
