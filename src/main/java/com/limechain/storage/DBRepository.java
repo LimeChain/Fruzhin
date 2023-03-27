@@ -26,12 +26,14 @@ public class DBRepository implements KVRepository<String, Object> {
      * Connection to the DB
      */
     private RocksDB db;
+    private String chainPrefix;
 
-    public DBRepository(String path) {
+    public DBRepository(String path, String chain) {
         RocksDB.loadLibrary();
         final Options options = new Options();
         options.setCreateIfMissing(true);
         File baseDir = new File(path, FILE_NAME);
+        chainPrefix = chain;
         try {
             Files.createDirectories(baseDir.getParentFile().toPath());
             Files.createDirectories(baseDir.getAbsoluteFile().toPath());
@@ -49,7 +51,7 @@ public class DBRepository implements KVRepository<String, Object> {
     public synchronized boolean save(String key, Object value) {
         log.log(Level.INFO, String.format("saving value '%s' with key '%s'", value, key));
         try {
-            db.put(key.getBytes(), SerializationUtils.serialize(value));
+            db.put(getPrefixedKey(key), SerializationUtils.serialize(value));
         } catch (RocksDBException e) {
             log.log(Level.WARNING,
                     String.format("Error saving entry. Cause: '%s', message: '%s'", e.getCause(), e.getMessage()));
@@ -62,7 +64,7 @@ public class DBRepository implements KVRepository<String, Object> {
     public synchronized Optional<Object> find(String key) {
         Object value = null;
         try {
-            byte[] bytes = db.get(key.getBytes());
+            byte[] bytes = db.get(getPrefixedKey(key));
             if (bytes != null) {
                 value = SerializationUtils.deserialize(bytes);
             }
@@ -82,13 +84,17 @@ public class DBRepository implements KVRepository<String, Object> {
     public synchronized boolean delete(String key) {
         log.log(Level.INFO, String.format("deleting key '%s'", key));
         try {
-            db.delete(key.getBytes());
+            db.delete(getPrefixedKey(key));
         } catch (RocksDBException e) {
             log.log(Level.SEVERE,
                     String.format("Error deleting entry, cause: '%s', message: '%s'", e.getCause(), e.getMessage()));
             return false;
         }
         return true;
+    }
+
+    public byte[] getPrefixedKey(String key){
+        return chainPrefix.concat(key).getBytes();
     }
 
     public synchronized void closeConnection() {

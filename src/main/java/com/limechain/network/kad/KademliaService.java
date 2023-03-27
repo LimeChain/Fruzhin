@@ -38,7 +38,8 @@ public class KademliaService {
         var bootstrapMultiAddress = List.of(bootNodes).stream()
                 .map(MultiAddress::new)
                 .collect(Collectors.toList());
-        dht.bootstrapRoutingTable(host, bootstrapMultiAddress, addr -> !addr.contains("wss"));
+        int successfulBootNodes = dht.bootstrapRoutingTable(host, bootstrapMultiAddress, addr -> !addr.contains("wss"));
+        log.log(Level.INFO, "Successfully connected to " + successfulBootNodes + " boot nodes");
     }
 
     public void findNewPeers() {

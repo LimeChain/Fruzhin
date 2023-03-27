@@ -1,5 +1,6 @@
 package com.limechain.storage;
 
+import com.limechain.chain.Chain;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,7 +16,7 @@ public class DBRepositoryTest {
 
     @BeforeEach
     public void setup() {
-        dbRepository = DBInitializer.initialize("./test");
+        dbRepository = DBInitializer.initialize("./test", Chain.WESTEND);
     }
 
     @AfterEach

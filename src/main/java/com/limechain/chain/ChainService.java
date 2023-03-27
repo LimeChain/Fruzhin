@@ -35,7 +35,7 @@ public class ChainService {
     public ChainService(HostConfig hostConfig, KVRepository<String, Object> repository) {
         this.repository = repository;
 
-        Optional<Object> genesis = repository.find(genesisKey + hostConfig.getChain().getValue());
+        Optional<Object> genesis = repository.find(genesisKey);
         if (genesis.isPresent()) {
             this.setGenesis((ChainSpec) genesis.get());
             log.log(Level.INFO, "✅️Loaded chain spec from DB");

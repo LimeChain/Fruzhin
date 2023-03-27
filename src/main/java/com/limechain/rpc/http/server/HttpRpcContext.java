@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
  * Pattern taken from <a href="https://bit.ly/3yqYkX0">here</a>
  */
 @Component
+@Deprecated
 public class HttpRpcContext implements ApplicationContextAware {
 
     private static ApplicationContext context;
