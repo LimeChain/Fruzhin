@@ -47,7 +47,6 @@ public class Cli {
             CommandLineParser parser = new DefaultParser();
             CommandLine cmd = parser.parse(options, args);
             String network = cmd.getOptionValue("network", "").toLowerCase();
-            List<String> chains = List.of(Chain.values()).stream().map(Chain::getValue).toList();
             if (!validChains.contains(network) && !network.isEmpty()) throw new ParseException("Invalid network");
             String dbPath = cmd.getOptionValue("db-path", DBInitializer.DEFAULT_DIRECTORY);
 
