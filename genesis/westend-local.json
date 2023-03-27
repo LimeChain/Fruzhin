@@ -2,7 +2,7 @@
   "name": "Westend",
   "id": "westend2",
   "bootNodes": [
-    "/ip4/192.168.1.203/tcp/7003/p2p/12D3KooWM1uHVHfnxoyfDRGxBvEAxzL7hnadoRmgF1MrMCt6KvDv"
+    "/ip4/127.0.0.1/tcp/7003/p2p/12D3KooWM1uHVHfnxoyfDRGxBvEAxzL7hnadoRmgF1MrMCt6KvDv"
   ],
   "telemetryEndpoints": [
     [
