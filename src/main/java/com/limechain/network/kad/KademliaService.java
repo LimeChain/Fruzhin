@@ -33,7 +33,8 @@ public class KademliaService {
     }
 
     /**
-     *  Initializes Kademlia dht with replication=20 and alpha=3
+     * Initializes Kademlia dht with replication=20 and alpha=3
+     *
      * @param protocolId
      * @param hostId
      * @param localEnabled
@@ -46,6 +47,7 @@ public class KademliaService {
 
     /**
      * Connects to boot nodes to the Kademlia dht
+     *
      * @param bootNodes boot nodes set in ChainService
      */
     public void connectBootNodes(String[] bootNodes) {
@@ -63,10 +65,6 @@ public class KademliaService {
         byte[] hash = new byte[32];
         (new Random()).nextBytes(hash);
         Multihash randomPeerId = new Multihash(Multihash.Type.sha2_256, hash);
-        try {
-            dht.findClosestPeers(randomPeerId, REPLICATION, host);
-        } catch (Exception e) {
-            log.log(Level.SEVERE, "Error finding closest peers", e);
-        }
+        dht.findClosestPeers(randomPeerId, REPLICATION, host);
     }
 }

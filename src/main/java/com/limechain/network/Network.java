@@ -36,10 +36,11 @@ public class Network {
     private Host host;
 
     /**
-     *  Initializes a host for the peer connection,
-     *  Initializes the Kademlia service
-     *  Manages if nodes running locally are going to be allowed
-     *  Connects Kademlia to boot nodes
+     * Initializes a host for the peer connection,
+     * Initializes the Kademlia service
+     * Manages if nodes running locally are going to be allowed
+     * Connects Kademlia to boot nodes
+     *
      * @param chainService chain specification information containing boot nodes
      * @param hostConfig host configuration containing current network
      */
@@ -69,6 +70,7 @@ public class Network {
     /**
      * Initializes singleton Network instance
      * This is used two times on startup
+     *
      * @return Network instance saved in class or if not found returns new Network instance
      */
     public static Network initialize(ChainService chainService, HostConfig hostConfig) {
@@ -87,10 +89,6 @@ public class Network {
     @Scheduled(fixedDelay = TEN_SECONDS_IN_MS)
     public void findPeers() {
         log.log(Level.INFO, "Searching for nodes...");
-        try {
-            kademliaService.findNewPeers();
-        } catch (Exception e) {
-            log.log(Level.SEVERE, "Error: " + e.getMessage());
-        }
+        kademliaService.findNewPeers();
     }
 }
