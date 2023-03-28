@@ -11,7 +11,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.java.Log;
 import org.peergos.HostBuilder;
-import org.peergos.protocol.autonat.AutonatProtocol;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
