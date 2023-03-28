@@ -18,19 +18,32 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.logging.Level;
 
+/**
+ * A Singleton Network class that handles all peer connections and Kademlia
+ */
 @Component
 @Log
 @Getter
 @Setter
 public class Network {
+    /**
+     * Interval between periodic peer searches
+     */
     private static final int TEN_SECONDS_IN_MS = 10000;
     private static final int HOST_PORT = 1001;
     private static Network network;
     public static KademliaService kademliaService;
-
     private HostBuilder hostBuilder;
     private Host host;
 
+    /**
+     *  Initializes a host for the peer connection,
+     *  Initializes the Kademlia service
+     *  Manages if nodes running locally are going to be allowed
+     *  Connects Kademlia to boot nodes
+     * @param chainService chain specification information containing boot nodes
+     * @param hostConfig host configuration containing current network
+     */
     private Network(ChainService chainService, HostConfig hostConfig) {
         boolean isLocalEnabled = hostConfig.getChain() == Chain.LOCAL;
         hostBuilder = (new HostBuilder()).generateIdentity().listenLocalhost(HOST_PORT);
@@ -44,6 +57,9 @@ public class Network {
         kademliaService.connectBootNodes(chainService.getGenesis().getBootNodes());
     }
 
+    /**
+     * @return Network class instance
+     */
     public static Network getInstance() {
         if (network != null) {
             return network;
@@ -51,6 +67,11 @@ public class Network {
         throw new AssertionError("Network not initialized.");
     }
 
+    /**
+     * Initializes singleton Network instance
+     * This is used two times on startup
+     * @return Network instance saved in class or if not found returns new Network instance
+     */
     public static Network initialize(ChainService chainService, HostConfig hostConfig) {
         if (network != null) {
             log.log(Level.WARNING, "Network module already initialized.");
@@ -61,8 +82,11 @@ public class Network {
         return network;
     }
 
+    /**
+     * Periodically searched for new peers
+     */
     @Scheduled(fixedDelay = TEN_SECONDS_IN_MS)
-    public void findPeers() throws InterruptedException {
+    public void findPeers() {
         log.log(Level.INFO, "Searching for nodes...");
         try {
             kademliaService.findNewPeers();

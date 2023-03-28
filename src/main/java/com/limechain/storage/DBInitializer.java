@@ -28,6 +28,7 @@ public class DBInitializer {
      * Initializes the connection if it doesn't exist and returns it
      *
      * @param path path where the DB should write to
+     * @param chain current network used for prefix
      * @return connection to the DB
      */
     public static DBRepository initialize(String path, Chain chain) {
