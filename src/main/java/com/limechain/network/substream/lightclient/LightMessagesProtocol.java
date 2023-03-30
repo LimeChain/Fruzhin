@@ -1,0 +1,110 @@
+package com.limechain.network.substream.lightclient;
+
+import com.limechain.network.substream.lightclient.pb.LightClientMessage;
+import io.libp2p.core.ConnectionClosedException;
+import io.libp2p.core.Stream;
+import io.libp2p.protocol.ProtocolHandler;
+import io.libp2p.protocol.ProtocolMessageHandler;
+import io.netty.handler.codec.protobuf.ProtobufDecoder;
+import io.netty.handler.codec.protobuf.ProtobufEncoder;
+import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
+import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.concurrent.CompletableFuture;
+
+public class LightMessagesProtocol extends ProtocolHandler<LightMessagesController> {
+    // Sizes taken from smoldot
+    public static final int MAX_REQUEST_SIZE = 1024 * 512;
+    public static final int MAX_RESPONSE_SIZE = 10 * 1024 * 1024;
+    private final LightMessagesEngine engine;
+
+    public LightMessagesProtocol(LightMessagesEngine engine) {
+        super(MAX_REQUEST_SIZE, MAX_RESPONSE_SIZE);
+        this.engine = engine;
+    }
+
+    @NotNull
+    @Override
+    protected CompletableFuture<LightMessagesController> onStartInitiator(@NotNull Stream stream) {
+        stream.pushHandler(new ProtobufVarint32FrameDecoder());
+        stream.pushHandler(new ProtobufDecoder(LightClientMessage.Response.getDefaultInstance()));
+
+        stream.pushHandler((new ProtobufVarint32LengthFieldPrepender()));
+        stream.pushHandler((new ProtobufEncoder()));
+
+        Sender handler = new Sender(stream);
+        stream.pushHandler(handler);
+        return CompletableFuture.completedFuture(handler);
+    }
+
+    @NotNull
+    @Override
+    protected CompletableFuture<LightMessagesController> onStartResponder(@NotNull Stream stream) {
+        stream.pushHandler(new ProtobufVarint32FrameDecoder());
+        stream.pushHandler(new ProtobufDecoder(LightClientMessage.Request.getDefaultInstance()));
+
+        stream.pushHandler((new ProtobufVarint32LengthFieldPrepender()));
+        stream.pushHandler((new ProtobufEncoder()));
+
+        Receiver handler = new Receiver(engine);
+        stream.pushHandler(handler);
+        return CompletableFuture.completedFuture(handler);
+    }
+
+    // Class for handling incoming requests
+    static class Receiver implements ProtocolMessageHandler<LightClientMessage.Request>, LightMessagesController {
+        private final LightMessagesEngine engine;
+
+        public Receiver(LightMessagesEngine engine) {
+            this.engine = engine;
+        }
+
+        @Override
+        public void onMessage(@NotNull Stream stream, LightClientMessage.Request msg) {
+            engine.receiveRequest(msg, stream);
+        }
+
+        @Override
+        public CompletableFuture<LightClientMessage.Response> send(LightClientMessage.Request msg) {
+            throw new IllegalStateException("Responder only!");
+        }
+
+    }
+
+    // Class for handling outgoing requests
+    static class Sender
+            implements ProtocolMessageHandler<LightClientMessage.Response>,
+            LightMessagesController {
+        private final CompletableFuture<LightClientMessage.Response> resp = new CompletableFuture<>();
+        private final Stream stream;
+
+        public Sender(Stream stream) {
+            this.stream = stream;
+        }
+
+        @Override
+        public void onMessage(@NotNull Stream stream, LightClientMessage.Response msg) {
+            resp.complete(msg);
+            stream.closeWrite();
+        }
+
+        @Override
+        public CompletableFuture<LightClientMessage.Response> send(LightClientMessage.Request req) {
+            stream.writeAndFlush(req);
+            return resp;
+        }
+
+        @Override
+        public void onClosed(@NotNull Stream stream) {
+            resp.completeExceptionally(new ConnectionClosedException());
+        }
+
+        @Override
+        public void onException(@Nullable Throwable cause) {
+            resp.completeExceptionally(cause);
+        }
+
+    }
+}

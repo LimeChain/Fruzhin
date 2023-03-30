@@ -55,6 +55,8 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-websocket")
 
     implementation("org.java-websocket:Java-WebSocket:1.5.3")
+    implementation("com.google.protobuf:protobuf-java:3.22.2")
+
 }
 
 tasks.getByName<Test>("test") {

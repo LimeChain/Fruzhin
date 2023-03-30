@@ -4,6 +4,7 @@ import com.limechain.chain.Chain;
 import com.limechain.chain.ChainService;
 import com.limechain.config.HostConfig;
 import com.limechain.network.kad.KademliaService;
+import com.limechain.network.substream.lightclient.LightMessagesService;
 import io.ipfs.multihash.Multihash;
 import io.libp2p.core.Host;
 import io.libp2p.protocol.Ping;
@@ -31,7 +32,8 @@ public class Network {
     private static final int TEN_SECONDS_IN_MS = 10000;
     private static final int HOST_PORT = 1001;
     private static Network network;
-    public static KademliaService kademliaService;
+    public LightMessagesService lightMessagesService;
+    public KademliaService kademliaService;
     private HostBuilder hostBuilder;
     private Host host;
 
@@ -42,14 +44,19 @@ public class Network {
      * Connects Kademlia to boot nodes
      *
      * @param chainService chain specification information containing boot nodes
-     * @param hostConfig host configuration containing current network
+     * @param hostConfig   host configuration containing current network
      */
     private Network(ChainService chainService, HostConfig hostConfig) {
         boolean isLocalEnabled = hostConfig.getChain() == Chain.LOCAL;
         hostBuilder = (new HostBuilder()).generateIdentity().listenLocalhost(HOST_PORT);
         Multihash hostId = Multihash.deserialize(hostBuilder.getPeerId().getBytes());
+
         kademliaService = new KademliaService("/dot/kad", hostId, isLocalEnabled);
-        hostBuilder.addProtocols(List.of(new Ping(), kademliaService.getDht()));
+        lightMessagesService = new LightMessagesService();
+
+        hostBuilder.addProtocols(
+                List.of(new Ping(), kademliaService.getDht(),
+                        lightMessagesService.getLightMessages()));
 
         host = hostBuilder.build();
         kademliaService.setHost(host);
@@ -87,8 +94,12 @@ public class Network {
      * Periodically searched for new peers
      */
     @Scheduled(fixedDelay = TEN_SECONDS_IN_MS)
-    public void findPeers() {
+    public void findPeers() throws InterruptedException {
         log.log(Level.INFO, "Searching for nodes...");
-        kademliaService.findNewPeers();
+        try {
+            kademliaService.findNewPeers();
+        } catch (Exception e) {
+            log.log(Level.SEVERE, "Error: " + e.getMessage());
+        }
     }
 }
