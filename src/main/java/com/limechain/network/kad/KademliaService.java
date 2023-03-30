@@ -11,6 +11,7 @@ import org.peergos.protocol.dht.KademliaEngine;
 import org.peergos.protocol.dht.RamProviderStore;
 import org.peergos.protocol.dht.RamRecordStore;
 
+import java.net.ConnectException;
 import java.util.List;
 import java.util.Random;
 import java.util.logging.Level;

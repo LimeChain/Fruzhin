@@ -34,7 +34,10 @@ public class ChainService {
 
     public ChainService(HostConfig hostConfig, KVRepository<String, Object> repository) {
         this.repository = repository;
+        initialize(hostConfig);
+    }
 
+    protected void initialize(HostConfig hostConfig) {
         Optional<Object> genesis = repository.find(genesisKey);
         /*
             WORKAROUND
@@ -56,10 +59,11 @@ public class ChainService {
             this.setGenesis(ChainSpec.newFromJSON(hostConfig.getGenesisPath()));
             log.log(Level.INFO, "✅️Loaded chain spec from JSON");
 
-            repository.save(genesisKey, this.getGenesis());
+            repository.save(this.getGenesisKey(), this.getGenesis());
             log.log(Level.FINE, "Saved chain spec to database");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+
     }
 }

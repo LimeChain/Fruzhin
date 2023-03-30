@@ -1,5 +1,6 @@
 package com.limechain.chain;
 
+import com.limechain.rpc.config.SubscriptionName;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -20,9 +21,9 @@ public class ChainTest {
     }
 
     @Test
-    public void invalidFromStringTest(){
-        String testString = "string";
-        Chain chain = Chain.fromString(testString);
-        assertNull(chain);
+    public void FromString_returns_correctValue() {
+        assertEquals(Chain.fromString("polkadot"),
+                Chain.POLKADOT);
+        assertNull(SubscriptionName.fromString("invalid"));
     }
 }
