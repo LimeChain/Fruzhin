@@ -1,5 +1,6 @@
 package com.limechain.storage;
 
+import com.limechain.chain.Chain;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -53,24 +54,27 @@ class DBInitializerTest {
         DBInitializer initializer = mock(DBInitializer.class);
         Map<String, DBRepository> instances = mock(Map.class);
         setPrivateField("instances", instances);
-        initializer.initialize("path1");
+        String testPath = "test/path1";
+        initializer.initialize(testPath, Chain.WESTEND);
 
-        verify(instances, times(1)).put(eq("path1"), any());
-        verify(instances, never()).get("path1");
+        verify(instances, times(1)).put(eq(testPath), any());
+        verify(instances, never()).get(testPath);
 
-        when(instances.containsKey("path1")).thenReturn(true);
+        when(instances.containsKey(testPath)).thenReturn(true);
 
-        initializer.initialize("path1");
+        initializer.initialize(testPath, Chain.WESTEND);
 
-        verify(instances, times(1)).get("path1");
-        verify(instances, times(1)).put(eq("path1"), any());
+        verify(instances, times(1)).get(testPath);
+        verify(instances, times(1)).put(eq(testPath), any());
     }
 
     @Test
     public void closeInstances_closesConnection() throws NoSuchFieldException, IllegalAccessException {
         Map<String, DBRepository> instances = mock(Map.class);
-        Map.Entry<String, DBRepository> entrySet1 = new AbstractMap.SimpleEntry("path1", mock(DBRepository.class));
-        Map.Entry<String, DBRepository> entrySet2 = new AbstractMap.SimpleEntry("path2", mock(DBRepository.class));
+        String testPath1 = "test/path1";
+        String testPath2 = "test/path2";
+        Map.Entry<String, DBRepository> entrySet1 = new AbstractMap.SimpleEntry(testPath1, mock(DBRepository.class));
+        Map.Entry<String, DBRepository> entrySet2 = new AbstractMap.SimpleEntry(testPath2, mock(DBRepository.class));
 
         setPrivateField("instances", instances);
         Set<Map.Entry<String, DBRepository>> set = Set.of(entrySet1, entrySet2);

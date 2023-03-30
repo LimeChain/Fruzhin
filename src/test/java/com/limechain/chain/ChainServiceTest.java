@@ -62,7 +62,6 @@ public class ChainServiceTest {
         }
     }
 
-
     @Test
     public void throwsRuntimeException_when_saveFails() {
         Optional<Object> mockGenesis = Optional.ofNullable(null);

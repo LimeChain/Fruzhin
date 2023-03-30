@@ -1,5 +1,6 @@
 package com.limechain.storage;
 
+import com.limechain.chain.Chain;
 import lombok.extern.java.Log;
 
 import java.util.HashMap;
@@ -27,14 +28,15 @@ public class DBInitializer {
      * Initializes the connection if it doesn't exist and returns it
      *
      * @param path path where the DB should write to
+     * @param chain current network used for prefix
      * @return connection to the DB
      */
-    public static DBRepository initialize(String path) {
+    public static DBRepository initialize(String path, Chain chain) {
         if (instances.containsKey(path)) {
             return instances.get(path);
         }
 
-        DBRepository repo = new DBRepository(path);
+        DBRepository repo = new DBRepository(path, chain.getValue());
 
         instances.put(path, repo);
         return repo;

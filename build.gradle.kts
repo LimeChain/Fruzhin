@@ -40,10 +40,10 @@ dependencies {
     // CLI
     implementation("commons-cli:commons-cli:1.3.1")
 
-    // JSON-RPC dependencies
     // TODO: Publish imported packages to mvnrepository and import them
     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
 
+    // JSON-RPC dependencies
     // Needed for strange error when starting up json rpc server
     // See: https://github.com/briandilley/jsonrpc4j/issues/280
     implementation("javax.jws:javax.jws-api:1.1")
@@ -55,6 +55,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-websocket")
 
     implementation("org.java-websocket:Java-WebSocket:1.5.3")
+
 }
 
 tasks.getByName<Test>("test") {

@@ -1,5 +1,6 @@
 package com.limechain.cli;
 
+import com.limechain.chain.Chain;
 import com.limechain.storage.DBInitializer;
 import lombok.Getter;
 import lombok.extern.java.Log;
@@ -11,7 +12,11 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 /**
  * Abstraction class around apache.commons.cli used to set arguments rules and parse node arguments
@@ -23,7 +28,7 @@ public class Cli {
      * Holds CLI options
      */
     private final Options options;
-
+    private final List<String> validChains = List.of(Chain.values()).stream().map(Chain::getValue).toList();
     private final HelpFormatter formatter = new HelpFormatter();
 
     public Cli() {
@@ -42,12 +47,13 @@ public class Cli {
             CommandLineParser parser = new DefaultParser();
             CommandLine cmd = parser.parse(options, args);
             String network = cmd.getOptionValue("network", "").toLowerCase();
+            if (!validChains.contains(network) && !network.isEmpty()) throw new ParseException("Invalid network");
             String dbPath = cmd.getOptionValue("db-path", DBInitializer.DEFAULT_DIRECTORY);
 
             return new CliArguments(network, dbPath);
         } catch (ParseException e) {
             log.log(Level.SEVERE, "Failed to parse cli arguments", e);
-            formatter.printHelp("Specify the network name - polkadot, kusama, westend", options);
+            formatter.printHelp("Specify the network name - " + String.join(", ", validChains), options);
             throw new RuntimeException();
         }
     }

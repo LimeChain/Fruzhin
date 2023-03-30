@@ -38,8 +38,18 @@ public class ChainService {
     }
 
     protected void initialize(HostConfig hostConfig) {
-        Optional<Object> genesis = repository.find(this.getGenesisKey());
-        if (genesis.isPresent()) {
+        Optional<Object> genesis = repository.find(genesisKey);
+        /*
+            WORKAROUND
+            The inLocalDevelopment variable and its usage below are only to aid in development.
+            It is expected that the local genesis file will change rather frequently while the all official
+                chain specifications will never change. To improve performance we are loading the chain
+                specifications only once, and then they are saved to the database.
+            Saving the local genesis file is not suitable in this early phase of development.
+            This might be removed in the future.
+         */
+        boolean inLocalDevelopment = hostConfig.getChain() == Chain.LOCAL;
+        if (genesis.isPresent() && !inLocalDevelopment) {
             this.setGenesis((ChainSpec) genesis.get());
             log.log(Level.INFO, "✅️Loaded chain spec from DB");
             return;

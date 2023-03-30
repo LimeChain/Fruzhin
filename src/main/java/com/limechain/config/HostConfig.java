@@ -28,13 +28,14 @@ public class HostConfig {
      * Chain the Host is running on
      */
     private Chain chain;
-
     @Value("${genesis.path.polkadot}")
     private String polkadotGenesisPath;
     @Value("${genesis.path.kusama}")
     private String kusamaGenesisPath;
     @Value("${genesis.path.westend}")
     private String westendGenesisPath;
+    @Value("${genesis.path.local}")
+    private String localGenesisPath;
     @Value("${helper.node.address}")
     private String helperNodeAddress;
 
@@ -66,7 +67,12 @@ public class HostConfig {
             case WESTEND -> {
                 return westendGenesisPath;
             }
+            case LOCAL ->{
+                return localGenesisPath;
+            }
+            default -> {
+                throw new RuntimeException("Invalid Chain in host configuration");
+            }
         }
-        throw new RuntimeException("Invalid Chain in host configuration");
     }
 }
