@@ -20,9 +20,11 @@ public class KademliaServiceTest {
      */
     @Test
     public void dnsNodeToIp4_TransformDnsNode() throws UnknownHostException {
+        //CHECKSTYLE.OFF
         String bootNode = "/dns/p2p.0.polkadot.network/tcp/30333/p2p/12D3KooWHsvEicXjWWraktbZ4MQBizuyADQtuEGr3NbDvtm5rFA5";
         InetAddress address = InetAddress.getByName("p2p.0.polkadot.network");
         String expected = "/ip4/" + address.getHostAddress() + "/tcp/30333/p2p/12D3KooWHsvEicXjWWraktbZ4MQBizuyADQtuEGr3NbDvtm5rFA5";
+        //CHECKSTYLE.ON
         assertEquals(expected, dnsNodeToIp4(bootNode));
     }
 
