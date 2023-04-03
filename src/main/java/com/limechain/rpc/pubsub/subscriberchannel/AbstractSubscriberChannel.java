@@ -1,7 +1,6 @@
 package com.limechain.rpc.pubsub.subscriberchannel;
 
 import com.limechain.rpc.pubsub.Message;
-import com.limechain.rpc.pubsub.PubSubService;
 import com.limechain.rpc.pubsub.Topic;
 import lombok.Getter;
 import lombok.Setter;
@@ -63,11 +62,11 @@ public abstract class AbstractSubscriberChannel {
     public abstract void removeSubscriber(WebSocketSession session);
 
     /**
-     * Request messages for this channel from {@link PubSubService}
+     * Adds a message to the channel
      *
-     * @param pubSubService the pub-sub service mediator
+     * @param message the message to add
      */
-    public abstract void getMessagesForSubscriberOfTopic(PubSubService pubSubService);
+    public abstract void addMessage(Message message);
 
     /**
      * Send all messages from {@link #pendingMessages} to every subscriber from {@link #subscribers}
