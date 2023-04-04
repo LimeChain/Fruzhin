@@ -25,9 +25,8 @@ public class LightMessagesProtocol extends ProtocolHandler<LightMessagesControll
         this.engine = engine;
     }
 
-    @NotNull
     @Override
-    protected CompletableFuture<LightMessagesController> onStartInitiator(@NotNull Stream stream) {
+    protected CompletableFuture<LightMessagesController> onStartInitiator( Stream stream) {
         stream.pushHandler(new ProtobufVarint32FrameDecoder());
         stream.pushHandler(new ProtobufDecoder(LightClientMessage.Response.getDefaultInstance()));
 
@@ -39,9 +38,8 @@ public class LightMessagesProtocol extends ProtocolHandler<LightMessagesControll
         return CompletableFuture.completedFuture(handler);
     }
 
-    @NotNull
     @Override
-    protected CompletableFuture<LightMessagesController> onStartResponder(@NotNull Stream stream) {
+    protected CompletableFuture<LightMessagesController> onStartResponder(Stream stream) {
         stream.pushHandler(new ProtobufVarint32FrameDecoder());
         stream.pushHandler(new ProtobufDecoder(LightClientMessage.Request.getDefaultInstance()));
 
@@ -62,13 +60,13 @@ public class LightMessagesProtocol extends ProtocolHandler<LightMessagesControll
         }
 
         @Override
-        public void onMessage(@NotNull Stream stream, LightClientMessage.Request msg) {
+        public void onMessage(Stream stream, LightClientMessage.Request msg) {
             engine.receiveRequest(msg, stream);
         }
 
         @Override
         public CompletableFuture<LightClientMessage.Response> send(LightClientMessage.Request msg) {
-            throw new IllegalStateException("Responder only!");
+            throw new IllegalStateException("Host can't process inbound requests yet!");
         }
 
     }
@@ -85,7 +83,7 @@ public class LightMessagesProtocol extends ProtocolHandler<LightMessagesControll
         }
 
         @Override
-        public void onMessage(@NotNull Stream stream, LightClientMessage.Response msg) {
+        public void onMessage(Stream stream, LightClientMessage.Response msg) {
             resp.complete(msg);
             stream.closeWrite();
         }
@@ -97,12 +95,12 @@ public class LightMessagesProtocol extends ProtocolHandler<LightMessagesControll
         }
 
         @Override
-        public void onClosed(@NotNull Stream stream) {
+        public void onClosed(Stream stream) {
             resp.completeExceptionally(new ConnectionClosedException());
         }
 
         @Override
-        public void onException(@Nullable Throwable cause) {
+        public void onException(Throwable cause) {
             resp.completeExceptionally(cause);
         }
 
