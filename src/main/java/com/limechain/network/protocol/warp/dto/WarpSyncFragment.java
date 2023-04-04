@@ -1,4 +1,4 @@
-package com.limechain.network.protocol.warp;
+package com.limechain.network.protocol.warp.dto;
 
 public class WarpSyncFragment {
     String scaleEncodedHeader;
