@@ -1,6 +1,6 @@
 package com.limechain.rpc.pubsub.subscriberchannel;
 
-import com.limechain.rpc.pubsub.PubSubService;
+import com.limechain.rpc.pubsub.Message;
 import com.limechain.rpc.pubsub.Topic;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -23,7 +23,8 @@ public class SubscriberChannel extends AbstractSubscriberChannel {
         this.getSubscribers().removeIf(s -> s.getId().equals(session.getId()));
     }
 
-    public void getMessagesForSubscriberOfTopic(PubSubService pubSubService) {
-        pubSubService.sendMessagesToChannel(this);
+    @Override
+    public void addMessage(Message message) {
+        this.getPendingMessages().add(message);
     }
 }

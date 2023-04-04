@@ -13,7 +13,7 @@ import java.util.Queue;
 import java.util.logging.Level;
 
 /**
- * A mediator class standing between {@link com.limechain.rpc.pubsub.publisher.Publisher}
+ * A singleton mediator class standing between {@link com.limechain.rpc.pubsub.publisher.Publisher}
  * and {@link AbstractSubscriberChannel} which accepts messages from the formers and sends them at some point
  * to the latter.
  * <p>
@@ -102,18 +102,14 @@ public class PubSubService {
      * {@link #messagesQueue} will be empty after broadcasting.
      */
     public void broadcast() {
-        if (messagesQueue.isEmpty()) {
-            log.log(Level.FINE, "No messages to broadcast");
-        } else {
-            while (!messagesQueue.isEmpty()) {
-                Message message = messagesQueue.remove();
-                String topic = message.topic();
+        while (!messagesQueue.isEmpty()) {
+            Message message = messagesQueue.remove();
+            String topic = message.topic();
 
-                AbstractSubscriberChannel subscriberChannel = subscribersTopicMap.get(Topic.fromString(topic));
-                // If subscriberChannel is null, the message will get lost
-                if (subscriberChannel != null) {
-                    subscriberChannel.getPendingMessages().add(message);
-                }
+            AbstractSubscriberChannel subscriberChannel = subscribersTopicMap.get(Topic.fromString(topic));
+            // If subscriberChannel is null, the message will get lost
+            if (subscriberChannel != null) {
+                subscriberChannel.addMessage(message);
             }
         }
     }
@@ -127,28 +123,6 @@ public class PubSubService {
                 set.getValue().notifySubscribers();
             } catch (IOException e) {
                 throw new RuntimeException(e);
-            }
-        }
-    }
-
-    /**
-     * Sends all messages about a topic to the subscriber channel for that topic
-     *
-     * @param subscriberChannel the subscriber channel
-     */
-    public void sendMessagesToChannel(AbstractSubscriberChannel subscriberChannel) {
-        if (messagesQueue.isEmpty()) {
-            log.log(Level.FINE, "No messages to send");
-            return;
-        }
-
-        while (!messagesQueue.isEmpty()) {
-            Message message = messagesQueue.remove();
-            if (message.topic().equalsIgnoreCase(subscriberChannel.getTopic().getValue())) {
-                if (subscribersTopicMap.get(subscriberChannel.getTopic()).equals(subscriberChannel)) {
-                    // Add broadcast message to subscriber message queue
-                    subscriberChannel.getPendingMessages().add(message);
-                }
             }
         }
     }

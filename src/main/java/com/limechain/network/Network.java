@@ -94,12 +94,8 @@ public class Network {
      * Periodically searched for new peers
      */
     @Scheduled(fixedDelay = TEN_SECONDS_IN_MS)
-    public void findPeers() throws InterruptedException {
+    public void findPeers() {
         log.log(Level.INFO, "Searching for nodes...");
-        try {
-            kademliaService.findNewPeers();
-        } catch (Exception e) {
-            log.log(Level.SEVERE, "Error: " + e.getMessage());
-        }
+        kademliaService.findNewPeers();
     }
 }
