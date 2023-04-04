@@ -80,10 +80,12 @@ public class KademliaService {
     public static String dnsNodeToIp4(String bootNode) {
         int prefixEnd = bootNode.indexOf('/', 1) + 1;
         String prefix = bootNode.substring(0, prefixEnd);
+
         if (prefix.equals("/dns/")) {
             int domainEnd = bootNode.indexOf('/', prefixEnd);
             String domain = bootNode.substring(prefixEnd, domainEnd);
             String postfix = bootNode.substring(domainEnd);
+
             try {
                 InetAddress address = InetAddress.getByName(domain);
                 bootNode = "/ip4/" + address.getHostAddress() + postfix;
