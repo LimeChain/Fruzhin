@@ -73,6 +73,8 @@ public class KademliaService {
 
     /**
      * Makes a dns lookup and changes the address to an equal ip4 address
+     * This is needed because of a bug in jvm-libp2p that involves resolving dns addresses
+     * https://github.com/Peergos/nabu/issues/22#issuecomment-1495687079
      *
      * @param bootNode
      * @return bootNode in ip4 format
