@@ -9,8 +9,6 @@ import io.netty.handler.codec.protobuf.ProtobufDecoder;
 import io.netty.handler.codec.protobuf.ProtobufEncoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -26,7 +24,7 @@ public class LightMessagesProtocol extends ProtocolHandler<LightMessagesControll
     }
 
     @Override
-    protected CompletableFuture<LightMessagesController> onStartInitiator( Stream stream) {
+    protected CompletableFuture<LightMessagesController> onStartInitiator(Stream stream) {
         stream.pushHandler(new ProtobufVarint32FrameDecoder());
         stream.pushHandler(new ProtobufDecoder(LightClientMessage.Response.getDefaultInstance()));
 
@@ -37,40 +35,7 @@ public class LightMessagesProtocol extends ProtocolHandler<LightMessagesControll
         stream.pushHandler(handler);
         return CompletableFuture.completedFuture(handler);
     }
-
-    @Override
-    protected CompletableFuture<LightMessagesController> onStartResponder(Stream stream) {
-        stream.pushHandler(new ProtobufVarint32FrameDecoder());
-        stream.pushHandler(new ProtobufDecoder(LightClientMessage.Request.getDefaultInstance()));
-
-        stream.pushHandler((new ProtobufVarint32LengthFieldPrepender()));
-        stream.pushHandler((new ProtobufEncoder()));
-
-        Receiver handler = new Receiver(engine);
-        stream.pushHandler(handler);
-        return CompletableFuture.completedFuture(handler);
-    }
-
-    // Class for handling incoming requests
-    static class Receiver implements ProtocolMessageHandler<LightClientMessage.Request>, LightMessagesController {
-        private final LightMessagesEngine engine;
-
-        public Receiver(LightMessagesEngine engine) {
-            this.engine = engine;
-        }
-
-        @Override
-        public void onMessage(Stream stream, LightClientMessage.Request msg) {
-            engine.receiveRequest(msg, stream);
-        }
-
-        @Override
-        public CompletableFuture<LightClientMessage.Response> send(LightClientMessage.Request msg) {
-            throw new IllegalStateException("Host can't process inbound requests yet!");
-        }
-
-    }
-
+    
     // Class for handling outgoing requests
     static class Sender
             implements ProtocolMessageHandler<LightClientMessage.Response>,
