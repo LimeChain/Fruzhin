@@ -38,7 +38,7 @@ public class LightMessagesTest {
 
             Multiaddr address2 = receiverNode.listenAddresses().get(0);
             senderNode.getAddressBook().addAddrs(Objects.requireNonNull(address2.getPeerId()), 0, address2).join();
-            
+
             var remoteCallResponse =
                     lightMessages1.remoteCallRequest(senderNode, senderNode.getAddressBook(), receiverNode.getPeerId(),
                             "0x123",

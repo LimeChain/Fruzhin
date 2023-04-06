@@ -27,6 +27,7 @@ repositories {
 
 dependencies {
     implementation("org.rocksdb:rocksdbjni:7.8.3")
+    implementation("commons-codec:commons-codec:1.15")
     compileOnly("org.projectlombok:lombok:1.18.8")
     implementation("org.projectlombok:lombok:1.18.22")
 

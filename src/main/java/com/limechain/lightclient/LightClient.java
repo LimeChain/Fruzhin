@@ -1,8 +1,9 @@
 package com.limechain.lightclient;
 
+import com.limechain.network.Network;
 import com.limechain.rpc.http.server.HttpRpc;
 import com.limechain.rpc.ws.server.WebSocketRPC;
-import lombok.AllArgsConstructor;
+import com.limechain.sync.Sync;
 import lombok.extern.java.Log;
 
 import java.util.logging.Level;
@@ -12,12 +13,19 @@ import java.util.logging.Level;
  * the client and hold references to dependencies
  */
 @Log
-@AllArgsConstructor
 public class LightClient {
     // TODO: Add service dependencies i.e rpc, sync, network, etc.
     private final String[] cliArgs;
     private final HttpRpc httpRpc;
     private final WebSocketRPC wsRpc;
+    private Network networkService;
+    private Sync syncService;
+
+    public LightClient(String[] cliArgs, HttpRpc httpRpc, WebSocketRPC wsRpc) {
+        this.cliArgs = cliArgs;
+        this.httpRpc = httpRpc;
+        this.wsRpc = wsRpc;
+    }
 
     /**
      * Starts the light client by instantiating all dependencies and services

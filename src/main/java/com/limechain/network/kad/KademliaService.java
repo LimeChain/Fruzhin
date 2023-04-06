@@ -35,6 +35,32 @@ public class KademliaService {
     }
 
     /**
+     * Makes a dns lookup and changes the address to an equal ip4 address
+     *
+     * @param bootNode
+     * @return bootNode in ip4 format
+     */
+    //TODO: Should be private by concept
+    public static String dnsNodeToIp4(String bootNode) {
+        int prefixEnd = bootNode.indexOf('/', 1) + 1;
+        String prefix = bootNode.substring(0, prefixEnd);
+
+        if (prefix.equals("/dns/")) {
+            int domainEnd = bootNode.indexOf('/', prefixEnd);
+            String domain = bootNode.substring(prefixEnd, domainEnd);
+            String postfix = bootNode.substring(domainEnd);
+
+            try {
+                InetAddress address = InetAddress.getByName(domain);
+                bootNode = "/ip4/" + address.getHostAddress() + postfix;
+            } catch (UnknownHostException e) {
+                log.log(Level.WARNING, "Unknown domain for bootstrap node address", e);
+            }
+        }
+        return bootNode;
+    }
+
+    /**
      * Initializes Kademlia dht with replication=20 and alpha=3
      *
      * @param protocolId
@@ -69,32 +95,5 @@ public class KademliaService {
         (new Random()).nextBytes(hash);
         Multihash randomPeerId = new Multihash(Multihash.Type.sha2_256, hash);
         dht.findClosestPeers(randomPeerId, REPLICATION, host);
-    }
-
-    /**
-     * Makes a dns lookup and changes the address to an equal ip4 address
-     * Implementation is necessary due to a bug in jvm-libp2p that involves resolving dns addresses
-     * https://github.com/Peergos/nabu/issues/22#issuecomment-1495687079
-     *
-     * @param bootNode
-     * @return bootNode in ip4 format
-     */
-    public static String dnsNodeToIp4(String bootNode) {
-        int prefixEnd = bootNode.indexOf('/', 1) + 1;
-        String prefix = bootNode.substring(0, prefixEnd);
-
-        if (prefix.equals("/dns/")) {
-            int domainEnd = bootNode.indexOf('/', prefixEnd);
-            String domain = bootNode.substring(prefixEnd, domainEnd);
-            String postfix = bootNode.substring(domainEnd);
-
-            try {
-                InetAddress address = InetAddress.getByName(domain);
-                bootNode = "/ip4/" + address.getHostAddress() + postfix;
-            } catch (UnknownHostException e) {
-                log.log(Level.WARNING, "Unknown domain for bootstrap node address", e);
-            }
-        }
-        return bootNode;
     }
 }
