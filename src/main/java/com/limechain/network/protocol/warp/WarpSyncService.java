@@ -1,2 +1,4 @@
-package com.limechain.network.protocol.warp;public class WarpSyncService {
+package com.limechain.network.protocol.warp;
+
+public class WarpSyncService {
 }
