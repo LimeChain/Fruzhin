@@ -18,10 +18,9 @@ public interface LightMessagesController {
                 .setRemoteCallRequest(
                         LightClientMessage.RemoteCallRequest
                                 .newBuilder()
-                                .setBlock(ByteString.copyFrom(blockHash.getBytes()))
+                                .setBlock(ByteString.fromHex(blockHash))
                                 .setMethod(methodName)
-                                .setData(ByteString.copyFrom(callData.getBytes()))
-                                .build()
+                                .setData(ByteString.fromHex(callData))
                 )
                 .build());
     }
@@ -34,13 +33,12 @@ public interface LightMessagesController {
                 .setRemoteReadRequest(
                         LightClientMessage.RemoteReadRequest
                                 .newBuilder()
-                                .setBlock(ByteString.copyFrom(blockHash.getBytes()))
+                                .setBlock(ByteString.fromHex(blockHash))
                                 .addAllKeys(
                                         Arrays.stream(storageKeys)
-                                                .map(s -> ByteString.copyFrom(s.getBytes()))
+                                                .map(ByteString::fromHex)
                                                 .collect(Collectors.toList())
                                 )
-                                .build()
                 )
                 .build());
 
@@ -54,14 +52,13 @@ public interface LightMessagesController {
                 .setRemoteReadChildRequest(
                         LightClientMessage.RemoteReadChildRequest
                                 .newBuilder()
-                                .setBlock(ByteString.copyFrom(blockHash.getBytes()))
-                                .setStorageKey(ByteString.copyFrom(childStorageKey.getBytes()))
+                                .setBlock(ByteString.fromHex(blockHash))
+                                .setStorageKey(ByteString.fromHex(childStorageKey))
                                 .addAllKeys(
                                         Arrays.stream(keys)
-                                                .map(s -> ByteString.copyFrom(s.getBytes()))
+                                                .map(ByteString::fromHex)
                                                 .collect(Collectors.toList())
                                 )
-                                .build()
                 )
                 .build());
     }
