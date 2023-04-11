@@ -5,12 +5,15 @@ import io.ipfs.multihash.Multihash;
 import io.libp2p.core.Host;
 import io.libp2p.core.PeerId;
 import io.libp2p.protocol.Ping;
+import org.junit.jupiter.api.Test;
 import org.peergos.HostBuilder;
 
 import java.util.List;
 import java.util.Random;
 
 public class WarpSyncTest {
+
+    @Test
     public void remoteFunctions_return_correctData() {
         Host senderNode = null;
 
@@ -28,9 +31,10 @@ public class WarpSyncTest {
             senderNode.start().join();
 
             kademliaService.setHost(senderNode);
-            var peerId = PeerId.fromBase58("12D3KooWHsvEicXjWWraktbZ4MQBizuyADQtuEGr3NbDvtm5rFA5");
+            var peerId = PeerId.fromBase58("12D3KooWSRQFbXzBaP3Ec4Ayb1PKcdc7DDFqdjBZhPH2qeQZUCyp");
             var receivers = new String[]{
-                    "/dns/p2p.0.polkadot.network/tcp/30333/p2p/12D3KooWHsvEicXjWWraktbZ4MQBizuyADQtuEGr3NbDvtm5rFA5",
+                    "/ip4/127.0.0.1/tcp/30333/p2p/12D3KooWSRQFbXzBaP3Ec4Ayb1PKcdc7DDFqdjBZhPH2qeQZUCyp"
+//                    "/dns/p2p.0.polkadot.network/tcp/30333/p2p/12D3KooWHsvEicXjWWraktbZ4MQBizuyADQtuEGr3NbDvtm5rFA5",
 //                    "/dns/p2p.1.polkadot.network/tcp/30333/p2p/12D3KooWQz2q2UWVCiy9cFX1hHYEmhSKQB2hjEZCccScHLGUPjcc",
 //                    "/dns/p2p.2.polkadot.network/tcp/30333/p2p/12D3KooWNHxjYbDLLbDNZ2tq1kXgif5MSiLTUWJKcDdedKu4KaG8",
 //                    "/dns/p2p.3.polkadot.network/tcp/30333/p2p/12D3KooWGJQysxrQcSvUWWNw88RkqYvJhH3ZcDpWJ8zrXKhLP5Vr",
@@ -46,7 +50,7 @@ public class WarpSyncTest {
             var response = warpSync1.warpSyncRequest(senderNode, senderNode.getAddressBook(), peerId,
                     //TODO: This should come from the chain spec light client state
 //                    "0x91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3"
-                    "4418fdfc7577f311915cc1c81116ee96b640fea2aa3adb58e9e61ccef0ead749"
+                    "b71e3ddbfe2b3d1cb534563493b779acbb08ca28019f75cc03c8eeaf55751042"
             );
             System.out.println("Response: " + response);
             System.out.println("Done");

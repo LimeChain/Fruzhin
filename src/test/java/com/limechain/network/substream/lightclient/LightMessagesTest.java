@@ -32,16 +32,17 @@ public class LightMessagesTest {
             senderNode.start().join();
 
             kademliaService.setHost(senderNode);
-            var peerId = PeerId.fromBase58("12D3KooWHsvEicXjWWraktbZ4MQBizuyADQtuEGr3NbDvtm5rFA5");
+            var peerId = PeerId.fromBase58("12D3KooWPxr1rAHJkcNVmvDMCteNJP8QFWZhQ9YxSGzPJSjZ3XBj");
             var receivers = new String[]{
-                    "/dns/p2p.0.polkadot.network/tcp/30333/p2p/12D3KooWHsvEicXjWWraktbZ4MQBizuyADQtuEGr3NbDvtm5rFA5",
+                    "/ip4/127.0.0.1/tcp/30333/p2p/12D3KooWPxr1rAHJkcNVmvDMCteNJP8QFWZhQ9YxSGzPJSjZ3XBj"
+//                    "/dns/p2p.0.polkadot.network/tcp/30333/p2p/12D3KooWHsvEicXjWWraktbZ4MQBizuyADQtuEGr3NbDvtm5rFA5",
             };
 
             // TODO: connectBootNodes to return number of successful connection in order to validate if > 0
             kademliaService.connectBootNodes(receivers);
 
             var response = lightMessages.remoteReadRequest(senderNode, kademliaService.getHost().getAddressBook(), peerId,
-                    "91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3",
+                    "1929d6a34b7de276b14aece99e57c0518a92e54edc8da17868241f064541aa0f",
                     new String[]{"9c5d795d0297be56027a4b2464e333979c5d795d0297be56027a4b2464e333977a2dce72ec5f24ed58baf131ea24762f3947ac46"}
             );
 
