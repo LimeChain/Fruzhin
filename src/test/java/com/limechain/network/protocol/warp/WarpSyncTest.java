@@ -31,9 +31,9 @@ public class WarpSyncTest {
             senderNode.start().join();
 
             kademliaService.setHost(senderNode);
-            var peerId = PeerId.fromBase58("12D3KooWSRQFbXzBaP3Ec4Ayb1PKcdc7DDFqdjBZhPH2qeQZUCyp");
+            var peerId = PeerId.fromBase58("12D3KooWHsvEicXjWWraktbZ4MQBizuyADQtuEGr3NbDvtm5rFA5");
             var receivers = new String[]{
-                    "/ip4/127.0.0.1/tcp/30333/p2p/12D3KooWSRQFbXzBaP3Ec4Ayb1PKcdc7DDFqdjBZhPH2qeQZUCyp"
+//                    "/ip4/127.0.0.1/tcp/30333/p2p/12D3KooWSRQFbXzBaP3Ec4Ayb1PKcdc7DDFqdjBZhPH2qeQZUCyp"
 //                    "/dns/p2p.0.polkadot.network/tcp/30333/p2p/12D3KooWHsvEicXjWWraktbZ4MQBizuyADQtuEGr3NbDvtm5rFA5",
 //                    "/dns/p2p.1.polkadot.network/tcp/30333/p2p/12D3KooWQz2q2UWVCiy9cFX1hHYEmhSKQB2hjEZCccScHLGUPjcc",
 //                    "/dns/p2p.2.polkadot.network/tcp/30333/p2p/12D3KooWNHxjYbDLLbDNZ2tq1kXgif5MSiLTUWJKcDdedKu4KaG8",

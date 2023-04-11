@@ -1,4 +1,4 @@
-package com.limechain.network.substream.lightclient;
+package com.limechain.network.protocol.lightclient;
 
 import com.google.protobuf.ByteString;
 import com.limechain.network.substream.lightclient.pb.LightClientMessage;

@@ -1,4 +1,4 @@
-package com.limechain.network.substream.lightclient;
+package com.limechain.network.protocol.lightclient;
 
 import lombok.Getter;
 

@@ -4,7 +4,7 @@ import com.limechain.chain.Chain;
 import com.limechain.chain.ChainService;
 import com.limechain.config.HostConfig;
 import com.limechain.network.kad.KademliaService;
-import com.limechain.network.substream.lightclient.LightMessagesService;
+import com.limechain.network.protocol.lightclient.LightMessagesService;
 import io.ipfs.multihash.Multihash;
 import io.libp2p.core.Host;
 import io.libp2p.protocol.Ping;
