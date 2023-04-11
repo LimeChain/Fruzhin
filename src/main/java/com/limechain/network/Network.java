@@ -4,6 +4,7 @@ import com.limechain.chain.Chain;
 import com.limechain.chain.ChainService;
 import com.limechain.config.HostConfig;
 import com.limechain.network.kad.KademliaService;
+import com.limechain.network.protocol.sync.SyncService;
 import io.ipfs.multihash.Multihash;
 import io.libp2p.core.Host;
 import io.libp2p.protocol.Ping;
@@ -31,6 +32,7 @@ public class Network {
     private static final int TEN_SECONDS_IN_MS = 10000;
     private static final int HOST_PORT = 1001;
     private static Network network;
+    public SyncService syncService;
     public static KademliaService kademliaService;
     private HostBuilder hostBuilder;
     private Host host;
@@ -50,6 +52,9 @@ public class Network {
         Multihash hostId = Multihash.deserialize(hostBuilder.getPeerId().getBytes());
         kademliaService = new KademliaService("/dot/kad", hostId, isLocalEnabled);
         hostBuilder.addProtocols(List.of(new Ping(), kademliaService.getDht()));
+        syncService = new SyncService();
+
+        hostBuilder.addProtocols(List.of(new Ping(), kademliaService.getDht(), syncService.getSyncMessages()));
 
         host = hostBuilder.build();
         kademliaService.setHost(host);
