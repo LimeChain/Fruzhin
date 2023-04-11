@@ -19,8 +19,8 @@ public class SyncMessages extends StrictProtocolBinding<SyncController> {
     public SyncMessage.BlockResponse remoteBlockRequest(Host us, AddressBook addrs, PeerId peer,
                                                        int fields,
                                                        String hash,
-                                                       byte[] number,
-                                                       byte[] toBlock,
+                                                       Integer number,
+                                                       Integer toBlock,
                                                        SyncMessage.Direction direction,
                                                        int maxBlocks){
         SyncController controller = dialPeer(us,peer,addrs);
