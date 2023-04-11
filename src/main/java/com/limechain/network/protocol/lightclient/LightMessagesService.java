@@ -7,6 +7,6 @@ public class LightMessagesService {
     private final LightMessages lightMessages;
 
     public LightMessagesService() {
-        this.lightMessages = new LightMessages(new LightMessagesProtocol(new LightMessagesEngine()));
+        this.lightMessages = new LightMessages(new LightMessagesProtocol());
     }
 }

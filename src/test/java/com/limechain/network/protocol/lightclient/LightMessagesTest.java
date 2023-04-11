@@ -1,10 +1,12 @@
 package com.limechain.network.protocol.lightclient;
 
 import com.limechain.network.kad.KademliaService;
+import com.limechain.network.protocol.lightclient.pb.LightClientMessage;
 import io.ipfs.multihash.Multihash;
 import io.libp2p.core.Host;
 import io.libp2p.core.PeerId;
 import io.libp2p.protocol.Ping;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.peergos.HostBuilder;
 
@@ -16,6 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 //CHECKSTYLE.OFF
 public class LightMessagesTest {
 
+    @Disabled("This is an integration test")
     @Test
     public void remoteReadRequest_return_response() {
         Host senderNode = null;
@@ -23,7 +26,7 @@ public class LightMessagesTest {
             HostBuilder hostBuilder1 =
                     (new HostBuilder()).generateIdentity().listenLocalhost(10000 + new Random().nextInt(50000));
 
-            var lightMessages = new LightMessages(new LightMessagesProtocol(new LightMessagesEngine()));
+            var lightMessages = new LightMessages(new LightMessagesProtocol());
             var kademliaService = new KademliaService("/dot/kad",
                     Multihash.deserialize(hostBuilder1.getPeerId().getBytes()), false);
 
@@ -42,7 +45,7 @@ public class LightMessagesTest {
             // TODO: connectBootNodes to return number of successful connection in order to validate if > 0
             kademliaService.connectBootNodes(receivers);
 
-            var response = lightMessages.remoteReadRequest(
+            LightClientMessage.Response response = lightMessages.remoteReadRequest(
                     senderNode,
                     kademliaService.getHost().getAddressBook(),
                     peerId,

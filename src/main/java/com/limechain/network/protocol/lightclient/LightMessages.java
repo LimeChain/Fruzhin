@@ -1,6 +1,6 @@
 package com.limechain.network.protocol.lightclient;
 
-import com.limechain.network.substream.lightclient.pb.LightClientMessage;
+import com.limechain.network.protocol.lightclient.pb.LightClientMessage;
 import io.libp2p.core.AddressBook;
 import io.libp2p.core.Host;
 import io.libp2p.core.PeerId;

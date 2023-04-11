@@ -1,6 +1,6 @@
 package com.limechain.network.protocol.lightclient;
 
-import com.limechain.network.substream.lightclient.pb.LightClientMessage;
+import com.limechain.network.protocol.lightclient.pb.LightClientMessage;
 import io.libp2p.core.ConnectionClosedException;
 import io.libp2p.core.Stream;
 import io.libp2p.protocol.ProtocolHandler;
@@ -16,11 +16,9 @@ public class LightMessagesProtocol extends ProtocolHandler<LightMessagesControll
     // Sizes taken from smoldot
     public static final int MAX_REQUEST_SIZE = 1024 * 512;
     public static final int MAX_RESPONSE_SIZE = 10 * 1024 * 1024;
-    private final LightMessagesEngine engine;
 
-    public LightMessagesProtocol(LightMessagesEngine engine) {
+    public LightMessagesProtocol() {
         super(MAX_REQUEST_SIZE, MAX_RESPONSE_SIZE);
-        this.engine = engine;
     }
 
     @Override

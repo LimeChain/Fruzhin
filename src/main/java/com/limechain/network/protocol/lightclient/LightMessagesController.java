@@ -1,7 +1,7 @@
 package com.limechain.network.protocol.lightclient;
 
 import com.google.protobuf.ByteString;
-import com.limechain.network.substream.lightclient.pb.LightClientMessage;
+import com.limechain.network.protocol.lightclient.pb.LightClientMessage;
 
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
