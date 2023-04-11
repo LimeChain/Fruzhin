@@ -25,7 +25,9 @@ public class SyncMessages extends StrictProtocolBinding<SyncController> {
                                                        int maxBlocks){
         SyncController controller = dialPeer(us,peer,addrs);
         try{
-            SyncMessage.BlockResponse response = controller.sendBlockRequest(fields, hash, number, toBlock, direction, maxBlocks).get();
+            SyncMessage.BlockResponse response = controller
+                    .sendBlockRequest(fields, hash, number, toBlock, direction, maxBlocks)
+                    .get();
             log.log(Level.INFO, "Received response: " + response.toString());
             return response;
         } catch (Exception e){

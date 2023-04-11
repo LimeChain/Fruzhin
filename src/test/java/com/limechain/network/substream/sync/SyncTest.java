@@ -14,7 +14,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.peergos.HostBuilder;
 
-import java.math.BigInteger;
 import java.util.List;
 
 import java.util.Random;
@@ -31,10 +30,12 @@ public class SyncTest {
 
     @BeforeAll
     public void init() {
-        HostBuilder hostBuilder = (new HostBuilder()).generateIdentity().listenLocalhost(10000 + new Random().nextInt(50000));
+        HostBuilder hostBuilder = (new HostBuilder()).generateIdentity()
+                .listenLocalhost(10000 + new Random().nextInt(50000));
 
         syncService = new SyncService();
-        kademliaService = new KademliaService("/dot/kad", Multihash.deserialize(hostBuilder.getPeerId().getBytes()), false);
+        kademliaService = new KademliaService("/dot/kad",
+                Multihash.deserialize(hostBuilder.getPeerId().getBytes()), false);
 
         hostBuilder.addProtocols(List.of(new Ping(), kademliaService.getDht(), syncService.getSyncMessages()));
         senderNode = hostBuilder.build();
@@ -54,8 +55,9 @@ public class SyncTest {
     @Test
     public void remoteBlockRequest_returnCorrectBlock_ifGivenBlockHash() {
         var peerId = PeerId.fromBase58("12D3KooWHsvEicXjWWraktbZ4MQBizuyADQtuEGr3NbDvtm5rFA5");
+        //CHECKSTYLE.OFF
         var receivers = new String[]{"/dns/p2p.0.polkadot.network/tcp/30333/p2p/12D3KooWHsvEicXjWWraktbZ4MQBizuyADQtuEGr3NbDvtm5rFA5"};
-
+        //CHECKSTYLE.ON
         int connectedNodes = kademliaService.connectBootNodes(receivers);
         int expectedConnectedNodes = 1;
         assertEquals(expectedConnectedNodes, connectedNodes);
@@ -73,21 +75,11 @@ public class SyncTest {
 
     @Test
     public void remoteBlockRequest_returnCorrectBlock_ifGivenBlockNumber() {
-        HostBuilder hostBuilder = (new HostBuilder()).generateIdentity().listenLocalhost(10000 + new Random().nextInt(50000));
-
-        var syncService = new SyncService();
-        var kademliaService = new KademliaService("/dot/kad", Multihash.deserialize(hostBuilder.getPeerId().getBytes()), false);
-
-        hostBuilder.addProtocols(List.of(new Ping(), kademliaService.getDht(), syncService.getSyncMessages()));
-        senderNode = hostBuilder.build();
-
-        senderNode.start().join();
-        System.out.println(senderNode.getPeerId());
-
         kademliaService.setHost(senderNode);
         var peerId = PeerId.fromBase58("12D3KooWHsvEicXjWWraktbZ4MQBizuyADQtuEGr3NbDvtm5rFA5");
+        //CHECKSTYLE.OFF
         var receivers = new String[]{"/dns/p2p.0.polkadot.network/tcp/30333/p2p/12D3KooWHsvEicXjWWraktbZ4MQBizuyADQtuEGr3NbDvtm5rFA5"};
-
+        //CHECKSTYLE.ON
         int connectedNodes = kademliaService.connectBootNodes(receivers);
         int expectedConnectedNodes = 1;
         assertEquals(expectedConnectedNodes, connectedNodes);

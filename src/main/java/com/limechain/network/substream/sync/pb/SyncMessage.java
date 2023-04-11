@@ -3,6 +3,7 @@
 
 package com.limechain.network.substream.sync.pb;
 
+//CHECKSTYLE:OFF
 public final class SyncMessage {
   private SyncMessage() {}
   public static void registerAllExtensions(
