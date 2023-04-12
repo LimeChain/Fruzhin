@@ -8,6 +8,7 @@ import io.libp2p.core.multiformats.Multiaddr;
 import io.libp2p.core.multistream.StrictProtocolBinding;
 import lombok.extern.java.Log;
 
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
 @Log
@@ -27,7 +28,7 @@ public class SyncMessages extends StrictProtocolBinding<SyncController> {
         try{
             SyncMessage.BlockResponse response = controller
                     .sendBlockRequest(fields, hash, number, toBlock, direction, maxBlocks)
-                    .get();
+                    .get(2, TimeUnit.SECONDS);
             log.log(Level.INFO, "Received response: " + response.toString());
             return response;
         } catch (Exception e){

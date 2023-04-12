@@ -54,9 +54,9 @@ public class SyncTest {
 
     @Test
     public void remoteBlockRequest_returnCorrectBlock_ifGivenBlockHash() {
-        var peerId = PeerId.fromBase58("12D3KooWGJQysxrQcSvUWWNw88RkqYvJhH3ZcDpWJ8zrXKhLP5Vr");
+        var peerId = PeerId.fromBase58("12D3KooWKer8bYqpYjwurVABu13mkELpX2X7mSpEicpjShLeg7D6");
         //CHECKSTYLE.OFF
-        var receivers = new String[]{"/dns/p2p.3.polkadot.network/tcp/30333/p2p/12D3KooWGJQysxrQcSvUWWNw88RkqYvJhH3ZcDpWJ8zrXKhLP5Vr"};
+        var receivers = new String[]{"/dns/p2p.4.polkadot.network/tcp/30333/p2p/12D3KooWKer8bYqpYjwurVABu13mkELpX2X7mSpEicpjShLeg7D6"};
         //CHECKSTYLE.ON
         int connectedNodes = kademliaService.connectBootNodes(receivers);
         int expectedConnectedNodes = 1;
@@ -75,10 +75,9 @@ public class SyncTest {
 
     @Test
     public void remoteBlockRequest_returnCorrectBlock_ifGivenBlockNumber() {
-        kademliaService.setHost(senderNode);
-        var peerId = PeerId.fromBase58("12D3KooWGJQysxrQcSvUWWNw88RkqYvJhH3ZcDpWJ8zrXKhLP5Vr");
+        var peerId = PeerId.fromBase58("12D3KooWKer8bYqpYjwurVABu13mkELpX2X7mSpEicpjShLeg7D6");
         //CHECKSTYLE.OFF
-        var receivers = new String[]{"/dns/p2p.3.polkadot.network/tcp/30333/p2p/12D3KooWGJQysxrQcSvUWWNw88RkqYvJhH3ZcDpWJ8zrXKhLP5Vr"};
+        var receivers = new String[]{"/dns/p2p.4.polkadot.network/tcp/30333/p2p/12D3KooWKer8bYqpYjwurVABu13mkELpX2X7mSpEicpjShLeg7D6"};
         //CHECKSTYLE.ON
         int connectedNodes = kademliaService.connectBootNodes(receivers);
         int expectedConnectedNodes = 1;
