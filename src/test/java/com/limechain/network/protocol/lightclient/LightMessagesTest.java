@@ -26,16 +26,16 @@ public class LightMessagesTest {
             HostBuilder hostBuilder1 =
                     (new HostBuilder()).generateIdentity().listenLocalhost(10000 + new Random().nextInt(50000));
 
-            var lightMessages = new LightMessages(new LightMessagesProtocol());
+            var lightMessages = new LightMessages("/dot/light/2", new LightMessagesProtocol());
             var kademliaService = new KademliaService("/dot/kad",
                     Multihash.deserialize(hostBuilder1.getPeerId().getBytes()), false);
 
-            hostBuilder1.addProtocols(List.of(new Ping(), lightMessages, kademliaService.getDht()));
+            hostBuilder1.addProtocols(List.of(new Ping(), lightMessages, kademliaService.getProtocol()));
             senderNode = hostBuilder1.build();
 
             senderNode.start().join();
 
-            kademliaService.setHost(senderNode);
+            kademliaService.host = senderNode;
             var peerId = PeerId.fromBase58("12D3KooWHsvEicXjWWraktbZ4MQBizuyADQtuEGr3NbDvtm5rFA5");
             var receivers = new String[]{
 //                    "/ip4/127.0.0.1/tcp/30333/p2p/12D3KooWR5BwfThj5pZ3sWMrYXyi1oeFyYDbSdyEbcbf7FzGwWML"
@@ -47,7 +47,7 @@ public class LightMessagesTest {
 
             LightClientMessage.Response response = lightMessages.remoteReadRequest(
                     senderNode,
-                    kademliaService.getHost().getAddressBook(),
+                    kademliaService.host.getAddressBook(),
                     peerId,
                     "202d85e7911b81e7e704be791b6a2147dc37b571bd311abe5dbf6ab3860dc4b8",
                     new String[]{"9c5d795d0297be56027a4b2464e333979c5d795d0297be56027a4b2464e333977a2dce72ec5f24ed58baf131ea24762f3947ac46"}

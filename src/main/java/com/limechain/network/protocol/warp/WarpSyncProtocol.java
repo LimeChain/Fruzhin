@@ -8,8 +8,6 @@ import io.libp2p.core.ConnectionClosedException;
 import io.libp2p.core.Stream;
 import io.libp2p.protocol.ProtocolHandler;
 import io.libp2p.protocol.ProtocolMessageHandler;
-import org.apache.commons.codec.binary.Hex;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -41,12 +39,6 @@ public class WarpSyncProtocol extends ProtocolHandler<WarpSyncController> {
 
         @Override
         public void onMessage(Stream stream, WarpSyncResponse msg) {
-            System.out.println("Encoded warp sync response: " + msg);
-//            System.out.println("Encoded warp sync response: " + Hex.encodeHexString(msg));
-
-//            ScaleCodecReader reader = new ScaleCodecReader(msg);
-//            WarpSyncResponse warpSyncResponse = reader.read(new WarpSyncRequestReader());
-//
             resp.complete(msg);
             stream.closeWrite();
         }
@@ -60,24 +52,8 @@ public class WarpSyncProtocol extends ProtocolHandler<WarpSyncController> {
                 throw new RuntimeException(e);
             }
 
-            System.out.println("Encoded warp sync request: " + Hex.encodeHexString(buf.toByteArray()));
-//            stream.writeAndFlush("0xb71e3ddbfe2b3d1cb534563493b779acbb08ca28019f75cc03c8eeaf55751");
             stream.writeAndFlush(buf.toByteArray());
-//            stream.writeAndFlush("b71e3ddbfe2b3d1cb534563493b779acbb08ca28019f75cc03c8eeaf55751".getBytes());
-//            stream.writeAndFlush(buf);
             return resp;
-        }
-
-        @Override
-        public void fireMessage(@NotNull Stream stream, @NotNull Object msg) {
-            System.out.println("Fired message!");
-            ProtocolMessageHandler.super.fireMessage(stream, msg);
-        }
-
-        @Override
-        public void onActivated(@NotNull Stream stream) {
-            System.out.println("Activated!");
-            ProtocolMessageHandler.super.onActivated(stream);
         }
 
         @Override

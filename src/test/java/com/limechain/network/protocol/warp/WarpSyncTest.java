@@ -23,16 +23,16 @@ public class WarpSyncTest {
             HostBuilder hostBuilder1 =
                     (new HostBuilder()).generateIdentity().listenLocalhost(10000 + new Random().nextInt(50000));
 
-            var warpSync1 = new WarpSync(new WarpSyncProtocol());
+            var warpSync1 = new WarpSync("/dot/sync/warp", new WarpSyncProtocol());
             var kademliaService = new KademliaService("/dot/kad",
                     Multihash.deserialize(hostBuilder1.getPeerId().getBytes()), false);
 
-            hostBuilder1.addProtocols(List.of(new Ping(), warpSync1, kademliaService.getDht()));
+            hostBuilder1.addProtocols(List.of(new Ping(), warpSync1, kademliaService.getProtocol()));
             senderNode = hostBuilder1.build();
 
             senderNode.start().join();
 
-            kademliaService.setHost(senderNode);
+            kademliaService.host = senderNode;
             var peerId = PeerId.fromBase58("12D3KooWHsvEicXjWWraktbZ4MQBizuyADQtuEGr3NbDvtm5rFA5");
             var receivers = new String[]{
 //                    "/ip4/127.0.0.1/tcp/30333/p2p/12D3KooWSRQFbXzBaP3Ec4Ayb1PKcdc7DDFqdjBZhPH2qeQZUCyp"
