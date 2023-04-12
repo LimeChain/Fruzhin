@@ -6,7 +6,7 @@ import lombok.Getter;
 public class SyncService {
     private final SyncMessages syncMessages;
 
-    public SyncService(){
-        this.syncMessages = new SyncMessages(new SyncProtocol(new SyncEngine()));
+    public SyncService(String protocolId) {
+        this.syncMessages = new SyncMessages(protocolId, new SyncProtocol());
     }
 }

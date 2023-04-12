@@ -101,6 +101,5 @@ public class LightMessagesProtocol extends ProtocolHandler<LightMessagesControll
         public void onException(Throwable cause) {
             resp.completeExceptionally(cause);
         }
-
     }
 }

@@ -15,11 +15,9 @@ import java.util.concurrent.CompletableFuture;
 public class SyncProtocol extends ProtocolHandler<SyncController> {
     public static final int MAX_REQUEST_SIZE = 1024 * 512;
     public static final int MAX_RESPONSE_SIZE = 10 * 1024 * 1024;
-    public final SyncEngine engine;
 
-    public SyncProtocol(SyncEngine engine) {
+    public SyncProtocol() {
         super(MAX_REQUEST_SIZE, MAX_RESPONSE_SIZE);
-        this.engine = engine;
     }
 
     @Override
@@ -36,7 +34,6 @@ public class SyncProtocol extends ProtocolHandler<SyncController> {
     }
 
     // Class for handling outgoing requests
-    // TODO REFACTOR
     static class Sender
             implements ProtocolMessageHandler<SyncMessage.BlockResponse>,
             SyncController {

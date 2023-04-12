@@ -53,16 +53,18 @@ public class Network {
         hostBuilder = (new HostBuilder()).generateIdentity().listenLocalhost(HOST_PORT);
         Multihash hostId = Multihash.deserialize(hostBuilder.getPeerId().getBytes());
 
-        kademliaService = new KademliaService("/dot/kad", hostId, isLocalEnabled);
- 
+        String chainId = chainService.getGenesis().getProtocolId();
+        String legacyKadProtocolId = String.format("/%s/kad", chainId);
+        String syncProtocolId = String.format("/%s/sync/2", chainId);
+        kademliaService = new KademliaService(legacyKadProtocolId, hostId, isLocalEnabled);
         lightMessagesService = new LightMessagesService();
-        syncService = new SyncService();
+        syncService = new SyncService(syncProtocolId);
 
         hostBuilder.addProtocols(
                 List.of(new Ping(), kademliaService.getDht(),
                         lightMessagesService.getLightMessages(),
                         syncService.getSyncMessages()
-                        ));
+                ));
 
         host = hostBuilder.build();
         kademliaService.setHost(host);

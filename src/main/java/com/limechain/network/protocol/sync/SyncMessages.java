@@ -12,8 +12,8 @@ import java.util.logging.Level;
 
 @Log
 public class SyncMessages extends StrictProtocolBinding<SyncController> {
-    public SyncMessages(SyncProtocol protocol){
-        super("/dot/sync/2", protocol);
+    public SyncMessages(String protocolId, SyncProtocol protocol){
+        super(protocolId, protocol);
     }
 
     public SyncMessage.BlockResponse remoteBlockRequest(Host us, AddressBook addrs, PeerId peer,
