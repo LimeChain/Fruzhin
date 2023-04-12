@@ -92,6 +92,5 @@ public class SyncTest {
         assertTrue(response.getBlocksCount() > 0);
 
         assertEquals(expected, response.getBlocks(0).getHash());
-        System.out.println(response.getBlocks(0));
     }
 }
