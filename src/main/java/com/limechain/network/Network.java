@@ -5,6 +5,7 @@ import com.limechain.chain.ChainService;
 import com.limechain.config.HostConfig;
 import com.limechain.network.kad.KademliaService;
 import com.limechain.network.protocol.sync.SyncService;
+import com.limechain.network.substream.lightclient.LightMessagesService;
 import io.ipfs.multihash.Multihash;
 import io.libp2p.core.Host;
 import io.libp2p.protocol.Ping;
@@ -33,7 +34,8 @@ public class Network {
     private static final int HOST_PORT = 1001;
     private static Network network;
     public SyncService syncService;
-    public static KademliaService kademliaService;
+    public LightMessagesService lightMessagesService;
+    public KademliaService kademliaService;
     private HostBuilder hostBuilder;
     private Host host;
 
@@ -44,17 +46,23 @@ public class Network {
      * Connects Kademlia to boot nodes
      *
      * @param chainService chain specification information containing boot nodes
-     * @param hostConfig host configuration containing current network
+     * @param hostConfig   host configuration containing current network
      */
     private Network(ChainService chainService, HostConfig hostConfig) {
         boolean isLocalEnabled = hostConfig.getChain() == Chain.LOCAL;
         hostBuilder = (new HostBuilder()).generateIdentity().listenLocalhost(HOST_PORT);
         Multihash hostId = Multihash.deserialize(hostBuilder.getPeerId().getBytes());
+
         kademliaService = new KademliaService("/dot/kad", hostId, isLocalEnabled);
-        hostBuilder.addProtocols(List.of(new Ping(), kademliaService.getDht()));
+ 
+        lightMessagesService = new LightMessagesService();
         syncService = new SyncService();
 
-        hostBuilder.addProtocols(List.of(new Ping(), kademliaService.getDht(), syncService.getSyncMessages()));
+        hostBuilder.addProtocols(
+                List.of(new Ping(), kademliaService.getDht(),
+                        lightMessagesService.getLightMessages(),
+                        syncService.getSyncMessages()
+                        ));
 
         host = hostBuilder.build();
         kademliaService.setHost(host);
