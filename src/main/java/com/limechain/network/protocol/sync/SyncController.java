@@ -10,6 +10,11 @@ import static java.util.Objects.isNull;
 public interface SyncController {
     CompletableFuture<SyncMessage.BlockResponse> send(SyncMessage.BlockRequest msg);
 
+    /**
+     * Converts block number to bytes to encode them for the sync message
+     * @param blockNumber
+     * @return byte array made from the block number
+     */
     private static byte[] blockNumberToByteArray(int blockNumber) {
         byte byte1 = (byte) (blockNumber);
         byte byte2 = (byte) (blockNumber >>> 8);
