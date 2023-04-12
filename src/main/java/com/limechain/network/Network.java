@@ -4,8 +4,8 @@ import com.limechain.chain.Chain;
 import com.limechain.chain.ChainService;
 import com.limechain.config.HostConfig;
 import com.limechain.network.kad.KademliaService;
-import com.limechain.network.protocol.sync.SyncService;
 import com.limechain.network.protocol.lightclient.LightMessagesService;
+import com.limechain.network.protocol.sync.SyncService;
 import com.limechain.network.protocol.warp.WarpSyncService;
 import io.ipfs.multihash.Multihash;
 import io.libp2p.core.Host;
@@ -65,7 +65,7 @@ public class Network {
                         kademliaService.getProtocol(),
                         lightMessagesService.getProtocol(),
                         warpSyncService.getProtocol(),
-                        syncService.getSyncMessages()
+                        syncService.getProtocol()
                 ));
 
         host = hostBuilder.build();
