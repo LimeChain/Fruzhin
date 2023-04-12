@@ -2,7 +2,8 @@ package com.limechain.network.substream.sync;
 
 import com.google.protobuf.ByteString;
 import com.limechain.network.kad.KademliaService;
-import com.limechain.network.protocol.sync.SyncService;
+import com.limechain.network.protocol.sync.SyncMessages;
+import com.limechain.network.protocol.sync.SyncProtocol;
 import com.limechain.network.substream.sync.pb.SyncMessage;
 import io.ipfs.multihash.Multihash;
 import io.libp2p.core.Host;
@@ -15,7 +16,6 @@ import org.junit.jupiter.api.TestInstance;
 import org.peergos.HostBuilder;
 
 import java.util.List;
-
 import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -26,23 +26,23 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class SyncTest {
     private Host senderNode = null;
     private KademliaService kademliaService = null;
-    private SyncService syncService = null;
+    private SyncMessages syncService = null;
 
     @BeforeAll
     public void init() {
         HostBuilder hostBuilder = (new HostBuilder()).generateIdentity()
                 .listenLocalhost(10000 + new Random().nextInt(50000));
 
-        syncService = new SyncService("/dot/sync/2");
+        syncService = new SyncMessages("/dot/sync/2", new SyncProtocol());
         kademliaService = new KademliaService("/dot/kad",
                 Multihash.deserialize(hostBuilder.getPeerId().getBytes()), false);
 
-        hostBuilder.addProtocols(List.of(new Ping(), kademliaService.getDht(), syncService.getSyncMessages()));
+        hostBuilder.addProtocols(List.of(new Ping(), kademliaService.getProtocol(), syncService));
         senderNode = hostBuilder.build();
 
         senderNode.start().join();
 
-        kademliaService.setHost(senderNode);
+        kademliaService.host = senderNode;
     }
 
     @AfterAll
@@ -63,7 +63,7 @@ public class SyncTest {
         assertEquals(expectedConnectedNodes, connectedNodes);
 
         //CHECKSTYLE.OFF
-        var response = syncService.getSyncMessages().remoteBlockRequest(senderNode, senderNode.getAddressBook(), peerId, 19, "cbd3e72e769652f804568a48889382edff4742074a7201309acfd1069e5de90a",
+        var response = syncService.remoteBlockRequest(senderNode, senderNode.getAddressBook(), peerId, 19, "cbd3e72e769652f804568a48889382edff4742074a7201309acfd1069e5de90a",
                 null, null, SyncMessage.Direction.Ascending, 1);
         ByteString expected = ByteString.copyFrom(new byte[]{-53, -45, -25, 46, 118, -106, 82, -8, 4, 86, -118, 72, -120, -109, -126, -19, -1, 71, 66, 7, 74, 114, 1, 48, -102, -49, -47, 6, -98, 93, -23, 10});
         //CHECKSTYLE.ON
@@ -83,7 +83,7 @@ public class SyncTest {
         int expectedConnectedNodes = 1;
         assertEquals(expectedConnectedNodes, connectedNodes);
         //CHECKSTYLE.OFF
-        var response = syncService.getSyncMessages().remoteBlockRequest(senderNode, senderNode.getAddressBook(), peerId, 19, null,
+        var response = syncService.remoteBlockRequest(senderNode, senderNode.getAddressBook(), peerId, 19, null,
                 15000000, 15000000, SyncMessage.Direction.Ascending, 1);
         ByteString expected = ByteString.copyFrom(new byte[]{-5, -114, 15, -47, 54, 111, 75, -101, 58, 121, -122, 66, -103, -41, -9, 10, -125, -12, 77, 72, -53, -7, -84, 19, 95, 45, -110, -39, 104, 8, 6, -88});
         //CHECKSTYLE.ON
