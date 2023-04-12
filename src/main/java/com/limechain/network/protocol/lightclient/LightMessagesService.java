@@ -1,12 +1,17 @@
 package com.limechain.network.protocol.lightclient;
 
-import lombok.Getter;
+import com.limechain.network.protocol.NetworkService;
+import io.libp2p.core.multistream.ProtocolBinding;
 
-public class LightMessagesService {
-    @Getter
+public class LightMessagesService implements NetworkService {
+
     private final LightMessages lightMessages;
 
-    public LightMessagesService() {
-        this.lightMessages = new LightMessages(new LightMessagesProtocol());
+    public LightMessagesService(String protocolId) {
+        this.lightMessages = new LightMessages(protocolId, new LightMessagesProtocol());
+    }
+
+    public ProtocolBinding getProtocol() {
+        return lightMessages;
     }
 }

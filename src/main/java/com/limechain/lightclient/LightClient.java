@@ -18,7 +18,7 @@ public class LightClient {
     private final String[] cliArgs;
     private final HttpRpc httpRpc;
     private final WebSocketRPC wsRpc;
-    private Network networkService;
+    private Network network;
     private Sync syncService;
 
     public LightClient(String[] cliArgs, HttpRpc httpRpc, WebSocketRPC wsRpc) {

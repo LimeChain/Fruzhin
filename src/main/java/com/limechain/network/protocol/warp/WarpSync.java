@@ -16,8 +16,8 @@ import java.util.logging.Level;
 @Log
 public class WarpSync extends StrictProtocolBinding<WarpSyncController> {
 
-    public WarpSync(WarpSyncProtocol protocol) {
-        super("/dot/sync/warp", protocol);
+    public WarpSync(String protocolId, WarpSyncProtocol protocol) {
+        super(protocolId, protocol);
     }
 
     public WarpSyncResponse warpSyncRequest(Host us, AddressBook addrs, PeerId peer, String blockHash) {

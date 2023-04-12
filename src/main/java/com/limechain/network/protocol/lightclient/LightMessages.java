@@ -13,9 +13,8 @@ import java.util.logging.Level;
 
 @Log
 public class LightMessages extends StrictProtocolBinding<LightMessagesController> {
-    public LightMessages(LightMessagesProtocol protocol) {
-        super("/dot/light/2", protocol);
-
+    public LightMessages(String protocolId, LightMessagesProtocol protocol) {
+        super(protocolId, protocol);
     }
 
     public LightClientMessage.Response remoteCallRequest(Host us, AddressBook addrs, PeerId peer,
