@@ -4,19 +4,19 @@ import com.limechain.chain.Chain;
 import com.limechain.chain.ChainService;
 import com.limechain.config.HostConfig;
 import com.limechain.network.kad.KademliaService;
+import com.limechain.network.protocol.lightclient.LightMessagesService;
 import com.limechain.network.protocol.sync.SyncService;
-import com.limechain.network.substream.lightclient.LightMessagesService;
+import com.limechain.network.protocol.warp.WarpSyncService;
 import io.ipfs.multihash.Multihash;
 import io.libp2p.core.Host;
 import io.libp2p.protocol.Ping;
-import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.java.Log;
 import org.peergos.HostBuilder;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
 /**
@@ -24,19 +24,13 @@ import java.util.logging.Level;
  */
 @Component
 @Log
-@Getter
-@Setter
 public class Network {
-    /**
-     * Interval between periodic peer searches
-     */
-    private static final int TEN_SECONDS_IN_MS = 10000;
-    private static final int HOST_PORT = 1001;
+    private static final int HOST_PORT = 30333;
     private static Network network;
     public SyncService syncService;
     public LightMessagesService lightMessagesService;
+    public WarpSyncService warpSyncService;
     public KademliaService kademliaService;
-    private HostBuilder hostBuilder;
     private Host host;
 
     /**
@@ -50,25 +44,33 @@ public class Network {
      */
     private Network(ChainService chainService, HostConfig hostConfig) {
         boolean isLocalEnabled = hostConfig.getChain() == Chain.LOCAL;
-        hostBuilder = (new HostBuilder()).generateIdentity().listenLocalhost(HOST_PORT);
+        HostBuilder hostBuilder = (new HostBuilder()).generateIdentity().listenLocalhost(HOST_PORT);
         Multihash hostId = Multihash.deserialize(hostBuilder.getPeerId().getBytes());
 
+        //TODO: Add new protocolId format with genesis hash
         String chainId = chainService.getGenesis().getProtocolId();
         String legacyKadProtocolId = String.format("/%s/kad", chainId);
-        String syncProtocolId = String.format("/%s/sync/2", chainId);
+        String legacyWarpProtocolId = String.format("/%s/sync/warp", chainId);
+        String legacyLightProtocolId = String.format("/%s/light/2", chainId);
+        String legacySyncProtocolId = String.format("/%s/sync/2", chainId);
+
         kademliaService = new KademliaService(legacyKadProtocolId, hostId, isLocalEnabled);
-        lightMessagesService = new LightMessagesService();
-        syncService = new SyncService(syncProtocolId);
+        lightMessagesService = new LightMessagesService(legacyLightProtocolId);
+        warpSyncService = new WarpSyncService(legacyWarpProtocolId);
+        syncService = new SyncService(legacySyncProtocolId);
 
         hostBuilder.addProtocols(
-                List.of(new Ping(), kademliaService.getDht(),
-                        lightMessagesService.getLightMessages(),
-                        syncService.getSyncMessages()
+                List.of(
+                        new Ping(),
+                        kademliaService.getProtocol(),
+                        lightMessagesService.getProtocol(),
+                        warpSyncService.getProtocol(),
+                        syncService.getProtocol()
                 ));
 
         host = hostBuilder.build();
-        kademliaService.setHost(host);
 
+        kademliaService.host = host;
         kademliaService.connectBootNodes(chainService.getGenesis().getBootNodes());
     }
 
@@ -101,7 +103,7 @@ public class Network {
     /**
      * Periodically searched for new peers
      */
-    @Scheduled(fixedDelay = TEN_SECONDS_IN_MS)
+    @Scheduled(fixedDelay = 10, timeUnit = TimeUnit.SECONDS)
     public void findPeers() {
         log.log(Level.INFO, "Searching for nodes...");
         kademliaService.findNewPeers();

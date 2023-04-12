@@ -1,8 +1,5 @@
 syntax = "proto3";
 
-package com.limechain.network.substream.lightclient.pb;
-option java_package = "com.limechain.network.substream.lightclient.pb";
-
 // Schema definition for light client messages.
 // Copied from https://github.com/paritytech/substrate/blob/9b08105b8c7106d723c4f470304ad9e2868569d9/client/network/src/schema/light.v1.proto
 
