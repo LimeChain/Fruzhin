@@ -51,8 +51,9 @@ public class KademliaService implements NetworkService {
      * Connects to boot nodes to the Kademlia dht
      *
      * @param bootNodes boot nodes set in ChainService
+     * @return the number of successfully connected nodes
      */
-    public void connectBootNodes(String[] bootNodes) {
+    public int connectBootNodes(String[] bootNodes) {
         var bootstrapMultiAddress = List.of(bootNodes).stream()
                 .map(DnsUtils::dnsNodeToIp4)
                 .map(MultiAddress::new)
@@ -60,6 +61,7 @@ public class KademliaService implements NetworkService {
         int successfulBootNodes = kademlia.bootstrapRoutingTable(host, bootstrapMultiAddress,
                 addr -> !addr.contains("wss") && !addr.contains("ws"));
         log.log(Level.INFO, "Successfully connected to " + successfulBootNodes + " boot nodes");
+        return successfulBootNodes;
     }
 
     /**

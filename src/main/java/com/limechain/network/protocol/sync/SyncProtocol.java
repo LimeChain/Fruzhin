@@ -1,6 +1,6 @@
-package com.limechain.network.protocol.lightclient;
+package com.limechain.network.protocol.sync;
 
-import com.limechain.network.protocol.lightclient.pb.LightClientMessage;
+import com.limechain.network.substream.sync.pb.SyncMessage;
 import io.libp2p.core.ConnectionClosedException;
 import io.libp2p.core.Stream;
 import io.libp2p.protocol.ProtocolHandler;
@@ -12,19 +12,18 @@ import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 
 import java.util.concurrent.CompletableFuture;
 
-public class LightMessagesProtocol extends ProtocolHandler<LightMessagesController> {
-    // Sizes taken from smoldot
+public class SyncProtocol extends ProtocolHandler<SyncController> {
     public static final int MAX_REQUEST_SIZE = 1024 * 512;
     public static final int MAX_RESPONSE_SIZE = 10 * 1024 * 1024;
 
-    public LightMessagesProtocol() {
+    public SyncProtocol() {
         super(MAX_REQUEST_SIZE, MAX_RESPONSE_SIZE);
     }
 
     @Override
-    protected CompletableFuture<LightMessagesController> onStartInitiator(Stream stream) {
+    protected CompletableFuture<SyncController> onStartInitiator(Stream stream) {
         stream.pushHandler(new ProtobufVarint32FrameDecoder());
-        stream.pushHandler(new ProtobufDecoder(LightClientMessage.Response.getDefaultInstance()));
+        stream.pushHandler(new ProtobufDecoder(SyncMessage.BlockResponse.getDefaultInstance()));
 
         stream.pushHandler((new ProtobufVarint32LengthFieldPrepender()));
         stream.pushHandler((new ProtobufEncoder()));
@@ -36,9 +35,9 @@ public class LightMessagesProtocol extends ProtocolHandler<LightMessagesControll
 
     // Class for handling outgoing requests
     static class Sender
-            implements ProtocolMessageHandler<LightClientMessage.Response>,
-            LightMessagesController {
-        private final CompletableFuture<LightClientMessage.Response> resp = new CompletableFuture<>();
+            implements ProtocolMessageHandler<SyncMessage.BlockResponse>,
+            SyncController {
+        private final CompletableFuture<SyncMessage.BlockResponse> resp = new CompletableFuture<>();
         private final Stream stream;
 
         public Sender(Stream stream) {
@@ -46,14 +45,14 @@ public class LightMessagesProtocol extends ProtocolHandler<LightMessagesControll
         }
 
         @Override
-        public void onMessage(Stream stream, LightClientMessage.Response msg) {
+        public void onMessage(Stream stream, SyncMessage.BlockResponse msg) {
             resp.complete(msg);
             stream.closeWrite();
         }
 
         @Override
-        public CompletableFuture<LightClientMessage.Response> send(LightClientMessage.Request req) {
-            stream.writeAndFlush(req);
+        public CompletableFuture<SyncMessage.BlockResponse> send(SyncMessage.BlockRequest msg) {
+            stream.writeAndFlush(msg);
             return resp;
         }
 
@@ -66,5 +65,6 @@ public class LightMessagesProtocol extends ProtocolHandler<LightMessagesControll
         public void onException(Throwable cause) {
             resp.completeExceptionally(cause);
         }
+
     }
 }

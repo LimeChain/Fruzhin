@@ -4,6 +4,7 @@ import com.limechain.chain.Chain;
 import com.limechain.chain.ChainService;
 import com.limechain.config.HostConfig;
 import com.limechain.network.kad.KademliaService;
+import com.limechain.network.protocol.sync.SyncService;
 import com.limechain.network.protocol.lightclient.LightMessagesService;
 import com.limechain.network.protocol.warp.WarpSyncService;
 import io.ipfs.multihash.Multihash;
@@ -26,6 +27,7 @@ import java.util.logging.Level;
 public class Network {
     private static final int HOST_PORT = 30333;
     private static Network network;
+    public SyncService syncService;
     public LightMessagesService lightMessagesService;
     public WarpSyncService warpSyncService;
     public KademliaService kademliaService;
@@ -50,17 +52,20 @@ public class Network {
         String legacyKadProtocolId = String.format("/%s/kad", chainId);
         String legacyWarpProtocolId = String.format("/%s/sync/warp", chainId);
         String legacyLightProtocolId = String.format("/%s/light/2", chainId);
+        String legacySyncProtocolId = String.format("/%s/sync/2", chainId);
 
         kademliaService = new KademliaService(legacyKadProtocolId, hostId, isLocalEnabled);
         lightMessagesService = new LightMessagesService(legacyLightProtocolId);
         warpSyncService = new WarpSyncService(legacyWarpProtocolId);
+        syncService = new SyncService(legacySyncProtocolId);
 
         hostBuilder.addProtocols(
                 List.of(
                         new Ping(),
                         kademliaService.getProtocol(),
                         lightMessagesService.getProtocol(),
-                        warpSyncService.getProtocol()
+                        warpSyncService.getProtocol(),
+                        syncService.getSyncMessages()
                 ));
 
         host = hostBuilder.build();
