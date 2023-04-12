@@ -28,7 +28,7 @@ public class LightMessagesTest {
 
             var lightMessages = new LightMessages("/dot/light/2", new LightMessagesProtocol());
             var kademliaService = new KademliaService("/dot/kad",
-                    Multihash.deserialize(hostBuilder1.getPeerId().getBytes()), false);
+                    Multihash.deserialize(hostBuilder1.getPeerId().getBytes()), false, true);
 
             hostBuilder1.addProtocols(List.of(new Ping(), lightMessages, kademliaService.getProtocol()));
             senderNode = hostBuilder1.build();

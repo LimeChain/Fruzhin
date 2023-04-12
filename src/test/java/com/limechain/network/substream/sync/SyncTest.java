@@ -35,7 +35,7 @@ public class SyncTest {
 
         syncService = new SyncMessages("/dot/sync/2", new SyncProtocol());
         kademliaService = new KademliaService("/dot/kad",
-                Multihash.deserialize(hostBuilder.getPeerId().getBytes()), false);
+                Multihash.deserialize(hostBuilder.getPeerId().getBytes()), false, true);
 
         hostBuilder.addProtocols(List.of(new Ping(), kademliaService.getProtocol(), syncService));
         senderNode = hostBuilder.build();

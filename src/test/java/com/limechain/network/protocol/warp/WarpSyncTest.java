@@ -27,7 +27,7 @@ public class WarpSyncTest {
 
             var warpSync = new WarpSync("/dot/sync/warp", new WarpSyncProtocol());
             var kademliaService = new KademliaService("/dot/kad",
-                    Multihash.deserialize(hostBuilder1.getPeerId().getBytes()), false);
+                    Multihash.deserialize(hostBuilder1.getPeerId().getBytes()), false, true);
 
             hostBuilder1.addProtocols(List.of(new Ping(), warpSync, kademliaService.getProtocol()));
             senderNode = hostBuilder1.build();
