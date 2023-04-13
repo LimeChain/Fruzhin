@@ -9,6 +9,7 @@ import com.limechain.network.protocol.sync.SyncService;
 import com.limechain.network.protocol.warp.WarpSyncService;
 import io.ipfs.multihash.Multihash;
 import io.libp2p.core.Host;
+import io.libp2p.core.multiformats.Multiaddr;
 import io.libp2p.protocol.Ping;
 import lombok.Getter;
 import lombok.extern.java.Log;
@@ -52,7 +53,7 @@ public class Network {
         boolean isLocalEnabled = hostConfig.getChain() == Chain.LOCAL;
         boolean clientMode = true;
 
-        HostBuilder hostBuilder = (new HostBuilder()).generateIdentity().listenLocalhost(HOST_PORT);
+        HostBuilder hostBuilder = new HostBuilder().generateIdentity().listenLocalhost(HOST_PORT);
         Multihash hostId = Multihash.deserialize(hostBuilder.getPeerId().getBytes());
 
         //TODO: Add new protocolId format with genesis hash
@@ -108,6 +109,19 @@ public class Network {
         return network;
     }
 
+    public void start() {
+        // TODO: Connect to bootnodes, start new peers search cron job
+    }
+
+    public String getPeerId() {
+        return this.host.getPeerId().toString();
+    }
+
+    public String[] getListenAddresses() {
+        // TODO Bug: .listenAddresses() returns empty list
+        return this.host.listenAddresses().stream().map(Multiaddr::toString).toArray(String[]::new);
+    }
+    
     /**
      * Periodically searched for new peers
      */

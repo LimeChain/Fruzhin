@@ -32,6 +32,11 @@ public class ChainService {
      */
     private ChainSpec genesis;
 
+    /**
+     * Whether the chain setup is in local development mode
+     */
+    private boolean isLocalChain;
+
     public ChainService(HostConfig hostConfig, KVRepository<String, Object> repository) {
         this.repository = repository;
         initialize(hostConfig);
@@ -48,8 +53,8 @@ public class ChainService {
             Saving the local genesis file is not suitable in this early phase of development.
             This might be removed in the future.
          */
-        boolean inLocalDevelopment = hostConfig.getChain() == Chain.LOCAL;
-        if (genesis.isPresent() && !inLocalDevelopment) {
+        isLocalChain = hostConfig.getChain() == Chain.LOCAL;
+        if (genesis.isPresent() && !isLocalChain) {
             this.setGenesis((ChainSpec) genesis.get());
             log.log(Level.INFO, "✅️Loaded chain spec from DB");
             return;
@@ -65,5 +70,13 @@ public class ChainService {
             throw new RuntimeException(e);
         }
 
+    }
+
+    public boolean isChainLive() {
+        String chainType = this.getGenesis().getChainType();
+        if (chainType != null) {
+            return chainType.equals("Live");
+        }
+        return !isLocalChain;
     }
 }

@@ -3,6 +3,8 @@ package com.limechain.rpc.methods.system;
 import com.limechain.chain.ChainService;
 import com.limechain.chain.ChainSpec;
 import com.limechain.config.SystemInfo;
+import com.limechain.network.Network;
+import com.limechain.sync.Sync;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -17,14 +19,17 @@ public class SystemRPCImplTest {
 
     // Dependencies
     private ChainService chainService;
+    private Sync sync;
+    private Network network;
     private SystemInfo systemInfo;
 
     @BeforeEach
     public void setup() {
         chainService = mock(ChainService.class);
         systemInfo = mock(SystemInfo.class);
-
-        systemRPC = new SystemRPCImpl(chainService, systemInfo);
+        sync = mock(Sync.class);
+        network = mock(Network.class);
+        systemRPC = new SystemRPCImpl(chainService, systemInfo, network, sync);
     }
 
     @Test

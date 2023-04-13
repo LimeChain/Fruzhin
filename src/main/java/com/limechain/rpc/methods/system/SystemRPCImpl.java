@@ -2,10 +2,14 @@ package com.limechain.rpc.methods.system;
 
 import com.limechain.chain.ChainService;
 import com.limechain.config.SystemInfo;
+import com.limechain.network.Network;
+import com.limechain.sync.Sync;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
+
+import static java.util.Map.entry;
 
 /**
  * Holds all business logic related to executing system rpc method calls.
@@ -21,6 +25,8 @@ public class SystemRPCImpl {
      */
     private final ChainService chainService;
     private final SystemInfo systemInfo;
+    private final Network network;
+    private final Sync sync;
 
     /**
      * Gets the node's implementation name.
@@ -73,15 +79,18 @@ public class SystemRPCImpl {
      */
     // TODO: Implement in M2.
     public Map<String, Object> systemHealth() {
-        return null;
+        return Map.ofEntries(
+                entry("isSyncing", this.sync.isSyncing()),
+                entry("peers", this.network.getPeers().size()),
+                entry("shouldHavePeers", chainService.isChainLive())
+        );
     }
 
     /**
      * Returns the base58-encoded PeerId of the node.
      */
-    // TODO: Implement in M2.
     public String systemLocalPeerId() {
-        return null;
+        return network.getPeerId();
     }
 
     /**
@@ -92,7 +101,7 @@ public class SystemRPCImpl {
      */
     // TODO: Implement in M2.
     public String[] systemLocalListenAddress() {
-        return new String[0];
+        return this.network.getListenAddresses();
     }
 
     /**
@@ -102,14 +111,13 @@ public class SystemRPCImpl {
     public String[] systemSystemPeers() {
         return new String[0];
     }
-
-    // TODO: Implement in M2.
-
+    
     /**
      * Adds a reserved peer. The string parameter should encode a p2p multiaddr.
      *
      * @param peerId peerId to add
      */
+    // TODO: Implement in Mx.
     public void systemAddReservedPeer(String peerId) {
     }
 
