@@ -1,9 +1,7 @@
-package com.limechain.network.substream.sync;
+package com.limechain.network.protocol.sync;
 
 import com.google.protobuf.ByteString;
 import com.limechain.network.kad.KademliaService;
-import com.limechain.network.protocol.sync.SyncMessages;
-import com.limechain.network.protocol.sync.SyncProtocol;
 import com.limechain.network.substream.sync.pb.SyncMessage;
 import io.ipfs.multihash.Multihash;
 import io.libp2p.core.Host;
