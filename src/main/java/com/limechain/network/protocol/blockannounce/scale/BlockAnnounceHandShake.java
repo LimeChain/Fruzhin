@@ -7,4 +7,14 @@ public class BlockAnnounceHandShake {
     public String bestBlock;
     public Hash256 bestBlockHash;
     public Hash256 genesisBlockHash;
+
+    @Override
+    public String toString() {
+        return "BlockAnnounceHandShake{" +
+                "nodeRole=" + nodeRole +
+                ", bestBlock='" + bestBlock + '\'' +
+                ", bestBlockHash=" + bestBlockHash +
+                ", genesisBlockHash=" + genesisBlockHash +
+                '}';
+    }
 }

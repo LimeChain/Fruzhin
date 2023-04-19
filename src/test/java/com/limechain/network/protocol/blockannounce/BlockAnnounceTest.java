@@ -6,12 +6,16 @@ import io.emeraldpay.polkaj.types.Hash256;
 import io.ipfs.multihash.Multihash;
 import io.libp2p.core.Host;
 import io.libp2p.core.PeerId;
+import io.libp2p.core.StreamPromise;
+import io.libp2p.core.multiformats.Multiaddr;
 import io.libp2p.protocol.Ping;
 import org.junit.jupiter.api.Test;
 import org.peergos.HostBuilder;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 public class BlockAnnounceTest {
     @Test
@@ -23,7 +27,7 @@ public class BlockAnnounceTest {
 
             var blockAnnounce = new BlockAnnounce("/dot/block-announces/1", new BlockAnnounceProtocol());
             var kademliaService = new KademliaService("/dot/kad",
-                    Multihash.deserialize(hostBuilder1.getPeerId().getBytes()), false, true);
+                    Multihash.deserialize(hostBuilder1.getPeerId().getBytes()), true, false);
 
             hostBuilder1.addProtocols(List.of(new Ping(), blockAnnounce, kademliaService.getProtocol()));
             senderNode = hostBuilder1.build();
@@ -31,23 +35,77 @@ public class BlockAnnounceTest {
             senderNode.start().join();
 
             kademliaService.host = senderNode;
-            var peerId = PeerId.fromBase58("12D3KooWLiGEgzQy8XRp825ZGDRxhcWdvPzC5QydUaNkzkp9ffGN");
+            var peerId = PeerId.fromBase58("12D3KooW9zKCrJ1tpbFGRTjEs34H5RF3rfvqCqbAFGWT7q8bgUSz");
             var receivers = new String[]{
-                    "/ip4/127.0.0.1/tcp/30333/p2p/12D3KooWLiGEgzQy8XRp825ZGDRxhcWdvPzC5QydUaNkzkp9ffGN"
-//                    "/ip4/127.0.0.1/tcp/7001/p2p/12D3KooWRWPEuqV2ECJfRvqG7Dj1Qk8NC8jpsQZuWAoySXJLqkHA"
+//                    "/ip4/127.0.0.1/tcp/30333/p2p/12D3KooWERhqHL6N91yPM3YnjUu8Q26CqnrqsTYgmW32UmVcV5Je"
+                    "/ip4/127.0.0.1/tcp/7001/p2p/12D3KooW9zKCrJ1tpbFGRTjEs34H5RF3rfvqCqbAFGWT7q8bgUSz"
+//                    "/ip4/127.0.0.1/tcp/7002/p2p/12D3KooWBTnoAGRrmxbBsFY9GvLps6pMSrZchDnPx8hQpp7Z2AZJ"
 //                    "/dns/p2p.0.polkadot.network/tcp/30333/p2p/12D3KooWHsvEicXjWWraktbZ4MQBizuyADQtuEGr3NbDvtm5rFA5",
             };
-
             kademliaService.connectBootNodes(receivers);
-            kademliaService.findNewPeers();
-            blockAnnounce.sendHandshake(senderNode, senderNode.getAddressBook(), peerId, new BlockAnnounceHandShake() {{
-                nodeRole = 1;
-                bestBlockHash = Hash256.from("0xbbce82af7e14f84ed09c051f25384ba80adf6b5a5fbc0086c0eea6986ad9d82a");
-                bestBlock = "15072200";
-                genesisBlockHash = Hash256.from("0x91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3");
-            }});
 
+            var handShake = new BlockAnnounceHandShake() {{
+                nodeRole = 4;
+                bestBlockHash = Hash256.from("0x1f7a1b28529651bb50b3ef4304f82fbc72bc791b9b838920df2fa96eabe011aa");
+                bestBlock = "3";
+                genesisBlockHash = Hash256.from("0xb6d36a6766363567d2a385c8b5f9bd93b223b8f42e54aa830270edcf375f4d63");
+            }};
+
+            System.out.println("PeerID: " + senderNode.getPeerId());
+            Multiaddr[] addr = senderNode.getAddressBook().get(peerId)
+                    .join().stream()
+                    .filter(address -> !address.toString().contains("/ws") && !address.toString().contains("/wss"))
+                    .toList()
+                    .toArray(new Multiaddr[0]);
+
+            if (addr.length == 0)
+                throw new IllegalStateException("No addresses known for peer " + peerId);
+
+//            StreamPromise<BlockAnnounceController> senderController = senderNode.newStream(new ArrayList<>() {{
+//                add("/dot/block-announces/1");
+//            }}, peerId, addr);
+//
+//            senderController.getController().join().sendHandshake(handShake);
+//
+//            System.out.println(senderNode.getStreams().stream().map(s -> s.getProtocol().join()).collect(Collectors.joining(", ")));
+
+            while (true) {
+                Thread.sleep(2000);
+                System.out.println(senderNode.getStreams().stream().map(s -> s.getProtocol().join()).collect(Collectors.joining(", ")));
+
+                var blockAnnStreams = senderNode.getStreams().stream().filter(s -> s.getProtocol().join().equals("/dot/block-announces/1")).toList();
+
+                if (blockAnnStreams.size() == 0) {
+                    continue;
+                }
+
+                Host finalSenderNode = senderNode;
+
+                blockAnnStreams.forEach(s -> {
+                    if (s.isInitiator()) {
+                        return;
+                    }
+                    Multiaddr[] addr2 = finalSenderNode.getAddressBook().get(peerId)
+                            .join().stream()
+                            .filter(address -> !address.toString().contains("/ws") && !address.toString().contains("/wss"))
+                            .toList()
+                            .toArray(new Multiaddr[0]);
+
+                    if (addr2.length == 0)
+                        throw new IllegalStateException("No addresses known for peer " + peerId);
+
+                    StreamPromise<BlockAnnounceController> senderController2 = finalSenderNode.newStream(new ArrayList<>() {{
+                        add("/dot/block-announces/1");
+                    }}, peerId, addr2);
+
+                    senderController2.getController().join().sendHandshake(handShake);
+                });
+                break;
+            }
+
+            System.out.println(senderNode.getStreams().stream().map(s -> s.getProtocol().join()).collect(Collectors.joining(", ")));
             Thread.sleep(25000);
+            System.out.println(senderNode.getStreams().stream().map(s -> s.getProtocol().join()).collect(Collectors.joining(", ")));
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         } finally {

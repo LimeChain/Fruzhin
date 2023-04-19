@@ -8,6 +8,7 @@ import io.libp2p.protocol.ProtocolHandler;
 import io.libp2p.protocol.ProtocolMessageHandler;
 import io.netty.buffer.ByteBuf;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -54,7 +55,7 @@ public class BlockAnnounceProtocol extends ProtocolHandler<BlockAnnounceControll
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-            System.out.println("Writing handshake to stream");
+            System.out.println("Writing handshake to stream 1");
             stream.writeAndFlush(buf.toByteArray());
         }
 
@@ -89,7 +90,20 @@ public class BlockAnnounceProtocol extends ProtocolHandler<BlockAnnounceControll
             byte[] messageBytes = new byte[msg.readableBytes()];
             msg.readBytes(messageBytes);
             engine.receiveRequest(messageBytes, stream.remotePeerId(), stream);
-            stream.writeAndFlush(msg);
+            // Idea: use the peer id and dial it again. Maybe this will open a new stream.
+        }
+
+        @Override
+        public void onClosed(@NotNull Stream stream) {
+            System.out.println("Closed");
+            ProtocolMessageHandler.super.onClosed(stream);
+        }
+
+        @Override
+        public void onException(@Nullable Throwable cause) {
+            System.out.println("Excepted: " + cause.getMessage());
+            cause.printStackTrace();
+            ProtocolMessageHandler.super.onException(cause);
         }
 
         @Override
