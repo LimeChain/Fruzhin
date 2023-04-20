@@ -30,6 +30,7 @@ import java.util.logging.Level;
 public class Network {
     private static final int HOST_PORT = 30333;
     private static Network network;
+    @Getter
     private final Host host;
     public SyncService syncService;
     public LightMessagesService lightMessagesService;
