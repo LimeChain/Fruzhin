@@ -2,12 +2,16 @@ package com.limechain.network.protocol.warp;
 
 import com.limechain.network.protocol.warp.dto.WarpSyncRequest;
 import com.limechain.network.protocol.warp.dto.WarpSyncResponse;
+import com.limechain.network.protocol.warp.encodings.Leb128LengthFrameDecoder;
+import com.limechain.network.protocol.warp.encodings.WarpSyncResponseDecoder;
 import com.limechain.network.protocol.warp.scale.WarpSyncRequestWriter;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.libp2p.core.ConnectionClosedException;
 import io.libp2p.core.Stream;
 import io.libp2p.protocol.ProtocolHandler;
 import io.libp2p.protocol.ProtocolMessageHandler;
+import io.netty.handler.codec.LengthFieldPrepender;
+import io.netty.handler.codec.bytes.ByteArrayEncoder;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -24,6 +28,11 @@ public class WarpSyncProtocol extends ProtocolHandler<WarpSyncController> {
 
     @Override
     protected CompletableFuture<WarpSyncController> onStartInitiator(Stream stream) {
+        stream.pushHandler(new Leb128LengthFrameDecoder());
+        stream.pushHandler(new WarpSyncResponseDecoder());
+
+        stream.pushHandler(new LengthFieldPrepender(1));
+        stream.pushHandler(new ByteArrayEncoder());
         WarpSyncProtocol.Sender handler = new WarpSyncProtocol.Sender(stream);
         stream.pushHandler(handler);
         return CompletableFuture.completedFuture(handler);
@@ -39,6 +48,7 @@ public class WarpSyncProtocol extends ProtocolHandler<WarpSyncController> {
 
         @Override
         public void onMessage(Stream stream, WarpSyncResponse msg) {
+            System.out.println("GotMessage");
             resp.complete(msg);
             stream.closeWrite();
         }
@@ -51,7 +61,6 @@ public class WarpSyncProtocol extends ProtocolHandler<WarpSyncController> {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-
             stream.writeAndFlush(buf.toByteArray());
             return resp;
         }

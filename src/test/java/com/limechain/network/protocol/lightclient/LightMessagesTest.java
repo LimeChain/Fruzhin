@@ -6,7 +6,6 @@ import io.ipfs.multihash.Multihash;
 import io.libp2p.core.Host;
 import io.libp2p.core.PeerId;
 import io.libp2p.protocol.Ping;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.peergos.HostBuilder;
 
@@ -18,7 +17,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 //CHECKSTYLE.OFF
 public class LightMessagesTest {
 
-    @Disabled("This is an integration test")
     @Test
     public void remoteReadRequest_return_response() {
         Host senderNode = null;
@@ -36,10 +34,9 @@ public class LightMessagesTest {
             senderNode.start().join();
 
             kademliaService.host = senderNode;
-            var peerId = PeerId.fromBase58("12D3KooWHsvEicXjWWraktbZ4MQBizuyADQtuEGr3NbDvtm5rFA5");
+            var peerId = PeerId.fromBase58("12D3KooWMfNeF5kTufr24Mgp76D8QgE6R5vGmbatVjP8Ls7HfQAb");
             var receivers = new String[]{
-//                    "/ip4/127.0.0.1/tcp/30333/p2p/12D3KooWR5BwfThj5pZ3sWMrYXyi1oeFyYDbSdyEbcbf7FzGwWML"
-                    "/dns/p2p.0.polkadot.network/tcp/30333/p2p/12D3KooWHsvEicXjWWraktbZ4MQBizuyADQtuEGr3NbDvtm5rFA5",
+                    "/ip4/127.0.0.1/tcp/30333/p2p/12D3KooWMfNeF5kTufr24Mgp76D8QgE6R5vGmbatVjP8Ls7HfQAb",
             };
 
             // TODO: connectBootNodes to return number of successful connection in order to validate if > 0

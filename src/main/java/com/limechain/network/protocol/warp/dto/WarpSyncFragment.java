@@ -7,6 +7,6 @@ import lombok.Setter;
 @Setter
 
 public class WarpSyncFragment {
-    private String scaleEncodedHeader;
-    private String scaleEncodedJustification;
+    private BlockHeader header;
+    private WarpSyncJustification justification;
 }
