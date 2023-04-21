@@ -47,8 +47,8 @@ public class CommonConfig {
     }
 
     @Bean
-    public SystemInfo systemInfo(HostConfig hostConfig) {
-        return new SystemInfo();
+    public SystemInfo systemInfo(HostConfig hostConfig, Network network) {
+        return new SystemInfo(hostConfig, network);
     }
 
     @Bean
