@@ -1,5 +1,6 @@
 package com.limechain.rpc.http.server;
 
+import com.limechain.config.SystemInfo;
 import org.rocksdb.RocksDB;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.SpringApplication;
@@ -48,6 +49,7 @@ public class HttpRpc {
         SpringApplication app = new SpringApplication(HttpRpc.class);
         app.setDefaultProperties(Collections.singletonMap("server.port", serverPort));
         ConfigurableApplicationContext ctx = app.run(cliArgs);
+        ctx.getBean(SystemInfo.class).logSystemInfo();
         this.springCtx = ctx;
     }
 

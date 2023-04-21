@@ -17,7 +17,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 //CHECKSTYLE.OFF
 public class LightMessagesTest {
-    @Disabled("This is an integration test. It should be run manually.")
+
+    @Disabled("This is an integration test")
     @Test
     public void remoteReadRequest_return_response() {
         Host senderNode = null;
@@ -27,7 +28,7 @@ public class LightMessagesTest {
 
             var lightMessages = new LightMessages("/dot/light/2", new LightMessagesProtocol());
             var kademliaService = new KademliaService("/dot/kad",
-                    Multihash.deserialize(hostBuilder1.getPeerId().getBytes()), false);
+                    Multihash.deserialize(hostBuilder1.getPeerId().getBytes()), false, true);
 
             hostBuilder1.addProtocols(List.of(new Ping(), lightMessages, kademliaService.getProtocol()));
             senderNode = hostBuilder1.build();
@@ -35,9 +36,10 @@ public class LightMessagesTest {
             senderNode.start().join();
 
             kademliaService.host = senderNode;
-            var peerId = PeerId.fromBase58("12D3KooWMfNeF5kTufr24Mgp76D8QgE6R5vGmbatVjP8Ls7HfQAb");
+            var peerId = PeerId.fromBase58("12D3KooWHsvEicXjWWraktbZ4MQBizuyADQtuEGr3NbDvtm5rFA5");
             var receivers = new String[]{
-                    "/ip4/127.0.0.1/tcp/30333/p2p/12D3KooWMfNeF5kTufr24Mgp76D8QgE6R5vGmbatVjP8Ls7HfQAb",
+//                    "/ip4/127.0.0.1/tcp/30333/p2p/12D3KooWR5BwfThj5pZ3sWMrYXyi1oeFyYDbSdyEbcbf7FzGwWML"
+                    "/dns/p2p.0.polkadot.network/tcp/30333/p2p/12D3KooWHsvEicXjWWraktbZ4MQBizuyADQtuEGr3NbDvtm5rFA5",
             };
 
             // TODO: connectBootNodes to return number of successful connection in order to validate if > 0

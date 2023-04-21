@@ -10,11 +10,14 @@ import com.limechain.network.protocol.warp.WarpSyncService;
 import io.ipfs.multihash.Multihash;
 import io.libp2p.core.Host;
 import io.libp2p.protocol.Ping;
+import lombok.Getter;
 import lombok.extern.java.Log;
 import org.peergos.HostBuilder;
+import org.peergos.PeerAddresses;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -27,11 +30,14 @@ import java.util.logging.Level;
 public class Network {
     private static final int HOST_PORT = 30333;
     private static Network network;
+    @Getter
+    private final Host host;
     public SyncService syncService;
     public LightMessagesService lightMessagesService;
     public WarpSyncService warpSyncService;
     public KademliaService kademliaService;
-    private Host host;
+    @Getter
+    private List<PeerAddresses> peers = new ArrayList<>();
 
     /**
      * Initializes a host for the peer connection,
@@ -44,6 +50,8 @@ public class Network {
      */
     private Network(ChainService chainService, HostConfig hostConfig) {
         boolean isLocalEnabled = hostConfig.getChain() == Chain.LOCAL;
+        boolean clientMode = true;
+
         HostBuilder hostBuilder = (new HostBuilder()).generateIdentity().listenLocalhost(HOST_PORT);
         Multihash hostId = Multihash.deserialize(hostBuilder.getPeerId().getBytes());
 
@@ -54,7 +62,7 @@ public class Network {
         String legacyLightProtocolId = String.format("/%s/light/2", chainId);
         String legacySyncProtocolId = String.format("/%s/sync/2", chainId);
 
-        kademliaService = new KademliaService(legacyKadProtocolId, hostId, isLocalEnabled);
+        kademliaService = new KademliaService(legacyKadProtocolId, hostId, isLocalEnabled, clientMode);
         lightMessagesService = new LightMessagesService(legacyLightProtocolId);
         warpSyncService = new WarpSyncService(legacyWarpProtocolId);
         syncService = new SyncService(legacySyncProtocolId);
@@ -105,7 +113,11 @@ public class Network {
      */
     @Scheduled(fixedDelay = 10, timeUnit = TimeUnit.SECONDS)
     public void findPeers() {
-        log.log(Level.INFO, "Searching for nodes...");
-        kademliaService.findNewPeers();
+        log.log(Level.INFO, "Searching for peers...");
+        List<PeerAddresses> newPeers = kademliaService.findNewPeers();
+
+        this.peers = newPeers;
+
+        log.log(Level.INFO, String.format("Currently connected peers: %s", peers.size()));
     }
 }
