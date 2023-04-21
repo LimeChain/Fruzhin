@@ -6,6 +6,7 @@ import io.ipfs.multihash.Multihash;
 import io.libp2p.core.Host;
 import io.libp2p.core.PeerId;
 import io.libp2p.protocol.Ping;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.peergos.HostBuilder;
 
@@ -16,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 //CHECKSTYLE.OFF
 public class LightMessagesTest {
-
+    @Disabled("This is an integration test. It should be run manually.")
     @Test
     public void remoteReadRequest_return_response() {
         Host senderNode = null;
