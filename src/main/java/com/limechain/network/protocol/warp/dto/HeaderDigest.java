@@ -1,11 +1,23 @@
 package com.limechain.network.protocol.warp.dto;
 
+import lombok.Getter;
 import lombok.Setter;
 
-@Setter
-public class HeaderDigest {
-    public DigestType type;
-    public ConsensusEngineId id;
-    public byte[] message;
+import java.util.Arrays;
 
+@Setter
+@Getter
+public class HeaderDigest {
+    private DigestType type;
+    private ConsensusEngine id;
+    private byte[] message;
+
+    @Override
+    public String toString() {
+        return "HeaderDigest{" +
+                "type=" + type +
+                ", id=" + id +
+                ", message=" + Arrays.toString(message) +
+                '}';
+    }
 }

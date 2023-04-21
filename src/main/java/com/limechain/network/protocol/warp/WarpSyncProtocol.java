@@ -1,9 +1,9 @@
 package com.limechain.network.protocol.warp;
 
+import com.limechain.network.encoding.Leb128LengthFrameDecoder;
 import com.limechain.network.protocol.warp.dto.WarpSyncRequest;
 import com.limechain.network.protocol.warp.dto.WarpSyncResponse;
-import com.limechain.network.protocol.warp.encodings.Leb128LengthFrameDecoder;
-import com.limechain.network.protocol.warp.encodings.WarpSyncResponseDecoder;
+import com.limechain.network.protocol.warp.encoding.WarpSyncResponseDecoder;
 import com.limechain.network.protocol.warp.scale.WarpSyncRequestWriter;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.libp2p.core.ConnectionClosedException;
@@ -31,6 +31,8 @@ public class WarpSyncProtocol extends ProtocolHandler<WarpSyncController> {
         stream.pushHandler(new Leb128LengthFrameDecoder());
         stream.pushHandler(new WarpSyncResponseDecoder());
 
+        // This should be Leb128LengthFrameEncoder, but it's not implemented, yet
+        // It works because the request length is always 32 bytes and it's encoded as a single byte
         stream.pushHandler(new LengthFieldPrepender(1));
         stream.pushHandler(new ByteArrayEncoder());
         WarpSyncProtocol.Sender handler = new WarpSyncProtocol.Sender(stream);
@@ -48,7 +50,6 @@ public class WarpSyncProtocol extends ProtocolHandler<WarpSyncController> {
 
         @Override
         public void onMessage(Stream stream, WarpSyncResponse msg) {
-            System.out.println("GotMessage");
             resp.complete(msg);
             stream.closeWrite();
         }
@@ -74,6 +75,5 @@ public class WarpSyncProtocol extends ProtocolHandler<WarpSyncController> {
         public void onException(Throwable cause) {
             resp.completeExceptionally(cause);
         }
-
     }
 }

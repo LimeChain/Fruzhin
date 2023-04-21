@@ -1,4 +1,4 @@
-package com.limechain.network.protocol.warp.encodings;
+package com.limechain.network.encoding;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
@@ -39,10 +39,8 @@ public class Leb128LengthFrameDecoder extends ByteToMessageDecoder {
                 if (in.readableBytes() < length) {
                     in.resetReaderIndex();
                 } else {
-                    System.out.println("Length: " + length);
                     out.add(in.readRetainedSlice(length));
                 }
-
             }
         }
     }
