@@ -18,15 +18,17 @@ public class JustificationReader implements ScaleReader<WarpSyncJustification> {
 
         int precommitsCount = reader.readCompactInt();
         Precommit[] precommits = new Precommit[precommitsCount];
+        PrecommitReader precommitReader = new PrecommitReader();
         for (int i = 0; i < precommitsCount; i++) {
-            precommits[i] = new PrecommitReader().read(reader);
+            precommits[i] = precommitReader.read(reader);
         }
         justification.setPrecommits(precommits);
 
         int ancestryCount = reader.readCompactInt();
         BlockHeader[] ancestries = new BlockHeader[ancestryCount];
+        BlockHeaderReader blockHeaderReader = new BlockHeaderReader();
         for (int i = 0; i < ancestryCount; i++) {
-            ancestries[i] = new BlockHeaderReader().read(reader);
+            ancestries[i] = blockHeaderReader.read(reader);
         }
         justification.setAncestryVotes(ancestries);
 

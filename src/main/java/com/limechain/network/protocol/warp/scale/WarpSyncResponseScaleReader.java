@@ -14,9 +14,10 @@ public class WarpSyncResponseScaleReader implements ScaleReader<WarpSyncResponse
     public WarpSyncResponse read(ScaleCodecReader reader) {
         WarpSyncResponse response = new WarpSyncResponse();
         List<WarpSyncFragment> fragments = new ArrayList<>();
-        var fragmentCount = reader.readCompactInt();
+        WarpSyncFragmentReader fragmentReader = new WarpSyncFragmentReader();
+        int fragmentCount = reader.readCompactInt();
         for (int i = 0; i < fragmentCount; i++) {
-            fragments.add(new WarpSyncFragmentReader().read(reader));
+            fragments.add(fragmentReader.read(reader));
         }
         response.setFragments(fragments.toArray(WarpSyncFragment[]::new));
         response.setFinished(reader.readBoolean());
