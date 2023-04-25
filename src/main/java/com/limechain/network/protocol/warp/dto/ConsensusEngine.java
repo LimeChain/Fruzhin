@@ -3,7 +3,8 @@ package com.limechain.network.protocol.warp.dto;
 import java.util.Arrays;
 
 public enum ConsensusEngine {
-    BABE(new byte[]{'B', 'A', 'B', 'E'}), GRANDPA(new byte[]{'F', 'R', 'N', 'K'}),
+    BABE(new byte[]{'B', 'A', 'B', 'E'}),
+    GRANDPA(new byte[]{'F', 'R', 'N', 'K'}),
     BEEFY(new byte[]{'B', 'E', 'E', 'F'});
     private final byte[] value;
 
