@@ -5,8 +5,6 @@ import java.util.Arrays;
 public enum ConsensusEngine {
     BABE(new byte[]{'B', 'A', 'B', 'E'}), GRANDPA(new byte[]{'F', 'R', 'N', 'K'}),
     BEEFY(new byte[]{'B', 'E', 'E', 'F'});
-
-    public static final int ID_LENGTH = 4;
     private final byte[] value;
 
     ConsensusEngine(byte[] value) {
@@ -25,5 +23,4 @@ public enum ConsensusEngine {
     public byte[] getValue() {
         return value;
     }
-
 }
