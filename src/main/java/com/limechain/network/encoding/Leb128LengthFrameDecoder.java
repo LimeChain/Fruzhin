@@ -8,9 +8,18 @@ import io.netty.handler.codec.CorruptedFrameException;
 import java.security.InvalidParameterException;
 import java.util.List;
 
+/**
+ * Decodes a LEB128-encoded integer into a {@link ByteBuf}. Used in decoding SCALE encoded data.
+ * <p>
+ * As per Polkadot Spec - requests, responses, handshakes and messages are prefixed with their LEB128 encoded length
+ */
 public class Leb128LengthFrameDecoder extends ByteToMessageDecoder {
+
     /**
      * Reads an unsigned integer from {@code in}.
+     * <p>
+     * Note: Reading u32 into an int is safe here because we have a
+     * limit on the size of the message applied into every protocol's controller.
      */
     private static int readUnsignedLeb128(ByteBuf in) {
         int result = 0;

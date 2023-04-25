@@ -34,6 +34,5 @@ public class VarUint64Reader implements ScaleReader<BigInteger> {
         result = result.add(BigInteger.valueOf(out[7]).shiftLeft(56));
 
         return result;
-
     }
 }
