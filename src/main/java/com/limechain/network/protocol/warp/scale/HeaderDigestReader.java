@@ -14,7 +14,7 @@ public class HeaderDigestReader implements ScaleReader<HeaderDigest> {
         headerDigest.setType(DigestType.fromId(digestType));
         switch (headerDigest.getType()) {
             case CONSENSUS_MESSAGE, SEAL, PRE_RUNTIME -> {
-                headerDigest.setId(ConsensusEngine.fromId(reader.readByteArray(4)));
+                headerDigest.setId(ConsensusEngine.fromId(reader.readByteArray(ConsensusEngine.ID_LENGTH)));
                 int messageLength = reader.readCompactInt();
                 headerDigest.setMessage(reader.readByteArray(messageLength));
             }
