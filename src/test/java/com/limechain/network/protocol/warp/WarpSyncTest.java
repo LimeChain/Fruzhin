@@ -15,8 +15,7 @@ import java.util.Random;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class WarpSyncTest {
-
-    @Disabled("This is an integration test")
+    @Disabled("This is an integration test. It should be run manually.")
     @Test
     public void remoteFunctions_return_correctData() {
         Host senderNode = null;
@@ -27,7 +26,7 @@ public class WarpSyncTest {
 
             var warpSync = new WarpSync("/dot/sync/warp", new WarpSyncProtocol());
             var kademliaService = new KademliaService("/dot/kad",
-                    Multihash.deserialize(hostBuilder1.getPeerId().getBytes()), false, true);
+                    Multihash.deserialize(hostBuilder1.getPeerId().getBytes()), false, false);
 
             hostBuilder1.addProtocols(List.of(new Ping(), warpSync, kademliaService.getProtocol()));
             senderNode = hostBuilder1.build();
@@ -35,15 +34,15 @@ public class WarpSyncTest {
             senderNode.start().join();
 
             kademliaService.host = senderNode;
-            var peerId = PeerId.fromBase58("12D3KooWHsvEicXjWWraktbZ4MQBizuyADQtuEGr3NbDvtm5rFA5");
+            var peerId = PeerId.fromBase58("12D3KooWMWgGa4jQKyyC2zhZo2DrjP9yZmC4b75Uoa9ZzjJxTMSE");
             var receivers = new String[]{
-                    "/dns/p2p.0.polkadot.network/tcp/30333/p2p/12D3KooWHsvEicXjWWraktbZ4MQBizuyADQtuEGr3NbDvtm5rFA5",
+                    "/ip4/127.0.0.1/tcp/30333/p2p/12D3KooWMWgGa4jQKyyC2zhZo2DrjP9yZmC4b75Uoa9ZzjJxTMSE",
             };
 
             kademliaService.connectBootNodes(receivers);
 
             var response = warpSync.warpSyncRequest(senderNode, senderNode.getAddressBook(), peerId,
-                    "b71e3ddbfe2b3d1cb534563493b779acbb08ca28019f75cc03c8eeaf55751042"
+                    "0xb3a0f1e3c06de74c9aedb3e4b129b570f778dd82005b2a84177dfb8a1b3751d0"
             );
             assertNotNull(response);
         } finally {

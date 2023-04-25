@@ -6,8 +6,10 @@ import io.emeraldpay.polkaj.scale.ScaleReader;
 
 public class WarpSyncFragmentReader implements ScaleReader<WarpSyncFragment> {
     @Override
-    public WarpSyncFragment read(ScaleCodecReader scaleCodecReader) {
+    public WarpSyncFragment read(ScaleCodecReader reader) {
         WarpSyncFragment fragment = new WarpSyncFragment();
+        fragment.setHeader(new BlockHeaderReader().read(reader));
+        fragment.setJustification(new JustificationReader().read(reader));
         return fragment;
     }
 }

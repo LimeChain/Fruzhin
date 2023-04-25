@@ -2,7 +2,6 @@ package com.limechain.config;
 
 import com.limechain.chain.Chain;
 import com.limechain.network.Network;
-import com.limechain.network.kad.KademliaService;
 import io.libp2p.core.Host;
 import io.libp2p.core.PeerId;
 import org.junit.jupiter.api.Test;
