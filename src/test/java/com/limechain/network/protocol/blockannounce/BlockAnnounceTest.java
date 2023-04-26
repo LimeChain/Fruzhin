@@ -23,7 +23,8 @@ public class BlockAnnounceTest {
         Host senderNode = null;
         try {
             HostBuilder hostBuilder1 =
-                    (new HostBuilder()).generateIdentity().listenLocalhost(10000 + new Random().nextInt(50000));
+                    (new HostBuilder()).generateIdentity().listenLocalhost(
+                            10000 + new Random().nextInt(50000));
 
             var blockAnnounce = new BlockAnnounce("/dot/block-announces/1", new BlockAnnounceProtocol());
             var kademliaService = new KademliaService("/dot/kad",
@@ -45,7 +46,8 @@ public class BlockAnnounceTest {
                 nodeRole = 4;
                 bestBlockHash = Hash256.from("0x1f7a1b28529651bb50b3ef4304f82fbc72bc791b9b838920df2fa96eabe011aa");
                 bestBlock = "3";
-                genesisBlockHash = Hash256.from("0xb6d36a6766363567d2a385c8b5f9bd93b223b8f42e54aa830270edcf375f4d63");
+                genesisBlockHash = Hash256.from(
+                        "0xb6d36a6766363567d2a385c8b5f9bd93b223b8f42e54aa830270edcf375f4d63");
             }};
 
             System.out.println("PeerID: " + senderNode.getPeerId());
