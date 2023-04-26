@@ -32,7 +32,7 @@ public class Network {
     private static final int HOST_PORT = 30333;
     private static Network network;
     @Getter
-    private HashMap<Multihash, List<MultiAddress>> connections = new HashMap<>();
+    private Map<Multihash, List<MultiAddress>> connections = new HashMap<>();
     @Getter
     private final Host host;
     public SyncService syncService;

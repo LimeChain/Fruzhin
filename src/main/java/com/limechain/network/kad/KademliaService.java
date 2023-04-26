@@ -76,7 +76,7 @@ public class KademliaService implements NetworkService {
      *
      * @return Successfully connected peers
      */
-    public Map<Multihash, List<MultiAddress>> findNewPeers(HashMap<Multihash, List<MultiAddress>> connected) {
+    public Map<Multihash, List<MultiAddress>> findNewPeers(Map<Multihash, List<MultiAddress>> connected) {
         byte[] hash = new byte[32];
         (new Random()).nextBytes(hash);
         Multihash randomPeerId = new Multihash(Multihash.Type.sha2_256, hash);
