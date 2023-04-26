@@ -109,7 +109,7 @@ public class Network {
     }
 
     /**
-     * Periodically searched for new peers and connects to them
+     * Periodically searches for new peers and connects to them
      * Logs the number of connected peers excluding boot nodes
      * By default Spring Boot uses a thread pool of size 1, so each call will be executed one at a time.
      */
