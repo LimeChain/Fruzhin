@@ -5,7 +5,6 @@ import io.ipfs.multihash.Multihash;
 import io.libp2p.core.Host;
 import io.libp2p.core.PeerId;
 import io.libp2p.protocol.Ping;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.peergos.HostBuilder;
 
@@ -15,7 +14,6 @@ import java.util.Random;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class WarpSyncTest {
-    @Disabled("This is an integration test. It should be run manually.")
     @Test
     public void remoteFunctions_return_correctData() {
         Host senderNode = null;
@@ -34,9 +32,9 @@ public class WarpSyncTest {
             senderNode.start().join();
 
             kademliaService.host = senderNode;
-            var peerId = PeerId.fromBase58("12D3KooWMWgGa4jQKyyC2zhZo2DrjP9yZmC4b75Uoa9ZzjJxTMSE");
+            var peerId = PeerId.fromBase58("12D3KooWBMw3k3sDwcvFGkD1V6DXuo2okRbZQ7KA72hpYMWXrUmc");
             var receivers = new String[]{
-                    "/ip4/127.0.0.1/tcp/30333/p2p/12D3KooWMWgGa4jQKyyC2zhZo2DrjP9yZmC4b75Uoa9ZzjJxTMSE",
+                    "/ip4/127.0.0.1/tcp/30333/p2p/12D3KooWBMw3k3sDwcvFGkD1V6DXuo2okRbZQ7KA72hpYMWXrUmc",
             };
 
             kademliaService.connectBootNodes(receivers);

@@ -1,5 +1,7 @@
 package com.limechain.network.protocol.blockannounce;
 
+import com.limechain.network.encoding.Leb128LengthFrameDecoder;
+import com.limechain.network.encoding.Leb128LengthFrameEncoder;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandShake;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshakeScaleWriter;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
@@ -7,6 +9,7 @@ import io.libp2p.core.Stream;
 import io.libp2p.protocol.ProtocolHandler;
 import io.libp2p.protocol.ProtocolMessageHandler;
 import io.netty.buffer.ByteBuf;
+import io.netty.handler.codec.bytes.ByteArrayEncoder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +30,10 @@ public class BlockAnnounceProtocol extends ProtocolHandler<BlockAnnounceControll
     @Override
     protected CompletableFuture<BlockAnnounceController> onStartInitiator(Stream stream) {
         System.out.println("sending message");
+        stream.pushHandler(new Leb128LengthFrameDecoder());
+        stream.pushHandler(new Leb128LengthFrameEncoder());
+        stream.pushHandler(new ByteArrayEncoder());
+
         NotificationSender handler = new NotificationSender(stream);
         stream.pushHandler(handler);
         return CompletableFuture.completedFuture(handler);

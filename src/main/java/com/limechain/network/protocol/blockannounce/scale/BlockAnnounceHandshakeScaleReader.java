@@ -7,8 +7,6 @@ import io.emeraldpay.polkaj.types.Hash256;
 public class BlockAnnounceHandshakeScaleReader implements ScaleReader<BlockAnnounceHandShake> {
     @Override
     public BlockAnnounceHandShake read(ScaleCodecReader reader) {
-        // Gossamer workaround
-        reader.skip(1);
         BlockAnnounceHandShake handShake = new BlockAnnounceHandShake();
         handShake.nodeRole = reader.readByte();
         handShake.bestBlock = Long.toString(reader.readUint32());

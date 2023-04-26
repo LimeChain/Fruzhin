@@ -1,7 +1,9 @@
 package com.limechain.network.protocol.blockannounce.scale;
 
 import io.emeraldpay.polkaj.types.Hash256;
+import lombok.Getter;
 
+@Getter
 public class BlockAnnounceHandShake {
     public int nodeRole;
     public String bestBlock;
