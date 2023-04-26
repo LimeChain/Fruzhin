@@ -7,18 +7,19 @@ import com.limechain.network.kad.KademliaService;
 import com.limechain.network.protocol.lightclient.LightMessagesService;
 import com.limechain.network.protocol.sync.SyncService;
 import com.limechain.network.protocol.warp.WarpSyncService;
+import io.ipfs.multiaddr.MultiAddress;
 import io.ipfs.multihash.Multihash;
 import io.libp2p.core.Host;
 import io.libp2p.protocol.Ping;
 import lombok.Getter;
 import lombok.extern.java.Log;
 import org.peergos.HostBuilder;
-import org.peergos.PeerAddresses;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
@@ -31,13 +32,13 @@ public class Network {
     private static final int HOST_PORT = 30333;
     private static Network network;
     @Getter
+    private Map<Multihash, List<MultiAddress>> connections = new HashMap<>();
+    @Getter
     private final Host host;
     public SyncService syncService;
     public LightMessagesService lightMessagesService;
     public WarpSyncService warpSyncService;
     public KademliaService kademliaService;
-    @Getter
-    private List<PeerAddresses> peers = new ArrayList<>();
 
     /**
      * Initializes a host for the peer connection,
@@ -109,15 +110,17 @@ public class Network {
     }
 
     /**
-     * Periodically searched for new peers
+     * Periodically searches for new peers and connects to them
+     * Logs the number of connected peers excluding boot nodes
+     * By default Spring Boot uses a thread pool of size 1, so each call will be executed one at a time.
      */
     @Scheduled(fixedDelay = 10, timeUnit = TimeUnit.SECONDS)
     public void findPeers() {
         log.log(Level.INFO, "Searching for peers...");
-        List<PeerAddresses> newPeers = kademliaService.findNewPeers();
+        Map<Multihash, List<MultiAddress>> newPeers = kademliaService.findNewPeers(connections);
 
-        this.peers = newPeers;
+        connections.putAll(newPeers);
 
-        log.log(Level.INFO, String.format("Currently connected peers: %s", peers.size()));
+        log.log(Level.INFO, String.format("Connected peers: %s", connections.size()));
     }
 }

@@ -12,8 +12,10 @@ import org.peergos.protocol.dht.KademliaEngine;
 import org.peergos.protocol.dht.RamProviderStore;
 import org.peergos.protocol.dht.RamRecordStore;
 
-import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -63,22 +65,35 @@ public class KademliaService implements NetworkService {
                 .collect(Collectors.toList());
         int successfulBootNodes = kademlia.bootstrapRoutingTable(host, bootstrapMultiAddress,
                 addr -> !addr.contains("wss") && !addr.contains("ws"));
-        log.log(Level.INFO, "Successfully connected to " + successfulBootNodes + " boot nodes");
+        if (successfulBootNodes > 0)
+            log.log(Level.INFO, "Successfully connected to " + successfulBootNodes + " boot nodes");
+        else log.log(Level.SEVERE, "Failed to connect to bootnodes");
         return successfulBootNodes;
     }
 
     /**
-     * Populates Kademlia dht with peers closest in distance to a random id
+     * Populates Kademlia dht with peers closest in distance to a random id then makes connections with our node
+     *
+     * @return Successfully connected peers
      */
-    public List<PeerAddresses> findNewPeers() {
+    public Map<Multihash, List<MultiAddress>> findNewPeers(Map<Multihash, List<MultiAddress>> connected) {
         byte[] hash = new byte[32];
         (new Random()).nextBytes(hash);
         Multihash randomPeerId = new Multihash(Multihash.Type.sha2_256, hash);
         var peers = kademlia.findClosestPeers(randomPeerId, REPLICATION, host);
 
+        Map<Multihash, List<MultiAddress>> connectedPeers = new HashMap<>();
+        Iterator peerIterator = peers.iterator();
+
+        while (peerIterator.hasNext()) {
+            PeerAddresses peer = (PeerAddresses) peerIterator.next();
+            if (!connected.containsKey(peer.peerId) && kademlia.connectTo(host, peer)) {
+                connectedPeers.put(peer.peerId, peer.addresses);
+            }
+        }
+
         // TODO: We can't connect to ws peers for now
         // Add filtering of /ws and /wss peers
-        var filteredPeers = new ArrayList<>(peers);
-        return filteredPeers;
+        return connectedPeers;
     }
 }
