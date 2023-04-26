@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
@@ -116,7 +117,7 @@ public class Network {
     @Scheduled(fixedDelay = 10, timeUnit = TimeUnit.SECONDS)
     public void findPeers() {
         log.log(Level.INFO, "Searching for peers...");
-        HashMap<Multihash, List<MultiAddress>> newPeers = kademliaService.findNewPeers(connections);
+        Map<Multihash, List<MultiAddress>> newPeers = kademliaService.findNewPeers(connections);
 
         connections.putAll(newPeers);
 

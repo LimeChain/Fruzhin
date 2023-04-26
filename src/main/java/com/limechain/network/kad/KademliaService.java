@@ -15,6 +15,7 @@ import org.peergos.protocol.dht.RamRecordStore;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -75,13 +76,13 @@ public class KademliaService implements NetworkService {
      *
      * @return Successfully connected peers
      */
-    public HashMap<Multihash, List<MultiAddress>> findNewPeers(HashMap<Multihash, List<MultiAddress>> connected) {
+    public Map<Multihash, List<MultiAddress>> findNewPeers(HashMap<Multihash, List<MultiAddress>> connected) {
         byte[] hash = new byte[32];
         (new Random()).nextBytes(hash);
         Multihash randomPeerId = new Multihash(Multihash.Type.sha2_256, hash);
         var peers = kademlia.findClosestPeers(randomPeerId, REPLICATION, host);
 
-        HashMap<Multihash, List<MultiAddress>> connectedPeers = new HashMap<>();
+        Map<Multihash, List<MultiAddress>> connectedPeers = new HashMap<>();
         Iterator peerIterator = peers.iterator();
 
         while (peerIterator.hasNext()) {
