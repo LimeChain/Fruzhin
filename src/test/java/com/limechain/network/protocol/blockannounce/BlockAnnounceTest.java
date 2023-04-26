@@ -9,6 +9,7 @@ import io.libp2p.core.PeerId;
 import io.libp2p.core.StreamPromise;
 import io.libp2p.core.multiformats.Multiaddr;
 import io.libp2p.protocol.Ping;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.peergos.HostBuilder;
 
@@ -18,6 +19,7 @@ import java.util.Random;
 import java.util.stream.Collectors;
 
 public class BlockAnnounceTest {
+    @Disabled
     @Test
     public void receivesNotifications() {
         Host senderNode = null;

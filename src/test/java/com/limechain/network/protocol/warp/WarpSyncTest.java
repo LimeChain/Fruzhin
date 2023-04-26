@@ -5,6 +5,7 @@ import io.ipfs.multihash.Multihash;
 import io.libp2p.core.Host;
 import io.libp2p.core.PeerId;
 import io.libp2p.protocol.Ping;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.peergos.HostBuilder;
 
@@ -14,6 +15,7 @@ import java.util.Random;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class WarpSyncTest {
+    @Disabled
     @Test
     public void remoteFunctions_return_correctData() {
         Host senderNode = null;

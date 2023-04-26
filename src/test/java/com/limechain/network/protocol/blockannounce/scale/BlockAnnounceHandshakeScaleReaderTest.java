@@ -27,8 +27,10 @@ class BlockAnnounceHandshakeScaleReaderTest {
 
         assertEquals(4, decoded.getNodeRole());
         assertEquals("77", decoded.getBestBlock());
-        assertEquals("0x0100000000000000000000000000000000000000000000000000000000000000", decoded.getBestBlockHash().toString());
-        assertEquals("0x0200000000000000000000000000000000000000000000000000000000000000", decoded.getGenesisBlockHash().toString());
+        assertEquals("0x0100000000000000000000000000000000000000000000000000000000000000",
+                decoded.getBestBlockHash().toString());
+        assertEquals("0x0200000000000000000000000000000000000000000000000000000000000000",
+                decoded.getGenesisBlockHash().toString());
     }
 
     @Test
@@ -40,8 +42,10 @@ class BlockAnnounceHandshakeScaleReaderTest {
         BlockAnnounceHandShake dataToEncode = new BlockAnnounceHandShake();
         dataToEncode.nodeRole = 4;
         dataToEncode.bestBlock = "77";
-        dataToEncode.bestBlockHash = Hash256.from("0x0100000000000000000000000000000000000000000000000000000000000000");
-        dataToEncode.genesisBlockHash = Hash256.from("0x0200000000000000000000000000000000000000000000000000000000000000");
+        dataToEncode.bestBlockHash = Hash256.from(
+                "0x0100000000000000000000000000000000000000000000000000000000000000");
+        dataToEncode.genesisBlockHash = Hash256.from(
+                "0x0200000000000000000000000000000000000000000000000000000000000000");
 
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
         try (ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
