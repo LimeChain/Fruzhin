@@ -19,7 +19,7 @@ import java.util.Random;
 import java.util.stream.Collectors;
 
 public class BlockAnnounceTest {
-    //@Disabled
+    @Disabled("This is an integration test!")
     @Test
     public void receivesNotifications() {
         Host senderNode = null;
