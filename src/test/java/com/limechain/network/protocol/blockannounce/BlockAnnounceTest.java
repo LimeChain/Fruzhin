@@ -53,7 +53,6 @@ public class BlockAnnounceTest {
 //                    "/ip4/127.0.0.1/tcp/7003/p2p/12D3KooWNHBdnJUcmHf4YYh4axJCwfuZ1txuWFGK8szkJQNB4ZYf"
 //            };
 
-
             kademliaService.connectBootNodes(receivers);
 
             var handShake = new BlockAnnounceHandShake() {{

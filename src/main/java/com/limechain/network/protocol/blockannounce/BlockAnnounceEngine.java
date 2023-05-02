@@ -22,7 +22,7 @@ import java.util.logging.Level;
 public class BlockAnnounceEngine {
     private final Map<PeerId, BlockAnnounceHandShake> peerHandshakes = new HashMap<>();
 
-    private final int HANDSHAKE_LENGTH = 69;
+    private static final int HANDSHAKE_LENGTH = 69;
 
     public void receiveRequest(byte[] msg, PeerId peerId, Stream stream) {
         var hasKey = peerHandshakes.containsKey(peerId);
