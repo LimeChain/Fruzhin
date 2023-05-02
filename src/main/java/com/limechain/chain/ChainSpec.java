@@ -27,6 +27,7 @@ public class ChainSpec implements Serializable {
     private String[] forkBlocks;
     private String[] badBlocks;
     private String consensusEngine;
+    private Map<String, String> lightSyncState;
 
     /**
      * Loads chain specification data from json file and maps its fields
