@@ -24,6 +24,17 @@ public class BlockAnnounceEngine {
 
     private static final int HANDSHAKE_LENGTH = 69;
 
+    /* Polkadot handshake */
+    //TODO Get handshake data from latest snapshot release
+    private final BlockAnnounceHandshake handshake = new BlockAnnounceHandshake() {{
+        nodeRole = 4;
+        bestBlockHash = Hash256.from("0x7b22fc4469863c9671686c189a3238708033d364a77ba8d83e78777e7563f346");
+        bestBlock = "0";
+        genesisBlockHash = Hash256.from(
+                "0x7b22fc4469863c9671686c189a3238708033d364a77ba8d83e78777e7563f346");
+    }};
+
+
     public void receiveRequest(byte[] msg, PeerId peerId, Stream stream) {
         var hasKey = peerHandshakes.containsKey(peerId);
 
@@ -60,15 +71,6 @@ public class BlockAnnounceEngine {
     }
 
     public void writeHandshakeToStream(Stream stream, PeerId peerId) {
-        /* Polkadot handshake */
-        var handshake = new BlockAnnounceHandshake() {{
-            nodeRole = 4;
-            bestBlockHash = Hash256.from("0x7b22fc4469863c9671686c189a3238708033d364a77ba8d83e78777e7563f346");
-            bestBlock = "0";
-            genesisBlockHash = Hash256.from(
-                    "0x7b22fc4469863c9671686c189a3238708033d364a77ba8d83e78777e7563f346");
-        }};
-
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
         try (ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
             writer.write(new BlockAnnounceHandshakeScaleWriter(), handshake);

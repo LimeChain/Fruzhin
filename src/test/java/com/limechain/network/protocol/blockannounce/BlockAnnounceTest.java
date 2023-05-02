@@ -47,8 +47,8 @@ public class BlockAnnounceTest {
 
             var handshake = new BlockAnnounceHandshake() {{
                 nodeRole = 4;
-                bestBlockHash = Hash256.from("0x8421665e01ed8ef7bafe5ed146f6c39c66816b45d45b925bb6f9801cc9567645");
-                bestBlock = "25";
+                bestBlockHash = Hash256.from("0x7b22fc4469863c9671686c189a3238708033d364a77ba8d83e78777e7563f346");
+                bestBlock = "0";
                 genesisBlockHash = Hash256.from(
                         "0x7b22fc4469863c9671686c189a3238708033d364a77ba8d83e78777e7563f346");
             }};
