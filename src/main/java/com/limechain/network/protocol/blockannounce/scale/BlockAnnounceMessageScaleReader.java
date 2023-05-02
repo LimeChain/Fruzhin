@@ -10,7 +10,6 @@ public class BlockAnnounceMessageScaleReader implements ScaleReader<BlockAnnounc
         BlockAnnounceMessage message = new BlockAnnounceMessage();
         message.header = new BlockHeaderReader().read(reader);
         message.isBestBlock = reader.readBoolean();
-        System.out.println("Decoded: " + message);
         return message;
     }
 }

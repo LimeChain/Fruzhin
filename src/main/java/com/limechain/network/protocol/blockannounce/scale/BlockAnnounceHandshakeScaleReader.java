@@ -12,7 +12,6 @@ public class BlockAnnounceHandshakeScaleReader implements ScaleReader<BlockAnnou
         handShake.bestBlock = Long.toString(reader.readUint32());
         handShake.bestBlockHash = new Hash256(reader.readUint256());
         handShake.genesisBlockHash = new Hash256(reader.readUint256());
-        System.out.println("Decoded " + handShake);
         return handShake;
     }
 }

@@ -19,7 +19,7 @@ import java.util.Random;
 import java.util.stream.Collectors;
 
 public class BlockAnnounceTest {
-    @Disabled("This is an integration test!")
+    //@Disabled("This is an integration test!")
     @Test
     public void receivesNotifications() {
         Host senderNode = null;
@@ -45,13 +45,6 @@ public class BlockAnnounceTest {
             var receivers = new String[]{
                     "/ip4/127.0.0.1/tcp/30333/p2p/" + peerId.toBase58()
             };
-//
-//            // gosammer
-//            var peerId = PeerId.fromBase58("12D3KooWNHBdnJUcmHf4YYh4axJCwfuZ1txuWFGK8szkJQNB4ZYf");
-//
-//            var receivers = new String[]{
-//                    "/ip4/127.0.0.1/tcp/7003/p2p/12D3KooWNHBdnJUcmHf4YYh4axJCwfuZ1txuWFGK8szkJQNB4ZYf"
-//            };
 
             kademliaService.connectBootNodes(receivers);
 
@@ -60,8 +53,7 @@ public class BlockAnnounceTest {
                 bestBlockHash = Hash256.from("0x8421665e01ed8ef7bafe5ed146f6c39c66816b45d45b925bb6f9801cc9567645");
                 bestBlock = "25";
                 genesisBlockHash = Hash256.from(
-                        "0x7b22fc4469863c9671686c189a3238708033d364a77ba8d83e78777e7563f346");  //polkadot
-                //"0xb6d36a6766363567d2a385c8b5f9bd93b223b8f42e54aa830270edcf375f4d63"); //gossamer
+                        "0x7b22fc4469863c9671686c189a3238708033d364a77ba8d83e78777e7563f346");
             }};
 
             System.out.println("PeerID: " + senderNode.getPeerId());
@@ -74,17 +66,9 @@ public class BlockAnnounceTest {
             if (addr.length == 0)
                 throw new IllegalStateException("No addresses known for peer " + peerId);
 
-            System.out.println("Wait 10 seconds");
-
             blockAnnounce.sendHandshake(senderNode, senderNode.getAddressBook(), peerId, handShake);
-
-            System.out.println("Wait 10 seconds after sending handshake");
-
-            System.out.println(senderNode.getStreams().stream().map(s ->
-                    s.getProtocol().join()).collect(Collectors.joining(", ")));
+            
             Thread.sleep(60000);
-            System.out.println(senderNode.getStreams().stream().map(s ->
-                    s.getProtocol().join()).collect(Collectors.joining(", ")));
         } catch (
                 InterruptedException e) {
             throw new RuntimeException(e);

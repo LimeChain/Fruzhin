@@ -27,30 +27,30 @@ public class BlockAnnounceEngine {
     public void receiveRequest(byte[] msg, PeerId peerId, Stream stream) {
         var hasKey = peerHandshakes.containsKey(peerId);
 
-        System.out.println("Message length:: " + msg.length);
-
         //Decode handshake from Polkadot
         if (!hasKey && msg.length == HANDSHAKE_LENGTH) {
-            System.out.println("Peer opened a notification stream with us?");
-            System.out.println("Decoding Handshake");
             ScaleCodecReader reader = new ScaleCodecReader(msg);
             BlockAnnounceHandShake handShake = reader.read(new BlockAnnounceHandshakeScaleReader());
             peerHandshakes.put(peerId, handShake);
-            sendHandshake(stream, 0);
+            writeHandshakeToStream(stream, peerId);
+
+            log.log(Level.INFO, "Received handshake from " + peerId + "\n" +
+                    handShake);
             return;
         }
 
         if (hasKey && msg.length == HANDSHAKE_LENGTH) {
-            System.out.println("Handshake already initiated!");
-            sendHandshake(stream, 0);
+            writeHandshakeToStream(stream, peerId);
+
+            log.log(Level.INFO, "Received handshake from " + peerId);
             return;
         }
 
         if (hasKey) {
-            System.out.println("Decoding BlockAnnounce");
             ScaleCodecReader reader = new ScaleCodecReader(msg);
             BlockAnnounceMessage announce = reader.read(new BlockAnnounceMessageScaleReader());
-            System.out.println(announce);
+
+            log.log(Level.INFO, "Received block announce: \n" + announce);
             return;
         }
 
@@ -59,9 +59,9 @@ public class BlockAnnounceEngine {
         // TODO: Send message to network? module
     }
 
-    public void sendHandshake(Stream stream, int hostReciever) {
-        //            /* Polkadot handshake */
-        var polkadotHandshake = new BlockAnnounceHandShake() {{
+    public void writeHandshakeToStream(Stream stream, PeerId peerId) {
+        /* Polkadot handshake */
+        var handshake = new BlockAnnounceHandShake() {{
             nodeRole = 4;
             bestBlockHash = Hash256.from("0x7b22fc4469863c9671686c189a3238708033d364a77ba8d83e78777e7563f346");
             bestBlock = "0";
@@ -69,26 +69,14 @@ public class BlockAnnounceEngine {
                     "0x7b22fc4469863c9671686c189a3238708033d364a77ba8d83e78777e7563f346");
         }};
 
-        /* Gossamer handshake */
-        var gossamerHandshake = new BlockAnnounceHandShake() {{
-            nodeRole = 4;
-            bestBlockHash = Hash256.from("0xb6d36a6766363567d2a385c8b5f9bd93b223b8f42e54aa830270edcf375f4d63");
-            bestBlock = "0";
-            genesisBlockHash = Hash256.from(
-                    "0xb6d36a6766363567d2a385c8b5f9bd93b223b8f42e54aa830270edcf375f4d63");
-        }};
-
-        BlockAnnounceHandShake[] handshakes = new BlockAnnounceHandShake[]{polkadotHandshake, gossamerHandshake};
-
-        BlockAnnounceHandShake handshake = handshakes[hostReciever];
-
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
         try (ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
             writer.write(new BlockAnnounceHandshakeScaleWriter(), handshake);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        System.out.println("Writing handshake to stream from engine");
+
+        log.log(Level.INFO, "Sending handshake to " + peerId);
         stream.writeAndFlush(buf.toByteArray());
     }
 }
