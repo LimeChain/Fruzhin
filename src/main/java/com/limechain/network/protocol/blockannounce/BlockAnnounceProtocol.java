@@ -29,75 +29,85 @@ public class BlockAnnounceProtocol extends ProtocolHandler<BlockAnnounceControll
 
     @Override
     protected CompletableFuture<BlockAnnounceController> onStartInitiator(Stream stream) {
-        System.out.println("sending message");
+        System.out.println("On start initiator");
         stream.pushHandler(new Leb128LengthFrameDecoder());
         stream.pushHandler(new Leb128LengthFrameEncoder());
-        stream.pushHandler(new ByteArrayEncoder());
 
-        NotificationSender handler = new NotificationSender(stream);
+        stream.pushHandler(new ByteArrayEncoder());
+        NotificationHandler handler = new NotificationHandler(engine, stream);
         stream.pushHandler(handler);
+        engine.sendHandshake(stream, 1);
         return CompletableFuture.completedFuture(handler);
     }
 
     @Override
     protected CompletableFuture<BlockAnnounceController> onStartResponder(Stream stream) {
-        System.out.println("received notification ?");
-        NotificationHandler handler = new NotificationHandler(engine);
+        System.out.println("On start responder ?");
+        stream.pushHandler(new Leb128LengthFrameDecoder());
+        stream.pushHandler(new Leb128LengthFrameEncoder());
+
+        stream.pushHandler(new ByteArrayEncoder());
+        NotificationHandler handler = new NotificationHandler(engine, stream);
         stream.pushHandler(handler);
         return CompletableFuture.completedFuture(handler);
     }
 
-    static class NotificationSender implements ProtocolMessageHandler<ByteBuf>, BlockAnnounceController {
+//    static class NotificationSender implements ProtocolMessageHandler<ByteBuf>, BlockAnnounceController {
+//        private final Stream stream;
+//        private final BlockAnnounceEngine engine;
+//
+//        public NotificationSender(BlockAnnounceEngine engine, Stream stream) {
+//            this.stream = stream;
+//            this.engine = engine;
+//        }
+//
+//        @Override
+//        public void sendHandshake(BlockAnnounceHandShake req) {
+//            System.out.println("Notification Sender sendHandshake");
+//            ByteArrayOutputStream buf = new ByteArrayOutputStream();
+//            try (ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
+//                writer.write(new BlockAnnounceHandshakeScaleWriter(), req);
+//            } catch (IOException e) {
+//                throw new RuntimeException(e);
+//            }
+//            System.out.println("Writing handshake to stream 1");
+//            stream.writeAndFlush(buf.toByteArray());
+//        }
+//
+//        @Override
+//        public void onMessage(Stream stream, ByteBuf msg) {
+//            byte[] messageBytes = new byte[msg.readableBytes()];
+//            System.out.println("Received message in Sender with length " + messageBytes.length);
+//        }
+//
+//        @Override
+//        public void onClosed(Stream stream) {
+//            System.out.println("Closed Sender stream..");
+//        }
+//
+//        @Override
+//        public void onException(Throwable cause) {
+//            System.out.println("Sender Error");
+//            assert cause != null;
+//            System.out.println(cause.getMessage());
+//        }
+//    }
+
+    static class NotificationHandler implements ProtocolMessageHandler<ByteBuf>, BlockAnnounceController {
+        private final BlockAnnounceEngine engine;
         private final Stream stream;
 
-        public NotificationSender(Stream stream) {
+        public NotificationHandler(BlockAnnounceEngine engine, Stream stream) {
+            this.engine = engine;
             this.stream = stream;
         }
 
         @Override
-        public void sendHandshake(BlockAnnounceHandShake req) {
-            ByteArrayOutputStream buf = new ByteArrayOutputStream();
-            try (ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
-                writer.write(new BlockAnnounceHandshakeScaleWriter(), req);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            System.out.println("Writing handshake to stream 1");
-            stream.writeAndFlush(buf.toByteArray());
-        }
-
-        @Override
-        public void onMessage(Stream stream, ByteBuf msg) {
-            System.out.println("Received message");
-            stream.closeWrite();
-        }
-
-        @Override
-        public void onClosed(Stream stream) {
-            System.out.println("closed..");
-        }
-
-        @Override
-        public void onException(Throwable cause) {
-            System.out.println("Error");
-            assert cause != null;
-            System.out.println(cause.getMessage());
-        }
-    }
-
-    static class NotificationHandler implements ProtocolMessageHandler<ByteBuf>, BlockAnnounceController {
-        private final BlockAnnounceEngine engine;
-
-        public NotificationHandler(BlockAnnounceEngine engine) {
-            this.engine = engine;
-        }
-
-        @Override
         public void onMessage(@NotNull Stream stream, ByteBuf msg) {
+            System.out.println("Received message in notification handler");
             byte[] messageBytes = new byte[msg.readableBytes()];
             msg.readBytes(messageBytes);
             engine.receiveRequest(messageBytes, stream.remotePeerId(), stream);
-            // Idea: use the peer id and dial it again. Maybe this will open a new stream.
         }
 
         @Override
@@ -115,7 +125,14 @@ public class BlockAnnounceProtocol extends ProtocolHandler<BlockAnnounceControll
 
         @Override
         public void sendHandshake(BlockAnnounceHandShake req) {
-            throw new IllegalStateException("Responder only!");
+            ByteArrayOutputStream buf = new ByteArrayOutputStream();
+            try (ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
+                writer.write(new BlockAnnounceHandshakeScaleWriter(), req);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            System.out.println("Writing handshake from notification handler");
+            stream.writeAndFlush(buf.toByteArray());
         }
     }
 }

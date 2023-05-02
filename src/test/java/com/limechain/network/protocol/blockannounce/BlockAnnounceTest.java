@@ -19,7 +19,7 @@ import java.util.Random;
 import java.util.stream.Collectors;
 
 public class BlockAnnounceTest {
-    @Disabled
+    //@Disabled
     @Test
     public void receivesNotifications() {
         Host senderNode = null;
@@ -38,18 +38,31 @@ public class BlockAnnounceTest {
             senderNode.start().join();
 
             kademliaService.host = senderNode;
-            var peerId = PeerId.fromBase58("12D3KooWC1gBkDciExkQUNissYmEHdGLkxYAZMhq5FsgxAS6HB9v");
+
+            //Polkadot
+            var peerId = PeerId.fromBase58("12D3KooWHbGtCKs3ndunAYPPX6ozc6mbnGVAsvWsEchhMPp2NXt4");
+
             var receivers = new String[]{
-                    "/ip4/127.0.0.1/tcp/30333/p2p/12D3KooWC1gBkDciExkQUNissYmEHdGLkxYAZMhq5FsgxAS6HB9v",
+                    "/ip4/127.0.0.1/tcp/30333/p2p/" + peerId.toBase58()
             };
+//
+//            // gosammer
+//            var peerId = PeerId.fromBase58("12D3KooWNHBdnJUcmHf4YYh4axJCwfuZ1txuWFGK8szkJQNB4ZYf");
+//
+//            var receivers = new String[]{
+//                    "/ip4/127.0.0.1/tcp/7003/p2p/12D3KooWNHBdnJUcmHf4YYh4axJCwfuZ1txuWFGK8szkJQNB4ZYf"
+//            };
+
+
             kademliaService.connectBootNodes(receivers);
 
             var handShake = new BlockAnnounceHandShake() {{
                 nodeRole = 4;
-                bestBlockHash = Hash256.from("0x1f7a1b28529651bb50b3ef4304f82fbc72bc791b9b838920df2fa96eabe011aa");
-                bestBlock = "3";
+                bestBlockHash = Hash256.from("0x8421665e01ed8ef7bafe5ed146f6c39c66816b45d45b925bb6f9801cc9567645");
+                bestBlock = "25";
                 genesisBlockHash = Hash256.from(
-                        "0xb6d36a6766363567d2a385c8b5f9bd93b223b8f42e54aa830270edcf375f4d63");
+                        "0x7b22fc4469863c9671686c189a3238708033d364a77ba8d83e78777e7563f346");  //polkadot
+                //"0xb6d36a6766363567d2a385c8b5f9bd93b223b8f42e54aa830270edcf375f4d63"); //gossamer
             }};
 
             System.out.println("PeerID: " + senderNode.getPeerId());
@@ -62,59 +75,19 @@ public class BlockAnnounceTest {
             if (addr.length == 0)
                 throw new IllegalStateException("No addresses known for peer " + peerId);
 
-            StreamPromise<BlockAnnounceController> senderController = senderNode.newStream(new ArrayList<>() {{
-                add("/dot/block-announces/1");
-            }}, peerId, addr);
+            System.out.println("Wait 10 seconds");
 
-            senderController.getController().join().sendHandshake(handShake);
+            blockAnnounce.sendHandshake(senderNode, senderNode.getAddressBook(), peerId, handShake);
 
-            System.out.println(senderNode.getStreams().stream().map(
-                    s -> s.getProtocol().join()).collect(Collectors.joining(", ")));
-
-//            while (true) {
-//                Thread.sleep(2000);
-//                System.out.println(senderNode.getStreams().stream().map(s ->
-//                s.getProtocol().join()).collect(Collectors.joining(", ")));
-//
-//                var blockAnnStreams = senderNode.getStreams().stream().filter(s ->
-//                s.getProtocol().join().equals("/dot/block-announces/1")).toList();
-//
-//                if (blockAnnStreams.size() == 0) {
-//                    continue;
-//                }
-//
-//                Host finalSenderNode = senderNode;
-//
-//                blockAnnStreams.forEach(s -> {
-//                    if (s.isInitiator()) {
-//                        return;
-//                    }
-//                    Multiaddr[] addr2 = finalSenderNode.getAddressBook().get(peerId)
-//                            .join().stream()
-//                            .filter(address -> !address.toString().contains("/ws")
-//                            && !address.toString().contains("/wss"))
-//                            .toList()
-//                            .toArray(new Multiaddr[0]);
-//
-//                    if (addr2.length == 0)
-//                        throw new IllegalStateException("No addresses known for peer " + peerId);
-//
-//                    StreamPromise<BlockAnnounceController> senderController2
-//                    = finalSenderNode.newStream(new ArrayList<>() {{
-//                        add("/dot/block-announces/1");
-//                    }}, peerId, addr2);
-//
-//                    senderController2.getController().join().sendHandshake(handShake);
-//                });
-//                break;
-//            }
+            System.out.println("Wait 10 seconds after sending handshake");
 
             System.out.println(senderNode.getStreams().stream().map(s ->
                     s.getProtocol().join()).collect(Collectors.joining(", ")));
-            Thread.sleep(25000);
+            Thread.sleep(60000);
             System.out.println(senderNode.getStreams().stream().map(s ->
                     s.getProtocol().join()).collect(Collectors.joining(", ")));
-        } catch (InterruptedException e) {
+        } catch (
+                InterruptedException e) {
             throw new RuntimeException(e);
         } finally {
             if (senderNode != null) {

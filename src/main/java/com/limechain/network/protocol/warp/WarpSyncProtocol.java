@@ -31,8 +31,6 @@ public class WarpSyncProtocol extends ProtocolHandler<WarpSyncController> {
         stream.pushHandler(new Leb128LengthFrameDecoder());
         stream.pushHandler(new WarpSyncResponseDecoder());
 
-        // This should be Leb128LengthFrameEncoder, but it's not implemented, yet
-        // It works because the request length is always 32 bytes and it's encoded as a single byte
         stream.pushHandler(new Leb128LengthFrameEncoder());
         stream.pushHandler(new ByteArrayEncoder());
         WarpSyncProtocol.Sender handler = new WarpSyncProtocol.Sender(stream);
