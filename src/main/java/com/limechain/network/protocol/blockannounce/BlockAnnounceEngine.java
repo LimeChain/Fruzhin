@@ -1,6 +1,6 @@
 package com.limechain.network.protocol.blockannounce;
 
-import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandShake;
+import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshake;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshakeScaleReader;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshakeScaleWriter;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceMessage;
@@ -20,7 +20,7 @@ import java.util.logging.Level;
 
 @Log
 public class BlockAnnounceEngine {
-    private final Map<PeerId, BlockAnnounceHandShake> peerHandshakes = new HashMap<>();
+    private final Map<PeerId, BlockAnnounceHandshake> peerHandshakes = new HashMap<>();
 
     private static final int HANDSHAKE_LENGTH = 69;
 
@@ -30,19 +30,19 @@ public class BlockAnnounceEngine {
         //Decode handshake from Polkadot
         if (!hasKey && msg.length == HANDSHAKE_LENGTH) {
             ScaleCodecReader reader = new ScaleCodecReader(msg);
-            BlockAnnounceHandShake handShake = reader.read(new BlockAnnounceHandshakeScaleReader());
-            peerHandshakes.put(peerId, handShake);
-            writeHandshakeToStream(stream, peerId);
-
+            BlockAnnounceHandshake handshake = reader.read(new BlockAnnounceHandshakeScaleReader());
+            peerHandshakes.put(peerId, handshake);
             log.log(Level.INFO, "Received handshake from " + peerId + "\n" +
-                    handShake);
+                    handshake);
+
+            writeHandshakeToStream(stream, peerId);
             return;
         }
 
         if (hasKey && msg.length == HANDSHAKE_LENGTH) {
-            writeHandshakeToStream(stream, peerId);
+            log.log(Level.INFO, "Received existing handshake from " + peerId);
 
-            log.log(Level.INFO, "Received handshake from " + peerId);
+            writeHandshakeToStream(stream, peerId);
             return;
         }
 
@@ -61,7 +61,7 @@ public class BlockAnnounceEngine {
 
     public void writeHandshakeToStream(Stream stream, PeerId peerId) {
         /* Polkadot handshake */
-        var handshake = new BlockAnnounceHandShake() {{
+        var handshake = new BlockAnnounceHandshake() {{
             nodeRole = 4;
             bestBlockHash = Hash256.from("0x7b22fc4469863c9671686c189a3238708033d364a77ba8d83e78777e7563f346");
             bestBlock = "0";

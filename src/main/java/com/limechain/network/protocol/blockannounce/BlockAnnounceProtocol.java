@@ -2,9 +2,7 @@ package com.limechain.network.protocol.blockannounce;
 
 import com.limechain.network.encoding.Leb128LengthFrameDecoder;
 import com.limechain.network.encoding.Leb128LengthFrameEncoder;
-import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandShake;
-import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshakeScaleWriter;
-import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
+import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshake;
 import io.libp2p.core.Stream;
 import io.libp2p.protocol.ProtocolHandler;
 import io.libp2p.protocol.ProtocolMessageHandler;
@@ -33,7 +31,6 @@ public class BlockAnnounceProtocol extends ProtocolHandler<BlockAnnounceControll
         stream.pushHandler(new ByteArrayEncoder());
         NotificationHandler handler = new NotificationHandler(engine, stream);
         stream.pushHandler(handler);
-        engine.writeHandshakeToStream(stream, stream.remotePeerId());
         return CompletableFuture.completedFuture(handler);
     }
 
@@ -78,7 +75,7 @@ public class BlockAnnounceProtocol extends ProtocolHandler<BlockAnnounceControll
         }
 
         @Override
-        public void sendHandshake(BlockAnnounceHandShake req) {
+        public void sendHandshake(BlockAnnounceHandshake req) {
             engine.writeHandshakeToStream(stream, stream.remotePeerId());
         }
     }

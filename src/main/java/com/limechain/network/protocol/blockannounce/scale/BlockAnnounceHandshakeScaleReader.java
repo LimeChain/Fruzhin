@@ -4,14 +4,14 @@ import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleReader;
 import io.emeraldpay.polkaj.types.Hash256;
 
-public class BlockAnnounceHandshakeScaleReader implements ScaleReader<BlockAnnounceHandShake> {
+public class BlockAnnounceHandshakeScaleReader implements ScaleReader<BlockAnnounceHandshake> {
     @Override
-    public BlockAnnounceHandShake read(ScaleCodecReader reader) {
-        BlockAnnounceHandShake handShake = new BlockAnnounceHandShake();
-        handShake.nodeRole = reader.readByte();
-        handShake.bestBlock = Long.toString(reader.readUint32());
-        handShake.bestBlockHash = new Hash256(reader.readUint256());
-        handShake.genesisBlockHash = new Hash256(reader.readUint256());
-        return handShake;
+    public BlockAnnounceHandshake read(ScaleCodecReader reader) {
+        BlockAnnounceHandshake handshake = new BlockAnnounceHandshake();
+        handshake.nodeRole = reader.readByte();
+        handshake.bestBlock = Long.toString(reader.readUint32());
+        handshake.bestBlockHash = new Hash256(reader.readUint256());
+        handshake.genesisBlockHash = new Hash256(reader.readUint256());
+        return handshake;
     }
 }

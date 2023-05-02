@@ -23,7 +23,7 @@ class BlockAnnounceHandshakeScaleReaderTest {
         byte[] encodedBytes = byteString.toByteArray();
 
         ScaleCodecReader reader = new ScaleCodecReader(encodedBytes);
-        BlockAnnounceHandShake decoded = reader.read(new BlockAnnounceHandshakeScaleReader());
+        BlockAnnounceHandshake decoded = reader.read(new BlockAnnounceHandshakeScaleReader());
 
         assertEquals(4, decoded.getNodeRole());
         assertEquals("77", decoded.getBestBlock());
@@ -39,7 +39,7 @@ class BlockAnnounceHandshakeScaleReaderTest {
         byte[] expected = ByteString.fromHex("044d00000001000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000").toByteArray();
         //CHECKSTYLE.ON
 
-        BlockAnnounceHandShake dataToEncode = new BlockAnnounceHandShake();
+        BlockAnnounceHandshake dataToEncode = new BlockAnnounceHandshake();
         dataToEncode.nodeRole = 4;
         dataToEncode.bestBlock = "77";
         dataToEncode.bestBlockHash = Hash256.from(

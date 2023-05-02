@@ -4,7 +4,7 @@ import io.emeraldpay.polkaj.types.Hash256;
 import lombok.Getter;
 
 @Getter
-public class BlockAnnounceHandShake {
+public class BlockAnnounceHandshake {
     public int nodeRole;
     public String bestBlock;
     public Hash256 bestBlockHash;

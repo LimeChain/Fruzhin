@@ -1,22 +1,19 @@
 package com.limechain.network.protocol.blockannounce;
 
 import com.limechain.network.kad.KademliaService;
-import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandShake;
+import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshake;
 import io.emeraldpay.polkaj.types.Hash256;
 import io.ipfs.multihash.Multihash;
 import io.libp2p.core.Host;
 import io.libp2p.core.PeerId;
-import io.libp2p.core.StreamPromise;
 import io.libp2p.core.multiformats.Multiaddr;
 import io.libp2p.protocol.Ping;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.peergos.HostBuilder;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.stream.Collectors;
 
 public class BlockAnnounceTest {
     //@Disabled("This is an integration test!")
@@ -48,7 +45,7 @@ public class BlockAnnounceTest {
 
             kademliaService.connectBootNodes(receivers);
 
-            var handShake = new BlockAnnounceHandShake() {{
+            var handshake = new BlockAnnounceHandshake() {{
                 nodeRole = 4;
                 bestBlockHash = Hash256.from("0x8421665e01ed8ef7bafe5ed146f6c39c66816b45d45b925bb6f9801cc9567645");
                 bestBlock = "25";
@@ -66,8 +63,8 @@ public class BlockAnnounceTest {
             if (addr.length == 0)
                 throw new IllegalStateException("No addresses known for peer " + peerId);
 
-            blockAnnounce.sendHandshake(senderNode, senderNode.getAddressBook(), peerId, handShake);
-            
+            blockAnnounce.sendHandshake(senderNode, senderNode.getAddressBook(), peerId, handshake);
+
             Thread.sleep(60000);
         } catch (
                 InterruptedException e) {

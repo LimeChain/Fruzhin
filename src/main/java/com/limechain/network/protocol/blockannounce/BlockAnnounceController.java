@@ -1,7 +1,7 @@
 package com.limechain.network.protocol.blockannounce;
 
-import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandShake;
+import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshake;
 
 public interface BlockAnnounceController {
-    void sendHandshake(BlockAnnounceHandShake req);
+    void sendHandshake(BlockAnnounceHandshake req);
 }
