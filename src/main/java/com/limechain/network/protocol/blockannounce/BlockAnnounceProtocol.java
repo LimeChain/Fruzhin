@@ -64,6 +64,7 @@ public class BlockAnnounceProtocol extends ProtocolHandler<BlockAnnounceControll
         @Override
         public void onClosed(@NotNull Stream stream) {
             System.out.println("Closed");
+            engine.removePeerHandshake(stream.remotePeerId());
             ProtocolMessageHandler.super.onClosed(stream);
         }
 

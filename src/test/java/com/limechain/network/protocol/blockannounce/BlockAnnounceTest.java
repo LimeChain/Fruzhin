@@ -37,7 +37,7 @@ public class BlockAnnounceTest {
             kademliaService.host = senderNode;
 
             //Polkadot
-            var peerId = PeerId.fromBase58("12D3KooWHbGtCKs3ndunAYPPX6ozc6mbnGVAsvWsEchhMPp2NXt4");
+            var peerId = PeerId.fromBase58("12D3KooWMSYMPsrD81abMMx8YsZp41Mo1L9UXQRAimitPTP2VsK7");
 
             var receivers = new String[]{
                     "/ip4/127.0.0.1/tcp/30333/p2p/" + peerId.toBase58()
@@ -63,7 +63,7 @@ public class BlockAnnounceTest {
             if (addr.length == 0)
                 throw new IllegalStateException("No addresses known for peer " + peerId);
 
-            blockAnnounce.sendHandshake(senderNode, senderNode.getAddressBook(), peerId, handshake);
+            //blockAnnounce.sendHandshake(senderNode, senderNode.getAddressBook(), peerId, handshake);
 
             Thread.sleep(60000);
         } catch (

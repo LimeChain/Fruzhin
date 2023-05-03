@@ -81,4 +81,8 @@ public class BlockAnnounceEngine {
         log.log(Level.INFO, "Sending handshake to " + peerId);
         stream.writeAndFlush(buf.toByteArray());
     }
+
+    public void removePeerHandshake(PeerId peerId){
+        peerHandshakes.remove(peerId);
+    }
 }
