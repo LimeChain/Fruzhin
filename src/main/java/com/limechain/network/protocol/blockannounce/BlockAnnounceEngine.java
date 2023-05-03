@@ -50,6 +50,10 @@ public class BlockAnnounceEngine {
             return;
         }
 
+        /*  We might not need to send a second handshake.
+            If we already have stored the key it means that we have processed the handshake once.
+            This might be caused by using a different stream for sending and receiving in libp2p.
+        */
         if (hasKey && msg.length == HANDSHAKE_LENGTH) {
             log.log(Level.INFO, "Received existing handshake from " + peerId);
 
@@ -82,7 +86,7 @@ public class BlockAnnounceEngine {
         stream.writeAndFlush(buf.toByteArray());
     }
 
-    public void removePeerHandshake(PeerId peerId){
+    public void removePeerHandshake(PeerId peerId) {
         peerHandshakes.remove(peerId);
     }
 }
