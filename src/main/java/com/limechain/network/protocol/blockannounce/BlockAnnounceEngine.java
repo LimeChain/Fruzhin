@@ -36,7 +36,7 @@ public class BlockAnnounceEngine {
 
 
     public void receiveRequest(byte[] msg, PeerId peerId, Stream stream) {
-        var hasKey = peerHandshakes.containsKey(peerId);
+        boolean hasKey = peerHandshakes.containsKey(peerId);
 
         //Decode handshake from Polkadot
         if (!hasKey && msg.length == HANDSHAKE_LENGTH) {

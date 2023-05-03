@@ -37,7 +37,7 @@ public class BlockAnnounceTest {
             kademliaService.host = senderNode;
 
             //Polkadot
-            var peerId = PeerId.fromBase58("12D3KooWMSYMPsrD81abMMx8YsZp41Mo1L9UXQRAimitPTP2VsK7");
+            var peerId = PeerId.fromBase58("12D3KooWDABCJBL5xN6ivizdq1QSch3QuN2ogkaSpohVK829RPdm");
 
             var receivers = new String[]{
                     "/ip4/127.0.0.1/tcp/30333/p2p/" + peerId.toBase58()
