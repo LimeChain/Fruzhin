@@ -8,11 +8,12 @@ import io.libp2p.protocol.ProtocolHandler;
 import io.libp2p.protocol.ProtocolMessageHandler;
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.bytes.ByteArrayEncoder;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import lombok.extern.java.Log;
+import java.util.logging.Level;
 
 import java.util.concurrent.CompletableFuture;
 
+@Log
 public class BlockAnnounceProtocol extends ProtocolHandler<BlockAnnounceController> {
     public static final int MAX_HANDSHAKE_SIZE = 1024 * 1024;
     public static final int MAX_NOTIFICATION_SIZE = 1024 * 1024;
@@ -55,22 +56,22 @@ public class BlockAnnounceProtocol extends ProtocolHandler<BlockAnnounceControll
         }
 
         @Override
-        public void onMessage(@NotNull Stream stream, ByteBuf msg) {
+        public void onMessage(Stream stream, ByteBuf msg) {
             byte[] messageBytes = new byte[msg.readableBytes()];
             msg.readBytes(messageBytes);
             engine.receiveRequest(messageBytes, stream.remotePeerId(), stream);
         }
 
         @Override
-        public void onClosed(@NotNull Stream stream) {
-            System.out.println("Closed");
+        public void onClosed(Stream stream) {
+            log.log(Level.INFO, "Block announce stream closed for peer " + stream.remotePeerId());
             engine.removePeerHandshake(stream.remotePeerId());
             ProtocolMessageHandler.super.onClosed(stream);
         }
 
         @Override
-        public void onException(@Nullable Throwable cause) {
-            System.out.println("Excepted: " + cause.getMessage());
+        public void onException(Throwable cause) {
+            log.log(Level.WARNING, "Block Announce Exception: " + cause.getMessage());
             cause.printStackTrace();
             ProtocolMessageHandler.super.onException(cause);
         }

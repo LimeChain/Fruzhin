@@ -53,7 +53,6 @@ public class BlockAnnounceTest {
                         "0x7b22fc4469863c9671686c189a3238708033d364a77ba8d83e78777e7563f346");
             }};
 
-            System.out.println("PeerID: " + senderNode.getPeerId());
             Multiaddr[] addr = senderNode.getAddressBook().get(peerId)
                     .join().stream()
                     .filter(address -> !address.toString().contains("/ws") && !address.toString().contains("/wss"))
