@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Random;
 
 public class BlockAnnounceTest {
-    //@Disabled("This is an integration test!")
+    @Disabled("This is an integration test")
     @Test
     public void receivesNotifications() {
         Host senderNode = null;
@@ -37,7 +37,7 @@ public class BlockAnnounceTest {
             kademliaService.host = senderNode;
 
             //Polkadot
-            var peerId = PeerId.fromBase58("12D3KooWDABCJBL5xN6ivizdq1QSch3QuN2ogkaSpohVK829RPdm");
+            var peerId = PeerId.fromBase58("12D3KooWPGSssFbR4XvuSfvu7Rdq4MUv82HdsygXZ4nRhEw3vJpC");
 
             var receivers = new String[]{
                     "/ip4/127.0.0.1/tcp/30333/p2p/" + peerId.toBase58()
@@ -62,7 +62,7 @@ public class BlockAnnounceTest {
             if (addr.length == 0)
                 throw new IllegalStateException("No addresses known for peer " + peerId);
 
-            //blockAnnounce.sendHandshake(senderNode, senderNode.getAddressBook(), peerId, handshake);
+            blockAnnounce.sendHandshake(senderNode, senderNode.getAddressBook(), peerId, handshake);
 
             Thread.sleep(60000);
         } catch (

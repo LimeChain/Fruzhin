@@ -15,7 +15,7 @@ import java.util.Random;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class WarpSyncTest {
-    @Disabled
+    @Disabled("This is an integration test")
     @Test
     public void remoteFunctions_return_correctData() {
         Host senderNode = null;
