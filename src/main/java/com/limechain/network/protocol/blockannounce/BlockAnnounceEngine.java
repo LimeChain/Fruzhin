@@ -34,7 +34,6 @@ public class BlockAnnounceEngine {
                 "0x7b22fc4469863c9671686c189a3238708033d364a77ba8d83e78777e7563f346");
     }};
 
-
     public void receiveRequest(byte[] msg, PeerId peerId, Stream stream) {
         boolean hasKey = peerHandshakes.containsKey(peerId);
 
