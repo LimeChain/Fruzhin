@@ -1,11 +1,10 @@
 package com.limechain.network.protocol.lightclient;
 
+import com.limechain.network.StrictProtocolBinding;
 import com.limechain.network.protocol.lightclient.pb.LightClientMessage;
 import io.libp2p.core.AddressBook;
 import io.libp2p.core.Host;
 import io.libp2p.core.PeerId;
-import io.libp2p.core.multiformats.Multiaddr;
-import io.libp2p.core.multistream.StrictProtocolBinding;
 import lombok.extern.java.Log;
 
 import java.util.concurrent.ExecutionException;
@@ -61,13 +60,4 @@ public class LightMessages extends StrictProtocolBinding<LightMessagesController
             throw new RuntimeException(e);
         }
     }
-
-    private LightMessagesController dialPeer(Host us, PeerId peer, AddressBook addrs) {
-        Multiaddr[] addr = addrs.get(peer).join().toArray(new Multiaddr[0]);
-        if (addr.length == 0)
-            throw new IllegalStateException("No addresses known for peer " + peer);
-
-        return dial(us, peer, addr).getController().join();
-    }
-
 }

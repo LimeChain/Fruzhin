@@ -9,6 +9,7 @@ import com.limechain.config.SystemInfo;
 import com.limechain.network.Network;
 import com.limechain.storage.DBInitializer;
 import com.limechain.storage.KVRepository;
+import com.limechain.sync.Sync;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -54,6 +55,12 @@ public class CommonConfig {
     @Bean
     public Network network(ChainService chainService, HostConfig hostConfig) {
         return Network.initialize(chainService, hostConfig);
+    }
+
+    @Bean
+    public Sync sync() {
+        // TODO: Should be singleton
+        return new Sync();
     }
 
 }
