@@ -77,7 +77,6 @@ public class SystemRPCImpl {
      * <li>Connected to some peers (unless running in dev mode).</li>
      * <li>Not performing a major sync.</li>
      */
-    // TODO: Implement in M2.
     public Map<String, Object> systemHealth() {
         return Map.ofEntries(
                 entry("isSyncing", this.sync.isSyncing()),
@@ -99,7 +98,6 @@ public class SystemRPCImpl {
      * The addresses include a trailing /p2p/ with the local PeerId, and are thus
      * suitable to be passed to system_addReservedPeer or as a bootnode address for example.
      */
-    // TODO: Implement in M2.
     public String[] systemLocalListenAddress() {
         return this.network.getListenAddresses();
     }
@@ -111,7 +109,7 @@ public class SystemRPCImpl {
     public String[] systemSystemPeers() {
         return new String[0];
     }
-    
+
     /**
      * Adds a reserved peer. The string parameter should encode a p2p multiaddr.
      *
