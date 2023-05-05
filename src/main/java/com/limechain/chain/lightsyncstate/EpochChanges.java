@@ -6,15 +6,12 @@ import lombok.Setter;
 import org.javatuples.Pair;
 
 import java.math.BigInteger;
-import java.util.TreeMap;
+import java.util.Map;
 
 @Getter
 @Setter
 public class EpochChanges {
     private ForkTree<PersistedEpochHeader> inner;
 
-    // We can use this library to store the epochs if TreeMap is not performant enough:
-    // https://github.com/batterseapower/btreemap
-    private TreeMap<Pair<Hash256, BigInteger>, PersistedEpoch> epochs;
-
+    private Map<Pair<Hash256, BigInteger>, PersistedEpoch> epochs;
 }

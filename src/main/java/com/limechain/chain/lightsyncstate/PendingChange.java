@@ -25,8 +25,9 @@ public class PendingChange {
     @Setter
     public static class DelayKind {
         public DelayKindEnum kind;
-        public BigInteger medianLastFinalized;
+
         // Applies only when `Best` is selected
+        public BigInteger medianLastFinalized;
     }
 
 }

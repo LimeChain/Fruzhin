@@ -11,6 +11,7 @@ import io.emeraldpay.polkaj.types.Hash256;
 import org.javatuples.Pair;
 
 import java.math.BigInteger;
+import java.util.Map;
 import java.util.TreeMap;
 
 public class EpochChangesReader implements ScaleReader<EpochChanges> {
@@ -27,18 +28,18 @@ public class EpochChangesReader implements ScaleReader<EpochChanges> {
             setBestFinalizedNumber(reader.readOptional(new UInt32Reader()));
         }});
 
-        TreeMap<Pair<Hash256, BigInteger>, PersistedEpoch> treemap = new TreeMap<>();
-        int treeEntries = reader.readCompactInt();
-        for (int i = 0; i < treeEntries; i++) {
+        Map<Pair<Hash256, BigInteger>, PersistedEpoch> epochs = new TreeMap<>();
+        int epochsCount = reader.readCompactInt();
+        for (int i = 0; i < epochsCount; i++) {
             Pair<Hash256, BigInteger> key = new Pair<>(
                     new Hash256(reader.readUint256()),
                     BigInteger.valueOf(reader.readUint32())
             );
             var value = reader.read(new PersistedEpochReader());
-            treemap.put(key, value);
+            epochs.put(key, value);
         }
 
-        changes.setEpochs(treemap);
+        changes.setEpochs(epochs);
         return changes;
     }
 }
