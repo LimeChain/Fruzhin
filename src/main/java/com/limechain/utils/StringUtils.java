@@ -6,14 +6,14 @@ import java.security.InvalidParameterException;
 import java.util.regex.Pattern;
 
 public class StringUtils {
-    private static final Pattern hexPattern = Pattern.compile("^(0x)?[0-9a-fA-F]+$");
+    private static final Pattern HEX_PATTERN = Pattern.compile("^(0x)?[0-9a-fA-F]+$");
 
     public static byte[] hexToBytes(String hex) {
         if (hex.length() % 2 != 0) {
             throw new InvalidParameterException("Invalid hex string length");
         }
 
-        if (!hexPattern.matcher(hex).matches()) {
+        if (!HEX_PATTERN.matcher(hex).matches()) {
             throw new InvalidParameterException("Invalid hex string");
         }
 
@@ -21,7 +21,7 @@ public class StringUtils {
         if (hex.startsWith("0x")) {
             hex = hex.substring(2);
         }
-        
+
         return ByteString.fromHex(hex).toByteArray();
     }
 }
