@@ -1,7 +1,6 @@
 package com.limechain.network.protocol.lightclient;
 
 import com.limechain.network.protocol.lightclient.pb.LightClientMessage;
-import io.libp2p.core.ConnectionClosedException;
 import io.libp2p.core.Stream;
 import io.libp2p.protocol.ProtocolHandler;
 import io.libp2p.protocol.ProtocolMessageHandler;
@@ -10,7 +9,9 @@ import io.netty.handler.codec.protobuf.ProtobufEncoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.LinkedBlockingDeque;
 
 public class LightMessagesProtocol extends ProtocolHandler<LightMessagesController> {
     // Sizes taken from smoldot
@@ -38,7 +39,9 @@ public class LightMessagesProtocol extends ProtocolHandler<LightMessagesControll
     static class Sender
             implements ProtocolMessageHandler<LightClientMessage.Response>,
             LightMessagesController {
-        private final CompletableFuture<LightClientMessage.Response> resp = new CompletableFuture<>();
+        public static final int MAX_QUEUE_SIZE = 50;
+        private final LinkedBlockingDeque<CompletableFuture<LightClientMessage.Response>> queue =
+                new LinkedBlockingDeque<>(MAX_QUEUE_SIZE);
         private final Stream stream;
 
         public Sender(Stream stream) {
@@ -47,24 +50,21 @@ public class LightMessagesProtocol extends ProtocolHandler<LightMessagesControll
 
         @Override
         public void onMessage(Stream stream, LightClientMessage.Response msg) {
-            resp.complete(msg);
+            Objects.requireNonNull(queue.poll()).complete(msg);
             stream.closeWrite();
         }
 
         @Override
         public CompletableFuture<LightClientMessage.Response> send(LightClientMessage.Request req) {
+            CompletableFuture<LightClientMessage.Response> res = new CompletableFuture<>();
+            queue.add(res);
             stream.writeAndFlush(req);
-            return resp;
-        }
-
-        @Override
-        public void onClosed(Stream stream) {
-            resp.completeExceptionally(new ConnectionClosedException());
+            return res;
         }
 
         @Override
         public void onException(Throwable cause) {
-            resp.completeExceptionally(cause);
+            Objects.requireNonNull(queue.poll()).completeExceptionally(cause);
         }
     }
 }
