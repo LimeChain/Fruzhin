@@ -1,6 +1,7 @@
 package com.limechain.network.protocol.warp;
 
 import com.limechain.network.encoding.Leb128LengthFrameDecoder;
+import com.limechain.network.encoding.Leb128LengthFrameEncoder;
 import com.limechain.network.protocol.warp.dto.WarpSyncRequest;
 import com.limechain.network.protocol.warp.dto.WarpSyncResponse;
 import com.limechain.network.protocol.warp.encoding.WarpSyncResponseDecoder;
@@ -9,7 +10,6 @@ import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.libp2p.core.Stream;
 import io.libp2p.protocol.ProtocolHandler;
 import io.libp2p.protocol.ProtocolMessageHandler;
-import io.netty.handler.codec.LengthFieldPrepender;
 import io.netty.handler.codec.bytes.ByteArrayEncoder;
 
 import java.io.ByteArrayOutputStream;
@@ -32,7 +32,7 @@ public class WarpSyncProtocol extends ProtocolHandler<WarpSyncController> {
         stream.pushHandler(new Leb128LengthFrameDecoder());
         stream.pushHandler(new WarpSyncResponseDecoder());
 
-        stream.pushHandler(new LengthFieldPrepender(1));
+        stream.pushHandler(new Leb128LengthFrameEncoder());
         stream.pushHandler(new ByteArrayEncoder());
         WarpSyncProtocol.Sender handler = new WarpSyncProtocol.Sender(stream);
         stream.pushHandler(handler);
