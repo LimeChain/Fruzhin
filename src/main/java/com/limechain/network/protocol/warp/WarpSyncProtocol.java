@@ -7,7 +7,6 @@ import com.limechain.network.protocol.warp.dto.WarpSyncResponse;
 import com.limechain.network.protocol.warp.encoding.WarpSyncResponseDecoder;
 import com.limechain.network.protocol.warp.scale.WarpSyncRequestWriter;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
-import io.libp2p.core.ConnectionClosedException;
 import io.libp2p.core.Stream;
 import io.libp2p.protocol.ProtocolHandler;
 import io.libp2p.protocol.ProtocolMessageHandler;
@@ -15,7 +14,9 @@ import io.netty.handler.codec.bytes.ByteArrayEncoder;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.LinkedBlockingDeque;
 
 public class WarpSyncProtocol extends ProtocolHandler<WarpSyncController> {
     // Sizes taken from smoldot
@@ -39,7 +40,9 @@ public class WarpSyncProtocol extends ProtocolHandler<WarpSyncController> {
     }
 
     static class Sender implements ProtocolMessageHandler<WarpSyncResponse>, WarpSyncController {
-        private final CompletableFuture<WarpSyncResponse> resp = new CompletableFuture<>();
+        public static final int MAX_QUEUE_SIZE = 50;
+        private final LinkedBlockingDeque<CompletableFuture<WarpSyncResponse>> queue =
+                new LinkedBlockingDeque<>(MAX_QUEUE_SIZE);
         private final Stream stream;
 
         public Sender(Stream stream) {
@@ -48,7 +51,7 @@ public class WarpSyncProtocol extends ProtocolHandler<WarpSyncController> {
 
         @Override
         public void onMessage(Stream stream, WarpSyncResponse msg) {
-            resp.complete(msg);
+            Objects.requireNonNull(queue.poll()).complete(msg);
             stream.closeWrite();
         }
 
@@ -60,18 +63,15 @@ public class WarpSyncProtocol extends ProtocolHandler<WarpSyncController> {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
+            CompletableFuture<WarpSyncResponse> res = new CompletableFuture<>();
+            queue.add(res);
             stream.writeAndFlush(buf.toByteArray());
-            return resp;
-        }
-
-        @Override
-        public void onClosed(Stream stream) {
-            resp.completeExceptionally(new ConnectionClosedException());
+            return res;
         }
 
         @Override
         public void onException(Throwable cause) {
-            resp.completeExceptionally(cause);
+            Objects.requireNonNull(queue.poll()).completeExceptionally(cause);
         }
     }
 }
