@@ -11,7 +11,7 @@ import java.util.HashMap;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class LightSyncStateTest {
-    private static LightSyncState execute_decoding(String pathname) throws IOException {
+    private static LightSyncState executeDecoding(String pathname) throws IOException {
         JsonNode root = new ObjectMapper().readTree(new File(pathname));
         LightSyncState decoded = LightSyncState.decode(new HashMap<>() {{
             put("finalizedBlockHeader", root.path("lightSyncState").get("finalizedBlockHeader").textValue());
@@ -23,20 +23,20 @@ class LightSyncStateTest {
     }
 
     @Test
-    void decode_polkadot() throws IOException {
-        LightSyncState decoded = execute_decoding("genesis/polkadot.json");
+    void decodePolkadot() throws IOException {
+        LightSyncState decoded = executeDecoding("genesis/polkadot.json");
         assertNotNull(decoded);
     }
 
     @Test
-    void decode_kusama() throws IOException {
-        LightSyncState decoded = execute_decoding("genesis/kusama.json");
+    void decodeKusama() throws IOException {
+        LightSyncState decoded = executeDecoding("genesis/kusama.json");
         assertNotNull(decoded);
     }
 
     @Test
-    void decode_westend() throws IOException {
-        LightSyncState decoded = execute_decoding("genesis/westend.json");
+    void decodeWestend() throws IOException {
+        LightSyncState decoded = executeDecoding("genesis/westend.json");
         assertNotNull(decoded);
     }
 }
