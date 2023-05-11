@@ -8,9 +8,11 @@ import com.limechain.network.protocol.blockannounce.BlockAnnounceService;
 import com.limechain.network.protocol.lightclient.LightMessagesService;
 import com.limechain.network.protocol.sync.SyncService;
 import com.limechain.network.protocol.warp.WarpSyncService;
+import com.limechain.network.protocol.warp.dto.WarpSyncResponse;
 import io.ipfs.multiaddr.MultiAddress;
 import io.ipfs.multihash.Multihash;
 import io.libp2p.core.Host;
+import io.libp2p.core.PeerId;
 import io.libp2p.core.multiformats.Multiaddr;
 import io.libp2p.protocol.Ping;
 import lombok.Getter;
@@ -21,7 +23,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,15 +37,17 @@ import java.util.logging.Level;
 public class Network {
     private static final int HOST_PORT = 30333;
     private static Network network;
-    @Getter
-    private Map<Multihash, List<MultiAddress>> connections = new HashMap<>();
-    @Getter
-    private final Host host;
+    private final String[] bootNodes;
     public SyncService syncService;
     public LightMessagesService lightMessagesService;
-    public WarpSyncService warpSyncService;
     public KademliaService kademliaService;
     public BlockAnnounceService blockAnnounceService;
+    @Getter
+    private Host host;
+    private WarpSyncService warpSyncService;
+    @Getter
+    private Map<Multihash, List<MultiAddress>> connections = new HashMap<>();
+    private PeerId currentSelectedPeer;
 
     /**
      * Initializes a host for the peer connection,
@@ -56,6 +59,27 @@ public class Network {
      * @param hostConfig   host configuration containing current network
      */
     private Network(ChainService chainService, HostConfig hostConfig) {
+        this.initializeProtocols(chainService, hostConfig);
+        this.bootNodes = chainService.getGenesis().getBootNodes();
+    }
+
+    /**
+     * Initializes singleton Network instance
+     * This is used two times on startup
+     *
+     * @return Network instance saved in class or if not found returns new Network instance
+     */
+    public static Network initialize(ChainService chainService, HostConfig hostConfig) {
+        if (network != null) {
+            log.log(Level.WARNING, "Network module already initialized.");
+            return network;
+        }
+        network = new Network(chainService, hostConfig);
+        log.log(Level.INFO, "Initialized network module!");
+        return network;
+    }
+
+    private void initializeProtocols(ChainService chainService, HostConfig hostConfig) {
         boolean isLocalEnabled = hostConfig.getChain() == Chain.LOCAL;
         boolean clientMode = true;
 
@@ -87,40 +111,16 @@ public class Network {
                 )
         );
 
-        host = hostBuilder.build();
+        this.host = hostBuilder.build();
 
         kademliaService.host = host;
-        kademliaService.connectBootNodes(chainService.getGenesis().getBootNodes());
-    }
-
-    /**
-     * @return Network class instance
-     */
-    public static Network getInstance() {
-        if (network != null) {
-            return network;
-        }
-        throw new AssertionError("Network not initialized.");
-    }
-
-    /**
-     * Initializes singleton Network instance
-     * This is used two times on startup
-     *
-     * @return Network instance saved in class or if not found returns new Network instance
-     */
-    public static Network initialize(ChainService chainService, HostConfig hostConfig) {
-        if (network != null) {
-            log.log(Level.WARNING, "Network module already initialized.");
-            return network;
-        }
-        network = new Network(chainService, hostConfig);
-        log.log(Level.INFO, "Initialized network module!");
-        return network;
     }
 
     public void start() {
-        // TODO: Connect to bootnodes, start new peers search cron job
+        log.log(Level.INFO, "Starting network module...");
+        kademliaService.connectBootNodes(this.bootNodes);
+        log.log(Level.INFO, "Started network module!");
+
     }
 
     public String getPeerId() {
@@ -132,7 +132,7 @@ public class Network {
         return this.host.listenAddresses().stream().map(Multiaddr::toString).toArray(String[]::new);
     }
 
-    public List<PeerAddresses> getPeers(){
+    public List<PeerAddresses> getPeers() {
         List<PeerAddresses> peers = new ArrayList<>();
         for (Map.Entry<Multihash, List<MultiAddress>> entry : connections.entrySet()) {
             PeerAddresses peer = new PeerAddresses(entry.getKey(), entry.getValue());
@@ -153,6 +153,28 @@ public class Network {
 
         connections.putAll(newPeers);
 
+        if (this.currentSelectedPeer == null && newPeers.size() > 0) {
+            this.currentSelectedPeer = PeerId.fromBase58(newPeers.keySet().toArray()[0].toString());
+        }
+
         log.log(Level.INFO, String.format("Connected peers: %s", connections.size()));
+    }
+
+    public WarpSyncResponse makeWarpSyncRequest(String blockHash) {
+        if (this.currentSelectedPeer == null) {
+            log.log(Level.WARNING, "No peer selected for warp sync request.");
+            return null;
+        }
+
+        if (this.host.getAddressBook().get(this.currentSelectedPeer).join() == null) {
+            log.log(Level.WARNING, "Peer not found in address book.");
+            return null;
+        }
+
+        return this.warpSyncService.warpSync.warpSyncRequest(this.host, this.host.getAddressBook(), this.currentSelectedPeer, blockHash);
+    }
+
+    public void stop() {
+
     }
 }

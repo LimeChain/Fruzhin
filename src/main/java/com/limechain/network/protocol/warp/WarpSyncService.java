@@ -4,7 +4,7 @@ import com.limechain.network.protocol.NetworkService;
 import io.libp2p.core.multistream.ProtocolBinding;
 
 public class WarpSyncService implements NetworkService {
-    private final WarpSync warpSync;
+    public final WarpSync warpSync;
 
     public WarpSyncService(String protocolId) {
         this.warpSync = new WarpSync(protocolId, new WarpSyncProtocol());
