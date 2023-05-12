@@ -29,6 +29,8 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
+import static com.limechain.network.kad.KademliaService.REPLICATION;
+
 /**
  * A Singleton Network class that handles all peer connections and Kademlia
  */
@@ -38,6 +40,8 @@ public class Network {
     private static final int HOST_PORT = 30333;
     private static Network network;
     private final String[] bootNodes;
+    @Getter
+    private final Map<Multihash, List<MultiAddress>> connections = new HashMap<>();
     public SyncService syncService;
     public LightMessagesService lightMessagesService;
     public KademliaService kademliaService;
@@ -45,8 +49,6 @@ public class Network {
     @Getter
     private Host host;
     private WarpSyncService warpSyncService;
-    @Getter
-    private Map<Multihash, List<MultiAddress>> connections = new HashMap<>();
     private PeerId currentSelectedPeer;
 
     /**
@@ -148,10 +150,19 @@ public class Network {
      */
     @Scheduled(fixedDelay = 10, timeUnit = TimeUnit.SECONDS)
     public void findPeers() {
+        if (connections.size() >= REPLICATION) {
+            log.log(Level.INFO,
+                    "Connections have reached replication factor(" + REPLICATION + "). " +
+                            "No need to search for new ones yet.");
+            return;
+        }
+
         log.log(Level.INFO, "Searching for peers...");
         Map<Multihash, List<MultiAddress>> newPeers = kademliaService.findNewPeers(connections);
 
         connections.putAll(newPeers);
+
+        newPeers.forEach((peerId, addresses) -> log.log(Level.INFO, String.format("Found peer: " + peerId)));
 
         if (this.currentSelectedPeer == null && newPeers.size() > 0) {
             this.currentSelectedPeer = PeerId.fromBase58(newPeers.keySet().toArray()[0].toString());
@@ -171,7 +182,11 @@ public class Network {
             return null;
         }
 
-        return this.warpSyncService.warpSync.warpSyncRequest(this.host, this.host.getAddressBook(), this.currentSelectedPeer, blockHash);
+        return this.warpSyncService.warpSync.warpSyncRequest(
+                this.host,
+                this.host.getAddressBook(),
+                this.currentSelectedPeer,
+                blockHash);
     }
 
     public void stop() {
