@@ -40,7 +40,7 @@ public class LightClient {
         this.network.start();
 
         this.warpSyncService = AppBean.getBean(WarpSync.class);
-//        this.warpSyncService.start();
+        this.warpSyncService.start();
         log.log(Level.INFO, "\uD83D\uDE80Started light client!");
     }
 

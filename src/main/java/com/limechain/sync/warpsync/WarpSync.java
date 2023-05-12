@@ -42,9 +42,11 @@ public class WarpSync {
                 case NotStarted, InProgress -> {
                     log.log(Level.INFO, "Making sync progress...");
                     this.warpSyncStatus = WarpSyncStatus.InProgress;
-                    LightSyncState initState = LightSyncState.decode(this.chainService.getGenesis().getLightSyncState());
+                    LightSyncState initState = LightSyncState.decode(
+                            this.chainService.getGenesis().getLightSyncState());
 
-                    WarpSyncResponse resp = this.networkService.makeWarpSyncRequest(initState.getFinalizedBlockHeader().getParentHash().toString());
+                    WarpSyncResponse resp = this.networkService.makeWarpSyncRequest(
+                            initState.getFinalizedBlockHeader().getParentHash().toString());
                     log.log(Level.INFO, "Got response from warp sync: " + resp.toString());
                 }
                 case Completed -> log.log(Level.INFO, "Warp sync already finished.");
@@ -52,8 +54,9 @@ public class WarpSync {
         } catch (Exception e) {
             log.log(Level.SEVERE, "Error while making sync progress: " + e.getMessage());
         } finally {
-            Thread t = new Thread(this::makeSyncProgress);
-            t.start();
+            // TODO: Uncomment this when we have a way to stop the sync
+            // Thread t = new Thread(this::makeSyncProgress);
+            // t.start();
         }
     }
 
