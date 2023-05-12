@@ -6,6 +6,7 @@ import com.limechain.config.HostConfig;
 import com.limechain.network.kad.KademliaService;
 import com.limechain.network.protocol.blockannounce.BlockAnnounceService;
 import com.limechain.network.protocol.lightclient.LightMessagesService;
+import com.limechain.network.protocol.ping.Ping;
 import com.limechain.network.protocol.sync.SyncService;
 import com.limechain.network.protocol.warp.WarpSyncService;
 import com.limechain.network.protocol.warp.dto.WarpSyncResponse;
@@ -14,7 +15,7 @@ import io.ipfs.multihash.Multihash;
 import io.libp2p.core.Host;
 import io.libp2p.core.PeerId;
 import io.libp2p.core.multiformats.Multiaddr;
-import io.libp2p.protocol.Ping;
+import io.libp2p.protocol.PingProtocol;
 import lombok.Getter;
 import lombok.extern.java.Log;
 import org.peergos.HostBuilder;
@@ -46,6 +47,7 @@ public class Network {
     public LightMessagesService lightMessagesService;
     public KademliaService kademliaService;
     public BlockAnnounceService blockAnnounceService;
+    public Ping ping;
     @Getter
     private Host host;
     private WarpSyncService warpSyncService;
@@ -88,6 +90,7 @@ public class Network {
         HostBuilder hostBuilder = new HostBuilder().generateIdentity().listenLocalhost(HOST_PORT);
         Multihash hostId = Multihash.deserialize(hostBuilder.getPeerId().getBytes());
 
+        String pingProtocol = "/ipfs/ping/1.0.0";
         //TODO: Add new protocolId format with genesis hash
         String chainId = chainService.getGenesis().getProtocolId();
         String legacyKadProtocolId = String.format("/%s/kad", chainId);
@@ -101,10 +104,11 @@ public class Network {
         warpSyncService = new WarpSyncService(legacyWarpProtocolId);
         syncService = new SyncService(legacySyncProtocolId);
         blockAnnounceService = new BlockAnnounceService(legacyBlockAnnounceProtocolId);
+        ping = new Ping(pingProtocol, new PingProtocol());
 
         hostBuilder.addProtocols(
                 List.of(
-                        new Ping(),
+                        ping,
                         kademliaService.getProtocol(),
                         lightMessagesService.getProtocol(),
                         warpSyncService.getProtocol(),
@@ -149,7 +153,7 @@ public class Network {
      * By default Spring Boot uses a thread pool of size 1, so each call will be executed one at a time.
      */
     @Scheduled(fixedDelay = 10, timeUnit = TimeUnit.SECONDS)
-    public void findPeers() {
+    public synchronized void findPeers() {
         if (connections.size() >= REPLICATION) {
             log.log(Level.INFO,
                     "Connections have reached replication factor(" + REPLICATION + "). " +
@@ -169,6 +173,35 @@ public class Network {
         }
 
         log.log(Level.INFO, String.format("Connected peers: %s", connections.size()));
+    }
+
+    @Scheduled(fixedDelay = 10, timeUnit = TimeUnit.SECONDS)
+    public synchronized void pingPeers() {
+        // TODO: This needs to by synchronized with the findPeers method
+        if (connections.size() == 0) {
+            log.log(Level.INFO, "No peers to ping.");
+            return;
+        }
+
+        log.log(Level.INFO, "Pinging peers...");
+        connections.forEach((peerId, addresses) -> {
+            try {
+                Long latency = ping.ping(host, host.getAddressBook(), PeerId.fromBase58(peerId.toBase58()));
+
+                log.log(Level.INFO, String.format("Pinged peer: %s, latency %s ms", peerId, latency));
+            } catch (Exception e) {
+                log.log(Level.WARNING, String.format("Failed to ping peer: %s. Removing from active connections", peerId));
+                connections.remove(peerId);
+
+                if (this.currentSelectedPeer.toBase58().equals(peerId.toBase58())) {
+                    this.currentSelectedPeer = null;
+                    if (connections.size() > 0) {
+                        this.currentSelectedPeer = PeerId.fromBase58(connections.keySet().toArray()[0].toString());
+                    }
+                }
+
+            }
+        });
     }
 
     public WarpSyncResponse makeWarpSyncRequest(String blockHash) {

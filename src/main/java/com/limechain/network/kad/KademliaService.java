@@ -28,7 +28,7 @@ public class KademliaService implements NetworkService {
     public static final int REPLICATION = 20;
     public static final int ALPHA = 3;
     public Host host;
-    private Kademlia kademlia;
+    public Kademlia kademlia;
 
     public KademliaService(String protocolId, Multihash hostId, boolean localDht, boolean clientMode) {
         this.initialize(protocolId, hostId, localDht, clientMode);
