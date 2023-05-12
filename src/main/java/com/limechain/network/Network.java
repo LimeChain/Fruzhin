@@ -190,7 +190,8 @@ public class Network {
 
                 log.log(Level.INFO, String.format("Pinged peer: %s, latency %s ms", peerId, latency));
             } catch (Exception e) {
-                log.log(Level.WARNING, String.format("Failed to ping peer: %s. Removing from active connections", peerId));
+                log.log(Level.WARNING, String.format("Failed to ping peer: %s. " +
+                        "Removing from active connections", peerId));
                 connections.remove(peerId);
 
                 if (this.currentSelectedPeer.toBase58().equals(peerId.toBase58())) {
