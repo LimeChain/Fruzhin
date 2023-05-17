@@ -26,7 +26,7 @@ public class SyncTest {
             ChainService chainService = new ChainService(hostConfig, dbRepository);
             Network.initialize(chainService, hostConfig);
             Network network = Network.getInstance();
-            Thread.sleep(2000);
+            Thread.sleep(1);
             Sync sync = new Sync(network);
             sync.warpSync();
         } catch (InterruptedException e) {

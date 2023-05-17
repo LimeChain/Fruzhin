@@ -50,11 +50,11 @@ public class Sync {
     }
 
     public WarpSyncResponse syncWithNode(PeerAddresses peer) {
-        final PeerId peerId = new PeerId(Multihash.fromBase58("12D3KooWHsvEicXjWWraktbZ4MQBizuyADQtuEGr3NbDvtm5rFA5").toBytes());
+        final PeerId peerId = new PeerId(Multihash.fromBase58("12D3KooWQz2q2UWVCiy9cFX1hHYEmhSKQB2hjEZCccScHLGUPjcc").toBytes());
 
         WarpSyncResponse warpSyncResponse = network.warpSyncService.getProtocol().warpSyncRequest(
                 network.getHost(), network.getHost().getAddressBook(), peerId,
-                "0x906558bc9ec91de6b110dee2b1f1cd69a4e3ae378677004bb46ef3dde1148ce0"
+                        "0x103edc4fdb29614dda6bd983e425b94ba20bff2329ba0ff75d2543592aae2266"
         );
 
         String message = new String(Arrays.stream(Arrays.stream(warpSyncResponse.getFragments()).toList().get(0).getHeader().getDigest()).toList().get(0).getMessage());
