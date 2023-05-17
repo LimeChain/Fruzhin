@@ -58,9 +58,9 @@ public class CommonConfig {
     }
 
     @Bean
-    public Sync sync() {
+    public Sync sync(Network network) {
         // TODO: Should be singleton
-        return new Sync();
+        return new Sync(network);
     }
 
 }

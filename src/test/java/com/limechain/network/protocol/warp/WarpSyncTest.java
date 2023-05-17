@@ -34,15 +34,15 @@ public class WarpSyncTest {
             senderNode.start().join();
 
             kademliaService.host = senderNode;
-            var peerId = PeerId.fromBase58("12D3KooWBMw3k3sDwcvFGkD1V6DXuo2okRbZQ7KA72hpYMWXrUmc");
+            var peerId = PeerId.fromBase58("12D3KooWHsvEicXjWWraktbZ4MQBizuyADQtuEGr3NbDvtm5rFA5");
             var receivers = new String[]{
-                    "/ip4/127.0.0.1/tcp/30333/p2p/12D3KooWBMw3k3sDwcvFGkD1V6DXuo2okRbZQ7KA72hpYMWXrUmc",
+                    "/dns/p2p.0.polkadot.network/tcp/30333/p2p/12D3KooWHsvEicXjWWraktbZ4MQBizuyADQtuEGr3NbDvtm5rFA5",
             };
 
             kademliaService.connectBootNodes(receivers);
 
             var response = warpSync.warpSyncRequest(senderNode, senderNode.getAddressBook(), peerId,
-                    "0xb3a0f1e3c06de74c9aedb3e4b129b570f778dd82005b2a84177dfb8a1b3751d0"
+                    "0x906558bc9ec91de6b110dee2b1f1cd69a4e3ae378677004bb46ef3dde1148ce0"
             );
             assertNotNull(response);
         } finally {

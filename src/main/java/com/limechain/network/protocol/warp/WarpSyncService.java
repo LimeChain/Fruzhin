@@ -1,7 +1,6 @@
 package com.limechain.network.protocol.warp;
 
 import com.limechain.network.protocol.NetworkService;
-import io.libp2p.core.multistream.ProtocolBinding;
 
 public class WarpSyncService implements NetworkService {
     private final WarpSync warpSync;
@@ -10,7 +9,7 @@ public class WarpSyncService implements NetworkService {
         this.warpSync = new WarpSync(protocolId, new WarpSyncProtocol());
     }
 
-    public ProtocolBinding getProtocol() {
+    public WarpSync getProtocol() {
         return this.warpSync;
     }
 }
