@@ -4,6 +4,8 @@ import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleReader;
 
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 /**
  * Decodes into a `u64` a SCALE-encoded number whose number of bytes isn't known at compile-time.
@@ -12,27 +14,21 @@ import java.math.BigInteger;
  * nom_varsize_number_decode_u64</a>
  */
 public class VarUint64Reader implements ScaleReader<BigInteger> {
+    private final int blockNumSize;
+
+    public VarUint64Reader(int blockNumSize) {
+        this.blockNumSize = blockNumSize;
+    }
+
     @Override
     public BigInteger read(ScaleCodecReader reader) {
-        var out = new byte[8];
-        // 4 comes from that blocks are encoded in 4 bytes
-        var block = reader.readByteArray(4);
-        out[0] = block[0];
-        out[1] = block[1];
-        out[2] = block[2];
-        out[3] = block[3];
+        byte[] input = reader.readByteArray(blockNumSize);
+        byte[] slice = new byte[8];
+        System.arraycopy(input, 0, slice, 0, blockNumSize);
 
-        BigInteger result = BigInteger.ZERO;
+        ByteBuffer buffer = ByteBuffer.wrap(slice);
+        buffer.order(ByteOrder.LITTLE_ENDIAN);
 
-        result = result.add(BigInteger.valueOf(out[0]));
-        result = result.add(BigInteger.valueOf(out[1]).shiftLeft(8));
-        result = result.add(BigInteger.valueOf(out[2]).shiftLeft(16));
-        result = result.add(BigInteger.valueOf(out[3]).shiftLeft(24));
-        result = result.add(BigInteger.valueOf(out[4]).shiftLeft(32));
-        result = result.add(BigInteger.valueOf(out[5]).shiftLeft(40));
-        result = result.add(BigInteger.valueOf(out[6]).shiftLeft(48));
-        result = result.add(BigInteger.valueOf(out[7]).shiftLeft(56));
-
-        return result;
+        return BigInteger.valueOf(buffer.getLong());
     }
 }

@@ -11,7 +11,7 @@ public class PrecommitReader implements ScaleReader<Precommit> {
     public Precommit read(ScaleCodecReader reader) {
         Precommit precommit = new Precommit();
         precommit.setTargetHash(new Hash256(reader.readUint256()));
-        precommit.setTargetNumber(new VarUint64Reader().read(reader));
+        precommit.setTargetNumber(new VarUint64Reader(4).read(reader));
         precommit.setSignature(new Hash512(reader.readByteArray(64)));
         precommit.setAuthorityPublicKey(new Hash256(reader.readUint256()));
         return precommit;
