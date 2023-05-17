@@ -90,14 +90,14 @@ public class Network {
         HostBuilder hostBuilder = new HostBuilder().generateIdentity().listenLocalhost(HOST_PORT);
         Multihash hostId = Multihash.deserialize(hostBuilder.getPeerId().getBytes());
 
-        String pingProtocol = "/ipfs/ping/1.0.0";
+        String pingProtocol = ProtocolUtils.getPingProtocol();
         //TODO: Add new protocolId format with genesis hash
         String chainId = chainService.getGenesis().getProtocolId();
-        String legacyKadProtocolId = String.format("/%s/kad", chainId);
-        String legacyWarpProtocolId = String.format("/%s/sync/warp", chainId);
-        String legacyLightProtocolId = String.format("/%s/light/2", chainId);
-        String legacySyncProtocolId = String.format("/%s/sync/2", chainId);
-        String legacyBlockAnnounceProtocolId = String.format("/%s/block-announces/1", chainId);
+        String legacyKadProtocolId = ProtocolUtils.getLegacyKadProtocol(chainId);
+        String legacyWarpProtocolId = ProtocolUtils.getLegacyWarpSyncProtocol(chainId);
+        String legacyLightProtocolId = ProtocolUtils.getLegacyLightMessageProtocol(chainId);
+        String legacySyncProtocolId = ProtocolUtils.getLegacySyncProtocol(chainId);
+        String legacyBlockAnnounceProtocolId = ProtocolUtils.getLegacyBlockAnnounceProtocol(chainId);
 
         kademliaService = new KademliaService(legacyKadProtocolId, hostId, isLocalEnabled, clientMode);
         lightMessagesService = new LightMessagesService(legacyLightProtocolId);
