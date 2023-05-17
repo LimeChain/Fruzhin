@@ -3,6 +3,7 @@ package com.limechain.sync.warpsync;
 import com.limechain.chain.ChainService;
 import com.limechain.chain.lightsyncstate.LightSyncState;
 import com.limechain.network.Network;
+import com.limechain.network.protocol.warp.dto.WarpSyncFragment;
 import com.limechain.network.protocol.warp.dto.WarpSyncResponse;
 import lombok.extern.java.Log;
 
@@ -48,6 +49,13 @@ public class WarpSync {
                     WarpSyncResponse resp = this.networkService.makeWarpSyncRequest(
                             initState.getFinalizedBlockHeader().getParentHash().toString());
                     log.log(Level.INFO, "Got response from warp sync: " + resp.toString());
+                    for (WarpSyncFragment fragment : resp.getFragments()) {
+                        var result = fragment.getJustification().verify(
+                                initState.getGrandpaAuthoritySet().getCurrentAuthorities(),
+                                initState.getGrandpaAuthoritySet().getSetId(),
+                                new byte[]{1, 2, 3, 4, 5}
+                        );
+                    }
                 }
                 case Completed -> log.log(Level.INFO, "Warp sync already finished.");
             }

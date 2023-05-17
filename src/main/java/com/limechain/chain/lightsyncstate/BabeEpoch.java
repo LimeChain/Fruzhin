@@ -17,6 +17,12 @@ public class BabeEpoch {
     private byte[] randomness;
     private NextBabeConfig nextConfig;
 
+    public void validate() {
+        if (nextConfig.c.getValue0().compareTo(nextConfig.c.getValue1()) > 0) {
+            throw new IllegalStateException("Invalid epoch configuration: c0 > c1");
+        }
+    }
+
     public enum BabeAllowedSlots {
         /// Only allow primary slot claims.
         PrimarySlots,
