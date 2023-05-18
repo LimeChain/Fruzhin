@@ -52,8 +52,7 @@ public class WarpSync {
                     for (WarpSyncFragment fragment : resp.getFragments()) {
                         var result = fragment.getJustification().verify(
                                 initState.getGrandpaAuthoritySet().getCurrentAuthorities(),
-                                initState.getGrandpaAuthoritySet().getSetId(),
-                                new byte[]{1, 2, 3, 4, 5}
+                                initState.getGrandpaAuthoritySet().getSetId()
                         );
                     }
                 }
