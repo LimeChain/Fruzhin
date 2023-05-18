@@ -4,7 +4,7 @@ import com.limechain.chain.ChainService;
 import com.limechain.chain.ChainSpec;
 import com.limechain.config.SystemInfo;
 import com.limechain.network.Network;
-import com.limechain.sync.warpsync.WarpSync;
+import com.limechain.sync.warpsync.WarpSyncMachine;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -19,7 +19,7 @@ public class SystemRPCImplTest {
 
     // Dependencies
     private ChainService chainService;
-    private WarpSync warpSync;
+    private WarpSyncMachine warpSync;
     private Network network;
     private SystemInfo systemInfo;
 
@@ -27,7 +27,7 @@ public class SystemRPCImplTest {
     public void setup() {
         chainService = mock(ChainService.class);
         systemInfo = mock(SystemInfo.class);
-        warpSync = mock(WarpSync.class);
+        warpSync = mock(WarpSyncMachine.class);
         network = mock(Network.class);
         systemRPC = new SystemRPCImpl(chainService, systemInfo, network, warpSync);
     }

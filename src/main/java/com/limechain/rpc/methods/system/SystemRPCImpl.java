@@ -3,7 +3,7 @@ package com.limechain.rpc.methods.system;
 import com.limechain.chain.ChainService;
 import com.limechain.config.SystemInfo;
 import com.limechain.network.Network;
-import com.limechain.sync.warpsync.WarpSync;
+import com.limechain.sync.warpsync.WarpSyncMachine;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -26,7 +26,7 @@ public class SystemRPCImpl {
     private final ChainService chainService;
     private final SystemInfo systemInfo;
     private final Network network;
-    private final WarpSync warpSync;
+    private final WarpSyncMachine warpSync;
 
     /**
      * Gets the node's implementation name.

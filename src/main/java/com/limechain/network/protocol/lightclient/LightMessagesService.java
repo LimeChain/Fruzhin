@@ -5,7 +5,7 @@ import io.libp2p.core.multistream.ProtocolBinding;
 
 public class LightMessagesService implements NetworkService {
 
-    private final LightMessages lightMessages;
+    public final LightMessages lightMessages;
 
     public LightMessagesService(String protocolId) {
         this.lightMessages = new LightMessages(protocolId, new LightMessagesProtocol());

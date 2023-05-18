@@ -9,7 +9,7 @@ import com.limechain.config.SystemInfo;
 import com.limechain.network.Network;
 import com.limechain.storage.DBInitializer;
 import com.limechain.storage.KVRepository;
-import com.limechain.sync.warpsync.WarpSync;
+import com.limechain.sync.warpsync.WarpSyncMachine;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -58,8 +58,8 @@ public class CommonConfig {
     }
 
     @Bean
-    public WarpSync sync(Network network, ChainService chainService) {
-        return WarpSync.initialize(network, chainService);
+    public WarpSyncMachine sync(Network network, ChainService chainService) {
+        return WarpSyncMachine.initialize(network, chainService);
     }
 
 }

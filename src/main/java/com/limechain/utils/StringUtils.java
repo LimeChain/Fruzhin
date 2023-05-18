@@ -2,6 +2,8 @@ package com.limechain.utils;
 
 import com.google.protobuf.ByteString;
 
+import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidParameterException;
 import java.util.regex.Pattern;
 
@@ -23,5 +25,16 @@ public class StringUtils {
         }
 
         return ByteString.fromHex(hex).toByteArray();
+    }
+
+    public static String remove0xPrefix(String hex) {
+        if (hex.startsWith("0x")) {
+            return hex.substring(2);
+        }
+        return hex;
+    }
+
+    public static String toHex(String key) {
+        return String.format("%040x", new BigInteger(1, key.getBytes(StandardCharsets.UTF_8)));
     }
 }

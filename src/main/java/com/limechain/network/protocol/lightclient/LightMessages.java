@@ -2,6 +2,7 @@ package com.limechain.network.protocol.lightclient;
 
 import com.limechain.network.StrictProtocolBinding;
 import com.limechain.network.protocol.lightclient.pb.LightClientMessage;
+import com.limechain.utils.StringUtils;
 import io.libp2p.core.AddressBook;
 import io.libp2p.core.Host;
 import io.libp2p.core.PeerId;
@@ -22,7 +23,7 @@ public class LightMessages extends StrictProtocolBinding<LightMessagesController
                                                          String data) {
         LightMessagesController controller = dialPeer(us, peer, addrs);
         try {
-            LightClientMessage.Response resp = controller.remoteCallRequest(blockHash, method, data).get();
+            LightClientMessage.Response resp = controller.remoteCallRequest(StringUtils.remove0xPrefix(blockHash), method, data).get();
             log.log(Level.INFO, "Received response: " + resp.toString());
             return resp;
         } catch (ExecutionException | InterruptedException e) {
@@ -33,10 +34,13 @@ public class LightMessages extends StrictProtocolBinding<LightMessagesController
 
     public LightClientMessage.Response remoteReadRequest(Host us, AddressBook addrs, PeerId peer,
                                                          String blockHash,
-                                                         String[] keys) {
+                                                         String[] hexKeys) {
         LightMessagesController controller = dialPeer(us, peer, addrs);
         try {
-            LightClientMessage.Response resp = controller.remoteReadRequest(blockHash, keys).get();
+            LightClientMessage.Response resp = controller.remoteReadRequest(
+                            StringUtils.remove0xPrefix(blockHash),
+                            hexKeys)
+                    .get();
             log.log(Level.INFO, "Received response: " + resp.toString());
             return resp;
         } catch (ExecutionException | InterruptedException e) {
@@ -52,7 +56,7 @@ public class LightMessages extends StrictProtocolBinding<LightMessagesController
         LightMessagesController controller = dialPeer(us, peer, addrs);
         try {
             LightClientMessage.Response resp =
-                    controller.remoteReadChildRequest(blockHash, childStorageKey, keys).get();
+                    controller.remoteReadChildRequest(StringUtils.remove0xPrefix(blockHash), childStorageKey, keys).get();
             log.log(Level.INFO, "Received response: " + resp.toString());
             return resp;
         } catch (ExecutionException | InterruptedException e) {

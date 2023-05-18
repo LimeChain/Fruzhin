@@ -6,6 +6,7 @@ import com.limechain.config.HostConfig;
 import com.limechain.network.kad.KademliaService;
 import com.limechain.network.protocol.blockannounce.BlockAnnounceService;
 import com.limechain.network.protocol.lightclient.LightMessagesService;
+import com.limechain.network.protocol.lightclient.pb.LightClientMessage;
 import com.limechain.network.protocol.ping.Ping;
 import com.limechain.network.protocol.sync.SyncService;
 import com.limechain.network.protocol.warp.WarpSyncService;
@@ -207,15 +208,7 @@ public class Network {
     }
 
     public WarpSyncResponse makeWarpSyncRequest(String blockHash) {
-        if (this.currentSelectedPeer == null) {
-            log.log(Level.WARNING, "No peer selected for warp sync request.");
-            return null;
-        }
-
-        if (this.host.getAddressBook().get(this.currentSelectedPeer).join() == null) {
-            log.log(Level.WARNING, "Peer not found in address book.");
-            return null;
-        }
+        if (validatePeer()) return null;
 
         return this.warpSyncService.warpSync.warpSyncRequest(
                 this.host,
@@ -226,5 +219,30 @@ public class Network {
 
     public void stop() {
 
+    }
+
+    public LightClientMessage.Response makeRemoteReadRequest(String blockHash, String[] keys) {
+        if (validatePeer()) return null;
+
+        return this.lightMessagesService.lightMessages.remoteReadRequest(
+                this.host,
+                this.host.getAddressBook(),
+                this.currentSelectedPeer,
+                blockHash,
+                keys);
+
+    }
+
+    private boolean validatePeer() {
+        if (this.currentSelectedPeer == null) {
+            log.log(Level.WARNING, "No peer selected for warp sync request.");
+            return true;
+        }
+
+        if (this.host.getAddressBook().get(this.currentSelectedPeer).join() == null) {
+            log.log(Level.WARNING, "Peer not found in address book.");
+            return true;
+        }
+        return false;
     }
 }

@@ -4,7 +4,7 @@ import com.limechain.network.Network;
 import com.limechain.rpc.http.server.AppBean;
 import com.limechain.rpc.http.server.HttpRpc;
 import com.limechain.rpc.ws.server.WebSocketRPC;
-import com.limechain.sync.warpsync.WarpSync;
+import com.limechain.sync.warpsync.WarpSyncMachine;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
@@ -44,10 +44,10 @@ public class LightClientTest {
     @Test
     public void lightClient_start_invokesStartFunctions() {
         Network network = mock(Network.class);
-        WarpSync warpSync = mock(WarpSync.class);
+        WarpSyncMachine warpSync = mock(WarpSyncMachine.class);
         try (MockedStatic<AppBean> utilities = Mockito.mockStatic(AppBean.class)) {
             utilities.when(() -> AppBean.getBean(Network.class)).thenReturn(network);
-            utilities.when(() -> AppBean.getBean(WarpSync.class)).thenReturn(warpSync);
+            utilities.when(() -> AppBean.getBean(WarpSyncMachine.class)).thenReturn(warpSync);
 
             lightClient.start();
 
@@ -61,7 +61,7 @@ public class LightClientTest {
     @Test
     public void lightClient_stop_invokesStopFunctions() throws NoSuchFieldException, IllegalAccessException {
         Network network = mock(Network.class);
-        WarpSync warpSync = mock(WarpSync.class);
+        WarpSyncMachine warpSync = mock(WarpSyncMachine.class);
 
         setPrivateField("network", network);
         setPrivateField("warpSyncService", warpSync);
