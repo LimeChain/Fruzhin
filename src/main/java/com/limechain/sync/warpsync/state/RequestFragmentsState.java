@@ -41,6 +41,10 @@ public class RequestFragmentsState implements WarpSyncState {
             WarpSyncResponse resp = sync.getNetworkService().makeWarpSyncRequest(blockHash.toString());
             log.log(Level.INFO, "Got response from warp sync: " + resp.toString());
 
+            if (resp == null) {
+                throw new Exception("No response received.");
+            }
+            
             if (resp.getFragments().length == 0) {
                 log.log(Level.WARNING, "No fragments received.");
                 return;
@@ -49,6 +53,7 @@ public class RequestFragmentsState implements WarpSyncState {
             sync.setFragmentsQueue(new LinkedBlockingQueue<>(
                     Arrays.stream(resp.getFragments()).collect(java.util.stream.Collectors.toList()))
             );
+
             this.result = resp;
         } catch (Exception e) {
             // TODO: Set error state, next() will use to transition to correct next state.

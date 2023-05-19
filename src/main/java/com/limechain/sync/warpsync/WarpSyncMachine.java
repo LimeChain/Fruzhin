@@ -1,9 +1,9 @@
 package com.limechain.sync.warpsync;
 
 import com.limechain.chain.ChainService;
+import com.limechain.chain.lightsyncstate.Authority;
 import com.limechain.chain.lightsyncstate.LightSyncState;
 import com.limechain.network.Network;
-import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.network.protocol.warp.dto.WarpSyncFragment;
 import com.limechain.sync.warpsync.state.FinishedState;
 import com.limechain.sync.warpsync.state.RequestFragmentsState;
@@ -13,6 +13,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.java.Log;
 
+import java.math.BigInteger;
 import java.util.Queue;
 import java.util.logging.Level;
 
@@ -31,7 +32,7 @@ public class WarpSyncMachine {
 
     @Getter
     @Setter
-    private BlockHeader verifyingHeader;
+    private boolean isFinished;
 
     @Getter
     @Setter
@@ -39,7 +40,11 @@ public class WarpSyncMachine {
 
     @Getter
     @Setter
-    private boolean isFinished;
+    private Authority[] authoritySet;
+
+    @Getter
+    @Setter
+    private BigInteger setId;
 
     public WarpSyncMachine(Network network, ChainService chainService) {
         this.networkService = network;
@@ -78,6 +83,8 @@ public class WarpSyncMachine {
         LightSyncState initState = LightSyncState.decode(this.chainService.getGenesis().getLightSyncState());
         // Always start with requesting fragments
         this.state = new RequestFragmentsState(initState.getFinalizedBlockHeader().getParentHash());
+        this.setAuthoritySet(initState.getGrandpaAuthoritySet().getCurrentAuthorities());
+        this.setSetId(initState.getGrandpaAuthoritySet().getSetId());
 
         // Process should be non-blocking...
         while (this.state.getClass() != FinishedState.class) {

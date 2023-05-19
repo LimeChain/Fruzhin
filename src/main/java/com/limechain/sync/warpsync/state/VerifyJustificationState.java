@@ -16,6 +16,7 @@ public class VerifyJustificationState implements WarpSyncState {
         if (this.error != null) {
             // Not sure what state we should transition to here.
             sync.setState(new FinishedState());
+            return;
         }
 
         if (!sync.getFragmentsQueue().isEmpty()) {
@@ -33,7 +34,10 @@ public class VerifyJustificationState implements WarpSyncState {
             WarpSyncFragment fragment = sync.getFragmentsQueue().poll();
             log.log(Level.INFO, "Verifying justification...");
             // TODO: Throw error if not verified!
-
+            boolean verified = fragment.getJustification().verify(sync.getAuthoritySet(), sync.getSetId());
+            if (!verified) {
+                throw new Exception("Justification could not be verified.");
+            }
             // Set the latest finalized header
             // TODO: Persist header to DB?
             sync.setLastFinalizedBlockHash(fragment.getJustification().targetHash);

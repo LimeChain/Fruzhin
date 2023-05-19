@@ -3,8 +3,10 @@ package com.limechain.network.protocol.warp.dto;
 import com.limechain.chain.lightsyncstate.Authority;
 import io.emeraldpay.polkaj.scaletypes.Extrinsic;
 import io.emeraldpay.polkaj.types.Hash256;
+import io.libp2p.crypto.keys.Ed25519PublicKey;
 import lombok.Setter;
 import lombok.extern.java.Log;
+import org.bouncycastle.crypto.params.Ed25519PublicKeyParameters;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -14,9 +16,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
-
-import io.libp2p.crypto.keys.Ed25519PublicKey;
-import org.bouncycastle.crypto.params.Ed25519PublicKeyParameters;
 
 @Setter
 @Log
@@ -113,13 +112,16 @@ public class WarpSyncJustification {
             Extrinsic.ED25519Signature signature = new Extrinsic.ED25519Signature(precommit.getSignature());
 
             byte[] data = new byte[messageCapacity];
-            for(int i=0; i<message.size();i++){
-                data[i]= message.get(i);
+            for (int i = 0; i < message.size(); i++) {
+                data[i] = message.get(i);
             }
 
-            publicKey.verify(data, signature.getValue().getBytes());
+            boolean result = publicKey.verify(data, signature.getValue().getBytes());
+            if (!result) {
+                log.log(Level.WARNING, "Invalid signature");
+                return false;
+            }
         }
-
         // From Smoldot implementation:
         // TODO: must check that votes_ancestries doesn't contain any unused entry
         // TODO: there's also a "ghost" thing?
