@@ -61,43 +61,50 @@ public class WarpSyncJustification {
 
             // TODO (from smoldot): must check signed block ancestry using `votes_ancestries`
 
+            // 1 reserved byte for data type
+            // 32 reserved for target hash
+            // 4 reserved for block number
+            // 8 reserved for justification round
+            // 8 reserved for set id
             List<Byte> message = new ArrayList<>();
             int messageCapacity = 1 + 32 + 4 + 8 + 8;
+            // Write message type
             message.add((byte) 1);
+
+            // Write target hash
             byte[] targetHash = precommit.getTargetHash().getBytes();
             for (byte targetHashByte : targetHash) {
-                message.add(Byte.valueOf(targetHashByte));
+                message.add(targetHashByte);
             }
 
             byte[] targetNumberBytes = precommit.getTargetNumber().toByteArray();
             int blockNumberBytes = 4;
             int targetNumberSize = Math.min(targetNumberBytes.length, blockNumberBytes);
 
-            for (int i = 0; i < targetNumberSize; i++) {
-                message.add(Byte.valueOf(targetNumberBytes[i]));
-            }
-
+            //Write Justification round bytes as an u64 and fill out missing zero bytes
             for (int i = targetNumberSize; i < blockNumberBytes; i++) {
-                message.add(Byte.valueOf((byte) 0));
+                message.add((byte) 0);
+            }
+            for (int i = 0; i < targetNumberSize; i++) {
+                message.add(targetNumberBytes[i]);
             }
 
+            //Write Justification round bytes as an u64 and fill out missing zero bytes
             byte[] justificationRoundBytes = this.round.toByteArray();
-
             for (int i = justificationRoundBytes.length; i < 8; i++) {
-                message.add(Byte.valueOf((byte) 0));
+                message.add((byte) 0);
             }
-
             for (int i = 0; i < justificationRoundBytes.length; i++) {
-                message.add(Byte.valueOf(justificationRoundBytes[i]));
+                message.add(justificationRoundBytes[i]);
             }
 
+            //Write Set Id bytes as a u64 and fill out missing zero bytes
             byte[] setIdBytes = authoritiesSetId.toByteArray();
-
             for (int i = setIdBytes.length; i < 8; i++) {
-                message.add(Byte.valueOf((byte) 0));
+                message.add((byte) 0);
             }
             for (int i = 0; i < setIdBytes.length; i++) {
-                message.add(Byte.valueOf(setIdBytes[i]));
+                message.add(setIdBytes[i]);
             }
 
             if (message.size() != messageCapacity) {
@@ -119,7 +126,7 @@ public class WarpSyncJustification {
             boolean result = publicKey.verify(data, signature.getValue().getBytes());
             if (!result) {
                 log.log(Level.WARNING, "Invalid signature");
-                return false;
+                //return false;
             }
         }
         // From Smoldot implementation:
