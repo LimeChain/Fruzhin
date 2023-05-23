@@ -1,5 +1,6 @@
 package com.limechain.sync.warpsync.state;
 
+import com.limechain.merkle.MerkleProver;
 import com.limechain.network.protocol.lightclient.pb.LightClientMessage;
 import com.limechain.sync.warpsync.WarpSyncMachine;
 import com.limechain.utils.StringUtils;
@@ -24,5 +25,7 @@ public class RuntimeDownloadState implements WarpSyncState {
                 new String[]{StringUtils.toHex(":code"), StringUtils.toHex(":heappages")});
 
         log.log(Level.INFO, "Downloaded runtime. Response: " + response.toString());
+
+        MerkleProver.decodeAndVerifyProof(response.getRemoteReadResponse().getProof().toByteArray(), sync.getStateRoot());
     }
 }

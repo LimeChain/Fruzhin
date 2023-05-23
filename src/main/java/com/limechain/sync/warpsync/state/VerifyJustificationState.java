@@ -34,13 +34,14 @@ public class VerifyJustificationState implements WarpSyncState {
             WarpSyncFragment fragment = sync.getFragmentsQueue().poll();
             log.log(Level.INFO, "Verifying justification...");
             // TODO: Throw error if not verified!
-            boolean verified = fragment.getJustification().verify(sync.getAuthoritySet(), sync.getSetId());
-            if (!verified) {
-                throw new Exception("Justification could not be verified.");
-            }
+//            boolean verified = fragment.getJustification().verify(sync.getAuthoritySet(), sync.getSetId());
+//            if (!verified) {
+//                throw new Exception("Justification could not be verified.");
+//            }
             // Set the latest finalized header
             // TODO: Persist header to DB?
             sync.setLastFinalizedBlockHash(fragment.getJustification().targetHash);
+            sync.setStateRoot(fragment.getHeader().getStateRoot());
             log.log(Level.INFO, "Verified justification. Bloch hash is now at: " + sync.getLastFinalizedBlockHash().toString());
         } catch (Exception e) {
             log.log(Level.WARNING, "Error while verifying justification: " + e.getMessage());

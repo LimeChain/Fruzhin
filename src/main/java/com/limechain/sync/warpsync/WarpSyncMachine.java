@@ -23,25 +23,23 @@ public class WarpSyncMachine {
     private final ChainService chainService;
     @Getter
     private final Network networkService;
+    @Getter
+    @Setter
+    private Hash256 stateRoot;
     @Setter
     private WarpSyncState state;
-
     @Getter
     @Setter
     private Queue<WarpSyncFragment> fragmentsQueue;
-
     @Getter
     @Setter
     private boolean isFinished;
-
     @Getter
     @Setter
     private Hash256 lastFinalizedBlockHash;
-
     @Getter
     @Setter
     private Authority[] authoritySet;
-
     @Getter
     @Setter
     private BigInteger setId;
