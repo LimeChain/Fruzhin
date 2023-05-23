@@ -1,6 +1,8 @@
 package com.limechain.network.protocol.warp.dto;
 
 import com.limechain.chain.lightsyncstate.Authority;
+import com.limechain.utils.LittleEndianUtils;
+import com.limechain.utils.StringUtils;
 import io.emeraldpay.polkaj.scaletypes.Extrinsic;
 import io.emeraldpay.polkaj.types.Hash256;
 import io.emeraldpay.polkaj.types.Hash512;
@@ -12,10 +14,10 @@ import org.bouncycastle.crypto.signers.Ed25519Signer;
 import org.bouncycastle.util.encoders.Hex;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -42,7 +44,7 @@ public class WarpSyncJustification {
 
     public boolean verify(Authority[] authorities, BigInteger authoritiesSetId) {
         // TODO: implement https://github.com/smol-dot/smoldot/blob/165412f0292009aedd208615a37cf2859fd45936/lib/src/finality/justification/verify.rs#L50
-        if (precommits.length < authorities.length * 2 / 3 + 1) {
+        if (precommits.length < (authorities.length * 2 / 3) + 1) {
             log.log(Level.WARNING, "Not enough signatures");
             return false;
         }
@@ -71,61 +73,28 @@ public class WarpSyncJustification {
             // 4 reserved for block number
             // 8 reserved for justification round
             // 8 reserved for set id
-            List<Byte> message = new ArrayList<>();
             int messageCapacity = 1 + 32 + 4 + 8 + 8;
+            var messageBuffer = ByteBuffer.allocate(messageCapacity);
+            messageBuffer.order(ByteOrder.LITTLE_ENDIAN);
+
             // Write message type
-            message.add((byte) 1);
-
+            messageBuffer.put((byte) 1);
             // Write target hash
-            byte[] targetHash = precommit.getTargetHash().getBytes();
-            for (byte targetHashByte : targetHash) {
-                message.add(targetHashByte);
-            }
-
-            byte[] targetNumberBytes = precommit.getTargetNumber().toByteArray();
-            int blockNumberBytes = 4;
-            int targetNumberSize = Math.min(targetNumberBytes.length, blockNumberBytes);
-
-            //Write Justification round bytes as an u64 and fill out missing zero bytes
-            for (int i = targetNumberSize; i < blockNumberBytes; i++) {
-                message.add((byte) 0);
-            }
-            for (int i = 0; i < targetNumberSize; i++) {
-                message.add(targetNumberBytes[i]);
-            }
-
-            //Write Justification round bytes as an u64 and fill out missing zero bytes
-            byte[] justificationRoundBytes = this.round.toByteArray();
-            for (int i = justificationRoundBytes.length; i < 8; i++) {
-                message.add((byte) 0);
-            }
-            for (int i = 0; i < justificationRoundBytes.length; i++) {
-                message.add(justificationRoundBytes[i]);
-            }
-
-            //Write Set Id bytes as a u64 and fill out missing zero bytes
-            byte[] setIdBytes = authoritiesSetId.toByteArray();
-            for (int i = setIdBytes.length; i < 8; i++) {
-                message.add((byte) 0);
-            }
-            for (int i = 0; i < setIdBytes.length; i++) {
-                message.add(setIdBytes[i]);
-            }
-
-            if (message.size() != messageCapacity) {
-                log.log(Level.WARNING, "Message size not equal to expected capacity");
-                return false;
-            }
+            messageBuffer.put(LittleEndianUtils.convertBytes(StringUtils.hexToBytes(precommit.getTargetHash().toString())));
+            //Write Justification round bytes as u64
+            messageBuffer.put(LittleEndianUtils.bytesToFixedLength(precommit.getTargetNumber().toByteArray(), 4));
+            //Write Justification round bytes as u64
+            messageBuffer.put(LittleEndianUtils.bytesToFixedLength(this.round.toByteArray(), 8));
+            //Write Set Id bytes as u64
+            messageBuffer.put(LittleEndianUtils.bytesToFixedLength(authoritiesSetId.toByteArray(), 8));
 
             //Verify message
             //Might have problems because we use the stand ED25519 instead of ED25519_zebra
-            byte[] data = new byte[messageCapacity];
-            for (int i = 0; i < message.size(); i++) {
-                data[i] = message.get(i);
-            }
-
+            messageBuffer.rewind();
+            byte[] data = new byte[messageBuffer.remaining()];
+            messageBuffer.get(data);
             boolean isValid = verifySignature(precommit.getAuthorityPublicKey().toString(), precommit.getSignature().toString(), data);
-            if(isValid){
+            if (isValid) {
                 successfullyVerifiedSignatures++;
             }
         }
@@ -137,7 +106,7 @@ public class WarpSyncJustification {
         return true;
     }
 
-    public boolean verifySignature(String publicKeyHex, String signatureHex, byte[] data){
+    public boolean verifySignature(String publicKeyHex, String signatureHex, byte[] data) {
         byte[] publicKeyBytes = Hex.decode(publicKeyHex.substring(2));
         byte[] signatureBytes = Hex.decode(signatureHex.substring(2));
         Ed25519PublicKeyParameters publicKeyParams = new Ed25519PublicKeyParameters(publicKeyBytes, 0);
