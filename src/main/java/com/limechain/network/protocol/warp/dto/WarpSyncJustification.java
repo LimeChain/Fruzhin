@@ -3,10 +3,13 @@ package com.limechain.network.protocol.warp.dto;
 import com.limechain.chain.lightsyncstate.Authority;
 import io.emeraldpay.polkaj.scaletypes.Extrinsic;
 import io.emeraldpay.polkaj.types.Hash256;
+import io.emeraldpay.polkaj.types.Hash512;
 import io.libp2p.crypto.keys.Ed25519PublicKey;
 import lombok.Setter;
 import lombok.extern.java.Log;
 import org.bouncycastle.crypto.params.Ed25519PublicKeyParameters;
+import org.bouncycastle.crypto.signers.Ed25519Signer;
+import org.bouncycastle.util.encoders.Hex;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -46,6 +49,8 @@ public class WarpSyncJustification {
 
         Set<Hash256> seen_pub_keys = new HashSet<>();
         Set<Hash256> authorityKeys = Arrays.stream(authorities).map(Authority::getPublicKey).collect(Collectors.toSet());
+
+        int successfullyVerifiedSignatures = 0;
 
         for (Precommit precommit : precommits) {
             if (!authorityKeys.contains(precommit.getAuthorityPublicKey())) {
@@ -114,25 +119,43 @@ public class WarpSyncJustification {
 
             //Verify message
             //Might have problems because we use the stand ED25519 instead of ED25519_zebra
-            Ed25519PublicKey publicKey =
-                    new Ed25519PublicKey(new Ed25519PublicKeyParameters(precommit.getAuthorityPublicKey().getBytes()));
-            Extrinsic.ED25519Signature signature = new Extrinsic.ED25519Signature(precommit.getSignature());
-
             byte[] data = new byte[messageCapacity];
             for (int i = 0; i < message.size(); i++) {
                 data[i] = message.get(i);
             }
 
-            boolean result = publicKey.verify(data, signature.getValue().getBytes());
-            if (!result) {
-                log.log(Level.WARNING, "Invalid signature");
-                //return false;
+            boolean isValid = verifySignature(precommit.getAuthorityPublicKey().toString(), precommit.getSignature().toString(), data);
+            if(isValid){
+                successfullyVerifiedSignatures++;
             }
         }
+        System.out.println("Verified signatures:" + successfullyVerifiedSignatures);
         // From Smoldot implementation:
         // TODO: must check that votes_ancestries doesn't contain any unused entry
         // TODO: there's also a "ghost" thing?
 
         return true;
+    }
+
+    public boolean verifySignature(String publicKeyHex, String signatureHex, byte[] data){
+        byte[] publicKeyBytes = Hex.decode(publicKeyHex.substring(2));
+        byte[] signatureBytes = Hex.decode(signatureHex.substring(2));
+        Ed25519PublicKeyParameters publicKeyParams = new Ed25519PublicKeyParameters(publicKeyBytes, 0);
+        Ed25519Signer verifier = new Ed25519Signer();
+        verifier.init(false, publicKeyParams);
+        verifier.update(data, 0, data.length);
+
+        Ed25519PublicKey publicKey =
+                new Ed25519PublicKey(publicKeyParams);
+        Extrinsic.ED25519Signature signature = new Extrinsic.ED25519Signature(Hash512.from(signatureHex));
+
+        boolean isValid = verifier.verifySignature(signatureBytes);
+        boolean result = publicKey.verify(data, signature.getValue().getBytes());
+        if (result) {
+            log.log(Level.INFO, "Valid signature");
+        } else {
+            log.log(Level.WARNING, "Invalid signature");
+        }
+        return isValid;
     }
 }
