@@ -23,7 +23,7 @@ public class WarpSync extends StrictProtocolBinding<WarpSyncController> {
         WarpSyncController controller = dialPeer(us, peer, addrs);
         try {
             WarpSyncResponse resp = controller.warpSyncRequest(blockHash).get(10, TimeUnit.SECONDS);
-            log.log(Level.INFO, "Received response: " + resp.toString());
+            log.log(Level.INFO, "Received warp sync response: " + resp.toString());
             return resp;
         } catch (ExecutionException | InterruptedException | TimeoutException e) {
             log.log(Level.SEVERE, "Error while sending remote call request: ", e);

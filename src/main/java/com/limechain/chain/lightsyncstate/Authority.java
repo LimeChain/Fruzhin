@@ -14,8 +14,8 @@ public class Authority {
     private Hash256 publicKey;
     private BigInteger weight;
 
-    public Authority(Hash256 publicKey, long weight) {
+    public Authority(Hash256 publicKey, BigInteger weight) {
         this.publicKey = publicKey;
-        this.weight = BigInteger.valueOf(weight);
+        this.weight = weight;
     }
 }

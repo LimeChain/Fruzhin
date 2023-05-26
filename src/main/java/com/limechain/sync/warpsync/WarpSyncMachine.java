@@ -12,8 +12,10 @@ import io.emeraldpay.polkaj.types.Hash256;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.java.Log;
+import org.javatuples.Pair;
 
 import java.math.BigInteger;
+import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.logging.Level;
 
@@ -32,11 +34,19 @@ public class WarpSyncMachine {
 
     @Getter
     @Setter
+    private PriorityQueue<Pair<BigInteger, Authority[]>> scheduledAuthorityChanges = new PriorityQueue<>();
+
+    @Getter
+    @Setter
     private boolean isFinished;
 
     @Getter
     @Setter
     private Hash256 lastFinalizedBlockHash;
+
+    @Getter
+    @Setter
+    private BigInteger lastFinalizedBlockNumber;
 
     @Getter
     @Setter
