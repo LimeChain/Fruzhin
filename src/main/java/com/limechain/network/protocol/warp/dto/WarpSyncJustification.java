@@ -50,7 +50,7 @@ public class WarpSyncJustification {
             return false;
         }
 
-        Set<Hash256> seen_pub_keys = new HashSet<>();
+        Set<Hash256> seenPublicKeys = new HashSet<>();
         Set<Hash256> authorityKeys = Arrays.stream(authorities)
                 .map(Authority::getPublicKey)
                 .collect(Collectors.toSet());
@@ -61,11 +61,11 @@ public class WarpSyncJustification {
                 return false;
             }
 
-            if (seen_pub_keys.contains(precommit.getAuthorityPublicKey())) {
+            if (seenPublicKeys.contains(precommit.getAuthorityPublicKey())) {
                 log.log(Level.WARNING, "Duplicated signature");
                 return false;
             }
-            seen_pub_keys.add(precommit.getAuthorityPublicKey());
+            seenPublicKeys.add(precommit.getAuthorityPublicKey());
 
             // TODO (from smoldot): must check signed block ancestry using `votes_ancestries`
 
