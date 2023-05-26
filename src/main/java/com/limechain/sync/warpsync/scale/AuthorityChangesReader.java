@@ -15,8 +15,8 @@ public class AuthorityChangesReader implements ScaleReader<Authority[]> {
         Authority[] authoritiesChanges = new Authority[authoritiesSize];
         for (int i = 0; i < authoritiesSize; i++) {
             Hash256 authority = new Hash256(reader.readByteArray(Hash256.SIZE_BYTES));
-            UInt64Reader uInt64Reader = new UInt64Reader();
-            BigInteger weight = uInt64Reader.read(reader);
+            UInt64Reader weightReader = new UInt64Reader();
+            BigInteger weight = weightReader.read(reader);
             authoritiesChanges[i] = new Authority(authority, weight);
         }
         return authoritiesChanges;

@@ -33,7 +33,6 @@ public class RequestFragmentsState implements WarpSyncState {
         log.log(Level.WARNING, "RequestFragmentsState.next() called without result or error set.");
     }
 
-
     @Override
     public void handle(WarpSyncMachine sync) {
         try {

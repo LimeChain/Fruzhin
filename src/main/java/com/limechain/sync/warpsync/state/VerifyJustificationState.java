@@ -15,7 +15,8 @@ import org.javatuples.Pair;
 import java.math.BigInteger;
 import java.util.logging.Level;
 
-// VerifyJustificationState is going to be instantiated a lot of times, maybe we can make it a singleton in order to reduce performance overhead?
+// VerifyJustificationState is going to be instantiated a lot of times
+// Maybe we can make it a singleton in order to reduce performance overhead?
 @Log
 public class VerifyJustificationState implements WarpSyncState {
     private Exception error;
