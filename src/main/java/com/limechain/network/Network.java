@@ -66,7 +66,8 @@ public class Network {
     private Network(ChainService chainService, HostConfig hostConfig) {
         this.initializeProtocols(chainService, hostConfig);
         this.bootNodes = chainService.getGenesis().getBootNodes();
-        this.currentSelectedPeer = new PeerId(Multihash.fromBase58("12D3KooWKer94o1REDPtAhjtYR4SdLehnSrN8PEhBnZm5NBoCrMC").toBytes());
+        String selectedPeerId = "12D3KooWKer94o1REDPtAhjtYR4SdLehnSrN8PEhBnZm5NBoCrMC";
+        this.currentSelectedPeer = new PeerId(Multihash.fromBase58(selectedPeerId).toBytes());
     }
 
     /**
