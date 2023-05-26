@@ -12,6 +12,5 @@ public interface WarpSyncController {
         var request = new WarpSyncRequest(blockHash);
 
         return send(request);
-
     }
 }
