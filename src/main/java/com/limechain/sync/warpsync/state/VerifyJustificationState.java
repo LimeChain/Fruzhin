@@ -74,35 +74,34 @@ public class VerifyJustificationState implements WarpSyncState {
             if (digest.getId() == ConsensusEngine.GRANDPA) {
                 ScaleCodecReader reader = new ScaleCodecReader(digest.getMessage());
                 GrandpaMessageType type = GrandpaMessageType.fromId(reader.readByte());
-                if (type == GrandpaMessageType.SCHEDULED_CHANGE) {
-                    ScheduledChangeReader authorityChangesReader = new ScheduledChangeReader();
-                    authorityChanges = authorityChangesReader.read(reader);
 
-                    sync.getScheduledAuthorityChanges()
-                            .add(new Pair<>(authorityChanges.getDelay(), authorityChanges.getAuthorities()));
-                    sync.setAuthoritySet(authorityChanges.getAuthorities());
-                    return;
-                }
-                if (type == GrandpaMessageType.FORCED_CHANGE) {
-                    ForcedChangeReader authorityChangesReader = new ForcedChangeReader();
-                    authorityChanges = authorityChangesReader.read(reader);
+                switch (type) {
+                    case SCHEDULED_CHANGE:
+                        ScheduledChangeReader authorityChangesReader = new ScheduledChangeReader();
+                        authorityChanges = authorityChangesReader.read(reader);
 
-                    sync.getScheduledAuthorityChanges()
-                            .add(new Pair<>(authorityChanges.getDelay(), authorityChanges.getAuthorities()));
-                    return;
-                }
-                if (type == GrandpaMessageType.ON_DISABLED) {
-                    log.log(Level.SEVERE, "On disabled grandpa message not implemented");
-                    return;
-                }
+                        sync.getScheduledAuthorityChanges()
+                                .add(new Pair<>(authorityChanges.getDelay(), authorityChanges.getAuthorities()));
+                        sync.setAuthoritySet(authorityChanges.getAuthorities());
+                        return;
+                    case FORCED_CHANGE:
+                        ScheduledChangeReader authorityForcedChangesReader = new ScheduledChangeReader();
+                        authorityChanges = authorityForcedChangesReader.read(reader);
 
-                if (type == GrandpaMessageType.PAUSE) {
-                    log.log(Level.SEVERE, "Pause grandpa message not implemented");
-                    return;
-                }
-                if (type == GrandpaMessageType.RESUME) {
-                    log.log(Level.SEVERE, "Resume grandpa message not implemented");
-                    return;
+                        sync.getScheduledAuthorityChanges()
+                                .add(new Pair<>(authorityChanges.getDelay(), authorityChanges.getAuthorities()));
+                        return;
+                    case ON_DISABLED:
+                        log.log(Level.SEVERE, "On disabled grandpa message not implemented");
+                        return;
+                    case PAUSE:
+                        log.log(Level.SEVERE, "Pause grandpa message not implemented");
+                        return;
+                    case RESUME:
+                        log.log(Level.SEVERE, "Resume grandpa message not implemented");
+                        return;
+                    default:
+                        log.log(Level.INFO, "Could not get grandpa message type");
                 }
             }
         }
