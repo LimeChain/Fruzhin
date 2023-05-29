@@ -1,5 +1,6 @@
 package com.limechain.sync.warpsync.state;
 
+import com.limechain.chain.lightsyncstate.Authority;
 import com.limechain.network.protocol.warp.dto.ConsensusEngine;
 import com.limechain.network.protocol.warp.dto.HeaderDigest;
 import com.limechain.network.protocol.warp.dto.WarpSyncFragment;
@@ -13,6 +14,7 @@ import lombok.extern.java.Log;
 import org.javatuples.Pair;
 
 import java.math.BigInteger;
+import java.util.PriorityQueue;
 import java.util.logging.Level;
 
 // VerifyJustificationState is going to be instantiated a lot of times
@@ -107,8 +109,8 @@ public class VerifyJustificationState implements WarpSyncState {
     }
 
     public void handleScheduledEvents(WarpSyncMachine sync) {
-        var eventQueue = sync.getScheduledAuthorityChanges();
-        var data = eventQueue.peek();
+        PriorityQueue<Pair<BigInteger, Authority[]>> eventQueue = sync.getScheduledAuthorityChanges();
+        Pair<BigInteger, Authority[]> data = eventQueue.peek();
         while (data != null) {
             if (data.getValue0().compareTo(sync.getLastFinalizedBlockNumber()) != 1) {
                 sync.setAuthoritySet(data.getValue1());
