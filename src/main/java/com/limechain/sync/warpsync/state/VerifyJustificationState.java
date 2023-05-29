@@ -82,10 +82,9 @@ public class VerifyJustificationState implements WarpSyncState {
 
                         sync.getScheduledAuthorityChanges()
                                 .add(new Pair<>(authorityChanges.getDelay(), authorityChanges.getAuthorities()));
-                        sync.setAuthoritySet(authorityChanges.getAuthorities());
                         return;
                     case FORCED_CHANGE:
-                        ScheduledChangeReader authorityForcedChangesReader = new ScheduledChangeReader();
+                        ForcedChangeReader authorityForcedChangesReader = new ForcedChangeReader();
                         authorityChanges = authorityForcedChangesReader.read(reader);
 
                         sync.getScheduledAuthorityChanges()
