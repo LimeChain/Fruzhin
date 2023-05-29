@@ -9,6 +9,6 @@ import java.math.BigInteger;
 @Getter
 @AllArgsConstructor
 public class Authority {
-    private Hash256 publicKey;
-    private BigInteger weight;
+    private final Hash256 publicKey;
+    private final BigInteger weight;
 }
