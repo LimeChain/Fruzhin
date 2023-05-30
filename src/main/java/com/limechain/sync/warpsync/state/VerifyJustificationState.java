@@ -14,7 +14,7 @@ import lombok.extern.java.Log;
 import org.javatuples.Pair;
 
 import java.math.BigInteger;
-import java.util.PriorityQueue;
+import java.util.Queue;
 import java.util.logging.Level;
 
 // VerifyJustificationState is going to be instantiated a lot of times
@@ -112,7 +112,7 @@ public class VerifyJustificationState implements WarpSyncState {
     }
 
     public void handleScheduledEvents(WarpSyncMachine sync) {
-        PriorityQueue<Pair<BigInteger, Authority[]>> eventQueue = sync.getScheduledAuthorityChanges();
+        Queue<Pair<BigInteger, Authority[]>> eventQueue = sync.getScheduledAuthorityChanges();
         Pair<BigInteger, Authority[]> data = eventQueue.peek();
         while (data != null) {
             if (data.getValue0().compareTo(sync.getLastFinalizedBlockNumber()) != 1) {
