@@ -58,9 +58,13 @@ public class VerifyJustificationState implements WarpSyncState {
             sync.setLastFinalizedBlockHash(fragment.getJustification().targetHash);
             sync.setLastFinalizedBlockNumber(fragment.getJustification().targetBlock);
 
-            handleAuthorityChanges(sync, fragment);
-            log.log(Level.INFO, "Verified justification. Block hash is now at #"
-                    + sync.getLastFinalizedBlockNumber() + ": " + sync.getLastFinalizedBlockHash().toString());
+            try {
+                handleAuthorityChanges(sync, fragment);
+                log.log(Level.INFO, "Verified justification. Block hash is now at #"
+                        + sync.getLastFinalizedBlockNumber() + ": " + sync.getLastFinalizedBlockHash().toString());
+            } catch (Exception error){
+                this.error = error;
+            }
         } catch (Exception e) {
             log.log(Level.WARNING, "Error while verifying justification: " + e.getMessage());
             this.error = e;
@@ -100,7 +104,8 @@ public class VerifyJustificationState implements WarpSyncState {
                         log.log(Level.SEVERE, "Resume grandpa message not implemented");
                         return;
                     default:
-                        log.log(Level.INFO, "Could not get grandpa message type");
+                        log.log(Level.SEVERE, "Could not get grandpa message type");
+                        throw new IllegalStateException("Unknown grandpa message type");
                 }
             }
         }
