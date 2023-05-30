@@ -15,6 +15,7 @@ import lombok.extern.java.Log;
 import org.javatuples.Pair;
 
 import java.math.BigInteger;
+import java.util.Comparator;
 import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.logging.Level;
@@ -34,7 +35,8 @@ public class WarpSyncMachine {
 
     @Getter
     @Setter
-    private PriorityQueue<Pair<BigInteger, Authority[]>> scheduledAuthorityChanges = new PriorityQueue<>();
+    private PriorityQueue<Pair<BigInteger, Authority[]>> scheduledAuthorityChanges =
+            new PriorityQueue<>(Comparator.comparing(Pair::getValue0));
 
     @Getter
     @Setter
