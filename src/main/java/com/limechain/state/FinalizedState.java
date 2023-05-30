@@ -36,7 +36,8 @@ public class FinalizedState {
                         "information has been provided. This would imply the existence of a block -1 and below.");
             }
             if (this.finalizedBlockEpochInformation.getSlotNumber().equals(BigInteger.ZERO)) {
-                throw new IllegalStateException("Missing Babe slot start number for Babe epoch number other than future epoch 0.");
+                throw new IllegalStateException("Missing Babe slot start number for Babe epoch number other " +
+                        "than future epoch 0.");
             }
             if (this.finalizedBlockEpochInformation.getEpochIndex()
                     .add(BigInteger.ONE)

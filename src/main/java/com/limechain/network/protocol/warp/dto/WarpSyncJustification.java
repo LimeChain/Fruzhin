@@ -43,16 +43,17 @@ public class WarpSyncJustification {
     }
 
     public boolean verify(Authority[] authorities, BigInteger authoritiesSetId) {
-        // TODO: implement https://github.com/smol-dot/smoldot/blob/165412f0292009aedd208615a37cf2859fd45936/lib/src/finality/justification/verify.rs#L50
+        // Implementation from: https://github.com/smol-dot/smoldot
+        // lib/src/finality/justification/verify.rs
         if (precommits.length < (authorities.length * 2 / 3) + 1) {
             log.log(Level.WARNING, "Not enough signatures");
             return false;
         }
 
-        Set<Hash256> seen_pub_keys = new HashSet<>();
-        Set<Hash256> authorityKeys = Arrays.stream(authorities).map(Authority::getPublicKey).collect(Collectors.toSet());
-
-        int successfullyVerifiedSignatures = 0;
+        Set<Hash256> seenPublicKeys = new HashSet<>();
+        Set<Hash256> authorityKeys = Arrays.stream(authorities)
+                .map(Authority::getPublicKey)
+                .collect(Collectors.toSet());
 
         for (Precommit precommit : precommits) {
             if (!authorityKeys.contains(precommit.getAuthorityPublicKey())) {
@@ -60,11 +61,11 @@ public class WarpSyncJustification {
                 return false;
             }
 
-            if (seen_pub_keys.contains(precommit.getAuthorityPublicKey())) {
+            if (seenPublicKeys.contains(precommit.getAuthorityPublicKey())) {
                 log.log(Level.WARNING, "Duplicated signature");
                 return false;
             }
-            seen_pub_keys.add(precommit.getAuthorityPublicKey());
+            seenPublicKeys.add(precommit.getAuthorityPublicKey());
 
             // TODO (from smoldot): must check signed block ancestry using `votes_ancestries`
 
@@ -80,9 +81,11 @@ public class WarpSyncJustification {
             // Write message type
             messageBuffer.put((byte) 1);
             // Write target hash
-            messageBuffer.put(LittleEndianUtils.convertBytes(StringUtils.hexToBytes(precommit.getTargetHash().toString())));
+            messageBuffer.put(LittleEndianUtils
+                    .convertBytes(StringUtils.hexToBytes(precommit.getTargetHash().toString())));
             //Write Justification round bytes as u64
-            messageBuffer.put(LittleEndianUtils.bytesToFixedLength(precommit.getTargetNumber().toByteArray(), 4));
+            messageBuffer.put(LittleEndianUtils
+                    .bytesToFixedLength(precommit.getTargetNumber().toByteArray(), 4));
             //Write Justification round bytes as u64
             messageBuffer.put(LittleEndianUtils.bytesToFixedLength(this.round.toByteArray(), 8));
             //Write Set Id bytes as u64
@@ -93,12 +96,15 @@ public class WarpSyncJustification {
             messageBuffer.rewind();
             byte[] data = new byte[messageBuffer.remaining()];
             messageBuffer.get(data);
-            boolean isValid = verifySignature(precommit.getAuthorityPublicKey().toString(), precommit.getSignature().toString(), data);
-            if (isValid) {
-                successfullyVerifiedSignatures++;
+            boolean isValid = verifySignature(precommit.getAuthorityPublicKey().toString(),
+                    precommit.getSignature().toString(), data);
+            if (!isValid) {
+                log.log(Level.WARNING, "Failed to verify signature");
+                return false;
             }
         }
-        System.out.println("Verified signatures:" + successfullyVerifiedSignatures);
+        System.out.println("All signatures were verified successfully");
+
         // From Smoldot implementation:
         // TODO: must check that votes_ancestries doesn't contain any unused entry
         // TODO: there's also a "ghost" thing?
@@ -120,9 +126,7 @@ public class WarpSyncJustification {
 
         boolean isValid = verifier.verifySignature(signatureBytes);
         boolean result = publicKey.verify(data, signature.getValue().getBytes());
-        if (result) {
-            log.log(Level.INFO, "Valid signature");
-        } else {
+        if (!result) {
             log.log(Level.WARNING, "Invalid signature");
         }
         return isValid;
