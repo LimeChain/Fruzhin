@@ -4,9 +4,6 @@ import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.extern.java.Log;
 
-import java.math.BigInteger;
-import java.util.logging.Level;
-
 import static com.limechain.internal.TrieVerifier.MAX_PARTIAL_KEY_LENGTH;
 
 @Log
@@ -26,8 +23,7 @@ public class TreeDecoder {
             int nextByte = reader.readUByte();
             partialKeyLengthHeader += nextByte;
             if (partialKeyLengthHeader > MAX_PARTIAL_KEY_LENGTH) {
-                log.log(Level.SEVERE, "Partial key overflow");
-                return null;
+                throw new IllegalStateException("Partial key overflow");
             }
 
             //check if current byte is max byte value
@@ -54,7 +50,7 @@ public class TreeDecoder {
 
         node.setPartialKey(DecodeLeaf.decodeKey(reader, partialKeyLength));
 
-        byte[] childrenBitmap = new byte[2];
+        byte[] childrenBitmap;
         childrenBitmap = reader.readByteArray(2);
         if (variant == DecodeHeaderResult.variantsOrderedByBitMask[2][1]) {
             node.setStorageValue(reader.readByteArray());
@@ -71,9 +67,9 @@ public class TreeDecoder {
             if (hash.length < Hash256.SIZE_BYTES) {
                 ScaleCodecReader inlinedChildReader = new ScaleCodecReader(hash);
                 Node childNode = decode(inlinedChildReader);
-                node.setDescendants(node.getDescendants().add(childNode.getDescendants()));
+                node.setDescendants(node.getDescendants() + childNode.getDescendants());
             }
-            node.descendants.add(BigInteger.ONE);
+            node.setDescendants(node.getDescendants() + 1);
             node.setChildrenAt(child, i);
         }
         return node;
@@ -90,6 +86,7 @@ public class TreeDecoder {
                 variant == DecodeHeaderResult.variantsOrderedByBitMask[2][0]) {
             return decodeBranch(reader, variant, partialKeyLength);
         }
-        return new Node();
+
+        throw new IllegalStateException("Unknown variant: " + variant);
     }
 }

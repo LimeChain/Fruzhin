@@ -3,7 +3,6 @@ package com.limechain.internal;
 import io.emeraldpay.polkaj.types.Hash256;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
@@ -25,7 +24,7 @@ public class Trie {
         this.deltas = deltas;
     }
 
-    public static Trie newTrie() {
+    public static Trie newTrie(Node node) {
         return new Trie(BigInteger.ZERO, null, new HashMap<Hash256, Trie>(), new Vector<Hash256>());
     }
 

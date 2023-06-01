@@ -4,10 +4,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.bouncycastle.crypto.digests.Blake2bDigest;
-import org.bouncycastle.jcajce.provider.digest.Blake2b;
-import org.bouncycastle.oer.its.HashAlgorithm;
 
-import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -16,15 +13,15 @@ import java.security.NoSuchAlgorithmException;
 @NoArgsConstructor
 public class Node {
     public static final int CHILDREN_CAPACITY = 16;
-    byte[] partialKey;
-    byte[] storageValue;
-    BigInteger generation;
-    Node[] children = new Node[16];
-    boolean dirty;
-    byte[] merkleValue;
-    BigInteger descendants = BigInteger.ZERO;
+    private byte[] partialKey;
+    private byte[] storageValue;
+    private int generation;
+    private Node[] children;
+    private boolean dirty;
+    private byte[] merkleValue;
+    private int descendants;
 
-    private static byte[] getBlake2bHash(HashAlgorithm algorithm, byte[] value) {
+    private static byte[] getBlake2bHash(byte[] value) {
         Blake2bDigest blake2bDigest = new Blake2bDigest(256);
         byte[] rawHash = new byte[256];
         blake2bDigest.update(value, 0, value.length);
@@ -32,13 +29,34 @@ public class Node {
         return rawHash;
     }
 
+    public static byte[] getMerkleValueRoot(byte[] encoding) {
+        MessageDigest md;
+        try {
+            md = MessageDigest.getInstance("SHA-256");
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+        md.update(encoding);
+        return md.digest();
+    }
+
+    public NodeKind getKind() {
+        if (this.getChildren() != null) {
+            return NodeKind.Branch;
+        }
+        return NodeKind.Leaf;
+    }
+
     public void setChildrenAt(Node child, int position) {
         children[position] = child;
     }
 
-    public byte[] getMerkleValueRoot(byte[] encoding) throws NoSuchAlgorithmException {
-        MessageDigest md = MessageDigest.getInstance("SHA-256");
-        md.update(encoding);
-        return md.digest();
+    public boolean hasChild() {
+        for (Node child : children) {
+            if (child != null) {
+                return true;
+            }
+        }
+        return false;
     }
 }
