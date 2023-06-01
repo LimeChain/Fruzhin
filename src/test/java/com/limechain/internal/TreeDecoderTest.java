@@ -89,7 +89,6 @@ public class TreeDecoderTest {
         assertArrayEquals(expectedPartialKey, node.getPartialKey());
         assertNull(node.getStorageValue());
         assertArrayEquals(Node.getMerkleValueRoot(childHash), node.getChildren()[10].getMerkleValue());
-        System.out.println(node.getChildren()[10].getMerkleValue());
     }
 
     @Test
@@ -118,4 +117,6 @@ public class TreeDecoderTest {
         assertArrayEquals(expectedStorageValue, node.getStorageValue());
         assertArrayEquals(Node.getMerkleValueRoot(childHash), node.getChildren()[10].getMerkleValue());
     }
+
+
 }
