@@ -4,11 +4,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.bouncycastle.crypto.digests.Blake2bDigest;
-import org.bouncycastle.crypto.digests.Blake2sDigest;
-import org.bouncycastle.jcajce.provider.digest.Blake2b;
 import org.bouncycastle.oer.its.HashAlgorithm;
 
 import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 @Getter
 @Setter
@@ -23,22 +23,21 @@ public class Node {
     byte[] merkleValue;
     BigInteger descendants = BigInteger.ZERO;
 
+    private static byte[] getBlake2bHash(HashAlgorithm algorithm, byte[] value) {
+        Blake2bDigest blake2bDigest = new Blake2bDigest(256);
+        byte[] rawHash = new byte[256];
+        blake2bDigest.update(value, 0, value.length);
+        blake2bDigest.doFinal(rawHash, 0);
+        return rawHash;
+    }
+
     public void setChildrenAt(Node child, int position) {
         children[position] = child;
     }
 
-    public byte[] MerkleValueRoot(byte[] encoding) {
-        byte[] hashed = new Blake2b.Blake2b256().digest(encoding);
-        return new byte[1];
-    }
-
-    
-    private static byte[] blake2Hash(HashAlgorithm algorithm, byte[] value) {
-        int digestLengthBytes = 32;
-        Blake2bDigest blake2bDigest = new Blake2bDigest(digestLengthBytes * 8);
-        byte[] rawHash = new byte[blake2bDigest.getDigestSize()];
-        blake2bDigest.update(value, 0, value.length);
-        blake2bDigest.doFinal(rawHash, 0);
-        return rawHash;
+    public byte[] getMerkleValueRoot(byte[] encoding) throws NoSuchAlgorithmException {
+        MessageDigest md = MessageDigest.getInstance("SHA-256");
+        md.update(encoding);
+        return md.digest();
     }
 }
