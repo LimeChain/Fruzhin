@@ -10,7 +10,7 @@ public class DecodeHeaderResult {
             // bits, mask, variant
             new int[]{0b0100_0000, 0b1100_0000, 1}, // leaf 01
             new int[]{0b1000_0000, 0b1100_0000, 2}, // branch 10
-            new int[]{0b1100_0000, 0b1100_0000, 3}, // branch 11
+            new int[]{0b1100_0000, 0b1100_0000, 3}, // branch 11 with value
     };
     public byte variantBits;
     public int partialKeyLengthHeader;
@@ -24,14 +24,14 @@ public class DecodeHeaderResult {
 
     public static DecodeHeaderResult decodeHeaderByte(byte header) {
         for (int i = variantsOrderedByBitMask.length - 1; i >= 0; i--) {
-            byte variantBits = (byte) (header & variantsOrderedByBitMask[i][1]);
+            int variantBits = (header & variantsOrderedByBitMask[i][1]);
             if (variantBits != variantsOrderedByBitMask[i][0]) {
                 continue;
             }
 
             byte partialKeyLengthHeaderMask = (byte) ~variantsOrderedByBitMask[i][1];
             byte partialKeyLengthHeader = (byte) (header & partialKeyLengthHeaderMask);
-            return new DecodeHeaderResult(variantBits, partialKeyLengthHeader, partialKeyLengthHeaderMask);
+            return new DecodeHeaderResult((byte)variantBits, partialKeyLengthHeader, partialKeyLengthHeaderMask);
         }
         throw new IllegalStateException("ErrorVariantUnknown: for header byte " + String.format("%08d", Integer.parseInt(Integer.toBinaryString(header & 0xFF))));
     }

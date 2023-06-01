@@ -44,7 +44,7 @@ public class TreeDecoder {
         return node;
     }
 
-    public static Node decodeBranch(ScaleCodecReader reader, byte variant, int partialKeyLength) {
+    public static Node decodeBranch(ScaleCodecReader reader, byte variantByte, int partialKeyLength) {
         Node node = new Node();
         node.setChildren(new Node[Node.CHILDREN_CAPACITY]);
 
@@ -52,6 +52,7 @@ public class TreeDecoder {
 
         byte[] childrenBitmap;
         childrenBitmap = reader.readByteArray(2);
+        int variant = variantByte & 0xff;
         if (variant == DecodeHeaderResult.variantsOrderedByBitMask[2][1]) {
             node.setStorageValue(reader.readByteArray());
         }
@@ -63,7 +64,7 @@ public class TreeDecoder {
 
             byte[] hash = reader.readByteArray();
             Node child = new Node();
-            child.setMerkleValue(hash);
+            child.setMerkleValue(Node.getMerkleValueRoot(hash));
             if (hash.length < Hash256.SIZE_BYTES) {
                 ScaleCodecReader inlinedChildReader = new ScaleCodecReader(hash);
                 Node childNode = decode(inlinedChildReader);
@@ -77,14 +78,14 @@ public class TreeDecoder {
 
     public static Node decode(ScaleCodecReader reader) {
         DecodeHeaderResult decodeHeaderResult = decodeHeader(reader);
-        byte variant = decodeHeaderResult.getVariantBits();
+        int variant = decodeHeaderResult.getVariantBits() & 0xff;
         int partialKeyLength = decodeHeaderResult.partialKeyLengthHeader;
         if (variant == DecodeHeaderResult.variantsOrderedByBitMask[0][0]) {
             return decodeLeaf(reader, partialKeyLength);
         }
         if (variant == DecodeHeaderResult.variantsOrderedByBitMask[1][0] ||
                 variant == DecodeHeaderResult.variantsOrderedByBitMask[2][0]) {
-            return decodeBranch(reader, variant, partialKeyLength);
+            return decodeBranch(reader, (byte) variant, partialKeyLength);
         }
 
         throw new IllegalStateException("Unknown variant: " + variant);
