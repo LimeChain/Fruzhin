@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.bouncycastle.crypto.digests.Blake2bDigest;
+import org.bouncycastle.jcajce.provider.digest.Blake2b;
 import org.bouncycastle.oer.its.HashAlgorithm;
 
 import java.math.BigInteger;

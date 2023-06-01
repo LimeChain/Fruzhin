@@ -25,7 +25,7 @@ public class DecodeHeaderResult {
     public static DecodeHeaderResult decodeHeaderByte(byte header) {
         for (int i = variantsOrderedByBitMask.length - 1; i >= 0; i--) {
             byte variantBits = (byte) (header & variantsOrderedByBitMask[i][1]);
-            if (variantBits != variantsOrderedByBitMask[i][1]) {
+            if (variantBits != variantsOrderedByBitMask[i][0]) {
                 continue;
             }
 
