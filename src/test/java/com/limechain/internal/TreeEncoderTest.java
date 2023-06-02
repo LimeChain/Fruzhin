@@ -2,8 +2,11 @@ package com.limechain.internal;
 
 import org.junit.jupiter.api.Test;
 
+import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 
+import static com.limechain.internal.TrieVerifier.MAX_PARTIAL_KEY_LENGTH;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.mockito.Mockito.*;
 
 class TreeEncoderTest {
@@ -166,6 +169,34 @@ class TreeEncoderTest {
         verify(buffer, times(1)).write(Variant.LEAF.bits ^ Variant.LEAF.mask);
         verify(buffer, times(1)).write(0b1111_1111);
         verify(buffer, times(1)).write(0);
+    }
+
+    @Test
+    public void testEncodeHeaderAtMaximum() throws Exception {
+        int variant = Variant.LEAF.bits;
+        final int partialKeyLengthHeaderMask = 0b0011_1111;
+        double extraKeyBytesNeeded = Math.ceil((double) (MAX_PARTIAL_KEY_LENGTH - partialKeyLengthHeaderMask) / 255.0);
+        int expectedEncodingLength = 1 + (int) extraKeyBytesNeeded;
+
+        int lengthLeft = MAX_PARTIAL_KEY_LENGTH;
+        byte[] expectedBytes = new byte[expectedEncodingLength];
+        expectedBytes[0] = (byte) (variant | partialKeyLengthHeaderMask);
+        lengthLeft -= partialKeyLengthHeaderMask;
+        for (int i = 1; i < expectedBytes.length - 1; i++) {
+            expectedBytes[i] = (byte) 255;
+            lengthLeft -= 255;
+        }
+        expectedBytes[expectedBytes.length - 1] = (byte) lengthLeft;
+
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream(expectedEncodingLength);
+        buffer.reset();
+
+        Node node = new Node();
+        node.setPartialKey(new byte[MAX_PARTIAL_KEY_LENGTH]);
+
+        TreeEncoder.encodeHeader(node, buffer);
+
+        assertArrayEquals(expectedBytes, buffer.toByteArray());
     }
 
 }

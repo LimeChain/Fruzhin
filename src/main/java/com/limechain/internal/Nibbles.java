@@ -1,6 +1,7 @@
 package com.limechain.internal;
 
 public class Nibbles {
+    //TODO: Add docs
     public static byte[] nibblesToKeyLE(byte[] nibbles) {
         if (nibbles.length % 2 == 0) {
             byte[] keyLE = new byte[nibbles.length / 2];
@@ -19,6 +20,7 @@ public class Nibbles {
         return keyLE;
     }
 
+    //TODO: Add docs
     public static byte[] keyLEToNibbles(byte[] in) {
         if (in.length == 0) {
             return new byte[]{};
