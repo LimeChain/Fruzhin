@@ -27,7 +27,7 @@ public class TreeEncoder {
         // Note leaves and branches with value cannot have a `null` storage value.
         if (node.getStorageValue() != null) {
             try (ScaleCodecWriter writer = new ScaleCodecWriter(buffer)) {
-                writer.writeByteArray(node.getStorageValue());
+                writer.writeAsList(node.getStorageValue());
             }
         }
 
@@ -98,7 +98,7 @@ public class TreeEncoder {
     private static void encodeChild(Node child, OutputStream buffer) throws IOException {
         byte[] merkleValue = child.calculateMerkleValue();
         try (ScaleCodecWriter writer = new ScaleCodecWriter(buffer)) {
-            writer.writeByteArray(merkleValue);
+            writer.writeAsList(merkleValue);
         }
 
     }
