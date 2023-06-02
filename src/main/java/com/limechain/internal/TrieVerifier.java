@@ -12,7 +12,7 @@ import java.util.Map;
 public class TrieVerifier {
     public static final int MAX_PARTIAL_KEY_LENGTH = 65535;
 
-    public static Trie buildTrie(byte[][] encodedProofNodes, byte[] rootHash) {
+    public static Trie buildTrie(byte[][] encodedProofNodes, byte[] rootHash) throws TrieDecoderException {
         if (encodedProofNodes.length == 0) {
             throw new IllegalStateException("Encoded proof nodes is empty!");
         }
@@ -44,7 +44,7 @@ public class TrieVerifier {
 
     // loadProof is a recursive function that will create all the trie paths based
     // on the map from node hash digest to node encoding, starting from the node `n`.
-    private static void loadProof(Map<String, byte[]> digestToEncoding, Node n) {
+    private static void loadProof(Map<String, byte[]> digestToEncoding, Node n) throws TrieDecoderException {
         if (n.getKind() != NodeKind.Branch) {
             return;
         }

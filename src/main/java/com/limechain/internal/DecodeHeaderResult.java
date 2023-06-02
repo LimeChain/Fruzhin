@@ -22,7 +22,7 @@ public class DecodeHeaderResult {
         this.partialKeyLengthHeaderMask = partialKeyLengthHeaderMask;
     }
 
-    public static DecodeHeaderResult decodeHeaderByte(byte header) {
+    public static DecodeHeaderResult decodeHeaderByte(byte header) throws TrieDecoderException {
         for (int i = variantsOrderedByBitMask.length - 1; i >= 0; i--) {
             int variantBits = (header & variantsOrderedByBitMask[i][1]);
             if (variantBits != variantsOrderedByBitMask[i][0]) {
@@ -33,6 +33,6 @@ public class DecodeHeaderResult {
             byte partialKeyLengthHeader = (byte) (header & partialKeyLengthHeaderMask);
             return new DecodeHeaderResult((byte)variantBits, partialKeyLengthHeader, partialKeyLengthHeaderMask);
         }
-        throw new IllegalStateException("ErrorVariantUnknown: for header byte " + String.format("%08d", Integer.parseInt(Integer.toBinaryString(header & 0xFF))));
+        throw new TrieDecoderException("Node variant is unknown for header byte " + String.format("%08d", Integer.parseInt(Integer.toBinaryString(header & 0xFF))));
     }
 }
