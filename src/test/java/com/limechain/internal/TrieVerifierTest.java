@@ -1,18 +1,32 @@
 package com.limechain.internal;
 
 import com.limechain.utils.HashUtils;
+import com.limechain.utils.RandomGenerationUtils;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class TrieVerifierTest {
     Node leafAShort = new Node() {{
         this.setPartialKey(new byte[]{1});
         this.setStorageValue(new byte[]{2});
+        this.setDirty(true);
     }};
+
+    Node leafBLarge = new Node() {{
+        this.setPartialKey(new byte[]{2});
+        this.setStorageValue(RandomGenerationUtils.generateBytes(40));
+        this.setDirty(true);
+    }};
+
+    Node leafCLarge = new Node() {{
+        this.setPartialKey(new byte[]{3});
+        this.setStorageValue(RandomGenerationUtils.generateBytes(40));
+        this.setDirty(true);
+    }};
+
 
     @Test
     void buildTrieThrowsEmptyProofError() {
@@ -34,6 +48,62 @@ class TrieVerifierTest {
         var rootHash = HashUtils.hashWithBlake2b(getBadNodeEncoding());
         assertThrows(IllegalStateException.class, () -> TrieVerifier.buildTrie(encodedProofNodes, rootHash));
     }
+
+    @Test
+    void buildTrieRootProofEncodingLessThan32Bytes() throws Exception {
+        assertShortEncoding(leafAShort);
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        TreeEncoder.encode(leafAShort, outputStream);
+
+        byte[] rootHash = HashUtils.hashWithBlake2b(outputStream.toByteArray());
+        byte[][] encodedProofNodes = new byte[][]{outputStream.toByteArray()};
+        Trie expectedTrie = Trie.newTrie(leafAShort);
+        Trie trie = TrieVerifier.buildTrie(encodedProofNodes, rootHash);
+
+        assertEquals(expectedTrie.toString(), trie.toString());
+    }
+
+    @Test
+    void buildTrieRootProofEncodingMoreThan32Bytes() throws Exception {
+        assertLongEncoding(leafBLarge);
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        TreeEncoder.encode(leafBLarge, outputStream);
+
+        byte[] rootHash = HashUtils.hashWithBlake2b(outputStream.toByteArray());
+        byte[][] encodedProofNodes = new byte[][]{outputStream.toByteArray()};
+        Trie expectedTrie = Trie.newTrie(leafBLarge);
+        Trie trie = TrieVerifier.buildTrie(encodedProofNodes, rootHash);
+
+        assertEquals(expectedTrie.toString(), trie.toString());
+    }
+
+    @Test
+    void buildTrieDiscardUnusedNode() throws Exception {
+        assertShortEncoding(leafAShort);
+        assertLongEncoding(leafBLarge);
+
+        ByteArrayOutputStream leafAEncodedStream = new ByteArrayOutputStream();
+        TreeEncoder.encode(leafAShort, leafAEncodedStream);
+        ByteArrayOutputStream leafBEncodedStream = new ByteArrayOutputStream();
+        TreeEncoder.encode(leafBLarge, leafBEncodedStream);
+
+        byte[] rootHash = HashUtils.hashWithBlake2b(leafAEncodedStream.toByteArray());
+        byte[][] encodedProofNodes = new byte[][]{leafAEncodedStream.toByteArray(), leafBEncodedStream.toByteArray()};
+        Trie expectedTrie = Trie.newTrie(leafAShort);
+        Trie trie = TrieVerifier.buildTrie(encodedProofNodes, rootHash);
+
+        assertEquals(expectedTrie.toString(), trie.toString());
+    }
+
+    private void assertLongEncoding(Node node) throws Exception {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        TreeEncoder.encode(node, outputStream);
+
+        assertTrue(outputStream.toByteArray().length > 32);
+    }
+
 
     private void assertShortEncoding(Node node) throws Exception {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();

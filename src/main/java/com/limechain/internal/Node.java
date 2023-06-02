@@ -10,6 +10,7 @@ import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 
 @Getter
 @Setter
@@ -110,5 +111,18 @@ public class Node {
             return;
         }
         buffer.put(HashUtils.hashWithBlake2b(encoding));
+    }
+
+    @Override
+    public String toString() {
+        return "Node{" +
+                "partialKey=" + Arrays.toString(partialKey) +
+                ", storageValue=" + Arrays.toString(storageValue) +
+                ", generation=" + generation +
+                ", children=" + Arrays.toString(children) +
+                ", dirty=" + dirty +
+                ", merkleValue=" + Arrays.toString(merkleValue) +
+                ", descendants=" + descendants +
+                '}';
     }
 }

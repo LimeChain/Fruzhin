@@ -7,25 +7,25 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Vector;
 
 public class Trie {
     BigInteger generation;
-    Trie root;
-    Map<Hash256, Trie> children;
-    Vector<Hash256> deltas;
+    Node root;
+    Map<Hash256, Trie> childTries;
+    ArrayList<Hash256> deltas;
 
-    public Trie(BigInteger generation, Trie root, Map<Hash256, Trie> children, Vector<Hash256> deltas) {
+    public Trie(BigInteger generation, Node root, Map<Hash256, Trie> childTries, ArrayList<Hash256> deltas) {
         this.generation = generation;
         this.root = root;
-        this.children = children;
+        this.childTries = childTries;
         this.deltas = deltas;
     }
 
     public static Trie newTrie(Node node) {
-        return new Trie(BigInteger.ZERO, null, new HashMap<Hash256, Trie>(), new Vector<Hash256>());
+        return new Trie(BigInteger.ZERO, node, new HashMap<>(), new ArrayList<>());
     }
 
     public static void getMerkleValueRoot(byte[] encodedProof, ByteBuffer writer) throws IOException {
@@ -45,5 +45,15 @@ public class Trie {
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("Hashing algorithm not found: " + e.getMessage(), e);
         }
+    }
+
+    @Override
+    public String toString() {
+        return "Trie{" +
+                "generation=" + generation +
+                ", root=" + root +
+                ", childTries=" + childTries +
+                ", deltas=" + deltas +
+                '}';
     }
 }
