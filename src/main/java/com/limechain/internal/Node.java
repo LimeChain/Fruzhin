@@ -1,10 +1,13 @@
 package com.limechain.internal;
 
+import com.limechain.utils.HashUtils;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.bouncycastle.crypto.digests.Blake2bDigest;
+import org.javatuples.Pair;
 
+import java.io.ByteArrayOutputStream;
+import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -13,20 +16,16 @@ import java.security.NoSuchAlgorithmException;
 @NoArgsConstructor
 public class Node {
     public static final int CHILDREN_CAPACITY = 16;
-    private byte[] partialKey;
+    private byte[] partialKey = new byte[]{};
     private byte[] storageValue;
     private int generation;
     private Node[] children;
     private boolean dirty;
-    private byte[] merkleValue;
+    private byte[] merkleValue = new byte[]{};
     private int descendants;
 
     private static byte[] getBlake2bHash(byte[] value) {
-        Blake2bDigest blake2bDigest = new Blake2bDigest(256);
-        byte[] rawHash = new byte[256];
-        blake2bDigest.update(value, 0, value.length);
-        blake2bDigest.doFinal(rawHash, 0);
-        return rawHash;
+        return HashUtils.hashWithBlake2b(value);
     }
 
     public static byte[] getMerkleValueRoot(byte[] encoding) {
@@ -58,5 +57,58 @@ public class Node {
             }
         }
         return false;
+    }
+
+    public int getChildrenBitmap() {
+        int bitmap = 0;
+        for (int i = 0; i < children.length; i++) {
+            if (children[i] != null) {
+                bitmap |= 1 << i;
+            }
+        }
+        return bitmap;
+    }
+
+    public int getChildrenCount() {
+        int count = 0;
+        for (Node child : children) {
+            if (child != null) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    public byte[] calculateMerkleValue() {
+        if (!this.isDirty() && this.getMerkleValue() != null) {
+            return this.getMerkleValue();
+        }
+
+        return this.encodeAndHash().getValue1();
+    }
+
+    private Pair<byte[], byte[]> encodeAndHash() {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try {
+            TreeEncoder.encode(this, out);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        byte[] encoding = out.toByteArray();
+        ByteBuffer merkleValueBuf = ByteBuffer.allocate(32);
+        writeMerkleValue(encoding, merkleValueBuf);
+
+        byte[] merkleValue = merkleValueBuf.array();
+        this.setMerkleValue(merkleValue);
+        return new Pair<>(encoding, merkleValue);
+    }
+
+    private void writeMerkleValue(byte[] encoding, ByteBuffer buffer) {
+        if (encoding.length < 32) {
+            buffer.put(encoding);
+            return;
+        }
+        buffer.put(HashUtils.hashWithBlake2b(encoding));
     }
 }
