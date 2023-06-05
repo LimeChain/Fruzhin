@@ -1,5 +1,7 @@
 package com.limechain.internal;
 
+import com.limechain.internal.tree.decoder.TreeDecoder;
+import com.limechain.internal.tree.decoder.TrieDecoderException;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import lombok.extern.java.Log;
 import org.apache.tomcat.util.buf.HexUtils;
