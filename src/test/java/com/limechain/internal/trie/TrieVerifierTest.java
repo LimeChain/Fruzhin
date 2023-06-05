@@ -1,6 +1,10 @@
-package com.limechain.internal;
+package com.limechain.internal.trie;
 
+import com.limechain.internal.Node;
+import com.limechain.internal.TreeEncoder;
+import com.limechain.internal.Trie;
 import com.limechain.internal.tree.decoder.TrieDecoderException;
+import com.limechain.internal.trie.TrieVerifier;
 import com.limechain.utils.HashUtils;
 import com.limechain.utils.RandomGenerationUtils;
 import org.junit.jupiter.api.Test;

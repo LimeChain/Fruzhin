@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 
-import static com.limechain.internal.TrieVerifier.MAX_PARTIAL_KEY_LENGTH;
+import static com.limechain.internal.trie.TrieVerifier.MAX_PARTIAL_KEY_LENGTH;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.mockito.Mockito.*;
 

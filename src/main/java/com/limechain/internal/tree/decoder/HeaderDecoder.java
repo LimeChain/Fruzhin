@@ -9,7 +9,7 @@ import lombok.Setter;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.limechain.internal.TrieVerifier.MAX_PARTIAL_KEY_LENGTH;
+import static com.limechain.internal.trie.TrieVerifier.MAX_PARTIAL_KEY_LENGTH;
 
 @Getter
 @Setter
