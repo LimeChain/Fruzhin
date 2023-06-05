@@ -22,7 +22,7 @@ public class Node {
     private int generation;
     private Node[] children;
     private boolean dirty;
-    private byte[] merkleValue = new byte[]{};
+    private byte[] merkleValue;
     private int descendants;
 
     private static byte[] getBlake2bHash(byte[] value) {
@@ -97,20 +97,19 @@ public class Node {
         }
 
         byte[] encoding = out.toByteArray();
-        ByteBuffer merkleValueBuf = ByteBuffer.allocate(32);
-        writeMerkleValue(encoding, merkleValueBuf);
-
-        byte[] merkleValue = merkleValueBuf.array();
+        byte[] merkleValue = writeMerkleValue(encoding);
         this.setMerkleValue(merkleValue);
         return new Pair<>(encoding, merkleValue);
     }
 
-    private void writeMerkleValue(byte[] encoding, ByteBuffer buffer) {
+    private byte[] writeMerkleValue(byte[] encoding) {
+        ByteBuffer merkleValueBuf = ByteBuffer.allocate(Math.min(encoding.length, 32));
         if (encoding.length < 32) {
-            buffer.put(encoding);
-            return;
+            merkleValueBuf.put(encoding);
+            return merkleValueBuf.array();
         }
-        buffer.put(HashUtils.hashWithBlake2b(encoding));
+        merkleValueBuf.put(HashUtils.hashWithBlake2b(encoding));
+        return merkleValueBuf.array();
     }
 
     @Override

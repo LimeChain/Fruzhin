@@ -1,9 +1,7 @@
 package com.limechain.internal;
 
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
-import io.emeraldpay.polkaj.scale.writer.UByteWriter;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -52,10 +50,7 @@ public class TreeEncoder {
             variant = Variant.BRANCH_WITH_VALUE;
         }
 
-        ByteArrayOutputStream outStream = new ByteArrayOutputStream();
         int headerByte = variant.bits;
-        new UByteWriter().write(new ScaleCodecWriter(outStream), variant.bits);
-
         int partialKeyLengthMask = variant.mask;
         if (partialKeyLength < partialKeyLengthMask) {
             // Partial key length fits in header byte
@@ -85,7 +80,7 @@ public class TreeEncoder {
         }
     }
 
-    private static void encodeChildren(Node[] children, OutputStream buffer) throws Exception {
+    public static void encodeChildren(Node[] children, OutputStream buffer) throws Exception {
         for (Node child : children) {
             if (child == null) {
                 continue;
@@ -95,7 +90,7 @@ public class TreeEncoder {
         }
     }
 
-    private static void encodeChild(Node child, OutputStream buffer) throws IOException {
+    public static void encodeChild(Node child, OutputStream buffer) throws IOException {
         byte[] merkleValue = child.calculateMerkleValue();
         try (ScaleCodecWriter writer = new ScaleCodecWriter(buffer)) {
             writer.writeAsList(merkleValue);
