@@ -18,7 +18,7 @@ class TreeEncoderTest {
         OutputStream buffer = mock(OutputStream.class);
 
         TreeEncoder.encodeHeader(node, buffer);
-        verify(buffer, times(1)).write(Variant.BRANCH.bits);
+        verify(buffer, times(1)).write(NodeVariant.BRANCH.bits);
     }
 
     @Test
@@ -30,7 +30,7 @@ class TreeEncoderTest {
         OutputStream buffer = mock(OutputStream.class);
 
         TreeEncoder.encodeHeader(node, buffer);
-        verify(buffer, times(1)).write(Variant.BRANCH_WITH_VALUE.bits);
+        verify(buffer, times(1)).write(NodeVariant.BRANCH_WITH_VALUE.bits);
     }
 
     @Test
@@ -42,7 +42,7 @@ class TreeEncoderTest {
         OutputStream buffer = mock(OutputStream.class);
 
         TreeEncoder.encodeHeader(node, buffer);
-        verify(buffer, times(1)).write(Variant.BRANCH.bits | 30);
+        verify(buffer, times(1)).write(NodeVariant.BRANCH.bits | 30);
     }
 
     @Test
@@ -54,7 +54,7 @@ class TreeEncoderTest {
         OutputStream buffer = mock(OutputStream.class);
 
         TreeEncoder.encodeHeader(node, buffer);
-        verify(buffer, times(1)).write(Variant.BRANCH.bits | 62);
+        verify(buffer, times(1)).write(NodeVariant.BRANCH.bits | 62);
     }
 
     @Test
@@ -66,7 +66,7 @@ class TreeEncoderTest {
         OutputStream buffer = mock(OutputStream.class);
 
         TreeEncoder.encodeHeader(node, buffer);
-        verify(buffer, times(1)).write(Variant.BRANCH.bits | 63);
+        verify(buffer, times(1)).write(NodeVariant.BRANCH.bits | 63);
     }
 
     @Test
@@ -78,7 +78,7 @@ class TreeEncoderTest {
         OutputStream buffer = mock(OutputStream.class);
 
         TreeEncoder.encodeHeader(node, buffer);
-        verify(buffer, times(1)).write(Variant.BRANCH.bits | 63);
+        verify(buffer, times(1)).write(NodeVariant.BRANCH.bits | 63);
         verify(buffer, times(1)).write(0x01);
     }
 
@@ -91,7 +91,7 @@ class TreeEncoderTest {
 
         TreeEncoder.encodeHeader(node, buffer);
 
-        verify(buffer, times(1)).write(Variant.LEAF.bits);
+        verify(buffer, times(1)).write(NodeVariant.LEAF.bits);
     }
 
     @Test
@@ -103,7 +103,7 @@ class TreeEncoderTest {
 
         TreeEncoder.encodeHeader(node, buffer);
 
-        verify(buffer, times(1)).write(Variant.LEAF.bits | 30);
+        verify(buffer, times(1)).write(NodeVariant.LEAF.bits | 30);
     }
 
     @Test
@@ -115,7 +115,7 @@ class TreeEncoderTest {
 
         TreeEncoder.encodeHeader(node, buffer);
 
-        verify(buffer, times(1)).write(Variant.LEAF.bits | 62);
+        verify(buffer, times(1)).write(NodeVariant.LEAF.bits | 62);
     }
 
     @Test
@@ -127,7 +127,7 @@ class TreeEncoderTest {
 
         TreeEncoder.encodeHeader(node, buffer);
 
-        verify(buffer, times(1)).write(Variant.LEAF.bits | 63);
+        verify(buffer, times(1)).write(NodeVariant.LEAF.bits | 63);
     }
 
     @Test
@@ -139,20 +139,20 @@ class TreeEncoderTest {
 
         TreeEncoder.encodeHeader(node, buffer);
 
-        verify(buffer, times(1)).write(Variant.LEAF.bits | 63);
+        verify(buffer, times(1)).write(NodeVariant.LEAF.bits | 63);
         verify(buffer, times(1)).write(0x01);
     }
 
     @Test
     void testEncodeHeaderLeafWithKeyLengthOver3Bytes() throws Exception {
         var node = new Node() {{
-            this.setPartialKey(new byte[Variant.LEAF.mask + 0b1111_1111 + 0b0000_0001]);
+            this.setPartialKey(new byte[NodeVariant.LEAF.mask + 0b1111_1111 + 0b0000_0001]);
         }};
         OutputStream buffer = mock(OutputStream.class);
 
         TreeEncoder.encodeHeader(node, buffer);
 
-        verify(buffer, times(1)).write(Variant.LEAF.bits ^ Variant.LEAF.mask);
+        verify(buffer, times(1)).write(NodeVariant.LEAF.bits ^ NodeVariant.LEAF.mask);
         verify(buffer, times(1)).write(0b1111_1111);
         verify(buffer, times(1)).write(1);
     }
@@ -160,20 +160,20 @@ class TreeEncoderTest {
     @Test
     void testEncodeHeaderLeafWithKeyLengthOver3BytesAndLastByte0() throws Exception {
         var node = new Node() {{
-            this.setPartialKey(new byte[Variant.LEAF.mask + 0b1111_1111]);
+            this.setPartialKey(new byte[NodeVariant.LEAF.mask + 0b1111_1111]);
         }};
         OutputStream buffer = mock(OutputStream.class);
 
         TreeEncoder.encodeHeader(node, buffer);
 
-        verify(buffer, times(1)).write(Variant.LEAF.bits ^ Variant.LEAF.mask);
+        verify(buffer, times(1)).write(NodeVariant.LEAF.bits ^ NodeVariant.LEAF.mask);
         verify(buffer, times(1)).write(0b1111_1111);
         verify(buffer, times(1)).write(0);
     }
 
     @Test
     public void testEncodeHeaderAtMaximum() throws Exception {
-        int variant = Variant.LEAF.bits;
+        int variant = NodeVariant.LEAF.bits;
         final int partialKeyLengthHeaderMask = 0b0011_1111;
         double extraKeyBytesNeeded = Math.ceil((double) (MAX_PARTIAL_KEY_LENGTH - partialKeyLengthHeaderMask) / 255.0);
         int expectedEncodingLength = 1 + (int) extraKeyBytesNeeded;
@@ -225,7 +225,7 @@ class TreeEncoderTest {
         TreeEncoder.encode(node, buffer);
 
         // Header
-        verify(buffer, times(1)).write(Variant.BRANCH_WITH_VALUE.bits | 3);
+        verify(buffer, times(1)).write(NodeVariant.BRANCH_WITH_VALUE.bits | 3);
         // LE key
         verify(buffer, times(1)).write(new byte[]{0x01, 0x23});
         // Children bitmap

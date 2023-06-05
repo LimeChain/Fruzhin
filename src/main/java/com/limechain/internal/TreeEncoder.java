@@ -41,17 +41,17 @@ public class TreeEncoder {
             throw new IllegalStateException("Partial key length is too big: " + partialKeyLength);
         }
 
-        Variant variant;
+        NodeVariant nodeVariant;
         if (node.getKind() == NodeKind.Leaf) {
-            variant = Variant.LEAF;
+            nodeVariant = NodeVariant.LEAF;
         } else if (node.getStorageValue() == null) {
-            variant = Variant.BRANCH;
+            nodeVariant = NodeVariant.BRANCH;
         } else {
-            variant = Variant.BRANCH_WITH_VALUE;
+            nodeVariant = NodeVariant.BRANCH_WITH_VALUE;
         }
 
-        int headerByte = variant.bits;
-        int partialKeyLengthMask = variant.mask;
+        int headerByte = nodeVariant.bits;
+        int partialKeyLengthMask = nodeVariant.mask;
         if (partialKeyLength < partialKeyLengthMask) {
             // Partial key length fits in header byte
             headerByte |= partialKeyLength;

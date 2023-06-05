@@ -1,6 +1,6 @@
 package com.limechain.internal.tree.decoder;
 
-import com.limechain.internal.Variant;
+import com.limechain.internal.NodeVariant;
 import com.limechain.utils.LittleEndianUtils;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import lombok.Getter;
@@ -25,16 +25,16 @@ public class HeaderDecoder {
     }
 
     public static HeaderDecoder decodeHeaderByte(byte header) throws TrieDecoderException {
-        List<Variant> variantList = Arrays.asList(Variant.values());
-        for (int i = variantList.size() - 1; i >= 0; i--) {
-            Variant variant = variantList.get(i);
-            int variantBits = header & variant.bits;
-            if (variantBits != variant.bits) {
+        List<NodeVariant> nodeVariantList = Arrays.asList(NodeVariant.values());
+        for (int i = nodeVariantList.size() - 1; i >= 0; i--) {
+            NodeVariant nodeVariant = nodeVariantList.get(i);
+            int variantBits = header & nodeVariant.bits;
+            if (variantBits != nodeVariant.bits) {
                 continue;
             }
 
-            byte partialKeyLengthHeader = (byte) (header & variant.mask);
-            return new HeaderDecoder((byte) variantBits, partialKeyLengthHeader, (byte) variant.mask);
+            byte partialKeyLengthHeader = (byte) (header & nodeVariant.mask);
+            return new HeaderDecoder((byte) variantBits, partialKeyLengthHeader, (byte) nodeVariant.mask);
         }
         throw new TrieDecoderException("Node variant is unknown for header byte " +
                 String.format("%08d", Integer.parseInt(Integer.toBinaryString(header & 0xFF))));

@@ -1,7 +1,7 @@
 package com.limechain.internal.tree.decoder;
 
 import com.limechain.internal.Node;
-import com.limechain.internal.Variant;
+import com.limechain.internal.NodeVariant;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.types.Hash256;
 
@@ -23,7 +23,7 @@ public class BranchDecoder {
             throw new TrieDecoderException("Could not decode children bitmap: " + error.getMessage());
         }
         int variant = variantByte & 0xff;
-        if (variant == Variant.BRANCH_WITH_VALUE.bits) {
+        if (variant == NodeVariant.BRANCH_WITH_VALUE.bits) {
             try {
                 node.setStorageValue(reader.readByteArray());
             } catch (IndexOutOfBoundsException e) {

@@ -1,7 +1,7 @@
 package com.limechain.internal.tree.decoder;
 
 import com.limechain.internal.Node;
-import com.limechain.internal.Variant;
+import com.limechain.internal.NodeVariant;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import lombok.extern.java.Log;
 
@@ -15,10 +15,10 @@ public class TreeDecoder {
         HeaderDecoder decodeHeaderResult = decodeHeader(reader);
         int variant = decodeHeaderResult.getVariantBits() & 0xff;
         int partialKeyLength = decodeHeaderResult.partialKeyLengthHeader;
-        if (variant == Variant.LEAF.bits) {
+        if (variant == NodeVariant.LEAF.bits) {
             return decodeLeaf(reader, partialKeyLength);
         }
-        if (variant == Variant.BRANCH.bits || variant == Variant.BRANCH_WITH_VALUE.bits) {
+        if (variant == NodeVariant.BRANCH.bits || variant == NodeVariant.BRANCH_WITH_VALUE.bits) {
             return decodeBranch(reader, (byte) variant, partialKeyLength);
         }
 

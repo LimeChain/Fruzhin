@@ -1,6 +1,6 @@
 package com.limechain.internal.tree.decoder;
 
-import com.limechain.internal.Variant;
+import com.limechain.internal.NodeVariant;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import org.junit.jupiter.api.Test;
@@ -32,7 +32,7 @@ public class HeaderDecoderTest {
         int expectedPartialKeyLength = 1;
         byte[] expectedPartialKey = new byte[]{9};
         byte[] expectedStorageValue = new byte[]{1, 2, 3};
-        int nodeType = Variant.LEAF.bits | 1;
+        int nodeType = NodeVariant.LEAF.bits | 1;
 
         OutputStream out = new ByteArrayOutputStream();
         ScaleCodecWriter writer = new ScaleCodecWriter(out);
