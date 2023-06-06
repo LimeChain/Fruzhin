@@ -112,7 +112,7 @@ public class TrieDecoderTest {
         assertEquals(node.getKind(), NodeKind.Branch);
         assertArrayEquals(expectedPartialKey, node.getPartialKey());
         assertArrayEquals(expectedStorageValue, node.getStorageValue());
-        assertArrayEquals(Trie.getMerkleValueRoot(childHash), node.getChildren()[10].getMerkleValue());
+        assertArrayEquals(Trie.getMerkleValueRoot(childHash), Trie.getMerkleValueRoot(node.getChildren()[10].getMerkleValue()));
     }
 
     @Test
