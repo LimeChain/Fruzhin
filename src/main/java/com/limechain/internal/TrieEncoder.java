@@ -7,7 +7,7 @@ import java.io.OutputStream;
 
 import static com.limechain.internal.trie.TrieVerifier.MAX_PARTIAL_KEY_LENGTH;
 
-public class TreeEncoder {
+public class TrieEncoder {
     public static void encode(Node node, OutputStream buffer) throws Exception {
         encodeHeader(node, buffer);
 
@@ -86,7 +86,7 @@ public class TreeEncoder {
                 continue;
             }
 
-             encodeChild(child, buffer);
+            encodeChild(child, buffer);
         }
     }
 

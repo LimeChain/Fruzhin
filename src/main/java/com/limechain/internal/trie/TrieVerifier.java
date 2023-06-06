@@ -2,9 +2,8 @@ package com.limechain.internal.trie;
 
 import com.limechain.internal.Node;
 import com.limechain.internal.Trie;
-import com.limechain.internal.tree.decoder.TreeDecoder;
+import com.limechain.internal.tree.decoder.TrieDecoder;
 import com.limechain.internal.tree.decoder.TrieDecoderException;
-import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import lombok.extern.java.Log;
 import org.apache.tomcat.util.buf.HexUtils;
 import org.bouncycastle.util.Arrays;
@@ -35,7 +34,7 @@ public class TrieVerifier {
                 continue;
             }
 
-            root = TreeDecoder.decode(new ScaleCodecReader(encodedProofNode));
+            root = TrieDecoder.decode(encodedProofNode);
             root.setDirty(true);
         }
 

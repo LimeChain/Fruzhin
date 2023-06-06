@@ -1,7 +1,7 @@
 package com.limechain.internal.trie;
 
 import com.limechain.internal.Node;
-import com.limechain.internal.TreeEncoder;
+import com.limechain.internal.TrieEncoder;
 import com.limechain.utils.RandomGenerationUtils;
 
 import java.io.ByteArrayOutputStream;
@@ -35,18 +35,17 @@ public class Helper {
 
     public static void assertLongEncoding(Node node) throws Exception {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        TreeEncoder.encode(node, outputStream);
+        TrieEncoder.encode(node, outputStream);
 
         assertTrue(outputStream.toByteArray().length > 32);
     }
 
     public static void assertShortEncoding(Node node) throws Exception {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        TreeEncoder.encode(node, outputStream);
+        TrieEncoder.encode(node, outputStream);
 
         assertTrue(outputStream.toByteArray().length < 32);
     }
-
 
     public static byte[] getBadNodeEncoding() {
         return new byte[]{0x1, (byte) 0x94, (byte) 0xfd, (byte) 0xc2, (byte) 0xfa, 0x2f,

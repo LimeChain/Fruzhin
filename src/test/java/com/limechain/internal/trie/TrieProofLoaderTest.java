@@ -1,7 +1,7 @@
 package com.limechain.internal.trie;
 
 import com.limechain.internal.Node;
-import com.limechain.internal.TreeEncoder;
+import com.limechain.internal.TrieEncoder;
 import com.limechain.internal.tree.decoder.TrieDecoderException;
 import com.limechain.utils.HashUtils;
 import org.apache.tomcat.util.buf.HexUtils;
@@ -77,7 +77,7 @@ public class TrieProofLoaderTest {
             this.setPartialKey(new byte[]{3});
             this.setStorageValue(new byte[]{1});
         }};
-        TreeEncoder.encode(nodeToEncode, encodedNode);
+        TrieEncoder.encode(nodeToEncode, encodedNode);
         Map<String, byte[]> digestToEncoding = new HashMap<>() {{
             put(HexUtils.toHexString(new byte[]{2}), encodedNode.toByteArray());
         }};
@@ -121,7 +121,7 @@ public class TrieProofLoaderTest {
             this.setPartialKey(new byte[]{3});
             this.setStorageValue(new byte[]{1});
         }};
-        TreeEncoder.encode(nodeToEncode, encodedNode);
+        TrieEncoder.encode(nodeToEncode, encodedNode);
         Map<String, byte[]> digestToEncoding = new HashMap<>() {{
             put(HexUtils.toHexString(new byte[]{2}), encodedNode.toByteArray());
         }};
@@ -168,7 +168,7 @@ public class TrieProofLoaderTest {
                     }}}
             ));
         }};
-        TreeEncoder.encode(nodeToEncode, encodedNode);
+        TrieEncoder.encode(nodeToEncode, encodedNode);
         Map<String, byte[]> digestToEncoding = new HashMap<>() {{
             put(HexUtils.toHexString(new byte[]{2}), encodedNode.toByteArray());
         }};
@@ -246,8 +246,8 @@ public class TrieProofLoaderTest {
                     leafBLarge
             }));
         }};
-        TreeEncoder.encode(nodeToEncode, encodedNode);
-        TreeEncoder.encode(leafBLarge, encodedLeaf);
+        TrieEncoder.encode(nodeToEncode, encodedNode);
+        TrieEncoder.encode(leafBLarge, encodedLeaf);
         Map<String, byte[]> digestToEncoding = new HashMap<>() {{
             put(HexUtils.toHexString(new byte[]{2}), encodedNode.toByteArray());
             put(HexUtils.toHexString(leafBLarge.calculateMerkleValue()), encodedLeaf.toByteArray());
@@ -305,8 +305,8 @@ public class TrieProofLoaderTest {
                         leafBLarge
                 }));
             }};
-            TreeEncoder.encode(nodeToEncode, encodedNode);
-            TreeEncoder.encode(leafBLarge, encodedLeaf);
+            TrieEncoder.encode(nodeToEncode, encodedNode);
+            TrieEncoder.encode(leafBLarge, encodedLeaf);
             String encodedLeafKey = HexUtils.toHexString(HashUtils.hashWithBlake2b(encodedLeaf.toByteArray()));
             Map<String, byte[]> digestToEncoding = new HashMap<>() {{
                 put(HexUtils.toHexString(new byte[]{2}), encodedNode.toByteArray());

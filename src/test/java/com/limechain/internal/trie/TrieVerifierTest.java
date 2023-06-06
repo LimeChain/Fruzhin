@@ -1,8 +1,8 @@
 package com.limechain.internal.trie;
 
 import com.limechain.internal.Node;
-import com.limechain.internal.TreeEncoder;
 import com.limechain.internal.Trie;
+import com.limechain.internal.TrieEncoder;
 import com.limechain.utils.HashUtils;
 import org.junit.jupiter.api.Test;
 
@@ -45,7 +45,7 @@ class TrieVerifierTest {
         assertShortEncoding(leafAShort);
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        TreeEncoder.encode(leafAShort, outputStream);
+        TrieEncoder.encode(leafAShort, outputStream);
 
         byte[] rootHash = HashUtils.hashWithBlake2b(outputStream.toByteArray());
         byte[][] encodedProofNodes = new byte[][]{outputStream.toByteArray()};
@@ -60,7 +60,7 @@ class TrieVerifierTest {
         assertLongEncoding(leafBLarge);
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        TreeEncoder.encode(leafBLarge, outputStream);
+        TrieEncoder.encode(leafBLarge, outputStream);
 
         byte[] rootHash = HashUtils.hashWithBlake2b(outputStream.toByteArray());
         byte[][] encodedProofNodes = new byte[][]{outputStream.toByteArray()};
@@ -76,9 +76,9 @@ class TrieVerifierTest {
         assertLongEncoding(leafBLarge);
 
         ByteArrayOutputStream leafAEncodedStream = new ByteArrayOutputStream();
-        TreeEncoder.encode(leafAShort, leafAEncodedStream);
+        TrieEncoder.encode(leafAShort, leafAEncodedStream);
         ByteArrayOutputStream leafBEncodedStream = new ByteArrayOutputStream();
-        TreeEncoder.encode(leafBLarge, leafBEncodedStream);
+        TrieEncoder.encode(leafBLarge, leafBEncodedStream);
 
         byte[] rootHash = HashUtils.hashWithBlake2b(leafAEncodedStream.toByteArray());
         byte[][] encodedProofNodes = new byte[][]{leafAEncodedStream.toByteArray(), leafBEncodedStream.toByteArray()};
@@ -91,20 +91,18 @@ class TrieVerifierTest {
     @Test
     void buildTrieMultipleUnorderedNodes() throws Exception {
         ByteArrayOutputStream leafBEncodedStream = new ByteArrayOutputStream();
-        TreeEncoder.encode(leafBLarge, leafBEncodedStream);
+        TrieEncoder.encode(leafBLarge, leafBEncodedStream);
 
         assertShortEncoding(leafAShort);
         assertLongEncoding(leafBLarge);
         assertLongEncoding(leafCLarge);
 
         ByteArrayOutputStream leafAEncodedStream = new ByteArrayOutputStream();
-        TreeEncoder.encode(leafAShort, leafAEncodedStream);
-
+        TrieEncoder.encode(leafAShort, leafAEncodedStream);
         ByteArrayOutputStream leafCEncodedStream = new ByteArrayOutputStream();
-        TreeEncoder.encode(leafCLarge, leafCEncodedStream);
-
+        TrieEncoder.encode(leafCLarge, leafCEncodedStream);
         ByteArrayOutputStream rootNodeEncodedStream = new ByteArrayOutputStream();
-        TreeEncoder.encode(new Node() {{
+        TrieEncoder.encode(new Node() {{
             this.setPartialKey(new byte[]{1});
             this.setChildren(padRightChildren(new Node[]{leafAShort, leafBLarge, leafCLarge, leafBLarge}));
         }}, rootNodeEncodedStream);
@@ -138,7 +136,6 @@ class TrieVerifierTest {
                     new Node() {{
                         this.setPartialKey(leafBLarge.getPartialKey());
                         this.setStorageValue(leafBLarge.getStorageValue());
-                        this.setMerkleValue(leafBLarge.getMerkleValue());
                         this.setDirty(true);
                     }}
             }));

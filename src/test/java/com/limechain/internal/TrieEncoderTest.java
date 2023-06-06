@@ -7,9 +7,13 @@ import java.io.OutputStream;
 
 import static com.limechain.internal.trie.TrieVerifier.MAX_PARTIAL_KEY_LENGTH;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
-class TreeEncoderTest {
+class TrieEncoderTest {
     @Test
     void testEncodeHeaderBranchWithNoKey() throws Exception {
         var node = new Node() {{
@@ -17,7 +21,7 @@ class TreeEncoderTest {
         }};
         OutputStream buffer = mock(OutputStream.class);
 
-        TreeEncoder.encodeHeader(node, buffer);
+        TrieEncoder.encodeHeader(node, buffer);
         verify(buffer, times(1)).write(NodeVariant.BRANCH.bits);
     }
 
@@ -29,7 +33,7 @@ class TreeEncoderTest {
         }};
         OutputStream buffer = mock(OutputStream.class);
 
-        TreeEncoder.encodeHeader(node, buffer);
+        TrieEncoder.encodeHeader(node, buffer);
         verify(buffer, times(1)).write(NodeVariant.BRANCH_WITH_VALUE.bits);
     }
 
@@ -41,7 +45,7 @@ class TreeEncoderTest {
         }};
         OutputStream buffer = mock(OutputStream.class);
 
-        TreeEncoder.encodeHeader(node, buffer);
+        TrieEncoder.encodeHeader(node, buffer);
         verify(buffer, times(1)).write(NodeVariant.BRANCH.bits | 30);
     }
 
@@ -53,7 +57,7 @@ class TreeEncoderTest {
         }};
         OutputStream buffer = mock(OutputStream.class);
 
-        TreeEncoder.encodeHeader(node, buffer);
+        TrieEncoder.encodeHeader(node, buffer);
         verify(buffer, times(1)).write(NodeVariant.BRANCH.bits | 62);
     }
 
@@ -65,7 +69,7 @@ class TreeEncoderTest {
         }};
         OutputStream buffer = mock(OutputStream.class);
 
-        TreeEncoder.encodeHeader(node, buffer);
+        TrieEncoder.encodeHeader(node, buffer);
         verify(buffer, times(1)).write(NodeVariant.BRANCH.bits | 63);
     }
 
@@ -77,7 +81,7 @@ class TreeEncoderTest {
         }};
         OutputStream buffer = mock(OutputStream.class);
 
-        TreeEncoder.encodeHeader(node, buffer);
+        TrieEncoder.encodeHeader(node, buffer);
         verify(buffer, times(1)).write(NodeVariant.BRANCH.bits | 63);
         verify(buffer, times(1)).write(0x01);
     }
@@ -89,7 +93,7 @@ class TreeEncoderTest {
         }};
         OutputStream buffer = mock(OutputStream.class);
 
-        TreeEncoder.encodeHeader(node, buffer);
+        TrieEncoder.encodeHeader(node, buffer);
 
         verify(buffer, times(1)).write(NodeVariant.LEAF.bits);
     }
@@ -101,7 +105,7 @@ class TreeEncoderTest {
         }};
         OutputStream buffer = mock(OutputStream.class);
 
-        TreeEncoder.encodeHeader(node, buffer);
+        TrieEncoder.encodeHeader(node, buffer);
 
         verify(buffer, times(1)).write(NodeVariant.LEAF.bits | 30);
     }
@@ -113,7 +117,7 @@ class TreeEncoderTest {
         }};
         OutputStream buffer = mock(OutputStream.class);
 
-        TreeEncoder.encodeHeader(node, buffer);
+        TrieEncoder.encodeHeader(node, buffer);
 
         verify(buffer, times(1)).write(NodeVariant.LEAF.bits | 62);
     }
@@ -125,7 +129,7 @@ class TreeEncoderTest {
         }};
         OutputStream buffer = mock(OutputStream.class);
 
-        TreeEncoder.encodeHeader(node, buffer);
+        TrieEncoder.encodeHeader(node, buffer);
 
         verify(buffer, times(1)).write(NodeVariant.LEAF.bits | 63);
     }
@@ -137,7 +141,7 @@ class TreeEncoderTest {
         }};
         OutputStream buffer = mock(OutputStream.class);
 
-        TreeEncoder.encodeHeader(node, buffer);
+        TrieEncoder.encodeHeader(node, buffer);
 
         verify(buffer, times(1)).write(NodeVariant.LEAF.bits | 63);
         verify(buffer, times(1)).write(0x01);
@@ -150,7 +154,7 @@ class TreeEncoderTest {
         }};
         OutputStream buffer = mock(OutputStream.class);
 
-        TreeEncoder.encodeHeader(node, buffer);
+        TrieEncoder.encodeHeader(node, buffer);
 
         verify(buffer, times(1)).write(NodeVariant.LEAF.bits ^ NodeVariant.LEAF.mask);
         verify(buffer, times(1)).write(0b1111_1111);
@@ -164,7 +168,7 @@ class TreeEncoderTest {
         }};
         OutputStream buffer = mock(OutputStream.class);
 
-        TreeEncoder.encodeHeader(node, buffer);
+        TrieEncoder.encodeHeader(node, buffer);
 
         verify(buffer, times(1)).write(NodeVariant.LEAF.bits ^ NodeVariant.LEAF.mask);
         verify(buffer, times(1)).write(0b1111_1111);
@@ -194,7 +198,7 @@ class TreeEncoderTest {
         Node node = new Node();
         node.setPartialKey(new byte[MAX_PARTIAL_KEY_LENGTH]);
 
-        TreeEncoder.encodeHeader(node, buffer);
+        TrieEncoder.encodeHeader(node, buffer);
 
         assertArrayEquals(expectedBytes, buffer.toByteArray());
     }
@@ -221,7 +225,7 @@ class TreeEncoderTest {
         }};
 
         ByteArrayOutputStream buffer = mock(ByteArrayOutputStream.class);
-        TreeEncoder.encode(node, buffer);
+        TrieEncoder.encode(node, buffer);
 
         // Header
         verify(buffer, times(1)).write(NodeVariant.BRANCH_WITH_VALUE.bits | 3);
@@ -232,13 +236,12 @@ class TreeEncoderTest {
         verify(buffer, atLeast(1)).write(0);
     }
 
-
     // Should be in a separate test class
     @Test
     public void testEncodeChildrenNoChildren() throws Exception {
         ByteArrayOutputStream buffer = mock(ByteArrayOutputStream.class);
 
-        TreeEncoder.encodeChildren(new Node[]{}, buffer);
+        TrieEncoder.encodeChildren(new Node[]{}, buffer);
 
         verify(buffer, times(0)).write(any());
     }
@@ -247,7 +250,7 @@ class TreeEncoderTest {
     public void testEncodeChildrenFirstChildNotNull() throws Exception {
         ByteArrayOutputStream buffer = mock(ByteArrayOutputStream.class);
 
-        TreeEncoder.encodeChildren(new Node[]{
+        TrieEncoder.encodeChildren(new Node[]{
                 new Node() {{
                     this.setPartialKey(new byte[]{1});
                     this.setStorageValue(new byte[]{2});
@@ -263,7 +266,7 @@ class TreeEncoderTest {
     public void testEncodeChildrenLastChildNotNull() throws Exception {
         ByteArrayOutputStream buffer = mock(ByteArrayOutputStream.class);
 
-        TreeEncoder.encodeChildren(new Node[]{
+        TrieEncoder.encodeChildren(new Node[]{
                 null, null, null, null,
                 null, null, null, null,
                 null, null, null, null,
@@ -283,7 +286,7 @@ class TreeEncoderTest {
     public void testEncodeChildrenFirstTwoChildrenNotNull() throws Exception {
         ByteArrayOutputStream buffer = mock(ByteArrayOutputStream.class);
 
-        TreeEncoder.encodeChildren(new Node[]{
+        TrieEncoder.encodeChildren(new Node[]{
                 new Node() {{
                     this.setPartialKey(new byte[]{1});
                     this.setStorageValue(new byte[]{2});
@@ -305,7 +308,7 @@ class TreeEncoderTest {
     public void testEncodeEmptyBranchChild() throws Exception {
         ByteArrayOutputStream buffer = mock(ByteArrayOutputStream.class);
 
-        TreeEncoder.encodeChild(new Node() {{
+        TrieEncoder.encodeChild(new Node() {{
             this.setChildren(new Node[Node.CHILDREN_CAPACITY]);
         }}, buffer);
 
@@ -318,7 +321,7 @@ class TreeEncoderTest {
     public void testEncodeLeafChild() throws Exception {
         ByteArrayOutputStream buffer = mock(ByteArrayOutputStream.class);
 
-        TreeEncoder.encodeChild(new Node() {{
+        TrieEncoder.encodeChild(new Node() {{
             this.setPartialKey(new byte[]{1});
             this.setStorageValue(new byte[]{2});
         }}, buffer);
@@ -332,7 +335,7 @@ class TreeEncoderTest {
     public void testEncodeBranchChild() throws Exception {
         ByteArrayOutputStream buffer = mock(ByteArrayOutputStream.class);
 
-        TreeEncoder.encodeChild(new Node() {{
+        TrieEncoder.encodeChild(new Node() {{
             this.setPartialKey(new byte[]{1});
             this.setStorageValue(new byte[]{2});
             this.setChildren(new Node[]{
@@ -346,6 +349,7 @@ class TreeEncoderTest {
 
         verify(buffer, times(1)).write(44);
         // SCALE specific invocation... Maybe there's a workaround for this
-        verify(buffer, times(1)).write(new byte[]{(byte) 193, 1, 4, 0, 4, 2, 16, 65, 5, 4, 6}, 0, 11);
+        verify(buffer, times(1)).write(
+                new byte[]{(byte) 193, 1, 4, 0, 4, 2, 16, 65, 5, 4, 6}, 0, 11);
     }
 }

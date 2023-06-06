@@ -3,9 +3,8 @@ package com.limechain.internal.tree.decoder;
 import com.limechain.internal.Node;
 import com.limechain.internal.NodeKind;
 import com.limechain.internal.NodeVariant;
-import com.limechain.internal.TreeEncoder;
 import com.limechain.internal.Trie;
-import io.emeraldpay.polkaj.scale.ScaleCodecReader;
+import com.limechain.internal.TrieEncoder;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -20,13 +19,12 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class TreeDecoderTest {
+public class TrieDecoderTest {
     @Test
     public void headerDecodingExceptionTest() {
         Exception e = assertThrows(TrieDecoderException.class, () -> {
             byte[] data = new byte[]{};
-            ScaleCodecReader reader = new ScaleCodecReader(data);
-            TreeDecoder.decode(reader);
+            TrieDecoder.decode(data);
         });
         assertTrue(e.getMessage().contains("Could not decode header"));
     }
@@ -35,8 +33,7 @@ public class TreeDecoderTest {
     public void variantExceptionTest() {
         Exception e = assertThrows(TrieDecoderException.class, () -> {
             byte[] data = new byte[]{0};
-            ScaleCodecReader reader = new ScaleCodecReader(data);
-            TreeDecoder.decode(reader);
+            TrieDecoder.decode(data);
         });
         assertTrue(e.getMessage().contains("Node variant is unknown"));
     }
@@ -45,8 +42,7 @@ public class TreeDecoderTest {
     public void decodeLeafExceptionTest() {
         Exception e = assertThrows(TrieDecoderException.class, () -> {
             byte[] data = new byte[]{(byte) ((byte) NodeVariant.LEAF.bits | 63)};
-            ScaleCodecReader reader = new ScaleCodecReader(data);
-            TreeDecoder.decode(reader);
+            TrieDecoder.decode(data);
         });
         assertTrue(e.getMessage().contains("Could not decode header"));
     }
@@ -64,8 +60,7 @@ public class TreeDecoderTest {
         writer.writeAsList(expectedStorageValue);
 
         byte[] data = ((ByteArrayOutputStream) out).toByteArray();
-        ScaleCodecReader reader = new ScaleCodecReader(data);
-        Node node = TreeDecoder.decode(reader);
+        Node node = TrieDecoder.decode(data);
 
         assertArrayEquals(expectedPartialKey, node.getPartialKey());
         assertArrayEquals(expectedStorageValue, node.getStorageValue());
@@ -75,8 +70,7 @@ public class TreeDecoderTest {
     public void decodeBranchExceptionTest() {
         Exception e = assertThrows(TrieDecoderException.class, () -> {
             byte[] data = new byte[]{(byte) (NodeVariant.BRANCH.bits | 63)};
-            ScaleCodecReader reader = new ScaleCodecReader(data);
-            TreeDecoder.decode(reader);
+            TrieDecoder.decode(data);
         });
         assertTrue(e.getMessage().contains("Could not decode header"));
     }
@@ -87,8 +81,7 @@ public class TreeDecoderTest {
 
         byte[] data = new byte[]{(byte) (NodeVariant.BRANCH.bits | 1), 9, 0, 0};
 
-        ScaleCodecReader reader = new ScaleCodecReader(data);
-        Node node = TreeDecoder.decode(reader);
+        Node node = TrieDecoder.decode(data);
 
         Assertions.assertEquals(NodeKind.Branch, node.getKind());
         assertArrayEquals(expectedPartialKey, node.getPartialKey());
@@ -114,8 +107,7 @@ public class TreeDecoderTest {
         writer.writeAsList(childHash);
 
         byte[] data = ((ByteArrayOutputStream) out).toByteArray();
-        ScaleCodecReader reader = new ScaleCodecReader(data);
-        Node node = TreeDecoder.decode(reader);
+        Node node = TrieDecoder.decode(data);
 
         assertEquals(node.getKind(), NodeKind.Branch);
         assertArrayEquals(expectedPartialKey, node.getPartialKey());
@@ -127,7 +119,7 @@ public class TreeDecoderTest {
     public void decodeBranchWithInlinedBranchAndLeafTest() throws Exception {
         var node = new Node() {{
             this.setPartialKey(new byte[]{1});
-            this.setStorageValue(new byte[]{2});
+            this.setStorageValue(new byte[]{1});
             this.setChildrenAt(new Node() {{
                 this.setPartialKey(new byte[]{2});
                 this.setStorageValue(new byte[]{2});
@@ -143,12 +135,17 @@ public class TreeDecoderTest {
             }}, 1);
         }};
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-        TreeEncoder.encode(node, buffer);
+        TrieEncoder.encode(node, buffer);
 
-        ScaleCodecReader reader = new ScaleCodecReader(buffer.toByteArray());
-        Node decodedNode = TreeDecoder.decode(reader);
+        Node decodedNode = TrieDecoder.decode(buffer.toByteArray());
         assertEquals(decodedNode.getKind(), NodeKind.Branch);
         assertArrayEquals(new byte[]{1}, decodedNode.getPartialKey());
-        assertArrayEquals(new byte[]{2}, decodedNode.getStorageValue());
+        assertArrayEquals(new byte[]{1}, decodedNode.getStorageValue());
+        assertArrayEquals(new byte[]{2}, decodedNode.getChildren()[0].getPartialKey());
+        assertArrayEquals(new byte[]{2}, decodedNode.getChildren()[0].getStorageValue());
+        assertArrayEquals(new byte[]{3}, decodedNode.getChildren()[1].getPartialKey());
+        assertArrayEquals(new byte[]{3}, decodedNode.getChildren()[1].getStorageValue());
+        assertArrayEquals(new byte[]{4}, decodedNode.getChildren()[1].getChildren()[0].getPartialKey());
+        assertArrayEquals(new byte[]{4}, decodedNode.getChildren()[1].getChildren()[0].getStorageValue());
     }
 }

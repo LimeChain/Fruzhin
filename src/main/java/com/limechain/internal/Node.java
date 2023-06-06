@@ -22,7 +22,7 @@ public class Node {
     private boolean dirty;
     private byte[] merkleValue;
     private int descendants;
-    
+
     public NodeKind getKind() {
         if (this.getChildren() != null) {
             return NodeKind.Branch;
@@ -83,7 +83,7 @@ public class Node {
     private Pair<byte[], byte[]> encodeAndHash() {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         try {
-            TreeEncoder.encode(this, out);
+            TrieEncoder.encode(this, out);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

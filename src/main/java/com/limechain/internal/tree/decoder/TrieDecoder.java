@@ -10,8 +10,9 @@ import static com.limechain.internal.tree.decoder.HeaderDecoder.decodeHeader;
 import static com.limechain.internal.tree.decoder.LeafDecoder.decodeLeaf;
 
 @Log
-public class TreeDecoder {
-    public static Node decode(ScaleCodecReader reader) throws TrieDecoderException {
+public class TrieDecoder {
+    public static Node decode(byte[] encoded) throws TrieDecoderException {
+        ScaleCodecReader reader = new ScaleCodecReader(encoded);
         HeaderDecoder decodeHeaderResult = decodeHeader(reader);
         int variant = decodeHeaderResult.getVariantBits() & 0xff;
         int partialKeyLength = decodeHeaderResult.partialKeyLengthHeader;
