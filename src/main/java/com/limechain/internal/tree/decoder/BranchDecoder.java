@@ -50,7 +50,7 @@ public class BranchDecoder {
                 throw new TrieDecoderException("Could not decode child hash: " + e.getMessage());
             }
             Node child = new Node();
-            child.setMerkleValue(Trie.getMerkleValueRoot(hash));
+            child.setMerkleValue(hash);
             if (hash.length < Hash256.SIZE_BYTES) {
                 ScaleCodecReader inlinedChildReader = new ScaleCodecReader(hash);
                 child = decode(inlinedChildReader);

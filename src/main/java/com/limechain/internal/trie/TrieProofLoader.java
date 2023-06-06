@@ -26,6 +26,7 @@ public class TrieProofLoader {
 
             byte[] merkleValue = child.getMerkleValue();
             String merkleValueKey = HexUtils.toHexString(merkleValue);
+
             boolean keyExists = digestToEncoding.containsKey(merkleValueKey);
             if (!keyExists) {
                 boolean inlinedChild = child.getStorageValueLength() > 0 || child.hasChild();
@@ -47,7 +48,7 @@ public class TrieProofLoader {
                 continue;
             }
 
-            byte[] encoding = digestToEncoding.get(new String(merkleValue));
+            byte[] encoding = digestToEncoding.get(merkleValueKey);
             Node decodedChild = TreeDecoder.decode(new ScaleCodecReader(encoding));
             if (decodedChild == null) {
                 throw new RuntimeException("Decoding child node for hash digest: " + HexUtils.toHexString(merkleValue));

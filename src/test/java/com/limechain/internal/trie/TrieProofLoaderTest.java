@@ -4,6 +4,7 @@ import com.limechain.internal.Node;
 import com.limechain.internal.TreeEncoder;
 import com.limechain.internal.tree.decoder.TrieDecoderException;
 import com.limechain.utils.HashUtils;
+import org.apache.tomcat.util.buf.HexUtils;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -78,7 +79,7 @@ public class TrieProofLoaderTest {
         }};
         TreeEncoder.encode(nodeToEncode, encodedNode);
         Map<String, byte[]> digestToEncoding = new HashMap<>() {{
-            put(new String(new byte[]{2}), encodedNode.toByteArray());
+            put(HexUtils.toHexString(new byte[]{2}), encodedNode.toByteArray());
         }};
 
         Node expectedNode = new Node() {{
@@ -122,7 +123,7 @@ public class TrieProofLoaderTest {
         }};
         TreeEncoder.encode(nodeToEncode, encodedNode);
         Map<String, byte[]> digestToEncoding = new HashMap<>() {{
-            put(new String(new byte[]{2}), encodedNode.toByteArray());
+            put(HexUtils.toHexString(new byte[]{2}), encodedNode.toByteArray());
         }};
 
         Node expectedNode = new Node() {{
@@ -169,7 +170,7 @@ public class TrieProofLoaderTest {
         }};
         TreeEncoder.encode(nodeToEncode, encodedNode);
         Map<String, byte[]> digestToEncoding = new HashMap<>() {{
-            put(new String(new byte[]{2}), encodedNode.toByteArray());
+            put(HexUtils.toHexString(new byte[]{2}), encodedNode.toByteArray());
         }};
 
         Node expectedNode = new Node() {{
@@ -183,14 +184,13 @@ public class TrieProofLoaderTest {
                         this.setStorageValue(new byte[]{1});
                         this.setDirty(true);
                         this.setDescendants(1);
-                        this.setChildren(new Node[]{
+                        this.setChildren(Helper.padRightChildren(new Node[]{
                                 new Node() {{
                                     this.setPartialKey(new byte[]{4});
                                     this.setStorageValue(new byte[]{2});
                                     this.setDirty(true);
                                 }}
-
-                        });
+                        }));
                     }}
             }));
         }};
@@ -214,21 +214,9 @@ public class TrieProofLoaderTest {
                 }));
             }};
             Map<String, byte[]> digestToEncoding = new HashMap<>() {{
-                put(new String(new byte[]{2}), Helper.getBadNodeEncoding());
+                put(HexUtils.toHexString(new byte[]{2}), Helper.getBadNodeEncoding());
             }};
 
-            Node expectedNode = new Node() {{
-                this.setPartialKey(new byte[]{1});
-                this.setStorageValue(new byte[]{2});
-                this.setDescendants(1);
-                this.setDirty(true);
-                this.setChildren(Helper.padRightChildren(new Node[]{
-                        new Node() {{
-                            this.setMerkleValue(new byte[]{2});
-                        }}
-                }));
-            }};
-            // Catch exception here
             TrieProofLoader.loadProof(digestToEncoding, node);
         });
         assertTrue(e.getMessage().contains("Node variant is unknown for header byte 00000001"));
@@ -261,8 +249,8 @@ public class TrieProofLoaderTest {
         TreeEncoder.encode(nodeToEncode, encodedNode);
         TreeEncoder.encode(leafBLarge, encodedLeaf);
         Map<String, byte[]> digestToEncoding = new HashMap<>() {{
-            put(new String(new byte[]{2}), encodedNode.toByteArray());
-            put(HashUtils.hashWithBlake2b(encodedLeaf.toByteArray()).toString(), encodedLeaf.toByteArray());
+            put(HexUtils.toHexString(new byte[]{2}), encodedNode.toByteArray());
+            put(HexUtils.toHexString(leafBLarge.calculateMerkleValue()), encodedLeaf.toByteArray());
         }};
 
         Node expectedNode = new Node() {{
@@ -293,56 +281,59 @@ public class TrieProofLoaderTest {
 
     @Test
     public void loadGrandChildExceptionTest() throws Exception {
-        Node node = new Node() {{
-            this.setPartialKey(new byte[]{1});
-            this.setStorageValue(new byte[]{1});
-            this.setDescendants(1);
-            this.setDirty(true);
-            this.setChildren(Helper.padRightChildren(new Node[]{
-                    new Node() {{
-                        this.setMerkleValue(new byte[]{2});
-                    }}
-            }));
-        }};
-        ByteArrayOutputStream encodedNode = new ByteArrayOutputStream();
-        ByteArrayOutputStream encodedLeaf = new ByteArrayOutputStream();
-        Node nodeToEncode = new Node() {{
-            this.setPartialKey(new byte[]{2});
-            this.setStorageValue(new byte[]{2});
-            this.setDescendants(1);
-            this.setDirty(true);
-            this.setChildren(Helper.padRightChildren(new Node[]{
-                    leafBLarge
-            }));
-        }};
-        TreeEncoder.encode(nodeToEncode, encodedNode);
-        TreeEncoder.encode(leafBLarge, encodedLeaf);
-        String encodedLeafKey =  new String(HashUtils.hashWithBlake2b(encodedLeaf.toByteArray()));
-        Map<String, byte[]> digestToEncoding = new HashMap<>() {{
-            put(new String(new byte[]{2}), encodedNode.toByteArray());
-            put(encodedLeafKey, Helper.getBadNodeEncoding());
-        }};
-        Node expectedNode = new Node() {{
-            this.setPartialKey(new byte[]{1});
-            this.setStorageValue(new byte[]{1});
-            this.setDescendants(1);
-            this.setDirty(true);
-            this.setChildren(Helper.padRightChildren(new Node[]{
-                    new Node() {{
-                        this.setPartialKey(new byte[]{2});
-                        this.setStorageValue(new byte[]{2});
-                        this.setDescendants(1);
-                        this.setDirty(true);
-                        this.setChildren(Helper.padRightChildren(new Node[]{
-                                new Node() {{
-                                    this.setMerkleValue(HashUtils.hashWithBlake2b(encodedLeaf.toByteArray()));
-                                }}
-                        }));
-                    }}
-            }));
-        }};
+        Exception e = assertThrows(TrieDecoderException.class, () -> {
 
-        TrieProofLoader.loadProof(digestToEncoding, node);
-        assertEquals(expectedNode.toString(), node.toString());
+            Node node = new Node() {{
+                this.setPartialKey(new byte[]{1});
+                this.setStorageValue(new byte[]{1});
+                this.setDescendants(1);
+                this.setDirty(true);
+                this.setChildren(Helper.padRightChildren(new Node[]{
+                        new Node() {{
+                            this.setMerkleValue(new byte[]{2});
+                        }}
+                }));
+            }};
+            ByteArrayOutputStream encodedNode = new ByteArrayOutputStream();
+            ByteArrayOutputStream encodedLeaf = new ByteArrayOutputStream();
+            Node nodeToEncode = new Node() {{
+                this.setPartialKey(new byte[]{2});
+                this.setStorageValue(new byte[]{2});
+                this.setDescendants(1);
+                this.setDirty(true);
+                this.setChildren(Helper.padRightChildren(new Node[]{
+                        leafBLarge
+                }));
+            }};
+            TreeEncoder.encode(nodeToEncode, encodedNode);
+            TreeEncoder.encode(leafBLarge, encodedLeaf);
+            String encodedLeafKey = HexUtils.toHexString(HashUtils.hashWithBlake2b(encodedLeaf.toByteArray()));
+            Map<String, byte[]> digestToEncoding = new HashMap<>() {{
+                put(HexUtils.toHexString(new byte[]{2}), encodedNode.toByteArray());
+                put(encodedLeafKey, Helper.getBadNodeEncoding());
+            }};
+            Node expectedNode = new Node() {{
+                this.setPartialKey(new byte[]{1});
+                this.setStorageValue(new byte[]{1});
+                this.setDescendants(1);
+                this.setDirty(true);
+                this.setChildren(Helper.padRightChildren(new Node[]{
+                        new Node() {{
+                            this.setPartialKey(new byte[]{2});
+                            this.setStorageValue(new byte[]{2});
+                            this.setDescendants(1);
+                            this.setDirty(true);
+                            this.setChildren(Helper.padRightChildren(new Node[]{
+                                    new Node() {{
+                                        this.setMerkleValue(HashUtils.hashWithBlake2b(encodedLeaf.toByteArray()));
+                                    }}
+                            }));
+                        }}
+                }));
+            }};
+
+            TrieProofLoader.loadProof(digestToEncoding, node);
+        });
+        assertTrue(e.getMessage().contains("Node variant is unknown for header byte 00000001"));
     }
 }
