@@ -1,9 +1,9 @@
 package com.limechain.internal;
 
 public enum NodeVariant {
-    LEAF(0x40),
-    BRANCH(0x80),
-    BRANCH_WITH_VALUE(0xc0);
+    LEAF(64),
+    BRANCH(128),
+    BRANCH_WITH_VALUE(192);
 
     public final int bits;
     public final int mask;

@@ -1,7 +1,12 @@
 package com.limechain.internal;
 
 public class Nibbles {
-    //TODO: Add docs
+    /**
+     * Converts a key in nibbles format to LE format. The key is assumed to be in nibbles format.
+     *
+     * @param nibbles key in nibbles format
+     * @return key in LE format
+     */
     public static byte[] nibblesToKeyLE(byte[] nibbles) {
         if (nibbles.length % 2 == 0) {
             byte[] keyLE = new byte[nibbles.length / 2];
@@ -20,7 +25,12 @@ public class Nibbles {
         return keyLE;
     }
 
-    //TODO: Add docs
+    /**
+     * Converts a key in LE format to nibbles. The key is assumed to be in LE format.
+     *
+     * @param in key in LE format
+     * @return nibbles representation of the key
+     */
     public static byte[] keyLEToNibbles(byte[] in) {
         if (in.length == 0) {
             return new byte[]{};
@@ -31,8 +41,8 @@ public class Nibbles {
         int l = in.length * 2;
         byte[] nibbles = new byte[l];
         for (int i = 0; i < in.length; i++) {
-            nibbles[2 * i] = (byte) (in[i] / 16);
-            nibbles[2 * i + 1] = (byte) (in[i] % 16);
+            nibbles[2 * i] = (byte) (in[i] >> 4 & 0xf);
+            nibbles[2 * i + 1] = (byte) (in[i] & 0xf);
         }
 
         return nibbles;

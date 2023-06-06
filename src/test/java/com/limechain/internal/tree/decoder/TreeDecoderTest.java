@@ -7,7 +7,6 @@ import com.limechain.internal.TreeEncoder;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -119,11 +118,11 @@ public class TreeDecoderTest {
         assertArrayEquals(Node.getMerkleValueRoot(childHash), node.getChildren()[10].getMerkleValue());
     }
 
-    @Disabled("Children encoding is not working at the moment")
     @Test
     public void decodeBranchWithInlinedBranchAndLeafTest() throws Exception {
         var node = new Node() {{
             this.setPartialKey(new byte[]{1});
+            this.setStorageValue(new byte[]{2});
             this.setChildrenAt(new Node() {{
                 this.setPartialKey(new byte[]{2});
                 this.setStorageValue(new byte[]{2});

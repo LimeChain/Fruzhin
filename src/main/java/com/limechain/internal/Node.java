@@ -25,10 +25,12 @@ public class Node {
     private byte[] merkleValue;
     private int descendants;
 
-    private static byte[] getBlake2bHash(byte[] value) {
-        return HashUtils.hashWithBlake2b(value);
-    }
-
+    /**
+     * Returns the merkle value of the node
+     *
+     * @param encoding - the encoded node
+     * @return the merkle value of the node
+     */
     public static byte[] getMerkleValueRoot(byte[] encoding) {
         MessageDigest md;
         try {
@@ -48,11 +50,14 @@ public class Node {
     }
 
     public void setChildrenAt(Node child, int position) {
-        children[position] = child;
+        if (this.children == null) {
+            this.children = new Node[CHILDREN_CAPACITY];
+        }
+        this.children[position] = child;
     }
 
     public boolean hasChild() {
-        for (Node child : children) {
+        for (Node child : this.children) {
             if (child != null) {
                 return true;
             }
@@ -62,8 +67,8 @@ public class Node {
 
     public int getChildrenBitmap() {
         int bitmap = 0;
-        for (int i = 0; i < children.length; i++) {
-            if (children[i] != null) {
+        for (int i = 0; i < this.children.length; i++) {
+            if (this.children[i] != null) {
                 bitmap |= 1 << i;
             }
         }
@@ -72,7 +77,7 @@ public class Node {
 
     public int getChildrenCount() {
         int count = 0;
-        for (Node child : children) {
+        for (Node child : this.children) {
             if (child != null) {
                 count++;
             }
@@ -88,6 +93,11 @@ public class Node {
         return this.encodeAndHash().getValue1();
     }
 
+    /**
+     * Encodes the node and calculates the merkle value
+     *
+     * @return Pair of encoded node and merkle value
+     */
     private Pair<byte[], byte[]> encodeAndHash() {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         try {
