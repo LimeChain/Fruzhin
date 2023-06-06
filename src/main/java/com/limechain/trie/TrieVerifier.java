@@ -1,17 +1,13 @@
-package com.limechain.internal.trie;
+package com.limechain.trie;
 
-import com.limechain.internal.Node;
-import com.limechain.internal.Trie;
-import com.limechain.internal.tree.decoder.TrieDecoder;
-import com.limechain.internal.tree.decoder.TrieDecoderException;
+import com.limechain.trie.decoder.TrieDecoder;
+import com.limechain.trie.decoder.TrieDecoderException;
 import lombok.extern.java.Log;
 import org.apache.tomcat.util.buf.HexUtils;
 import org.bouncycastle.util.Arrays;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import static com.limechain.internal.trie.TrieProofLoader.loadProof;
 
 @Log
 public class TrieVerifier {
@@ -42,7 +38,7 @@ public class TrieVerifier {
             throw new IllegalStateException("Root node not found in proof for root hash: " + HexUtils.toHexString(rootHash));
         }
 
-        loadProof(digestToEncoding, root);
+        TrieProofLoader.loadProof(digestToEncoding, root);
 
         return Trie.newTrie(root);
     }

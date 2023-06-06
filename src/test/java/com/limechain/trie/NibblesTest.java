@@ -1,4 +1,4 @@
-package com.limechain.internal;
+package com.limechain.trie;
 
 import org.junit.jupiter.api.Test;
 

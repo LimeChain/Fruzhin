@@ -1,6 +1,6 @@
-package com.limechain.internal.tree.decoder;
+package com.limechain.trie.decoder;
 
-import com.limechain.internal.Node;
+import com.limechain.trie.Node;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import org.junit.jupiter.api.Test;
 
@@ -8,13 +8,13 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class LeafDecoderTest {
+public class TrieLeafDecoderTest {
     @Test
     public void decodeKeyExceptionTest() {
         Exception e = assertThrows(TrieDecoderException.class, () -> {
             byte[] data = new byte[]{};
             ScaleCodecReader reader = new ScaleCodecReader(data);
-            LeafDecoder.decodeLeaf(reader, 1);
+            TrieLeafDecoder.decode(reader, 1);
         });
         assertTrue(e.getMessage().contains("Could not decode partial key"));
     }
@@ -24,7 +24,7 @@ public class LeafDecoderTest {
         Exception e = assertThrows(TrieDecoderException.class, () -> {
             byte[] data = new byte[]{4, 9, 127, 127};
             ScaleCodecReader reader = new ScaleCodecReader(data);
-            LeafDecoder.decodeLeaf(reader, 1);
+            TrieLeafDecoder.decode(reader, 1);
         });
         assertTrue(e.getMessage().contains("Could not decode storage value"));
     }
@@ -34,7 +34,7 @@ public class LeafDecoderTest {
         Exception e = assertThrows(TrieDecoderException.class, () -> {
             byte[] data = new byte[]{4, 9};
             ScaleCodecReader reader = new ScaleCodecReader(data);
-            LeafDecoder.decodeLeaf(reader, 1);
+            TrieLeafDecoder.decode(reader, 1);
         });
         assertTrue(e.getMessage().contains("Could not decode storage value"));
     }
@@ -45,7 +45,7 @@ public class LeafDecoderTest {
         byte[] expectedStorage = new byte[]{};
 
         ScaleCodecReader reader = new ScaleCodecReader(data);
-        Node leaf = LeafDecoder.decodeLeaf(reader, 1);
+        Node leaf = TrieLeafDecoder.decode(reader, 1);
         assertArrayEquals(expectedStorage, leaf.getStorageValue());
     }
 
@@ -55,7 +55,7 @@ public class LeafDecoderTest {
         byte[] expectedStorage = new byte[]{1, 2, 3, 4, 5};
 
         ScaleCodecReader reader = new ScaleCodecReader(data);
-        Node leaf = LeafDecoder.decodeLeaf(reader, 1);
+        Node leaf = TrieLeafDecoder.decode(reader, 1);
         assertArrayEquals(expectedStorage, leaf.getStorageValue());
     }
 

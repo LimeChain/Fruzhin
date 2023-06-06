@@ -1,20 +1,20 @@
-package com.limechain.internal.tree.decoder;
+package com.limechain.trie.decoder;
 
-import com.limechain.internal.NodeVariant;
+import com.limechain.trie.NodeVariant;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import org.junit.jupiter.api.Test;
 
-import static com.limechain.internal.tree.decoder.BranchDecoder.decodeBranch;
+import static com.limechain.trie.decoder.TrieBranchDecoder.decode;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class BranchDecoderTest {
+public class TrieBranchDecoderTest {
     @Test
     public void decodeEmptyBranchExceptionTest() {
         Exception e = assertThrows(TrieDecoderException.class, () -> {
             byte[] data = new byte[]{};
             ScaleCodecReader reader = new ScaleCodecReader(data);
-            decodeBranch(reader, (byte) NodeVariant.BRANCH.bits, 1);
+            decode(reader, (byte) NodeVariant.BRANCH.bits, 1);
         });
         assertTrue(e.getMessage().contains("Could not decode partial key"));
     }
@@ -24,7 +24,7 @@ public class BranchDecoderTest {
         Exception e = assertThrows(TrieDecoderException.class, () -> {
             byte[] data = new byte[]{9};
             ScaleCodecReader reader = new ScaleCodecReader(data);
-            decodeBranch(reader, (byte) NodeVariant.BRANCH.bits, 1);
+            decode(reader, (byte) NodeVariant.BRANCH.bits, 1);
         });
         assertTrue(e.getMessage().contains("Could not decode children bitmap"));
     }
@@ -34,7 +34,7 @@ public class BranchDecoderTest {
         Exception e = assertThrows(TrieDecoderException.class, () -> {
             byte[] data = new byte[]{9, 0, 4};
             ScaleCodecReader reader = new ScaleCodecReader(data);
-            decodeBranch(reader, (byte) NodeVariant.BRANCH.bits, 1);
+            decode(reader, (byte) NodeVariant.BRANCH.bits, 1);
         });
         assertTrue(e.getMessage().contains("Could not decode child hash"));
     }
@@ -44,7 +44,7 @@ public class BranchDecoderTest {
         Exception e = assertThrows(TrieDecoderException.class, () -> {
             byte[] data = new byte[]{9, 0, 4};
             ScaleCodecReader reader = new ScaleCodecReader(data);
-            decodeBranch(reader, (byte) NodeVariant.BRANCH_WITH_VALUE.bits, 1);
+            decode(reader, (byte) NodeVariant.BRANCH_WITH_VALUE.bits, 1);
         });
         assertTrue(e.getMessage().contains("Could not decode storage value"));
     }
@@ -54,7 +54,7 @@ public class BranchDecoderTest {
         Exception e = assertThrows(TrieDecoderException.class, () -> {
             byte[] data = new byte[]{9, 0b0000_0001, 0b0000_0000, 4, 1, 4, 0};
             ScaleCodecReader reader = new ScaleCodecReader(data);
-            decodeBranch(reader, (byte) NodeVariant.BRANCH_WITH_VALUE.bits, 1);
+            decode(reader, (byte) NodeVariant.BRANCH_WITH_VALUE.bits, 1);
         });
         assertTrue(e.getMessage().contains("Node variant is unknown"));
     }

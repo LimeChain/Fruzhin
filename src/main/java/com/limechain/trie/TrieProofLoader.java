@@ -1,9 +1,7 @@
-package com.limechain.internal.trie;
+package com.limechain.trie;
 
-import com.limechain.internal.Node;
-import com.limechain.internal.NodeKind;
-import com.limechain.internal.tree.decoder.TrieDecoder;
-import com.limechain.internal.tree.decoder.TrieDecoderException;
+import com.limechain.trie.decoder.TrieDecoder;
+import com.limechain.trie.decoder.TrieDecoderException;
 import org.apache.tomcat.util.buf.HexUtils;
 
 import java.util.Map;

@@ -1,10 +1,10 @@
-package com.limechain.internal.tree.decoder;
+package com.limechain.trie.decoder;
 
-import com.limechain.internal.Node;
-import com.limechain.internal.NodeKind;
-import com.limechain.internal.NodeVariant;
-import com.limechain.internal.Trie;
-import com.limechain.internal.TrieEncoder;
+import com.limechain.trie.Node;
+import com.limechain.trie.NodeKind;
+import com.limechain.trie.NodeVariant;
+import com.limechain.trie.Trie;
+import com.limechain.trie.еncoder.TrieEncoder;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;

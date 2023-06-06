@@ -1,25 +1,24 @@
-package com.limechain.internal.tree.decoder;
+package com.limechain.trie.decoder;
 
-import com.limechain.internal.Node;
-import com.limechain.internal.NodeVariant;
+import com.limechain.trie.Node;
+import com.limechain.trie.NodeVariant;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.types.Hash256;
 
-public class BranchDecoder {
-    public static Node decodeBranch(ScaleCodecReader reader, byte variantByte, int partialKeyLength)
+public class TrieBranchDecoder {
+    public static Node decode(ScaleCodecReader reader, byte variantByte, int partialKeyLength)
             throws TrieDecoderException {
         Node node = new Node();
         node.setChildren(new Node[Node.CHILDREN_CAPACITY]);
-
-        node.setPartialKey(HeaderDecoder.decodeKey(reader, partialKeyLength));
+        node.setPartialKey(TrieKeyDecoder.decodeKey(reader, partialKeyLength));
 
         byte[] childrenBitmap;
-
         try {
             childrenBitmap = reader.readByteArray(2);
         } catch (IndexOutOfBoundsException error) {
             throw new TrieDecoderException("Could not decode children bitmap: " + error.getMessage());
         }
+
         int variant = variantByte & 0xff;
         if (variant == NodeVariant.BRANCH_WITH_VALUE.bits) {
             try {
@@ -30,7 +29,6 @@ public class BranchDecoder {
         }
 
         decodeChildren(node, childrenBitmap, reader);
-
         return node;
     }
 

@@ -1,8 +1,7 @@
-package com.limechain.internal.trie;
+package com.limechain.trie;
 
-import com.limechain.internal.Node;
-import com.limechain.internal.TrieEncoder;
-import com.limechain.internal.tree.decoder.TrieDecoderException;
+import com.limechain.trie.decoder.TrieDecoderException;
+import com.limechain.trie.еncoder.TrieEncoder;
 import com.limechain.utils.HashUtils;
 import org.apache.tomcat.util.buf.HexUtils;
 import org.junit.jupiter.api.Test;
@@ -11,7 +10,6 @@ import java.io.ByteArrayOutputStream;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.limechain.internal.trie.Helper.leafBLarge;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -243,14 +241,14 @@ public class TrieProofLoaderTest {
             this.setDescendants(1);
             this.setDirty(true);
             this.setChildren(Helper.padRightChildren(new Node[]{
-                    leafBLarge
+                    Helper.leafBLarge
             }));
         }};
         TrieEncoder.encode(nodeToEncode, encodedNode);
-        TrieEncoder.encode(leafBLarge, encodedLeaf);
+        TrieEncoder.encode(Helper.leafBLarge, encodedLeaf);
         Map<String, byte[]> digestToEncoding = new HashMap<>() {{
             put(HexUtils.toHexString(new byte[]{2}), encodedNode.toByteArray());
-            put(HexUtils.toHexString(leafBLarge.calculateMerkleValue()), encodedLeaf.toByteArray());
+            put(HexUtils.toHexString(Helper.leafBLarge.calculateMerkleValue()), encodedLeaf.toByteArray());
         }};
 
         Node expectedNode = new Node() {{
@@ -266,8 +264,8 @@ public class TrieProofLoaderTest {
                         this.setDirty(true);
                         this.setChildren(Helper.padRightChildren(new Node[]{
                                 new Node() {{
-                                    this.setPartialKey(leafBLarge.getPartialKey());
-                                    this.setStorageValue(leafBLarge.getStorageValue());
+                                    this.setPartialKey(Helper.leafBLarge.getPartialKey());
+                                    this.setStorageValue(Helper.leafBLarge.getStorageValue());
                                     this.setDirty(true);
                                 }}
                         }));
@@ -302,11 +300,11 @@ public class TrieProofLoaderTest {
                 this.setDescendants(1);
                 this.setDirty(true);
                 this.setChildren(Helper.padRightChildren(new Node[]{
-                        leafBLarge
+                        Helper.leafBLarge
                 }));
             }};
             TrieEncoder.encode(nodeToEncode, encodedNode);
-            TrieEncoder.encode(leafBLarge, encodedLeaf);
+            TrieEncoder.encode(Helper.leafBLarge, encodedLeaf);
             String encodedLeafKey = HexUtils.toHexString(HashUtils.hashWithBlake2b(encodedLeaf.toByteArray()));
             Map<String, byte[]> digestToEncoding = new HashMap<>() {{
                 put(HexUtils.toHexString(new byte[]{2}), encodedNode.toByteArray());

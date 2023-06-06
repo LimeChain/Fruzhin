@@ -1,11 +1,14 @@
-package com.limechain.internal;
+package com.limechain.trie.encoder;
 
+import com.limechain.trie.Node;
+import com.limechain.trie.NodeVariant;
+import com.limechain.trie.еncoder.TrieEncoder;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 
-import static com.limechain.internal.trie.TrieVerifier.MAX_PARTIAL_KEY_LENGTH;
+import static com.limechain.trie.TrieVerifier.MAX_PARTIAL_KEY_LENGTH;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.atLeast;

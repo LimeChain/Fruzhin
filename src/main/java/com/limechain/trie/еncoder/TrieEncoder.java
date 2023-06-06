@@ -1,11 +1,15 @@
-package com.limechain.internal;
+package com.limechain.trie.еncoder;
 
+import com.limechain.trie.Nibbles;
+import com.limechain.trie.Node;
+import com.limechain.trie.NodeKind;
+import com.limechain.trie.NodeVariant;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 
 import java.io.IOException;
 import java.io.OutputStream;
 
-import static com.limechain.internal.trie.TrieVerifier.MAX_PARTIAL_KEY_LENGTH;
+import static com.limechain.trie.TrieVerifier.MAX_PARTIAL_KEY_LENGTH;
 
 public class TrieEncoder {
     public static void encode(Node node, OutputStream buffer) throws Exception {
@@ -35,7 +39,7 @@ public class TrieEncoder {
 
     }
 
-    public static void encodeHeader(Node node, OutputStream writer) throws Exception {
+    public static void encodeHeader(Node node, OutputStream buffer) throws Exception {
         int partialKeyLength = node.getPartialKey().length;
         if (partialKeyLength > MAX_PARTIAL_KEY_LENGTH) {
             throw new IllegalStateException("Partial key length is too big: " + partialKeyLength);
@@ -55,7 +59,7 @@ public class TrieEncoder {
         if (partialKeyLength < partialKeyLengthMask) {
             // Partial key length fits in header byte
             headerByte |= partialKeyLength;
-            writer.write(headerByte);
+            buffer.write(headerByte);
             return;
         }
 
@@ -63,7 +67,7 @@ public class TrieEncoder {
         // Partial key length does not fit in header byte only
         headerByte |= partialKeyLengthMask;
         partialKeyLength -= partialKeyLengthMask;
-        writer.write(headerByte);
+        buffer.write(headerByte);
 
         while (true) {
             headerByte = 255;
@@ -71,7 +75,7 @@ public class TrieEncoder {
                 headerByte = partialKeyLength;
             }
 
-            writer.write(headerByte);
+            buffer.write(headerByte);
             partialKeyLength -= headerByte;
 
             if (headerByte < 255) {
@@ -95,6 +99,5 @@ public class TrieEncoder {
         try (ScaleCodecWriter writer = new ScaleCodecWriter(buffer)) {
             writer.writeAsList(merkleValue);
         }
-
     }
 }

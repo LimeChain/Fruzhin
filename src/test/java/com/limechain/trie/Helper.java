@@ -1,7 +1,6 @@
-package com.limechain.internal.trie;
+package com.limechain.trie;
 
-import com.limechain.internal.Node;
-import com.limechain.internal.TrieEncoder;
+import com.limechain.trie.еncoder.TrieEncoder;
 import com.limechain.utils.RandomGenerationUtils;
 
 import java.io.ByteArrayOutputStream;

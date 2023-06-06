@@ -1,4 +1,4 @@
-package com.limechain.internal;
+package com.limechain.trie;
 
 public enum NodeKind {
     Leaf,
