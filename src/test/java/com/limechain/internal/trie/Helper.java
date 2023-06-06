@@ -2,12 +2,31 @@ package com.limechain.internal.trie;
 
 import com.limechain.internal.Node;
 import com.limechain.internal.TreeEncoder;
+import com.limechain.utils.RandomGenerationUtils;
 
 import java.io.ByteArrayOutputStream;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class Helper {
+    public static Node leafAShort = new Node() {{
+        this.setPartialKey(new byte[]{1});
+        this.setStorageValue(new byte[]{2});
+        this.setDirty(true);
+    }};
+
+    public static Node leafBLarge = new Node() {{
+        this.setPartialKey(new byte[]{2});
+        this.setStorageValue(RandomGenerationUtils.generateBytes(40));
+        this.setDirty(true);
+    }};
+
+    public static Node leafCLarge = new Node() {{
+        this.setPartialKey(new byte[]{3});
+        this.setStorageValue(RandomGenerationUtils.generateBytes(40));
+        this.setDirty(true);
+    }};
+
     public static Node[] padRightChildren(Node[] children) {
         Node[] paddedSlice = new Node[Node.CHILDREN_CAPACITY];
         System.arraycopy(children, 0, paddedSlice, 0, Math.min(children.length, Node.CHILDREN_CAPACITY));

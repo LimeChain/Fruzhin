@@ -86,7 +86,7 @@ public class TreeEncoder {
                 continue;
             }
 
-            encodeChild(child, buffer);
+             encodeChild(child, buffer);
         }
     }
 

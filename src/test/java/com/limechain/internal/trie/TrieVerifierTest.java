@@ -13,29 +13,13 @@ import java.io.ByteArrayOutputStream;
 import static com.limechain.internal.trie.Helper.assertLongEncoding;
 import static com.limechain.internal.trie.Helper.assertShortEncoding;
 import static com.limechain.internal.trie.Helper.getBadNodeEncoding;
+import static com.limechain.internal.trie.Helper.leafAShort;
+import static com.limechain.internal.trie.Helper.leafBLarge;
+import static com.limechain.internal.trie.Helper.leafCLarge;
 import static com.limechain.internal.trie.Helper.padRightChildren;
 import static org.junit.jupiter.api.Assertions.*;
 
 class TrieVerifierTest {
-    Node leafAShort = new Node() {{
-        this.setPartialKey(new byte[]{1});
-        this.setStorageValue(new byte[]{2});
-        this.setDirty(true);
-    }};
-
-    Node leafBLarge = new Node() {{
-        this.setPartialKey(new byte[]{2});
-        this.setStorageValue(RandomGenerationUtils.generateBytes(40));
-        this.setDirty(true);
-    }};
-
-    Node leafCLarge = new Node() {{
-        this.setPartialKey(new byte[]{3});
-        this.setStorageValue(RandomGenerationUtils.generateBytes(40));
-        this.setDirty(true);
-    }};
-
-
     @Test
     void buildTrieThrowsEmptyProofError() {
         assertThrows(IllegalStateException.class, () -> TrieVerifier.buildTrie(new byte[][]{}, new byte[]{1}));

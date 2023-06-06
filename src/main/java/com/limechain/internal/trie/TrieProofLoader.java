@@ -19,15 +19,16 @@ public class TrieProofLoader {
 
         // Node is a branch
         for (int i = 0; i < Node.CHILDREN_CAPACITY; i++) {
-            Node child = n.getChildren()[i];
+            Node child = n.getChild(i);
             if (child == null) {
                 continue;
             }
 
             byte[] merkleValue = child.getMerkleValue();
-            boolean keyExists = digestToEncoding.containsKey(HexUtils.toHexString(merkleValue));
-            if (keyExists) {
-                boolean inlinedChild = child.getStorageValue().length > 0 || child.hasChild();
+            String merkleValueKey = new String(merkleValue);
+            boolean keyExists = digestToEncoding.containsKey(merkleValueKey);
+            if (!keyExists) {
+                boolean inlinedChild = child.getStorageValueLength() > 0 || child.hasChild();
                 if (inlinedChild) {
                     // The built proof trie is not used with a database, but just in case
                     // it becomes used with a database in the future, we set the dirty flag
@@ -46,7 +47,7 @@ public class TrieProofLoader {
                 continue;
             }
 
-            byte[] encoding = digestToEncoding.get(HexUtils.toHexString(merkleValue));
+            byte[] encoding = digestToEncoding.get(new String(merkleValue));
             Node decodedChild = TreeDecoder.decode(new ScaleCodecReader(encoding));
             if (decodedChild == null) {
                 throw new RuntimeException("Decoding child node for hash digest: " + HexUtils.toHexString(merkleValue));

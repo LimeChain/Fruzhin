@@ -57,7 +57,8 @@ public class Node {
     }
 
     public boolean hasChild() {
-        for (Node child : this.children) {
+        if (children == null) return false;
+        for (Node child : children) {
             if (child != null) {
                 return true;
             }
@@ -120,6 +121,18 @@ public class Node {
         }
         merkleValueBuf.put(HashUtils.hashWithBlake2b(encoding));
         return merkleValueBuf.array();
+    }
+
+    public int getStorageValueLength() {
+        if (this.storageValue == null) {
+            return 0;
+        }
+        return this.storageValue.length;
+    }
+
+    public Node getChild(int pos) {
+        if (this.children == null) return null;
+        else return this.children[pos];
     }
 
     @Override
