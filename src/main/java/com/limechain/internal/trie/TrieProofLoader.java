@@ -25,7 +25,7 @@ public class TrieProofLoader {
             }
 
             byte[] merkleValue = child.getMerkleValue();
-            String merkleValueKey = new String(merkleValue);
+            String merkleValueKey = HexUtils.toHexString(merkleValue);
             boolean keyExists = digestToEncoding.containsKey(merkleValueKey);
             if (!keyExists) {
                 boolean inlinedChild = child.getStorageValueLength() > 0 || child.hasChild();

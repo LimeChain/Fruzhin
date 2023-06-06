@@ -3,9 +3,7 @@ package com.limechain.internal.trie;
 import com.limechain.internal.Node;
 import com.limechain.internal.TreeEncoder;
 import com.limechain.internal.Trie;
-import com.limechain.internal.tree.decoder.TrieDecoderException;
 import com.limechain.utils.HashUtils;
-import com.limechain.utils.RandomGenerationUtils;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -17,7 +15,8 @@ import static com.limechain.internal.trie.Helper.leafAShort;
 import static com.limechain.internal.trie.Helper.leafBLarge;
 import static com.limechain.internal.trie.Helper.leafCLarge;
 import static com.limechain.internal.trie.Helper.padRightChildren;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class TrieVerifierTest {
     @Test
@@ -29,7 +28,7 @@ class TrieVerifierTest {
     void buildTrieThrowsHeaderByteDecodingError() {
         var encodedProofNodes = new byte[][]{getBadNodeEncoding()};
         var rootHash = HashUtils.hashWithBlake2b(getBadNodeEncoding());
-        assertThrows(TrieDecoderException.class, () -> TrieVerifier.buildTrie(encodedProofNodes, rootHash));
+        assertThrows(IllegalStateException.class, () -> TrieVerifier.buildTrie(encodedProofNodes, rootHash));
     }
 
     @Test
@@ -38,7 +37,7 @@ class TrieVerifierTest {
 
         var encodedProofNodes = new byte[][]{getBadNodeEncoding()};
         var rootHash = HashUtils.hashWithBlake2b(getBadNodeEncoding());
-        assertThrows(TrieDecoderException.class, () -> TrieVerifier.buildTrie(encodedProofNodes, rootHash));
+        assertThrows(IllegalStateException.class, () -> TrieVerifier.buildTrie(encodedProofNodes, rootHash));
     }
 
     @Test
@@ -139,6 +138,7 @@ class TrieVerifierTest {
                     new Node() {{
                         this.setPartialKey(leafBLarge.getPartialKey());
                         this.setStorageValue(leafBLarge.getStorageValue());
+                        this.setMerkleValue(leafBLarge.getMerkleValue());
                         this.setDirty(true);
                     }}
             }));

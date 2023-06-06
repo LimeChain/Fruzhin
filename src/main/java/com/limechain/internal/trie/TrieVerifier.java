@@ -28,9 +28,9 @@ public class TrieVerifier {
         Node root = null;
 
         for (byte[] encodedProofNode : encodedProofNodes) {
-            byte[] digest = Node.getMerkleValueRoot(encodedProofNode);
+            byte[] digest = Trie.getMerkleValueRoot(encodedProofNode);
+            // root node already found or the hash doesn't match the root hash.
             if (root != null || !Arrays.areEqual(digest, rootHash)) {
-                // root node already found or the hash doesn't match the root hash.
                 digestToEncoding.put(HexUtils.toHexString(digest), encodedProofNode);
                 continue;
             }

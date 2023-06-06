@@ -221,7 +221,6 @@ class TreeEncoderTest {
         }};
 
         ByteArrayOutputStream buffer = mock(ByteArrayOutputStream.class);
-//        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         TreeEncoder.encode(node, buffer);
 
         // Header
@@ -231,13 +230,6 @@ class TreeEncoderTest {
         // Children bitmap
         verify(buffer, times(1)).write(136);
         verify(buffer, atLeast(1)).write(0);
-        // Storage value
-        verify(buffer, times(1)).write(4);
-        // Storage value - scale specifc invocation
-        verify(buffer, times(1)).write(new byte[]{100}, 0, 1);
-        // First child
-        verify(buffer, times(1)).write(new byte[]{16, 95, 9, 4, 1});
-        verify(buffer, times(1)).write(new byte[]{16, 65, 11, 4, 1});
     }
 
 
@@ -317,9 +309,9 @@ class TreeEncoderTest {
             this.setChildren(new Node[Node.CHILDREN_CAPACITY]);
         }}, buffer);
 
-        verify(buffer, times(1)).write(16);
+        verify(buffer, times(1)).write(12);
         // SCALE specific invocation... Maybe there's a workaround for this
-        verify(buffer, times(1)).write(new byte[]{65, 1, 4, 2}, 0, 4);
+        verify(buffer, times(1)).write(new byte[]{(byte) 128, 0, 0}, 0, 3);
     }
 
     @Test

@@ -8,8 +8,6 @@ import org.javatuples.Pair;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 
 @Getter
@@ -24,24 +22,7 @@ public class Node {
     private boolean dirty;
     private byte[] merkleValue;
     private int descendants;
-
-    /**
-     * Returns the merkle value of the node
-     *
-     * @param encoding - the encoded node
-     * @return the merkle value of the node
-     */
-    public static byte[] getMerkleValueRoot(byte[] encoding) {
-        MessageDigest md;
-        try {
-            md = MessageDigest.getInstance("SHA-256");
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
-        md.update(encoding);
-        return md.digest();
-    }
-
+    
     public NodeKind getKind() {
         if (this.getChildren() != null) {
             return NodeKind.Branch;

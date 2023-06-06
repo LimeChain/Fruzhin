@@ -2,6 +2,7 @@ package com.limechain.internal.tree.decoder;
 
 import com.limechain.internal.Node;
 import com.limechain.internal.NodeVariant;
+import com.limechain.internal.Trie;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.types.Hash256;
 
@@ -49,11 +50,11 @@ public class BranchDecoder {
                 throw new TrieDecoderException("Could not decode child hash: " + e.getMessage());
             }
             Node child = new Node();
-            child.setMerkleValue(Node.getMerkleValueRoot(hash));
+            child.setMerkleValue(Trie.getMerkleValueRoot(hash));
             if (hash.length < Hash256.SIZE_BYTES) {
                 ScaleCodecReader inlinedChildReader = new ScaleCodecReader(hash);
-                Node childNode = decode(inlinedChildReader);
-                node.setDescendants(node.getDescendants() + childNode.getDescendants());
+                child = decode(inlinedChildReader);
+                node.setDescendants(node.getDescendants() + child.getDescendants());
             }
             node.setDescendants(node.getDescendants() + 1);
             node.setChildrenAt(child, i);

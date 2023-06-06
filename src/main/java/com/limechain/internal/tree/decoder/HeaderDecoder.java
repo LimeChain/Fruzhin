@@ -24,20 +24,20 @@ public class HeaderDecoder {
         this.partialKeyLengthHeaderMask = partialKeyLengthHeaderMask;
     }
 
-    public static HeaderDecoder decodeHeaderByte(byte header) throws TrieDecoderException {
+    public static HeaderDecoder decodeHeaderByte(byte headerByte) throws TrieDecoderException {
         List<NodeVariant> nodeVariantList = Arrays.asList(NodeVariant.values());
         for (int i = nodeVariantList.size() - 1; i >= 0; i--) {
             NodeVariant nodeVariant = nodeVariantList.get(i);
-            int variantBits = header & nodeVariant.bits;
+            int variantBits = headerByte & nodeVariant.bits;
             if (variantBits != nodeVariant.bits) {
                 continue;
             }
 
-            byte partialKeyLengthHeader = (byte) (header & nodeVariant.mask);
+            byte partialKeyLengthHeader = (byte) (headerByte & nodeVariant.mask);
             return new HeaderDecoder((byte) variantBits, partialKeyLengthHeader, (byte) nodeVariant.mask);
         }
         throw new TrieDecoderException("Node variant is unknown for header byte " +
-                String.format("%08d", Integer.parseInt(Integer.toBinaryString(header & 0xFF))));
+                String.format("%08d", Integer.parseInt(Integer.toBinaryString(headerByte & 0xFF))));
     }
 
     public static HeaderDecoder decodeHeader(ScaleCodecReader reader) throws TrieDecoderException {

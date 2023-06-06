@@ -4,6 +4,7 @@ import com.limechain.internal.Node;
 import com.limechain.internal.NodeKind;
 import com.limechain.internal.NodeVariant;
 import com.limechain.internal.TreeEncoder;
+import com.limechain.internal.Trie;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import org.junit.jupiter.api.Assertions;
@@ -13,7 +14,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TreeDecoderTest {
     @Test
@@ -115,7 +120,7 @@ public class TreeDecoderTest {
         assertEquals(node.getKind(), NodeKind.Branch);
         assertArrayEquals(expectedPartialKey, node.getPartialKey());
         assertArrayEquals(expectedStorageValue, node.getStorageValue());
-        assertArrayEquals(Node.getMerkleValueRoot(childHash), node.getChildren()[10].getMerkleValue());
+        assertArrayEquals(Trie.getMerkleValueRoot(childHash), node.getChildren()[10].getMerkleValue());
     }
 
     @Test
