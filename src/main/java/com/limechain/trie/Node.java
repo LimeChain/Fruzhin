@@ -148,7 +148,6 @@ public class Node {
 
         byte[] encoding = out.toByteArray();
         byte[] merkleValue = writeMerkleValue(encoding);
-        this.setMerkleValue(merkleValue);
         return new Pair<>(encoding, merkleValue);
     }
 
