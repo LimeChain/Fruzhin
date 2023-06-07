@@ -1,5 +1,8 @@
 package com.limechain.trie;
 
+/**
+ * Enum containing the different node variant bits and masks
+ */
 public enum NodeVariant {
     LEAF(64),
     BRANCH(128),

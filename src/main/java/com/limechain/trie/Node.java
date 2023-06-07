@@ -151,6 +151,12 @@ public class Node {
         return new Pair<>(encoding, merkleValue);
     }
 
+    /**
+     * Hashes the merkle value if longer than 32 bytes. Then returns it.
+     *
+     * @param encoding
+     * @return the merkle value as a byte array
+     */
     private byte[] writeMerkleValue(byte[] encoding) {
         ByteBuffer merkleValueBuf = ByteBuffer.allocate(Math.min(encoding.length, 32));
         if (encoding.length < 32) {

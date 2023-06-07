@@ -7,7 +7,7 @@ import io.emeraldpay.polkaj.types.Hash256;
 
 public class TrieBranchDecoder {
     /**
-     * Decodes a branch node from a ScaleCodecReader input stream.
+     * Decodes a branch node and its children recursively from a ScaleCodecReader input stream.
      *
      * @param reader the ScaleCodecReader to read the encoded node data from
      * @param variantByte the variant byte that represents the node variant

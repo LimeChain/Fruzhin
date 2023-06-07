@@ -13,6 +13,15 @@ import java.util.Map;
 public class TrieVerifier {
     public static final int MAX_PARTIAL_KEY_LENGTH = 65535;
 
+    /**
+     * Verifies that a given key and value belongs to the trie by creating
+     * a proof trie based on the encoded proof nodes given
+     *
+     * @param encodedProofNodes
+     * @param rootHash
+     * @return
+     * @throws TrieDecoderException
+     */
     public static Trie buildTrie(byte[][] encodedProofNodes, byte[] rootHash) throws TrieDecoderException {
         if (encodedProofNodes.length == 0) {
             throw new IllegalStateException("Encoded proof nodes is empty!");

@@ -10,7 +10,7 @@ import static com.limechain.trie.decoder.TrieHeaderDecoder.decodeHeader;
 @Log
 public class TrieDecoder {
     /**
-     * Decodes encoded node data from a byte array
+     * Decodes encoded node data and its children recursively from a byte array.
      *
      * @param encoded a byte array containing the encoded node data
      * @return the decoded Node object

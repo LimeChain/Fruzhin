@@ -21,6 +21,12 @@ public class Trie {
         this.deltas = deltas;
     }
 
+    /**
+     * Creates new trie containing only a root node
+     *
+     * @param node - the root node
+     * @return the new trie
+     */
     public static Trie newTrie(Node node) {
         return new Trie(BigInteger.ZERO, node, new HashMap<>(), new ArrayList<>());
     }

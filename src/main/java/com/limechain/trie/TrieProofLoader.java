@@ -7,8 +7,14 @@ import org.apache.tomcat.util.buf.HexUtils;
 import java.util.Map;
 
 public class TrieProofLoader {
-    // loadProof is a recursive function that will create all the trie paths based
-    // on the map from node hash digest to node encoding, starting from the node `n`.
+    /**
+     * loadProof is a recursive function that will create all the trie paths based
+     * on the map from node hash digest to node encoding, starting from the node `n`.
+     *
+     * @param digestToEncoding - map containing hashed node digest as keys and node encodings as values
+     * @param node - storing the loaded information
+     * @throws TrieDecoderException
+     */
     public static void loadProof(Map<String, byte[]> digestToEncoding, Node node) throws TrieDecoderException {
         if (node.getKind() != NodeKind.Branch) {
             return;
