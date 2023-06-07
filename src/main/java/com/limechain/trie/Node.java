@@ -24,6 +24,11 @@ public class Node {
     private byte[] merkleValue;
     private int descendants;
 
+    /**
+     * Returns the node's kind(Leaf or Branch)
+     *
+     * @return NodeKind
+     */
     public NodeKind getKind() {
         if (this.getChildren() != null) {
             return NodeKind.Branch;
@@ -31,6 +36,12 @@ public class Node {
         return NodeKind.Leaf;
     }
 
+    /**
+     * Sets a node as a child of the current node in a specific position
+     *
+     * @param child    Node to be set as a child
+     * @param position Index of the child(0-15)
+     */
     public void setChildrenAt(Node child, int position) {
         if (this.children == null) {
             this.children = new Node[CHILDREN_CAPACITY];
@@ -38,6 +49,11 @@ public class Node {
         this.children[position] = child;
     }
 
+    /**
+     * Checks whether the node has any children
+     *
+     * @return True if the node has children, false otherwise
+     */
     public boolean hasChild() {
         if (children == null) return false;
         for (Node child : children) {
@@ -48,6 +64,11 @@ public class Node {
         return false;
     }
 
+    /**
+     * Returns a bitmap of the node's children
+     *
+     * @return Bitmap of the children
+     */
     public int getChildrenBitmap() {
         int bitmap = 0;
         for (int i = 0; i < this.children.length; i++) {
@@ -58,6 +79,11 @@ public class Node {
         return bitmap;
     }
 
+    /**
+     * Returns the count of node's children
+     *
+     * @return Count of the children
+     */
     public int getChildrenCount() {
         int count = 0;
         for (Node child : this.children) {
@@ -68,6 +94,37 @@ public class Node {
         return count;
     }
 
+
+    /**
+     * @return Length of the storage value
+     */
+    public int getStorageValueLength() {
+        if (this.storageValue == null) {
+            return 0;
+        }
+        return this.storageValue.length;
+    }
+
+    /**
+     * Returns the child of the node at a specific position
+     *
+     * @param pos Index of the child
+     * @return
+     */
+    public Node getChild(int pos) {
+        if (this.children == null) return null;
+
+        return this.children[pos];
+    }
+
+
+    /**
+     * Calculates the merkle value of the node
+     * If the node is not dirty and the merkle value is already calculated, it will return the cached value
+     * <b>Note: Has a side effect of setting the merkle value of the node</b>
+     *
+     * @return Merkle value
+     */
     public byte[] calculateMerkleValue() {
         if (!this.isDirty() && this.getMerkleValue() != null) {
             return this.getMerkleValue();
@@ -99,22 +156,10 @@ public class Node {
         ByteBuffer merkleValueBuf = ByteBuffer.allocate(Math.min(encoding.length, 32));
         if (encoding.length < 32) {
             merkleValueBuf.put(encoding);
-            return merkleValueBuf.array();
+        } else {
+            merkleValueBuf.put(HashUtils.hashWithBlake2b(encoding));
         }
-        merkleValueBuf.put(HashUtils.hashWithBlake2b(encoding));
         return merkleValueBuf.array();
-    }
-
-    public int getStorageValueLength() {
-        if (this.storageValue == null) {
-            return 0;
-        }
-        return this.storageValue.length;
-    }
-
-    public Node getChild(int pos) {
-        if (this.children == null) return null;
-        else return this.children[pos];
     }
 
     @Override

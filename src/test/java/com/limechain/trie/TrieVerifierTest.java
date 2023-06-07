@@ -1,5 +1,6 @@
 package com.limechain.trie;
 
+import com.limechain.trie.decoder.TrieDecoderException;
 import com.limechain.trie.еncoder.TrieEncoder;
 import com.limechain.utils.HashUtils;
 import org.junit.jupiter.api.Test;
@@ -26,7 +27,7 @@ class TrieVerifierTest {
     void buildTrieThrowsHeaderByteDecodingError() {
         var encodedProofNodes = new byte[][]{getBadNodeEncoding()};
         var rootHash = HashUtils.hashWithBlake2b(getBadNodeEncoding());
-        assertThrows(IllegalStateException.class, () -> TrieVerifier.buildTrie(encodedProofNodes, rootHash));
+        assertThrows(TrieDecoderException.class, () -> TrieVerifier.buildTrie(encodedProofNodes, rootHash));
     }
 
     @Test
@@ -35,7 +36,7 @@ class TrieVerifierTest {
 
         var encodedProofNodes = new byte[][]{getBadNodeEncoding()};
         var rootHash = HashUtils.hashWithBlake2b(getBadNodeEncoding());
-        assertThrows(IllegalStateException.class, () -> TrieVerifier.buildTrie(encodedProofNodes, rootHash));
+        assertThrows(TrieDecoderException.class, () -> TrieVerifier.buildTrie(encodedProofNodes, rootHash));
     }
 
     @Test
