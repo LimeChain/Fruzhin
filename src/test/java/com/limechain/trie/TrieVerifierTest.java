@@ -21,11 +21,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class TrieVerifierTest {
     @Test
     void buildTrieThrowsEmptyProofError() {
-        assertThrows(IllegalStateException.class, () -> TrieVerifier.buildTrie(new byte[][]{}, new byte[]{1}));
+        Exception e =
+                assertThrows(IllegalArgumentException.class, () -> TrieVerifier.buildTrie(new byte[][]{}, new byte[]{1}));
+        assertTrue(e.getMessage().contains("Encoded proof nodes is empty"));
     }
 
     @Test
-    void buildTrieThrowsHeaderByteDecodingError() {
+    void buildTrieHeaderByteDecodingExceptionTest() {
         var encodedProofNodes = new byte[][]{getBadNodeEncoding()};
         var rootHash = HashUtils.hashWithBlake2b(getBadNodeEncoding());
         Exception e = assertThrows(TrieDecoderException.class, () ->
@@ -34,7 +36,7 @@ class TrieVerifierTest {
     }
 
     @Test
-    void buildTrieThrowsRootProofEncodingLessThan32Bytes() throws Exception {
+    void buildTrieRootProofEncodingLessThan32BytesExceptionTest() throws Exception {
         assertShortEncoding(leafAShort);
 
         var encodedProofNodes = new byte[][]{getBadNodeEncoding()};

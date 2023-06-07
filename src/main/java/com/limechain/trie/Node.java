@@ -94,7 +94,6 @@ public class Node {
         return count;
     }
 
-
     /**
      * @return Length of the storage value
      */
@@ -116,7 +115,6 @@ public class Node {
 
         return this.children[pos];
     }
-
 
     /**
      * Calculates the merkle value of the node

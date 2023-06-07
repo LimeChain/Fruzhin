@@ -24,7 +24,7 @@ public class TrieVerifier {
      */
     public static Trie buildTrie(byte[][] encodedProofNodes, byte[] rootHash) throws TrieDecoderException {
         if (encodedProofNodes.length == 0) {
-            throw new IllegalStateException("Encoded proof nodes is empty!");
+            throw new IllegalArgumentException("Encoded proof nodes is empty!");
         }
 
         Map<String, byte[]> digestToEncoding = new HashMap<>(encodedProofNodes.length);
@@ -44,7 +44,8 @@ public class TrieVerifier {
         }
 
         if (root == null) {
-            throw new IllegalStateException("Root node not found in proof for root hash: " + HexUtils.toHexString(rootHash));
+            throw new IllegalStateException("Root node not found in proof for root hash: " +
+                    HexUtils.toHexString(rootHash));
         }
 
         TrieProofLoader.loadProof(digestToEncoding, root);
