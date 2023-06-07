@@ -4,6 +4,15 @@ import com.limechain.trie.Node;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 
 public class TrieLeafDecoder {
+    /**
+     * Decodes a leaf node from a ScaleCodecReader input stream.
+     *
+     * @param reader the ScaleCodecReader to read the encoded node data from
+     * @param partialKeyLength the length of the partial key to be read
+     * @return the decoded Node object
+     * @throws TrieDecoderException if an error occurs while decoding the node. This could be
+     * due to an issue reading the children bitmap or the storage value.
+     */
     public static Node decode(ScaleCodecReader reader, int partialKeyLength) throws TrieDecoderException {
         Node node = new Node();
         node.setPartialKey(TrieKeyDecoder.decodeKey(reader, partialKeyLength));

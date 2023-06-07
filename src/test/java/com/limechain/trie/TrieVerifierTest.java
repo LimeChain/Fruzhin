@@ -16,6 +16,7 @@ import static com.limechain.trie.Helper.leafCLarge;
 import static com.limechain.trie.Helper.padRightChildren;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TrieVerifierTest {
     @Test
@@ -27,7 +28,9 @@ class TrieVerifierTest {
     void buildTrieThrowsHeaderByteDecodingError() {
         var encodedProofNodes = new byte[][]{getBadNodeEncoding()};
         var rootHash = HashUtils.hashWithBlake2b(getBadNodeEncoding());
-        assertThrows(TrieDecoderException.class, () -> TrieVerifier.buildTrie(encodedProofNodes, rootHash));
+        Exception e = assertThrows(TrieDecoderException.class, () ->
+                        TrieVerifier.buildTrie(encodedProofNodes, rootHash));
+        assertTrue(e.getMessage().contains("Node variant is unknown for header byte 00000001"));
     }
 
     @Test
@@ -36,7 +39,9 @@ class TrieVerifierTest {
 
         var encodedProofNodes = new byte[][]{getBadNodeEncoding()};
         var rootHash = HashUtils.hashWithBlake2b(getBadNodeEncoding());
-        assertThrows(TrieDecoderException.class, () -> TrieVerifier.buildTrie(encodedProofNodes, rootHash));
+        Exception e = assertThrows(TrieDecoderException.class, () ->
+                TrieVerifier.buildTrie(encodedProofNodes, rootHash));
+        assertTrue(e.getMessage().contains("Node variant is unknown for header byte 00000001"));
     }
 
     @Test

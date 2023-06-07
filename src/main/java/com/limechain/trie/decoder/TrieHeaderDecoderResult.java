@@ -3,6 +3,9 @@ package com.limechain.trie.decoder;
 import lombok.Getter;
 import lombok.Setter;
 
+/**
+ * This class is used to store the data returned from the TrieHeaderDecoder
+ */
 @Getter
 @Setter
 public class TrieHeaderDecoderResult {

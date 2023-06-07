@@ -9,6 +9,14 @@ import java.util.List;
 import static com.limechain.trie.TrieVerifier.MAX_PARTIAL_KEY_LENGTH;
 
 public class TrieHeaderDecoder {
+
+    /**
+     * Decodes a node header from a ScaleCodecReader input stream.
+     *
+     * @param reader the ScaleCodecReader input stream used to read the encoded node data
+     * @return The variant, partial key length and mask read from the stream
+     * @throws TrieDecoderException if an error occurs while reading the children bitmap or the storage value.
+     */
     public static TrieHeaderDecoderResult decodeHeader(ScaleCodecReader reader) throws TrieDecoderException {
         try {
             byte currentByte = reader.readByte();
@@ -25,7 +33,7 @@ public class TrieHeaderDecoder {
                 int nextByte = reader.readUByte();
                 partialKeyLengthHeader += nextByte;
                 if (partialKeyLengthHeader > MAX_PARTIAL_KEY_LENGTH) {
-                    throw new IllegalStateException("Partial key overflow");
+                    throw new TrieDecoderException("Partial key overflow");
                 }
 
                 // Check if current byte is max byte value
@@ -38,6 +46,13 @@ public class TrieHeaderDecoder {
         }
     }
 
+    /**
+     * Decodes the header byte of a Trie node to identify its variant and the partial key length.
+     *
+     * @param headerByte the byte from the header of the Trie node to be decode
+     * @return a TrieHeaderDecoderResult object containing the variant bits, partial key length, and the variant mask
+     * @throws TrieDecoderException if no matching NodeVariant is found for the given header byte
+     */
     static TrieHeaderDecoderResult decodeHeaderByte(byte headerByte) throws TrieDecoderException {
         List<NodeVariant> nodeVariantList = Arrays.asList(NodeVariant.values());
         for (int i = nodeVariantList.size() - 1; i >= 0; i--) {

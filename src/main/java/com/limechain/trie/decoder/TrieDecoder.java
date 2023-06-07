@@ -9,6 +9,13 @@ import static com.limechain.trie.decoder.TrieHeaderDecoder.decodeHeader;
 
 @Log
 public class TrieDecoder {
+    /**
+     * Decodes encoded node data from a byte array
+     *
+     * @param encoded a byte array containing the encoded node data
+     * @return the decoded Node object
+     * @throws TrieDecoderException if the variant does not match known variants
+     */
     public static Node decode(byte[] encoded) throws TrieDecoderException {
         ScaleCodecReader reader = new ScaleCodecReader(encoded);
         TrieHeaderDecoderResult header = decodeHeader(reader);
