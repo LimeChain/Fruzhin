@@ -21,8 +21,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class TrieVerifierTest {
     @Test
     void buildTrieThrowsEmptyProofError() {
-        Exception e =
-                assertThrows(IllegalArgumentException.class, () -> TrieVerifier.buildTrie(new byte[][]{}, new byte[]{1}));
+        Exception e = assertThrows(IllegalArgumentException.class, () ->
+                        TrieVerifier.buildTrie(new byte[][]{}, new byte[]{1}));
         assertTrue(e.getMessage().contains("Encoded proof nodes is empty"));
     }
 
@@ -31,7 +31,7 @@ class TrieVerifierTest {
         var encodedProofNodes = new byte[][]{getBadNodeEncoding()};
         var rootHash = HashUtils.hashWithBlake2b(getBadNodeEncoding());
         Exception e = assertThrows(TrieDecoderException.class, () ->
-                        TrieVerifier.buildTrie(encodedProofNodes, rootHash));
+                TrieVerifier.buildTrie(encodedProofNodes, rootHash));
         assertTrue(e.getMessage().contains("Node variant is unknown for header byte 00000001"));
     }
 

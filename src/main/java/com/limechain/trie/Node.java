@@ -108,7 +108,7 @@ public class Node {
      * Returns the child of the node at a specific position
      *
      * @param pos Index of the child
-     * @return
+     * @return child node
      */
     public Node getChild(int pos) {
         if (this.children == null) return null;
@@ -152,7 +152,7 @@ public class Node {
     /**
      * Hashes the merkle value if longer than 32 bytes. Then returns it.
      *
-     * @param encoding
+     * @param encoding of the trie
      * @return the merkle value as a byte array
      */
     private byte[] writeMerkleValue(byte[] encoding) {

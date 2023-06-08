@@ -17,9 +17,9 @@ public class TrieVerifier {
      * Verifies that a given key and value belongs to the trie by creating
      * a proof trie based on the encoded proof nodes given
      *
-     * @param encodedProofNodes
-     * @param rootHash
-     * @return
+     * @param encodedProofNodes two-dimensional array containing the encoded proof nodes
+     * @param rootHash to search for in the proofs
+     * @return a new trie with the searched root hash
      * @throws TrieDecoderException
      */
     public static Trie buildTrie(byte[][] encodedProofNodes, byte[] rootHash) throws TrieDecoderException {

@@ -13,7 +13,7 @@ public class TrieProofLoader {
      *
      * @param digestToEncoding - map containing hashed node digest as keys and node encodings as values
      * @param node - storing the loaded information
-     * @throws TrieDecoderException
+     * @throws TrieDecoderException when child could not be decoded
      */
     public static void loadProof(Map<String, byte[]> digestToEncoding, Node node) throws TrieDecoderException {
         if (node.getKind() != NodeKind.Branch) {
