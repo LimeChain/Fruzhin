@@ -17,14 +17,16 @@ public class TrieVerifier {
      * Verify verifies a given key and value belongs to the trie by creating
      * a proof trie based on the encoded proof nodes given. The order of proofs is ignored.
      * A nil error is returned on success.
-     * https://github.com/ComposableFi/ibc-go/blob/6d62edaa1a3cb0768c430dab81bb195e0b0c72db/modules/light-clients/11-beefy/types/client_state.go#L78.
+     * https://github.com/ComposableFi/ibc-go/blob/6d62edaa1a3cb0768c430dab81bb195e0b0c72db/
+     * modules/light-clients/11-beefy/types/client_state.go#L78
      *
      * @param encodedProofNodes two-dimensional array containing the encoded proof nodes
      * @param rootHash          to search for in the proofs
      * @return a new trie with the searched root hash
-         * @throws TrieDecoderException
+     * @throws TrieDecoderException
      */
-    public static boolean verify(byte[][] encodedProofNodes, byte[] rootHash, byte[] key, byte[] value) throws TrieDecoderException {
+    public static boolean verify(byte[][] encodedProofNodes, byte[] rootHash, byte[] key, byte[] value)
+            throws TrieDecoderException {
         Trie proofTrie = buildTrie(encodedProofNodes, rootHash);
         byte[] proofTrieValue = proofTrie.get(key);
         if (proofTrieValue == null) {
