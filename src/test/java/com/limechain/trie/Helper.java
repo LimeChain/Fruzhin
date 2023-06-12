@@ -1,6 +1,6 @@
 package com.limechain.trie;
 
-import com.limechain.trie.еncoder.TrieEncoder;
+import com.limechain.trie.encoder.TrieEncoder;
 import com.limechain.utils.RandomGenerationUtils;
 
 import java.io.ByteArrayOutputStream;

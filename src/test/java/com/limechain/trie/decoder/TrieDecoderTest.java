@@ -4,7 +4,7 @@ import com.limechain.trie.Node;
 import com.limechain.trie.NodeKind;
 import com.limechain.trie.NodeVariant;
 import com.limechain.trie.Trie;
-import com.limechain.trie.еncoder.TrieEncoder;
+import com.limechain.trie.encoder.TrieEncoder;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
