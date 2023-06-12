@@ -3,9 +3,11 @@ package com.limechain.trie.encoder;
 import com.limechain.trie.Node;
 import com.limechain.trie.NodeVariant;
 import com.limechain.trie.еncoder.TrieEncoder;
+import com.limechain.trie.еncoder.TrieEncoderException;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.OutputStream;
 
 import static com.limechain.trie.TrieVerifier.MAX_PARTIAL_KEY_LENGTH;
@@ -18,7 +20,7 @@ import static org.mockito.Mockito.verify;
 
 class TrieEncoderTest {
     @Test
-    void testEncodeHeaderBranchWithNoKey() throws Exception {
+    void testEncodeHeaderBranchWithNoKey() throws TrieEncoderException, IOException {
         var node = new Node() {{
             this.setChildren(new Node[Node.CHILDREN_CAPACITY]);
         }};
@@ -29,7 +31,7 @@ class TrieEncoderTest {
     }
 
     @Test
-    void testEncodeHeaderBranchWithValue() throws Exception {
+    void testEncodeHeaderBranchWithValue() throws TrieEncoderException, IOException {
         var node = new Node() {{
             this.setChildren(new Node[Node.CHILDREN_CAPACITY]);
             this.setStorageValue(new byte[0]);
@@ -41,7 +43,7 @@ class TrieEncoderTest {
     }
 
     @Test
-    void testEncodeHeaderBranchWithKeyOfLength30() throws Exception {
+    void testEncodeHeaderBranchWithKeyOfLength30() throws TrieEncoderException, IOException {
         var node = new Node() {{
             this.setChildren(new Node[Node.CHILDREN_CAPACITY]);
             this.setPartialKey(new byte[30]);
@@ -53,7 +55,7 @@ class TrieEncoderTest {
     }
 
     @Test
-    void testEncodeHeaderBranchWithKeyOfLength62() throws Exception {
+    void testEncodeHeaderBranchWithKeyOfLength62() throws TrieEncoderException, IOException {
         var node = new Node() {{
             this.setChildren(new Node[Node.CHILDREN_CAPACITY]);
             this.setPartialKey(new byte[62]);
@@ -65,7 +67,7 @@ class TrieEncoderTest {
     }
 
     @Test
-    void testEncodeHeaderBranchWithKeyOfLength63() throws Exception {
+    void testEncodeHeaderBranchWithKeyOfLength63() throws TrieEncoderException, IOException {
         var node = new Node() {{
             this.setChildren(new Node[Node.CHILDREN_CAPACITY]);
             this.setPartialKey(new byte[63]);
@@ -77,7 +79,7 @@ class TrieEncoderTest {
     }
 
     @Test
-    void testEncodeHeaderBranchWithKeyOfLength64() throws Exception {
+    void testEncodeHeaderBranchWithKeyOfLength64() throws TrieEncoderException, IOException {
         var node = new Node() {{
             this.setChildren(new Node[Node.CHILDREN_CAPACITY]);
             this.setPartialKey(new byte[64]);
@@ -90,7 +92,7 @@ class TrieEncoderTest {
     }
 
     @Test
-    void testEncodeHeaderLeafWithNoKey() throws Exception {
+    void testEncodeHeaderLeafWithNoKey() throws TrieEncoderException, IOException {
         var node = new Node() {{
             this.setStorageValue(new byte[]{1});
         }};
@@ -102,7 +104,7 @@ class TrieEncoderTest {
     }
 
     @Test
-    void testEncodeHeaderLeafWithKeyOfLength30() throws Exception {
+    void testEncodeHeaderLeafWithKeyOfLength30() throws TrieEncoderException, IOException {
         var node = new Node() {{
             this.setPartialKey(new byte[30]);
         }};
@@ -114,7 +116,7 @@ class TrieEncoderTest {
     }
 
     @Test
-    void testEncodeHeaderLeafWithKeyOfLength62() throws Exception {
+    void testEncodeHeaderLeafWithKeyOfLength62() throws TrieEncoderException, IOException {
         var node = new Node() {{
             this.setPartialKey(new byte[62]);
         }};
@@ -126,7 +128,7 @@ class TrieEncoderTest {
     }
 
     @Test
-    void testEncodeHeaderLeafWithKeyOfLength63() throws Exception {
+    void testEncodeHeaderLeafWithKeyOfLength63() throws TrieEncoderException, IOException {
         var node = new Node() {{
             this.setPartialKey(new byte[63]);
         }};
@@ -138,7 +140,7 @@ class TrieEncoderTest {
     }
 
     @Test
-    void testEncodeHeaderLeafWithKeyOfLength64() throws Exception {
+    void testEncodeHeaderLeafWithKeyOfLength64() throws TrieEncoderException, IOException {
         var node = new Node() {{
             this.setPartialKey(new byte[64]);
         }};
@@ -151,7 +153,7 @@ class TrieEncoderTest {
     }
 
     @Test
-    void testEncodeHeaderLeafWithKeyLengthOver3Bytes() throws Exception {
+    void testEncodeHeaderLeafWithKeyLengthOver3Bytes() throws TrieEncoderException, IOException {
         var node = new Node() {{
             this.setPartialKey(new byte[NodeVariant.LEAF.mask + 0b1111_1111 + 0b0000_0001]);
         }};
@@ -165,7 +167,7 @@ class TrieEncoderTest {
     }
 
     @Test
-    void testEncodeHeaderLeafWithKeyLengthOver3BytesAndLastByte0() throws Exception {
+    void testEncodeHeaderLeafWithKeyLengthOver3BytesAndLastByte0() throws TrieEncoderException, IOException {
         var node = new Node() {{
             this.setPartialKey(new byte[NodeVariant.LEAF.mask + 0b1111_1111]);
         }};
@@ -179,7 +181,7 @@ class TrieEncoderTest {
     }
 
     @Test
-    public void testEncodeHeaderAtMaximum() throws Exception {
+    public void testEncodeHeaderAtMaximum() throws TrieEncoderException {
         int variant = NodeVariant.LEAF.bits;
         final int partialKeyLengthHeaderMask = 0b0011_1111;
         double extraKeyBytesNeeded = Math.ceil((double) (MAX_PARTIAL_KEY_LENGTH - partialKeyLengthHeaderMask) / 255.0);
@@ -207,7 +209,7 @@ class TrieEncoderTest {
     }
 
     @Test
-    public void testEncodeChildrenNode() throws Exception {
+    public void testEncodeChildrenNode() throws IOException, TrieEncoderException {
         Node node = new Node() {{
             this.setPartialKey(new byte[]{1, 2, 3});
             this.setStorageValue(new byte[]{100});
@@ -241,7 +243,7 @@ class TrieEncoderTest {
 
     // Should be in a separate test class
     @Test
-    public void testEncodeChildrenNoChildren() throws Exception {
+    public void testEncodeChildrenNoChildren() throws TrieEncoderException, IOException {
         ByteArrayOutputStream buffer = mock(ByteArrayOutputStream.class);
 
         TrieEncoder.encodeChildren(new Node[]{}, buffer);
@@ -250,7 +252,7 @@ class TrieEncoderTest {
     }
 
     @Test
-    public void testEncodeChildrenFirstChildNotNull() throws Exception {
+    public void testEncodeChildrenFirstChildNotNull() throws TrieEncoderException {
         ByteArrayOutputStream buffer = mock(ByteArrayOutputStream.class);
 
         TrieEncoder.encodeChildren(new Node[]{
@@ -266,7 +268,7 @@ class TrieEncoderTest {
     }
 
     @Test
-    public void testEncodeChildrenLastChildNotNull() throws Exception {
+    public void testEncodeChildrenLastChildNotNull() throws TrieEncoderException {
         ByteArrayOutputStream buffer = mock(ByteArrayOutputStream.class);
 
         TrieEncoder.encodeChildren(new Node[]{
@@ -286,7 +288,7 @@ class TrieEncoderTest {
     }
 
     @Test
-    public void testEncodeChildrenFirstTwoChildrenNotNull() throws Exception {
+    public void testEncodeChildrenFirstTwoChildrenNotNull() throws TrieEncoderException {
         ByteArrayOutputStream buffer = mock(ByteArrayOutputStream.class);
 
         TrieEncoder.encodeChildren(new Node[]{
@@ -308,7 +310,7 @@ class TrieEncoderTest {
     }
 
     @Test
-    public void testEncodeEmptyBranchChild() throws Exception {
+    public void testEncodeEmptyBranchChild() throws TrieEncoderException {
         ByteArrayOutputStream buffer = mock(ByteArrayOutputStream.class);
 
         TrieEncoder.encodeChild(new Node() {{
@@ -321,7 +323,7 @@ class TrieEncoderTest {
     }
 
     @Test
-    public void testEncodeLeafChild() throws Exception {
+    public void testEncodeLeafChild() throws TrieEncoderException {
         ByteArrayOutputStream buffer = mock(ByteArrayOutputStream.class);
 
         TrieEncoder.encodeChild(new Node() {{
@@ -335,7 +337,7 @@ class TrieEncoderTest {
     }
 
     @Test
-    public void testEncodeBranchChild() throws Exception {
+    public void testEncodeBranchChild() throws TrieEncoderException {
         ByteArrayOutputStream buffer = mock(ByteArrayOutputStream.class);
 
         TrieEncoder.encodeChild(new Node() {{
