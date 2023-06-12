@@ -89,7 +89,6 @@ public class TrieEncoder {
                 return;
             }
 
-
             // Partial key length does not fit in header byte only
             headerByte |= partialKeyLengthMask;
             partialKeyLength -= partialKeyLengthMask;
