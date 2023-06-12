@@ -1,4 +1,4 @@
-package com.limechain.trie.еncoder;
+package com.limechain.trie.encoder;
 
 import com.limechain.trie.Nibbles;
 import com.limechain.trie.Node;
