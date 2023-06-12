@@ -2,8 +2,6 @@ package com.limechain.trie.encoder;
 
 import com.limechain.trie.Node;
 import com.limechain.trie.NodeVariant;
-import com.limechain.trie.еncoder.TrieEncoder;
-import com.limechain.trie.еncoder.TrieEncoderException;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
