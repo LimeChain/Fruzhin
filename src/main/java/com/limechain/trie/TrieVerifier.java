@@ -14,11 +14,33 @@ public class TrieVerifier {
     public static final int MAX_PARTIAL_KEY_LENGTH = 65535;
 
     /**
-     * Verifies that a given key and value belongs to the trie by creating
-     * a proof trie based on the encoded proof nodes given
+     * Verify verifies a given key and value belongs to the trie by creating
+     * a proof trie based on the encoded proof nodes given. The order of proofs is ignored.
+     * A nil error is returned on success.
+     * https://github.com/ComposableFi/ibc-go/blob/6d62edaa1a3cb0768c430dab81bb195e0b0c72db/modules/light-clients/11-beefy/types/client_state.go#L78.
      *
      * @param encodedProofNodes two-dimensional array containing the encoded proof nodes
-     * @param rootHash to search for in the proofs
+     * @param rootHash          to search for in the proofs
+     * @return a new trie with the searched root hash
+         * @throws TrieDecoderException
+     */
+    public static boolean verify(byte[][] encodedProofNodes, byte[] rootHash, byte[] key, byte[] value) throws TrieDecoderException {
+        Trie proofTrie = buildTrie(encodedProofNodes, rootHash);
+        byte[] proofTrieValue = proofTrie.get(key);
+        if (proofTrieValue == null) {
+            throw new IllegalStateException("Key not found in proof trie hash");
+        }
+        if (value.length > 0 && !Arrays.areEqual(value, proofTrieValue)) {
+            throw new IllegalStateException("Value mismatch\nExpected: " + value + "\nActual: " + proofTrieValue);
+        }
+        return true;
+    }
+
+    /**
+     * Sets a partial trie based on the proof slice of encoded nodes.
+     *
+     * @param encodedProofNodes two-dimensional array containing the encoded proof nodes
+     * @param rootHash          to search for in the proofs
      * @return a new trie with the searched root hash
      * @throws TrieDecoderException
      */

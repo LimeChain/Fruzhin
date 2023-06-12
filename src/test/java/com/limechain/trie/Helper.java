@@ -8,6 +8,17 @@ import java.io.ByteArrayOutputStream;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class Helper {
+    public static Node leafA = new Node() {{
+        this.setPartialKey(new byte[]{1});
+        this.setStorageValue(new byte[]{1});
+        this.setDirty(true);
+    }};
+
+    public static Node leafB = new Node() {{
+        this.setPartialKey(new byte[]{2});
+        this.setStorageValue(RandomGenerationUtils.generateBytes(40));
+    }};
+
     public static Node leafAShort = new Node() {{
         this.setPartialKey(new byte[]{1});
         this.setStorageValue(new byte[]{2});
@@ -24,6 +35,12 @@ public class Helper {
         this.setPartialKey(new byte[]{3});
         this.setStorageValue(RandomGenerationUtils.generateBytes(40));
         this.setDirty(true);
+    }};
+
+    public static Node branch = new Node(){{
+        this.setPartialKey(new byte[]{3,4});
+        this.setStorageValue(new byte[]{1});
+        this.setChildren(padRightChildren(new Node[]{leafB, null, leafA, leafB}));
     }};
 
     public static Node[] padRightChildren(Node[] children) {

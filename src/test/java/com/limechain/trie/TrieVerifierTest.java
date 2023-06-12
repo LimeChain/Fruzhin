@@ -2,7 +2,9 @@ package com.limechain.trie;
 
 import com.limechain.trie.decoder.TrieDecoderException;
 import com.limechain.trie.encoder.TrieEncoder;
+import com.limechain.trie.encoder.TrieEncoderException;
 import com.limechain.utils.HashUtils;
+import com.limechain.utils.RandomGenerationUtils;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -22,7 +24,7 @@ class TrieVerifierTest {
     @Test
     void buildTrieThrowsEmptyProofError() {
         Exception e = assertThrows(IllegalArgumentException.class, () ->
-                        TrieVerifier.buildTrie(new byte[][]{}, new byte[]{1}));
+                TrieVerifier.buildTrie(new byte[][]{}, new byte[]{1}));
         assertTrue(e.getMessage().contains("Encoded proof nodes is empty"));
     }
 
@@ -152,4 +154,77 @@ class TrieVerifierTest {
         assertEquals(expectedTrie.toString(), trie.toString());
     }
 
+    @Test
+    public void buildingProofTrieExceptionTest() {
+        byte[] keyLE = new byte[]{1, 1};
+        Exception e = assertThrows(IllegalArgumentException.class, () -> {
+            byte[] rootHash = new byte[]{1, 2, 3};
+            TrieVerifier.verify(new byte[][]{}, rootHash, keyLE, new byte[]{});
+        });
+        assertTrue(e.getMessage().contains("Encoded proof nodes is empty"));
+    }
+
+    @Test
+    public void valueNotFoundExceptionTest() throws TrieEncoderException {
+        ByteArrayOutputStream branchBuffer = new ByteArrayOutputStream();
+        ByteArrayOutputStream leafBuffer = new ByteArrayOutputStream();
+        TrieEncoder.encode(Helper.branch, branchBuffer);
+        TrieEncoder.encode(leafAShort, leafBuffer);
+        byte[] value = new byte[]{1, 1};
+        byte[] rootHash = HashUtils.hashWithBlake2b(branchBuffer.toByteArray());
+        byte[] keyLE = new byte[]{1, 1};
+
+        byte[][] encodedNodes = new byte[][]{branchBuffer.toByteArray(), leafBuffer.toByteArray()};
+        Exception e = assertThrows(Exception.class, () ->
+                TrieVerifier.verify(encodedNodes,
+                        rootHash,
+                        keyLE,
+                        value)
+        );
+        assertTrue(e.getMessage().contains("Key not found in proof trie hash"));
+    }
+
+    @Test
+    public void keyFoundWithNullSearchValueTest() throws TrieEncoderException, TrieDecoderException {
+        ByteArrayOutputStream branchBuffer = new ByteArrayOutputStream();
+        ByteArrayOutputStream leafBuffer = new ByteArrayOutputStream();
+        TrieEncoder.encode(Helper.branch, branchBuffer);
+        TrieEncoder.encode(leafAShort, leafBuffer);
+        byte[][] encodedNodes = new byte[][]{branchBuffer.toByteArray(), leafBuffer.toByteArray()};
+        byte[] rootHash = HashUtils.hashWithBlake2b(branchBuffer.toByteArray());
+        byte[] value = new byte[]{};
+        byte[] keyLE = new byte[]{0x34, 0x21};
+        boolean result = TrieVerifier.verify(encodedNodes, rootHash, keyLE, value);
+        assertTrue(result);
+    }
+
+    @Test
+    public void keyFoundWithMismatchValueExceptionTest() throws TrieEncoderException {
+        ByteArrayOutputStream branchBuffer = new ByteArrayOutputStream();
+        ByteArrayOutputStream leafBuffer = new ByteArrayOutputStream();
+        TrieEncoder.encode(Helper.branch, branchBuffer);
+        TrieEncoder.encode(leafBLarge, leafBuffer);
+        byte[][] encodedNodes = new byte[][]{branchBuffer.toByteArray(), leafBuffer.toByteArray()};
+        byte[] rootHash = HashUtils.hashWithBlake2b(branchBuffer.toByteArray());
+        byte[] value = new byte[]{2};
+        byte[] keyLE = new byte[]{0x34, 0x21};
+        Exception e = assertThrows(IllegalStateException.class, () -> {
+            TrieVerifier.verify(encodedNodes, rootHash, keyLE, value);
+        });
+        assertTrue(e.getMessage().contains("Value mismatch"));
+    }
+
+    @Test
+    public void keyFoundWithMatchingValue() throws TrieEncoderException, TrieDecoderException {
+        ByteArrayOutputStream branchBuffer = new ByteArrayOutputStream();
+        ByteArrayOutputStream leafBuffer = new ByteArrayOutputStream();
+        TrieEncoder.encode(Helper.branch, branchBuffer);
+        TrieEncoder.encode(leafBLarge, leafBuffer);
+        byte[][] encodedNodes = new byte[][]{branchBuffer.toByteArray(), leafBuffer.toByteArray()};
+        byte[] rootHash = HashUtils.hashWithBlake2b(branchBuffer.toByteArray());
+        byte[] value = RandomGenerationUtils.generateBytes(40);
+        byte[] keyLE = new byte[]{0x34, 0x32};
+        boolean verified = TrieVerifier.verify(encodedNodes, rootHash, keyLE, value);
+        assertTrue(verified);
+    }
 }

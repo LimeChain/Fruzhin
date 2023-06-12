@@ -12,7 +12,7 @@ public class TrieProofLoader {
      * on the map from node hash digest to node encoding, starting from the node `n`.
      *
      * @param digestToEncoding - map containing hashed node digest as keys and node encodings as values
-     * @param node - storing the loaded information
+     * @param node             - storing the loaded information
      * @throws TrieDecoderException when child could not be decoded
      */
     public static void loadProof(Map<String, byte[]> digestToEncoding, Node node) throws TrieDecoderException {
