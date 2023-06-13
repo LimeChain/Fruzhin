@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class TrieProofLoaderTest {
 
     @Test
-    public void loadLeafNodeTest() throws TrieDecoderException {
+    public void loadLeafNodeTest() {
         Node node = new Node() {{
             this.setPartialKey(new byte[]{1});
             this.setStorageValue(new byte[]{2});
@@ -32,7 +32,7 @@ public class TrieProofLoaderTest {
     }
 
     @Test
-    public void loadBranchChildWithNoHashTest() throws TrieDecoderException {
+    public void loadBranchChildWithNoHashTest() {
         Node node = new Node() {{
             this.setPartialKey(new byte[]{1});
             this.setStorageValue(new byte[]{2});
@@ -58,7 +58,7 @@ public class TrieProofLoaderTest {
     }
 
     @Test
-    public void loadBranchNodeWithHashTest() throws Exception {
+    public void loadBranchNodeWithHashTest() {
         Node node = new Node() {{
             this.setPartialKey(new byte[]{1});
             this.setStorageValue(new byte[]{2});
@@ -99,7 +99,7 @@ public class TrieProofLoaderTest {
     }
 
     @Test
-    public void loadBranchOneChildWithHashAndOneWithoutHashTest() throws Exception {
+    public void loadBranchOneChildWithHashAndOneWithoutHashTest() {
         Node node = new Node() {{
             this.setPartialKey(new byte[]{1});
             this.setStorageValue(new byte[]{2});
@@ -143,7 +143,7 @@ public class TrieProofLoaderTest {
     }
 
     @Test
-    public void loadBranchNodeWithBranchChildHash() throws Exception {
+    public void loadBranchNodeWithBranchChildHash() {
         Node node = new Node() {{
             this.setPartialKey(new byte[]{1});
             this.setStorageValue(new byte[]{2});
@@ -221,7 +221,7 @@ public class TrieProofLoaderTest {
     }
 
     @Test
-    public void loadGrandChild() throws Exception {
+    public void loadGrandChild() {
         Node node = new Node() {{
             this.setPartialKey(new byte[]{1});
             this.setStorageValue(new byte[]{1});
@@ -278,7 +278,7 @@ public class TrieProofLoaderTest {
     }
 
     @Test
-    public void loadGrandChildExceptionTest() throws Exception {
+    public void loadGrandChildExceptionTest() {
         Exception e = assertThrows(TrieDecoderException.class, () -> {
 
             Node node = new Node() {{
@@ -310,26 +310,6 @@ public class TrieProofLoaderTest {
                 put(HexUtils.toHexString(new byte[]{2}), encodedNode.toByteArray());
                 put(encodedLeafKey, Helper.getBadNodeEncoding());
             }};
-            Node expectedNode = new Node() {{
-                this.setPartialKey(new byte[]{1});
-                this.setStorageValue(new byte[]{1});
-                this.setDescendants(1);
-                this.setDirty(true);
-                this.setChildren(Helper.padRightChildren(new Node[]{
-                        new Node() {{
-                            this.setPartialKey(new byte[]{2});
-                            this.setStorageValue(new byte[]{2});
-                            this.setDescendants(1);
-                            this.setDirty(true);
-                            this.setChildren(Helper.padRightChildren(new Node[]{
-                                    new Node() {{
-                                        this.setMerkleValue(HashUtils.hashWithBlake2b(encodedLeaf.toByteArray()));
-                                    }}
-                            }));
-                        }}
-                }));
-            }};
-
             TrieProofLoader.loadProof(digestToEncoding, node);
         });
         assertTrue(e.getMessage().contains("Node variant is unknown for header byte 00000001"));

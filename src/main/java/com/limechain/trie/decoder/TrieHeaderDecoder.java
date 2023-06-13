@@ -17,7 +17,7 @@ public class TrieHeaderDecoder {
      * @return The variant, partial key length and mask read from the stream
      * @throws TrieDecoderException if an error occurs while reading the children bitmap or the storage value.
      */
-    public static TrieHeaderDecoderResult decodeHeader(ScaleCodecReader reader) throws TrieDecoderException {
+    public static TrieHeaderDecoderResult decodeHeader(ScaleCodecReader reader) {
         try {
             byte currentByte = reader.readByte();
             TrieHeaderDecoderResult header = TrieHeaderDecoder.decodeHeaderByte(currentByte);
@@ -53,7 +53,7 @@ public class TrieHeaderDecoder {
      * @return a TrieHeaderDecoderResult object containing the variant bits, partial key length, and the variant mask
      * @throws TrieDecoderException if no matching NodeVariant is found for the given header byte
      */
-    static TrieHeaderDecoderResult decodeHeaderByte(byte headerByte) throws TrieDecoderException {
+    static TrieHeaderDecoderResult decodeHeaderByte(byte headerByte) {
         List<NodeVariant> nodeVariantList = Arrays.asList(NodeVariant.values());
         for (int i = nodeVariantList.size() - 1; i >= 0; i--) {
             NodeVariant nodeVariant = nodeVariantList.get(i);

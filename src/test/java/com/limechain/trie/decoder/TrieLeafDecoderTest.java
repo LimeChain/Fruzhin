@@ -40,7 +40,7 @@ public class TrieLeafDecoderTest {
     }
 
     @Test
-    public void decodeEmptyStorageTest() throws TrieDecoderException {
+    public void decodeEmptyStorageTest() {
         byte[] data = new byte[]{9, 0};
         byte[] expectedStorage = new byte[]{};
 
@@ -50,7 +50,7 @@ public class TrieLeafDecoderTest {
     }
 
     @Test
-    public void decodeStorageTest() throws TrieDecoderException {
+    public void decodeStorageTest() {
         byte[] data = new byte[]{9, 20, 1, 2, 3, 4, 5};
         byte[] expectedStorage = new byte[]{1, 2, 3, 4, 5};
 

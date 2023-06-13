@@ -16,7 +16,7 @@ public class TrieDecoder {
      * @return the decoded Node object
      * @throws TrieDecoderException if the variant does not match known variants
      */
-    public static Node decode(byte[] encoded) throws TrieDecoderException {
+    public static Node decode(byte[] encoded) {
         ScaleCodecReader reader = new ScaleCodecReader(encoded);
         TrieHeaderDecoderResult header = decodeHeader(reader);
         int variant = header.getVariantBits() & 0xff;

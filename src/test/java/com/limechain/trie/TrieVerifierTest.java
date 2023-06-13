@@ -2,7 +2,6 @@ package com.limechain.trie;
 
 import com.limechain.trie.decoder.TrieDecoderException;
 import com.limechain.trie.encoder.TrieEncoder;
-import com.limechain.trie.encoder.TrieEncoderException;
 import com.limechain.utils.HashUtils;
 import com.limechain.utils.RandomGenerationUtils;
 import org.junit.jupiter.api.Test;
@@ -38,7 +37,7 @@ class TrieVerifierTest {
     }
 
     @Test
-    void buildTrieRootProofEncodingLessThan32BytesExceptionTest() throws Exception {
+    void buildTrieRootProofEncodingLessThan32BytesExceptionTest() {
         assertShortEncoding(leafAShort);
 
         var encodedProofNodes = new byte[][]{getBadNodeEncoding()};
@@ -49,7 +48,7 @@ class TrieVerifierTest {
     }
 
     @Test
-    void buildTrieRootProofEncodingLessThan32Bytes() throws Exception {
+    void buildTrieRootProofEncodingLessThan32Bytes() {
         assertShortEncoding(leafAShort);
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -64,7 +63,7 @@ class TrieVerifierTest {
     }
 
     @Test
-    void buildTrieRootProofEncodingMoreThan32Bytes() throws Exception {
+    void buildTrieRootProofEncodingMoreThan32Bytes() {
         assertLongEncoding(leafBLarge);
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -79,7 +78,7 @@ class TrieVerifierTest {
     }
 
     @Test
-    void buildTrieDiscardUnusedNode() throws Exception {
+    void buildTrieDiscardUnusedNode() {
         assertShortEncoding(leafAShort);
         assertLongEncoding(leafBLarge);
 
@@ -97,7 +96,7 @@ class TrieVerifierTest {
     }
 
     @Test
-    void buildTrieMultipleUnorderedNodes() throws Exception {
+    void buildTrieMultipleUnorderedNodes() {
         ByteArrayOutputStream leafBEncodedStream = new ByteArrayOutputStream();
         TrieEncoder.encode(leafBLarge, leafBEncodedStream);
 
@@ -165,7 +164,7 @@ class TrieVerifierTest {
     }
 
     @Test
-    public void valueNotFoundExceptionTest() throws TrieEncoderException {
+    public void valueNotFoundExceptionTest() {
         ByteArrayOutputStream branchBuffer = new ByteArrayOutputStream();
         ByteArrayOutputStream leafBuffer = new ByteArrayOutputStream();
         TrieEncoder.encode(Helper.branch, branchBuffer);
@@ -185,7 +184,7 @@ class TrieVerifierTest {
     }
 
     @Test
-    public void keyFoundWithNullSearchValueTest() throws TrieEncoderException, TrieDecoderException {
+    public void keyFoundWithNullSearchValueTest() {
         ByteArrayOutputStream branchBuffer = new ByteArrayOutputStream();
         ByteArrayOutputStream leafBuffer = new ByteArrayOutputStream();
         TrieEncoder.encode(Helper.branch, branchBuffer);
@@ -199,7 +198,7 @@ class TrieVerifierTest {
     }
 
     @Test
-    public void keyFoundWithMismatchValueExceptionTest() throws TrieEncoderException {
+    public void keyFoundWithMismatchValueExceptionTest() {
         ByteArrayOutputStream branchBuffer = new ByteArrayOutputStream();
         ByteArrayOutputStream leafBuffer = new ByteArrayOutputStream();
         TrieEncoder.encode(Helper.branch, branchBuffer);
@@ -208,14 +207,13 @@ class TrieVerifierTest {
         byte[] rootHash = HashUtils.hashWithBlake2b(branchBuffer.toByteArray());
         byte[] value = new byte[]{2};
         byte[] keyLE = new byte[]{0x34, 0x21};
-        Exception e = assertThrows(IllegalStateException.class, () -> {
-            TrieVerifier.verify(encodedNodes, rootHash, keyLE, value);
-        });
+        Exception e = assertThrows(IllegalStateException.class, () ->
+                TrieVerifier.verify(encodedNodes, rootHash, keyLE, value));
         assertTrue(e.getMessage().contains("Value mismatch"));
     }
 
     @Test
-    public void keyFoundWithMatchingValue() throws TrieEncoderException, TrieDecoderException {
+    public void keyFoundWithMatchingValue() {
         ByteArrayOutputStream branchBuffer = new ByteArrayOutputStream();
         ByteArrayOutputStream leafBuffer = new ByteArrayOutputStream();
         TrieEncoder.encode(Helper.branch, branchBuffer);

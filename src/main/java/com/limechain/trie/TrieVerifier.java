@@ -20,10 +20,8 @@ public class TrieVerifier {
      * @param encodedProofNodes two-dimensional array containing the encoded proof nodes
      * @param rootHash          to search for in the proofs
      * @return a new trie with the searched root hash
-     * @throws TrieDecoderException
      */
-    public static boolean verify(byte[][] encodedProofNodes, byte[] rootHash, byte[] key, byte[] value)
-            throws TrieDecoderException {
+    public static boolean verify(byte[][] encodedProofNodes, byte[] rootHash, byte[] key, byte[] value) {
         Trie proofTrie = buildTrie(encodedProofNodes, rootHash);
         byte[] proofTrieValue = proofTrie.get(key);
         if (proofTrieValue == null) {
@@ -41,9 +39,8 @@ public class TrieVerifier {
      * @param encodedProofNodes two-dimensional array containing the encoded proof nodes
      * @param rootHash          to search for in the proofs
      * @return a new trie with the searched root hash
-     * @throws TrieDecoderException
      */
-    public static Trie buildTrie(byte[][] encodedProofNodes, byte[] rootHash) throws TrieDecoderException {
+    public static Trie buildTrie(byte[][] encodedProofNodes, byte[] rootHash) {
         if (encodedProofNodes.length == 0) {
             throw new IllegalArgumentException("Encoded proof nodes is empty!");
         }

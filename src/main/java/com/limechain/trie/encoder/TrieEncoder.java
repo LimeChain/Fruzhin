@@ -23,7 +23,7 @@ public class TrieEncoder {
      * @param buffer The buffer to write the encoded node to
      * @throws TrieEncoderException If any exception occurs during encoding
      */
-    public static void encode(Node node, OutputStream buffer) throws TrieEncoderException {
+    public static void encode(Node node, OutputStream buffer) {
         try {
             encodeHeader(node, buffer);
 
@@ -64,7 +64,7 @@ public class TrieEncoder {
      * @param buffer The buffer to write the encoded header to
      * @throws TrieEncoderException If any exception occurs during encoding
      */
-    public static void encodeHeader(Node node, OutputStream buffer) throws TrieEncoderException {
+    public static void encodeHeader(Node node, OutputStream buffer) {
         int partialKeyLength = node.getPartialKey().length;
         if (partialKeyLength > MAX_PARTIAL_KEY_LENGTH) {
             throw new TrieEncoderException("Partial key length is too big: " + partialKeyLength);
@@ -120,7 +120,7 @@ public class TrieEncoder {
      * @param buffer   The buffer to write the encoded children to
      * @throws TrieEncoderException If any exception occurs during encoding
      */
-    public static void encodeChildren(Node[] children, OutputStream buffer) throws TrieEncoderException {
+    public static void encodeChildren(Node[] children, OutputStream buffer) {
         for (Node child : children) {
             if (child == null) {
                 continue;
@@ -137,7 +137,7 @@ public class TrieEncoder {
      * @param buffer The buffer to write the encoded child to
      * @throws TrieEncoderException If any exception occurs during encoding
      */
-    public static void encodeChild(Node child, OutputStream buffer) throws TrieEncoderException {
+    public static void encodeChild(Node child, OutputStream buffer) {
         byte[] merkleValue = child.calculateMerkleValue();
         try (ScaleCodecWriter writer = new ScaleCodecWriter(buffer)) {
             writer.writeAsList(merkleValue);

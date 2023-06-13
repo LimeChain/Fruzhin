@@ -49,14 +49,14 @@ public class Helper {
         return paddedSlice;
     }
 
-    public static void assertLongEncoding(Node node) throws Exception {
+    public static void assertLongEncoding(Node node) {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         TrieEncoder.encode(node, outputStream);
 
         assertTrue(outputStream.toByteArray().length > 32);
     }
 
-    public static void assertShortEncoding(Node node) throws Exception {
+    public static void assertShortEncoding(Node node) {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         TrieEncoder.encode(node, outputStream);
 

@@ -15,7 +15,7 @@ public class TrieProofLoader {
      * @param node             - storing the loaded information
      * @throws TrieDecoderException when child could not be decoded
      */
-    public static void loadProof(Map<String, byte[]> digestToEncoding, Node node) throws TrieDecoderException {
+    public static void loadProof(Map<String, byte[]> digestToEncoding, Node node) {
         if (node.getKind() != NodeKind.Branch) {
             return;
         }
@@ -53,7 +53,8 @@ public class TrieProofLoader {
             byte[] encoding = digestToEncoding.get(merkleValueKey);
             Node decodedChild = TrieDecoder.decode(encoding);
             if (decodedChild == null) {
-                throw new RuntimeException("Decoding child node for hash digest: " + HexUtils.toHexString(merkleValue));
+                throw new TrieDecoderException("Decoding child node for hash digest: "
+                        + HexUtils.toHexString(merkleValue));
             }
 
             // The built proof trie is not used with a database, but just in case

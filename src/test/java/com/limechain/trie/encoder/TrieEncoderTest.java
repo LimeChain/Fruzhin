@@ -18,7 +18,7 @@ import static org.mockito.Mockito.verify;
 
 class TrieEncoderTest {
     @Test
-    void testEncodeHeaderBranchWithNoKey() throws TrieEncoderException, IOException {
+    void testEncodeHeaderBranchWithNoKey() throws IOException {
         var node = new Node() {{
             this.setChildren(new Node[Node.CHILDREN_CAPACITY]);
         }};
@@ -29,7 +29,7 @@ class TrieEncoderTest {
     }
 
     @Test
-    void testEncodeHeaderBranchWithValue() throws TrieEncoderException, IOException {
+    void testEncodeHeaderBranchWithValue() throws IOException {
         var node = new Node() {{
             this.setChildren(new Node[Node.CHILDREN_CAPACITY]);
             this.setStorageValue(new byte[0]);
@@ -41,7 +41,7 @@ class TrieEncoderTest {
     }
 
     @Test
-    void testEncodeHeaderBranchWithKeyOfLength30() throws TrieEncoderException, IOException {
+    void testEncodeHeaderBranchWithKeyOfLength30() throws IOException {
         var node = new Node() {{
             this.setChildren(new Node[Node.CHILDREN_CAPACITY]);
             this.setPartialKey(new byte[30]);
@@ -53,7 +53,7 @@ class TrieEncoderTest {
     }
 
     @Test
-    void testEncodeHeaderBranchWithKeyOfLength62() throws TrieEncoderException, IOException {
+    void testEncodeHeaderBranchWithKeyOfLength62() throws IOException {
         var node = new Node() {{
             this.setChildren(new Node[Node.CHILDREN_CAPACITY]);
             this.setPartialKey(new byte[62]);
@@ -65,7 +65,7 @@ class TrieEncoderTest {
     }
 
     @Test
-    void testEncodeHeaderBranchWithKeyOfLength63() throws TrieEncoderException, IOException {
+    void testEncodeHeaderBranchWithKeyOfLength63() throws IOException {
         var node = new Node() {{
             this.setChildren(new Node[Node.CHILDREN_CAPACITY]);
             this.setPartialKey(new byte[63]);
@@ -77,7 +77,7 @@ class TrieEncoderTest {
     }
 
     @Test
-    void testEncodeHeaderBranchWithKeyOfLength64() throws TrieEncoderException, IOException {
+    void testEncodeHeaderBranchWithKeyOfLength64() throws IOException {
         var node = new Node() {{
             this.setChildren(new Node[Node.CHILDREN_CAPACITY]);
             this.setPartialKey(new byte[64]);
@@ -90,7 +90,7 @@ class TrieEncoderTest {
     }
 
     @Test
-    void testEncodeHeaderLeafWithNoKey() throws TrieEncoderException, IOException {
+    void testEncodeHeaderLeafWithNoKey() throws IOException {
         var node = new Node() {{
             this.setStorageValue(new byte[]{1});
         }};
@@ -102,7 +102,7 @@ class TrieEncoderTest {
     }
 
     @Test
-    void testEncodeHeaderLeafWithKeyOfLength30() throws TrieEncoderException, IOException {
+    void testEncodeHeaderLeafWithKeyOfLength30() throws IOException {
         var node = new Node() {{
             this.setPartialKey(new byte[30]);
         }};
@@ -114,7 +114,7 @@ class TrieEncoderTest {
     }
 
     @Test
-    void testEncodeHeaderLeafWithKeyOfLength62() throws TrieEncoderException, IOException {
+    void testEncodeHeaderLeafWithKeyOfLength62() throws IOException {
         var node = new Node() {{
             this.setPartialKey(new byte[62]);
         }};
@@ -126,7 +126,7 @@ class TrieEncoderTest {
     }
 
     @Test
-    void testEncodeHeaderLeafWithKeyOfLength63() throws TrieEncoderException, IOException {
+    void testEncodeHeaderLeafWithKeyOfLength63() throws IOException {
         var node = new Node() {{
             this.setPartialKey(new byte[63]);
         }};
@@ -138,7 +138,7 @@ class TrieEncoderTest {
     }
 
     @Test
-    void testEncodeHeaderLeafWithKeyOfLength64() throws TrieEncoderException, IOException {
+    void testEncodeHeaderLeafWithKeyOfLength64() throws IOException {
         var node = new Node() {{
             this.setPartialKey(new byte[64]);
         }};
@@ -151,7 +151,7 @@ class TrieEncoderTest {
     }
 
     @Test
-    void testEncodeHeaderLeafWithKeyLengthOver3Bytes() throws TrieEncoderException, IOException {
+    void testEncodeHeaderLeafWithKeyLengthOver3Bytes() throws IOException {
         var node = new Node() {{
             this.setPartialKey(new byte[NodeVariant.LEAF.mask + 0b1111_1111 + 0b0000_0001]);
         }};
@@ -165,7 +165,7 @@ class TrieEncoderTest {
     }
 
     @Test
-    void testEncodeHeaderLeafWithKeyLengthOver3BytesAndLastByte0() throws TrieEncoderException, IOException {
+    void testEncodeHeaderLeafWithKeyLengthOver3BytesAndLastByte0() throws IOException {
         var node = new Node() {{
             this.setPartialKey(new byte[NodeVariant.LEAF.mask + 0b1111_1111]);
         }};
@@ -179,7 +179,7 @@ class TrieEncoderTest {
     }
 
     @Test
-    public void testEncodeHeaderAtMaximum() throws TrieEncoderException {
+    public void testEncodeHeaderAtMaximum() {
         int variant = NodeVariant.LEAF.bits;
         final int partialKeyLengthHeaderMask = 0b0011_1111;
         double extraKeyBytesNeeded = Math.ceil((double) (MAX_PARTIAL_KEY_LENGTH - partialKeyLengthHeaderMask) / 255.0);
@@ -207,7 +207,7 @@ class TrieEncoderTest {
     }
 
     @Test
-    public void testEncodeChildrenNode() throws IOException, TrieEncoderException {
+    public void testEncodeChildrenNode() throws IOException {
         Node node = new Node() {{
             this.setPartialKey(new byte[]{1, 2, 3});
             this.setStorageValue(new byte[]{100});
@@ -241,7 +241,7 @@ class TrieEncoderTest {
 
     // Should be in a separate test class
     @Test
-    public void testEncodeChildrenNoChildren() throws TrieEncoderException, IOException {
+    public void testEncodeChildrenNoChildren() throws IOException {
         ByteArrayOutputStream buffer = mock(ByteArrayOutputStream.class);
 
         TrieEncoder.encodeChildren(new Node[]{}, buffer);
@@ -250,7 +250,7 @@ class TrieEncoderTest {
     }
 
     @Test
-    public void testEncodeChildrenFirstChildNotNull() throws TrieEncoderException {
+    public void testEncodeChildrenFirstChildNotNull() {
         ByteArrayOutputStream buffer = mock(ByteArrayOutputStream.class);
 
         TrieEncoder.encodeChildren(new Node[]{
@@ -266,7 +266,7 @@ class TrieEncoderTest {
     }
 
     @Test
-    public void testEncodeChildrenLastChildNotNull() throws TrieEncoderException {
+    public void testEncodeChildrenLastChildNotNull() {
         ByteArrayOutputStream buffer = mock(ByteArrayOutputStream.class);
 
         TrieEncoder.encodeChildren(new Node[]{
@@ -286,7 +286,7 @@ class TrieEncoderTest {
     }
 
     @Test
-    public void testEncodeChildrenFirstTwoChildrenNotNull() throws TrieEncoderException {
+    public void testEncodeChildrenFirstTwoChildrenNotNull() {
         ByteArrayOutputStream buffer = mock(ByteArrayOutputStream.class);
 
         TrieEncoder.encodeChildren(new Node[]{
@@ -308,7 +308,7 @@ class TrieEncoderTest {
     }
 
     @Test
-    public void testEncodeEmptyBranchChild() throws TrieEncoderException {
+    public void testEncodeEmptyBranchChild() {
         ByteArrayOutputStream buffer = mock(ByteArrayOutputStream.class);
 
         TrieEncoder.encodeChild(new Node() {{
@@ -321,7 +321,7 @@ class TrieEncoderTest {
     }
 
     @Test
-    public void testEncodeLeafChild() throws TrieEncoderException {
+    public void testEncodeLeafChild() {
         ByteArrayOutputStream buffer = mock(ByteArrayOutputStream.class);
 
         TrieEncoder.encodeChild(new Node() {{
@@ -335,7 +335,7 @@ class TrieEncoderTest {
     }
 
     @Test
-    public void testEncodeBranchChild() throws TrieEncoderException {
+    public void testEncodeBranchChild() {
         ByteArrayOutputStream buffer = mock(ByteArrayOutputStream.class);
 
         TrieEncoder.encodeChild(new Node() {{

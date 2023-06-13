@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -48,18 +47,18 @@ public class TrieDecoderTest {
     }
 
     @Test
-    public void decodeLeafTest() throws IOException, TrieDecoderException {
+    public void decodeLeafTest() throws IOException {
         byte[] expectedPartialKey = new byte[]{9};
         byte[] expectedStorageValue = new byte[]{1, 2, 3};
         byte leafVariant = (byte) (NodeVariant.LEAF.bits | 1);
 
-        OutputStream out = new ByteArrayOutputStream();
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
         ScaleCodecWriter writer = new ScaleCodecWriter(out);
         writer.writeByte(leafVariant);
         writer.writeByteArray(expectedPartialKey);
         writer.writeAsList(expectedStorageValue);
 
-        byte[] data = ((ByteArrayOutputStream) out).toByteArray();
+        byte[] data = out.toByteArray();
         Node node = TrieDecoder.decode(data);
 
         assertArrayEquals(expectedPartialKey, node.getPartialKey());
@@ -76,7 +75,7 @@ public class TrieDecoderTest {
     }
 
     @Test
-    public void decodeBranchWithNoChildrenTest() throws TrieDecoderException {
+    public void decodeBranchWithNoChildrenTest() {
         byte[] expectedPartialKey = new byte[]{9};
 
         byte[] data = new byte[]{(byte) (NodeVariant.BRANCH.bits | 1), 9, 0, 0};
@@ -89,7 +88,7 @@ public class TrieDecoderTest {
     }
 
     @Test
-    public void decodeBranchWithValueTest() throws IOException, TrieDecoderException {
+    public void decodeBranchWithValueTest() throws IOException {
         byte[] expectedPartialKey = new byte[]{9};
         byte[] childrenBitmap = new byte[]{0, 4};
         byte[] expectedStorageValue = new byte[]{7, 8, 9};
@@ -98,7 +97,7 @@ public class TrieDecoderTest {
                 24, 25, 26, 27, 28, 29, 30, 31, 32};
         byte branchWithValueNodeVariant = (byte) (NodeVariant.BRANCH_WITH_VALUE.bits | 1);
 
-        OutputStream out = new ByteArrayOutputStream();
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
         ScaleCodecWriter writer = new ScaleCodecWriter(out);
         writer.writeByte(branchWithValueNodeVariant);
         writer.writeByteArray(expectedPartialKey);
@@ -106,7 +105,7 @@ public class TrieDecoderTest {
         writer.writeAsList(expectedStorageValue);
         writer.writeAsList(childHash);
 
-        byte[] data = ((ByteArrayOutputStream) out).toByteArray();
+        byte[] data = out.toByteArray();
         Node node = TrieDecoder.decode(data);
 
         assertEquals(node.getKind(), NodeKind.Branch);
@@ -117,7 +116,7 @@ public class TrieDecoderTest {
     }
 
     @Test
-    public void decodeBranchWithInlinedBranchAndLeafTest() throws Exception {
+    public void decodeBranchWithInlinedBranchAndLeafTest() {
         var node = new Node() {{
             this.setPartialKey(new byte[]{1});
             this.setStorageValue(new byte[]{1});

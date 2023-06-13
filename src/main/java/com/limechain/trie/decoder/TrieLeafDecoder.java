@@ -13,7 +13,7 @@ public class TrieLeafDecoder {
      * @throws TrieDecoderException if an error occurs while decoding the node. This could be
      * due to an issue reading the children bitmap or the storage value.
      */
-    public static Node decode(ScaleCodecReader reader, int partialKeyLength) throws TrieDecoderException {
+    public static Node decode(ScaleCodecReader reader, int partialKeyLength) {
         Node node = new Node();
         node.setPartialKey(TrieKeyDecoder.decodeKey(reader, partialKeyLength));
 

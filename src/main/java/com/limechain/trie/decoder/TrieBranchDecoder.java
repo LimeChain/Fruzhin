@@ -18,8 +18,7 @@ public class TrieBranchDecoder {
      * @throws TrieDecoderException if an error occurs while decoding the node. This could be
      *                              due to an issue reading the children bitmap or the storage value.
      */
-    public static Node decode(ScaleCodecReader reader, byte variantByte, int partialKeyLength)
-            throws TrieDecoderException {
+    public static Node decode(ScaleCodecReader reader, byte variantByte, int partialKeyLength) {
         Node node = new Node();
         node.setChildren(new Node[Node.CHILDREN_CAPACITY]);
         node.setPartialKey(TrieKeyDecoder.decodeKey(reader, partialKeyLength));
@@ -53,8 +52,7 @@ public class TrieBranchDecoder {
      * @throws TrieDecoderException if an error occurs while decoding the child node, e.g.
      *                              due to an issue reading the child's hash value.
      */
-    private static void decodeChildren(Node node, byte[] childrenBitmap, ScaleCodecReader reader)
-            throws TrieDecoderException {
+    private static void decodeChildren(Node node, byte[] childrenBitmap, ScaleCodecReader reader) {
         for (int i = 0; i < Node.CHILDREN_CAPACITY; i++) {
             // Skip if the bit is not set
             if (((childrenBitmap[i / 8] >> (i % 8)) & 1) != 1) {
