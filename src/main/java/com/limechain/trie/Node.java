@@ -3,7 +3,6 @@ package com.limechain.trie;
 import com.limechain.trie.encoder.TrieEncoder;
 import com.limechain.utils.HashUtils;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.javatuples.Pair;
 
@@ -13,7 +12,6 @@ import java.util.Arrays;
 
 @Getter
 @Setter
-@NoArgsConstructor
 public class Node {
     public static final int CHILDREN_CAPACITY = 16;
     private byte[] partialKey = new byte[]{};
