@@ -6,15 +6,17 @@ import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.types.Hash256;
 
 public class TrieBranchDecoder {
+    public static final int CHILD_BITMAP_SIZE = 2;
+
     /**
      * Decodes a branch node and its children recursively from a ScaleCodecReader input stream.
      *
-     * @param reader the ScaleCodecReader to read the encoded node data from
-     * @param variantByte the variant byte that represents the node variant
+     * @param reader           the ScaleCodecReader to read the encoded node data from
+     * @param variantByte      the variant byte that represents the node variant
      * @param partialKeyLength the length of the partial key to be read
      * @return the decoded Node object
      * @throws TrieDecoderException if an error occurs while decoding the node. This could be
-     * due to an issue reading the children bitmap or the storage value.
+     *                              due to an issue reading the children bitmap or the storage value.
      */
     public static Node decode(ScaleCodecReader reader, byte variantByte, int partialKeyLength)
             throws TrieDecoderException {
@@ -24,7 +26,7 @@ public class TrieBranchDecoder {
 
         byte[] childrenBitmap;
         try {
-            childrenBitmap = reader.readByteArray(2);
+            childrenBitmap = reader.readByteArray(CHILD_BITMAP_SIZE);
         } catch (IndexOutOfBoundsException error) {
             throw new TrieDecoderException("Could not decode children bitmap: " + error.getMessage());
         }
@@ -45,11 +47,11 @@ public class TrieBranchDecoder {
     /**
      * Decodes the children of a given Node from a ScaleCodecReader input stream and sets them to the node
      *
-     * @param node the Node object whose children are to be decoded
+     * @param node           the Node object whose children are to be decoded
      * @param childrenBitmap the bitmap representing the presence of children in the node
-     * @param reader the ScaleCodecReader to read the encoded child node data from
+     * @param reader         the ScaleCodecReader to read the encoded child node data from
      * @throws TrieDecoderException if an error occurs while decoding the child node, e.g.
-     * due to an issue reading the child's hash value.
+     *                              due to an issue reading the child's hash value.
      */
     private static void decodeChildren(Node node, byte[] childrenBitmap, ScaleCodecReader reader)
             throws TrieDecoderException {
