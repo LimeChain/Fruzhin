@@ -48,6 +48,10 @@ public class WarpSyncMachine {
 
     @Getter
     @Setter
+    private Hash256 stateRoot;
+
+    @Getter
+    @Setter
     private BigInteger lastFinalizedBlockNumber;
 
     @Getter
@@ -57,6 +61,14 @@ public class WarpSyncMachine {
     @Getter
     @Setter
     private BigInteger setId;
+
+    @Getter
+    @Setter
+    private byte[] runtime;
+
+    @Getter
+    @Setter
+    private byte[] heapPages;
 
     public WarpSyncMachine(Network network, ChainService chainService) {
         this.networkService = network;

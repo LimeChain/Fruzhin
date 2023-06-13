@@ -4,9 +4,9 @@ import com.limechain.chain.lightsyncstate.Authority;
 import com.limechain.network.protocol.warp.dto.ConsensusEngine;
 import com.limechain.network.protocol.warp.dto.HeaderDigest;
 import com.limechain.network.protocol.warp.dto.WarpSyncFragment;
+import com.limechain.sync.warpsync.WarpSyncMachine;
 import com.limechain.sync.warpsync.dto.AuthoritySetChange;
 import com.limechain.sync.warpsync.dto.GrandpaMessageType;
-import com.limechain.sync.warpsync.WarpSyncMachine;
 import com.limechain.sync.warpsync.scale.ForcedChangeReader;
 import com.limechain.sync.warpsync.scale.ScheduledChangeReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
@@ -55,6 +55,7 @@ public class VerifyJustificationState implements WarpSyncState {
 
             // Set the latest finalized header and number
             // TODO: Persist header to DB?
+            sync.setStateRoot(fragment.getHeader().getStateRoot());
             sync.setLastFinalizedBlockHash(fragment.getJustification().targetHash);
             sync.setLastFinalizedBlockNumber(fragment.getJustification().targetBlock);
 
@@ -62,7 +63,7 @@ public class VerifyJustificationState implements WarpSyncState {
                 handleAuthorityChanges(sync, fragment);
                 log.log(Level.INFO, "Verified justification. Block hash is now at #"
                         + sync.getLastFinalizedBlockNumber() + ": " + sync.getLastFinalizedBlockHash().toString());
-            } catch (Exception error){
+            } catch (Exception error) {
                 this.error = error;
             }
         } catch (Exception e) {

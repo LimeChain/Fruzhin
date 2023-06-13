@@ -49,7 +49,7 @@ public class TrieHeaderDecoder {
     /**
      * Decodes the header byte of a Trie node to identify its variant and the partial key length.
      *
-     * @param headerByte the byte from the header of the Trie node to be decode
+     * @param headerByte the byte from the header of the Trie node to be decoded
      * @return a TrieHeaderDecoderResult object containing the variant bits, partial key length, and the variant mask
      * @throws TrieDecoderException if no matching NodeVariant is found for the given header byte
      */
