@@ -9,6 +9,7 @@ import org.springframework.util.SerializationUtils;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Optional;
 import java.util.logging.Level;
 
@@ -20,7 +21,7 @@ public class DBRepository implements KVRepository<String, Object> {
     /**
      * Main DB file
      */
-    private final static String FILE_NAME = "db";
+    private final static String FOLDER_NAME = "db";
 
     /**
      * Connection to the DB
@@ -32,7 +33,7 @@ public class DBRepository implements KVRepository<String, Object> {
         RocksDB.loadLibrary();
         final Options options = new Options();
         options.setCreateIfMissing(true);
-        File baseDir = new File(path, FILE_NAME);
+        File baseDir = Path.of(path, FOLDER_NAME, chain).toFile();
         chainPrefix = chain;
         try {
             Files.createDirectories(baseDir.getParentFile().toPath());
