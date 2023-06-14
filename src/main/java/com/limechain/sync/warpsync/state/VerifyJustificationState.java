@@ -49,7 +49,7 @@ public class VerifyJustificationState implements WarpSyncState {
             log.log(Level.INFO, "Verifying justification...");
             boolean verified = fragment.getJustification().verify(sync.getAuthoritySet(), sync.getSetId());
             if (!verified) {
-                throw new Exception("Justification could not be verified.");
+                throw new RuntimeException("Justification could not be verified.");
             }
 
             // Set the latest finalized header and number
