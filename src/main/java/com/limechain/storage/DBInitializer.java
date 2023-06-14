@@ -29,15 +29,15 @@ public class DBInitializer {
      *
      * @param path    path where the DB should write to
      * @param chain   current network used for prefix
-     * @param dbCLean flag for recreating the database for current chain
+     * @param dbRecreate flag for recreating the database for current chain
      * @return connection to the DB
      */
-    public static DBRepository initialize(String path, Chain chain, boolean dbCLean) {
+    public static DBRepository initialize(String path, Chain chain, boolean dbRecreate) {
         if (instances.containsKey(path)) {
             return instances.get(path);
         }
 
-        DBRepository repo = new DBRepository(path, chain.getValue(), dbCLean);
+        DBRepository repo = new DBRepository(path, chain.getValue(), dbRecreate);
 
         instances.put(path, repo);
         return repo;
