@@ -21,6 +21,8 @@ import java.util.logging.Level;
 @Getter
 @Log
 public class Cli {
+    public static final String NETWORK = "network";
+    public static final String DB_PATH = "db-path";
     private static final String DB_RECREATE = "db-recreate";
 
     /**
@@ -65,8 +67,8 @@ public class Cli {
      */
     private Options buildOptions() {
         Options options = new Options();
-        Option networkOption = new Option("n", "network", true, "Client network");
-        Option dbPathOption = new Option(null, "db-path", true, "RocksDB path");
+        Option networkOption = new Option("n", NETWORK, true, "Client network");
+        Option dbPathOption = new Option(null, DB_PATH, true, "RocksDB path");
         Option dbClean = new Option("dbc", DB_RECREATE, false, "Clean the DB");
         networkOption.setRequired(false);
         dbPathOption.setRequired(false);
