@@ -16,7 +16,7 @@ public class DBRepositoryTest {
 
     @BeforeEach
     public void setup() {
-        dbRepository = DBInitializer.initialize("./test", Chain.WESTEND);
+        dbRepository = DBInitializer.initialize("./test", Chain.WESTEND, false);
     }
 
     @AfterEach

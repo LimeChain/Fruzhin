@@ -12,11 +12,8 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 
 /**
  * Abstraction class around apache.commons.cli used to set arguments rules and parse node arguments
@@ -24,6 +21,8 @@ import java.util.stream.Collectors;
 @Getter
 @Log
 public class Cli {
+    private static final String DB_RECREATE = "db-recreate";
+
     /**
      * Holds CLI options
      */
@@ -49,8 +48,9 @@ public class Cli {
             String network = cmd.getOptionValue("network", "").toLowerCase();
             if (!validChains.contains(network) && !network.isEmpty()) throw new ParseException("Invalid network");
             String dbPath = cmd.getOptionValue("db-path", DBInitializer.DEFAULT_DIRECTORY);
+            boolean dbRecreate = cmd.hasOption(DB_RECREATE);
 
-            return new CliArguments(network, dbPath);
+            return new CliArguments(network, dbPath, dbRecreate);
         } catch (ParseException e) {
             log.log(Level.SEVERE, "Failed to parse cli arguments", e);
             formatter.printHelp("Specify the network name - " + String.join(", ", validChains), options);
@@ -67,11 +67,13 @@ public class Cli {
         Options options = new Options();
         Option networkOption = new Option("n", "network", true, "Client network");
         Option dbPathOption = new Option(null, "db-path", true, "RocksDB path");
+        Option dbClean = new Option("dbc", DB_RECREATE, false, "Clean the DB");
         networkOption.setRequired(false);
         dbPathOption.setRequired(false);
 
         options.addOption(networkOption);
         options.addOption(dbPathOption);
+        options.addOption(dbClean);
         return options;
     }
 
