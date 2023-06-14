@@ -4,9 +4,9 @@ import com.limechain.network.protocol.NetworkService;
 import io.libp2p.core.multistream.ProtocolBinding;
 import lombok.Getter;
 
-@Getter
 public class LightMessagesService implements NetworkService {
 
+    @Getter
     private final LightMessages lightMessages;
 
     public LightMessagesService(String protocolId) {
