@@ -104,7 +104,4 @@ public class WarpSyncMachine {
             this.nextState();
         }
     }
-
-    public void stop() {
-    }
 }
