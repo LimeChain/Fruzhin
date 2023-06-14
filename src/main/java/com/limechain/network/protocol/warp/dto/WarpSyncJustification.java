@@ -103,7 +103,7 @@ public class WarpSyncJustification {
                 return false;
             }
         }
-        System.out.println("All signatures were verified successfully");
+        log.log(Level.INFO, "All signatures were verified successfully");
 
         // From Smoldot implementation:
         // TODO: must check that votes_ancestries doesn't contain any unused entry
