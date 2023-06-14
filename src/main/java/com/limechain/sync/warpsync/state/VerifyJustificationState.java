@@ -94,13 +94,13 @@ public class VerifyJustificationState implements WarpSyncState {
                                 .add(new Pair<>(authorityChanges.getDelay(), authorityChanges.getAuthorities()));
                         return;
                     case ON_DISABLED:
-                        log.log(Level.SEVERE, "On disabled grandpa message not implemented");
+                        log.log(Level.SEVERE, "'ON DISABLED' grandpa message not implemented");
                         return;
                     case PAUSE:
-                        log.log(Level.SEVERE, "Pause grandpa message not implemented");
+                        log.log(Level.SEVERE, "'PAUSE' grandpa message not implemented");
                         return;
                     case RESUME:
-                        log.log(Level.SEVERE, "Resume grandpa message not implemented");
+                        log.log(Level.SEVERE, "'RESUME' grandpa message not implemented");
                         return;
                     default:
                         log.log(Level.SEVERE, "Could not get grandpa message type");
