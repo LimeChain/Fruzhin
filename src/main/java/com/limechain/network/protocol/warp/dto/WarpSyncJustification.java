@@ -69,33 +69,8 @@ public class WarpSyncJustification {
 
             // TODO (from smoldot): must check signed block ancestry using `votes_ancestries`
 
-            // 1 reserved byte for data type
-            // 32 reserved for target hash
-            // 4 reserved for block number
-            // 8 reserved for justification round
-            // 8 reserved for set id
-            int messageCapacity = 1 + 32 + 4 + 8 + 8;
-            var messageBuffer = ByteBuffer.allocate(messageCapacity);
-            messageBuffer.order(ByteOrder.LITTLE_ENDIAN);
+            byte[] data = getDataToVerify(precommit, authoritiesSetId);
 
-            // Write message type
-            messageBuffer.put((byte) 1);
-            // Write target hash
-            messageBuffer.put(LittleEndianUtils
-                    .convertBytes(StringUtils.hexToBytes(precommit.getTargetHash().toString())));
-            //Write Justification round bytes as u64
-            messageBuffer.put(LittleEndianUtils
-                    .bytesToFixedLength(precommit.getTargetNumber().toByteArray(), 4));
-            //Write Justification round bytes as u64
-            messageBuffer.put(LittleEndianUtils.bytesToFixedLength(this.round.toByteArray(), 8));
-            //Write Set Id bytes as u64
-            messageBuffer.put(LittleEndianUtils.bytesToFixedLength(authoritiesSetId.toByteArray(), 8));
-
-            //Verify message
-            //Might have problems because we use the stand ED25519 instead of ED25519_zebra
-            messageBuffer.rewind();
-            byte[] data = new byte[messageBuffer.remaining()];
-            messageBuffer.get(data);
             boolean isValid = verifySignature(precommit.getAuthorityPublicKey().toString(),
                     precommit.getSignature().toString(), data);
             if (!isValid) {
@@ -110,6 +85,37 @@ public class WarpSyncJustification {
         // TODO: there's also a "ghost" thing?
 
         return true;
+    }
+
+    private byte[] getDataToVerify(Precommit precommit, BigInteger authoritiesSetId){
+        // 1 reserved byte for data type
+        // 32 reserved for target hash
+        // 4 reserved for block number
+        // 8 reserved for justification round
+        // 8 reserved for set id
+        int messageCapacity = 1 + 32 + 4 + 8 + 8;
+        var messageBuffer = ByteBuffer.allocate(messageCapacity);
+        messageBuffer.order(ByteOrder.LITTLE_ENDIAN);
+
+        // Write message type
+        messageBuffer.put((byte) 1);
+        // Write target hash
+        messageBuffer.put(LittleEndianUtils
+                .convertBytes(StringUtils.hexToBytes(precommit.getTargetHash().toString())));
+        //Write Justification round bytes as u64
+        messageBuffer.put(LittleEndianUtils
+                .bytesToFixedLength(precommit.getTargetNumber().toByteArray(), 4));
+        //Write Justification round bytes as u64
+        messageBuffer.put(LittleEndianUtils.bytesToFixedLength(this.round.toByteArray(), 8));
+        //Write Set Id bytes as u64
+        messageBuffer.put(LittleEndianUtils.bytesToFixedLength(authoritiesSetId.toByteArray(), 8));
+
+        //Verify message
+        //Might have problems because we use the stand ED25519 instead of ED25519_zebra
+        messageBuffer.rewind();
+        byte[] data = new byte[messageBuffer.remaining()];
+        messageBuffer.get(data);
+        return data;
     }
 
     public boolean verifySignature(String publicKeyHex, String signatureHex, byte[] data) {
