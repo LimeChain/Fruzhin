@@ -19,7 +19,7 @@ import java.util.logging.Level;
 @Log
 public class DBRepository implements KVRepository<String, Object> {
     /**
-     * Main DB file
+     * Main DB folder
      */
     private final static String FOLDER_NAME = "db";
 
