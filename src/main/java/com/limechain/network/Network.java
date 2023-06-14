@@ -67,7 +67,7 @@ public class Network {
         this.initializeProtocols(chainService, hostConfig);
         this.bootNodes = chainService.getGenesis().getBootNodes();
         //TODO Remove hardcoded peer
-        String selectedPeerId = "12D3KooWGbGRaDdDf4kxEbzksBydnCKx3q8D6pEhHiddC59gWx7L";
+        String selectedPeerId = "12D3KooWKer8bYqpYjwurVABu13mkELpX2X7mSpEicpjShLeg7D6";
         this.currentSelectedPeer = new PeerId(Multihash.fromBase58(selectedPeerId).toBytes());
     }
 
@@ -217,10 +217,6 @@ public class Network {
                 this.host.getAddressBook(),
                 this.currentSelectedPeer,
                 blockHash);
-    }
-
-    public void stop() {
-
     }
 
     public LightClientMessage.Response makeRemoteReadRequest(String blockHash, String[] keys) {
