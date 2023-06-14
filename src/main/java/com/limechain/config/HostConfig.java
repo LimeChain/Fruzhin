@@ -48,7 +48,7 @@ public class HostConfig {
         }
         log.log(Level.INFO, String.format("✅️Loaded app config for chain %s%n", chain));
         switch (this.getChain()) {
-            case POLKADOT -> {
+            case POLKADOT, LOCAL -> {
                 this.setRpcNodeAddress(RpcConstants.POLKADOT_WS_RPC);
             }
             case KUSAMA -> {
