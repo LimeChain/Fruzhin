@@ -47,7 +47,6 @@ public class VerifyJustificationState implements WarpSyncState {
 
             WarpSyncFragment fragment = sync.getFragmentsQueue().poll();
             log.log(Level.INFO, "Verifying justification...");
-            // TODO: Throw error if not verified!
             boolean verified = fragment.getJustification().verify(sync.getAuthoritySet(), sync.getSetId());
             if (!verified) {
                 throw new Exception("Justification could not be verified.");
