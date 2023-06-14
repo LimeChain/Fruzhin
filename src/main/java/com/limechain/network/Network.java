@@ -67,7 +67,7 @@ public class Network {
         this.initializeProtocols(chainService, hostConfig);
         this.bootNodes = chainService.getGenesis().getBootNodes();
         //TODO Remove hardcoded peer
-        String selectedPeerId = "12D3KooWKer94o1REDPtAhjtYR4SdLehnSrN8PEhBnZm5NBoCrMC";
+        String selectedPeerId = "12D3KooWGbGRaDdDf4kxEbzksBydnCKx3q8D6pEhHiddC59gWx7L";
         this.currentSelectedPeer = new PeerId(Multihash.fromBase58(selectedPeerId).toBytes());
     }
 
@@ -212,7 +212,7 @@ public class Network {
     public WarpSyncResponse makeWarpSyncRequest(String blockHash) {
         if (validatePeer()) return null;
 
-        return this.warpSyncService.warpSync.warpSyncRequest(
+        return this.warpSyncService.getWarpSync().warpSyncRequest(
                 this.host,
                 this.host.getAddressBook(),
                 this.currentSelectedPeer,
@@ -226,7 +226,7 @@ public class Network {
     public LightClientMessage.Response makeRemoteReadRequest(String blockHash, String[] keys) {
         if (validatePeer()) return null;
 
-        return this.lightMessagesService.lightMessages.remoteReadRequest(
+        return this.lightMessagesService.getLightMessages().remoteReadRequest(
                 this.host,
                 this.host.getAddressBook(),
                 this.currentSelectedPeer,
