@@ -62,6 +62,7 @@ public class DBRepository implements KVRepository<String, Object> {
                             e.getCause(),
                             e.getMessage()),
                     e);
+            throw new RuntimeException();
         }
     }
 
