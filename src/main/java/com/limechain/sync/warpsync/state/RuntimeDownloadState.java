@@ -40,17 +40,19 @@ public class RuntimeDownloadState implements WarpSyncState {
             decodedProofs[i] = reader.readByteArray();
         }
 
-        Trie trie = null;
+        Trie trie;
         try {
             trie = TrieVerifier.buildTrie(decodedProofs, sync.getStateRoot().getBytes());
         } catch (TrieDecoderException e) {
             throw new RuntimeException("Couldn't build trie from proofs list");
         }
-        var code = trie.get(LittleEndianUtils.convertBytes(StringUtils.toHex(":code").getBytes()));
+        var code = trie.get(
+                LittleEndianUtils.convertBytes(StringUtils.hexToBytes(StringUtils.toHex(":code"))));
         if (code == null) {
             throw new RuntimeException("Couldn't retrieve runtime code from trie");
         }
-        var heapPages = trie.get(StringUtils.toHex(":heappages").getBytes());
+        var heapPages = trie.get(
+                LittleEndianUtils.convertBytes(StringUtils.hexToBytes(StringUtils.toHex(":heappages"))));
         if (heapPages == null) {
             throw new RuntimeException("Couldn't retrieve runtime heap pages from trie");
         }
