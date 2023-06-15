@@ -157,7 +157,7 @@ public class Network {
      * By default Spring Boot uses a thread pool of size 1, so each call will be executed one at a time.
      */
     @Scheduled(fixedDelay = 10, timeUnit = TimeUnit.SECONDS)
-    public synchronized void findPeers() {
+    public void findPeers() {
         if (connections.size() >= REPLICATION) {
             log.log(Level.INFO,
                     "Connections have reached replication factor(" + REPLICATION + "). " +
@@ -180,7 +180,7 @@ public class Network {
     }
 
     @Scheduled(fixedDelay = 10, timeUnit = TimeUnit.SECONDS)
-    public synchronized void pingPeers() {
+    public void pingPeers() {
         // TODO: This needs to by synchronized with the findPeers method
         if (connections.size() == 0) {
             log.log(Level.INFO, "No peers to ping.");
