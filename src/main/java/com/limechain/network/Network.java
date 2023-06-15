@@ -3,6 +3,7 @@ package com.limechain.network;
 import com.limechain.chain.Chain;
 import com.limechain.chain.ChainService;
 import com.limechain.config.HostConfig;
+import com.limechain.network.kad.RamAddressBook;
 import com.limechain.network.kad.KademliaService;
 import com.limechain.network.protocol.blockannounce.BlockAnnounceService;
 import com.limechain.network.protocol.lightclient.LightMessagesService;
@@ -11,6 +12,7 @@ import com.limechain.network.protocol.warp.WarpSyncService;
 import io.ipfs.multiaddr.MultiAddress;
 import io.ipfs.multihash.Multihash;
 import io.libp2p.core.Host;
+import io.libp2p.core.PeerId;
 import io.libp2p.core.multiformats.Multiaddr;
 import io.libp2p.protocol.Ping;
 import lombok.Getter;
@@ -20,11 +22,9 @@ import org.peergos.PeerAddresses;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
@@ -37,14 +37,14 @@ public class Network {
     private static final int HOST_PORT = 30333;
     private static Network network;
     @Getter
-    private Map<Multihash, List<MultiAddress>> connections = new HashMap<>();
-    @Getter
     private final Host host;
     public SyncService syncService;
     public LightMessagesService lightMessagesService;
     public WarpSyncService warpSyncService;
     public KademliaService kademliaService;
     public BlockAnnounceService blockAnnounceService;
+
+    private final RamAddressBook addressBook = new RamAddressBook();
 
     /**
      * Initializes a host for the peer connection,
@@ -91,6 +91,7 @@ public class Network {
 
         kademliaService.host = host;
         kademliaService.connectBootNodes(chainService.getGenesis().getBootNodes());
+        kademliaService.getProtocol().setAddressBook(addressBook);
     }
 
     /**
@@ -132,13 +133,27 @@ public class Network {
         return this.host.listenAddresses().stream().map(Multiaddr::toString).toArray(String[]::new);
     }
 
-    public List<PeerAddresses> getPeers(){
-        List<PeerAddresses> peers = new ArrayList<>();
-        for (Map.Entry<Multihash, List<MultiAddress>> entry : connections.entrySet()) {
-            PeerAddresses peer = new PeerAddresses(entry.getKey(), entry.getValue());
-            peers.add(peer);
-        }
-        return peers;
+    public int getPeersCount() {
+        return addressBook.getAddresses().size();
+    }
+
+    public List<PeerAddresses> getPeers() {
+        return addressBook.getAddresses().entrySet().stream().map(this::mapAddressBookEntryToPeerAddresses).toList();
+    }
+
+    private PeerAddresses mapAddressBookEntryToPeerAddresses(Map.Entry<PeerId, Set<Multiaddr>> entry) {
+        return new PeerAddresses(
+                mapPeerIdToHash(entry.getKey()),
+                mapMultaddrSetToMultiAddressList(entry.getValue())
+        );
+    }
+
+    private Multihash mapPeerIdToHash(PeerId peerId) {
+        return Multihash.deserialize(peerId.getBytes());
+    }
+
+    private List<MultiAddress> mapMultaddrSetToMultiAddressList(Set<Multiaddr> multiaddrSet) {
+        return multiaddrSet.stream().map(multiaddr -> new MultiAddress(multiaddr.serialize())).toList();
     }
 
     /**
@@ -149,10 +164,8 @@ public class Network {
     @Scheduled(fixedDelay = 10, timeUnit = TimeUnit.SECONDS)
     public void findPeers() {
         log.log(Level.INFO, "Searching for peers...");
-        Map<Multihash, List<MultiAddress>> newPeers = kademliaService.findNewPeers(connections);
+        kademliaService.findNewPeers();
 
-        connections.putAll(newPeers);
-
-        log.log(Level.INFO, String.format("Connected peers: %s", connections.size()));
+        log.log(Level.INFO, String.format("Connected peers: %s", getPeersCount()));
     }
 }

@@ -4,7 +4,7 @@ import com.limechain.network.protocol.NetworkService;
 import io.ipfs.multiaddr.MultiAddress;
 import io.ipfs.multihash.Multihash;
 import io.libp2p.core.Host;
-import io.libp2p.core.multistream.ProtocolBinding;
+import io.libp2p.core.PeerId;
 import lombok.extern.java.Log;
 import org.peergos.PeerAddresses;
 import org.peergos.protocol.dht.Kademlia;
@@ -12,11 +12,8 @@ import org.peergos.protocol.dht.KademliaEngine;
 import org.peergos.protocol.dht.RamProviderStore;
 import org.peergos.protocol.dht.RamRecordStore;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -35,7 +32,7 @@ public class KademliaService implements NetworkService {
         this.initialize(protocolId, hostId, localDht, clientMode);
     }
 
-    public ProtocolBinding getProtocol() {
+    public Kademlia getProtocol() {
         return this.kademlia;
     }
 
@@ -45,7 +42,6 @@ public class KademliaService implements NetworkService {
      * @param protocolId
      * @param hostId
      * @param localEnabled
-     * @return Kademlia dht
      */
     private void initialize(String protocolId, Multihash hostId, boolean localEnabled, boolean clientMode) {
         kademlia = new Kademlia(new KademliaEngine(hostId, new RamProviderStore(), new RamRecordStore()),
@@ -71,29 +67,31 @@ public class KademliaService implements NetworkService {
         return successfulBootNodes;
     }
 
-    /**
-     * Populates Kademlia dht with peers closest in distance to a random id then makes connections with our node
-     *
-     * @return Successfully connected peers
-     */
-    public Map<Multihash, List<MultiAddress>> findNewPeers(Map<Multihash, List<MultiAddress>> connected) {
+    public void findNewPeers() {
+        kademlia.findClosestPeers(randomPeerId(), REPLICATION, host).stream()
+                .filter(this::peerNotInAddressBook)
+                .forEach(this::connectToAddresses);
+    }
+
+    private Multihash randomPeerId(){
         byte[] hash = new byte[32];
         (new Random()).nextBytes(hash);
-        Multihash randomPeerId = new Multihash(Multihash.Type.sha2_256, hash);
-        var peers = kademlia.findClosestPeers(randomPeerId, REPLICATION, host);
+        return new Multihash(Multihash.Type.sha2_256, hash);
+    }
 
-        Map<Multihash, List<MultiAddress>> connectedPeers = new HashMap<>();
-        Iterator peerIterator = peers.iterator();
+    private boolean peerNotInAddressBook(PeerAddresses peerAddresses) {
+        final var addressBook = host.getAddressBook();
 
-        while (peerIterator.hasNext()) {
-            PeerAddresses peer = (PeerAddresses) peerIterator.next();
-            if (!connected.containsKey(peer.peerId) && kademlia.connectTo(host, peer)) {
-                connectedPeers.put(peer.peerId, peer.addresses);
-            }
+        try {
+            return addressBook.getAddrs(PeerId.fromHex(peerAddresses.peerId.toHex())).get().isEmpty();
+        } catch (InterruptedException | ExecutionException e) {
+            log.log(Level.WARNING, "Interrupted while searching Address Book for peerId " + peerAddresses.peerId);
         }
 
-        // TODO: We can't connect to ws peers for now
-        // Add filtering of /ws and /wss peers
-        return connectedPeers;
+        return true;
+    }
+
+    private void connectToAddresses(PeerAddresses peerAddresses) {
+        kademlia.connectTo(host, peerAddresses);
     }
 }
