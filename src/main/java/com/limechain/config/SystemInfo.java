@@ -16,13 +16,13 @@ import java.util.logging.Level;
 @Log
 public class SystemInfo {
     private final String role;
+    private final Chain chain;
+    private final String dbPath;
+    private final String hostIdentity;
     @Value("${host.name}")
     private String hostName;
     @Value("${host.version}")
     private String hostVersion;
-    private Chain chain;
-    private String dbPath;
-    private String hostIdentity;
 
     public SystemInfo(HostConfig hostConfig, Network network) {
         // TODO: In the future this will be set depending on CLI params

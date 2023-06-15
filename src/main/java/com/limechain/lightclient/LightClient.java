@@ -1,9 +1,10 @@
 package com.limechain.lightclient;
 
 import com.limechain.network.Network;
+import com.limechain.rpc.http.server.AppBean;
 import com.limechain.rpc.http.server.HttpRpc;
 import com.limechain.rpc.ws.server.WebSocketRPC;
-import com.limechain.sync.Sync;
+import com.limechain.sync.warpsync.WarpSyncMachine;
 import lombok.extern.java.Log;
 
 import java.util.logging.Level;
@@ -19,7 +20,7 @@ public class LightClient {
     private final HttpRpc httpRpc;
     private final WebSocketRPC wsRpc;
     private Network network;
-    private Sync syncService;
+    private WarpSyncMachine warpSyncService;
 
     public LightClient(String[] cliArgs, HttpRpc httpRpc, WebSocketRPC wsRpc) {
         this.cliArgs = cliArgs;
@@ -34,6 +35,12 @@ public class LightClient {
         // TODO: Add business logic
         this.httpRpc.start(cliArgs);
         this.wsRpc.start(cliArgs);
+
+        this.network = AppBean.getBean(Network.class);
+        this.network.start();
+
+        this.warpSyncService = AppBean.getBean(WarpSyncMachine.class);
+        this.warpSyncService.start();
         log.log(Level.INFO, "\uD83D\uDE80Started light client!");
     }
 

@@ -2,6 +2,7 @@ package com.limechain.config;
 
 import com.limechain.chain.Chain;
 import com.limechain.cli.CliArguments;
+import com.limechain.constants.RpcConstants;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.java.Log;
@@ -28,6 +29,7 @@ public class HostConfig {
      * Chain the Host is running on
      */
     private Chain chain;
+    private String rpcNodeAddress;
     @Value("${genesis.path.polkadot}")
     private String polkadotGenesisPath;
     @Value("${genesis.path.kusama}")
@@ -36,8 +38,6 @@ public class HostConfig {
     private String westendGenesisPath;
     @Value("${genesis.path.local}")
     private String localGenesisPath;
-    @Value("${helper.node.address}")
-    private String helperNodeAddress;
 
     public HostConfig(CliArguments cliArguments) {
         this.setRocksDbPath(cliArguments.dbPath());
@@ -47,6 +47,17 @@ public class HostConfig {
             throw new RuntimeException("Unsupported or unknown network");
         }
         log.log(Level.INFO, String.format("✅️Loaded app config for chain %s%n", chain));
+        switch (this.getChain()) {
+            case POLKADOT, LOCAL -> {
+                this.setRpcNodeAddress(RpcConstants.POLKADOT_WS_RPC);
+            }
+            case KUSAMA -> {
+                this.setRpcNodeAddress(RpcConstants.KUSAMA_WS_RPC);
+            }
+            case WESTEND -> {
+                this.setRpcNodeAddress(RpcConstants.WESTEND_WS_RPC);
+            }
+        }
     }
 
     /**
@@ -67,7 +78,7 @@ public class HostConfig {
             case WESTEND -> {
                 return westendGenesisPath;
             }
-            case LOCAL ->{
+            case LOCAL -> {
                 return localGenesisPath;
             }
             default -> {

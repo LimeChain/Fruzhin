@@ -14,7 +14,7 @@ public class JustificationReader implements ScaleReader<WarpSyncJustification> {
         WarpSyncJustification justification = new WarpSyncJustification();
         justification.setRound(new UInt64Reader().read(reader));
         justification.setTargetHash(new Hash256(reader.readUint256()));
-        justification.setTargetBlock(new VarUint64Reader().read(reader));
+        justification.setTargetBlock(new VarUint64Reader(4).read(reader));
 
         int precommitsCount = reader.readCompactInt();
         Precommit[] precommits = new Precommit[precommitsCount];

@@ -13,7 +13,6 @@ import org.peergos.protocol.dht.RamProviderStore;
 import org.peergos.protocol.dht.RamRecordStore;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -29,7 +28,7 @@ public class KademliaService implements NetworkService {
     public static final int REPLICATION = 20;
     public static final int ALPHA = 3;
     public Host host;
-    private Kademlia kademlia;
+    public Kademlia kademlia;
 
     public KademliaService(String protocolId, Multihash hostId, boolean localDht, boolean clientMode) {
         this.initialize(protocolId, hostId, localDht, clientMode);
@@ -67,7 +66,7 @@ public class KademliaService implements NetworkService {
                 addr -> !addr.contains("wss") && !addr.contains("ws"));
         if (successfulBootNodes > 0)
             log.log(Level.INFO, "Successfully connected to " + successfulBootNodes + " boot nodes");
-        else log.log(Level.SEVERE, "Failed to connect to bootnodes");
+        else log.log(Level.SEVERE, "Failed to connect to boot nodes");
         return successfulBootNodes;
     }
 
@@ -78,22 +77,42 @@ public class KademliaService implements NetworkService {
      */
     public Map<Multihash, List<MultiAddress>> findNewPeers(Map<Multihash, List<MultiAddress>> connected) {
         byte[] hash = new byte[32];
-        (new Random()).nextBytes(hash);
+        new Random().nextBytes(hash);
         Multihash randomPeerId = new Multihash(Multihash.Type.sha2_256, hash);
-        var peers = kademlia.findClosestPeers(randomPeerId, REPLICATION, host);
+        List<PeerAddresses> peers = kademlia.findClosestPeers(randomPeerId, REPLICATION, host);
+
+        List<PeerAddresses> filteredPeers = peers.stream()
+                .filter(p -> p.addresses
+                        .stream()
+                        .anyMatch(a -> !a.toString().contains("/ws") && !a.toString().contains("/wss")))
+                .map(p -> new PeerAddresses(
+                        p.peerId,
+                        p.addresses.stream()
+                                .filter(a -> !a.toString().contains("/ws") && !a.toString().contains("/wss"))
+                                .collect(Collectors.toList())))
+                .toList();
+
+        log.log(Level.INFO,
+                "Filtered out " + (peers.size() - filteredPeers.size()) + " peers because of WS incompatibility");
 
         Map<Multihash, List<MultiAddress>> connectedPeers = new HashMap<>();
-        Iterator peerIterator = peers.iterator();
 
-        while (peerIterator.hasNext()) {
-            PeerAddresses peer = (PeerAddresses) peerIterator.next();
-            if (!connected.containsKey(peer.peerId) && kademlia.connectTo(host, peer)) {
+        for (PeerAddresses peer : filteredPeers) {
+            if (connectedPeers.size() == REPLICATION) {
+                log.log(Level.INFO, "Successfully reached " + REPLICATION + " peers");
+                break;
+            }
+
+            if (connected.containsKey(peer.peerId)) {
+                log.log(Level.INFO, "Already connected to peer " + peer.peerId);
+                continue;
+            }
+
+            if (kademlia.connectTo(host, peer)) {
+                log.log(Level.INFO, "Successfully connected to peer " + peer.peerId);
                 connectedPeers.put(peer.peerId, peer.addresses);
             }
         }
-
-        // TODO: We can't connect to ws peers for now
-        // Add filtering of /ws and /wss peers
         return connectedPeers;
     }
 }

@@ -50,12 +50,12 @@ public class WebSocketRoutingConfig implements WebSocketConfigurer {
      */
     @Bean
     public ChainHeadRpc chainHeadRpc() {
-        return new ChainHeadRpcImpl(hostConfig.getHelperNodeAddress());
+        return new ChainHeadRpcImpl(hostConfig.getRpcNodeAddress());
     }
 
     @Bean
     public TransactionRpc transactionRpc() {
-        return new TransactionRpcImpl(hostConfig.getHelperNodeAddress());
+        return new TransactionRpcImpl(hostConfig.getRpcNodeAddress());
     }
 
 }

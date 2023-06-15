@@ -3,7 +3,7 @@ package com.limechain.rpc.methods.system;
 import com.limechain.chain.ChainService;
 import com.limechain.config.SystemInfo;
 import com.limechain.network.Network;
-import com.limechain.sync.Sync;
+import com.limechain.sync.warpsync.WarpSyncMachine;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -26,7 +26,7 @@ public class SystemRPCImpl {
     private final ChainService chainService;
     private final SystemInfo systemInfo;
     private final Network network;
-    private final Sync sync;
+    private final WarpSyncMachine warpSync;
 
     /**
      * Gets the node's implementation name.
@@ -79,7 +79,7 @@ public class SystemRPCImpl {
      */
     public Map<String, Object> systemHealth() {
         return Map.ofEntries(
-                entry("isSyncing", this.sync.isSyncing()),
+                entry("isSyncing", this.warpSync.isSyncing()),
                 entry("peers", this.network.getPeers().size()),
                 entry("shouldHavePeers", chainService.isChainLive())
         );
