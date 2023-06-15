@@ -47,9 +47,9 @@ public class Cli {
         try {
             CommandLineParser parser = new DefaultParser();
             CommandLine cmd = parser.parse(options, args);
-            String network = cmd.getOptionValue("network", "").toLowerCase();
+            String network = cmd.getOptionValue(NETWORK, "").toLowerCase();
             if (!validChains.contains(network) && !network.isEmpty()) throw new ParseException("Invalid network");
-            String dbPath = cmd.getOptionValue("db-path", DBInitializer.DEFAULT_DIRECTORY);
+            String dbPath = cmd.getOptionValue(DB_PATH, DBInitializer.DEFAULT_DIRECTORY);
             boolean dbRecreate = cmd.hasOption(DB_RECREATE);
 
             return new CliArguments(network, dbPath, dbRecreate);
