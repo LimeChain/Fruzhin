@@ -35,6 +35,12 @@ public class StringUtils {
     }
 
     public static String toHex(String key) {
-        return String.format("%040x", new BigInteger(1, key.getBytes(StandardCharsets.UTF_8)));
+        StringBuilder sb = new StringBuilder();
+        char[] ch = key.toCharArray();
+        for (char c : ch) {
+            String hexString = Integer.toHexString(c);
+            sb.append(hexString);
+        }
+        return sb.toString();
     }
 }

@@ -54,6 +54,7 @@ public class VerifyJustificationState implements WarpSyncState {
 
             // Set the latest finalized header and number
             // TODO: Persist header to DB?
+            sync.setStateRoot(fragment.getHeader().getStateRoot());
             sync.setLastFinalizedBlockHash(fragment.getJustification().targetHash);
             sync.setLastFinalizedBlockNumber(fragment.getJustification().targetBlock);
 
