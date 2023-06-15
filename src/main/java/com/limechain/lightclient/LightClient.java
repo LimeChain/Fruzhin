@@ -51,8 +51,6 @@ public class LightClient {
         // TODO: Stop running services
         this.httpRpc.stop();
         this.wsRpc.stop();
-        this.network.stop();
-        this.warpSyncService.stop();
         log.log(Level.INFO, "\uD83D\uDED1Stopped light client!");
     }
 }

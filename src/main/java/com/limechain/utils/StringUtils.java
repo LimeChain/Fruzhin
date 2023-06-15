@@ -2,6 +2,8 @@ package com.limechain.utils;
 
 import com.google.protobuf.ByteString;
 
+import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidParameterException;
 import java.util.regex.Pattern;
 

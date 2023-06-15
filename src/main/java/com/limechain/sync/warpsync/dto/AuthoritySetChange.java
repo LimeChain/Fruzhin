@@ -13,6 +13,6 @@ import java.math.BigInteger;
 @AllArgsConstructor
 @NoArgsConstructor
 public class AuthoritySetChange {
-    Authority[] authorities;
-    BigInteger delay;
+    private Authority[] authorities;
+    private BigInteger delay;
 }

@@ -17,9 +17,7 @@ public class RuntimeDownloadState implements WarpSyncState {
     @Override
     public void next(WarpSyncMachine sync) {
         // After runtime is downloaded, we have to build the chain info
-        if (sync.getRuntime() != null && sync.getHeapPages() != null) {
-            sync.setState(new ChainInformationDownloadState());
-        }
+        sync.setState(new ChainInformationDownloadState());
     }
 
     @Override

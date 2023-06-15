@@ -4,9 +4,9 @@ import com.limechain.chain.lightsyncstate.Authority;
 import com.limechain.network.protocol.warp.dto.ConsensusEngine;
 import com.limechain.network.protocol.warp.dto.HeaderDigest;
 import com.limechain.network.protocol.warp.dto.WarpSyncFragment;
-import com.limechain.sync.warpsync.WarpSyncMachine;
 import com.limechain.sync.warpsync.dto.AuthoritySetChange;
 import com.limechain.sync.warpsync.dto.GrandpaMessageType;
+import com.limechain.sync.warpsync.WarpSyncMachine;
 import com.limechain.sync.warpsync.scale.ForcedChangeReader;
 import com.limechain.sync.warpsync.scale.ScheduledChangeReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
@@ -47,10 +47,9 @@ public class VerifyJustificationState implements WarpSyncState {
 
             WarpSyncFragment fragment = sync.getFragmentsQueue().poll();
             log.log(Level.INFO, "Verifying justification...");
-            // TODO: Throw error if not verified!
             boolean verified = fragment.getJustification().verify(sync.getAuthoritySet(), sync.getSetId());
             if (!verified) {
-                throw new Exception("Justification could not be verified.");
+                throw new RuntimeException("Justification could not be verified.");
             }
 
             // Set the latest finalized header and number
@@ -63,7 +62,7 @@ public class VerifyJustificationState implements WarpSyncState {
                 handleAuthorityChanges(sync, fragment);
                 log.log(Level.INFO, "Verified justification. Block hash is now at #"
                         + sync.getLastFinalizedBlockNumber() + ": " + sync.getLastFinalizedBlockHash().toString());
-            } catch (Exception error) {
+            } catch (Exception error){
                 this.error = error;
             }
         } catch (Exception e) {
@@ -96,13 +95,13 @@ public class VerifyJustificationState implements WarpSyncState {
                                 .add(new Pair<>(authorityChanges.getDelay(), authorityChanges.getAuthorities()));
                         return;
                     case ON_DISABLED:
-                        log.log(Level.SEVERE, "On disabled grandpa message not implemented");
+                        log.log(Level.SEVERE, "'ON DISABLED' grandpa message not implemented");
                         return;
                     case PAUSE:
-                        log.log(Level.SEVERE, "Pause grandpa message not implemented");
+                        log.log(Level.SEVERE, "'PAUSE' grandpa message not implemented");
                         return;
                     case RESUME:
-                        log.log(Level.SEVERE, "Resume grandpa message not implemented");
+                        log.log(Level.SEVERE, "'RESUME' grandpa message not implemented");
                         return;
                     default:
                         log.log(Level.SEVERE, "Could not get grandpa message type");

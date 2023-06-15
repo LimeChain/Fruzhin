@@ -67,7 +67,7 @@ public class Network {
         this.initializeProtocols(chainService, hostConfig);
         this.bootNodes = chainService.getGenesis().getBootNodes();
         //TODO Remove hardcoded peer
-        String selectedPeerId = "12D3KooWKer94o1REDPtAhjtYR4SdLehnSrN8PEhBnZm5NBoCrMC";
+        String selectedPeerId = "12D3KooWQz2q2UWVCiy9cFX1hHYEmhSKQB2hjEZCccScHLGUPjcc";
         this.currentSelectedPeer = new PeerId(Multihash.fromBase58(selectedPeerId).toBytes());
     }
 
@@ -157,7 +157,7 @@ public class Network {
      * By default Spring Boot uses a thread pool of size 1, so each call will be executed one at a time.
      */
     @Scheduled(fixedDelay = 10, timeUnit = TimeUnit.SECONDS)
-    public synchronized void findPeers() {
+    public void findPeers() {
         if (connections.size() >= REPLICATION) {
             log.log(Level.INFO,
                     "Connections have reached replication factor(" + REPLICATION + "). " +
@@ -180,7 +180,7 @@ public class Network {
     }
 
     @Scheduled(fixedDelay = 10, timeUnit = TimeUnit.SECONDS)
-    public synchronized void pingPeers() {
+    public void pingPeers() {
         // TODO: This needs to by synchronized with the findPeers method
         if (connections.size() == 0) {
             log.log(Level.INFO, "No peers to ping.");
@@ -212,21 +212,17 @@ public class Network {
     public WarpSyncResponse makeWarpSyncRequest(String blockHash) {
         if (validatePeer()) return null;
 
-        return this.warpSyncService.warpSync.warpSyncRequest(
+        return this.warpSyncService.getWarpSync().warpSyncRequest(
                 this.host,
                 this.host.getAddressBook(),
                 this.currentSelectedPeer,
                 blockHash);
     }
 
-    public void stop() {
-
-    }
-
     public LightClientMessage.Response makeRemoteReadRequest(String blockHash, String[] keys) {
         if (validatePeer()) return null;
 
-        return this.lightMessagesService.lightMessages.remoteReadRequest(
+        return this.lightMessagesService.getLightMessages().remoteReadRequest(
                 this.host,
                 this.host.getAddressBook(),
                 this.currentSelectedPeer,

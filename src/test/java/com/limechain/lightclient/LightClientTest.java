@@ -70,8 +70,6 @@ public class LightClientTest {
 
         verify(httpRpc, times(1)).stop();
         verify(wsRpc, times(1)).stop();
-        verify(network, times(1)).stop();
-        verify(warpSync, times(1)).stop();
 
     }
 }
