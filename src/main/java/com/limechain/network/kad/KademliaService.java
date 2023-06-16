@@ -105,9 +105,11 @@ public class KademliaService implements NetworkService {
                 .filter(p -> !p.addresses.isEmpty())
                 .toList();
 
-        log.log(Level.INFO,
-                "Filtered out " + (peerAddresses.size() - filteredAddresses.size())
-                        + " peers because of WS incompatibility");
+        int filteredOut = peerAddresses.size() - filteredAddresses.size();
+        if (filteredOut > 0) {
+            log.log(Level.INFO,
+                    "Filtered out " + filteredOut + " peers because of WS incompatibility");
+        }
 
         return filteredAddresses;
     }
