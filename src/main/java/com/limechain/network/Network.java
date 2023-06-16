@@ -24,7 +24,7 @@ import org.peergos.PeerAddresses;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -42,8 +42,6 @@ public class Network {
     private static final int HOST_PORT = 30333;
     private static Network network;
     private final String[] bootNodes;
-    @Getter
-    private final Map<Multihash, List<MultiAddress>> connections = new HashMap<>();
     public SyncService syncService;
     public LightMessagesService lightMessagesService;
     public KademliaService kademliaService;
@@ -182,7 +180,7 @@ public class Network {
         kademliaService.findNewPeers();
 
         if (this.currentSelectedPeer == null) {
-            this.currentSelectedPeer = kademliaService.getAddresses().keySet().stream().findFirst().orElse(null);
+            updateCurrentSelectedPeer();
         }
 
         log.log(Level.INFO, String.format("Connected peers: %s", getPeersCount()));
@@ -191,31 +189,31 @@ public class Network {
     @Scheduled(fixedDelay = 10, timeUnit = TimeUnit.SECONDS)
     public void pingPeers() {
         // TODO: This needs to by synchronized with the findPeers method
-        if (connections.size() == 0) {
+        if (getPeersCount() == 0) {
             log.log(Level.INFO, "No peers to ping.");
             return;
         }
 
         log.log(Level.INFO, "Pinging peers...");
-        connections.forEach((peerId, addresses) -> {
-            try {
-                Long latency = ping.ping(host, host.getAddressBook(), PeerId.fromBase58(peerId.toBase58()));
+        kademliaService.getAddresses().forEach(this::ping);
+    }
 
-                log.log(Level.INFO, String.format("Pinged peer: %s, latency %s ms", peerId, latency));
-            } catch (Exception e) {
-                log.log(Level.WARNING, String.format("Failed to ping peer: %s. " +
-                        "Removing from active connections", peerId));
-                connections.remove(peerId);
+    private void ping(PeerId peerId, Collection<Multiaddr> addresses) {
+        try {
+            Long latency = ping.ping(host, host.getAddressBook(), peerId);
+            log.log(Level.INFO, String.format("Pinged peer: %s, latency %s ms", peerId, latency));
+        } catch (Exception e) {
+            log.log(Level.WARNING, String.format("Failed to ping peer: %s. Removing from active connections", peerId));
 
-                if (this.currentSelectedPeer.toBase58().equals(peerId.toBase58())) {
-                    this.currentSelectedPeer = null;
-                    if (connections.size() > 0) {
-                        this.currentSelectedPeer = PeerId.fromBase58(connections.keySet().toArray()[0].toString());
-                    }
-                }
-
+            kademliaService.getAddresses().remove(peerId);
+            if (this.currentSelectedPeer.equals(peerId)) {
+                updateCurrentSelectedPeer();
             }
-        });
+        }
+    }
+
+    private void updateCurrentSelectedPeer() {
+        this.currentSelectedPeer = kademliaService.getAddresses().keySet().stream().findFirst().orElse(null);
     }
 
     public WarpSyncResponse makeWarpSyncRequest(String blockHash) {
