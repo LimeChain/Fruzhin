@@ -24,10 +24,10 @@ import org.peergos.PeerAddresses;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
@@ -141,14 +141,27 @@ public class Network {
         // TODO Bug: .listenAddresses() returns empty list
         return this.host.listenAddresses().stream().map(Multiaddr::toString).toArray(String[]::new);
     }
+    public int getPeersCount() {
+        return kademliaService.getAddresses().size();
+    }
 
     public List<PeerAddresses> getPeers() {
-        List<PeerAddresses> peers = new ArrayList<>();
-        for (Map.Entry<Multihash, List<MultiAddress>> entry : connections.entrySet()) {
-            PeerAddresses peer = new PeerAddresses(entry.getKey(), entry.getValue());
-            peers.add(peer);
-        }
-        return peers;
+        return kademliaService.getAddresses().entrySet().stream().map(this::mapAddressBookEntryToPeerAddresses).toList();
+    }
+
+    private PeerAddresses mapAddressBookEntryToPeerAddresses(Map.Entry<PeerId, Set<Multiaddr>> entry) {
+        return new PeerAddresses(
+                mapPeerIdToHash(entry.getKey()),
+                mapMultaddrSetToMultiAddressList(entry.getValue())
+        );
+    }
+
+    private Multihash mapPeerIdToHash(PeerId peerId) {
+        return Multihash.deserialize(peerId.getBytes());
+    }
+
+    private List<MultiAddress> mapMultaddrSetToMultiAddressList(Set<Multiaddr> multiaddrSet) {
+        return multiaddrSet.stream().map(multiaddr -> new MultiAddress(multiaddr.serialize())).toList();
     }
 
     /**
@@ -158,7 +171,7 @@ public class Network {
      */
     @Scheduled(fixedDelay = 10, timeUnit = TimeUnit.SECONDS)
     public void findPeers() {
-        if (connections.size() >= REPLICATION) {
+        if (getPeersCount() >= REPLICATION) {
             log.log(Level.INFO,
                     "Connections have reached replication factor(" + REPLICATION + "). " +
                             "No need to search for new ones yet.");
@@ -166,17 +179,13 @@ public class Network {
         }
 
         log.log(Level.INFO, "Searching for peers...");
-        Map<Multihash, List<MultiAddress>> newPeers = kademliaService.findNewPeers(connections);
+        kademliaService.findNewPeers();
 
-        connections.putAll(newPeers);
-
-        newPeers.forEach((peerId, addresses) -> log.log(Level.INFO, String.format("Found peer: " + peerId)));
-
-        if (this.currentSelectedPeer == null && newPeers.size() > 0) {
-            this.currentSelectedPeer = PeerId.fromBase58(newPeers.keySet().toArray()[0].toString());
+        if (this.currentSelectedPeer == null) {
+            this.currentSelectedPeer = kademliaService.getAddresses().keySet().stream().findFirst().orElse(null);
         }
 
-        log.log(Level.INFO, String.format("Connected peers: %s", connections.size()));
+        log.log(Level.INFO, String.format("Connected peers: %s", getPeersCount()));
     }
 
     @Scheduled(fixedDelay = 10, timeUnit = TimeUnit.SECONDS)

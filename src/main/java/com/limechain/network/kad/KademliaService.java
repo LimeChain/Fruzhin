@@ -4,6 +4,8 @@ import com.limechain.network.protocol.NetworkService;
 import io.ipfs.multiaddr.MultiAddress;
 import io.ipfs.multihash.Multihash;
 import io.libp2p.core.Host;
+import io.libp2p.core.PeerId;
+import io.libp2p.core.multiformats.Multiaddr;
 import io.libp2p.core.multistream.ProtocolBinding;
 import lombok.extern.java.Log;
 import org.peergos.PeerAddresses;
@@ -12,10 +14,11 @@ import org.peergos.protocol.dht.KademliaEngine;
 import org.peergos.protocol.dht.RamProviderStore;
 import org.peergos.protocol.dht.RamRecordStore;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -29,6 +32,7 @@ public class KademliaService implements NetworkService {
     public static final int ALPHA = 3;
     public Host host;
     public Kademlia kademlia;
+    private final RamAddressBook addressBook = new RamAddressBook();
 
     public KademliaService(String protocolId, Multihash hostId, boolean localDht, boolean clientMode) {
         this.initialize(protocolId, hostId, localDht, clientMode);
@@ -36,6 +40,10 @@ public class KademliaService implements NetworkService {
 
     public ProtocolBinding getProtocol() {
         return this.kademlia;
+    }
+
+    public Map<PeerId, Set<Multiaddr>> getAddresses() {
+        return addressBook.getAddresses();
     }
 
     /**
@@ -49,6 +57,7 @@ public class KademliaService implements NetworkService {
     private void initialize(String protocolId, Multihash hostId, boolean localEnabled, boolean clientMode) {
         kademlia = new Kademlia(new KademliaEngine(hostId, new RamProviderStore(), new RamRecordStore()),
                 protocolId, REPLICATION, ALPHA, localEnabled, clientMode);
+        kademlia.setAddressBook(addressBook);
     }
 
     /**
@@ -72,47 +81,65 @@ public class KademliaService implements NetworkService {
 
     /**
      * Populates Kademlia dht with peers closest in distance to a random id then makes connections with our node
-     *
-     * @return Successfully connected peers
      */
-    public Map<Multihash, List<MultiAddress>> findNewPeers(Map<Multihash, List<MultiAddress>> connected) {
-        byte[] hash = new byte[32];
-        new Random().nextBytes(hash);
-        Multihash randomPeerId = new Multihash(Multihash.Type.sha2_256, hash);
-        List<PeerAddresses> peers = kademlia.findClosestPeers(randomPeerId, REPLICATION, host);
+    public void findNewPeers() {
+        List<PeerAddresses> peers = kademlia.findClosestPeers(randomPeerId(), REPLICATION, host);
 
-        List<PeerAddresses> filteredPeers = peers.stream()
-                .filter(p -> p.addresses
-                        .stream()
-                        .anyMatch(a -> !a.toString().contains("/ws") && !a.toString().contains("/wss")))
-                .map(p -> new PeerAddresses(
-                        p.peerId,
-                        p.addresses.stream()
-                                .filter(a -> !a.toString().contains("/ws") && !a.toString().contains("/wss"))
-                                .collect(Collectors.toList())))
-                .toList();
-
-        log.log(Level.INFO,
-                "Filtered out " + (peers.size() - filteredPeers.size()) + " peers because of WS incompatibility");
-
-        Map<Multihash, List<MultiAddress>> connectedPeers = new HashMap<>();
-
-        for (PeerAddresses peer : filteredPeers) {
-            if (connectedPeers.size() == REPLICATION) {
+        for (PeerAddresses peer : filterWsPeers(peers)) {
+            if (addressBook.getAddresses().size() >= REPLICATION) {
                 log.log(Level.INFO, "Successfully reached " + REPLICATION + " peers");
                 break;
             }
 
-            if (connected.containsKey(peer.peerId)) {
-                log.log(Level.INFO, "Already connected to peer " + peer.peerId);
-                continue;
-            }
-
-            if (kademlia.connectTo(host, peer)) {
-                log.log(Level.INFO, "Successfully connected to peer " + peer.peerId);
-                connectedPeers.put(peer.peerId, peer.addresses);
-            }
+            connectToPeer(peer);
         }
-        return connectedPeers;
+    }
+
+    private Multihash randomPeerId(){
+        byte[] hash = new byte[32];
+        (new Random()).nextBytes(hash);
+        return new Multihash(Multihash.Type.sha2_256, hash);
+    }
+
+    private List<PeerAddresses> filterWsPeers(List<PeerAddresses> peerAddresses) {
+        final var filteredAddresses = peerAddresses.stream()
+                .map(this::filterWsAddresses)
+                .filter(p -> !p.addresses.isEmpty())
+                .toList();
+
+        log.log(Level.INFO,
+                "Filtered out " + (peerAddresses.size() - filteredAddresses.size()) + " peers because of WS incompatibility");
+
+        return filteredAddresses;
+    }
+
+    private PeerAddresses filterWsAddresses(PeerAddresses peerAddresses) {
+        return new PeerAddresses(
+                peerAddresses.peerId,
+                peerAddresses.addresses.stream()
+                        .filter(a -> !a.toString().contains("/ws") && !a.toString().contains("/wss"))
+                        .toList());
+    }
+
+    private void connectToPeer(PeerAddresses peerAddresses) {
+        if (peerAlreadyInAddressBook(peerAddresses.peerId)) {
+            log.log(Level.INFO, "Already connected to peer " + peerAddresses.peerId);
+        }
+
+        if (kademlia.connectTo(host, peerAddresses)) {
+            log.log(Level.INFO, "Successfully connected to peer " + peerAddresses.peerId);
+        }
+    }
+
+    private boolean peerAlreadyInAddressBook(Multihash peerId) {
+        final var addressBook = host.getAddressBook();
+
+        try {
+            return !addressBook.getAddrs(PeerId.fromHex(peerId.toHex())).get().isEmpty();
+        } catch (InterruptedException | ExecutionException e) {
+            log.log(Level.WARNING, "Interrupted while searching Address Book for peerId " + peerId);
+        }
+
+        return false;
     }
 }
