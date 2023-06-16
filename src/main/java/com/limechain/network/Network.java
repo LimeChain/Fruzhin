@@ -143,29 +143,6 @@ public class Network {
         return kademliaService.getAddresses().size();
     }
 
-    public List<PeerAddresses> getPeers() {
-        return kademliaService.getAddresses()
-                .entrySet()
-                .stream()
-                .map(this::mapAddressBookEntryToPeerAddresses)
-                .toList();
-    }
-
-    private PeerAddresses mapAddressBookEntryToPeerAddresses(Map.Entry<PeerId, Set<Multiaddr>> entry) {
-        return new PeerAddresses(
-                mapPeerIdToHash(entry.getKey()),
-                mapMultaddrSetToMultiAddressList(entry.getValue())
-        );
-    }
-
-    private Multihash mapPeerIdToHash(PeerId peerId) {
-        return Multihash.deserialize(peerId.getBytes());
-    }
-
-    private List<MultiAddress> mapMultaddrSetToMultiAddressList(Set<Multiaddr> multiaddrSet) {
-        return multiaddrSet.stream().map(multiaddr -> new MultiAddress(multiaddr.serialize())).toList();
-    }
-
     /**
      * Periodically searches for new peers and connects to them
      * Logs the number of connected peers excluding boot nodes
