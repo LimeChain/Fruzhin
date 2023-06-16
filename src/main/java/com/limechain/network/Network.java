@@ -144,7 +144,11 @@ public class Network {
     }
 
     public List<PeerAddresses> getPeers() {
-        return kademliaService.getAddresses().entrySet().stream().map(this::mapAddressBookEntryToPeerAddresses).toList();
+        return kademliaService.getAddresses()
+                .entrySet()
+                .stream()
+                .map(this::mapAddressBookEntryToPeerAddresses)
+                .toList();
     }
 
     private PeerAddresses mapAddressBookEntryToPeerAddresses(Map.Entry<PeerId, Set<Multiaddr>> entry) {
