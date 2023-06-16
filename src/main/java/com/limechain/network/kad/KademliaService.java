@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -52,7 +51,6 @@ public class KademliaService implements NetworkService {
      * @param protocolId
      * @param hostId
      * @param localEnabled
-     * @return Kademlia dht
      */
     private void initialize(String protocolId, Multihash hostId, boolean localEnabled, boolean clientMode) {
         kademlia = new Kademlia(new KademliaEngine(hostId, new RamProviderStore(), new RamRecordStore()),
@@ -86,7 +84,7 @@ public class KademliaService implements NetworkService {
         List<PeerAddresses> peers = kademlia.findClosestPeers(randomPeerId(), REPLICATION, host);
 
         for (PeerAddresses peer : filterWsPeers(peers)) {
-            if (addressBook.getAddresses().size() >= REPLICATION) {
+            if (getAddresses().size() >= REPLICATION) {
                 log.log(Level.INFO, "Successfully reached " + REPLICATION + " peers");
                 break;
             }
@@ -97,7 +95,7 @@ public class KademliaService implements NetworkService {
 
     private Multihash randomPeerId(){
         byte[] hash = new byte[32];
-        (new Random()).nextBytes(hash);
+        new Random().nextBytes(hash);
         return new Multihash(Multihash.Type.sha2_256, hash);
     }
 
@@ -133,14 +131,6 @@ public class KademliaService implements NetworkService {
     }
 
     private boolean peerAlreadyInAddressBook(Multihash peerId) {
-        final var addressBook = host.getAddressBook();
-
-        try {
-            return !addressBook.getAddrs(PeerId.fromHex(peerId.toHex())).get().isEmpty();
-        } catch (InterruptedException | ExecutionException e) {
-            log.log(Level.WARNING, "Interrupted while searching Address Book for peerId " + peerId);
-        }
-
-        return false;
+        return getAddresses().containsKey(PeerId.fromHex(peerId.toHex()));
     }
 }
