@@ -5,6 +5,7 @@ package com.limechain.cli;
  *
  * @param network the network
  * @param dbPath  the DB path
+ * @param dbRecreate flag for recreating the database for current network
  */
-public record CliArguments(String network, String dbPath) {
+public record CliArguments(String network, String dbPath, boolean dbRecreate) {
 }

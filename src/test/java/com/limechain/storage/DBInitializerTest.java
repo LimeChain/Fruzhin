@@ -55,14 +55,14 @@ class DBInitializerTest {
         Map<String, DBRepository> instances = mock(Map.class);
         setPrivateField("instances", instances);
         String testPath = "test/path1";
-        initializer.initialize(testPath, Chain.WESTEND);
+        initializer.initialize(testPath, Chain.WESTEND, false);
 
         verify(instances, times(1)).put(eq(testPath), any());
         verify(instances, never()).get(testPath);
 
         when(instances.containsKey(testPath)).thenReturn(true);
 
-        initializer.initialize(testPath, Chain.WESTEND);
+        initializer.initialize(testPath, Chain.WESTEND, false);
 
         verify(instances, times(1)).get(testPath);
         verify(instances, times(1)).put(eq(testPath), any());
