@@ -118,8 +118,7 @@ public class Network {
         );
 
         this.host = hostBuilder.build();
-
-        kademliaService.host = host;
+        kademliaService.setHost(host);
     }
 
     public void start() {
@@ -200,7 +199,7 @@ public class Network {
     public WarpSyncResponse makeWarpSyncRequest(String blockHash) {
         if (validatePeer()) return null;
 
-        return this.warpSyncService.getWarpSync().warpSyncRequest(
+        return this.warpSyncService.getProtocol().warpSyncRequest(
                 this.host,
                 this.host.getAddressBook(),
                 this.currentSelectedPeer,
@@ -210,7 +209,7 @@ public class Network {
     public LightClientMessage.Response makeRemoteReadRequest(String blockHash, String[] keys) {
         if (validatePeer()) return null;
 
-        return this.lightMessagesService.getLightMessages().remoteReadRequest(
+        return this.lightMessagesService.getProtocol().remoteReadRequest(
                 this.host,
                 this.host.getAddressBook(),
                 this.currentSelectedPeer,

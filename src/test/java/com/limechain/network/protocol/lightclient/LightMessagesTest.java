@@ -34,7 +34,7 @@ public class LightMessagesTest {
 
             senderNode.start().join();
 
-            kademliaService.host = senderNode;
+            kademliaService.setHost(senderNode);
             var peerId = PeerId.fromBase58("12D3KooWPGSssFbR4XvuSfvu7Rdq4MUv82HdsygXZ4nRhEw3vJpC");
             var receivers = new String[]{
                     "/ip4/127.0.0.1/tcp/30333/p2p/12D3KooWPGSssFbR4XvuSfvu7Rdq4MUv82HdsygXZ4nRhEw3vJpC"
@@ -46,7 +46,7 @@ public class LightMessagesTest {
 
             LightClientMessage.Response response = lightMessages.remoteReadRequest(
                     senderNode,
-                    kademliaService.host.getAddressBook(),
+                    kademliaService.getProtocol().getAddressBook(),
                     peerId,
                     "202d85e7911b81e7e704be791b6a2147dc37b571bd311abe5dbf6ab3860dc4b8",
                     new String[]{"9c5d795d0297be56027a4b2464e333979c5d795d0297be56027a4b2464e333977a2dce72ec5f24ed58baf131ea24762f3947ac46"}
