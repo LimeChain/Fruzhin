@@ -32,7 +32,7 @@ public class BlockHeader {
                 '}';
     }
 
-    public byte[] hash() {
+    public byte[] getHash() {
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
         try (ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
             writer.write(new BlockHeaderScaleWriter(), this);

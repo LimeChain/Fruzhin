@@ -1,6 +1,7 @@
 package com.limechain.network.protocol.blockannounce;
 
 import com.limechain.network.ConnectionManager;
+import com.limechain.network.PeerInfo;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshake;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshakeScaleReader;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshakeScaleWriter;
@@ -61,7 +62,7 @@ public class BlockAnnounceEngine {
         } else {
             ScaleCodecReader reader = new ScaleCodecReader(msg);
             BlockAnnounceHandshake handshake = reader.read(new BlockAnnounceHandshakeScaleReader());
-            connectionManager.addPeer(peerId, handshake);
+            connectionManager.addPeer(peerId, new PeerInfo(handshake));
             log.log(Level.INFO, "Received handshake from " + peerId + "\n" +
                     handshake);
         }

@@ -1,6 +1,5 @@
 package com.limechain.network;
 
-import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshake;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceMessage;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import io.emeraldpay.polkaj.types.Hash256;
@@ -11,18 +10,18 @@ import org.junit.jupiter.api.Test;
 import java.math.BigInteger;
 import java.util.Arrays;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 class ConnectionManagerTest {
     ConnectionManager connectionManager;
     PeerId peerId = mock(PeerId.class);
-    BlockAnnounceHandshake blockAnnounceHandshake = mock(BlockAnnounceHandshake.class);
+    PeerInfo peerInfo = mock(PeerInfo.class);
 
     @BeforeEach
     void setUp() {
@@ -31,14 +30,14 @@ class ConnectionManagerTest {
 
     @Test
     void addPeer() {
-        connectionManager.addPeer(peerId, blockAnnounceHandshake);
+        connectionManager.addPeer(peerId, peerInfo);
 
-        assertSame(blockAnnounceHandshake, connectionManager.peers.get(peerId));
+        assertSame(peerInfo, connectionManager.peers.get(peerId));
     }
 
     @Test
     void removePeer() {
-        connectionManager.peers.put(peerId, blockAnnounceHandshake);
+        connectionManager.peers.put(peerId, peerInfo);
         connectionManager.removePeer(peerId);
 
         assertFalse(connectionManager.peers.containsKey(peerId));
@@ -46,17 +45,17 @@ class ConnectionManagerTest {
 
     @Test
     void updatePeerShouldDoNothingIfNotBestBlock() {
-        connectionManager.peers.put(peerId, blockAnnounceHandshake);
+        connectionManager.peers.put(peerId, peerInfo);
         BlockAnnounceMessage message = mock(BlockAnnounceMessage.class);
         when(message.isBestBlock()).thenReturn(false);
 
         connectionManager.updatePeer(peerId, message);
-        verifyNoInteractions(blockAnnounceHandshake);
+        verifyNoInteractions(peerInfo);
     }
 
     @Test
     void updatePeerShouldUpdateWhenBestBlock() {
-        connectionManager.peers.put(peerId, new BlockAnnounceHandshake());
+        connectionManager.peers.put(peerId, peerInfo);
         BlockAnnounceMessage message = mock(BlockAnnounceMessage.class);
         when(message.isBestBlock()).thenReturn(true);
         BlockHeader header = mock(BlockHeader.class);
@@ -64,18 +63,17 @@ class ConnectionManagerTest {
         when(header.getBlockNumber()).thenReturn(BigInteger.TEN);
         byte[] hash = new byte[32];
         Arrays.fill( hash, (byte) 3 );
-        when(header.hash()).thenReturn(hash);
+        when(header.getHash()).thenReturn(hash);
 
         connectionManager.updatePeer(peerId, message);
 
-        final var updatedPeerData = connectionManager.peers.get(peerId);
-        assertEquals("10", updatedPeerData.getBestBlock());
-        assertEquals(new Hash256(hash), updatedPeerData.getBestBlockHash());
+        verify(peerInfo).setBestBlock("10");
+        verify(peerInfo).setBestBlockHash(new Hash256(hash));
     }
 
     @Test
     void isConnected() {
-        connectionManager.peers.put(peerId, blockAnnounceHandshake);
+        connectionManager.peers.put(peerId, peerInfo);
 
         assertTrue(connectionManager.isConnected(peerId));
     }
