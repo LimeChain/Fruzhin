@@ -24,7 +24,6 @@ public class HostConfig {
      * File path under which the DB will be created
      */
     private String rocksDbPath;
-
     /**
      * Chain the Host is running on
      */
@@ -39,6 +38,11 @@ public class HostConfig {
     @Value("${genesis.path.local}")
     private String localGenesisPath;
 
+    /**
+     * Recreate the DB
+     */
+    private boolean dbRecreate;
+
     public HostConfig(CliArguments cliArguments) {
         this.setRocksDbPath(cliArguments.dbPath());
         String network = cliArguments.network();
@@ -46,6 +50,7 @@ public class HostConfig {
         if (chain == null) {
             throw new RuntimeException("Unsupported or unknown network");
         }
+        dbRecreate = cliArguments.dbRecreate();
         log.log(Level.INFO, String.format("✅️Loaded app config for chain %s%n", chain));
         switch (this.getChain()) {
             case POLKADOT, LOCAL -> {

@@ -1,6 +1,7 @@
 package com.limechain.storage;
 
 import lombok.extern.java.Log;
+import org.apache.commons.io.FileUtils;
 import org.rocksdb.Options;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
@@ -29,11 +30,14 @@ public class DBRepository implements KVRepository<String, Object> {
     private RocksDB db;
     private String chainPrefix;
 
-    public DBRepository(String path, String chain) {
+    public DBRepository(String path, String chain, boolean dbRecreate) {
         RocksDB.loadLibrary();
         final Options options = new Options();
         options.setCreateIfMissing(true);
         File baseDir = Path.of(path, FOLDER_NAME, chain).toFile();
+        if (dbRecreate) {
+            cleanDatabaseFolder(baseDir);
+        }
         chainPrefix = chain;
         try {
             Files.createDirectories(baseDir.getParentFile().toPath());
@@ -45,6 +49,20 @@ public class DBRepository implements KVRepository<String, Object> {
                             e.getCause(),
                             e.getMessage()),
                     e);
+        }
+    }
+
+    private void cleanDatabaseFolder(File file) {
+        try {
+            FileUtils.cleanDirectory(file.getAbsoluteFile());
+            log.log(Level.INFO, "\uD83D\uDDD1️DB cleaned");
+
+        } catch (IOException e) {
+            log.log(Level.SEVERE, String.format("Error deleting db folder. Exception: '%s', message: '%s'",
+                            e.getCause(),
+                            e.getMessage()),
+                    e);
+            throw new RuntimeException();
         }
     }
 

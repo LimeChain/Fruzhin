@@ -39,7 +39,7 @@ public class CommonConfig {
 
     @Bean
     public KVRepository<String, Object> repository(HostConfig hostConfig) {
-        return DBInitializer.initialize(hostConfig.getRocksDbPath(), hostConfig.getChain());
+        return DBInitializer.initialize(hostConfig.getRocksDbPath(), hostConfig.getChain(), hostConfig.isDbRecreate());
     }
 
     @Bean
