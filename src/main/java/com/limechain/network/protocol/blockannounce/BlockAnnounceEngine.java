@@ -45,7 +45,7 @@ public class BlockAnnounceEngine {
         if (isHandshake) {
             handleHandshake(msg, peerId, stream, connectedToPeer);
         } else {
-            handleBlockAnnounce(msg);
+            handleBlockAnnounce(msg, peerId);
         }
 
         //TODO: Send message to network? module
@@ -61,16 +61,17 @@ public class BlockAnnounceEngine {
         } else {
             ScaleCodecReader reader = new ScaleCodecReader(msg);
             BlockAnnounceHandshake handshake = reader.read(new BlockAnnounceHandshakeScaleReader());
-            connectionManager.addPeer(peerId);
+            connectionManager.addPeer(peerId, handshake);
             log.log(Level.INFO, "Received handshake from " + peerId + "\n" +
                     handshake);
         }
         writeHandshakeToStream(stream, peerId);
     }
 
-    private void handleBlockAnnounce(byte[] msg) {
+    private void handleBlockAnnounce(byte[] msg, PeerId peerId) {
         ScaleCodecReader reader = new ScaleCodecReader(msg);
         BlockAnnounceMessage announce = reader.read(new BlockAnnounceMessageScaleReader());
+        connectionManager.updatePeer(peerId, announce);
         log.log(Level.INFO, "Received block announce: \n" + announce);
     }
 
