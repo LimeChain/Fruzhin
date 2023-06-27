@@ -11,7 +11,6 @@ import com.limechain.network.protocol.ping.Ping;
 import com.limechain.network.protocol.sync.SyncService;
 import com.limechain.network.protocol.warp.WarpSyncService;
 import com.limechain.network.protocol.warp.dto.WarpSyncResponse;
-import io.ipfs.multiaddr.MultiAddress;
 import io.ipfs.multihash.Multihash;
 import io.libp2p.core.Host;
 import io.libp2p.core.PeerId;
@@ -20,14 +19,10 @@ import io.libp2p.protocol.PingProtocol;
 import lombok.Getter;
 import lombok.extern.java.Log;
 import org.peergos.HostBuilder;
-import org.peergos.PeerAddresses;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
@@ -51,6 +46,9 @@ public class Network {
     private Host host;
     private WarpSyncService warpSyncService;
     private PeerId currentSelectedPeer;
+    private final ConnectionManager connectionManager = ConnectionManager.getInstance();
+
+    private boolean started = false;
 
     /**
      * Initializes a host for the peer connection,
@@ -127,6 +125,7 @@ public class Network {
     public void start() {
         log.log(Level.INFO, "Starting network module...");
         kademliaService.connectBootNodes(this.bootNodes);
+        started = true;
         log.log(Level.INFO, "Started network module!");
 
     }
@@ -140,7 +139,7 @@ public class Network {
         return this.host.listenAddresses().stream().map(Multiaddr::toString).toArray(String[]::new);
     }
     public int getPeersCount() {
-        return kademliaService.getAddresses().size();
+        return connectionManager.getPeerIds().size();
     }
 
     /**
@@ -150,6 +149,9 @@ public class Network {
      */
     @Scheduled(fixedDelay = 10, timeUnit = TimeUnit.SECONDS)
     public void findPeers() {
+        if(!started) {
+            return;
+        }
         if (getPeersCount() >= REPLICATION) {
             log.log(Level.INFO,
                     "Connections have reached replication factor(" + REPLICATION + "). " +
@@ -167,7 +169,7 @@ public class Network {
         log.log(Level.INFO, String.format("Connected peers: %s", getPeersCount()));
     }
 
-    @Scheduled(fixedDelay = 10, timeUnit = TimeUnit.SECONDS)
+    @Scheduled(fixedDelay = 1, timeUnit = TimeUnit.MINUTES)
     public void pingPeers() {
         // TODO: This needs to by synchronized with the findPeers method
         if (getPeersCount() == 0) {
@@ -176,17 +178,15 @@ public class Network {
         }
 
         log.log(Level.INFO, "Pinging peers...");
-        kademliaService.getAddresses().forEach(this::ping);
+        connectionManager.getPeerIds().forEach(this::ping);
     }
 
-    private void ping(PeerId peerId, Collection<Multiaddr> addresses) {
+    private void ping(PeerId peerId) {
         try {
             Long latency = ping.ping(host, host.getAddressBook(), peerId);
             log.log(Level.INFO, String.format("Pinged peer: %s, latency %s ms", peerId, latency));
         } catch (Exception e) {
             log.log(Level.WARNING, String.format("Failed to ping peer: %s. Removing from active connections", peerId));
-
-            kademliaService.getAddresses().remove(peerId);
             if (this.currentSelectedPeer.equals(peerId)) {
                 updateCurrentSelectedPeer();
             }
@@ -194,7 +194,7 @@ public class Network {
     }
 
     private void updateCurrentSelectedPeer() {
-        this.currentSelectedPeer = kademliaService.getAddresses().keySet().stream().findFirst().orElse(null);
+        this.currentSelectedPeer = connectionManager.getPeerIds().stream().findAny().orElse(null);
     }
 
     public WarpSyncResponse makeWarpSyncRequest(String blockHash) {
