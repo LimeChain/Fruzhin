@@ -14,7 +14,7 @@ public class BlockAnnounceMessage {
     public String toString() {
         return "BlockAnnounceMessage{" +
                 "header=" + header +
-                ", isBestBlock=" + bestBlock +
+                ", bestBlock=" + bestBlock +
                 '}';
     }
 }
