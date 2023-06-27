@@ -38,7 +38,7 @@ public class BlockAnnounceEngine {
         boolean isHandshake = msg.length == HANDSHAKE_LENGTH;
 
         if(!connectedToPeer && !isHandshake) {
-            log.log(Level.WARNING, "No handshake for block announce message");
+            log.log(Level.WARNING, "No handshake for block announce message from Peer " + peerId);
             return;
         }
 
