@@ -40,7 +40,7 @@ public class SyncTest {
 
         senderNode.start().join();
 
-        kademliaService.host = senderNode;
+        kademliaService.setHost(senderNode);
     }
 
     @AfterAll

@@ -34,7 +34,7 @@ public class BlockAnnounceTest {
 
             senderNode.start().join();
 
-            kademliaService.host = senderNode;
+            kademliaService.setHost(senderNode);
 
             //Polkadot
             var peerId = PeerId.fromBase58("12D3KooWPGSssFbR4XvuSfvu7Rdq4MUv82HdsygXZ4nRhEw3vJpC");

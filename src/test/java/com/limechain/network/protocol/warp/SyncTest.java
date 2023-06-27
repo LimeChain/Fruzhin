@@ -33,7 +33,7 @@ public class SyncTest {
 
             senderNode.start().join();
 
-            kademliaService.host = senderNode;
+            kademliaService.setHost(senderNode);
             var peerId = PeerId.fromBase58("12D3KooWBMw3k3sDwcvFGkD1V6DXuo2okRbZQ7KA72hpYMWXrUmc");
             var receivers = new String[]{
                     "/ip4/127.0.0.1/tcp/30333/p2p/12D3KooWBMw3k3sDwcvFGkD1V6DXuo2okRbZQ7KA72hpYMWXrUmc",
