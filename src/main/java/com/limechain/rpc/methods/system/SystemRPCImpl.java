@@ -80,7 +80,7 @@ public class SystemRPCImpl {
     public Map<String, Object> systemHealth() {
         return Map.ofEntries(
                 entry("isSyncing", this.warpSync.isSyncing()),
-                entry("peers", this.network.getPeers().size()),
+                entry("peers", this.network.getPeersCount()),
                 entry("shouldHavePeers", chainService.isChainLive())
         );
     }

@@ -1,5 +1,7 @@
 package com.limechain.network.protocol.blockannounce;
 
+import com.limechain.network.ConnectionManager;
+import com.limechain.network.PeerInfo;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshake;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshakeScaleReader;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshakeScaleWriter;
@@ -14,13 +16,11 @@ import lombok.extern.java.Log;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.logging.Level;
 
 @Log
 public class BlockAnnounceEngine {
-    private final Map<PeerId, BlockAnnounceHandshake> peerHandshakes = new HashMap<>();
+    private final ConnectionManager connectionManager = ConnectionManager.getInstance();
 
     private static final int HANDSHAKE_LENGTH = 69;
 
@@ -35,42 +35,45 @@ public class BlockAnnounceEngine {
     }};
 
     public void receiveRequest(byte[] msg, PeerId peerId, Stream stream) {
-        boolean hasKey = peerHandshakes.containsKey(peerId);
+        boolean connectedToPeer = connectionManager.isConnected(peerId);
+        boolean isHandshake = msg.length == HANDSHAKE_LENGTH;
 
-        //Decode handshake from Polkadot
-        if (!hasKey && msg.length == HANDSHAKE_LENGTH) {
+        if(!connectedToPeer && !isHandshake) {
+            log.log(Level.WARNING, "No handshake for block announce message from Peer " + peerId);
+            return;
+        }
+
+        if (isHandshake) {
+            handleHandshake(msg, peerId, stream, connectedToPeer);
+        } else {
+            handleBlockAnnounce(msg, peerId);
+        }
+
+        //TODO: Send message to network? module
+    }
+
+    private void handleHandshake(byte[] msg, PeerId peerId, Stream stream, boolean connectedToPeer) {
+        /*  We might not need to send a second handshake.
+        If we already have stored the key it means that we have processed the handshake once.
+        This might be caused by using a different stream for sending and receiving in libp2p.
+        */
+        if (connectedToPeer) {
+            log.log(Level.INFO, "Received existing handshake from " + peerId);
+        } else {
             ScaleCodecReader reader = new ScaleCodecReader(msg);
             BlockAnnounceHandshake handshake = reader.read(new BlockAnnounceHandshakeScaleReader());
-            peerHandshakes.put(peerId, handshake);
+            connectionManager.addPeer(peerId, new PeerInfo(handshake));
             log.log(Level.INFO, "Received handshake from " + peerId + "\n" +
                     handshake);
-
-            writeHandshakeToStream(stream, peerId);
-            return;
         }
+        writeHandshakeToStream(stream, peerId);
+    }
 
-        /*  We might not need to send a second handshake.
-            If we already have stored the key it means that we have processed the handshake once.
-            This might be caused by using a different stream for sending and receiving in libp2p.
-        */
-        if (hasKey && msg.length == HANDSHAKE_LENGTH) {
-            log.log(Level.INFO, "Received existing handshake from " + peerId);
-
-            writeHandshakeToStream(stream, peerId);
-            return;
-        }
-
-        if (hasKey) {
-            ScaleCodecReader reader = new ScaleCodecReader(msg);
-            BlockAnnounceMessage announce = reader.read(new BlockAnnounceMessageScaleReader());
-
-            log.log(Level.INFO, "Received block announce: \n" + announce);
-            return;
-        }
-
-        log.log(Level.WARNING, "No handshake for block announce message");
-
-        // TODO: Send message to network? module
+    private void handleBlockAnnounce(byte[] msg, PeerId peerId) {
+        ScaleCodecReader reader = new ScaleCodecReader(msg);
+        BlockAnnounceMessage announce = reader.read(new BlockAnnounceMessageScaleReader());
+        connectionManager.updatePeer(peerId, announce);
+        log.log(Level.INFO, "Received block announce: \n" + announce);
     }
 
     public void writeHandshakeToStream(Stream stream, PeerId peerId) {
@@ -86,6 +89,6 @@ public class BlockAnnounceEngine {
     }
 
     public void removePeerHandshake(PeerId peerId) {
-        peerHandshakes.remove(peerId);
+        connectionManager.removePeer(peerId);
     }
 }

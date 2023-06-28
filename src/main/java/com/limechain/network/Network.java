@@ -11,7 +11,6 @@ import com.limechain.network.protocol.ping.Ping;
 import com.limechain.network.protocol.sync.SyncService;
 import com.limechain.network.protocol.warp.WarpSyncService;
 import com.limechain.network.protocol.warp.dto.WarpSyncResponse;
-import io.ipfs.multiaddr.MultiAddress;
 import io.ipfs.multihash.Multihash;
 import io.libp2p.core.Host;
 import io.libp2p.core.PeerId;
@@ -20,14 +19,10 @@ import io.libp2p.protocol.PingProtocol;
 import lombok.Getter;
 import lombok.extern.java.Log;
 import org.peergos.HostBuilder;
-import org.peergos.PeerAddresses;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
@@ -42,8 +37,6 @@ public class Network {
     private static final int HOST_PORT = 30333;
     private static Network network;
     private final String[] bootNodes;
-    @Getter
-    private final Map<Multihash, List<MultiAddress>> connections = new HashMap<>();
     public SyncService syncService;
     public LightMessagesService lightMessagesService;
     public KademliaService kademliaService;
@@ -53,6 +46,9 @@ public class Network {
     private Host host;
     private WarpSyncService warpSyncService;
     private PeerId currentSelectedPeer;
+    private final ConnectionManager connectionManager = ConnectionManager.getInstance();
+
+    private boolean started = false;
 
     /**
      * Initializes a host for the peer connection,
@@ -129,6 +125,7 @@ public class Network {
     public void start() {
         log.log(Level.INFO, "Starting network module...");
         kademliaService.connectBootNodes(this.bootNodes);
+        started = true;
         log.log(Level.INFO, "Started network module!");
 
     }
@@ -141,14 +138,8 @@ public class Network {
         // TODO Bug: .listenAddresses() returns empty list
         return this.host.listenAddresses().stream().map(Multiaddr::toString).toArray(String[]::new);
     }
-
-    public List<PeerAddresses> getPeers() {
-        List<PeerAddresses> peers = new ArrayList<>();
-        for (Map.Entry<Multihash, List<MultiAddress>> entry : connections.entrySet()) {
-            PeerAddresses peer = new PeerAddresses(entry.getKey(), entry.getValue());
-            peers.add(peer);
-        }
-        return peers;
+    public int getPeersCount() {
+        return connectionManager.getPeerIds().size();
     }
 
     /**
@@ -158,7 +149,10 @@ public class Network {
      */
     @Scheduled(fixedDelay = 10, timeUnit = TimeUnit.SECONDS)
     public void findPeers() {
-        if (connections.size() >= REPLICATION) {
+        if(!started) {
+            return;
+        }
+        if (getPeersCount() >= REPLICATION) {
             log.log(Level.INFO,
                     "Connections have reached replication factor(" + REPLICATION + "). " +
                             "No need to search for new ones yet.");
@@ -166,47 +160,41 @@ public class Network {
         }
 
         log.log(Level.INFO, "Searching for peers...");
-        Map<Multihash, List<MultiAddress>> newPeers = kademliaService.findNewPeers(connections);
+        kademliaService.findNewPeers();
 
-        connections.putAll(newPeers);
-
-        newPeers.forEach((peerId, addresses) -> log.log(Level.INFO, String.format("Found peer: " + peerId)));
-
-        if (this.currentSelectedPeer == null && newPeers.size() > 0) {
-            this.currentSelectedPeer = PeerId.fromBase58(newPeers.keySet().toArray()[0].toString());
+        if (this.currentSelectedPeer == null) {
+            updateCurrentSelectedPeer();
         }
 
-        log.log(Level.INFO, String.format("Connected peers: %s", connections.size()));
+        log.log(Level.INFO, String.format("Connected peers: %s", getPeersCount()));
     }
 
-    @Scheduled(fixedDelay = 10, timeUnit = TimeUnit.SECONDS)
+    @Scheduled(fixedDelay = 1, timeUnit = TimeUnit.MINUTES)
     public void pingPeers() {
         // TODO: This needs to by synchronized with the findPeers method
-        if (connections.size() == 0) {
+        if (getPeersCount() == 0) {
             log.log(Level.INFO, "No peers to ping.");
             return;
         }
 
         log.log(Level.INFO, "Pinging peers...");
-        connections.forEach((peerId, addresses) -> {
-            try {
-                Long latency = ping.ping(host, host.getAddressBook(), PeerId.fromBase58(peerId.toBase58()));
+        connectionManager.getPeerIds().forEach(this::ping);
+    }
 
-                log.log(Level.INFO, String.format("Pinged peer: %s, latency %s ms", peerId, latency));
-            } catch (Exception e) {
-                log.log(Level.WARNING, String.format("Failed to ping peer: %s. " +
-                        "Removing from active connections", peerId));
-                connections.remove(peerId);
-
-                if (this.currentSelectedPeer.toBase58().equals(peerId.toBase58())) {
-                    this.currentSelectedPeer = null;
-                    if (connections.size() > 0) {
-                        this.currentSelectedPeer = PeerId.fromBase58(connections.keySet().toArray()[0].toString());
-                    }
-                }
-
+    private void ping(PeerId peerId) {
+        try {
+            Long latency = ping.ping(host, host.getAddressBook(), peerId);
+            log.log(Level.INFO, String.format("Pinged peer: %s, latency %s ms", peerId, latency));
+        } catch (Exception e) {
+            log.log(Level.WARNING, String.format("Failed to ping peer: %s. Removing from active connections", peerId));
+            if (this.currentSelectedPeer.equals(peerId)) {
+                updateCurrentSelectedPeer();
             }
-        });
+        }
+    }
+
+    private void updateCurrentSelectedPeer() {
+        this.currentSelectedPeer = connectionManager.getPeerIds().stream().findAny().orElse(null);
     }
 
     public WarpSyncResponse makeWarpSyncRequest(String blockHash) {

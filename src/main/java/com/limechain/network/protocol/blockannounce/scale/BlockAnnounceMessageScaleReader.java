@@ -8,8 +8,8 @@ public class BlockAnnounceMessageScaleReader implements ScaleReader<BlockAnnounc
     @Override
     public BlockAnnounceMessage read(ScaleCodecReader reader) {
         BlockAnnounceMessage message = new BlockAnnounceMessage();
-        message.header = new BlockHeaderReader().read(reader);
-        message.isBestBlock = reader.readBoolean();
+        message.setHeader(new BlockHeaderReader().read(reader));
+        message.setBestBlock(reader.readBoolean());
         return message;
     }
 }
