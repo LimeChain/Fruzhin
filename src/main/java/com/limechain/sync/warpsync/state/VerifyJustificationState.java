@@ -57,12 +57,15 @@ public class VerifyJustificationState implements WarpSyncState {
             sync.setStateRoot(fragment.getHeader().getStateRoot());
             sync.setLastFinalizedBlockHash(fragment.getJustification().targetHash);
             sync.setLastFinalizedBlockNumber(fragment.getJustification().targetBlock);
-
+            log.log(Level.INFO, "Verified justification. Block hash is now at #"
+                    + sync.getLastFinalizedBlockNumber() + ": " + sync.getLastFinalizedBlockHash().toString()
+                    + " with state root " + sync.getStateRoot());
             try {
                 handleAuthorityChanges(sync, fragment);
                 log.log(Level.INFO, "Verified justification. Block hash is now at #"
-                        + sync.getLastFinalizedBlockNumber() + ": " + sync.getLastFinalizedBlockHash().toString());
-            } catch (Exception error){
+                        + sync.getLastFinalizedBlockNumber() + ": " + sync.getLastFinalizedBlockHash().toString()
+                        + " with state root " + sync.getStateRoot());
+            } catch (Exception error) {
                 this.error = error;
             }
         } catch (Exception e) {
