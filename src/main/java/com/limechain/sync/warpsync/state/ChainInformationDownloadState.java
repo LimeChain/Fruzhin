@@ -51,6 +51,7 @@ public class ChainInformationDownloadState implements WarpSyncState {
         Trie[] tries = new Trie[runtimeFunctionCalls.length];
         byte[][][] data = new byte[runtimeFunctionCalls.length][][];
 
+        //Make a call for every runtime function we need
         for (int i = 0; i < runtimeFunctionCalls.length; i++) {
             responses[i] = sync.getNetworkService()
                     .makeRemoteCallRequest(
@@ -65,6 +66,8 @@ public class ChainInformationDownloadState implements WarpSyncState {
                     tries[i] = TrieVerifier.buildTrie(decodedProofs, sync.getStateRoot().getBytes());
                     log.log(Level.INFO, "Trie built successfully for " + runtimeFunctionCalls[i]);
                     data[i] = new byte[functionInfoRetrievalKeys[i].length][];
+
+                    //Get storage from every key we know in the functionInfoRetrievalKeys array
                     for (int j = 0; j < functionInfoRetrievalKeys[i].length; j++) {
                         byte[] key = StringUtils.hexToBytes(StringUtils.toHex(functionInfoRetrievalKeys[i][j]));
                         data[i][j] = tries[i].get(key);
