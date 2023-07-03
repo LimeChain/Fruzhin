@@ -62,7 +62,8 @@ public class RuntimeDownloadStateTest {
             var peerId = PeerId.fromBase58("12D3KooWFFqjBKoSdQniRpw1Y8W6kkV7takWv1DU2ZMkaA81PYVq");
             var receivers = new String[]{
 //                    "/ip4/127.0.0.1/tcp/30333/p2p/12D3KooWPyKTVdykB9iEXEggRkbMTV4qsWywhtT42qz16eBTvReA"
-                    "/dns/polkadot-boot-ng.dwellir.com/tcp/30336/p2p/12D3KooWFFqjBKoSdQniRpw1Y8W6kkV7takWv1DU2ZMkaA81PYVq",
+                    "/dns/polkadot-boot-ng.dwellir.com/tcp/30336/p2p/" +
+                            "12D3KooWFFqjBKoSdQniRpw1Y8W6kkV7takWv1DU2ZMkaA81PYVq",
             };
 
             kademliaService.connectBootNodes(receivers);
@@ -72,7 +73,7 @@ public class RuntimeDownloadStateTest {
                     senderNode,
                     kademliaService.host.getAddressBook(),
                     peerId,
-                    "0x883d076cebb8de43145b5f6d9b9ceb93675073d03eb78ab5e3ab3b6f65d18e8a",
+                    "0xd5c9e780d2ffaa4166f9d66c59f3e548ce3cbe208d7c14c345c5e19c6f9c2bb1",
                     new String[]{StringUtils.toHex(":code"), StringUtils.toHex(":heappages")}
             );
 
@@ -83,7 +84,9 @@ public class RuntimeDownloadStateTest {
             byte[] codeKey = LittleEndianUtils.convertBytes(StringUtils.hexToBytes(StringUtils.toHex(":code")));
             var res = response.getRemoteReadResponse();
             byte[] proof = res.getProof().toByteArray();
-            Hash256 stateRoot = Hash256.from("0x5a36ab90a2c9ee1b9a6863591e5c9bab38a34f9b54cc34adedabb6174fdd108b");
+
+            //Must change to the latest state root when updating block hash
+            Hash256 stateRoot = Hash256.from("0x38b9e8832b5b7e2bd5747730e067695566c94b293f38fa8ed5f5f98cb6169da1");
             ScaleCodecReader reader = new ScaleCodecReader(proof);
             int size = reader.readCompactInt();
             byte[][] decodedProofs = new byte[size][];
@@ -116,11 +119,12 @@ public class RuntimeDownloadStateTest {
             System.out.println("Instantiating module");
             Instance instance = module.instantiate(imports);
 
-            System.out.println("Calling exported function 'Core_initialize_block' as it calls both of the imported functions");
+            System.out.println("Calling exported function 'Core_initialize_block'" +
+                    " as it calls both of the imported functions");
             instance.exports.getFunction("Core_initialize_block").apply(1, 2);
 
             log.log(Level.INFO, "Runtime and heap pages downloaded");
-        } catch (IOException e) {
+        } catch (IOException | UnsatisfiedLinkError e) {
             throw new RuntimeException(e);
         } finally {
             if (senderNode != null) {
