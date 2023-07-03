@@ -50,7 +50,7 @@ public class LightMessagesProtocol extends ProtocolHandler<LightMessagesControll
 
         @Override
         public void onMessage(Stream stream, LightClientMessage.Response msg) {
-                Objects.requireNonNull(queue.poll()).complete(msg);
+            Objects.requireNonNull(queue.poll()).complete(msg);
             stream.closeWrite();
         }
 
