@@ -26,7 +26,7 @@ public class RuntimeDownloadState implements WarpSyncState {
             sync.setState(new RequestFragmentsState(sync.getLastFinalizedBlockHash()));
             return;
         }
-        // After runtime is downloaded, we have to build the chain info
+        // After runtime is downloaded, we have to build the runtime and then build chain information
         sync.setState(new RuntimeBuildState());
     }
 
