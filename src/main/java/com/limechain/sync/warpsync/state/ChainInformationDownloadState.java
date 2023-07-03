@@ -11,9 +11,7 @@ import lombok.extern.java.Log;
 import java.util.logging.Level;
 
 /**
- * Performs some runtime calls in order to obtain the current consensus-related parameters
- * of the chain. This might require obtaining some storage items, in which case they must also
- * be downloaded from a source
+ *  Downloads missing chain information from source
  */
 @Log
 public class ChainInformationDownloadState implements WarpSyncState {

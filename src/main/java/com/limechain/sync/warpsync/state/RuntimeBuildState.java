@@ -15,8 +15,8 @@ import java.util.logging.Level;
 
 /**
  * Performs some runtime calls in order to obtain the current consensus-related parameters
- * of the chain. This might require obtaining some storage items, in which case they must also
- * be downloaded from a source
+ * of the chain. This might require obtaining some storage items, in which case they will also
+ * be downloaded from a source in the Chain Information Download State
  */
 @Log
 public class RuntimeBuildState implements WarpSyncState {
@@ -28,9 +28,8 @@ public class RuntimeBuildState implements WarpSyncState {
 
     @Override
     public void handle(WarpSyncMachine sync) {
-
+        // TODO: After runtime is downloaded, we are downloading and computing the information of the chain
         try {
-            // TODO: After runtime is downloaded, we are downloading and computing the information of the chain
             Module module = new Module(sync.getRuntime());
 
             Imports imports = Imports.from(Arrays.asList(
