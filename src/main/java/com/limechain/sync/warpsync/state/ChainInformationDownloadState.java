@@ -34,8 +34,8 @@ public class ChainInformationDownloadState implements WarpSyncState {
             {},
             {},//{" slotduration", "epochlength", "constant", "genesisauthorities", "randomness", "secondaryslot"},
             {":grandpa_authorities"},
-            {}};
-
+            {}
+    };
 
     @Override
     public void next(WarpSyncMachine sync) {
