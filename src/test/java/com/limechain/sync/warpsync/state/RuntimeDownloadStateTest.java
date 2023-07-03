@@ -38,7 +38,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @Log
 public class RuntimeDownloadStateTest {
-    //@Disabled("Currently cannot get heap pages from built trie")
+    @Disabled
     @Test
     public void remoteReadRequest_return_response() {
         Host senderNode = null;
