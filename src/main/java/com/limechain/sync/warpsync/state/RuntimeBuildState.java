@@ -12,7 +12,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.logging.Level;
 
-
 /**
  * Performs some runtime calls in order to obtain the current consensus-related parameters
  * of the chain. This might require obtaining some storage items, in which case they will also
@@ -45,7 +44,8 @@ public class RuntimeBuildState implements WarpSyncState {
             System.out.println("Instantiating module");
             Instance instance = module.instantiate(imports);
 
-            System.out.println("Calling exported function 'Core_initialize_block' as it calls both of the imported functions");
+            System.out.println("Calling exported function 'Core_initialize_block'" +
+                    " as it calls both of the imported functions");
             instance.exports.getFunction("Core_initialize_block").apply(1, 2);
 
             instance.close();
