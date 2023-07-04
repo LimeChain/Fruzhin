@@ -1,10 +1,12 @@
 package com.limechain.lightclient;
 
+import com.limechain.network.ConnectionManager;
 import com.limechain.network.Network;
 import com.limechain.rpc.http.server.AppBean;
 import com.limechain.rpc.http.server.HttpRpc;
 import com.limechain.rpc.ws.server.WebSocketRPC;
 import com.limechain.sync.warpsync.WarpSyncMachine;
+import lombok.SneakyThrows;
 import lombok.extern.java.Log;
 
 import java.util.logging.Level;
@@ -19,6 +21,7 @@ public class LightClient {
     private final String[] cliArgs;
     private final HttpRpc httpRpc;
     private final WebSocketRPC wsRpc;
+    private final ConnectionManager connectionManager = ConnectionManager.getInstance();
     private Network network;
     private WarpSyncMachine warpSyncService;
 
@@ -31,6 +34,7 @@ public class LightClient {
     /**
      * Starts the light client by instantiating all dependencies and services
      */
+    @SneakyThrows
     public void start() {
         // TODO: Add business logic
         this.httpRpc.start(cliArgs);
@@ -39,9 +43,17 @@ public class LightClient {
         this.network = AppBean.getBean(Network.class);
         this.network.start();
 
-        this.warpSyncService = AppBean.getBean(WarpSyncMachine.class);
-        this.warpSyncService.start();
-        log.log(Level.INFO, "\uD83D\uDE80Started light client!");
+        for (int i = 0; i < 10; i++) {
+            if (connectionManager.getPeerIds().size() > 0 && this.network.currentSelectedPeer != null) {
+                log.log(Level.INFO, "Node successfully connected to a peer! Sync can start!");
+                this.warpSyncService = AppBean.getBean(WarpSyncMachine.class);
+                this.warpSyncService.start();
+                log.log(Level.INFO, "\uD83D\uDE80Started light client!");
+                break;
+            }
+            log.log(Level.INFO, "Waiting for peer connection...");
+            Thread.sleep(10000);
+        }
     }
 
     /**

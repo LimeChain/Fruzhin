@@ -4,9 +4,10 @@ import com.limechain.chain.lightsyncstate.Authority;
 import com.limechain.network.protocol.warp.dto.ConsensusEngine;
 import com.limechain.network.protocol.warp.dto.HeaderDigest;
 import com.limechain.network.protocol.warp.dto.WarpSyncFragment;
+import com.limechain.sync.warpsync.SyncedState;
+import com.limechain.sync.warpsync.WarpSyncMachine;
 import com.limechain.sync.warpsync.dto.AuthoritySetChange;
 import com.limechain.sync.warpsync.dto.GrandpaMessageType;
-import com.limechain.sync.warpsync.WarpSyncMachine;
 import com.limechain.sync.warpsync.scale.ForcedChangeReader;
 import com.limechain.sync.warpsync.scale.ScheduledChangeReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
@@ -21,22 +22,23 @@ import java.util.logging.Level;
 // Maybe we can make it a singleton in order to reduce performance overhead?
 @Log
 public class VerifyJustificationState implements WarpSyncState {
+    private final SyncedState syncedState = SyncedState.getINSTANCE();
     private Exception error;
 
     @Override
     public void next(WarpSyncMachine sync) {
         if (this.error != null) {
             // Not sure what state we should transition to here.
-            sync.setState(new FinishedState());
+            sync.setWarpSyncState(new FinishedState());
             return;
         }
 
         if (!sync.getFragmentsQueue().isEmpty()) {
-            sync.setState(new VerifyJustificationState());
+            sync.setWarpSyncState(new VerifyJustificationState());
         } else if (sync.isFinished()) {
-            sync.setState(new RuntimeDownloadState());
+            sync.setWarpSyncState(new RuntimeDownloadState());
         } else {
-            sync.setState(new RequestFragmentsState(sync.getLastFinalizedBlockHash()));
+            sync.setWarpSyncState(new RequestFragmentsState(syncedState.getLastFinalizedBlockHash()));
         }
     }
 
@@ -47,22 +49,24 @@ public class VerifyJustificationState implements WarpSyncState {
 
             WarpSyncFragment fragment = sync.getFragmentsQueue().poll();
             log.log(Level.INFO, "Verifying justification...");
-            boolean verified = fragment.getJustification().verify(sync.getAuthoritySet(), sync.getSetId());
+            boolean verified = fragment.getJustification()
+                    .verify(syncedState.getAuthoritySet(), syncedState.getSetId());
             if (!verified) {
                 throw new RuntimeException("Justification could not be verified.");
             }
 
             // Set the latest finalized header and number
             // TODO: Persist header to DB?
-            sync.setStateRoot(fragment.getHeader().getStateRoot());
-            sync.setLastFinalizedBlockHash(fragment.getJustification().targetHash);
-            sync.setLastFinalizedBlockNumber(fragment.getJustification().targetBlock);
+            syncedState.setStateRoot(fragment.getHeader().getStateRoot());
+            syncedState.setLastFinalizedBlockHash(fragment.getJustification().targetHash);
+            syncedState.setLastFinalizedBlockNumber(fragment.getJustification().targetBlock);
 
             try {
                 handleAuthorityChanges(sync, fragment);
                 log.log(Level.INFO, "Verified justification. Block hash is now at #"
-                        + sync.getLastFinalizedBlockNumber() + ": " + sync.getLastFinalizedBlockHash().toString());
-            } catch (Exception error){
+                        + syncedState.getLastFinalizedBlockNumber() + ": "
+                        + syncedState.getLastFinalizedBlockHash().toString());
+            } catch (Exception error) {
                 this.error = error;
             }
         } catch (Exception e) {
@@ -80,32 +84,36 @@ public class VerifyJustificationState implements WarpSyncState {
                 GrandpaMessageType type = GrandpaMessageType.fromId(reader.readByte());
 
                 switch (type) {
-                    case SCHEDULED_CHANGE:
+                    case SCHEDULED_CHANGE -> {
                         ScheduledChangeReader authorityChangesReader = new ScheduledChangeReader();
                         authorityChanges = authorityChangesReader.read(reader);
-
                         sync.getScheduledAuthorityChanges()
                                 .add(new Pair<>(authorityChanges.getDelay(), authorityChanges.getAuthorities()));
                         return;
-                    case FORCED_CHANGE:
+                    }
+                    case FORCED_CHANGE -> {
                         ForcedChangeReader authorityForcedChangesReader = new ForcedChangeReader();
                         authorityChanges = authorityForcedChangesReader.read(reader);
-
                         sync.getScheduledAuthorityChanges()
                                 .add(new Pair<>(authorityChanges.getDelay(), authorityChanges.getAuthorities()));
                         return;
-                    case ON_DISABLED:
+                    }
+                    case ON_DISABLED -> {
                         log.log(Level.SEVERE, "'ON DISABLED' grandpa message not implemented");
                         return;
-                    case PAUSE:
+                    }
+                    case PAUSE -> {
                         log.log(Level.SEVERE, "'PAUSE' grandpa message not implemented");
                         return;
-                    case RESUME:
+                    }
+                    case RESUME -> {
                         log.log(Level.SEVERE, "'RESUME' grandpa message not implemented");
                         return;
-                    default:
+                    }
+                    default -> {
                         log.log(Level.SEVERE, "Could not get grandpa message type");
                         throw new IllegalStateException("Unknown grandpa message type");
+                    }
                 }
             }
         }
@@ -115,9 +123,9 @@ public class VerifyJustificationState implements WarpSyncState {
         Queue<Pair<BigInteger, Authority[]>> eventQueue = sync.getScheduledAuthorityChanges();
         Pair<BigInteger, Authority[]> data = eventQueue.peek();
         while (data != null) {
-            if (data.getValue0().compareTo(sync.getLastFinalizedBlockNumber()) != 1) {
-                sync.setAuthoritySet(data.getValue1());
-                sync.setSetId(sync.getSetId().add(BigInteger.ONE));
+            if (data.getValue0().compareTo(syncedState.getLastFinalizedBlockNumber()) != 1) {
+                syncedState.setAuthoritySet(data.getValue1());
+                syncedState.setSetId(syncedState.getSetId().add(BigInteger.ONE));
                 sync.getScheduledAuthorityChanges().poll();
             } else break;
             data = eventQueue.peek();

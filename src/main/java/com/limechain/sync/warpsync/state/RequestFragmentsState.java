@@ -23,11 +23,11 @@ public class RequestFragmentsState implements WarpSyncState {
     public void next(WarpSyncMachine sync) {
         if (this.error != null) {
             // Try again?
-            sync.setState(new FinishedState());
+            sync.setWarpSyncState(new FinishedState());
             return;
         }
         if (this.result != null) {
-            sync.setState(new VerifyJustificationState());
+            sync.setWarpSyncState(new VerifyJustificationState());
             return;
         }
         log.log(Level.WARNING, "RequestFragmentsState.next() called without result or error set.");
@@ -43,7 +43,7 @@ public class RequestFragmentsState implements WarpSyncState {
             if (resp == null) {
                 throw new Exception("No response received.");
             }
-            
+
             if (resp.getFragments().length == 0) {
                 log.log(Level.WARNING, "No fragments received.");
                 return;

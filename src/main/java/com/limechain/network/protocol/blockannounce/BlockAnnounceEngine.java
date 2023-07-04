@@ -7,9 +7,9 @@ import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshake
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshakeScaleWriter;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceMessage;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceMessageScaleReader;
+import com.limechain.sync.warpsync.SyncedState;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
-import io.emeraldpay.polkaj.types.Hash256;
 import io.libp2p.core.PeerId;
 import io.libp2p.core.Stream;
 import lombok.extern.java.Log;
@@ -20,25 +20,14 @@ import java.util.logging.Level;
 
 @Log
 public class BlockAnnounceEngine {
-    private final ConnectionManager connectionManager = ConnectionManager.getInstance();
-
     private static final int HANDSHAKE_LENGTH = 69;
-
-    /* Polkadot handshake */
-    //TODO Get handshake data from latest snapshot release
-    private final BlockAnnounceHandshake handshake = new BlockAnnounceHandshake() {{
-        nodeRole = 4;
-        bestBlockHash = Hash256.from("0x7b22fc4469863c9671686c189a3238708033d364a77ba8d83e78777e7563f346");
-        bestBlock = "0";
-        genesisBlockHash = Hash256.from(
-                "0x7b22fc4469863c9671686c189a3238708033d364a77ba8d83e78777e7563f346");
-    }};
+    private final ConnectionManager connectionManager = ConnectionManager.getInstance();
 
     public void receiveRequest(byte[] msg, PeerId peerId, Stream stream) {
         boolean connectedToPeer = connectionManager.isConnected(peerId);
         boolean isHandshake = msg.length == HANDSHAKE_LENGTH;
 
-        if(!connectedToPeer && !isHandshake) {
+        if (!connectedToPeer && !isHandshake) {
             log.log(Level.WARNING, "No handshake for block announce message from Peer " + peerId);
             return;
         }
@@ -65,8 +54,8 @@ public class BlockAnnounceEngine {
             connectionManager.addPeer(peerId, new PeerInfo(handshake));
             log.log(Level.INFO, "Received handshake from " + peerId + "\n" +
                     handshake);
+            writeHandshakeToStream(stream, peerId);
         }
-        writeHandshakeToStream(stream, peerId);
     }
 
     private void handleBlockAnnounce(byte[] msg, PeerId peerId) {
@@ -79,7 +68,7 @@ public class BlockAnnounceEngine {
     public void writeHandshakeToStream(Stream stream, PeerId peerId) {
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
         try (ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
-            writer.write(new BlockAnnounceHandshakeScaleWriter(), handshake);
+            writer.write(new BlockAnnounceHandshakeScaleWriter(), SyncedState.getINSTANCE().getHandshake());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
