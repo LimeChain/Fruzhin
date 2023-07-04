@@ -54,7 +54,9 @@ public class DBRepository implements KVRepository<String, Object> {
 
     private void cleanDatabaseFolder(File file) {
         try {
-            FileUtils.cleanDirectory(file.getAbsoluteFile());
+            if (file.exists()) {
+                FileUtils.cleanDirectory(file.getAbsoluteFile());
+            }
             log.log(Level.INFO, "\uD83D\uDDD1️DB cleaned");
 
         } catch (IOException e) {
@@ -112,7 +114,7 @@ public class DBRepository implements KVRepository<String, Object> {
         return true;
     }
 
-    public byte[] getPrefixedKey(String key){
+    public byte[] getPrefixedKey(String key) {
         return chainPrefix.concat(key).getBytes();
     }
 
