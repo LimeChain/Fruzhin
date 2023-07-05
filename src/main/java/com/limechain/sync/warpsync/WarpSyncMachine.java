@@ -28,7 +28,7 @@ public class WarpSyncMachine {
     @Getter
     private final Network networkService;
     @Getter
-    private final SyncedState syncedState = SyncedState.getINSTANCE();
+    private final SyncedState syncedState = SyncedState.getInstance();
     @Setter
     private WarpSyncState warpSyncState;
     @Getter

@@ -68,7 +68,7 @@ public class BlockAnnounceEngine {
     public void writeHandshakeToStream(Stream stream, PeerId peerId) {
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
         try (ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
-            writer.write(new BlockAnnounceHandshakeScaleWriter(), SyncedState.getINSTANCE().getHandshake());
+            writer.write(new BlockAnnounceHandshakeScaleWriter(), SyncedState.getInstance().getHandshake());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

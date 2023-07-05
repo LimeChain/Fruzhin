@@ -16,7 +16,7 @@ import java.util.logging.Level;
 @Log
 public class RuntimeDownloadState implements WarpSyncState {
 
-    private final SyncedState syncedState = SyncedState.getINSTANCE();
+    private final SyncedState syncedState = SyncedState.getInstance();
 
     @Override
     public void next(WarpSyncMachine sync) {

@@ -3,6 +3,7 @@ package com.limechain.sync.warpsync;
 import com.limechain.chain.lightsyncstate.Authority;
 import com.limechain.constants.GenesisBlockHash;
 import com.limechain.network.Network;
+import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshake;
 import com.limechain.rpc.http.server.AppBean;
 import io.emeraldpay.polkaj.types.Hash256;
@@ -15,27 +16,27 @@ public class SyncedState {
     private static final SyncedState INSTANCE = new SyncedState();
     @Getter
     @Setter
-    public Hash256 lastFinalizedBlockHash;
+    private Hash256 lastFinalizedBlockHash;
     @Getter
     @Setter
-    public Hash256 stateRoot;
+    private Hash256 stateRoot;
     @Getter
     @Setter
-    public BigInteger lastFinalizedBlockNumber = BigInteger.ZERO;
+    private BigInteger lastFinalizedBlockNumber = BigInteger.ZERO;
     @Getter
     @Setter
-    public Authority[] authoritySet;
+    private Authority[] authoritySet;
     @Getter
     @Setter
-    public BigInteger setId;
+    private BigInteger setId;
     @Getter
     @Setter
-    public byte[] runtime;
+    private byte[] runtime;
     @Getter
     @Setter
-    public byte[] heapPages;
+    private byte[] heapPages;
 
-    public static SyncedState getINSTANCE() {
+    public static SyncedState getInstance() {
         return INSTANCE;
     }
 
@@ -54,7 +55,7 @@ public class SyncedState {
                 ? genesisBlockHash
                 : this.getLastFinalizedBlockHash();
         return new BlockAnnounceHandshake(
-                4,
+                NodeRole.LIGHT.getValue(),
                 this.getLastFinalizedBlockNumber().toString(),
                 lastFinalizedBlockHash,
                 genesisBlockHash

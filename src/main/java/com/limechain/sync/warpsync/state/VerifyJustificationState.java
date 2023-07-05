@@ -22,7 +22,7 @@ import java.util.logging.Level;
 // Maybe we can make it a singleton in order to reduce performance overhead?
 @Log
 public class VerifyJustificationState implements WarpSyncState {
-    private final SyncedState syncedState = SyncedState.getINSTANCE();
+    private final SyncedState syncedState = SyncedState.getInstance();
     private Exception error;
 
     @Override
