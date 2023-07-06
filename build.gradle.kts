@@ -27,6 +27,7 @@ repositories {
 
 dependencies {
     implementation("org.rocksdb:rocksdbjni:7.8.3")
+    implementation("com.google.guava:guava:31.1-jre")
     compileOnly("org.projectlombok:lombok:1.18.8")
     implementation("org.projectlombok:lombok:1.18.22")
 
@@ -57,6 +58,7 @@ dependencies {
     implementation("org.java-websocket:Java-WebSocket:1.5.3")
     implementation("org.javatuples:javatuples:1.2")
 
+    implementation("com.github.luben:zstd-jni:1.5.2-5")
 }
 
 tasks.getByName<Test>("test") {

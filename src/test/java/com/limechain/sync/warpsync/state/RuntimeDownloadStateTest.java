@@ -4,6 +4,7 @@ import com.limechain.network.kad.KademliaService;
 import com.limechain.network.protocol.lightclient.LightMessages;
 import com.limechain.network.protocol.lightclient.LightMessagesProtocol;
 import com.limechain.network.protocol.lightclient.pb.LightClientMessage;
+import com.limechain.sync.warpsync.RuntimeBuilder;
 import com.limechain.trie.Trie;
 import com.limechain.trie.TrieVerifier;
 import com.limechain.trie.decoder.TrieDecoderException;
@@ -17,19 +18,11 @@ import io.libp2p.core.PeerId;
 import io.libp2p.protocol.Ping;
 import lombok.extern.java.Log;
 import org.apache.commons.io.FileUtils;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.peergos.HostBuilder;
-import org.wasmer.ImportObject;
-import org.wasmer.Imports;
 import org.wasmer.Instance;
-import org.wasmer.Module;
-import org.wasmer.Type;
-
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.logging.Level;
@@ -38,7 +31,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @Log
 public class RuntimeDownloadStateTest {
-    @Disabled
     @Test
     public void remoteReadRequest_return_response() {
         Host senderNode = null;
@@ -73,7 +65,7 @@ public class RuntimeDownloadStateTest {
                     senderNode,
                     kademliaService.host.getAddressBook(),
                     peerId,
-                    "0xd5c9e780d2ffaa4166f9d66c59f3e548ce3cbe208d7c14c345c5e19c6f9c2bb1",
+                    "0xe7fdf777a1e0cc86f4a403f4381c14e83c8ec347fc26a69ce8a42f6d5cfe6ce3",
                     new String[]{StringUtils.toHex(":code"), StringUtils.toHex(":heappages")}
             );
 
@@ -86,7 +78,7 @@ public class RuntimeDownloadStateTest {
             byte[] proof = res.getProof().toByteArray();
 
             //Must change to the latest state root when updating block hash
-            Hash256 stateRoot = Hash256.from("0x38b9e8832b5b7e2bd5747730e067695566c94b293f38fa8ed5f5f98cb6169da1");
+            Hash256 stateRoot = Hash256.from("0xe4b0a62264619749261b1ab42344bf4ba6e02f9d7464c6e061f1dc351cc914ce");
             ScaleCodecReader reader = new ScaleCodecReader(proof);
             int size = reader.readCompactInt();
             byte[][] decodedProofs = new byte[size][];
@@ -103,21 +95,9 @@ public class RuntimeDownloadStateTest {
             var code = trie.get(codeKey);
             assertNotNull(code);
             FileUtils.writeByteArrayToFile(new File("./wasm_code"), code);
-
             //assertNotNull(heapPages);
-            Module module = new Module(code);
-            Imports imports = Imports.from(Arrays.asList(
-                    new ImportObject.FuncImport("env", "ext_storage_set_version_1", argv -> {
-                        System.out.println("Message printed in the body of 'ext_storage_set_version_1'");
-                        return argv;
-                    }, Arrays.asList(Type.I64, Type.I64), Collections.emptyList()),
-                    new ImportObject.FuncImport("env", "ext_storage_get_version_1", argv -> {
-                        System.out.println("Message printed in the body of 'ext_storage_get_version_1'");
-                        return argv;
-                    }, Collections.singletonList(Type.I64), Collections.singletonList(Type.I64)),
-                    new ImportObject.MemoryImport("env", 20, false)), module);
             System.out.println("Instantiating module");
-            Instance instance = module.instantiate(imports);
+            Instance instance = RuntimeBuilder.buildRuntime(code, 22);
 
             System.out.println("Calling exported function 'Core_initialize_block'" +
                     " as it calls both of the imported functions");
