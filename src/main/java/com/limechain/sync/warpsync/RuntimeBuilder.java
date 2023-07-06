@@ -88,11 +88,13 @@ public class RuntimeBuilder {
                     System.out.println("Message printed in the body of 'ext_crypto_ed25519_verify_version_1'");
                     return argv;
                 }, Arrays.asList(Type.I32, Type.I64, Type.I32), Arrays.asList(Type.I32)),
-                new ImportObject.FuncImport("env", "ext_crypto_secp256k1_ecdsa_recover_version_2", argv -> {
+                new ImportObject.FuncImport("env",
+                        "ext_crypto_secp256k1_ecdsa_recover_version_2", argv -> {
                     System.out.println("Message printed in the body of 'ext_crypto_secp256k1_ecdsa_recover_version_2'");
                     return argv;
                 }, Arrays.asList(Type.I32, Type.I32), Arrays.asList(Type.I64)),
-                new ImportObject.FuncImport("env", "ext_crypto_secp256k1_ecdsa_recover_compressed_version_2", argv -> {
+                new ImportObject.FuncImport("env",
+                        "ext_crypto_secp256k1_ecdsa_recover_compressed_version_2", argv -> {
                     System.out.println("Message printed in the body of 'ext_crypto_secp256k1_ecdsa_recover_compressed_version_2'");
                     return argv;
                 }, Arrays.asList(Type.I32, Type.I32), Arrays.asList(Type.I64)),
@@ -100,7 +102,8 @@ public class RuntimeBuilder {
                     System.out.println("Message printed in the body of 'ext_crypto_sr25519_generate_version_1'");
                     return argv;
                 }, Arrays.asList(Type.I32, Type.I64), Arrays.asList(Type.I32)),
-                new ImportObject.FuncImport("env", "ext_crypto_sr25519_public_keys_version_1", argv -> {
+                new ImportObject.FuncImport("env",
+                        "ext_crypto_sr25519_public_keys_version_1", argv -> {
                     System.out.println("Message printed in the body of 'ext_crypto_sr25519_public_keys_version_1'");
                     return argv;
                 }, Arrays.asList(Type.I32), Arrays.asList(Type.I64)),
@@ -140,7 +143,8 @@ public class RuntimeBuilder {
                     System.out.println("Message printed in the body of 'ext_storage_read_version_1'");
                     return argv;
                 }, Arrays.asList(Type.I64, Type.I64, Type.I32), Arrays.asList(Type.I64)),
-                new ImportObject.FuncImport("env", "ext_storage_rollback_transaction_version_1", argv -> {
+                new ImportObject.FuncImport("env",
+                        "ext_storage_rollback_transaction_version_1", argv -> {
                     System.out.println("Message printed in the body of 'ext_storage_rollback_transaction_version_1'");
                     return argv;
                 }, Arrays.asList(), Arrays.asList()),
@@ -148,11 +152,13 @@ public class RuntimeBuilder {
                     System.out.println("Message printed in the body of 'ext_storage_root_version_2'");
                     return argv;
                 }, Arrays.asList(Type.I32), Arrays.asList(Type.I64)),
-                new ImportObject.FuncImport("env", "ext_storage_start_transaction_version_1", argv -> {
+                new ImportObject.FuncImport("env",
+                        "ext_storage_start_transaction_version_1", argv -> {
                     System.out.println("Message printed in the body of 'ext_storage_start_transaction_version_1'");
                     return argv;
                 }, Arrays.asList(), Arrays.asList()),
-                new ImportObject.FuncImport("env", "ext_trie_blake2_256_ordered_root_version_2", argv -> {
+                new ImportObject.FuncImport("env",
+                        "ext_trie_blake2_256_ordered_root_version_2", argv -> {
                     System.out.println("Message printed in the body of 'ext_trie_blake2_256_ordered_root_version_2'");
                     return argv;
                 }, Arrays.asList(Type.I64, Type.I32), Arrays.asList(Type.I32)),
@@ -160,19 +166,24 @@ public class RuntimeBuilder {
                     System.out.println("Message printed in the body of 'ext_offchain_is_validator_version_1'");
                     return argv;
                 }, Arrays.asList(), Arrays.asList(Type.I32)),
-                new ImportObject.FuncImport("env", "ext_offchain_local_storage_clear_version_1", argv -> {
+                new ImportObject.FuncImport("env",
+                        "ext_offchain_local_storage_clear_version_1", argv -> {
                     System.out.println("Message printed in the body of 'ext_offchain_local_storage_clear_version_1'");
                     return argv;
                 }, Arrays.asList(Type.I32, Type.I64), Arrays.asList()),
-                new ImportObject.FuncImport("env", "ext_offchain_local_storage_compare_and_set_version_1", argv -> {
-                    System.out.println("Message printed in the body of 'ext_offchain_local_storage_compare_and_set_version_1'");
+                new ImportObject.FuncImport("env",
+                        "ext_offchain_local_storage_compare_and_set_version_1", argv -> {
+                    System.out.println("Message printed in the body of " +
+                            "'ext_offchain_local_storage_compare_and_set_version_1'");
                     return argv;
                 }, Arrays.asList(Type.I32, Type.I64, Type.I64, Type.I64), Arrays.asList(Type.I32)),
-                new ImportObject.FuncImport("env", "ext_offchain_local_storage_get_version_1", argv -> {
+                new ImportObject.FuncImport("env",
+                        "ext_offchain_local_storage_get_version_1", argv -> {
                     System.out.println("Message printed in the body of 'ext_offchain_local_storage_get_version_1'");
                     return argv;
                 }, Arrays.asList(Type.I32, Type.I64), Arrays.asList(Type.I64)),
-                new ImportObject.FuncImport("env", "ext_offchain_local_storage_set_version_1", argv -> {
+                new ImportObject.FuncImport("env",
+                        "ext_offchain_local_storage_set_version_1", argv -> {
                     System.out.println("Message printed in the body of 'ext_offchain_local_storage_set_version_1'");
                     return argv;
                 }, Arrays.asList(Type.I32, Type.I64, Type.I64), Arrays.asList()),
@@ -184,7 +195,8 @@ public class RuntimeBuilder {
                     System.out.println("Message printed in the body of 'ext_offchain_random_seed_version_1'");
                     return argv;
                 }, Arrays.asList(), Arrays.asList(Type.I32)),
-                new ImportObject.FuncImport("env", "ext_offchain_submit_transaction_version_1", argv -> {
+                new ImportObject.FuncImport("env",
+                        "ext_offchain_submit_transaction_version_1", argv -> {
                     System.out.println("Message printed in the body of 'ext_offchain_submit_transaction_version_1'");
                     return argv;
                 }, Arrays.asList(Type.I64), Arrays.asList(Type.I64)),
@@ -204,7 +216,8 @@ public class RuntimeBuilder {
                     System.out.println("Message printed in the body of 'ext_offchain_index_set_version_1'");
                     return argv;
                 }, Arrays.asList(Type.I64, Type.I64), Arrays.asList()),
-                new ImportObject.FuncImport("env", "ext_default_child_storage_clear_version_1", argv -> {
+                new ImportObject.FuncImport("env",
+                        "ext_default_child_storage_clear_version_1", argv -> {
                     System.out.println("Message printed in the body of 'ext_default_child_storage_clear_version_1'");
                     return argv;
                 }, Arrays.asList(Type.I64, Type.I64), Arrays.asList()),
@@ -212,11 +225,13 @@ public class RuntimeBuilder {
                     System.out.println("Message printed in the body of 'ext_misc_print_hex_version_1'");
                     return argv;
                 }, Arrays.asList(Type.I64), Arrays.asList()),
-                new ImportObject.FuncImport("env", "ext_default_child_storage_get_version_1", argv -> {
+                new ImportObject.FuncImport("env",
+                        "ext_default_child_storage_get_version_1", argv -> {
                     System.out.println("Message printed in the body of 'ext_default_child_storage_get_version_1'");
                     return argv;
                 }, Arrays.asList(Type.I64, Type.I64), Arrays.asList(Type.I64)),
-                new ImportObject.FuncImport("env", "ext_default_child_storage_next_key_version_1", argv -> {
+                new ImportObject.FuncImport("env",
+                        "ext_default_child_storage_next_key_version_1", argv -> {
                     System.out.println("Message printed in the body of 'ext_default_child_storage_next_key_version_1'");
                     return argv;
                 }, Arrays.asList(Type.I64, Type.I64), Arrays.asList(Type.I64)),
