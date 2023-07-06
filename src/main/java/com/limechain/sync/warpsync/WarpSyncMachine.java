@@ -3,6 +3,7 @@ package com.limechain.sync.warpsync;
 import com.limechain.chain.ChainService;
 import com.limechain.chain.lightsyncstate.Authority;
 import com.limechain.chain.lightsyncstate.LightSyncState;
+import com.limechain.constants.GenesisBlockHash;
 import com.limechain.network.Network;
 import com.limechain.network.protocol.warp.dto.WarpSyncFragment;
 import com.limechain.sync.warpsync.state.FinishedState;
@@ -26,49 +27,20 @@ public class WarpSyncMachine {
     private final ChainService chainService;
     @Getter
     private final Network networkService;
+    @Getter
+    private final SyncedState syncedState = SyncedState.getInstance();
     @Setter
-    private WarpSyncState state;
-
+    private WarpSyncState warpSyncState;
     @Getter
     @Setter
     private Queue<WarpSyncFragment> fragmentsQueue;
-
     @Getter
     @Setter
     private PriorityQueue<Pair<BigInteger, Authority[]>> scheduledAuthorityChanges =
             new PriorityQueue<>(Comparator.comparing(Pair::getValue0));
-
     @Getter
     @Setter
     private boolean isFinished;
-
-    @Getter
-    @Setter
-    private Hash256 lastFinalizedBlockHash;
-
-    @Getter
-    @Setter
-    private Hash256 stateRoot;
-
-    @Getter
-    @Setter
-    private BigInteger lastFinalizedBlockNumber;
-
-    @Getter
-    @Setter
-    private Authority[] authoritySet;
-
-    @Getter
-    @Setter
-    private BigInteger setId;
-
-    @Getter
-    @Setter
-    private byte[] runtime;
-
-    @Getter
-    @Setter
-    private byte[] heapPages;
 
     public WarpSyncMachine(Network network, ChainService chainService) {
         this.networkService = network;
@@ -92,26 +64,33 @@ public class WarpSyncMachine {
     }
 
     public void nextState() {
-        state.next(this);
+        warpSyncState.next(this);
     }
 
     public void handleState() {
-        state.handle(this);
+        warpSyncState.handle(this);
     }
 
     public boolean isSyncing() {
-        return this.state.getClass() != FinishedState.class;
+        return this.warpSyncState.getClass() != FinishedState.class;
     }
 
     public void start() {
-        LightSyncState initState = LightSyncState.decode(this.chainService.getGenesis().getLightSyncState());
+        Hash256 initStateHash;
+        if (this.chainService.getGenesis().getLightSyncState() != null) {
+            LightSyncState initState = LightSyncState.decode(this.chainService.getGenesis().getLightSyncState());
+            initStateHash = initState.getFinalizedBlockHeader().getParentHash();
+            this.syncedState.setAuthoritySet(initState.getGrandpaAuthoritySet().getCurrentAuthorities());
+            this.syncedState.setSetId(initState.getGrandpaAuthoritySet().getSetId());
+        } else {
+            initStateHash = GenesisBlockHash.LOCAL;
+        }
+
         // Always start with requesting fragments
-        this.state = new RequestFragmentsState(initState.getFinalizedBlockHeader().getParentHash());
-        this.setAuthoritySet(initState.getGrandpaAuthoritySet().getCurrentAuthorities());
-        this.setSetId(initState.getGrandpaAuthoritySet().getSetId());
+        this.warpSyncState = new RequestFragmentsState(initStateHash);
 
         // Process should be non-blocking...
-        while (this.state.getClass() != FinishedState.class) {
+        while (this.warpSyncState.getClass() != FinishedState.class) {
             this.handleState();
             this.nextState();
         }

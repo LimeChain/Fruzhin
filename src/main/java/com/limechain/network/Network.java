@@ -36,18 +36,19 @@ import static com.limechain.network.kad.KademliaService.REPLICATION;
 public class Network {
     private static final int HOST_PORT = 30333;
     private static Network network;
+    @Getter
+    public final Chain chain;
     private final String[] bootNodes;
+    private final ConnectionManager connectionManager = ConnectionManager.getInstance();
     public SyncService syncService;
     public LightMessagesService lightMessagesService;
     public KademliaService kademliaService;
     public BlockAnnounceService blockAnnounceService;
     public Ping ping;
+    public PeerId currentSelectedPeer;
     @Getter
     private Host host;
     private WarpSyncService warpSyncService;
-    private PeerId currentSelectedPeer;
-    private final ConnectionManager connectionManager = ConnectionManager.getInstance();
-
     private boolean started = false;
 
     /**
@@ -62,9 +63,7 @@ public class Network {
     private Network(ChainService chainService, HostConfig hostConfig) {
         this.initializeProtocols(chainService, hostConfig);
         this.bootNodes = chainService.getGenesis().getBootNodes();
-        //TODO Remove hardcoded peer
-        String selectedPeerId = "12D3KooWQz2q2UWVCiy9cFX1hHYEmhSKQB2hjEZCccScHLGUPjcc";
-        this.currentSelectedPeer = new PeerId(Multihash.fromBase58(selectedPeerId).toBytes());
+        this.chain = hostConfig.getChain();
     }
 
     /**
@@ -137,6 +136,7 @@ public class Network {
         // TODO Bug: .listenAddresses() returns empty list
         return this.host.listenAddresses().stream().map(Multiaddr::toString).toArray(String[]::new);
     }
+
     public int getPeersCount() {
         return connectionManager.getPeerIds().size();
     }
@@ -148,7 +148,7 @@ public class Network {
      */
     @Scheduled(fixedDelay = 10, timeUnit = TimeUnit.SECONDS)
     public void findPeers() {
-        if(!started) {
+        if (!started) {
             return;
         }
         if (getPeersCount() >= REPLICATION) {
@@ -197,7 +197,7 @@ public class Network {
     }
 
     public WarpSyncResponse makeWarpSyncRequest(String blockHash) {
-        if (validatePeer()) return null;
+        if (isPeerInvalid()) return null;
 
         return this.warpSyncService.getProtocol().warpSyncRequest(
                 this.host,
@@ -207,7 +207,7 @@ public class Network {
     }
 
     public LightClientMessage.Response makeRemoteReadRequest(String blockHash, String[] keys) {
-        if (validatePeer()) return null;
+        if (isPeerInvalid()) return null;
 
         return this.lightMessagesService.getProtocol().remoteReadRequest(
                 this.host,
@@ -218,7 +218,7 @@ public class Network {
 
     }
 
-    private boolean validatePeer() {
+    private boolean isPeerInvalid() {
         if (this.currentSelectedPeer == null) {
             log.log(Level.WARNING, "No peer selected for warp sync request.");
             return true;

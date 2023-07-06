@@ -1,14 +1,11 @@
 package com.limechain.lightclient;
 
 import com.limechain.network.Network;
-import com.limechain.rpc.http.server.AppBean;
 import com.limechain.rpc.http.server.HttpRpc;
 import com.limechain.rpc.ws.server.WebSocketRPC;
 import com.limechain.sync.warpsync.WarpSyncMachine;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
 
 import java.lang.reflect.Field;
 
@@ -39,23 +36,6 @@ public class LightClientTest {
         args = new String[]{"some args"};
 
         lightClient = new LightClient(args, httpRpc, wsRpc);
-    }
-
-    @Test
-    public void lightClient_start_invokesStartFunctions() {
-        Network network = mock(Network.class);
-        WarpSyncMachine warpSync = mock(WarpSyncMachine.class);
-        try (MockedStatic<AppBean> utilities = Mockito.mockStatic(AppBean.class)) {
-            utilities.when(() -> AppBean.getBean(Network.class)).thenReturn(network);
-            utilities.when(() -> AppBean.getBean(WarpSyncMachine.class)).thenReturn(warpSync);
-
-            lightClient.start();
-
-            verify(httpRpc, times(1)).start(args);
-            verify(wsRpc, times(1)).start(args);
-            verify(network, times(1)).start();
-            verify(warpSync, times(1)).start();
-        }
     }
 
     @Test

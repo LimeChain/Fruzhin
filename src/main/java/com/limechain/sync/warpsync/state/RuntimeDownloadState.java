@@ -1,6 +1,7 @@
 package com.limechain.sync.warpsync.state;
 
 import com.limechain.network.protocol.lightclient.pb.LightClientMessage;
+import com.limechain.sync.warpsync.SyncedState;
 import com.limechain.sync.warpsync.WarpSyncMachine;
 import com.limechain.trie.Trie;
 import com.limechain.trie.TrieVerifier;
@@ -14,10 +15,13 @@ import java.util.logging.Level;
 
 @Log
 public class RuntimeDownloadState implements WarpSyncState {
+
+    private final SyncedState syncedState = SyncedState.getInstance();
+
     @Override
     public void next(WarpSyncMachine sync) {
         // After runtime is downloaded, we have to build the chain info
-        sync.setState(new ChainInformationDownloadState());
+        sync.setWarpSyncState(new ChainInformationDownloadState());
     }
 
     @Override
@@ -25,7 +29,7 @@ public class RuntimeDownloadState implements WarpSyncState {
         // TODO: Implement runtime download which is remoteReadRequest with keys :code and :heappages
         log.log(Level.INFO, "Downloading runtime...");
         LightClientMessage.Response response = sync.getNetworkService().makeRemoteReadRequest(
-                sync.getLastFinalizedBlockHash().toString(),
+                syncedState.getLastFinalizedBlockHash().toString(),
                 new String[]{StringUtils.toHex(":code"), StringUtils.toHex(":heappages")});
 
         byte[] proof = response.getRemoteReadResponse().getProof().toByteArray();
@@ -40,7 +44,7 @@ public class RuntimeDownloadState implements WarpSyncState {
 
         Trie trie;
         try {
-            trie = TrieVerifier.buildTrie(decodedProofs, sync.getStateRoot().getBytes());
+            trie = TrieVerifier.buildTrie(decodedProofs, syncedState.getStateRoot().getBytes());
         } catch (TrieDecoderException e) {
             throw new RuntimeException("Couldn't build trie from proofs list");
         }
@@ -54,8 +58,8 @@ public class RuntimeDownloadState implements WarpSyncState {
         if (heapPages == null) {
             throw new RuntimeException("Couldn't retrieve runtime heap pages from trie");
         }
-        sync.setRuntime(code);
-        sync.setHeapPages(heapPages);
+        syncedState.setRuntime(code);
+        syncedState.setHeapPages(heapPages);
         log.log(Level.INFO, "Runtime & heap pages downloaded");
     }
 }

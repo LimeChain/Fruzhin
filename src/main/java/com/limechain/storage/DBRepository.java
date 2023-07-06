@@ -54,8 +54,10 @@ public class DBRepository implements KVRepository<String, Object> {
 
     private void cleanDatabaseFolder(File file) {
         try {
-            FileUtils.cleanDirectory(file.getAbsoluteFile());
-            log.log(Level.INFO, "\uD83D\uDDD1️DB cleaned");
+            if (file.exists()) {
+                FileUtils.cleanDirectory(file.getAbsoluteFile());
+                log.log(Level.INFO, "\uD83D\uDDD1️DB cleaned");
+            }
 
         } catch (IOException e) {
             log.log(Level.SEVERE, String.format("Error deleting db folder. Exception: '%s', message: '%s'",
@@ -112,7 +114,7 @@ public class DBRepository implements KVRepository<String, Object> {
         return true;
     }
 
-    public byte[] getPrefixedKey(String key){
+    public byte[] getPrefixedKey(String key) {
         return chainPrefix.concat(key).getBytes();
     }
 
