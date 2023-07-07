@@ -4,6 +4,7 @@ import com.limechain.network.kad.KademliaService;
 import com.limechain.network.protocol.lightclient.LightMessages;
 import com.limechain.network.protocol.lightclient.LightMessagesProtocol;
 import com.limechain.network.protocol.lightclient.pb.LightClientMessage;
+import com.limechain.sync.warpsync.Runtime;
 import com.limechain.sync.warpsync.RuntimeBuilder;
 import com.limechain.trie.Trie;
 import com.limechain.trie.TrieVerifier;
@@ -20,7 +21,7 @@ import lombok.extern.java.Log;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
 import org.peergos.HostBuilder;
-import org.wasmer.Instance;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -35,8 +36,6 @@ public class RuntimeDownloadStateTest {
     public void remoteReadRequest_return_response() {
         Host senderNode = null;
         try {
-            File f = new File("/Users/boris/Dev/java-host/build/libwasmer_jni.dylib");
-            System.load(f.getAbsolutePath());
             HostBuilder hostBuilder1 =
                     (new HostBuilder()).generateIdentity().listenLocalhost(10000
                             + new Random().nextInt(50000));
@@ -59,26 +58,25 @@ public class RuntimeDownloadStateTest {
             };
 
             kademliaService.connectBootNodes(receivers);
+            Thread.sleep(1000);
 
             //Block must not be older than 256 than the latest block
             LightClientMessage.Response response = lightMessages.remoteReadRequest(
                     senderNode,
                     kademliaService.host.getAddressBook(),
                     peerId,
-                    "0xe7fdf777a1e0cc86f4a403f4381c14e83c8ec347fc26a69ce8a42f6d5cfe6ce3",
-                    new String[]{StringUtils.toHex(":code"), StringUtils.toHex(":heappages")}
+                    "0x5203002e03949672589ad08b9115f39c2878ef254d879459ef25471377cb9695",
+                    new String[]{StringUtils.toHex(":code")}
             );
 
             assertNotNull(response);
 
-            byte[] heapPagesKey = LittleEndianUtils.convertBytes(
-                    StringUtils.hexToBytes(StringUtils.toHex(":heappages")));
             byte[] codeKey = LittleEndianUtils.convertBytes(StringUtils.hexToBytes(StringUtils.toHex(":code")));
             var res = response.getRemoteReadResponse();
             byte[] proof = res.getProof().toByteArray();
 
             //Must change to the latest state root when updating block hash
-            Hash256 stateRoot = Hash256.from("0xe4b0a62264619749261b1ab42344bf4ba6e02f9d7464c6e061f1dc351cc914ce");
+            Hash256 stateRoot = Hash256.from("0x50554f247e227e5ba097e4172c8d55e4ac6fcc53270db5272266de87f6c2325f");
             ScaleCodecReader reader = new ScaleCodecReader(proof);
             int size = reader.readCompactInt();
             byte[][] decodedProofs = new byte[size][];
@@ -97,14 +95,16 @@ public class RuntimeDownloadStateTest {
             FileUtils.writeByteArrayToFile(new File("./wasm_code"), code);
             //assertNotNull(heapPages);
             System.out.println("Instantiating module");
-            Instance instance = RuntimeBuilder.buildRuntime(code, 22);
+            Runtime runtime = RuntimeBuilder.buildRuntime(code);
 
             System.out.println("Calling exported function 'Core_initialize_block'" +
                     " as it calls both of the imported functions");
-            instance.exports.getFunction("Core_initialize_block").apply(1, 2);
+            runtime.getInstance().exports.getFunction("Core_initialize_block").apply(1, 2);
 
             log.log(Level.INFO, "Runtime and heap pages downloaded");
         } catch (IOException | UnsatisfiedLinkError e) {
+            throw new RuntimeException(e);
+        } catch (InterruptedException e) {
             throw new RuntimeException(e);
         } finally {
             if (senderNode != null) {

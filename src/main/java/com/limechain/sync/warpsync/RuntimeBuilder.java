@@ -4,7 +4,6 @@ import com.github.luben.zstd.Zstd;
 import com.google.common.primitives.Bytes;
 import org.wasmer.ImportObject;
 import org.wasmer.Imports;
-import org.wasmer.Instance;
 import org.wasmer.Module;
 import org.wasmer.Type;
 import lombok.extern.java.Log;
@@ -15,30 +14,37 @@ import java.util.Arrays;
 public class RuntimeBuilder {
     public static final byte[] ZSTD_PREFIX = new byte[]{82, -68, 83, 118, 70, -37, -114, 5};
     public static final int MAX_ZSTD_DECOMPRESSED_SIZE = 50 * 1024 * 1024;
+    public static final int DEFAULT_HEAP_PAGES=2048;
 
-    public static Instance buildRuntime(byte[] code, int minPages) {
+    public static Runtime buildRuntime(byte[] code) {
         byte[] wasmBinary;
         byte[] wasmBinaryPrefix = Arrays.copyOfRange(code, 0, 8);
         if (Arrays.equals(wasmBinaryPrefix, ZSTD_PREFIX)) {
             wasmBinary = Zstd.decompress(Arrays.copyOfRange(
-                    code, 8, code.length), MAX_ZSTD_DECOMPRESSED_SIZE);
+                    code, ZSTD_PREFIX.length, code.length), MAX_ZSTD_DECOMPRESSED_SIZE);
         } else wasmBinary = code;
 
-        getRuntimeVersion(wasmBinary);
+        RuntimeVersion runtimeVersion = getRuntimeVersion(wasmBinary);
         Module module = new Module(wasmBinary);
 
-        return module.instantiate(getImports(module, minPages));
+        return new Runtime(module, DEFAULT_HEAP_PAGES, runtimeVersion);
     }
 
-    private static boolean getRuntimeVersion(byte[] wasmBinary) {
+    private static RuntimeVersion getRuntimeVersion(byte[] wasmBinary) {
         // byte value of \0asm concatenated with 0x1, 0x0, 0x0, 0x0 from smoldot runtime_version.rs#97
         byte[] searchKey = new byte[]{0x00, 0x61, 0x73, 0x6D, 0x1, 0x0, 0x0, 0x0};
 
         int x = Bytes.indexOf(wasmBinary, searchKey);
-        return x >= 0;
+        if (x < 0) throw new RuntimeException("Key not found in runtime code");
+        WasmSections wasmSections = new WasmSections();
+        wasmSections.parseCustomSections(wasmBinary);
+        if(wasmSections.getRuntimeVersion() != null && wasmSections.getRuntimeVersion().getRuntimeApis()!=null){
+            return wasmSections.getRuntimeVersion();
+        }
+        else throw new RuntimeException("Could not get Runtime version");
     }
 
-    private static Imports getImports(Module module, int minPages) {
+    static Imports getImports(Module module, int minPages) {
         return Imports.from(Arrays.asList(
                 new ImportObject.FuncImport("env", "ext_storage_set_version_1", argv -> {
                     System.out.println("Message printed in the body of 'ext_storage_set_version_1'");
