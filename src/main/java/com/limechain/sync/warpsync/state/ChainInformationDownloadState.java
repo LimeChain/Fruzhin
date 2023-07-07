@@ -11,7 +11,7 @@ import lombok.extern.java.Log;
 import java.util.logging.Level;
 
 /**
- *  Downloads missing chain information from source
+ * Downloads missing chain information from source
  */
 @Log
 public class ChainInformationDownloadState implements WarpSyncState {
@@ -38,7 +38,7 @@ public class ChainInformationDownloadState implements WarpSyncState {
     @Override
     public void next(WarpSyncMachine sync) {
         // We're done with the warp sync process!
-        sync.setState(new FinishedState());
+        sync.setState(new ChainInformationBuildState());
     }
 
     @Override

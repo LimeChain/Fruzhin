@@ -4,6 +4,7 @@ import com.limechain.sync.warpsync.RuntimeBuilder;
 import com.limechain.sync.warpsync.WarpSyncMachine;
 import lombok.extern.java.Log;
 import com.limechain.sync.warpsync.Runtime;
+
 import java.util.logging.Level;
 
 /**
@@ -23,8 +24,8 @@ public class RuntimeBuildState implements WarpSyncState {
     public void handle(WarpSyncMachine sync) {
         // TODO: After runtime is downloaded, we are downloading and computing the information of the chain
         try {
-            Runtime runtime = RuntimeBuilder.buildRuntime(sync.getRuntime());
-
+            Runtime runtime = RuntimeBuilder.buildRuntime(sync.getRuntimeCode());
+            sync.setRuntime(runtime);
             //Maybe don't need to close the instance
             runtime.getInstance().close();
         } catch (UnsatisfiedLinkError e) {

@@ -17,8 +17,6 @@ public class RuntimeDownloadState implements WarpSyncState {
     private Exception error;
     private static byte[] codeKey =
             LittleEndianUtils.convertBytes(StringUtils.hexToBytes(StringUtils.toHex(":code")));
-    private static byte[] heapPagesKey =
-            LittleEndianUtils.convertBytes(StringUtils.hexToBytes(StringUtils.toHex(":heappages")));
 
     @Override
     public void next(WarpSyncMachine sync) {
@@ -63,12 +61,9 @@ public class RuntimeDownloadState implements WarpSyncState {
             if (code == null) {
                 this.error = new RuntimeException("Couldn't retrieve runtime code from trie");
             }
-            var heapPages = trie.get(heapPagesKey);
-            //TODO Set error if heapPages is null
-            //Currently other nodes are not returning :heappage information, only :code
+            //TODO Heap pages should be fetched from out storage
             if (code == null) return;
-            sync.setRuntime(code);
-            sync.setHeapPages(heapPages);
+            sync.setRuntimeCode(code);
             log.log(Level.INFO, "Runtime and heap pages downloaded");
 
         } catch (TrieDecoderException e) {

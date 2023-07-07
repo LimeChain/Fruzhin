@@ -64,11 +64,15 @@ public class WarpSyncMachine {
 
     @Getter
     @Setter
-    private byte[] runtime;
+    private byte[] runtimeCode;
 
     @Getter
     @Setter
     private byte[] heapPages;
+
+    @Getter
+    @Setter
+    private Runtime runtime;
 
     public WarpSyncMachine(Network network, ChainService chainService) {
         this.networkService = network;

@@ -50,9 +50,9 @@ public class WasmSections {
 
     public void processCustomSection(byte[] customSectionContent) {
         // Process the custom section content
-        log.log(Level.INFO, "Custom Section Found");
         String customSectionData = new String(customSectionContent);
-        System.out.println("Custom Section Data: \n" + customSectionData);
+        log.log(Level.INFO, "Custom section found in wasm code "
+                + Arrays.copyOfRange(customSectionContent, 0, 100) + "...");
         ScaleCodecReader reader = new ScaleCodecReader(customSectionContent);
         int size = reader.readByte();
         byte[] sectionNameDecoded = reader.readByteArray(size);
@@ -60,14 +60,12 @@ public class WasmSections {
             try {
                 RuntimeApis runtimeApis = RuntimeApis.decode(reader);
                 runtimeVersion.setRuntimeApis(runtimeApis);
-                System.out.println(runtimeApis);
             } catch (Exception e) {
                 log.log(Level.INFO, "Failed to decode runtime apis");
             }
         }
         if (Arrays.equals(sectionNameDecoded, runtimeVersionKey)) {
             runtimeVersion.decode(reader);
-            System.out.println(runtimeVersion);
         }
 
         //We can add more decoders for the other custom sections here if needed
