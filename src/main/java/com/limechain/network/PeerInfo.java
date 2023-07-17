@@ -10,6 +10,7 @@ public class PeerInfo {
     private String bestBlock;
     private Hash256 bestBlockHash;
     private Hash256 genesisBlockHash;
+    private int latestBlock;
 
     public PeerInfo(BlockAnnounceHandshake handshake) {
         nodeRole = handshake.getNodeRole();

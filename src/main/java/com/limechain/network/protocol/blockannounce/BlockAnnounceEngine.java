@@ -22,6 +22,7 @@ import java.util.logging.Level;
 public class BlockAnnounceEngine {
     private static final int HANDSHAKE_LENGTH = 69;
     private final ConnectionManager connectionManager = ConnectionManager.getInstance();
+    private final SyncedState syncedState = SyncedState.getInstance();
 
     public void receiveRequest(byte[] msg, PeerId peerId, Stream stream) {
         boolean connectedToPeer = connectionManager.isConnected(peerId);
@@ -63,6 +64,7 @@ public class BlockAnnounceEngine {
         BlockAnnounceMessage announce = reader.read(new BlockAnnounceMessageScaleReader());
         connectionManager.updatePeer(peerId, announce);
         log.log(Level.INFO, "Received block announce: \n" + announce);
+        syncedState.syncAnnouncedBlock(peerId, announce);
     }
 
     public void writeHandshakeToStream(Stream stream, PeerId peerId) {

@@ -1,9 +1,11 @@
 package com.limechain.network;
 
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceMessage;
+import com.limechain.network.protocol.warp.dto.BlockHeader;
 import io.emeraldpay.polkaj.types.Hash256;
 import io.libp2p.core.PeerId;
 
+import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -26,13 +28,25 @@ public class ConnectionManager {
     }
 
     public void updatePeer(PeerId peerId, BlockAnnounceMessage blockAnnounceMessage) {
-        if (!blockAnnounceMessage.isBestBlock()) {
-            return;
-        }
-
         final var peer = peers.get(peerId);
-        peer.setBestBlock(blockAnnounceMessage.getHeader().getBlockNumber().toString());
-        peer.setBestBlockHash(new Hash256(blockAnnounceMessage.getHeader().getHash()));
+        updateLatestBlock(peer, blockAnnounceMessage.getHeader().getBlockNumber());
+
+        if(blockAnnounceMessage.isBestBlock()) {
+            updateBestBlock(peer, blockAnnounceMessage.getHeader());
+        }
+    }
+
+    // TODO: decide if needed
+    private void updateLatestBlock(PeerInfo peerInfo, BigInteger announcedBlock) {
+        BigInteger latestRecordedBlock = BigInteger.valueOf(peerInfo.getLatestBlock());
+        if(announcedBlock.compareTo(latestRecordedBlock) > 0) {
+            peerInfo.setLatestBlock(announcedBlock.intValue());
+        }
+    }
+
+    private void updateBestBlock(PeerInfo peerInfo, BlockHeader blockHeader) {
+        peerInfo.setBestBlock(blockHeader.getBlockNumber().toString());
+        peerInfo.setBestBlockHash(new Hash256(blockHeader.getHash()));
     }
 
     public void removePeer(PeerId peerId) {

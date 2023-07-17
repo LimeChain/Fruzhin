@@ -23,7 +23,7 @@ public class LightClient {
     private final WebSocketRPC wsRpc;
     private final ConnectionManager connectionManager = ConnectionManager.getInstance();
     private Network network;
-    private WarpSyncMachine warpSyncService;
+    private WarpSyncMachine warpSyncMachine;
 
     public LightClient(String[] cliArgs, HttpRpc httpRpc, WebSocketRPC wsRpc) {
         this.cliArgs = cliArgs;
@@ -46,8 +46,8 @@ public class LightClient {
         while (true) {
             if (connectionManager.getPeerIds().size() > 0 && this.network.currentSelectedPeer != null) {
                 log.log(Level.INFO, "Node successfully connected to a peer! Sync can start!");
-                this.warpSyncService = AppBean.getBean(WarpSyncMachine.class);
-                this.warpSyncService.start();
+                this.warpSyncMachine = AppBean.getBean(WarpSyncMachine.class);
+                this.warpSyncMachine.start();
                 log.log(Level.INFO, "\uD83D\uDE80Started light client!");
                 break;
             }

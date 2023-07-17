@@ -1,17 +1,28 @@
 package com.limechain.sync.warpsync;
 
+import com.limechain.chain.ChainService;
 import com.limechain.chain.lightsyncstate.Authority;
+import com.limechain.chain.lightsyncstate.LightSyncState;
 import com.limechain.constants.GenesisBlockHash;
 import com.limechain.network.Network;
 import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshake;
+import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceMessage;
+import com.limechain.network.protocol.warp.dto.WarpSyncJustification;
+import com.limechain.network.protocol.warp.scale.JustificationReader;
+import com.limechain.network.substream.sync.pb.SyncMessage;
 import com.limechain.rpc.http.server.AppBean;
+import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.types.Hash256;
+import io.libp2p.core.PeerId;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.java.Log;
 
 import java.math.BigInteger;
-
+import java.util.Optional;
+import java.util.logging.Level;
+@Log
 public class SyncedState {
     private static final SyncedState INSTANCE = new SyncedState();
     @Getter
@@ -36,8 +47,21 @@ public class SyncedState {
     @Setter
     private byte[] heapPages;
 
+    @Setter
+    private Network network;
+
+    @Setter
+    private boolean warpSyncFinished;
+
+    JustificationReader justificationReader = new JustificationReader();
     public static SyncedState getInstance() {
         return INSTANCE;
+    }
+
+    public void updateChainService(ChainService chainService) {
+        LightSyncState initState = LightSyncState.decode(chainService.getGenesis().getLightSyncState());
+        authoritySet = initState.getGrandpaAuthoritySet().getCurrentAuthorities();
+        setId = initState.getGrandpaAuthoritySet().getSetId();
     }
 
     public BlockAnnounceHandshake getHandshake() {
@@ -62,4 +86,44 @@ public class SyncedState {
         );
     }
 
+    public void syncAnnouncedBlock(PeerId peerId, BlockAnnounceMessage announce) {
+        final var blockNumber = announce.getHeader().getBlockNumber();
+        if (!warpSyncFinished || blockNumber.compareTo(lastFinalizedBlockNumber) <= 0) {
+            return;
+        }
+
+        final var blockSyncResponse =  network.syncBlock(peerId, blockNumber, lastFinalizedBlockNumber);
+        verifyBlockResponse(blockSyncResponse).ifPresentOrElse(
+                this::updateLatestBlockData,
+                () -> log.log(Level.WARNING, "Failed verifying block " + blockNumber + " from peer " + peerId)
+        );
+    }
+
+    private Optional<WarpSyncJustification> verifyBlockResponse(SyncMessage.BlockResponse blockResponse) {
+        WarpSyncJustification lastVerifiedJustification = null;
+        for (SyncMessage.BlockData blockData : blockResponse.getBlocksList()) {
+            final var justification = parseJustification(blockData.getJustification().toByteArray());
+            if(verifyJustification(justification)) {
+                lastVerifiedJustification = justification;
+            } else {
+                //TODO: failed verification logic
+                return Optional.empty();
+            }
+        }
+        return Optional.ofNullable(lastVerifiedJustification);
+    }
+
+    // TODO: Not verified if this is the right justification format
+    private WarpSyncJustification parseJustification(byte[] bytes) {
+        return justificationReader.read(new ScaleCodecReader(bytes));
+    }
+
+    private boolean verifyJustification(WarpSyncJustification justification) {
+        return justification.verify(authoritySet, setId);
+    }
+
+    private void updateLatestBlockData(WarpSyncJustification justification) {
+       lastFinalizedBlockNumber = justification.targetBlock;
+       lastFinalizedBlockHash = justification.targetHash;
+    }
 }

@@ -11,6 +11,8 @@ import com.limechain.network.protocol.ping.Ping;
 import com.limechain.network.protocol.sync.SyncService;
 import com.limechain.network.protocol.warp.WarpSyncService;
 import com.limechain.network.protocol.warp.dto.WarpSyncResponse;
+import com.limechain.network.substream.sync.pb.SyncMessage;
+import com.limechain.network.substream.sync.pb.SyncMessage.BlockResponse;
 import io.ipfs.multihash.Multihash;
 import io.libp2p.core.Host;
 import io.libp2p.core.PeerId;
@@ -22,6 +24,7 @@ import org.peergos.HostBuilder;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -35,6 +38,7 @@ import static com.limechain.network.kad.KademliaService.REPLICATION;
 @Log
 public class Network {
     private static final int HOST_PORT = 30333;
+    @Getter
     private static Network network;
     @Getter
     public final Chain chain;
@@ -194,6 +198,23 @@ public class Network {
 
     private void updateCurrentSelectedPeer() {
         this.currentSelectedPeer = connectionManager.getPeerIds().stream().findAny().orElse(null);
+    }
+
+    public BlockResponse syncBlock(PeerId peerId, BigInteger blockNumber, BigInteger lastBlockNumber) {
+        this.currentSelectedPeer = peerId;
+        // TODO: fields, hash, direction and maxBlocks values not verified
+        // TODO: when debugging could not get a value returned
+        return syncService.getProtocol().remoteBlockRequest(
+                this.host,
+                this.host.getAddressBook(),
+                peerId,
+                19,
+                null,
+                lastBlockNumber.intValue(),
+                blockNumber.intValue(),
+                SyncMessage.Direction.Ascending,
+                32
+        );
     }
 
     public WarpSyncResponse makeWarpSyncRequest(String blockHash) {
