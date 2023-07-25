@@ -196,7 +196,7 @@ public class Network {
         }
     }
 
-    private void updateCurrentSelectedPeer() {
+    public void updateCurrentSelectedPeer() {
         this.currentSelectedPeer = connectionManager.getPeerIds().stream().findAny().orElse(null);
     }
 
@@ -210,11 +210,10 @@ public class Network {
                 peerId,
                 19,
                 null,
-                lastBlockNumber.intValue(),
+                blockNumber.intValue(),
                 blockNumber.intValue(),
                 SyncMessage.Direction.Ascending,
-                32
-        );
+                1);
     }
 
     public WarpSyncResponse makeWarpSyncRequest(String blockHash) {
