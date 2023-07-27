@@ -2,6 +2,7 @@
 // source: src/main/java/com/limechain/network/protobuf/SyncMessage.proto
 package com.limechain.network.protocol.sync.pb;
 
+//CHECKSTYLE.OFF
 public final class SyncMessage {
     private static final com.google.protobuf.Descriptors.Descriptor
             internal_static_BlockRequest_descriptor;
@@ -129,6 +130,7 @@ public final class SyncMessage {
     getDescriptor() {
         return descriptor;
     }
+
     /**
      * <pre>
      * Block enumeration direction.
@@ -258,6 +260,7 @@ public final class SyncMessage {
 
         // @@protoc_insertion_point(enum_scope:Direction)
     }
+
     public interface BlockRequestOrBuilder extends
             // @@protoc_insertion_point(interface_extends:BlockRequest)
             com.google.protobuf.MessageOrBuilder {
@@ -367,6 +370,7 @@ public final class SyncMessage {
 
         public SyncMessage.BlockRequest.FromBlockCase getFromBlockCase();
     }
+
     public interface BlockResponseOrBuilder extends
             // @@protoc_insertion_point(interface_extends:BlockResponse)
             com.google.protobuf.MessageOrBuilder {
@@ -419,6 +423,7 @@ public final class SyncMessage {
         SyncMessage.BlockDataOrBuilder getBlocksOrBuilder(
                 int index);
     }
+
     public interface BlockDataOrBuilder extends
             // @@protoc_insertion_point(interface_extends:BlockData)
             com.google.protobuf.MessageOrBuilder {
@@ -575,6 +580,7 @@ public final class SyncMessage {
          */
         com.google.protobuf.ByteString getIndexedBody(int index);
     }
+
     public interface StateRequestOrBuilder extends
             // @@protoc_insertion_point(interface_extends:StateRequest)
             com.google.protobuf.MessageOrBuilder {
@@ -638,6 +644,7 @@ public final class SyncMessage {
          */
         boolean getNoProof();
     }
+
     public interface StateResponseOrBuilder extends
             // @@protoc_insertion_point(interface_extends:StateResponse)
             com.google.protobuf.MessageOrBuilder {
@@ -701,6 +708,7 @@ public final class SyncMessage {
          */
         com.google.protobuf.ByteString getProof();
     }
+
     public interface KeyValueStateEntryOrBuilder extends
             // @@protoc_insertion_point(interface_extends:KeyValueStateEntry)
             com.google.protobuf.MessageOrBuilder {
@@ -776,6 +784,7 @@ public final class SyncMessage {
          */
         boolean getComplete();
     }
+
     public interface StateEntryOrBuilder extends
             // @@protoc_insertion_point(interface_extends:StateEntry)
             com.google.protobuf.MessageOrBuilder {
@@ -2040,6 +2049,7 @@ public final class SyncMessage {
         private BlockResponse(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
             super(builder);
         }
+
         private BlockResponse() {
             blocks_ = java.util.Collections.emptyList();
         }
@@ -4483,6 +4493,7 @@ public final class SyncMessage {
         private java.util.List<com.google.protobuf.ByteString> start_;
         private boolean noProof_ = false;
         private byte memoizedIsInitialized = -1;
+
         // Use StateRequest.newBuilder() to construct.
         private StateRequest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
             super(builder);
@@ -6324,6 +6335,7 @@ public final class SyncMessage {
         private java.util.List<SyncMessage.StateEntry> entries_;
         private boolean complete_ = false;
         private byte memoizedIsInitialized = -1;
+
         // Use KeyValueStateEntry.newBuilder() to construct.
         private KeyValueStateEntry(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
             super(builder);
@@ -7963,3 +7975,4 @@ public final class SyncMessage {
 
     // @@protoc_insertion_point(outer_class_scope)
 }
+//CHECKSTYLE.ON
