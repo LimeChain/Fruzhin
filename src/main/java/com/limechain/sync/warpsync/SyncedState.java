@@ -8,9 +8,9 @@ import com.limechain.network.Network;
 import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshake;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceMessage;
+import com.limechain.network.protocol.sync.pb.SyncMessage;
 import com.limechain.network.protocol.warp.dto.WarpSyncJustification;
 import com.limechain.network.protocol.warp.scale.JustificationReader;
-import com.limechain.network.substream.sync.pb.SyncMessage;
 import com.limechain.rpc.http.server.AppBean;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.types.Hash256;
@@ -22,9 +22,11 @@ import lombok.extern.java.Log;
 import java.math.BigInteger;
 import java.util.Optional;
 import java.util.logging.Level;
+
 @Log
 public class SyncedState {
     private static final SyncedState INSTANCE = new SyncedState();
+    JustificationReader justificationReader = new JustificationReader();
     @Getter
     @Setter
     private Hash256 lastFinalizedBlockHash;
@@ -46,14 +48,11 @@ public class SyncedState {
     @Getter
     @Setter
     private byte[] heapPages;
-
     @Setter
     private Network network;
-
     @Setter
     private boolean warpSyncFinished;
 
-    JustificationReader justificationReader = new JustificationReader();
     public static SyncedState getInstance() {
         return INSTANCE;
     }
@@ -92,7 +91,7 @@ public class SyncedState {
             return;
         }
 
-        final var blockSyncResponse =  network.syncBlock(peerId, blockNumber, lastFinalizedBlockNumber);
+        final var blockSyncResponse = network.syncBlock(peerId, blockNumber, lastFinalizedBlockNumber);
         verifyBlockResponse(blockSyncResponse).ifPresentOrElse(
                 this::updateLatestBlockData,
                 () -> log.log(Level.WARNING, "Failed verifying block " + blockNumber + " from peer " + peerId)
@@ -103,7 +102,7 @@ public class SyncedState {
         WarpSyncJustification lastVerifiedJustification = null;
         for (SyncMessage.BlockData blockData : blockResponse.getBlocksList()) {
             final var justification = parseJustification(blockData.getJustification().toByteArray());
-            if(verifyJustification(justification)) {
+            if (verifyJustification(justification)) {
                 lastVerifiedJustification = justification;
             } else {
                 //TODO: failed verification logic
@@ -123,7 +122,7 @@ public class SyncedState {
     }
 
     private void updateLatestBlockData(WarpSyncJustification justification) {
-       lastFinalizedBlockNumber = justification.targetBlock;
-       lastFinalizedBlockHash = justification.targetHash;
+        lastFinalizedBlockNumber = justification.targetBlock;
+        lastFinalizedBlockHash = justification.targetHash;
     }
 }

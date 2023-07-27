@@ -9,10 +9,10 @@ import com.limechain.network.protocol.lightclient.LightMessagesService;
 import com.limechain.network.protocol.lightclient.pb.LightClientMessage;
 import com.limechain.network.protocol.ping.Ping;
 import com.limechain.network.protocol.sync.SyncService;
+import com.limechain.network.protocol.sync.pb.SyncMessage;
+import com.limechain.network.protocol.sync.pb.SyncMessage.BlockResponse;
 import com.limechain.network.protocol.warp.WarpSyncService;
 import com.limechain.network.protocol.warp.dto.WarpSyncResponse;
-import com.limechain.network.substream.sync.pb.SyncMessage;
-import com.limechain.network.substream.sync.pb.SyncMessage.BlockResponse;
 import io.ipfs.multihash.Multihash;
 import io.libp2p.core.Host;
 import io.libp2p.core.PeerId;
@@ -210,8 +210,7 @@ public class Network {
                 peerId,
                 19,
                 null,
-                blockNumber.intValue(),
-                blockNumber.intValue(),
+                lastBlockNumber.intValue(),
                 SyncMessage.Direction.Ascending,
                 1);
     }

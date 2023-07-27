@@ -25,4 +25,12 @@ public class LittleEndianUtils {
 
         return littleEndian;
     }
+
+    public static byte[] intTo32LEBytes(int number) {
+        byte byte1 = (byte) (number);
+        byte byte2 = (byte) (number >>> 8);
+        byte byte3 = (byte) (number >>> 16);
+        byte byte4 = (byte) (number >>> 24);
+        return new byte[]{byte1, byte2, byte3, byte4};
+    }
 }

@@ -1,7 +1,7 @@
 package com.limechain.network.protocol.sync;
 
 import com.limechain.network.StrictProtocolBinding;
-import com.limechain.network.substream.sync.pb.SyncMessage;
+import com.limechain.network.protocol.sync.pb.SyncMessage;
 import io.libp2p.core.AddressBook;
 import io.libp2p.core.Host;
 import io.libp2p.core.PeerId;
@@ -17,16 +17,15 @@ public class SyncMessages extends StrictProtocolBinding<SyncController> {
     }
 
     public SyncMessage.BlockResponse remoteBlockRequest(Host us, AddressBook addrs, PeerId peer,
-                                                        int fields,
+                                                        Integer fields,
                                                         String hash,
                                                         Integer number,
-                                                        Integer toBlock,
                                                         SyncMessage.Direction direction,
                                                         int maxBlocks) {
         SyncController controller = dialPeer(us, peer, addrs);
         try {
             SyncMessage.BlockResponse response = controller
-                    .sendBlockRequest(fields, hash, number, toBlock, direction, maxBlocks)
+                    .sendBlockRequest(fields, hash, number, direction, maxBlocks)
                     .get(2, TimeUnit.SECONDS);
             log.log(Level.INFO, "Received response: " + response.toString());
             return response;

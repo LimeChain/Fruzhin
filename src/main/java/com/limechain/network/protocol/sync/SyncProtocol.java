@@ -1,6 +1,6 @@
 package com.limechain.network.protocol.sync;
 
-import com.limechain.network.substream.sync.pb.SyncMessage;
+import com.limechain.network.protocol.sync.pb.SyncMessage;
 import io.libp2p.core.Stream;
 import io.libp2p.protocol.ProtocolHandler;
 import io.libp2p.protocol.ProtocolMessageHandler;
