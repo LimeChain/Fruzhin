@@ -4,7 +4,8 @@ import com.limechain.network.protocol.NetworkService;
 import io.ipfs.multiaddr.MultiAddress;
 import io.ipfs.multihash.Multihash;
 import io.libp2p.core.Host;
-import io.libp2p.core.multistream.ProtocolBinding;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.java.Log;
 import org.peergos.protocol.dht.Kademlia;
 import org.peergos.protocol.dht.KademliaEngine;
@@ -20,18 +21,16 @@ import java.util.stream.Stream;
  * Service used for operating the Kademlia distributed hash table.
  */
 @Log
-public class KademliaService implements NetworkService {
+public class KademliaService extends NetworkService<Kademlia> {
     public static final int REPLICATION = 20;
     public static final int ALPHA = 3;
-    public Host host;
-    public Kademlia kademlia;
+
+    @Setter
+    @Getter
+    private Host host;
 
     public KademliaService(String protocolId, Multihash hostId, boolean localDht, boolean clientMode) {
         this.initialize(protocolId, hostId, localDht, clientMode);
-    }
-
-    public ProtocolBinding getProtocol() {
-        return this.kademlia;
     }
 
     /**
@@ -42,7 +41,7 @@ public class KademliaService implements NetworkService {
      * @param localEnabled
      */
     private void initialize(String protocolId, Multihash hostId, boolean localEnabled, boolean clientMode) {
-        kademlia = new Kademlia(new KademliaEngine(hostId, new RamProviderStore(), new RamRecordStore()),
+        protocol = new Kademlia(new KademliaEngine(hostId, new RamProviderStore(), new RamRecordStore()),
                 protocolId, REPLICATION, ALPHA, localEnabled, clientMode);
     }
 
@@ -57,7 +56,7 @@ public class KademliaService implements NetworkService {
                 .map(DnsUtils::dnsNodeToIp4)
                 .map(MultiAddress::new)
                 .collect(Collectors.toList());
-        int successfulBootNodes = kademlia.bootstrapRoutingTable(host, bootstrapMultiAddress,
+        int successfulBootNodes = protocol.bootstrapRoutingTable(host, bootstrapMultiAddress,
                 addr -> !addr.contains("wss") && !addr.contains("ws"));
         if (successfulBootNodes > 0)
             log.log(Level.INFO, "Successfully connected to " + successfulBootNodes + " boot nodes");
@@ -69,11 +68,11 @@ public class KademliaService implements NetworkService {
      * Populates Kademlia dht with peers closest in distance to a random id then makes connections with our node
      */
     public void findNewPeers() {
-       kademlia.findClosestPeers(randomPeerId(), REPLICATION, host);
+       protocol.findClosestPeers(randomPeerId(), REPLICATION, host);
        final var peers =
-               kademlia.findClosestPeers(Multihash.deserialize(host.getPeerId().getBytes()), REPLICATION, host);
+               protocol.findClosestPeers(Multihash.deserialize(host.getPeerId().getBytes()), REPLICATION, host);
 
-       peers.forEach(p -> kademlia.connectTo(host, p));
+       peers.forEach(p -> protocol.connectTo(host, p));
     }
 
     private Multihash randomPeerId(){

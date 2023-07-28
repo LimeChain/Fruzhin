@@ -51,7 +51,7 @@ public class RuntimeDownloadStateTest {
 
             senderNode.start().join();
 
-            kademliaService.host = senderNode;
+            kademliaService.setHost(senderNode);
             var peerId = PeerId.fromBase58("12D3KooWFFqjBKoSdQniRpw1Y8W6kkV7takWv1DU2ZMkaA81PYVq");
             var receivers = new String[]{
 //                    "/ip4/127.0.0.1/tcp/30333/p2p/12D3KooWPyKTVdykB9iEXEggRkbMTV4qsWywhtT42qz16eBTvReA"
@@ -65,7 +65,7 @@ public class RuntimeDownloadStateTest {
             //Block must not be older than 256 than the latest block
             LightClientMessage.Response response = lightMessages.remoteReadRequest(
                     senderNode,
-                    kademliaService.host.getAddressBook(),
+                    kademliaService.getHost().getAddressBook(),
                     peerId,
                     "0x8aa206d2dc0386ac0c6e1c4033f2445f209d14b9a11861d6eda4787651705231",
                     new String[]{StringUtils.toHex(":code")}

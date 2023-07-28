@@ -2,7 +2,6 @@ package com.limechain.sync.warpsync.runtime;
 
 import com.github.luben.zstd.Zstd;
 import com.google.common.primitives.Bytes;
-import com.limechain.sync.warpsync.WasmSections;
 import org.wasmer.ImportObject;
 import org.wasmer.Imports;
 import org.wasmer.Module;

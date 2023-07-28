@@ -1,6 +1,7 @@
 package com.limechain.sync.warpsync.state;
 
 import com.limechain.network.protocol.lightclient.pb.LightClientMessage;
+import com.limechain.sync.warpsync.SyncedState;
 import com.limechain.sync.warpsync.WarpSyncMachine;
 import com.limechain.trie.Trie;
 import com.limechain.trie.TrieVerifier;
@@ -14,6 +15,7 @@ import java.util.logging.Level;
 
 @Log
 public class RuntimeDownloadState implements WarpSyncState {
+    private final SyncedState syncedState = SyncedState.getInstance();
     private Exception error;
     private static byte[] codeKey =
             LittleEndianUtils.convertBytes(StringUtils.hexToBytes(StringUtils.toHex(":code")));
@@ -21,18 +23,18 @@ public class RuntimeDownloadState implements WarpSyncState {
     @Override
     public void next(WarpSyncMachine sync) {
         if (this.error != null) {
-            sync.setState(new RequestFragmentsState(sync.getLastFinalizedBlockHash()));
+            sync.setWarpSyncState(new RequestFragmentsState(syncedState.getLastFinalizedBlockHash()));
             return;
         }
         // After runtime is downloaded, we have to build the runtime and then build chain information
-        sync.setState(new RuntimeBuildState());
+        sync.setWarpSyncState(new RuntimeBuildState());
     }
 
     @Override
     public void handle(WarpSyncMachine sync) {
         log.log(Level.INFO, "Downloading runtime...");
         LightClientMessage.Response response = sync.getNetworkService().makeRemoteReadRequest(
-                sync.getLastFinalizedBlockHash().toString(),
+                syncedState.getLastFinalizedBlockHash().toString(),
                 new String[]{StringUtils.toHex(":code")});
 
         byte[] proof = response.getRemoteReadResponse().getProof().toByteArray();
@@ -56,14 +58,14 @@ public class RuntimeDownloadState implements WarpSyncState {
     private void setCodeAndHeapPages(WarpSyncMachine sync, byte[][] decodedProofs) {
         Trie trie;
         try {
-            trie = TrieVerifier.buildTrie(decodedProofs, sync.getStateRoot().getBytes());
+            trie = TrieVerifier.buildTrie(decodedProofs, syncedState.getStateRoot().getBytes());
             var code = trie.get(codeKey);
             if (code == null) {
                 this.error = new RuntimeException("Couldn't retrieve runtime code from trie");
             }
             //TODO Heap pages should be fetched from out storage
             if (code == null) return;
-            sync.setRuntimeCode(code);
+            syncedState.setRuntimeCode(code);
             log.log(Level.INFO, "Runtime and heap pages downloaded");
 
         } catch (TrieDecoderException e) {

@@ -1,5 +1,6 @@
 package com.limechain.sync.warpsync.state;
 
+import com.limechain.sync.warpsync.SyncedState;
 import com.limechain.sync.warpsync.WarpSyncMachine;
 import com.limechain.utils.HashUtils;
 import lombok.extern.java.Log;
@@ -15,10 +16,12 @@ import static com.limechain.sync.warpsync.runtime.RuntimeApis.API_VERSION_LENGTH
  */
 @Log
 public class ChainInformationBuildState implements WarpSyncState {
+    private final SyncedState syncedState = SyncedState.getInstance();
+
     @Override
     public void next(WarpSyncMachine sync) {
         log.log(Level.INFO, "Done with runtime build");
-        sync.setState(new ChainInformationDownloadState());
+        sync.setWarpSyncState(new ChainInformationDownloadState());
     }
 
     @Override
@@ -29,11 +32,11 @@ public class ChainInformationBuildState implements WarpSyncState {
                 HashUtils.hashWithBlake2bToLength("GrandpaApi".getBytes(), API_VERSION_LENGTH)
         };
         sync.getChainInformation().setRuntimeAuraVersion(
-                sync.getRuntime().getVersion().getRuntimeApis().getApiVersion(hashedApiVersions[0]));
+                syncedState.getRuntime().getVersion().getRuntimeApis().getApiVersion(hashedApiVersions[0]));
         sync.getChainInformation().setRuntimeBabeVersion(
-                sync.getRuntime().getVersion().getRuntimeApis().getApiVersion(hashedApiVersions[1]));
+                syncedState.getRuntime().getVersion().getRuntimeApis().getApiVersion(hashedApiVersions[1]));
         sync.getChainInformation().setRuntimeGrandpaVersion(
-                sync.getRuntime().getVersion().getRuntimeApis().getApiVersion(hashedApiVersions[2]));
+                syncedState.getRuntime().getVersion().getRuntimeApis().getApiVersion(hashedApiVersions[2]));
         log.log(Level.INFO, "Aura Api version: " + sync.getChainInformation().getRuntimeAuraVersion()
                 + " Babe api version: " + sync.getChainInformation().getRuntimeBabeVersion() +
                 " Grandpa Api Version: " + sync.getChainInformation().getRuntimeGrandpaVersion());

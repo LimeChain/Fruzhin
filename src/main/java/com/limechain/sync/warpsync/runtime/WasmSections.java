@@ -1,4 +1,4 @@
-package com.limechain.sync.warpsync;
+package com.limechain.sync.warpsync.runtime;
 
 import com.limechain.sync.warpsync.runtime.RuntimeApis;
 import com.limechain.sync.warpsync.runtime.RuntimeVersion;

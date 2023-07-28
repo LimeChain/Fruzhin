@@ -33,7 +33,7 @@ public class ChainInformationDownloadState implements WarpSyncState {
     @Override
     public void next(WarpSyncMachine sync) {
         // We're done with the warp sync process!
-        sync.setState(new FinishedState());
+        sync.setWarpSyncState(new FinishedState());
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.limechain.sync.warpsync.state;
 
+import com.limechain.sync.warpsync.SyncedState;
 import com.limechain.sync.warpsync.runtime.RuntimeBuilder;
 import com.limechain.sync.warpsync.WarpSyncMachine;
 import lombok.extern.java.Log;
@@ -14,18 +15,19 @@ import java.util.logging.Level;
  */
 @Log
 public class RuntimeBuildState implements WarpSyncState {
+    private final SyncedState syncedState = SyncedState.getInstance();
     @Override
     public void next(WarpSyncMachine sync) {
         log.log(Level.INFO, "Done with runtime build");
-        sync.setState(new ChainInformationBuildState());
+        sync.setWarpSyncState(new ChainInformationBuildState());
     }
 
     @Override
     public void handle(WarpSyncMachine sync) {
         // TODO: After runtime is downloaded, we are downloading and computing the information of the chain
         try {
-            Runtime runtime = RuntimeBuilder.buildRuntime(sync.getRuntimeCode());
-            sync.setRuntime(runtime);
+            Runtime runtime = RuntimeBuilder.buildRuntime(syncedState.getRuntimeCode());
+            syncedState.setRuntime(runtime);
         } catch (UnsatisfiedLinkError e) {
             log.log(Level.SEVERE, "Error loading wasm module");
             log.log(Level.SEVERE, e.getMessage(), e.getStackTrace());

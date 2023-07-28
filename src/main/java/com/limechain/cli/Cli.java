@@ -72,6 +72,7 @@ public class Cli {
         Option dbClean = new Option("dbc", DB_RECREATE, false, "Clean the DB");
         networkOption.setRequired(false);
         dbPathOption.setRequired(false);
+        dbClean.setRequired(false);
 
         options.addOption(networkOption);
         options.addOption(dbPathOption);
