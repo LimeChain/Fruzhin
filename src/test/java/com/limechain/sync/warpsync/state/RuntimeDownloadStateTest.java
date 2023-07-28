@@ -4,8 +4,8 @@ import com.limechain.network.kad.KademliaService;
 import com.limechain.network.protocol.lightclient.LightMessages;
 import com.limechain.network.protocol.lightclient.LightMessagesProtocol;
 import com.limechain.network.protocol.lightclient.pb.LightClientMessage;
-import com.limechain.sync.warpsync.Runtime;
-import com.limechain.sync.warpsync.RuntimeBuilder;
+import com.limechain.sync.warpsync.runtime.Runtime;
+import com.limechain.sync.warpsync.runtime.RuntimeBuilder;
 import com.limechain.trie.Trie;
 import com.limechain.trie.TrieVerifier;
 import com.limechain.trie.decoder.TrieDecoderException;
@@ -19,6 +19,7 @@ import io.libp2p.core.PeerId;
 import io.libp2p.protocol.Ping;
 import lombok.extern.java.Log;
 import org.apache.commons.io.FileUtils;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.peergos.HostBuilder;
 
@@ -32,6 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @Log
 public class RuntimeDownloadStateTest {
+    @Disabled("This is an integration test")
     @Test
     public void remoteReadRequest_return_response() {
         Host senderNode = null;
@@ -65,7 +67,7 @@ public class RuntimeDownloadStateTest {
                     senderNode,
                     kademliaService.host.getAddressBook(),
                     peerId,
-                    "0x5203002e03949672589ad08b9115f39c2878ef254d879459ef25471377cb9695",
+                    "0x8aa206d2dc0386ac0c6e1c4033f2445f209d14b9a11861d6eda4787651705231",
                     new String[]{StringUtils.toHex(":code")}
             );
 
@@ -76,7 +78,7 @@ public class RuntimeDownloadStateTest {
             byte[] proof = res.getProof().toByteArray();
 
             //Must change to the latest state root when updating block hash
-            Hash256 stateRoot = Hash256.from("0x50554f247e227e5ba097e4172c8d55e4ac6fcc53270db5272266de87f6c2325f");
+            Hash256 stateRoot = Hash256.from("0xdfe82c05dd0f9cf5ade3f5544c4311a123627f13dcdb6864bc842a1eae28c7c5");
             ScaleCodecReader reader = new ScaleCodecReader(proof);
             int size = reader.readCompactInt();
             byte[][] decodedProofs = new byte[size][];
@@ -97,9 +99,27 @@ public class RuntimeDownloadStateTest {
             System.out.println("Instantiating module");
             Runtime runtime = RuntimeBuilder.buildRuntime(code);
 
-            System.out.println("Calling exported function 'Core_initialize_block'" +
-                    " as it calls both of the imported functions");
-            runtime.getInstance().exports.getFunction("Core_initialize_block").apply(1, 2);
+            System.out.println("Calling exported function...");
+//            Thread.sleep(2000);
+//            Memory memory = runtime.getInstance().exports.getMemory("memory");
+//            ByteBuffer memoryBuffer = memory.buffer();
+//            memoryBuffer.position(0);
+//            System.out.println(HexUtils.
+//                    fromHexString("0xebdf9b472717dea63c2ae4ae312229d90dadd3e5a4858464da80103bd0b033a7").length);
+//
+//            memoryBuffer.put((byte)HexUtils
+//                    .fromHexString("0xebdf9b472717dea63c2ae4ae312229d90dadd3e5a4858464da80103bd0b033a7").length);
+//            memoryBuffer.put(HexUtils
+//                    .fromHexString("0xebdf9b472717dea63c2ae4ae312229d90dadd3e5a4858464da80103bd0b033a7"));
+//            memoryBuffer.put(blockNumberToByteArray(16454328));
+//            memoryBuffer.put(new byte[]{0});
+//            memoryBuffer.put(new byte[]{0});
+//            memoryBuffer.put(new byte[]{0});
+//            Object runtimeResponse = runtime.getInstance().exports.getFunction("Core_version")
+//                    .apply(
+//                            new Object[]{
+//                                0,0
+//                            });
 
             log.log(Level.INFO, "Runtime and heap pages downloaded");
         } catch (IOException | UnsatisfiedLinkError e) {

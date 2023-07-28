@@ -33,7 +33,7 @@ public class RuntimeDownloadState implements WarpSyncState {
         log.log(Level.INFO, "Downloading runtime...");
         LightClientMessage.Response response = sync.getNetworkService().makeRemoteReadRequest(
                 sync.getLastFinalizedBlockHash().toString(),
-                new String[]{StringUtils.toHex(":code"), StringUtils.toHex(":heappages")});
+                new String[]{StringUtils.toHex(":code")});
 
         byte[] proof = response.getRemoteReadResponse().getProof().toByteArray();
 

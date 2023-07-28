@@ -1,5 +1,7 @@
 package com.limechain.sync.warpsync;
 
+import com.limechain.sync.warpsync.runtime.RuntimeApis;
+import com.limechain.sync.warpsync.runtime.RuntimeVersion;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,8 +14,8 @@ import java.util.logging.Level;
 @NoArgsConstructor
 @Getter
 public class WasmSections {
-    public static final byte[] runtimeVersionKey = "runtime_version".getBytes();
-    public static final byte[] runtimeApisKey = "runtime_apis".getBytes();
+    public static final byte[] RUNTIME_VERSION_KEY = "runtime_version".getBytes();
+    public static final byte[] RUNTIME_APIS_KEY = "runtime_apis".getBytes();
     RuntimeVersion runtimeVersion = new RuntimeVersion();
 
     public void parseCustomSections(byte[] wasmBytes) {
@@ -56,7 +58,7 @@ public class WasmSections {
         ScaleCodecReader reader = new ScaleCodecReader(customSectionContent);
         int size = reader.readByte();
         byte[] sectionNameDecoded = reader.readByteArray(size);
-        if (Arrays.equals(sectionNameDecoded, runtimeApisKey)) {
+        if (Arrays.equals(sectionNameDecoded, RUNTIME_APIS_KEY)) {
             try {
                 RuntimeApis runtimeApis = RuntimeApis.decode(reader);
                 runtimeVersion.setRuntimeApis(runtimeApis);
@@ -64,7 +66,7 @@ public class WasmSections {
                 log.log(Level.INFO, "Failed to decode runtime apis");
             }
         }
-        if (Arrays.equals(sectionNameDecoded, runtimeVersionKey)) {
+        if (Arrays.equals(sectionNameDecoded, RUNTIME_VERSION_KEY)) {
             runtimeVersion.decode(reader);
         }
 

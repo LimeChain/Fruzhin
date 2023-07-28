@@ -1,4 +1,4 @@
-package com.limechain.sync.warpsync;
+package com.limechain.sync.warpsync.runtime;
 
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import lombok.Getter;

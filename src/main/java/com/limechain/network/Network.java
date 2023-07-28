@@ -63,7 +63,7 @@ public class Network {
         this.initializeProtocols(chainService, hostConfig);
         this.bootNodes = chainService.getGenesis().getBootNodes();
         //TODO Remove hardcoded peer
-        String selectedPeerId = "12D3KooWFFqjBKoSdQniRpw1Y8W6kkV7takWv1DU2ZMkaA81PYVq";
+        String selectedPeerId = "12D3KooWHJBMZgt7ymAdTRtadPcGXpJw79vBGe8z53r9JMkZW7Ha";
         this.currentSelectedPeer = new PeerId(Multihash.fromBase58(selectedPeerId).toBytes());
     }
 

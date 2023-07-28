@@ -5,6 +5,7 @@ import com.limechain.chain.lightsyncstate.Authority;
 import com.limechain.chain.lightsyncstate.LightSyncState;
 import com.limechain.network.Network;
 import com.limechain.network.protocol.warp.dto.WarpSyncFragment;
+import com.limechain.sync.warpsync.runtime.Runtime;
 import com.limechain.sync.warpsync.state.FinishedState;
 import com.limechain.sync.warpsync.state.RequestFragmentsState;
 import com.limechain.sync.warpsync.state.WarpSyncState;
@@ -73,6 +74,10 @@ public class WarpSyncMachine {
     @Getter
     @Setter
     private Runtime runtime;
+
+    @Getter
+    @Setter
+    private ChainInformation chainInformation = new ChainInformation();
 
     public WarpSyncMachine(Network network, ChainService chainService) {
         this.networkService = network;

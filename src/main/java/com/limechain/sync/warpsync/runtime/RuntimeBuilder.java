@@ -1,7 +1,8 @@
-package com.limechain.sync.warpsync;
+package com.limechain.sync.warpsync.runtime;
 
 import com.github.luben.zstd.Zstd;
 import com.google.common.primitives.Bytes;
+import com.limechain.sync.warpsync.WasmSections;
 import org.wasmer.ImportObject;
 import org.wasmer.Imports;
 import org.wasmer.Module;
@@ -14,9 +15,10 @@ import java.util.Arrays;
 public class RuntimeBuilder {
     public static final byte[] ZSTD_PREFIX = new byte[]{82, -68, 83, 118, 70, -37, -114, 5};
     public static final int MAX_ZSTD_DECOMPRESSED_SIZE = 50 * 1024 * 1024;
-    public static final int DEFAULT_HEAP_PAGES=2048;
+    public static final int DEFAULT_HEAP_PAGES = 2048;
 
     public static Runtime buildRuntime(byte[] code) {
+
         byte[] wasmBinary;
         byte[] wasmBinaryPrefix = Arrays.copyOfRange(code, 0, 8);
         if (Arrays.equals(wasmBinaryPrefix, ZSTD_PREFIX)) {
@@ -38,13 +40,13 @@ public class RuntimeBuilder {
         if (x < 0) throw new RuntimeException("Key not found in runtime code");
         WasmSections wasmSections = new WasmSections();
         wasmSections.parseCustomSections(wasmBinary);
-        if(wasmSections.getRuntimeVersion() != null && wasmSections.getRuntimeVersion().getRuntimeApis()!=null){
+        if (wasmSections.getRuntimeVersion() != null && wasmSections.getRuntimeVersion().getRuntimeApis() != null) {
             return wasmSections.getRuntimeVersion();
-        }
-        else throw new RuntimeException("Could not get Runtime version");
+        } else throw new RuntimeException("Could not get Runtime version");
     }
 
     static Imports getImports(Module module, int minPages) {
+        ImportObject.MemoryImport memory= new ImportObject.MemoryImport("env", 22, false);
         return Imports.from(Arrays.asList(
                 new ImportObject.FuncImport("env", "ext_storage_set_version_1", argv -> {
                     System.out.println("Message printed in the body of 'ext_storage_set_version_1'");
@@ -101,7 +103,8 @@ public class RuntimeBuilder {
                 }, Arrays.asList(Type.I32, Type.I32), Arrays.asList(Type.I64)),
                 new ImportObject.FuncImport("env",
                         "ext_crypto_secp256k1_ecdsa_recover_compressed_version_2", argv -> {
-                    System.out.println("Message printed in the body of 'ext_crypto_secp256k1_ecdsa_recover_compressed_version_2'");
+                    System.out.println("Message printed in the body of " +
+                            "'ext_crypto_secp256k1_ecdsa_recover_compressed_version_2'");
                     return argv;
                 }, Arrays.asList(Type.I32, Type.I32), Arrays.asList(Type.I64)),
                 new ImportObject.FuncImport("env", "ext_crypto_sr25519_generate_version_1", argv -> {
@@ -249,6 +252,10 @@ public class RuntimeBuilder {
                     System.out.println("Message printed in the body of 'ext_logging_log_version_1'");
                     return argv;
                 }, Arrays.asList(Type.I32, Type.I64, Type.I64), Arrays.asList()),
-                new ImportObject.MemoryImport("env", minPages, false)), module);
+                new ImportObject.FuncImport("env", "ext_misc_print_num_version_1", argv -> {
+                    System.out.println("Message printed in the body of 'ext_logging_log_version_1'");
+                    return argv;
+                }, Arrays.asList(Type.I64), Arrays.asList()),
+                memory), module);
     }
 }
