@@ -93,7 +93,6 @@ public class RuntimeDownloadTest {
             System.out.println("Instantiating module");
             RuntimeBuilder.buildRuntime(code);
 
-            System.out.println("Calling exported function...");
             log.log(Level.INFO, "Runtime and heap pages downloaded");
         } catch (UnsatisfiedLinkError e) {
             throw new RuntimeException(e);
