@@ -218,19 +218,6 @@ public class Network {
 
     }
 
-    public LightClientMessage.Response makeRemoteCallRequest(String blockHash, String function, String params) {
-        if (validatePeer()) return null;
-
-        return this.lightMessagesService.getProtocol().remoteCallRequest(
-                this.host,
-                this.host.getAddressBook(),
-                this.currentSelectedPeer,
-                blockHash,
-                function,
-                params);
-
-    }
-
     private boolean validatePeer() {
         if (this.currentSelectedPeer == null) {
             log.log(Level.WARNING, "No peer selected for warp sync request.");
