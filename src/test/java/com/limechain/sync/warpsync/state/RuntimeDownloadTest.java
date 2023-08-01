@@ -4,7 +4,6 @@ import com.limechain.network.kad.KademliaService;
 import com.limechain.network.protocol.lightclient.LightMessages;
 import com.limechain.network.protocol.lightclient.LightMessagesProtocol;
 import com.limechain.network.protocol.lightclient.pb.LightClientMessage;
-import com.limechain.sync.warpsync.runtime.Runtime;
 import com.limechain.sync.warpsync.runtime.RuntimeBuilder;
 import com.limechain.trie.Trie;
 import com.limechain.trie.TrieVerifier;
@@ -18,13 +17,10 @@ import io.libp2p.core.Host;
 import io.libp2p.core.PeerId;
 import io.libp2p.protocol.Ping;
 import lombok.extern.java.Log;
-import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.peergos.HostBuilder;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.List;
 import java.util.Random;
 import java.util.logging.Level;
@@ -32,10 +28,10 @@ import java.util.logging.Level;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @Log
-public class RuntimeDownloadStateTest {
+public class RuntimeDownloadTest {
     @Disabled("This is an integration test")
     @Test
-    public void remoteReadRequest_return_response() {
+    public void runtimeDownloadAndBuildTest() {
         Host senderNode = null;
         try {
             HostBuilder hostBuilder1 =
@@ -60,7 +56,6 @@ public class RuntimeDownloadStateTest {
             };
 
             kademliaService.connectBootNodes(receivers);
-            Thread.sleep(1000);
 
             //Block must not be older than 256 than the latest block
             LightClientMessage.Response response = lightMessages.remoteReadRequest(
@@ -94,37 +89,13 @@ public class RuntimeDownloadStateTest {
             }
             var code = trie.get(codeKey);
             assertNotNull(code);
-            FileUtils.writeByteArrayToFile(new File("./wasm_code"), code);
-            //assertNotNull(heapPages);
+
             System.out.println("Instantiating module");
-            Runtime runtime = RuntimeBuilder.buildRuntime(code);
+            RuntimeBuilder.buildRuntime(code);
 
             System.out.println("Calling exported function...");
-//            Thread.sleep(2000);
-//            Memory memory = runtime.getInstance().exports.getMemory("memory");
-//            ByteBuffer memoryBuffer = memory.buffer();
-//            memoryBuffer.position(0);
-//            System.out.println(HexUtils.
-//                    fromHexString("0xebdf9b472717dea63c2ae4ae312229d90dadd3e5a4858464da80103bd0b033a7").length);
-//
-//            memoryBuffer.put((byte)HexUtils
-//                    .fromHexString("0xebdf9b472717dea63c2ae4ae312229d90dadd3e5a4858464da80103bd0b033a7").length);
-//            memoryBuffer.put(HexUtils
-//                    .fromHexString("0xebdf9b472717dea63c2ae4ae312229d90dadd3e5a4858464da80103bd0b033a7"));
-//            memoryBuffer.put(blockNumberToByteArray(16454328));
-//            memoryBuffer.put(new byte[]{0});
-//            memoryBuffer.put(new byte[]{0});
-//            memoryBuffer.put(new byte[]{0});
-//            Object runtimeResponse = runtime.getInstance().exports.getFunction("Core_version")
-//                    .apply(
-//                            new Object[]{
-//                                0,0
-//                            });
-
             log.log(Level.INFO, "Runtime and heap pages downloaded");
-        } catch (IOException | UnsatisfiedLinkError e) {
-            throw new RuntimeException(e);
-        } catch (InterruptedException e) {
+        } catch (UnsatisfiedLinkError e) {
             throw new RuntimeException(e);
         } finally {
             if (senderNode != null) {
