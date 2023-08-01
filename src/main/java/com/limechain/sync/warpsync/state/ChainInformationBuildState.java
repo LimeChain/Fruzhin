@@ -10,9 +10,7 @@ import java.util.logging.Level;
 import static com.limechain.sync.warpsync.runtime.RuntimeApis.API_VERSION_LENGTH;
 
 /**
- * Performs some runtime calls in order to obtain the current consensus-related parameters
- * of the chain. This might require obtaining some storage items, in which case they will also
- * be downloaded from a source in the Chain Information Download State
+ * Sets consensus protocol versions
  */
 @Log
 public class ChainInformationBuildState implements WarpSyncState {

@@ -6,7 +6,9 @@ import lombok.extern.java.Log;
 import java.util.logging.Level;
 
 /**
- * Downloads missing chain information from source
+ * Performs some runtime calls in order to obtain the current consensus-related parameters
+ * of the chain. This might require obtaining some storage items, in which case they will also
+ * be downloaded from a source in the Chain Information Download State
  */
 @Log
 public class ChainInformationDownloadState implements WarpSyncState {
@@ -39,7 +41,7 @@ public class ChainInformationDownloadState implements WarpSyncState {
             try {
                 //TODO Make runtime calls here
                 //responses[i] = sync.getRuntime().call(runtimeFunctionCalls[i]);
-                log.log(Level.INFO, "Made a runtime call \""+runtimeFunctionCalls[i]+"\" : " + responses[i]);
+                log.log(Level.INFO, "Made a runtime call \"" + runtimeFunctionCalls[i] + "\" : " + responses[i]);
             } catch (Exception e) {
                 log.log(Level.WARNING, e.getMessage(), e.getStackTrace());
             }
