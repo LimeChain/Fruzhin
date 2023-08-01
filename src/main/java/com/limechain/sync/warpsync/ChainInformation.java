@@ -12,7 +12,7 @@ public class ChainInformation {
     BigInteger runtimeBabeVersion;
     BigInteger runtimeGrandpaVersion;
 
-    //TODO
+    //TODO Fill missing calls when runtime calls are working
     //finalized_block_header
     //block_number_bytes
     //aura_autorities_call_output

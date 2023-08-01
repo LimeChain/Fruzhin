@@ -20,16 +20,6 @@ public class ChainInformationDownloadState implements WarpSyncState {
             "GrandpaApi_current_set_id"
     };
 
-//    private String[][] functionInfoRetrievalKeys = new String[][]{
-//            {},
-//            {},
-//            {},
-//            {},
-//            {},//{" slotduration", "epochlength", "constant", "genesisauthorities", "randomness", "secondaryslot"},
-//            {":grandpa_authorities"},
-//            {}
-//    };
-
     @Override
     public void next(WarpSyncMachine sync) {
         // We're done with the warp sync process!
@@ -49,11 +39,11 @@ public class ChainInformationDownloadState implements WarpSyncState {
             try {
                 //TODO Make runtime calls here
                 //responses[i] = sync.getRuntime().call(runtimeFunctionCalls[i]);
-                log.log(Level.INFO, "Made a runtime call: " + responses[i]);
+                log.log(Level.INFO, "Made a runtime call \""+runtimeFunctionCalls[i]+"\" : " + responses[i]);
             } catch (Exception e) {
                 log.log(Level.WARNING, e.getMessage(), e.getStackTrace());
             }
         }
-        log.log(Level.INFO, "Downloaded calls");
+        log.log(Level.INFO, "Downloaded chain information");
     }
 }
