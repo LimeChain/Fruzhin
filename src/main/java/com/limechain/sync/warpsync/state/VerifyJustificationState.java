@@ -64,7 +64,8 @@ public class VerifyJustificationState implements WarpSyncState {
             try {
                 handleAuthorityChanges(sync, fragment);
                 log.log(Level.INFO, "Verified justification. Block hash is now at #"
-                        + syncedState.getLastFinalizedBlockNumber() + ": " + syncedState.getLastFinalizedBlockHash().toString()
+                        + syncedState.getLastFinalizedBlockNumber() + ": "
+                        + syncedState.getLastFinalizedBlockHash().toString()
                         + " with state root " + syncedState.getStateRoot());
             } catch (Exception error) {
                 this.error = error;
