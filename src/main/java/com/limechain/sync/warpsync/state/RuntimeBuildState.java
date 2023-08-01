@@ -9,9 +9,7 @@ import com.limechain.sync.warpsync.runtime.Runtime;
 import java.util.logging.Level;
 
 /**
- * Performs some runtime calls in order to obtain the current consensus-related parameters
- * of the chain. This might require obtaining some storage items, in which case they will also
- * be downloaded from a source in the Chain Information Download State
+    Creates a runtime instance using the downloaded code
  */
 @Log
 public class RuntimeBuildState implements WarpSyncState {
@@ -19,12 +17,12 @@ public class RuntimeBuildState implements WarpSyncState {
     @Override
     public void next(WarpSyncMachine sync) {
         log.log(Level.INFO, "Done with runtime build");
+        //After runtime instance is built, we are building the information of the chain
         sync.setWarpSyncState(new ChainInformationBuildState());
     }
 
     @Override
     public void handle(WarpSyncMachine sync) {
-        // TODO: After runtime is downloaded, we are downloading and computing the information of the chain
         try {
             Runtime runtime = RuntimeBuilder.buildRuntime(syncedState.getRuntimeCode());
             syncedState.setRuntime(runtime);
