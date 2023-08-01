@@ -42,6 +42,7 @@ public class SyncedState {
     @Getter
     @Setter
     private Runtime runtime;
+    
     public static SyncedState getInstance() {
         return INSTANCE;
     }
