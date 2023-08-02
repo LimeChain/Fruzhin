@@ -1,7 +1,6 @@
 package com.limechain.sync.warpsync.runtime;
 
-import com.limechain.sync.warpsync.runtime.RuntimeApis;
-import com.limechain.sync.warpsync.runtime.RuntimeVersion;
+import com.limechain.sync.warpsync.scale.RuntimeApisReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -52,7 +51,6 @@ public class WasmSections {
 
     public void processCustomSection(byte[] customSectionContent) {
         // Process the custom section content
-        String customSectionData = new String(customSectionContent);
         log.log(Level.INFO, "Custom section found in wasm code "
                 + Arrays.copyOfRange(customSectionContent, 0, 100) + "...");
         ScaleCodecReader reader = new ScaleCodecReader(customSectionContent);
@@ -60,7 +58,8 @@ public class WasmSections {
         byte[] sectionNameDecoded = reader.readByteArray(size);
         if (Arrays.equals(sectionNameDecoded, RUNTIME_APIS_KEY)) {
             try {
-                RuntimeApis runtimeApis = RuntimeApis.decode(reader);
+                RuntimeApisReader runtimeApisReader = new RuntimeApisReader();
+                RuntimeApis runtimeApis = runtimeApisReader.read(reader);
                 runtimeVersion.setRuntimeApis(runtimeApis);
             } catch (Exception e) {
                 log.log(Level.INFO, "Failed to decode runtime apis");
