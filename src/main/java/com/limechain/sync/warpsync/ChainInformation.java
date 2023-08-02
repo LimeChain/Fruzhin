@@ -8,6 +8,7 @@ import java.math.BigInteger;
 @Getter
 @Setter
 public class ChainInformation {
+    public static final BigInteger GRANDPA_VERSION_SUPPORTING_CURRENT_SET_ID = BigInteger.valueOf(3);
     BigInteger runtimeAuraVersion;
     BigInteger runtimeBabeVersion;
     BigInteger runtimeGrandpaVersion;
@@ -24,11 +25,11 @@ public class ChainInformation {
     //grandpa_current_set_id_call_output
 
     public boolean runtimeBabeApiIsV1() {
-        return runtimeBabeVersion == BigInteger.ONE;
+        return runtimeBabeVersion.equals(BigInteger.ONE);
     }
 
     public boolean runtimeGrandpaSupportsCurrentSetId() {
-        return runtimeGrandpaVersion.equals(BigInteger.valueOf(3));
+        return runtimeGrandpaVersion.equals(GRANDPA_VERSION_SUPPORTING_CURRENT_SET_ID);
     }
 
     public boolean runtimeHasAura() {
