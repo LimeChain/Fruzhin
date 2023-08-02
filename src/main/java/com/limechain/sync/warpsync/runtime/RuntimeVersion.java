@@ -2,14 +2,12 @@ package com.limechain.sync.warpsync.runtime;
 
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigInteger;
 
 @Getter
 @Setter
-@NoArgsConstructor
 public class RuntimeVersion {
     private String specName;
     private String implementation;
@@ -28,7 +26,7 @@ public class RuntimeVersion {
                 "; specVersion=" + this.specVersion +
                 "; implementationVersion=" + this.implementationVersion +
                 "; transactionVersion=" + this.transactionVersion +
-                "; stateVersion=" + this.stateVersion;
+                "; stateVersion=" + this.stateVersion +"}";
     }
 
     public void decode(ScaleCodecReader reader) {
