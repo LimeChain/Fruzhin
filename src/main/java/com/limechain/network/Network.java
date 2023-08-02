@@ -192,7 +192,7 @@ public class Network {
         }
     }
 
-    private void updateCurrentSelectedPeer() {
+    public void updateCurrentSelectedPeer() {
         this.currentSelectedPeer = connectionManager.getPeerIds().stream().findAny().orElse(null);
     }
 
