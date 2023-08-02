@@ -34,6 +34,7 @@ public class RuntimeDownloadTest {
     public void runtimeDownloadAndBuildTest() {
         Host senderNode = null;
         try {
+            //Setup node and connect to boot nodes
             HostBuilder hostBuilder1 =
                     (new HostBuilder()).generateIdentity().listenLocalhost(10000
                             + new Random().nextInt(50000));
@@ -56,6 +57,7 @@ public class RuntimeDownloadTest {
 
             kademliaService.connectBootNodes(receivers);
 
+            //Make a call to retrieve the runtime code information
             //Block must not be older than 256 than the latest block
             LightClientMessage.Response response = lightMessages.remoteReadRequest(
                     senderNode,
@@ -64,9 +66,9 @@ public class RuntimeDownloadTest {
                     "0x8aa206d2dc0386ac0c6e1c4033f2445f209d14b9a11861d6eda4787651705231",
                     new String[]{StringUtils.toHex(":code")}
             );
-
             assertNotNull(response);
 
+            //Parse the runtime code so that we can build it in a module later
             byte[] codeKey = LittleEndianUtils.convertBytes(StringUtils.hexToBytes(StringUtils.toHex(":code")));
             var res = response.getRemoteReadResponse();
             byte[] proof = res.getProof().toByteArray();
@@ -89,6 +91,7 @@ public class RuntimeDownloadTest {
             var code = trie.get(codeKey);
             assertNotNull(code);
 
+            //Build runtime
             System.out.println("Instantiating module");
             RuntimeBuilder.buildRuntime(code);
 
