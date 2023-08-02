@@ -13,9 +13,9 @@ import static com.limechain.sync.warpsync.runtime.RuntimeBuilder.getImports;
 @Getter
 @Log
 public class Runtime {
-    RuntimeVersion version;
-    Instance instance;
-    int heapPages;
+    private RuntimeVersion version;
+    private Instance instance;
+    private int heapPages;
 
     public Runtime(Module module, int heapPages, RuntimeVersion version) {
         this.version = version;

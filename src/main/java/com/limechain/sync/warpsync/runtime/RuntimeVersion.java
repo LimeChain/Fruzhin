@@ -11,14 +11,14 @@ import java.math.BigInteger;
 @Setter
 @NoArgsConstructor
 public class RuntimeVersion {
-    String specName;
-    String implementation;
-    BigInteger authoringVersion;
-    BigInteger specVersion;
-    BigInteger implementationVersion;
-    BigInteger transactionVersion;
-    BigInteger stateVersion;
-    RuntimeApis runtimeApis;
+    private String specName;
+    private String implementation;
+    private BigInteger authoringVersion;
+    private BigInteger specVersion;
+    private BigInteger implementationVersion;
+    private BigInteger transactionVersion;
+    private BigInteger stateVersion;
+    private RuntimeApis runtimeApis;
 
     @Override
     public String toString() {

@@ -9,9 +9,9 @@ import java.math.BigInteger;
 @Setter
 public class ChainInformation {
     public static final BigInteger GRANDPA_VERSION_SUPPORTING_CURRENT_SET_ID = BigInteger.valueOf(3);
-    BigInteger runtimeAuraVersion;
-    BigInteger runtimeBabeVersion;
-    BigInteger runtimeGrandpaVersion;
+    private BigInteger runtimeAuraVersion;
+    private BigInteger runtimeBabeVersion;
+    private BigInteger runtimeGrandpaVersion;
 
     //TODO Fill missing calls when runtime calls are working
     //finalized_block_header

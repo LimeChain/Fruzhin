@@ -10,9 +10,9 @@ import java.util.Arrays;
 @Getter
 @Setter
 public class RuntimeApis {
-    ArrayList<byte[]> apiVersions = new ArrayList<>();
-    ArrayList<BigInteger> apiVersionsNumbers = new ArrayList<>();
     public static final int API_VERSION_LENGTH = 8;
+    private ArrayList<byte[]> apiVersions = new ArrayList<>();
+    private ArrayList<BigInteger> apiVersionsNumbers = new ArrayList<>();
 
     public BigInteger getApiVersion(byte[] key) {
         for (int i = 0; i < apiVersions.size(); i++) {

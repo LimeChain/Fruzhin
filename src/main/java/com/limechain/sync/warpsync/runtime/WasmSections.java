@@ -15,7 +15,7 @@ import java.util.logging.Level;
 public class WasmSections {
     public static final byte[] RUNTIME_VERSION_KEY = "runtime_version".getBytes();
     public static final byte[] RUNTIME_APIS_KEY = "runtime_apis".getBytes();
-    RuntimeVersion runtimeVersion = new RuntimeVersion();
+    private RuntimeVersion runtimeVersion = new RuntimeVersion();
 
     public void parseCustomSections(byte[] wasmBytes) {
         int offset = 8; // Start after the Wasm file header
