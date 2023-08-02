@@ -197,7 +197,7 @@ public class Network {
     }
 
     public WarpSyncResponse makeWarpSyncRequest(String blockHash) {
-        if (validatePeer()) return null;
+        if (isPeerInvalid()) return null;
 
         return this.warpSyncService.getProtocol().warpSyncRequest(
                 this.host,
@@ -207,7 +207,7 @@ public class Network {
     }
 
     public LightClientMessage.Response makeRemoteReadRequest(String blockHash, String[] keys) {
-        if (validatePeer()) return null;
+        if (isPeerInvalid()) return null;
 
         return this.lightMessagesService.getProtocol().remoteReadRequest(
                 this.host,
@@ -218,7 +218,7 @@ public class Network {
 
     }
 
-    private boolean validatePeer() {
+    private boolean isPeerInvalid() {
         if (this.currentSelectedPeer == null) {
             log.log(Level.WARNING, "No peer selected for warp sync request.");
             return true;
