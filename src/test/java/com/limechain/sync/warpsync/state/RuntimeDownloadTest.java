@@ -50,7 +50,6 @@ public class RuntimeDownloadTest {
             kademliaService.setHost(senderNode);
             var peerId = PeerId.fromBase58("12D3KooWFFqjBKoSdQniRpw1Y8W6kkV7takWv1DU2ZMkaA81PYVq");
             var receivers = new String[]{
-//                    "/ip4/127.0.0.1/tcp/30333/p2p/12D3KooWPyKTVdykB9iEXEggRkbMTV4qsWywhtT42qz16eBTvReA"
                     "/dns/polkadot-boot-ng.dwellir.com/tcp/30336/p2p/" +
                             "12D3KooWFFqjBKoSdQniRpw1Y8W6kkV7takWv1DU2ZMkaA81PYVq",
             };

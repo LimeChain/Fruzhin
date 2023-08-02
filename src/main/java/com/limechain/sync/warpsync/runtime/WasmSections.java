@@ -3,14 +3,12 @@ package com.limechain.sync.warpsync.runtime;
 import com.limechain.sync.warpsync.scale.RuntimeApisReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.extern.java.Log;
 
 import java.util.Arrays;
 import java.util.logging.Level;
 
 @Log
-@NoArgsConstructor
 @Getter
 public class WasmSections {
     public static final byte[] RUNTIME_VERSION_KEY = "runtime_version".getBytes();
