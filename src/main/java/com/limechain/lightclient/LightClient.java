@@ -44,15 +44,16 @@ public class LightClient {
         this.network.start();
 
         while (true) {
-            if (connectionManager.getPeerIds().size() > 0 && this.network.currentSelectedPeer == null) {
-                network.updateCurrentSelectedPeer();
-            }
-            if (connectionManager.getPeerIds().size() > 0 && this.network.currentSelectedPeer != null) {
-                log.log(Level.INFO, "Node successfully connected to a peer! Sync can start!");
-                this.warpSyncMachine = AppBean.getBean(WarpSyncMachine.class);
-                this.warpSyncMachine.start();
-                log.log(Level.INFO, "\uD83D\uDE80Started light client!");
-                break;
+            if (connectionManager.getPeerIds().size() > 0) {
+                if (this.network.currentSelectedPeer != null) {
+                    log.log(Level.INFO, "Node successfully connected to a peer! Sync can start!");
+                    this.warpSyncMachine = AppBean.getBean(WarpSyncMachine.class);
+                    this.warpSyncMachine.start();
+                    log.log(Level.INFO, "\uD83D\uDE80Started light client!");
+                    break;
+                } else {
+                    this.network.updateCurrentSelectedPeer();
+                }
             }
             log.log(Level.INFO, "Waiting for peer connection...");
             Thread.sleep(10000);
