@@ -56,6 +56,7 @@ public class BlockAnnounceEngine {
             log.log(Level.INFO, "Received handshake from " + peerId + "\n" +
                     handshake);
             writeHandshakeToStream(stream, peerId);
+            //syncedState.grandpaSync(peerId);
         }
     }
 
@@ -64,7 +65,7 @@ public class BlockAnnounceEngine {
         BlockAnnounceMessage announce = reader.read(new BlockAnnounceMessageScaleReader());
         connectionManager.updatePeer(peerId, announce);
         log.log(Level.INFO, "Received block announce: \n" + announce);
-        syncedState.syncAnnouncedBlock(peerId, announce);
+       // syncedState.syncAnnouncedBlock(peerId, announce);
     }
 
     public void writeHandshakeToStream(Stream stream, PeerId peerId) {

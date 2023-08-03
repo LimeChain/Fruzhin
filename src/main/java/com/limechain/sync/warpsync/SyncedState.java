@@ -1,13 +1,12 @@
 package com.limechain.sync.warpsync;
 
-import com.limechain.chain.ChainService;
 import com.limechain.chain.lightsyncstate.Authority;
-import com.limechain.chain.lightsyncstate.LightSyncState;
 import com.limechain.constants.GenesisBlockHash;
 import com.limechain.network.Network;
 import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshake;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceMessage;
+import com.limechain.network.protocol.grandpa.scale.NeighbourMessage;
 import com.limechain.network.protocol.sync.pb.SyncMessage;
 import com.limechain.network.protocol.warp.dto.WarpSyncJustification;
 import com.limechain.network.protocol.warp.scale.JustificationReader;
@@ -42,6 +41,11 @@ public class SyncedState {
     @Getter
     @Setter
     private BigInteger setId;
+
+    @Getter
+    @Setter
+    private BigInteger latestRound = BigInteger.ZERO;
+
     @Getter
     @Setter
     private byte[] runtime;
@@ -55,12 +59,6 @@ public class SyncedState {
 
     public static SyncedState getInstance() {
         return INSTANCE;
-    }
-
-    public void updateChainService(ChainService chainService) {
-        LightSyncState initState = LightSyncState.decode(chainService.getGenesis().getLightSyncState());
-        authoritySet = initState.getGrandpaAuthoritySet().getCurrentAuthorities();
-        setId = initState.getGrandpaAuthoritySet().getSetId();
     }
 
     public BlockAnnounceHandshake getHandshake() {
@@ -85,7 +83,16 @@ public class SyncedState {
         );
     }
 
-    public void syncAnnouncedBlock(PeerId peerId, BlockAnnounceMessage announce) {
+    public NeighbourMessage getNeighbourMessage() {
+        NeighbourMessage message = new NeighbourMessage();
+        message.setVersion(1);
+        message.setSetId(this.setId);
+        message.setRound(this.latestRound);
+        message.setLastFinalizedBlock(lastFinalizedBlockNumber.longValue());
+        return message;
+    }
+
+    public synchronized void syncAnnouncedBlock(PeerId peerId, BlockAnnounceMessage announce) {
         final var blockNumber = announce.getHeader().getBlockNumber();
         if (!warpSyncFinished || blockNumber.compareTo(lastFinalizedBlockNumber) <= 0) {
             return;
