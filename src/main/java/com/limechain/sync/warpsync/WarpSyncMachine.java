@@ -41,7 +41,6 @@ public class WarpSyncMachine {
             new PriorityQueue<>(Comparator.comparing(Pair::getValue0));
 
     @Getter
-    @Setter
     private ChainInformation chainInformation = new ChainInformation();
 
     public WarpSyncMachine(Network network, ChainService chainService) {
