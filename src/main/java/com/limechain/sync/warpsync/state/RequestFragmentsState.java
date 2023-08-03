@@ -29,8 +29,7 @@ public class RequestFragmentsState implements WarpSyncState {
             try {
                 log.log(Level.SEVERE, "Failed to download fragments. Retry from a different source");
                 sync.getNetworkService().updateCurrentSelectedPeer();
-                /* Wait a bit before retrying. The peer might've just connected and still not in address book
-                 */
+                // Wait a bit before retrying. The peer might've just connected and still not in address book
                 Thread.sleep(1000);
                 sync.setWarpSyncState(new RequestFragmentsState(blockHash));
                 return;
