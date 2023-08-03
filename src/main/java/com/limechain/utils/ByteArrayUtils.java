@@ -23,4 +23,24 @@ public class ByteArrayUtils {
         }
         return true;
     }
+
+    public static int indexOf(byte[] array, byte[] target) {
+        if (array == null || target == null){
+            return -1;
+        }
+        if (target.length == 0) {
+            return 0;
+        }
+
+        outer:
+        for (int i = 0; i < array.length - target.length + 1; i++) {
+            for (int j = 0; j < target.length; j++) {
+                if (array[i + j] != target[j]) {
+                    continue outer;
+                }
+            }
+            return i;
+        }
+        return -1;
+    }
 }
