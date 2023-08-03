@@ -35,7 +35,8 @@ public class RequestFragmentsState implements WarpSyncState {
                 sync.setWarpSyncState(new RequestFragmentsState(blockHash));
                 return;
             } catch (InterruptedException e) {
-                log.log(Level.SEVERE, "Retry warp sync request fragment exception: " + e.getMessage(), e.getStackTrace());
+                log.log(Level.SEVERE, "Retry warp sync request fragment exception: "
+                        + e.getMessage(), e.getStackTrace());
             }
         }
         if (this.result != null) {
