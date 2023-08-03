@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class SyncTest {
+    public static final String PEER_ID = "12D3KooWKer8bYqpYjwurVABu13mkELpX2X7mSpEicpjShLeg7D6";
     private Host senderNode = null;
     private KademliaService kademliaService = null;
     private SyncMessages syncService = null;
@@ -52,9 +53,9 @@ public class SyncTest {
 
     @Test
     public void remoteBlockRequest_returnCorrectBlock_ifGivenBlockHash() {
-        var peerId = PeerId.fromBase58("12D3KooWKer8bYqpYjwurVABu13mkELpX2X7mSpEicpjShLeg7D6");
+        var peerId = PeerId.fromBase58(PEER_ID);
         //CHECKSTYLE.OFF
-        var receivers = new String[]{"/dns/p2p.4.polkadot.network/tcp/30333/p2p/12D3KooWKer8bYqpYjwurVABu13mkELpX2X7mSpEicpjShLeg7D6"};
+        var receivers = new String[]{"/dns/p2p.4.polkadot.network/tcp/30333/p2p/" + PEER_ID};
         //CHECKSTYLE.ON
         int connectedNodes = kademliaService.connectBootNodes(receivers);
         int expectedConnectedNodes = 1;
@@ -73,9 +74,9 @@ public class SyncTest {
 
     @Test
     public void remoteBlockRequest_returnCorrectBlock_ifGivenBlockNumber() {
-        var peerId = PeerId.fromBase58("12D3KooWKer8bYqpYjwurVABu13mkELpX2X7mSpEicpjShLeg7D6");
+        var peerId = PeerId.fromBase58(PEER_ID);
         //CHECKSTYLE.OFF
-        var receivers = new String[]{"/dns/p2p.4.polkadot.network/tcp/30333/p2p/12D3KooWKer8bYqpYjwurVABu13mkELpX2X7mSpEicpjShLeg7D6"};
+        var receivers = new String[]{"/dns/p2p.4.polkadot.network/tcp/30333/p2p/" + PEER_ID};
         //CHECKSTYLE.ON
         int connectedNodes = kademliaService.connectBootNodes(receivers);
         int expectedConnectedNodes = 1;

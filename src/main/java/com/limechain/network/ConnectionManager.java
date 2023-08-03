@@ -27,6 +27,10 @@ public class ConnectionManager {
         peers.put(peerId, peerInfo);
     }
 
+    public PeerInfo getPeerInfo(PeerId peerId) {
+       return peers.get(peerId);
+    }
+
     public void updatePeer(PeerId peerId, BlockAnnounceMessage blockAnnounceMessage) {
         final var peer = peers.get(peerId);
         updateLatestBlock(peer, blockAnnounceMessage.getHeader().getBlockNumber());

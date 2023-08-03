@@ -38,19 +38,13 @@ public class WarpSyncMachine {
     @Setter
     private PriorityQueue<Pair<BigInteger, Authority[]>> scheduledAuthorityChanges =
             new PriorityQueue<>(Comparator.comparing(Pair::getValue0));
+    @Setter
     @Getter
     private boolean isFinished;
 
     public WarpSyncMachine(Network network, ChainService chainService) {
         this.networkService = network;
         this.chainService = chainService;
-    }
-
-    public void setFinished(boolean finished) {
-        isFinished = finished;
-        this.syncedState.setWarpSyncFinished(true);
-        this.syncedState.updateChainService(chainService);
-        this.syncedState.setNetwork(networkService);
     }
 
     /**
@@ -100,5 +94,12 @@ public class WarpSyncMachine {
             this.handleState();
             this.nextState();
         }
+
+        startFullSync();
+    }
+
+    private void startFullSync() {
+        this.syncedState.setWarpSyncFinished(true);
+        // networkService.sendNeighbourMessages();
     }
 }

@@ -11,7 +11,7 @@ public abstract class StrictProtocolBinding<T> extends io.libp2p.core.multistrea
         super(protocolId, protocol);
     }
 
-    public T dialPeer(Host us, PeerId peer, AddressBook addrs) {
+    public synchronized T dialPeer(Host us, PeerId peer, AddressBook addrs) {
         Multiaddr[] addr = addrs.get(peer)
                 .join().stream()
                 .filter(address -> !address.toString().contains("/ws") && !address.toString().contains("/wss"))

@@ -5,6 +5,7 @@ import com.limechain.chain.ChainService;
 import com.limechain.config.HostConfig;
 import com.limechain.network.kad.KademliaService;
 import com.limechain.network.protocol.blockannounce.BlockAnnounceService;
+import com.limechain.network.protocol.grandpa.GrandpaService;
 import com.limechain.network.protocol.lightclient.LightMessagesService;
 import com.limechain.network.protocol.lightclient.pb.LightClientMessage;
 import com.limechain.network.protocol.ping.Ping;
@@ -13,6 +14,7 @@ import com.limechain.network.protocol.warp.WarpSyncService;
 import com.limechain.network.protocol.warp.dto.WarpSyncResponse;
 import com.limechain.network.substream.sync.pb.SyncMessage;
 import com.limechain.network.substream.sync.pb.SyncMessage.BlockResponse;
+import com.limechain.sync.warpsync.SyncedState;
 import io.ipfs.multihash.Multihash;
 import io.libp2p.core.Host;
 import io.libp2p.core.PeerId;
@@ -48,6 +50,8 @@ public class Network {
     public LightMessagesService lightMessagesService;
     public KademliaService kademliaService;
     public BlockAnnounceService blockAnnounceService;
+
+    public GrandpaService grandpaService;
     public Ping ping;
     public PeerId currentSelectedPeer;
     @Getter
@@ -82,6 +86,7 @@ public class Network {
             return network;
         }
         network = new Network(chainService, hostConfig);
+        SyncedState.getInstance().setNetwork(network);
         log.log(Level.INFO, "Initialized network module!");
         return network;
     }
@@ -101,12 +106,14 @@ public class Network {
         String legacyLightProtocolId = ProtocolUtils.getLegacyLightMessageProtocol(chainId);
         String legacySyncProtocolId = ProtocolUtils.getLegacySyncProtocol(chainId);
         String legacyBlockAnnounceProtocolId = ProtocolUtils.getLegacyBlockAnnounceProtocol(chainId);
+        String grandpaProtocolId = ProtocolUtils.getGrandpaLegacyProtocol(chainId);
 
         kademliaService = new KademliaService(legacyKadProtocolId, hostId, isLocalEnabled, clientMode);
         lightMessagesService = new LightMessagesService(legacyLightProtocolId);
         warpSyncService = new WarpSyncService(legacyWarpProtocolId);
         syncService = new SyncService(legacySyncProtocolId);
         blockAnnounceService = new BlockAnnounceService(legacyBlockAnnounceProtocolId);
+        grandpaService = new GrandpaService(grandpaProtocolId);
         ping = new Ping(pingProtocol, new PingProtocol());
 
         hostBuilder.addProtocols(
@@ -116,7 +123,8 @@ public class Network {
                         lightMessagesService.getProtocol(),
                         warpSyncService.getProtocol(),
                         syncService.getProtocol(),
-                        blockAnnounceService.getProtocol()
+                        blockAnnounceService.getProtocol(),
+                        grandpaService.getProtocol()
                 )
         );
 
@@ -249,5 +257,13 @@ public class Network {
             return true;
         }
         return false;
+    }
+
+    public void sendNeighbourMessages() {
+        connectionManager.getPeerIds().forEach(this::sendNeighbourMessage);
+    }
+
+    private void sendNeighbourMessage(PeerId peerId) {
+        grandpaService.getProtocol().sendNeighbourMessage(this.host, this.host.getAddressBook(), peerId);
     }
 }
