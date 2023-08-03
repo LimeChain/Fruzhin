@@ -27,7 +27,6 @@ repositories {
 
 dependencies {
     implementation("org.rocksdb:rocksdbjni:7.8.3")
-    implementation("com.google.guava:guava:31.1-jre")
     compileOnly("org.projectlombok:lombok:1.18.8")
     implementation("org.projectlombok:lombok:1.18.22")
 
