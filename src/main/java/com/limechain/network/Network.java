@@ -23,6 +23,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
@@ -193,7 +194,9 @@ public class Network {
     }
 
     public void updateCurrentSelectedPeer() {
-        this.currentSelectedPeer = connectionManager.getPeerIds().stream().findAny().orElse(null);
+        Random random = new Random();
+        this.currentSelectedPeer = connectionManager.getPeerIds().stream()
+                .skip(random.nextInt(connectionManager.getPeerIds().size())).findAny().orElse(null);
     }
 
     public WarpSyncResponse makeWarpSyncRequest(String blockHash) {

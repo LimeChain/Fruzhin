@@ -25,9 +25,18 @@ public class RequestFragmentsState implements WarpSyncState {
     @Override
     public void next(WarpSyncMachine sync) {
         if (this.error != null) {
-            // Try again?
-            sync.setWarpSyncState(new FinishedState());
-            return;
+            //Retry with a different source
+            try {
+                log.log(Level.SEVERE, "Failed to download fragments. Retry from a different source");
+                sync.getNetworkService().updateCurrentSelectedPeer();
+                // Wait a bit before retrying. The peer might've just connected and still not in address book
+                Thread.sleep(1000);
+                sync.setWarpSyncState(new RequestFragmentsState(blockHash));
+                return;
+            } catch (InterruptedException e) {
+                log.log(Level.SEVERE, "Retry warp sync request fragment exception: "
+                        + e.getMessage(), e.getStackTrace());
+            }
         }
         if (this.result != null) {
             sync.setWarpSyncState(new VerifyJustificationState());
@@ -39,7 +48,8 @@ public class RequestFragmentsState implements WarpSyncState {
     @Override
     public void handle(WarpSyncMachine sync) {
         try {
-            log.log(Level.INFO, "Requesting fragments...");
+            log.log(Level.INFO, "Requesting fragments from peer "
+                    + sync.getNetworkService().currentSelectedPeer + "...");
             WarpSyncResponse resp = sync.getNetworkService().makeWarpSyncRequest(blockHash.toString());
 
             if (resp == null) {
