@@ -1,6 +1,7 @@
 package com.limechain.sync.warpsync.state;
 
 import com.limechain.network.protocol.warp.dto.WarpSyncResponse;
+import com.limechain.sync.warpsync.SyncedState;
 import com.limechain.sync.warpsync.WarpSyncMachine;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.extern.java.Log;
@@ -11,6 +12,8 @@ import java.util.logging.Level;
 
 @Log
 public class RequestFragmentsState implements WarpSyncState {
+
+    private final SyncedState syncedState = SyncedState.getInstance();
     private final Hash256 blockHash;
     private WarpSyncResponse result;
     private Exception error;
@@ -38,7 +41,6 @@ public class RequestFragmentsState implements WarpSyncState {
         try {
             log.log(Level.INFO, "Requesting fragments...");
             WarpSyncResponse resp = sync.getNetworkService().makeWarpSyncRequest(blockHash.toString());
-            log.log(Level.INFO, "Got response from warp sync: " + resp.toString());
 
             if (resp == null) {
                 throw new Exception("No response received.");
@@ -48,7 +50,7 @@ public class RequestFragmentsState implements WarpSyncState {
                 log.log(Level.WARNING, "No fragments received.");
                 return;
             }
-            sync.setFinished(resp.isFinished());
+            syncedState.setFinished(resp.isFinished());
             sync.setFragmentsQueue(new LinkedBlockingQueue<>(
                     Arrays.stream(resp.getFragments()).collect(java.util.stream.Collectors.toList()))
             );

@@ -4,6 +4,7 @@ import com.limechain.network.protocol.NetworkService;
 import io.ipfs.multiaddr.MultiAddress;
 import io.ipfs.multihash.Multihash;
 import io.libp2p.core.Host;
+import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.java.Log;
 import org.peergos.protocol.dht.Kademlia;
@@ -25,6 +26,7 @@ public class KademliaService extends NetworkService<Kademlia> {
     public static final int ALPHA = 3;
 
     @Setter
+    @Getter
     private Host host;
 
     public KademliaService(String protocolId, Multihash hostId, boolean localDht, boolean clientMode) {

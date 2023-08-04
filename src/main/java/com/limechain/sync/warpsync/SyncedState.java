@@ -6,6 +6,7 @@ import com.limechain.network.Network;
 import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshake;
 import com.limechain.rpc.http.server.AppBean;
+import com.limechain.runtime.Runtime;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.Getter;
 import lombok.Setter;
@@ -17,6 +18,9 @@ public class SyncedState {
     @Getter
     @Setter
     private Hash256 lastFinalizedBlockHash;
+    @Getter
+    @Setter
+    private boolean isFinished;
     @Getter
     @Setter
     private Hash256 stateRoot;
@@ -31,10 +35,13 @@ public class SyncedState {
     private BigInteger setId;
     @Getter
     @Setter
-    private byte[] runtime;
+    private byte[] runtimeCode;
     @Getter
     @Setter
     private byte[] heapPages;
+    @Getter
+    @Setter
+    private Runtime runtime;
 
     public static SyncedState getInstance() {
         return INSTANCE;

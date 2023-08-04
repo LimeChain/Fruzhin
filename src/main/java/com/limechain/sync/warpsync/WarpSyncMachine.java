@@ -38,9 +38,9 @@ public class WarpSyncMachine {
     @Setter
     private PriorityQueue<Pair<BigInteger, Authority[]>> scheduledAuthorityChanges =
             new PriorityQueue<>(Comparator.comparing(Pair::getValue0));
+
     @Getter
-    @Setter
-    private boolean isFinished;
+    private ChainInformation chainInformation = new ChainInformation();
 
     public WarpSyncMachine(Network network, ChainService chainService) {
         this.networkService = network;
