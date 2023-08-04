@@ -1,10 +1,10 @@
 package com.limechain.sync.warpsync.state;
 
 import com.limechain.sync.warpsync.SyncedState;
-import com.limechain.sync.warpsync.runtime.RuntimeBuilder;
+import com.limechain.runtime.RuntimeBuilder;
 import com.limechain.sync.warpsync.WarpSyncMachine;
 import lombok.extern.java.Log;
-import com.limechain.sync.warpsync.runtime.Runtime;
+import com.limechain.runtime.Runtime;
 
 import java.util.logging.Level;
 

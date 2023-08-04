@@ -1,6 +1,6 @@
 package com.limechain.sync.warpsync.scale;
 
-import com.limechain.sync.warpsync.runtime.RuntimeVersion;
+import com.limechain.runtime.RuntimeVersion;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleReader;
 

@@ -1,7 +1,7 @@
-package com.limechain.sync.warpsync.runtime;
+package com.limechain.runtime;
 
 import com.github.luben.zstd.Zstd;
-import com.google.common.primitives.Bytes;
+import com.limechain.utils.ByteArrayUtils;
 import org.wasmer.ImportObject;
 import org.wasmer.Imports;
 import org.wasmer.Module;
@@ -35,8 +35,8 @@ public class RuntimeBuilder {
         // byte value of \0asm concatenated with 0x1, 0x0, 0x0, 0x0 from smoldot runtime_version.rs#97
         byte[] searchKey = new byte[]{0x00, 0x61, 0x73, 0x6D, 0x1, 0x0, 0x0, 0x0};
 
-        int x = Bytes.indexOf(wasmBinary, searchKey);
-        if (x < 0) throw new RuntimeException("Key not found in runtime code");
+        int searchedKeyIndex = ByteArrayUtils.indexOf(wasmBinary, searchKey);
+        if (searchedKeyIndex < 0) throw new RuntimeException("Key not found in runtime code");
         WasmSections wasmSections = new WasmSections();
         wasmSections.parseCustomSections(wasmBinary);
         if (wasmSections.getRuntimeVersion() != null && wasmSections.getRuntimeVersion().getRuntimeApis() != null) {

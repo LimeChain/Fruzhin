@@ -43,7 +43,7 @@ public class LightMessages extends StrictProtocolBinding<LightMessagesController
                             StringUtils.remove0xPrefix(blockHash),
                             hexKeys)
                     .get();
-            log.log(Level.INFO, "Received light client message response: " + resp.toByteArray().length);
+            log.log(Level.INFO, "Received light client message response with length: " + resp.toByteArray().length);
             return resp;
         } catch (ExecutionException | InterruptedException e) {
             log.log(Level.SEVERE, "Error while sending remote call request: ", e);
