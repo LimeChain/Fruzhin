@@ -1,4 +1,4 @@
-package com.limechain.sync.warpsync.runtime;
+package com.limechain.runtime;
 
 import com.github.luben.zstd.Zstd;
 import com.limechain.utils.ByteArrayUtils;

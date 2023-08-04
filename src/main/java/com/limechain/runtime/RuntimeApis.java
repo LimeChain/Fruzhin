@@ -1,4 +1,4 @@
-package com.limechain.sync.warpsync.runtime;
+package com.limechain.runtime;
 
 import lombok.Getter;
 import lombok.Setter;

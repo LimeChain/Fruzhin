@@ -1,12 +1,12 @@
 package com.limechain.sync.warpsync.scale;
 
-import com.limechain.sync.warpsync.runtime.RuntimeApis;
+import com.limechain.runtime.RuntimeApis;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleReader;
 
 import java.math.BigInteger;
 
-import static com.limechain.sync.warpsync.runtime.RuntimeApis.API_VERSION_LENGTH;
+import static com.limechain.runtime.RuntimeApis.API_VERSION_LENGTH;
 
 public class RuntimeApisReader implements ScaleReader<RuntimeApis> {
     @Override

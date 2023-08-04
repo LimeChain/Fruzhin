@@ -6,7 +6,7 @@ import com.limechain.network.Network;
 import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshake;
 import com.limechain.rpc.http.server.AppBean;
-import com.limechain.sync.warpsync.runtime.Runtime;
+import com.limechain.runtime.Runtime;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.Getter;
 import lombok.Setter;

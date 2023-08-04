@@ -7,7 +7,7 @@ import lombok.extern.java.Log;
 
 import java.util.logging.Level;
 
-import static com.limechain.sync.warpsync.runtime.RuntimeApis.API_VERSION_LENGTH;
+import static com.limechain.runtime.RuntimeApis.API_VERSION_LENGTH;
 
 /**
  * Sets consensus protocol versions

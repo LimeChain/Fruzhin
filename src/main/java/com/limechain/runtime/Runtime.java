@@ -1,6 +1,5 @@
-package com.limechain.sync.warpsync.runtime;
+package com.limechain.runtime;
 
-import com.limechain.sync.warpsync.runtime.RuntimeVersion;
 import lombok.Getter;
 import lombok.extern.java.Log;
 import org.wasmer.Instance;
@@ -8,7 +7,7 @@ import org.wasmer.Module;
 
 import java.util.logging.Level;
 
-import static com.limechain.sync.warpsync.runtime.RuntimeBuilder.getImports;
+import static com.limechain.runtime.RuntimeBuilder.getImports;
 
 @Getter
 @Log

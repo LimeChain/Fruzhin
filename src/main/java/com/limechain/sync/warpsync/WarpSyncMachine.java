@@ -6,7 +6,6 @@ import com.limechain.chain.lightsyncstate.LightSyncState;
 import com.limechain.constants.GenesisBlockHash;
 import com.limechain.network.Network;
 import com.limechain.network.protocol.warp.dto.WarpSyncFragment;
-import com.limechain.sync.warpsync.runtime.Runtime;
 import com.limechain.sync.warpsync.state.FinishedState;
 import com.limechain.sync.warpsync.state.RequestFragmentsState;
 import com.limechain.sync.warpsync.state.WarpSyncState;
