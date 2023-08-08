@@ -15,7 +15,7 @@ import java.util.concurrent.CompletableFuture;
 
 @Log
 public class GrandpaProtocol extends ProtocolHandler<GrandpaController> {
-    public static final int MAX_HANDSHAKE_SIZE = 1024 * 1024;
+    public static final int MAX_HANDSHAKE_SIZE = 1024 * 1024 * 1024;
     public static final int MAX_NOTIFICATION_SIZE = 1024 * 1024;
     private final GrandpaEngine engine;
 
@@ -24,6 +24,7 @@ public class GrandpaProtocol extends ProtocolHandler<GrandpaController> {
         this.engine = new GrandpaEngine();
     }
 
+    @NotNull
     @Override
     protected CompletableFuture<GrandpaController> onStartInitiator(Stream stream) {
         stream.pushHandler(new Leb128LengthFrameDecoder());
@@ -35,6 +36,7 @@ public class GrandpaProtocol extends ProtocolHandler<GrandpaController> {
         return CompletableFuture.completedFuture(handler);
     }
 
+    @NotNull
     @Override
     protected CompletableFuture<GrandpaController> onStartResponder(Stream stream) {
         stream.pushHandler(new Leb128LengthFrameDecoder());

@@ -1,4 +1,4 @@
-package com.limechain.network.protocol.grandpa.scale;
+package com.limechain.network.protocol.grandpa.messages;
 
 import lombok.Getter;
 

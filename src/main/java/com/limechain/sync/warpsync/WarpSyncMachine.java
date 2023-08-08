@@ -100,6 +100,7 @@ public class WarpSyncMachine {
 
     private void startFullSync() {
         this.syncedState.setWarpSyncFinished(true);
-        // networkService.sendNeighbourMessages();
+        syncedState.setSetId(syncedState.getSetId().max(syncedState.getLatestSetId()));
+        networkService.sendNeighbourMessages();
     }
 }

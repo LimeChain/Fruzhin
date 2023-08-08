@@ -6,7 +6,8 @@ import com.limechain.network.Network;
 import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshake;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceMessage;
-import com.limechain.network.protocol.grandpa.scale.NeighbourMessage;
+import com.limechain.network.protocol.grandpa.messages.commit.CommitMessage;
+import com.limechain.network.protocol.grandpa.messages.neighbour.NeighbourMessage;
 import com.limechain.network.protocol.sync.pb.SyncMessage;
 import com.limechain.network.protocol.warp.dto.WarpSyncJustification;
 import com.limechain.network.protocol.warp.scale.JustificationReader;
@@ -44,7 +45,11 @@ public class SyncedState {
 
     @Getter
     @Setter
-    private BigInteger latestRound = BigInteger.ZERO;
+    private BigInteger latestSetId = BigInteger.ZERO;
+
+    @Getter
+    @Setter
+    private BigInteger latestRound = BigInteger.ONE;
 
     @Getter
     @Setter
@@ -87,8 +92,8 @@ public class SyncedState {
         NeighbourMessage message = new NeighbourMessage();
         message.setVersion(1);
         message.setSetId(this.setId);
-        message.setRound(this.latestRound);
-        message.setLastFinalizedBlock(lastFinalizedBlockNumber.longValue());
+        message.setRound(BigInteger.ONE);
+        message.setLastFinalizedBlock(this.lastFinalizedBlockNumber.longValue());
         return message;
     }
 
@@ -124,7 +129,35 @@ public class SyncedState {
         return justificationReader.read(new ScaleCodecReader(bytes));
     }
 
-    private boolean verifyJustification(WarpSyncJustification justification) {
+    public void syncCommit(CommitMessage commitMessage, PeerId peerId) {
+        if(!verifyCommitJustification(commitMessage)) {
+            log.log(Level.WARNING, "Could not verify commit from peer: " + peerId);
+            return;
+        }
+
+        if(warpSyncFinished) {
+            updateState(commitMessage);
+        }
+    }
+
+    private void updateState(CommitMessage commitMessage) {
+        latestRound = commitMessage.getRoundNumber();
+        lastFinalizedBlockHash = commitMessage.getVote().getBlockHash();
+        lastFinalizedBlockNumber = BigInteger.valueOf(commitMessage.getVote().getBlockNumber());
+    }
+
+    //TODO: implement when right authority set is received
+    public boolean verifyCommitJustification(CommitMessage commitMessage) {
+        /*WarpSyncJustification justification = new WarpSyncJustification();
+        justification.setRound(commitMessage.getRoundNumber());
+        justification.setTargetHash(commitMessage.getVote().getBlockHash());
+        justification.setTargetBlock(BigInteger.valueOf(commitMessage.getVote().getBlockNumber()));
+        justification.setPrecommits(commitMessage.getPrecommits());
+        return verifyJustification(justification);*/
+        return true;
+    }
+
+    public boolean verifyJustification(WarpSyncJustification justification) {
         return justification.verify(authoritySet, setId);
     }
 

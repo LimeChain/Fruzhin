@@ -1,4 +1,4 @@
-package com.limechain.network.protocol.grandpa.scale;
+package com.limechain.network.protocol.grandpa.messages.neighbour;
 
 import lombok.Data;
 
@@ -8,8 +8,6 @@ import java.math.BigInteger;
 public class NeighbourMessage {
     private int version;
     private BigInteger round;
-
     private BigInteger setId;
-
     private long lastFinalizedBlock;
 }

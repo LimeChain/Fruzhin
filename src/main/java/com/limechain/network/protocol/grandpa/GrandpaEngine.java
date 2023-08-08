@@ -2,10 +2,12 @@ package com.limechain.network.protocol.grandpa;
 
 import com.limechain.network.ConnectionManager;
 import com.limechain.network.PeerInfo;
-import com.limechain.network.protocol.grandpa.scale.GrandpaMessageType;
-import com.limechain.network.protocol.grandpa.scale.NeighbourMessage;
-import com.limechain.network.protocol.grandpa.scale.NeighbourMessageScaleReader;
-import com.limechain.network.protocol.grandpa.scale.NeighbourMessageScaleWriter;
+import com.limechain.network.protocol.grandpa.messages.GrandpaMessageType;
+import com.limechain.network.protocol.grandpa.messages.commit.CommitMessage;
+import com.limechain.network.protocol.grandpa.messages.commit.CommitMessageScaleReader;
+import com.limechain.network.protocol.grandpa.messages.neighbour.NeighbourMessage;
+import com.limechain.network.protocol.grandpa.messages.neighbour.NeighbourMessageScaleReader;
+import com.limechain.network.protocol.grandpa.messages.neighbour.NeighbourMessageScaleWriter;
 import com.limechain.sync.warpsync.SyncedState;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
@@ -35,7 +37,7 @@ public class GrandpaEngine {
         switch (messageType) {
             case HANDSHAKE -> handleHandshake(msg, peerId, stream);
             case NEIGHBOUR -> handleNeighbourMessage(msg, peerId, stream);
-            case COMMIT -> handleCommitMessage(msg, peerId, stream);
+            case COMMIT -> handleCommitMessage(msg, peerId);
             default -> log.log(Level.WARNING, "Unknown grandpa message type from Peer " + peerId);
         }
     }
@@ -64,7 +66,6 @@ public class GrandpaEngine {
         writeHandshakeToStream(stream, peerId);
     }
 
-
     private void handleNeighbourMessage(byte[] msg, PeerId peerId, Stream stream) {
         ScaleCodecReader reader = new ScaleCodecReader(msg);
         NeighbourMessage neighbourMessage = reader.read(new NeighbourMessageScaleReader());
@@ -72,9 +73,12 @@ public class GrandpaEngine {
         writeNeighbourMessage(stream, peerId);
     }
 
-    private void handleCommitMessage(byte[] msg, PeerId peerId, Stream stream) {
-        //TODO: implement when commits start being received
-        log.log(Level.INFO, "Received commit message from peer " + peerId);
+    private void handleCommitMessage(byte[] msg, PeerId peerId) {
+        ScaleCodecReader reader = new ScaleCodecReader(msg);
+        CommitMessage commitMessage = reader.read(new CommitMessageScaleReader());
+        log.log(Level.INFO, "Received commit message from peer " + peerId + "\n" + commitMessage);
+
+        syncedState.syncCommit(commitMessage, peerId);
     }
 
     public void writeHandshakeToStream(Stream stream, PeerId peerId) {
