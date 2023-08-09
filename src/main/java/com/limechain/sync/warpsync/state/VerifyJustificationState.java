@@ -35,7 +35,7 @@ public class VerifyJustificationState implements WarpSyncState {
 
         if (!sync.getFragmentsQueue().isEmpty()) {
             sync.setWarpSyncState(new VerifyJustificationState());
-        } else if (sync.isFinished()) {
+        } else if (syncedState.isFinished()) {
             sync.setWarpSyncState(new RuntimeDownloadState());
         } else {
             sync.setWarpSyncState(new RequestFragmentsState(syncedState.getLastFinalizedBlockHash()));
@@ -65,7 +65,8 @@ public class VerifyJustificationState implements WarpSyncState {
                 handleAuthorityChanges(sync, fragment);
                 log.log(Level.INFO, "Verified justification. Block hash is now at #"
                         + syncedState.getLastFinalizedBlockNumber() + ": "
-                        + syncedState.getLastFinalizedBlockHash().toString());
+                        + syncedState.getLastFinalizedBlockHash().toString()
+                        + " with state root " + syncedState.getStateRoot());
             } catch (Exception error) {
                 this.error = error;
             }

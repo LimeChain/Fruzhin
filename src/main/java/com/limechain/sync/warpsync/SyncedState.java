@@ -12,6 +12,7 @@ import com.limechain.network.protocol.sync.pb.SyncMessage;
 import com.limechain.network.protocol.warp.dto.WarpSyncJustification;
 import com.limechain.network.protocol.warp.scale.JustificationReader;
 import com.limechain.rpc.http.server.AppBean;
+import com.limechain.runtime.Runtime;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.types.Hash256;
 import io.libp2p.core.PeerId;
@@ -30,6 +31,9 @@ public class SyncedState {
     @Getter
     @Setter
     private Hash256 lastFinalizedBlockHash;
+    @Getter
+    @Setter
+    private boolean isFinished;
     @Getter
     @Setter
     private Hash256 stateRoot;
@@ -53,10 +57,13 @@ public class SyncedState {
 
     @Getter
     @Setter
-    private byte[] runtime;
+    private byte[] runtimeCode;
     @Getter
     @Setter
     private byte[] heapPages;
+    @Getter
+    @Setter
+    private Runtime runtime;
     @Setter
     private Network network;
     @Setter

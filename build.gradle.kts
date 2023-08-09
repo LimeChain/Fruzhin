@@ -57,6 +57,7 @@ dependencies {
     implementation("org.java-websocket:Java-WebSocket:1.5.3")
     implementation("org.javatuples:javatuples:1.2")
 
+    implementation("com.github.luben:zstd-jni:1.5.2-5")
 }
 
 tasks.getByName<Test>("test") {

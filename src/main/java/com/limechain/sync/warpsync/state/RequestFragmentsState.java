@@ -1,6 +1,7 @@
 package com.limechain.sync.warpsync.state;
 
 import com.limechain.network.protocol.warp.dto.WarpSyncResponse;
+import com.limechain.sync.warpsync.SyncedState;
 import com.limechain.sync.warpsync.WarpSyncMachine;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.extern.java.Log;
@@ -11,6 +12,8 @@ import java.util.logging.Level;
 
 @Log
 public class RequestFragmentsState implements WarpSyncState {
+
+    private final SyncedState syncedState = SyncedState.getInstance();
     private final Hash256 blockHash;
     private WarpSyncResponse result;
     private Exception error;
@@ -22,9 +25,18 @@ public class RequestFragmentsState implements WarpSyncState {
     @Override
     public void next(WarpSyncMachine sync) {
         if (this.error != null) {
-            // Try again?
-            sync.setWarpSyncState(new FinishedState());
-            return;
+            //Retry with a different source
+            try {
+                log.log(Level.SEVERE, "Failed to download fragments. Retry from a different source");
+                sync.getNetworkService().updateCurrentSelectedPeer();
+                // Wait a bit before retrying. The peer might've just connected and still not in address book
+                Thread.sleep(1000);
+                sync.setWarpSyncState(new RequestFragmentsState(blockHash));
+                return;
+            } catch (InterruptedException e) {
+                log.log(Level.SEVERE, "Retry warp sync request fragment exception: "
+                        + e.getMessage(), e.getStackTrace());
+            }
         }
         if (this.result != null) {
             sync.setWarpSyncState(new VerifyJustificationState());
@@ -36,18 +48,19 @@ public class RequestFragmentsState implements WarpSyncState {
     @Override
     public void handle(WarpSyncMachine sync) {
         try {
-            log.log(Level.INFO, "Requesting fragments...");
+            log.log(Level.INFO, "Requesting fragments from peer "
+                    + sync.getNetworkService().currentSelectedPeer + "...");
             WarpSyncResponse resp = sync.getNetworkService().makeWarpSyncRequest(blockHash.toString());
+
             if (resp == null) {
                 throw new Exception("No response received.");
             }
-            log.log(Level.INFO, "Got response from warp sync: " + resp);
 
             if (resp.getFragments().length == 0) {
                 log.log(Level.WARNING, "No fragments received.");
                 return;
             }
-            sync.setFinished(resp.isFinished());
+            syncedState.setFinished(resp.isFinished());
             sync.setFragmentsQueue(new LinkedBlockingQueue<>(
                     Arrays.stream(resp.getFragments()).collect(java.util.stream.Collectors.toList()))
             );
