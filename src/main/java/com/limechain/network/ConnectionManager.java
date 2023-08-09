@@ -57,8 +57,12 @@ public class ConnectionManager {
         peers.remove(peerId);
     }
 
-    public boolean isConnected(PeerId peerId) {
-        return peers.containsKey(peerId);
+    public boolean isGrandpaConnected(PeerId peerId) {
+        return peers.containsKey(peerId) && peers.get(peerId).isGrandpaConnected();
+    }
+
+    public boolean isBlockAnnounceConnected(PeerId peerId) {
+        return peers.containsKey(peerId) && peers.get(peerId).isBlockAnnounceConnected();
     }
 
     public Set<PeerId> getPeerIds(){

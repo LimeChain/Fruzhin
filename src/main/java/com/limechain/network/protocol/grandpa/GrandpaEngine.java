@@ -26,7 +26,7 @@ public class GrandpaEngine {
     private final SyncedState syncedState = SyncedState.getInstance();
 
     public void receiveRequest(byte[] msg, PeerId peerId, Stream stream) {
-        boolean connectedToPeer = connectionManager.getPeerInfo(peerId).isGrandpaConnected();
+        boolean connectedToPeer = connectionManager.isGrandpaConnected(peerId);
         GrandpaMessageType messageType = getGrandpaMessageType(msg);
 
         if (!connectedToPeer && messageType != GrandpaMessageType.HANDSHAKE) {

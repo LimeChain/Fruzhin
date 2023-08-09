@@ -73,10 +73,24 @@ class ConnectionManagerTest {
     }
 
     @Test
-    void isConnected() {
+    void isBlockAnnounceConnected() {
         connectionManager.peers.put(peerId, peerInfo);
+        when(peerInfo.isBlockAnnounceConnected()).thenReturn(true);
+        assertTrue(connectionManager.isBlockAnnounceConnected(peerId));
+    }
 
-        assertTrue(connectionManager.isConnected(peerId));
+    @Test
+    void isGrandpaConnected() {
+        connectionManager.peers.put(peerId, peerInfo);
+        when(peerInfo.isGrandpaConnected()).thenReturn(true);
+        assertTrue(connectionManager.isGrandpaConnected(peerId));
+    }
+
+    @Test
+    void isBlockAnnounceConnectedAndGrandpaConnectedReturnFalseWhenNotInPeers() {
+        connectionManager.peers.clear();
+        assertFalse(connectionManager.isBlockAnnounceConnected(peerId));
+        assertFalse(connectionManager.isGrandpaConnected(peerId));
     }
 
     @Test
