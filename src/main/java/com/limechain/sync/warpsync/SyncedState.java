@@ -27,6 +27,8 @@ import java.util.logging.Level;
 @Log
 public class SyncedState {
     private static final SyncedState INSTANCE = new SyncedState();
+    public static final int NEIGHBOUR_MESSAGE_VERSION = 1;
+    public static final BigInteger NEIGHBOUR_MESSAGE_LIGHT_CLIENT_ROUND = BigInteger.ONE;
     JustificationReader justificationReader = new JustificationReader();
     @Getter
     @Setter
@@ -97,9 +99,9 @@ public class SyncedState {
 
     public NeighbourMessage getNeighbourMessage() {
         NeighbourMessage message = new NeighbourMessage();
-        message.setVersion(1);
+        message.setVersion(NEIGHBOUR_MESSAGE_VERSION);
         message.setSetId(this.setId);
-        message.setRound(BigInteger.ONE);
+        message.setRound(NEIGHBOUR_MESSAGE_LIGHT_CLIENT_ROUND);
         message.setLastFinalizedBlock(this.lastFinalizedBlockNumber.longValue());
         return message;
     }
