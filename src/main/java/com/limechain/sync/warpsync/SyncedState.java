@@ -69,6 +69,7 @@ public class SyncedState {
     @Setter
     private Network network;
     @Setter
+    @Getter
     private boolean warpSyncFinished;
 
     public static SyncedState getInstance() {
@@ -100,7 +101,7 @@ public class SyncedState {
     public NeighbourMessage getNeighbourMessage() {
         NeighbourMessage message = new NeighbourMessage();
         message.setVersion(NEIGHBOUR_MESSAGE_VERSION);
-        message.setSetId(this.setId);
+        message.setSetId(BigInteger.ZERO);
         message.setRound(NEIGHBOUR_MESSAGE_LIGHT_CLIENT_ROUND);
         message.setLastFinalizedBlock(this.lastFinalizedBlockNumber.longValue());
         return message;

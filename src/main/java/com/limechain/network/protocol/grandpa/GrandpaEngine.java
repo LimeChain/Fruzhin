@@ -36,7 +36,7 @@ public class GrandpaEngine {
 
         switch (messageType) {
             case HANDSHAKE -> handleHandshake(msg, peerId, stream);
-            case NEIGHBOUR -> handleNeighbourMessage(msg, peerId, stream);
+            case NEIGHBOUR -> handleNeighbourMessage(msg, peerId);
             case COMMIT -> handleCommitMessage(msg, peerId);
             default -> log.log(Level.WARNING, "Unknown grandpa message type from Peer " + peerId);
         }
@@ -50,6 +50,12 @@ public class GrandpaEngine {
     }
 
     private void handleHandshake(byte[] msg, PeerId peerId, Stream stream) {
+        if (stream.isInitiator()) {
+            log.log(Level.INFO, "Received grandpa handshake from " + peerId);
+            writeNeighbourMessage(stream, peerId);
+            return;
+        }
+
         PeerInfo peerInfo = connectionManager.getPeerInfo(peerId);
 
         if (peerInfo != null && peerInfo.isGrandpaConnected()) {
@@ -66,11 +72,10 @@ public class GrandpaEngine {
         writeHandshakeToStream(stream, peerId);
     }
 
-    private void handleNeighbourMessage(byte[] msg, PeerId peerId, Stream stream) {
+    private void handleNeighbourMessage(byte[] msg, PeerId peerId) {
         ScaleCodecReader reader = new ScaleCodecReader(msg);
         NeighbourMessage neighbourMessage = reader.read(new NeighbourMessageScaleReader());
         log.log(Level.INFO, "Received neighbour message from Peer " + peerId + "\n" + neighbourMessage);
-        writeNeighbourMessage(stream, peerId);
     }
 
     private void handleCommitMessage(byte[] msg, PeerId peerId) {

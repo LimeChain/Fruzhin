@@ -1,7 +1,6 @@
 package com.limechain.network.protocol.grandpa;
 
 import com.limechain.network.StrictProtocolBinding;
-import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshake;
 import io.libp2p.core.AddressBook;
 import io.libp2p.core.Host;
 import io.libp2p.core.PeerId;
@@ -13,9 +12,9 @@ public class Grandpa extends StrictProtocolBinding<GrandpaController> {
         super(protocolId, protocol);
     }
 
-    public void sendHandshake(Host us, AddressBook addrs, PeerId peer, BlockAnnounceHandshake handshake) {
+    public void sendHandshake(Host us, AddressBook addrs, PeerId peer) {
         GrandpaController controller = dialPeer(us, peer, addrs);
-        controller.sendHandshake(handshake);
+        controller.sendHandshake();
     }
 
     public void sendNeighbourMessage(Host us, AddressBook addrs, PeerId peer) {

@@ -266,6 +266,6 @@ public class Network {
     }
 
     private void sendNeighbourMessage(PeerId peerId) {
-        grandpaService.getProtocol().sendNeighbourMessage(this.host, this.host.getAddressBook(), peerId);
+        grandpaService.getProtocol().sendHandshake(this.host, this.host.getAddressBook(), peerId);
     }
 }
