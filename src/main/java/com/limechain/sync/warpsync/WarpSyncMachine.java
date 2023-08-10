@@ -88,8 +88,6 @@ public class WarpSyncMachine {
 
         // Always start with requesting fragments
         this.warpSyncState = new RequestFragmentsState(initStateHash);
-        //TODO: move to more appropriate place
-        networkService.sendNeighbourMessages();
 
         // Process should be non-blocking...
         while (this.warpSyncState.getClass() != FinishedState.class) {
@@ -102,7 +100,6 @@ public class WarpSyncMachine {
 
     private void startFullSync() {
         this.syncedState.setWarpSyncFinished(true);
-        syncedState.setSetId(syncedState.getSetId().max(syncedState.getLatestSetId()));
         networkService.sendNeighbourMessages();
     }
 }

@@ -101,7 +101,7 @@ public class SyncedState {
     public NeighbourMessage getNeighbourMessage() {
         NeighbourMessage message = new NeighbourMessage();
         message.setVersion(NEIGHBOUR_MESSAGE_VERSION);
-        message.setSetId(BigInteger.ZERO);
+        message.setSetId(this.getSetId());
         message.setRound(NEIGHBOUR_MESSAGE_LIGHT_CLIENT_ROUND);
         message.setLastFinalizedBlock(this.lastFinalizedBlockNumber.longValue());
         return message;
@@ -158,13 +158,12 @@ public class SyncedState {
 
     //TODO: implement when right authority set is received
     public boolean verifyCommitJustification(CommitMessage commitMessage) {
-        /*WarpSyncJustification justification = new WarpSyncJustification();
+        WarpSyncJustification justification = new WarpSyncJustification();
         justification.setRound(commitMessage.getRoundNumber());
         justification.setTargetHash(commitMessage.getVote().getBlockHash());
         justification.setTargetBlock(BigInteger.valueOf(commitMessage.getVote().getBlockNumber()));
         justification.setPrecommits(commitMessage.getPrecommits());
-        return verifyJustification(justification);*/
-        return true;
+        return verifyJustification(justification);
     }
 
     public boolean verifyJustification(WarpSyncJustification justification) {
