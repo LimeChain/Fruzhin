@@ -14,12 +14,11 @@ import java.util.concurrent.CompletableFuture;
 
 @Log
 public class GrandpaProtocol extends ProtocolHandler<GrandpaController> {
-    public static final int MAX_HANDSHAKE_SIZE = 1024 * 1024 * 1024;
-    public static final int MAX_NOTIFICATION_SIZE = 1024 * 1024;
+    public static final int TRAFFIC_LIMIT = 1024 * 1024;
     private final GrandpaEngine engine;
 
     public GrandpaProtocol() {
-        super(MAX_HANDSHAKE_SIZE, MAX_NOTIFICATION_SIZE);
+        super(TRAFFIC_LIMIT, TRAFFIC_LIMIT);
         this.engine = new GrandpaEngine();
     }
 

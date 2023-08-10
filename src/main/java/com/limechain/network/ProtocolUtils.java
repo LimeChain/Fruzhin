@@ -25,10 +25,7 @@ public final class ProtocolUtils {
         return String.format("/%s/kad", chainId);
     }
 
-    public static String getGrandpaLegacyProtocol(String chainId) {
-        if (chainId.equals("dot")) {
-            chainId = "paritytech";
-        }
-        return String.format("/%s/grandpa/1", chainId);
+    public static String getGrandpaLegacyProtocol() {
+        return "/paritytech/grandpa/1";
     }
 }

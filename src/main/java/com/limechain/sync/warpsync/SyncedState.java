@@ -99,12 +99,12 @@ public class SyncedState {
     }
 
     public NeighbourMessage getNeighbourMessage() {
-        NeighbourMessage message = new NeighbourMessage();
-        message.setVersion(NEIGHBOUR_MESSAGE_VERSION);
-        message.setSetId(this.getSetId());
-        message.setRound(NEIGHBOUR_MESSAGE_LIGHT_CLIENT_ROUND);
-        message.setLastFinalizedBlock(this.lastFinalizedBlockNumber.longValue());
-        return message;
+        return new NeighbourMessage(
+                NEIGHBOUR_MESSAGE_VERSION,
+                this.setId,
+                this.latestRound,
+                this.lastFinalizedBlockNumber.longValue()
+        );
     }
 
     public synchronized void syncAnnouncedBlock(PeerId peerId, BlockAnnounceMessage announce) {
@@ -140,12 +140,12 @@ public class SyncedState {
     }
 
     public void syncCommit(CommitMessage commitMessage, PeerId peerId) {
-        if(!verifyCommitJustification(commitMessage)) {
+        if (!verifyCommitJustification(commitMessage)) {
             log.log(Level.WARNING, "Could not verify commit from peer: " + peerId);
             return;
         }
 
-        if(warpSyncFinished) {
+        if (warpSyncFinished) {
             updateState(commitMessage);
         }
     }
@@ -153,7 +153,7 @@ public class SyncedState {
     private void updateState(CommitMessage commitMessage) {
         latestRound = commitMessage.getRoundNumber();
         lastFinalizedBlockHash = commitMessage.getVote().getBlockHash();
-        lastFinalizedBlockNumber = BigInteger.valueOf(commitMessage.getVote().getBlockNumber());
+        lastFinalizedBlockNumber = commitMessage.getVote().getBlockNumber();
     }
 
     //TODO: implement when right authority set is received
@@ -161,7 +161,7 @@ public class SyncedState {
         WarpSyncJustification justification = new WarpSyncJustification();
         justification.setRound(commitMessage.getRoundNumber());
         justification.setTargetHash(commitMessage.getVote().getBlockHash());
-        justification.setTargetBlock(BigInteger.valueOf(commitMessage.getVote().getBlockNumber()));
+        justification.setTargetBlock(commitMessage.getVote().getBlockNumber());
         justification.setPrecommits(commitMessage.getPrecommits());
         return verifyJustification(justification);
     }

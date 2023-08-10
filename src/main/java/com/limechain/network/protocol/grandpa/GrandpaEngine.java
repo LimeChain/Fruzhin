@@ -36,8 +36,11 @@ public class GrandpaEngine {
 
         switch (messageType) {
             case HANDSHAKE -> handleHandshake(msg, peerId, stream);
-            case NEIGHBOUR -> handleNeighbourMessage(msg, peerId);
+            case VOTE -> log.log(Level.INFO, "Vote message received from Peer " + peerId);
             case COMMIT -> handleCommitMessage(msg, peerId);
+            case NEIGHBOUR -> handleNeighbourMessage(msg, peerId);
+            case CATCH_UP_REQUEST -> log.log(Level.INFO, "Catch up request received from Peer " + peerId);
+            case CATCH_UP_RESPONSE -> log.log(Level.INFO, "Catch up response received from Peer " + peerId);
             default -> log.log(Level.WARNING, "Unknown grandpa message type from Peer " + peerId);
         }
     }
@@ -61,7 +64,7 @@ public class GrandpaEngine {
         if (peerInfo != null && peerInfo.isGrandpaConnected()) {
             log.log(Level.INFO, "Received existing grandpa handshake from " + peerId);
         } else {
-            if(peerInfo == null) {
+            if (peerInfo == null) {
                 peerInfo = new PeerInfo();
                 connectionManager.addPeer(peerId, peerInfo);
             }

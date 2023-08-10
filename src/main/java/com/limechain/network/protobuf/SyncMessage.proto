@@ -58,7 +58,7 @@ message BlockData {
   // justification.
   bool is_empty_justification = 7; // optional, false if absent
   // Justifications if requested.
-  // Unlike the field for a single justification, this field does not required an associated
+  // Unlike the field for a single justification, this field does not require an associated
   // boolean to differentiate between the lack of justifications and empty justification(s). This
   // is because empty justifications, like all justifications, are paired with a non-empty
   // consensus engine ID.

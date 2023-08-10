@@ -51,7 +51,6 @@ public class Network {
     public LightMessagesService lightMessagesService;
     public KademliaService kademliaService;
     public BlockAnnounceService blockAnnounceService;
-
     public GrandpaService grandpaService;
     public Ping ping;
     public PeerId currentSelectedPeer;
@@ -107,7 +106,7 @@ public class Network {
         String legacyLightProtocolId = ProtocolUtils.getLegacyLightMessageProtocol(chainId);
         String legacySyncProtocolId = ProtocolUtils.getLegacySyncProtocol(chainId);
         String legacyBlockAnnounceProtocolId = ProtocolUtils.getLegacyBlockAnnounceProtocol(chainId);
-        String grandpaProtocolId = ProtocolUtils.getGrandpaLegacyProtocol(chainId);
+        String grandpaProtocolId = ProtocolUtils.getGrandpaLegacyProtocol();
 
         kademliaService = new KademliaService(legacyKadProtocolId, hostId, isLocalEnabled, clientMode);
         lightMessagesService = new LightMessagesService(legacyLightProtocolId);

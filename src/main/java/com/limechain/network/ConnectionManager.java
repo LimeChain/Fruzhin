@@ -35,7 +35,7 @@ public class ConnectionManager {
         final var peer = peers.get(peerId);
         updateLatestBlock(peer, blockAnnounceMessage.getHeader().getBlockNumber());
 
-        if(blockAnnounceMessage.isBestBlock()) {
+        if (blockAnnounceMessage.isBestBlock()) {
             updateBestBlock(peer, blockAnnounceMessage.getHeader());
         }
     }
@@ -43,7 +43,7 @@ public class ConnectionManager {
     // TODO: decide if needed
     private void updateLatestBlock(PeerInfo peerInfo, BigInteger announcedBlock) {
         BigInteger latestRecordedBlock = BigInteger.valueOf(peerInfo.getLatestBlock());
-        if(announcedBlock.compareTo(latestRecordedBlock) > 0) {
+        if (announcedBlock.compareTo(latestRecordedBlock) > 0) {
             peerInfo.setLatestBlock(announcedBlock.intValue());
         }
     }

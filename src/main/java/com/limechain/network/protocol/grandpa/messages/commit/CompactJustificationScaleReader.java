@@ -6,8 +6,6 @@ import io.emeraldpay.polkaj.scale.ScaleReader;
 import io.emeraldpay.polkaj.types.Hash256;
 import io.emeraldpay.polkaj.types.Hash512;
 
-import java.math.BigInteger;
-
 public class CompactJustificationScaleReader implements ScaleReader<Precommit[]> {
 
     @Override
@@ -20,10 +18,11 @@ public class CompactJustificationScaleReader implements ScaleReader<Precommit[]>
             Vote vote = voteScaleReader.read(reader);
             precommits[i] = new Precommit();
             precommits[i].setTargetHash(vote.getBlockHash());
-            precommits[i].setTargetNumber(BigInteger.valueOf(vote.getBlockNumber()));
+            precommits[i].setTargetNumber(vote.getBlockNumber());
         }
 
         if (reader.readCompactInt() != precommitsCount) {
+            // TODO: update and handle exception
             throw new RuntimeException();
         }
 
