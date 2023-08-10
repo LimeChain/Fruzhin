@@ -101,8 +101,8 @@ public class SyncedState {
     public NeighbourMessage getNeighbourMessage() {
         return new NeighbourMessage(
                 NEIGHBOUR_MESSAGE_VERSION,
-                this.setId,
                 this.latestRound,
+                this.setId,
                 this.lastFinalizedBlockNumber.longValue()
         );
     }
@@ -145,7 +145,7 @@ public class SyncedState {
             return;
         }
 
-        if (warpSyncFinished) {
+        if (warpSyncFinished && commitMessage.getVote().getBlockNumber().compareTo(lastFinalizedBlockNumber) > 0) {
             updateState(commitMessage);
         }
     }
