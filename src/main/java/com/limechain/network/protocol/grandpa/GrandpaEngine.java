@@ -17,6 +17,7 @@ import lombok.extern.java.Log;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.logging.Level;
 
 @Log
@@ -84,9 +85,18 @@ public class GrandpaEngine {
     private void handleCommitMessage(byte[] msg, PeerId peerId) {
         ScaleCodecReader reader = new ScaleCodecReader(msg);
         CommitMessage commitMessage = reader.read(new CommitMessageScaleReader());
-        log.log(Level.INFO, "Received commit message from peer " + peerId + "\n" + commitMessage);
+        if (isBlockAlreadyReached(commitMessage.getVote().getBlockNumber())) {
+            log.log(Level.INFO, String.format("Received commit message for already reached block %d from peer %s",
+                            commitMessage.getVote().getBlockNumber(), peerId));
+            return;
+        }
 
+        log.log(Level.INFO, "Received commit message from peer " + peerId + "\n" + commitMessage);
         syncedState.syncCommit(commitMessage, peerId);
+    }
+
+    private boolean isBlockAlreadyReached(BigInteger blockNumber) {
+        return blockNumber.compareTo(syncedState.getLastFinalizedBlockNumber()) > 0;
     }
 
     public void writeHandshakeToStream(Stream stream, PeerId peerId) {

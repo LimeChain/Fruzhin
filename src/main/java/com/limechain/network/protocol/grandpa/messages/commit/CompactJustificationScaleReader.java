@@ -21,12 +21,13 @@ public class CompactJustificationScaleReader implements ScaleReader<Precommit[]>
             precommits[i].setTargetNumber(vote.getBlockNumber());
         }
 
-        if (reader.readCompactInt() != precommitsCount) {
+        int signaturesCount = reader.readCompactInt();
+        if (signaturesCount != precommitsCount) {
             // TODO: update and handle exception
             throw new RuntimeException();
         }
 
-        for (int i = 0; i < precommitsCount; i++) {
+        for (int i = 0; i < signaturesCount; i++) {
             precommits[i].setSignature(new Hash512(reader.readByteArray(64)));
             precommits[i].setAuthorityPublicKey(new Hash256(reader.readUint256()));
         }
