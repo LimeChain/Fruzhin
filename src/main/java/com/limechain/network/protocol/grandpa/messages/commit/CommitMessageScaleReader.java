@@ -10,7 +10,8 @@ public class CommitMessageScaleReader implements ScaleReader<CommitMessage> {
     public CommitMessage read(ScaleCodecReader reader) {
         int messageType = reader.readByte();
         if (messageType != GrandpaMessageType.COMMIT.getType()) {
-            return null;
+            throw new RuntimeException(
+                    String.format("Trying to read message of type %d as a commit message", messageType));
         }
         CommitMessage commitMessage = new CommitMessage();
         commitMessage.setRoundNumber(new UInt64Reader().read(reader));

@@ -10,7 +10,8 @@ public class NeighbourMessageScaleReader implements ScaleReader<NeighbourMessage
     public NeighbourMessage read(ScaleCodecReader reader) {
         int messageType = reader.readByte();
         if (messageType != GrandpaMessageType.NEIGHBOUR.getType()) {
-            return null;
+            throw new RuntimeException(
+                    String.format("Trying to read message of type %d as a neighbour message", messageType));
         }
         NeighbourMessage neighbourMessage = new NeighbourMessage();
         neighbourMessage.setVersion(reader.readByte());

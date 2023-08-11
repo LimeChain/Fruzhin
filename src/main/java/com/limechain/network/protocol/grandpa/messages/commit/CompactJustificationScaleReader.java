@@ -23,8 +23,7 @@ public class CompactJustificationScaleReader implements ScaleReader<Precommit[]>
 
         int signaturesCount = reader.readCompactInt();
         if (signaturesCount != precommitsCount) {
-            // TODO: update and handle exception
-            throw new RuntimeException();
+            throw new RuntimeException("Number of signatures does not match number of precommits");
         }
 
         for (int i = 0; i < signaturesCount; i++) {
