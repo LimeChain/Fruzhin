@@ -96,7 +96,7 @@ public class GrandpaEngine {
     }
 
     private boolean isBlockAlreadyReached(BigInteger blockNumber) {
-        return blockNumber.compareTo(syncedState.getLastFinalizedBlockNumber()) > 0;
+        return syncedState.getLastFinalizedBlockNumber().compareTo(blockNumber) >= 0;
     }
 
     public void writeHandshakeToStream(Stream stream, PeerId peerId) {

@@ -119,5 +119,6 @@ public class SyncedState {
         latestRound = commitMessage.getRoundNumber();
         lastFinalizedBlockHash = commitMessage.getVote().getBlockHash();
         lastFinalizedBlockNumber = commitMessage.getVote().getBlockNumber();
+        log.log(Level.INFO, "Reached block #" + lastFinalizedBlockNumber);
     }
 }
