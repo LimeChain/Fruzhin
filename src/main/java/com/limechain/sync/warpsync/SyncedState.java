@@ -28,7 +28,6 @@ import java.util.logging.Level;
 public class SyncedState {
     private static final SyncedState INSTANCE = new SyncedState();
     public static final int NEIGHBOUR_MESSAGE_VERSION = 1;
-    public static final BigInteger NEIGHBOUR_MESSAGE_LIGHT_CLIENT_ROUND = BigInteger.ONE;
     JustificationReader justificationReader = new JustificationReader();
     @Getter
     @Setter
@@ -145,7 +144,7 @@ public class SyncedState {
             return;
         }
 
-        if (warpSyncFinished && commitMessage.getVote().getBlockNumber().compareTo(lastFinalizedBlockNumber) > 0) {
+        if (warpSyncFinished) {
             updateState(commitMessage);
         }
     }
@@ -156,7 +155,6 @@ public class SyncedState {
         lastFinalizedBlockNumber = commitMessage.getVote().getBlockNumber();
     }
 
-    //TODO: implement when right authority set is received
     public boolean verifyCommitJustification(CommitMessage commitMessage) {
         WarpSyncJustification justification = new WarpSyncJustification();
         justification.setRound(commitMessage.getRoundNumber());

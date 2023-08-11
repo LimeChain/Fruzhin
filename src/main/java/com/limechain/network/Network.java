@@ -260,7 +260,11 @@ public class Network {
         return false;
     }
 
+    @Scheduled(fixedDelay = 5, timeUnit = TimeUnit.MINUTES)
     public void sendNeighbourMessages() {
+        if (!SyncedState.getInstance().isWarpSyncFinished()) {
+            return;
+        }
         connectionManager.getPeerIds().forEach(this::sendNeighbourMessage);
     }
 
