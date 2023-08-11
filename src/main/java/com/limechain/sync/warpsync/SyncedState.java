@@ -7,9 +7,9 @@ import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshake;
 import com.limechain.network.protocol.grandpa.messages.commit.CommitMessage;
 import com.limechain.network.protocol.grandpa.messages.neighbour.NeighbourMessage;
-import com.limechain.network.protocol.warp.dto.WarpSyncJustification;
 import com.limechain.rpc.http.server.AppBean;
 import com.limechain.runtime.Runtime;
+import com.limechain.sync.JustificationVerifier;
 import io.emeraldpay.polkaj.types.Hash256;
 import io.libp2p.core.PeerId;
 import lombok.Getter;
@@ -100,6 +100,10 @@ public class SyncedState {
         );
     }
 
+    private boolean verifyCommitJustification(CommitMessage commitMessage) {
+        return JustificationVerifier.verify(commitMessage.getPrecommits(), commitMessage.getRoundNumber());
+    }
+
     public void syncCommit(CommitMessage commitMessage, PeerId peerId) {
         if (!verifyCommitJustification(commitMessage)) {
             log.log(Level.WARNING, "Could not verify commit from peer: " + peerId);
@@ -115,18 +119,5 @@ public class SyncedState {
         latestRound = commitMessage.getRoundNumber();
         lastFinalizedBlockHash = commitMessage.getVote().getBlockHash();
         lastFinalizedBlockNumber = commitMessage.getVote().getBlockNumber();
-    }
-
-    public boolean verifyCommitJustification(CommitMessage commitMessage) {
-        WarpSyncJustification justification = new WarpSyncJustification();
-        justification.setRound(commitMessage.getRoundNumber());
-        justification.setTargetHash(commitMessage.getVote().getBlockHash());
-        justification.setTargetBlock(commitMessage.getVote().getBlockNumber());
-        justification.setPrecommits(commitMessage.getPrecommits());
-        return verifyJustification(justification);
-    }
-
-    public boolean verifyJustification(WarpSyncJustification justification) {
-        return justification.verify(authoritySet, setId);
     }
 }
