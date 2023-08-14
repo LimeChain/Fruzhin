@@ -40,7 +40,6 @@ public class ConnectionManager {
         }
     }
 
-    // TODO: decide if needed
     private void updateLatestBlock(PeerInfo peerInfo, BigInteger announcedBlock) {
         BigInteger latestRecordedBlock = BigInteger.valueOf(peerInfo.getLatestBlock());
         if (announcedBlock.compareTo(latestRecordedBlock) > 0) {
