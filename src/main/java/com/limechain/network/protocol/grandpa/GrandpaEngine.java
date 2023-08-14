@@ -42,7 +42,8 @@ public class GrandpaEngine {
             case NEIGHBOUR -> handleNeighbourMessage(msg, peerId);
             case CATCH_UP_REQUEST -> log.log(Level.INFO, "Catch up request received from Peer " + peerId);
             case CATCH_UP_RESPONSE -> log.log(Level.INFO, "Catch up response received from Peer " + peerId);
-            default -> log.log(Level.WARNING, "Unknown grandpa message type from Peer " + peerId);
+            default -> log.log(Level.WARNING,
+                    String.format("Unknown grandpa message type \"%d\" from Peer %s", msg[0], peerId));
         }
     }
 

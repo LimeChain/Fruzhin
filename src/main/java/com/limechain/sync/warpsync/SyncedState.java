@@ -100,12 +100,9 @@ public class SyncedState {
         );
     }
 
-    private boolean verifyCommitJustification(CommitMessage commitMessage) {
-        return JustificationVerifier.verify(commitMessage.getPrecommits(), commitMessage.getRoundNumber());
-    }
-
     public void syncCommit(CommitMessage commitMessage, PeerId peerId) {
-        if (!verifyCommitJustification(commitMessage)) {
+        boolean verified = JustificationVerifier.verify(commitMessage.getPrecommits(), commitMessage.getRoundNumber());
+        if (!verified) {
             log.log(Level.WARNING, "Could not verify commit from peer: " + peerId);
             return;
         }
