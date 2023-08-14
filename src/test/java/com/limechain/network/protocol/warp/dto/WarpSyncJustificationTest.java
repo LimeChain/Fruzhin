@@ -1,5 +1,6 @@
 package com.limechain.network.protocol.warp.dto;
 
+import com.limechain.sync.JustificationVerifier;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -15,8 +16,7 @@ public class WarpSyncJustificationTest {
         //CHECKSTYLE.OFF
         String signatureHex = "0xad0a9bd0680665848cf227e9d0ff547ed075421c2a24875a99e26736f0499daf5e582dd5a2de42980663210d8d289e0cb0803b2ba5cfb917d56fdc1cdadd7209";
         //CHECKSTYLE.ON
-        WarpSyncJustification justification = new WarpSyncJustification();
-        boolean isValid = justification.verifySignature(publicKey, signatureHex, dataToVerify);
+        boolean isValid = JustificationVerifier.verifySignature(publicKey, signatureHex, dataToVerify);
         assertTrue(isValid);
     }
 }

@@ -44,7 +44,7 @@ public class LightClientTest {
         WarpSyncMachine warpSync = mock(WarpSyncMachine.class);
 
         setPrivateField("network", network);
-        setPrivateField("warpSyncService", warpSync);
+        setPrivateField("warpSyncMachine", warpSync);
 
         lightClient.stop();
 

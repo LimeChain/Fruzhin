@@ -5,16 +5,24 @@ import com.limechain.constants.GenesisBlockHash;
 import com.limechain.network.Network;
 import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshake;
+import com.limechain.network.protocol.grandpa.messages.commit.CommitMessage;
+import com.limechain.network.protocol.grandpa.messages.neighbour.NeighbourMessage;
 import com.limechain.rpc.http.server.AppBean;
 import com.limechain.runtime.Runtime;
+import com.limechain.sync.JustificationVerifier;
 import io.emeraldpay.polkaj.types.Hash256;
+import io.libp2p.core.PeerId;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.java.Log;
 
 import java.math.BigInteger;
+import java.util.logging.Level;
 
+@Log
 public class SyncedState {
     private static final SyncedState INSTANCE = new SyncedState();
+    public static final int NEIGHBOUR_MESSAGE_VERSION = 1;
     @Getter
     @Setter
     private Hash256 lastFinalizedBlockHash;
@@ -33,6 +41,15 @@ public class SyncedState {
     @Getter
     @Setter
     private BigInteger setId;
+
+    @Getter
+    @Setter
+    private BigInteger latestSetId = BigInteger.ZERO;
+
+    @Getter
+    @Setter
+    private BigInteger latestRound = BigInteger.ONE;
+
     @Getter
     @Setter
     private byte[] runtimeCode;
@@ -42,6 +59,11 @@ public class SyncedState {
     @Getter
     @Setter
     private Runtime runtime;
+    @Setter
+    private Network network;
+    @Setter
+    @Getter
+    private boolean warpSyncFinished;
 
     public static SyncedState getInstance() {
         return INSTANCE;
@@ -69,4 +91,31 @@ public class SyncedState {
         );
     }
 
+    public NeighbourMessage getNeighbourMessage() {
+        return new NeighbourMessage(
+                NEIGHBOUR_MESSAGE_VERSION,
+                this.latestRound,
+                this.setId,
+                this.lastFinalizedBlockNumber.longValue()
+        );
+    }
+
+    public void syncCommit(CommitMessage commitMessage, PeerId peerId) {
+        boolean verified = JustificationVerifier.verify(commitMessage.getPrecommits(), commitMessage.getRoundNumber());
+        if (!verified) {
+            log.log(Level.WARNING, "Could not verify commit from peer: " + peerId);
+            return;
+        }
+
+        if (warpSyncFinished) {
+            updateState(commitMessage);
+        }
+    }
+
+    private void updateState(CommitMessage commitMessage) {
+        latestRound = commitMessage.getRoundNumber();
+        lastFinalizedBlockHash = commitMessage.getVote().getBlockHash();
+        lastFinalizedBlockNumber = commitMessage.getVote().getBlockNumber();
+        log.log(Level.INFO, "Reached block #" + lastFinalizedBlockNumber);
+    }
 }

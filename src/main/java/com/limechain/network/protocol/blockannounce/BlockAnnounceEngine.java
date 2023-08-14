@@ -24,7 +24,7 @@ public class BlockAnnounceEngine {
     private final ConnectionManager connectionManager = ConnectionManager.getInstance();
 
     public void receiveRequest(byte[] msg, PeerId peerId, Stream stream) {
-        boolean connectedToPeer = connectionManager.isConnected(peerId);
+        boolean connectedToPeer = connectionManager.isBlockAnnounceConnected(peerId);
         boolean isHandshake = msg.length == HANDSHAKE_LENGTH;
 
         if (!connectedToPeer && !isHandshake) {

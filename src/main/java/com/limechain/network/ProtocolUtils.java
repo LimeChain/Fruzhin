@@ -24,4 +24,8 @@ public final class ProtocolUtils {
     public static String getLegacyKadProtocol(String chainId) {
         return String.format("/%s/kad", chainId);
     }
+
+    public static String getGrandpaLegacyProtocol() {
+        return "/paritytech/grandpa/1";
+    }
 }

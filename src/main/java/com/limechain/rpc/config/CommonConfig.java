@@ -61,5 +61,4 @@ public class CommonConfig {
     public WarpSyncMachine sync(Network network, ChainService chainService) {
         return WarpSyncMachine.initialize(network, chainService);
     }
-
 }

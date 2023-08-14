@@ -5,12 +5,16 @@ import com.limechain.chain.ChainService;
 import com.limechain.config.HostConfig;
 import com.limechain.network.kad.KademliaService;
 import com.limechain.network.protocol.blockannounce.BlockAnnounceService;
+import com.limechain.network.protocol.grandpa.GrandpaService;
 import com.limechain.network.protocol.lightclient.LightMessagesService;
 import com.limechain.network.protocol.lightclient.pb.LightClientMessage;
 import com.limechain.network.protocol.ping.Ping;
 import com.limechain.network.protocol.sync.SyncService;
+import com.limechain.network.protocol.sync.pb.SyncMessage;
+import com.limechain.network.protocol.sync.pb.SyncMessage.BlockResponse;
 import com.limechain.network.protocol.warp.WarpSyncService;
 import com.limechain.network.protocol.warp.dto.WarpSyncResponse;
+import com.limechain.sync.warpsync.SyncedState;
 import io.ipfs.multihash.Multihash;
 import io.libp2p.core.Host;
 import io.libp2p.core.PeerId;
@@ -22,6 +26,7 @@ import org.peergos.HostBuilder;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
@@ -36,6 +41,7 @@ import static com.limechain.network.kad.KademliaService.REPLICATION;
 @Log
 public class Network {
     private static final int HOST_PORT = 30333;
+    @Getter
     private static Network network;
     @Getter
     public final Chain chain;
@@ -45,6 +51,7 @@ public class Network {
     public LightMessagesService lightMessagesService;
     public KademliaService kademliaService;
     public BlockAnnounceService blockAnnounceService;
+    public GrandpaService grandpaService;
     public Ping ping;
     public PeerId currentSelectedPeer;
     @Getter
@@ -79,6 +86,7 @@ public class Network {
             return network;
         }
         network = new Network(chainService, hostConfig);
+        SyncedState.getInstance().setNetwork(network);
         log.log(Level.INFO, "Initialized network module!");
         return network;
     }
@@ -98,12 +106,14 @@ public class Network {
         String legacyLightProtocolId = ProtocolUtils.getLegacyLightMessageProtocol(chainId);
         String legacySyncProtocolId = ProtocolUtils.getLegacySyncProtocol(chainId);
         String legacyBlockAnnounceProtocolId = ProtocolUtils.getLegacyBlockAnnounceProtocol(chainId);
+        String grandpaProtocolId = ProtocolUtils.getGrandpaLegacyProtocol();
 
         kademliaService = new KademliaService(legacyKadProtocolId, hostId, isLocalEnabled, clientMode);
         lightMessagesService = new LightMessagesService(legacyLightProtocolId);
         warpSyncService = new WarpSyncService(legacyWarpProtocolId);
         syncService = new SyncService(legacySyncProtocolId);
         blockAnnounceService = new BlockAnnounceService(legacyBlockAnnounceProtocolId);
+        grandpaService = new GrandpaService(grandpaProtocolId);
         ping = new Ping(pingProtocol, new PingProtocol());
 
         hostBuilder.addProtocols(
@@ -113,7 +123,8 @@ public class Network {
                         lightMessagesService.getProtocol(),
                         warpSyncService.getProtocol(),
                         syncService.getProtocol(),
-                        blockAnnounceService.getProtocol()
+                        blockAnnounceService.getProtocol(),
+                        grandpaService.getProtocol()
                 )
         );
 
@@ -199,6 +210,21 @@ public class Network {
                 .skip(random.nextInt(connectionManager.getPeerIds().size())).findAny().orElse(null);
     }
 
+    public BlockResponse syncBlock(PeerId peerId, BigInteger blockNumber, BigInteger lastBlockNumber) {
+        this.currentSelectedPeer = peerId;
+        // TODO: fields, hash, direction and maxBlocks values not verified
+        // TODO: when debugging could not get a value returned
+        return syncService.getProtocol().remoteBlockRequest(
+                this.host,
+                this.host.getAddressBook(),
+                peerId,
+                19,
+                null,
+                lastBlockNumber.intValue(),
+                SyncMessage.Direction.Ascending,
+                1);
+    }
+
     public WarpSyncResponse makeWarpSyncRequest(String blockHash) {
         if (isPeerInvalid()) return null;
 
@@ -232,5 +258,17 @@ public class Network {
             return true;
         }
         return false;
+    }
+
+    @Scheduled(fixedDelay = 5, timeUnit = TimeUnit.MINUTES)
+    public void sendNeighbourMessages() {
+        if (!SyncedState.getInstance().isWarpSyncFinished()) {
+            return;
+        }
+        connectionManager.getPeerIds().forEach(this::sendNeighbourMessage);
+    }
+
+    private void sendNeighbourMessage(PeerId peerId) {
+        grandpaService.getProtocol().sendHandshake(this.host, this.host.getAddressBook(), peerId);
     }
 }

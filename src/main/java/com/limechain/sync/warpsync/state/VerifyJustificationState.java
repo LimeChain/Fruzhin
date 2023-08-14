@@ -4,6 +4,8 @@ import com.limechain.chain.lightsyncstate.Authority;
 import com.limechain.network.protocol.warp.dto.ConsensusEngine;
 import com.limechain.network.protocol.warp.dto.HeaderDigest;
 import com.limechain.network.protocol.warp.dto.WarpSyncFragment;
+import com.limechain.network.protocol.warp.dto.WarpSyncJustification;
+import com.limechain.sync.JustificationVerifier;
 import com.limechain.sync.warpsync.SyncedState;
 import com.limechain.sync.warpsync.WarpSyncMachine;
 import com.limechain.sync.warpsync.dto.AuthoritySetChange;
@@ -49,8 +51,13 @@ public class VerifyJustificationState implements WarpSyncState {
 
             WarpSyncFragment fragment = sync.getFragmentsQueue().poll();
             log.log(Level.INFO, "Verifying justification...");
-            boolean verified = fragment.getJustification()
-                    .verify(syncedState.getAuthoritySet(), syncedState.getSetId());
+            WarpSyncJustification justification;
+            if (fragment == null) {
+                throw new RuntimeException("No such fragment");
+            }
+            boolean verified = JustificationVerifier.verify(
+                    fragment.getJustification().precommits,
+                    fragment.getJustification().round);
             if (!verified) {
                 throw new RuntimeException("Justification could not be verified.");
             }

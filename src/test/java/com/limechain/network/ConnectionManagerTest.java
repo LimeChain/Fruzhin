@@ -15,7 +15,6 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 class ConnectionManagerTest {
@@ -48,9 +47,11 @@ class ConnectionManagerTest {
         connectionManager.peers.put(peerId, peerInfo);
         BlockAnnounceMessage message = mock(BlockAnnounceMessage.class);
         when(message.isBestBlock()).thenReturn(false);
+        BlockHeader header = mock(BlockHeader.class);
+        when(message.getHeader()).thenReturn(header);
+        when(header.getBlockNumber()).thenReturn(BigInteger.TEN);
 
         connectionManager.updatePeer(peerId, message);
-        verifyNoInteractions(peerInfo);
     }
 
     @Test
@@ -72,10 +73,24 @@ class ConnectionManagerTest {
     }
 
     @Test
-    void isConnected() {
+    void isBlockAnnounceConnected() {
         connectionManager.peers.put(peerId, peerInfo);
+        when(peerInfo.isBlockAnnounceConnected()).thenReturn(true);
+        assertTrue(connectionManager.isBlockAnnounceConnected(peerId));
+    }
 
-        assertTrue(connectionManager.isConnected(peerId));
+    @Test
+    void isGrandpaConnected() {
+        connectionManager.peers.put(peerId, peerInfo);
+        when(peerInfo.isGrandpaConnected()).thenReturn(true);
+        assertTrue(connectionManager.isGrandpaConnected(peerId));
+    }
+
+    @Test
+    void isBlockAnnounceConnectedAndGrandpaConnectedReturnFalseWhenNotInPeers() {
+        connectionManager.peers.clear();
+        assertFalse(connectionManager.isBlockAnnounceConnected(peerId));
+        assertFalse(connectionManager.isGrandpaConnected(peerId));
     }
 
     @Test

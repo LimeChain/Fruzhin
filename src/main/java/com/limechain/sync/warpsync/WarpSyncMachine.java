@@ -94,5 +94,12 @@ public class WarpSyncMachine {
             this.handleState();
             this.nextState();
         }
+
+        startFullSync();
+    }
+
+    private void startFullSync() {
+        this.syncedState.setWarpSyncFinished(true);
+        networkService.sendNeighbourMessages();
     }
 }
