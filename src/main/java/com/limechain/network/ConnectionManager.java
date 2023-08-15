@@ -48,7 +48,7 @@ public class ConnectionManager {
     }
 
     private void updateBestBlock(PeerInfo peerInfo, BlockHeader blockHeader) {
-        peerInfo.setBestBlock(blockHeader.getBlockNumber().toString());
+        peerInfo.setBestBlock(blockHeader.getBlockNumber());
         peerInfo.setBestBlockHash(new Hash256(blockHeader.getHash()));
     }
 

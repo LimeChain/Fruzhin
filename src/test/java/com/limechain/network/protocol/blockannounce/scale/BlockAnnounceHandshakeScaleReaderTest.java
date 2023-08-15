@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -26,7 +27,7 @@ class BlockAnnounceHandshakeScaleReaderTest {
         BlockAnnounceHandshake decoded = reader.read(new BlockAnnounceHandshakeScaleReader());
 
         assertEquals(4, decoded.getNodeRole());
-        assertEquals("77", decoded.getBestBlock());
+        assertEquals(BigInteger.valueOf(77), decoded.getBestBlock());
         assertEquals("0x0100000000000000000000000000000000000000000000000000000000000000",
                 decoded.getBestBlockHash().toString());
         assertEquals("0x0200000000000000000000000000000000000000000000000000000000000000",
@@ -34,18 +35,18 @@ class BlockAnnounceHandshakeScaleReaderTest {
     }
 
     @Test
-    public void EncodeAnnouncementHandshakeTest() {
+    void EncodeAnnouncementHandshakeTest() {
         //CHECKSTYLE.OFF
         byte[] expected = ByteString.fromHex("044d00000001000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000").toByteArray();
         //CHECKSTYLE.ON
 
         BlockAnnounceHandshake dataToEncode = new BlockAnnounceHandshake();
-        dataToEncode.nodeRole = 4;
-        dataToEncode.bestBlock = "77";
-        dataToEncode.bestBlockHash = Hash256.from(
-                "0x0100000000000000000000000000000000000000000000000000000000000000");
-        dataToEncode.genesisBlockHash = Hash256.from(
-                "0x0200000000000000000000000000000000000000000000000000000000000000");
+        dataToEncode.setNodeRole(4);
+        dataToEncode.setBestBlock(BigInteger.valueOf(77));
+        dataToEncode.setBestBlockHash(Hash256.from(
+                "0x0100000000000000000000000000000000000000000000000000000000000000"));
+        dataToEncode.setGenesisBlockHash(Hash256.from(
+                "0x0200000000000000000000000000000000000000000000000000000000000000"));
 
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
         try (ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {

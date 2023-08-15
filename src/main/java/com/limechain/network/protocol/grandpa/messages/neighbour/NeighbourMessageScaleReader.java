@@ -5,6 +5,8 @@ import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleReader;
 import io.emeraldpay.polkaj.scale.reader.UInt64Reader;
 
+import java.math.BigInteger;
+
 public class NeighbourMessageScaleReader implements ScaleReader<NeighbourMessage> {
     @Override
     public NeighbourMessage read(ScaleCodecReader reader) {
@@ -17,7 +19,7 @@ public class NeighbourMessageScaleReader implements ScaleReader<NeighbourMessage
         neighbourMessage.setVersion(reader.readByte());
         neighbourMessage.setRound(new UInt64Reader().read(reader));
         neighbourMessage.setSetId(new UInt64Reader().read(reader));
-        neighbourMessage.setLastFinalizedBlock(reader.readUint32());
+        neighbourMessage.setLastFinalizedBlock(BigInteger.valueOf(reader.readUint32()));
         return neighbourMessage;
     }
 }

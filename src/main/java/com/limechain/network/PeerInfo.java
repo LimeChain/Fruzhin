@@ -5,11 +5,13 @@ import io.emeraldpay.polkaj.types.Hash256;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigInteger;
+
 @Data
 @NoArgsConstructor
 public class PeerInfo {
     private int nodeRole;
-    private String bestBlock;
+    private BigInteger bestBlock;
     private Hash256 bestBlockHash;
     private Hash256 genesisBlockHash;
     private int latestBlock;

@@ -19,10 +19,10 @@ public class RuntimeVersionReader implements ScaleReader<RuntimeVersion> {
         // Probably only reads a 0 byte since the runtime apis have been moved to a different custom sections
         int apiVersionsSize = reader.readCompactInt();
         byte[][] apiVersions = new byte[apiVersionsSize][];
-        long[] apiVersionsNumbers = new long[apiVersionsSize];
+        BigInteger[] apiVersionsNumbers = new BigInteger[apiVersionsSize];
         for (int i = 0; i < apiVersionsSize; i++) {
             apiVersions[i] = reader.readByteArray(8);
-            apiVersionsNumbers[i] = reader.readUint32();
+            apiVersionsNumbers[i] = BigInteger.valueOf(reader.readUint32());
         }
 
         runtimeVersion.setTransactionVersion(BigInteger.valueOf(reader.readUint32()));
