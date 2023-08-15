@@ -5,7 +5,7 @@ name: light-client-snapshot-periodic-update
 
 on:
   schedule:
-    - cron: '0 8 * * *'  # every day at 8am
+    - cron: '0 9 * * MON'  # every Monday at 9am
   workflow_dispatch: # allow triggering through the UI
 
 
@@ -78,8 +78,8 @@ jobs:
           # request triggers other actions such as the CI checks. GitHub prevents actions that use
           # GITHUB_TOKEN from triggering further actions, to avoid recursive actions.
           token: ${{ secrets.GH_TOKEN }}
-          committer: CICD bot
-          author: CICD bot
+          committer: Fruzhin CICD <fruzhin-cicd@limechain.tech>
+          author: Fruzhin CICD <fruzhin-cicd@limechain.tech>
           path: repo
           branch: automatic-checkpoints-update
           base: main
