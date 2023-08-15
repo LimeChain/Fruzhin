@@ -82,7 +82,7 @@ jobs:
           author: Fruzhin CICD <fruzhin-cicd@limechain.tech>
           path: repo
           branch: automatic-checkpoints-update
-          base: main
+          base: dev
           title: Update checkpoints in chain specifications
           # Note that the `download-spec` job above fails if the downloaded specification doesn't
           # correspond to an existing file. It is therefore impossible that the pull request
