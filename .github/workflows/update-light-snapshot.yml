@@ -1,3 +1,6 @@
+# The following code has been adapted from the Substrate Connect:
+# https://github.com/paritytech/substrate-connect/blob/ef6418015c371430c0735d2b491447326406e5fd/.github/workflows/update-chain-specs.yml
+
 name: light-client-snapshot-periodic-update
 
 on:
