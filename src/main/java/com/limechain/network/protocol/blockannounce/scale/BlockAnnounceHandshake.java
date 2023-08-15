@@ -2,16 +2,14 @@ package com.limechain.network.protocol.blockannounce.scale;
 
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.math.BigInteger;
 
-@Getter
-@Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@Data
 public class BlockAnnounceHandshake {
     private int nodeRole;
     private BigInteger bestBlock;
