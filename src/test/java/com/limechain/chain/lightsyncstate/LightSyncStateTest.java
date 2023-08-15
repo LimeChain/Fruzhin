@@ -30,13 +30,13 @@ class LightSyncStateTest {
 
     @Test
     void decodeKusama() throws IOException {
-        LightSyncState decoded = executeDecoding("genesis/kusama.json");
+        LightSyncState decoded = executeDecoding("genesis/ksmcc3.json");
         assertNotNull(decoded);
     }
 
     @Test
     void decodeWestend() throws IOException {
-        LightSyncState decoded = executeDecoding("genesis/westend.json");
+        LightSyncState decoded = executeDecoding("genesis/westend2.json");
         assertNotNull(decoded);
     }
 }
