@@ -15,14 +15,4 @@ public class BlockAnnounceHandshake {
     private BigInteger bestBlock;
     private Hash256 bestBlockHash;
     private Hash256 genesisBlockHash;
-
-    @Override
-    public String toString() {
-        return "BlockAnnounceHandShake{" +
-                "nodeRole=" + nodeRole +
-                ", bestBlock='" + bestBlock + '\'' +
-                ", bestBlockHash=" + bestBlockHash +
-                ", genesisBlockHash=" + genesisBlockHash +
-                '}';
-    }
 }
