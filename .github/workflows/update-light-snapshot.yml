@@ -17,7 +17,6 @@ jobs:
           "wss://rpc.polkadot.io",
           "wss://kusama-rpc.polkadot.io",
           "wss://westend-rpc.polkadot.io",
-          "wss://rococo-rpc.polkadot.io"
         ]
       fail-fast: false   # Don't automatically cancel the jobs of the other RPC nodes if one fails
 
@@ -50,7 +49,7 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: chain-spec-${{ steps.get-chain-id.outputs.id }}
-          # Note that passing `repo/**` maintains paths under `repo`. This is a bit of magic by the upload-artifact action.
+          # Note that passing `genesis/**` maintains paths under `genesis`. This is a bit of magic by the upload-artifact action.
           path: |
             repo/**/${{ steps.get-chain-id.outputs.id }}.json
 
@@ -63,7 +62,7 @@ jobs:
       - uses: actions/checkout@v3.5.3
         with:
           path: repo
-          ref: main
+          ref: dev
       - uses: actions/download-artifact@v3
         with:
           # Since we're not passing a name, this automatically downloads *all* artifacts
