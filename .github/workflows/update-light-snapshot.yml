@@ -52,7 +52,7 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: chain-spec-${{ steps.get-chain-id.outputs.id }}
-          # Note that passing `genesis/**` maintains paths under `genesis`. This is a bit of magic by the upload-artifact action.
+          # Note that passing `repo/**` maintains paths under `repo`. This is a bit of magic by the upload-artifact action.
           path: |
             repo/**/${{ steps.get-chain-id.outputs.id }}.json
 
