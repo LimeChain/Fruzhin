@@ -63,7 +63,7 @@ class BlockAnnounceTest {
             if (addr.length == 0)
                 throw new IllegalStateException("No addresses known for peer " + peerId);
 
-            blockAnnounce.sendHandshake(senderNode, senderNode.getAddressBook(), peerId, handshake);
+            blockAnnounce.sendHandshake(senderNode, senderNode.getAddressBook(), peerId);
 
             Thread.sleep(60000);
         } catch (
