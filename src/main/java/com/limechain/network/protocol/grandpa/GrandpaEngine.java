@@ -102,7 +102,7 @@ public class GrandpaEngine {
 
     public void writeHandshakeToStream(Stream stream, PeerId peerId) {
         byte[] handshake = new byte[] {
-                (byte) syncedState.getHandshake().nodeRole
+                (byte) syncedState.getHandshake().getNodeRole()
         };
 
         log.log(Level.INFO, "Sending grandpa handshake to " + peerId);

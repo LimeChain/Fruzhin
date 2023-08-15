@@ -85,7 +85,7 @@ public class SyncedState {
                 : this.getLastFinalizedBlockHash();
         return new BlockAnnounceHandshake(
                 NodeRole.LIGHT.getValue(),
-                this.getLastFinalizedBlockNumber().toString(),
+                this.getLastFinalizedBlockNumber(),
                 lastFinalizedBlockHash,
                 genesisBlockHash
         );
@@ -96,7 +96,7 @@ public class SyncedState {
                 NEIGHBOUR_MESSAGE_VERSION,
                 this.latestRound,
                 this.setId,
-                this.lastFinalizedBlockNumber.longValue()
+                this.lastFinalizedBlockNumber
         );
     }
 
