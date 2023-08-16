@@ -90,7 +90,7 @@ public class GrandpaEngine {
         ScaleCodecReader reader = new ScaleCodecReader(msg);
         CommitMessage commitMessage = reader.read(new CommitMessageScaleReader());
         if (isBlockAlreadyReached(commitMessage.getVote().getBlockNumber())) {
-            log.log(Level.INFO, String.format("Received commit message for finalized block %d from peer %s",
+            log.log(Level.FINE, String.format("Received commit message for finalized block %d from peer %s",
                             commitMessage.getVote().getBlockNumber(), peerId));
             return;
         }
