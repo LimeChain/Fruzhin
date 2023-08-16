@@ -30,6 +30,11 @@ public class GrandpaEngine {
         boolean connectedToPeer = connectionManager.isGrandpaConnected(peerId);
         GrandpaMessageType messageType = getGrandpaMessageType(msg);
 
+        if (messageType == null) {
+            log.log(Level.WARNING, String.format("Unknown grandpa message type \"%d\" from Peer %s", msg[0], peerId));
+            return;
+        }
+
         if (!connectedToPeer && messageType != GrandpaMessageType.HANDSHAKE) {
             log.log(Level.WARNING, "No handshake for grandpa message from Peer " + peerId);
             return;
@@ -42,8 +47,6 @@ public class GrandpaEngine {
             case NEIGHBOUR -> handleNeighbourMessage(msg, peerId);
             case CATCH_UP_REQUEST -> log.log(Level.INFO, "Catch up request received from Peer " + peerId);
             case CATCH_UP_RESPONSE -> log.log(Level.INFO, "Catch up response received from Peer " + peerId);
-            default -> log.log(Level.WARNING,
-                    String.format("Unknown grandpa message type \"%d\" from Peer %s", msg[0], peerId));
         }
     }
 
@@ -87,7 +90,7 @@ public class GrandpaEngine {
         ScaleCodecReader reader = new ScaleCodecReader(msg);
         CommitMessage commitMessage = reader.read(new CommitMessageScaleReader());
         if (isBlockAlreadyReached(commitMessage.getVote().getBlockNumber())) {
-            log.log(Level.INFO, String.format("Received commit message for already reached block %d from peer %s",
+            log.log(Level.INFO, String.format("Received commit message for finalized block %d from peer %s",
                             commitMessage.getVote().getBlockNumber(), peerId));
             return;
         }
