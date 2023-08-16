@@ -112,7 +112,10 @@ public class SyncedState {
         }
     }
 
-    private void updateState(CommitMessage commitMessage) {
+    private synchronized void updateState(CommitMessage commitMessage) {
+        if (commitMessage.getVote().getBlockNumber().compareTo(lastFinalizedBlockNumber) < 1) {
+            return;
+        }
         latestRound = commitMessage.getRoundNumber();
         lastFinalizedBlockHash = commitMessage.getVote().getBlockHash();
         lastFinalizedBlockNumber = commitMessage.getVote().getBlockNumber();
