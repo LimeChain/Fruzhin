@@ -23,6 +23,7 @@ import io.libp2p.protocol.PingProtocol;
 import lombok.Getter;
 import lombok.extern.java.Log;
 import org.peergos.HostBuilder;
+import org.peergos.protocol.IdentifyBuilder;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -129,6 +130,7 @@ public class Network {
         );
 
         this.host = hostBuilder.build();
+        IdentifyBuilder.addIdentifyProtocol(this.host);
         kademliaService.setHost(host);
     }
 
@@ -206,6 +208,7 @@ public class Network {
 
     public void updateCurrentSelectedPeer() {
         Random random = new Random();
+        if(connectionManager.getPeerIds().size() == 0) return;
         this.currentSelectedPeer = connectionManager.getPeerIds().stream()
                 .skip(random.nextInt(connectionManager.getPeerIds().size())).findAny().orElse(null);
     }
