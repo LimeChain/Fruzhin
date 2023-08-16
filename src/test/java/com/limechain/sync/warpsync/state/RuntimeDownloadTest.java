@@ -9,9 +9,11 @@ import com.limechain.trie.Trie;
 import com.limechain.trie.TrieVerifier;
 import com.limechain.trie.decoder.TrieDecoderException;
 import com.limechain.utils.LittleEndianUtils;
+import com.limechain.utils.RandomGenerationUtils;
 import com.limechain.utils.StringUtils;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.types.Hash256;
+import io.ipfs.multiaddr.MultiAddress;
 import io.ipfs.multihash.Multihash;
 import io.libp2p.core.Host;
 import io.libp2p.core.PeerId;
@@ -22,22 +24,22 @@ import org.junit.jupiter.api.Test;
 import org.peergos.HostBuilder;
 
 import java.util.List;
-import java.util.Random;
 import java.util.logging.Level;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @Log
-public class RuntimeDownloadTest {
+class RuntimeDownloadTest {
     @Disabled("This is an integration test")
     @Test
-    public void runtimeDownloadAndBuildTest() {
+    void runtimeDownloadAndBuildTest() {
         Host senderNode = null;
         try {
             //Setup node and connect to boot nodes
-            HostBuilder hostBuilder1 =
-                    (new HostBuilder()).generateIdentity().listenLocalhost(10000
-                            + new Random().nextInt(50000));
+            MultiAddress address = RandomGenerationUtils.generateRandomAddress();
+            HostBuilder hostBuilder1 = new HostBuilder()
+                    .generateIdentity()
+                    .listen(List.of(address));
 
             var lightMessages = new LightMessages("/dot/light/2", new LightMessagesProtocol());
             var kademliaService = new KademliaService("/dot/kad",

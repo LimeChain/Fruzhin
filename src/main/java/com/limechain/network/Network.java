@@ -15,6 +15,7 @@ import com.limechain.network.protocol.sync.pb.SyncMessage.BlockResponse;
 import com.limechain.network.protocol.warp.WarpSyncService;
 import com.limechain.network.protocol.warp.dto.WarpSyncResponse;
 import com.limechain.sync.warpsync.SyncedState;
+import io.ipfs.multiaddr.MultiAddress;
 import io.ipfs.multihash.Multihash;
 import io.libp2p.core.Host;
 import io.libp2p.core.PeerId;
@@ -41,6 +42,7 @@ import static com.limechain.network.kad.KademliaService.REPLICATION;
 @Component
 @Log
 public class Network {
+    public static final String LOCAL_IPV4_TCP_ADDRESS = "/ip4/127.0.0.1/tcp/";
     private static final int HOST_PORT = 30333;
     @Getter
     private static Network network;
@@ -96,7 +98,9 @@ public class Network {
         boolean isLocalEnabled = hostConfig.getChain() == Chain.LOCAL;
         boolean clientMode = true;
 
-        HostBuilder hostBuilder = new HostBuilder().generateIdentity().listenLocalhost(HOST_PORT);
+        HostBuilder hostBuilder = new HostBuilder()
+                .generateIdentity()
+                .listen(List.of(new MultiAddress(LOCAL_IPV4_TCP_ADDRESS + HOST_PORT)));
         Multihash hostId = Multihash.deserialize(hostBuilder.getPeerId().getBytes());
 
         String pingProtocol = ProtocolUtils.getPingProtocol();

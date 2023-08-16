@@ -2,7 +2,9 @@ package com.limechain.network.protocol.blockannounce;
 
 import com.limechain.network.kad.KademliaService;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshake;
+import com.limechain.utils.RandomGenerationUtils;
 import io.emeraldpay.polkaj.types.Hash256;
+import io.ipfs.multiaddr.MultiAddress;
 import io.ipfs.multihash.Multihash;
 import io.libp2p.core.Host;
 import io.libp2p.core.PeerId;
@@ -14,7 +16,6 @@ import org.peergos.HostBuilder;
 
 import java.math.BigInteger;
 import java.util.List;
-import java.util.Random;
 
 class BlockAnnounceTest {
     @Disabled("This is an integration test")
@@ -22,9 +23,10 @@ class BlockAnnounceTest {
     void receivesNotifications() {
         Host senderNode = null;
         try {
-            HostBuilder hostBuilder1 =
-                    (new HostBuilder()).generateIdentity().listenLocalhost(
-                            10000 + new Random().nextInt(50000));
+            MultiAddress multiAddress = RandomGenerationUtils.generateRandomAddress();
+            HostBuilder hostBuilder1 = new HostBuilder()
+                    .generateIdentity()
+                    .listen(List.of(multiAddress));
 
             var blockAnnounce = new BlockAnnounce("/dot/block-announces/1", new BlockAnnounceProtocol());
             var kademliaService = new KademliaService("/dot/kad",
