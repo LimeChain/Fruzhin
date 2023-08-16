@@ -23,6 +23,7 @@ public class RuntimeDownloadState implements WarpSyncState {
     @Override
     public void next(WarpSyncMachine sync) {
         if (this.error != null) {
+            log.log(Level.WARNING, this.error.getMessage());
             sync.setWarpSyncState(new RequestFragmentsState(syncedState.getLastFinalizedBlockHash()));
             return;
         }
@@ -41,7 +42,7 @@ public class RuntimeDownloadState implements WarpSyncState {
 
         byte[][] decodedProofs = decodeProof(proof);
 
-        setCodeAndHeapPages(sync, decodedProofs);
+        setCode(decodedProofs);
     }
 
     private byte[][] decodeProof(byte[] proof) {
@@ -55,7 +56,7 @@ public class RuntimeDownloadState implements WarpSyncState {
         return decodedProofs;
     }
 
-    private void setCodeAndHeapPages(WarpSyncMachine sync, byte[][] decodedProofs) {
+    private void setCode(byte[][] decodedProofs) {
         Trie trie;
         try {
             trie = TrieVerifier.buildTrie(decodedProofs, syncedState.getStateRoot().getBytes());

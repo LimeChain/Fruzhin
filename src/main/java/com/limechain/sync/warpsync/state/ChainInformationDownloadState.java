@@ -1,5 +1,6 @@
 package com.limechain.sync.warpsync.state;
 
+import com.limechain.sync.warpsync.SyncedState;
 import com.limechain.sync.warpsync.WarpSyncMachine;
 import lombok.extern.java.Log;
 
@@ -12,6 +13,7 @@ import java.util.logging.Level;
  */
 @Log
 public class ChainInformationDownloadState implements WarpSyncState {
+    private final SyncedState syncedState = SyncedState.getInstance();
     private String[] runtimeFunctionCalls = new String[]{
             "AuraApi_slot_duration",
             "AuraApi_authorities",
@@ -40,7 +42,7 @@ public class ChainInformationDownloadState implements WarpSyncState {
         for (int i = 0; i < runtimeFunctionCalls.length; i++) {
             try {
                 //TODO Make runtime calls here
-                //responses[i] = sync.getRuntime().call(runtimeFunctionCalls[i]);
+                responses[i] = syncedState.getRuntime().call(runtimeFunctionCalls[i]);
                 log.log(Level.INFO, "Made a runtime call \"" + runtimeFunctionCalls[i] + "\" : " + responses[i]);
             } catch (Exception e) {
                 log.log(Level.WARNING, e.getMessage(), e.getStackTrace());
