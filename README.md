@@ -42,4 +42,4 @@ Repository is under active development. Goal for first phase is to have a functi
    in order to get the genesis hash. Paste the response into the `LOCAL` field of `GenesisHash`.
 
 7. ```./gradlew build```
-8. ```java -jar build/libs/java-host-1.0-SNAPSHOT.jar -n local```
+8. ```java -jar -Djava.library.path=./artifacts/darwin-amd64 build/libs/java-host-1.0-SNAPSHOT.jar -n local```
