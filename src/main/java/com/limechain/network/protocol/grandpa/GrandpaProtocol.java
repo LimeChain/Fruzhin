@@ -63,6 +63,23 @@ public class GrandpaProtocol extends ProtocolHandler<GrandpaController> {
         }
 
         @Override
+        public void onClosed(Stream stream) {
+            log.log(Level.INFO, "Grandpa stream closed for peer " + stream.remotePeerId());
+            ProtocolMessageHandler.super.onClosed(stream);
+        }
+
+        @Override
+        public void onException(Throwable cause) {
+            if (cause != null) {
+                log.log(Level.WARNING, "Grandpa Exception: " + cause.getMessage());
+                cause.printStackTrace();
+            } else {
+                log.log(Level.WARNING, "Grandpa Exception with unknown cause");
+            }
+            ProtocolMessageHandler.super.onException(cause);
+        }
+
+        @Override
         public void sendHandshake() {
             engine.writeHandshakeToStream(stream, stream.remotePeerId());
         }
