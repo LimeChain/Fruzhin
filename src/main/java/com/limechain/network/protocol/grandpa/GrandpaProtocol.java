@@ -11,10 +11,11 @@ import lombok.extern.java.Log;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.logging.Level;
 
 @Log
 public class GrandpaProtocol extends ProtocolHandler<GrandpaController> {
-    public static final int TRAFFIC_LIMIT = 1024 * 1024;
+    private static final long TRAFFIC_LIMIT = Long.MAX_VALUE;
     private final GrandpaEngine engine;
 
     public GrandpaProtocol() {
