@@ -9,11 +9,7 @@ import org.springframework.context.annotation.ComponentScan;
 import java.util.Collections;
 
 /**
- * Main WS Spring application class. Starts one of the two Spring applications.
- * <p>
- * Reason for having two Spring applications is because we have to expose both http and ws
- * <a href="https://wiki.polkadot.network/docs/build-node-interaction#polkadot-rpc">endpoints on different ports</a>
- * which isn't possible with a single Spring app.
+ * Main RPC Spring application class.
  */
 @SpringBootApplication
 @ComponentScan(basePackages = {

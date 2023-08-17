@@ -14,14 +14,14 @@ public class TransactionRpcImpl implements TransactionRpc {
     /**
      * WebSocket client which forwards the requests to smoldot
      */
-    private final SubscriptionRpcClient wsClient;
+    private final SubscriptionRpcClient rpcClient;
 
     public TransactionRpcImpl(String forwardNodeAddress) {
         try {
-            this.wsClient = new SubscriptionRpcClient(new URI(forwardNodeAddress), new PublisherImpl(),
+            this.rpcClient = new SubscriptionRpcClient(new URI(forwardNodeAddress), new PublisherImpl(),
                     Topic.UNSTABLE_TRANSACTION_WATCH);
             // TODO: Move connect outside constructor
-            wsClient.connectBlocking();
+            rpcClient.connectBlocking();
         } catch (URISyntaxException | InterruptedException e) {
             throw new RuntimeException(e);
         }
@@ -29,14 +29,14 @@ public class TransactionRpcImpl implements TransactionRpc {
 
     @Override
     public void transactionUnstableSubmitAndWatch(String transaction) {
-        wsClient.send(SubscriptionName.TRANSACTION_UNSTABLE_SUBMIT_AND_WATCH.getValue(),
+        rpcClient.send(SubscriptionName.TRANSACTION_UNSTABLE_SUBMIT_AND_WATCH.getValue(),
                 new String[]{Utils.wrapWithDoubleQuotes(transaction)});
 
     }
 
     @Override
     public void transactionUnstableUnwatch(String subscriptionId) {
-        wsClient.send(SubscriptionName.TRANSACTION_UNSTABLE_UNWATCH.getValue(),
+        rpcClient.send(SubscriptionName.TRANSACTION_UNSTABLE_UNWATCH.getValue(),
                 new String[]{Utils.wrapWithDoubleQuotes(subscriptionId)});
     }
 

@@ -39,7 +39,7 @@ public class RpcWsRoutingConfig implements WebSocketConfigurer {
     }
 
     /**
-     * The handler that will be executed when ws request is received
+     * The handler that will be executed when ws rpc request is received
      */
     public RpcWsHandler webSocketHandler() {
         return new RpcWsHandler(rpcMethods, chainHeadRpc(), transactionRpc());

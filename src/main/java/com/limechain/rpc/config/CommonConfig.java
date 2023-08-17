@@ -15,10 +15,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Spring configuration class used to instantiate beans used by both http and ws rpc modules.
- * <p>
- * <b>IMPORTANT: This class is invoked twice on Host startup. This means that unless beans are singletons,
- * the http and ws spring apps will hold different bean references.</b>
+ * Spring configuration class used to instantiate beans.
  */
 @Configuration
 public class CommonConfig {
