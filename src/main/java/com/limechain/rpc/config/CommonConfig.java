@@ -29,8 +29,12 @@ public class CommonConfig {
     }
 
     @Bean
-    public HostConfig hostConfig(ApplicationArguments arguments) {
-        CliArguments cliArgs = new Cli().parseArgs(arguments.getSourceArgs());
+    public CliArguments cliArgs(ApplicationArguments arguments){
+        return new Cli().parseArgs(arguments.getSourceArgs());
+    }
+
+    @Bean
+    public HostConfig hostConfig(CliArguments cliArgs) {
         return new HostConfig(cliArgs);
     }
 
@@ -50,8 +54,9 @@ public class CommonConfig {
     }
 
     @Bean
-    public Network network(ChainService chainService, HostConfig hostConfig, KVRepository<String, Object> repository) {
-        return Network.initialize(chainService, hostConfig, repository);
+    public Network network(ChainService chainService, HostConfig hostConfig, KVRepository<String, Object> repository,
+                           CliArguments cliArgs) {
+        return Network.initialize(chainService, hostConfig, repository, cliArgs);
     }
 
     @Bean
