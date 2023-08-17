@@ -1,4 +1,4 @@
-package com.limechain.rpc.ws.client;
+package com.limechain.rpc.client;
 
 import lombok.extern.java.Log;
 import org.java_websocket.client.WebSocketClient;

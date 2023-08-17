@@ -1,4 +1,4 @@
-package com.limechain.rpc.ws.server;
+package com.limechain.rpc.server;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.googlecode.jsonrpc4j.JsonRpcBasicServer;
@@ -24,7 +24,7 @@ import java.util.logging.Level;
 
 @Component
 @Log
-public class WebSocketHandler extends TextWebSocketHandler {
+public class RpcWsHandler extends TextWebSocketHandler {
 
     private final JsonRpcBasicServer server;
     private final PubSubService pubSubService = PubSubService.getInstance();
@@ -32,7 +32,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
     private final ChainHeadRpc chainHeadRpc;
     private final TransactionRpc transactionRpc;
 
-    public WebSocketHandler(RPCMethods rpcMethods, ChainHeadRpc chainHeadRpc, TransactionRpc transactionRpc) {
+    public RpcWsHandler(RPCMethods rpcMethods, ChainHeadRpc chainHeadRpc, TransactionRpc transactionRpc) {
         ObjectMapper mapper = new ObjectMapper();
         this.server = new JsonRpcBasicServer(mapper, rpcMethods);
         this.chainHeadRpc = chainHeadRpc;

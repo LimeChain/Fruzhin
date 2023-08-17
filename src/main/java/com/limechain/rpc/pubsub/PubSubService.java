@@ -16,11 +16,6 @@ import java.util.logging.Level;
  * A singleton mediator class standing between {@link com.limechain.rpc.pubsub.publisher.Publisher}
  * and {@link AbstractSubscriberChannel} which accepts messages from the formers and sends them at some point
  * to the latter.
- * <p>
- * <b>IMPORTANT: This class is a singleton as both http and ws Spring apps
- * use it and we want to always have a single reference.
- * Otherwise each Spring app will have it's own instance of this
- * service which will lead to undocumented runtime behaviour</b>
  */
 @Log
 public class PubSubService {

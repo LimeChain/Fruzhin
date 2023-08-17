@@ -1,4 +1,4 @@
-package com.limechain.rpc.ws.client;
+package com.limechain.rpc.client;
 
 import com.limechain.rpc.pubsub.Message;
 import com.limechain.rpc.pubsub.PubSubService;

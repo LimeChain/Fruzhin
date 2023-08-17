@@ -8,9 +8,6 @@ import java.util.Map;
 
 /**
  * Initializer class ala Singleton which holds and serves connections to the database.
- * <p>
- * Both http and ws Spring apps should hold the same connection to the database.
- * Additionally, RocksDB throws an error if there are two apps trying to write to the same directory
  */
 @Log
 public class DBInitializer {

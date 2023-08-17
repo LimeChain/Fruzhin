@@ -1,4 +1,4 @@
-package com.limechain.rpc.ws.server;
+package com.limechain.rpc.server;
 
 import com.limechain.config.HostConfig;
 import com.limechain.rpc.methods.RPCMethods;
@@ -17,7 +17,7 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
  */
 @Configuration
 @EnableWebSocket
-public class WebSocketRoutingConfig implements WebSocketConfigurer {
+public class RpcWsRoutingConfig implements WebSocketConfigurer {
 
     /**
      * Dependencies will be injected from {@link com.limechain.rpc.config.CommonConfig}
@@ -25,7 +25,7 @@ public class WebSocketRoutingConfig implements WebSocketConfigurer {
     private final RPCMethods rpcMethods;
     private final HostConfig hostConfig;
 
-    public WebSocketRoutingConfig(RPCMethods rpcMethods, HostConfig hostConfig) {
+    public RpcWsRoutingConfig(RPCMethods rpcMethods, HostConfig hostConfig) {
         this.rpcMethods = rpcMethods;
         this.hostConfig = hostConfig;
     }
@@ -39,14 +39,14 @@ public class WebSocketRoutingConfig implements WebSocketConfigurer {
     }
 
     /**
-     * The handler that will be executed when ws request is received
+     * The handler that will be executed when ws rpc request is received
      */
-    public WebSocketHandler webSocketHandler() {
-        return new WebSocketHandler(rpcMethods, chainHeadRpc(), transactionRpc());
+    public RpcWsHandler webSocketHandler() {
+        return new RpcWsHandler(rpcMethods, chainHeadRpc(), transactionRpc());
     }
 
     /**
-     * Additional beans used by {@link WebSocketHandler}
+     * Additional beans used by {@link RpcWsHandler}
      */
     @Bean
     public ChainHeadRpc chainHeadRpc() {

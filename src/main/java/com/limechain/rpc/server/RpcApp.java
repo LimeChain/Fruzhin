@@ -1,4 +1,4 @@
-package com.limechain.rpc.ws.server;
+package com.limechain.rpc.server;
 
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.SpringApplication;
@@ -9,20 +9,16 @@ import org.springframework.context.annotation.ComponentScan;
 import java.util.Collections;
 
 /**
- * Main WS Spring application class. Starts one of the two Spring applications.
- * <p>
- * Reason for having two Spring applications is because we have to expose both http and ws
- * <a href="https://wiki.polkadot.network/docs/build-node-interaction#polkadot-rpc">endpoints on different ports</a>
- * which isn't possible with a single Spring app.
+ * Main RPC Spring application class.
  */
 @SpringBootApplication
 @ComponentScan(basePackages = {
         "com.limechain.rpc.config",
         "com.limechain.rpc.methods",
-        "com.limechain.rpc.ws.server",
+        "com.limechain.rpc.server",
         "com.limechain.storage"
 })
-public class WebSocketRPC {
+public class RpcApp {
 
     /**
      * Port the Spring app will run on
@@ -42,7 +38,7 @@ public class WebSocketRPC {
      * @see com.limechain.rpc.config.CommonConfig#hostConfig(ApplicationArguments)
      */
     public void start(String[] cliArgs) {
-        SpringApplication app = new SpringApplication(WebSocketRPC.class);
+        SpringApplication app = new SpringApplication(RpcApp.class);
         app.setDefaultProperties(Collections.singletonMap("server.port", serverPort));
         ConfigurableApplicationContext ctx = app.run(cliArgs);
         this.springCtx = ctx;

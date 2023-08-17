@@ -212,7 +212,7 @@ public class Network {
 
     public void updateCurrentSelectedPeer() {
         Random random = new Random();
-        if(connectionManager.getPeerIds().size() == 0) return;
+        if(connectionManager.getPeerIds().isEmpty()) return;
         this.currentSelectedPeer = connectionManager.getPeerIds().stream()
                 .skip(random.nextInt(connectionManager.getPeerIds().size())).findAny().orElse(null);
     }

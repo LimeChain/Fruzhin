@@ -1,4 +1,4 @@
-package com.limechain.rpc.http.server;
+package com.limechain.rpc.server;
 
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
