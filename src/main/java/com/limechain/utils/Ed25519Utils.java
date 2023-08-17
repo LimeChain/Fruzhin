@@ -1,14 +1,13 @@
 package com.limechain.utils;
 
 import io.libp2p.crypto.keys.Ed25519PrivateKey;
+import lombok.experimental.UtilityClass;
 import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters;
 
 import java.security.SecureRandom;
 
+@UtilityClass
 public class Ed25519Utils {
-    private Ed25519Utils(){
-        //Utils class
-    }
 
     public static Ed25519PrivateKey generatePrivateKey(){
         final Ed25519PrivateKeyParameters parameters = new Ed25519PrivateKeyParameters(new SecureRandom());
