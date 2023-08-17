@@ -15,6 +15,7 @@ import com.limechain.network.protocol.sync.pb.SyncMessage.BlockResponse;
 import com.limechain.network.protocol.warp.WarpSyncService;
 import com.limechain.network.protocol.warp.dto.WarpSyncResponse;
 import com.limechain.storage.KVRepository;
+import com.limechain.storage.DBConstants;
 import com.limechain.sync.warpsync.SyncedState;
 import com.limechain.utils.Ed25519Utils;
 import io.ipfs.multiaddr.MultiAddress;
@@ -47,7 +48,6 @@ import static com.limechain.network.kad.KademliaService.REPLICATION;
 @Log
 public class Network {
     public static final String LOCAL_IPV4_TCP_ADDRESS = "/ip4/127.0.0.1/tcp/";
-    private final String peerIdKey = "nodePeerId";
     private static final int HOST_PORT = 30333;
     @Getter
     private static Network network;
@@ -151,13 +151,13 @@ public class Network {
 
     private Ed25519PrivateKey loadPrivateKeyFromDB(KVRepository<String, Object> repository) {
         final Ed25519PrivateKey privateKey;
-        Optional<Object> peerIdKeyBytes = repository.find(this.peerIdKey);
+        Optional<Object> peerIdKeyBytes = repository.find(DBConstants.PEER_ID);
         if(peerIdKeyBytes.isPresent()){
             privateKey = Ed25519Utils.loadPrivateKey((byte[]) peerIdKeyBytes.get());
             log.log(Level.INFO, "PeerId loaded from database!");
         }else {
             privateKey = Ed25519Utils.generatePrivateKey();
-            repository.save(this.peerIdKey, privateKey.raw());
+            repository.save(DBConstants.PEER_ID, privateKey.raw());
             log.log(Level.INFO, "Generated new peerId ");
         }
         return privateKey;

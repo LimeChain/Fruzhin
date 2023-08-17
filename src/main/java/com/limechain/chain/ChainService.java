@@ -1,6 +1,7 @@
 package com.limechain.chain;
 
 import com.limechain.config.HostConfig;
+import com.limechain.storage.DBConstants;
 import com.limechain.storage.KVRepository;
 import lombok.Getter;
 import lombok.Setter;
@@ -17,11 +18,6 @@ import java.util.logging.Level;
 @Setter
 @Log
 public class ChainService {
-    /**
-     * Key under which the value is stored
-     */
-    private final String genesisKey = "genesis";
-
     /**
      * Key-value repository that stores the chain spec info
      */
@@ -43,7 +39,7 @@ public class ChainService {
     }
 
     protected void initialize(HostConfig hostConfig) {
-        Optional<Object> genesis = repository.find(genesisKey);
+        Optional<Object> genesis = repository.find(DBConstants.GENESIS_KEY);
         /*
             WORKAROUND
             The inLocalDevelopment variable and its usage below are only to aid in development.
@@ -64,7 +60,7 @@ public class ChainService {
             this.setGenesis(ChainSpec.newFromJSON(hostConfig.getGenesisPath()));
             log.log(Level.INFO, "✅️Loaded chain spec from JSON");
 
-            repository.save(this.getGenesisKey(), this.getGenesis());
+            repository.save(DBConstants.GENESIS_KEY, this.getGenesis());
             log.log(Level.FINE, "Saved chain spec to database");
         } catch (IOException e) {
             throw new RuntimeException(e);
