@@ -109,7 +109,7 @@ public class Network {
         HostBuilder hostBuilder = new HostBuilder()
                 .listen(List.of(new MultiAddress(LOCAL_IPV4_TCP_ADDRESS + HOST_PORT)));
 
-        //The peerId is generated from the privateKey of the node
+        // The peerId is generated from the privateKey of the node
         hostBuilder.setPrivKey(loadPrivateKeyFromDB(repository));
         log.info("Current peerId " + hostBuilder.getPeerId().toString());
         Multihash hostId = Multihash.deserialize(hostBuilder.getPeerId().getBytes());
@@ -158,7 +158,7 @@ public class Network {
         }else {
             privateKey = Ed25519Utils.generatePrivateKey();
             repository.save(DBConstants.PEER_ID, privateKey.raw());
-            log.log(Level.INFO, "Generated new peerId ");
+            log.log(Level.INFO, "Generated new peerId!");
         }
         return privateKey;
     }
