@@ -50,8 +50,8 @@ public class CommonConfig {
     }
 
     @Bean
-    public Network network(ChainService chainService, HostConfig hostConfig) {
-        return Network.initialize(chainService, hostConfig);
+    public Network network(ChainService chainService, HostConfig hostConfig, KVRepository<String, Object> repository) {
+        return Network.initialize(chainService, hostConfig, repository);
     }
 
     @Bean

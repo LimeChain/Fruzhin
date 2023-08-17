@@ -14,12 +14,15 @@ import com.limechain.network.protocol.sync.pb.SyncMessage;
 import com.limechain.network.protocol.sync.pb.SyncMessage.BlockResponse;
 import com.limechain.network.protocol.warp.WarpSyncService;
 import com.limechain.network.protocol.warp.dto.WarpSyncResponse;
+import com.limechain.storage.KVRepository;
 import com.limechain.sync.warpsync.SyncedState;
+import com.limechain.utils.Ed25519Utils;
 import io.ipfs.multiaddr.MultiAddress;
 import io.ipfs.multihash.Multihash;
 import io.libp2p.core.Host;
 import io.libp2p.core.PeerId;
 import io.libp2p.core.multiformats.Multiaddr;
+import io.libp2p.crypto.keys.Ed25519PrivateKey;
 import io.libp2p.protocol.PingProtocol;
 import lombok.Getter;
 import lombok.extern.java.Log;
@@ -30,6 +33,7 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -43,6 +47,7 @@ import static com.limechain.network.kad.KademliaService.REPLICATION;
 @Log
 public class Network {
     public static final String LOCAL_IPV4_TCP_ADDRESS = "/ip4/127.0.0.1/tcp/";
+    private final String peerIdKey = "nodePeerId";
     private static final int HOST_PORT = 30333;
     @Getter
     private static Network network;
@@ -70,9 +75,10 @@ public class Network {
      *
      * @param chainService chain specification information containing boot nodes
      * @param hostConfig   host configuration containing current network
+     * @param repository
      */
-    private Network(ChainService chainService, HostConfig hostConfig) {
-        this.initializeProtocols(chainService, hostConfig);
+    private Network(ChainService chainService, HostConfig hostConfig, KVRepository<String, Object> repository) {
+        this.initializeProtocols(chainService, hostConfig, repository);
         this.bootNodes = chainService.getGenesis().getBootNodes();
         this.chain = hostConfig.getChain();
     }
@@ -83,24 +89,29 @@ public class Network {
      *
      * @return Network instance saved in class or if not found returns new Network instance
      */
-    public static Network initialize(ChainService chainService, HostConfig hostConfig) {
+    public static Network initialize(ChainService chainService, HostConfig hostConfig,
+                                     KVRepository<String, Object> repository) {
         if (network != null) {
             log.log(Level.WARNING, "Network module already initialized.");
             return network;
         }
-        network = new Network(chainService, hostConfig);
+        network = new Network(chainService, hostConfig, repository);
         SyncedState.getInstance().setNetwork(network);
         log.log(Level.INFO, "Initialized network module!");
         return network;
     }
 
-    private void initializeProtocols(ChainService chainService, HostConfig hostConfig) {
+    private void initializeProtocols(ChainService chainService, HostConfig hostConfig,
+                                     KVRepository<String, Object> repository) {
         boolean isLocalEnabled = hostConfig.getChain() == Chain.LOCAL;
         boolean clientMode = true;
 
         HostBuilder hostBuilder = new HostBuilder()
-                .generateIdentity()
                 .listen(List.of(new MultiAddress(LOCAL_IPV4_TCP_ADDRESS + HOST_PORT)));
+
+        //The peerId is generated from the privateKey of the node
+        hostBuilder.setPrivKey(loadPrivateKeyFromDB(repository));
+        log.info("Current peerId " + hostBuilder.getPeerId().toString());
         Multihash hostId = Multihash.deserialize(hostBuilder.getPeerId().getBytes());
 
         String pingProtocol = ProtocolUtils.getPingProtocol();
@@ -136,6 +147,20 @@ public class Network {
         this.host = hostBuilder.build();
         IdentifyBuilder.addIdentifyProtocol(this.host);
         kademliaService.setHost(host);
+    }
+
+    private Ed25519PrivateKey loadPrivateKeyFromDB(KVRepository<String, Object> repository) {
+        final Ed25519PrivateKey privateKey;
+        Optional<Object> peerIdKeyBytes = repository.find(this.peerIdKey);
+        if(peerIdKeyBytes.isPresent()){
+            privateKey = Ed25519Utils.loadPrivateKey((byte[]) peerIdKeyBytes.get());
+            log.log(Level.INFO, "PeerId loaded from database!");
+        }else {
+            privateKey = Ed25519Utils.generatePrivateKey();
+            repository.save(this.peerIdKey, privateKey.raw());
+            log.log(Level.INFO, "Generated new peerId ");
+        }
+        return privateKey;
     }
 
     public void start() {
