@@ -15,8 +15,8 @@ import com.limechain.network.protocol.sync.pb.SyncMessage;
 import com.limechain.network.protocol.sync.pb.SyncMessage.BlockResponse;
 import com.limechain.network.protocol.warp.WarpSyncService;
 import com.limechain.network.protocol.warp.dto.WarpSyncResponse;
-import com.limechain.storage.KVRepository;
 import com.limechain.storage.DBConstants;
+import com.limechain.storage.KVRepository;
 import com.limechain.sync.warpsync.SyncedState;
 import com.limechain.utils.Ed25519Utils;
 import com.limechain.utils.StringUtils;
@@ -154,19 +154,23 @@ public class Network {
     }
 
     private Ed25519PrivateKey loadPrivateKeyFromDB(KVRepository<String, Object> repository, CliArguments cliArgs) {
-        final Ed25519PrivateKey privateKey;
+        Ed25519PrivateKey privateKey;
 
-        if(cliArgs.nodeKey() != null && !cliArgs.nodeKey().isBlank()){
-            privateKey = Ed25519Utils.loadPrivateKey(StringUtils.hexToBytes(cliArgs.nodeKey()));
-            log.log(Level.INFO, "PeerId loaded from arguments!");
-            return privateKey;
+        if (cliArgs.nodeKey() != null && !cliArgs.nodeKey().isBlank()) {
+            try {
+                privateKey = Ed25519Utils.loadPrivateKey(StringUtils.hexToBytes(cliArgs.nodeKey()));
+                log.log(Level.INFO, "PeerId loaded from arguments!");
+                return privateKey;
+            } catch (IllegalArgumentException ex) {
+                log.severe("Provided secret key hex is invalid!");
+            }
         }
 
         Optional<Object> peerIdKeyBytes = repository.find(DBConstants.PEER_ID);
-        if(peerIdKeyBytes.isPresent()){
+        if (peerIdKeyBytes.isPresent()) {
             privateKey = Ed25519Utils.loadPrivateKey((byte[]) peerIdKeyBytes.get());
             log.log(Level.INFO, "PeerId loaded from database!");
-        }else {
+        } else {
             privateKey = Ed25519Utils.generatePrivateKey();
             repository.save(DBConstants.PEER_ID, privateKey.raw());
             log.log(Level.INFO, "Generated new peerId!");
@@ -248,7 +252,7 @@ public class Network {
 
     public void updateCurrentSelectedPeer() {
         Random random = new Random();
-        if(connectionManager.getPeerIds().isEmpty()) return;
+        if (connectionManager.getPeerIds().isEmpty()) return;
         this.currentSelectedPeer = connectionManager.getPeerIds().stream()
                 .skip(random.nextInt(connectionManager.getPeerIds().size())).findAny().orElse(null);
     }
