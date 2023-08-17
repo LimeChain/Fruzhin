@@ -6,9 +6,9 @@ import org.springframework.web.servlet.HandlerMapping;
 import org.springframework.web.socket.server.support.WebSocketHandlerMapping;
 
 @Configuration
-public class WebsocketConfig {
+public class RpcConfig {
 
-    public WebsocketConfig(@Qualifier("webSocketHandlerMapping") HandlerMapping webSocketHandlerMapping) {
+    public RpcConfig(@Qualifier("webSocketHandlerMapping") HandlerMapping webSocketHandlerMapping) {
         WebSocketHandlerMapping webSocketHandlerMapping1 = (WebSocketHandlerMapping) webSocketHandlerMapping;
         webSocketHandlerMapping1.setWebSocketUpgradeMatch(true);
     }

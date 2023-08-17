@@ -4,7 +4,7 @@ import com.limechain.rpc.config.SubscriptionName;
 import com.limechain.rpc.pubsub.Topic;
 import com.limechain.rpc.pubsub.publisher.PublisherImpl;
 import com.limechain.rpc.subscriptions.utils.Utils;
-import com.limechain.rpc.ws.client.SubscriptionRpcClient;
+import com.limechain.rpc.client.SubscriptionRpcClient;
 
 import java.net.URI;
 import java.net.URISyntaxException;

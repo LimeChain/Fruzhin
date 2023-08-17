@@ -1,7 +1,7 @@
 package com.limechain.lightclient;
 
 import com.limechain.network.Network;
-import com.limechain.rpc.ws.server.WebSocketRPC;
+import com.limechain.rpc.server.RpcApp;
 import com.limechain.sync.warpsync.WarpSyncMachine;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,7 +15,7 @@ import static org.mockito.Mockito.verify;
 class LightClientTest {
     private LightClient lightClient;
 
-    private WebSocketRPC wsRpc;
+    private RpcApp wsRpc;
     private String[] args;
 
     // Setting private fields. Not a good idea in general
@@ -29,7 +29,7 @@ class LightClientTest {
 
     @BeforeEach
     public void setup() {
-        wsRpc = mock(WebSocketRPC.class);
+        wsRpc = mock(RpcApp.class);
         args = new String[]{"some args"};
 
         lightClient = new LightClient(args, wsRpc);

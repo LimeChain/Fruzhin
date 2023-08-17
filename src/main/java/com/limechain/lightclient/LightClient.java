@@ -2,8 +2,8 @@ package com.limechain.lightclient;
 
 import com.limechain.network.ConnectionManager;
 import com.limechain.network.Network;
-import com.limechain.rpc.ws.server.AppBean;
-import com.limechain.rpc.ws.server.WebSocketRPC;
+import com.limechain.rpc.server.AppBean;
+import com.limechain.rpc.server.RpcApp;
 import com.limechain.sync.warpsync.WarpSyncMachine;
 import lombok.SneakyThrows;
 import lombok.extern.java.Log;
@@ -18,12 +18,12 @@ import java.util.logging.Level;
 public class LightClient {
     // TODO: Add service dependencies i.e rpc, sync, network, etc.
     private final String[] cliArgs;
-    private final WebSocketRPC wsRpc;
+    private final RpcApp wsRpc;
     private final ConnectionManager connectionManager = ConnectionManager.getInstance();
     private Network network;
     private WarpSyncMachine warpSyncMachine;
 
-    public LightClient(String[] cliArgs, WebSocketRPC wsRpc) {
+    public LightClient(String[] cliArgs, RpcApp wsRpc) {
         this.cliArgs = cliArgs;
         this.wsRpc = wsRpc;
     }

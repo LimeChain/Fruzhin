@@ -1,4 +1,4 @@
-package com.limechain.rpc.ws.server;
+package com.limechain.rpc.server;
 
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.SpringApplication;
@@ -22,7 +22,7 @@ import java.util.Collections;
         "com.limechain.rpc.ws.server",
         "com.limechain.storage"
 })
-public class WebSocketRPC {
+public class RpcApp {
 
     /**
      * Port the Spring app will run on
@@ -42,7 +42,7 @@ public class WebSocketRPC {
      * @see com.limechain.rpc.config.CommonConfig#hostConfig(ApplicationArguments)
      */
     public void start(String[] cliArgs) {
-        SpringApplication app = new SpringApplication(WebSocketRPC.class);
+        SpringApplication app = new SpringApplication(RpcApp.class);
         app.setDefaultProperties(Collections.singletonMap("server.port", serverPort));
         ConfigurableApplicationContext ctx = app.run(cliArgs);
         this.springCtx = ctx;

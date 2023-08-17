@@ -1,4 +1,4 @@
-package com.limechain.rpc.ws.server;
+package com.limechain.rpc.server;
 
 import lombok.Getter;
 
