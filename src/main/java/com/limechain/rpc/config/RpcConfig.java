@@ -17,8 +17,10 @@ import org.springframework.web.socket.server.support.WebSocketHandlerMapping;
 public class RpcConfig {
 
     public RpcConfig(@Qualifier("webSocketHandlerMapping") HandlerMapping webSocketHandlerMapping) {
-        WebSocketHandlerMapping webSocketHandlerMapping1 = (WebSocketHandlerMapping) webSocketHandlerMapping;
-        webSocketHandlerMapping1.setWebSocketUpgradeMatch(true);
+        if(webSocketHandlerMapping instanceof WebSocketHandlerMapping handlerMapping)
+            handlerMapping.setWebSocketUpgradeMatch(true);
+        else
+            log.severe(String.format("%s was not found. The WS Rpc and Http Rpc may not work as intended!", WebSocketHandlerMapping.class.getSimpleName()));
     }
 
 }
