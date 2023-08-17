@@ -1,5 +1,8 @@
 package com.limechain.utils;
 
+import lombok.experimental.UtilityClass;
+
+@UtilityClass
 public class ByteArrayUtils {
     public static int commonPrefixLength(byte[] a, byte[] b) {
         int minLength = Math.min(a.length, b.length);

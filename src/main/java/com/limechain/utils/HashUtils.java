@@ -1,8 +1,10 @@
 package com.limechain.utils;
 
 import io.emeraldpay.polkaj.types.Hash256;
+import lombok.experimental.UtilityClass;
 import org.bouncycastle.crypto.digests.Blake2bDigest;
 
+@UtilityClass
 public class HashUtils {
     public static final int HASH256_HASH_LENGTH = Hash256.SIZE_BYTES * Byte.SIZE;
     public static byte[] hashWithBlake2b(byte[] input) {
