@@ -7,7 +7,8 @@ import org.springframework.web.servlet.HandlerMapping;
 import org.springframework.web.socket.server.support.WebSocketHandlerMapping;
 
 /**
- * Spring configuration class used to configure the websocket handler mapping to process only websocket requests or http requests with upgrade headers only
+ * Spring configuration class used to configure the websocket handler mapping
+ * to process only websocket requests or http requests with upgrade headers only
  *
  * <p>
  *     The configuration is in separate file from {@link CommonConfig} because of the circular dependency loop
@@ -19,8 +20,11 @@ public class RpcConfig {
     public RpcConfig(@Qualifier("webSocketHandlerMapping") HandlerMapping webSocketHandlerMapping) {
         if(webSocketHandlerMapping instanceof WebSocketHandlerMapping handlerMapping)
             handlerMapping.setWebSocketUpgradeMatch(true);
-        else
-            log.severe(String.format("%s was not found. The WS Rpc and Http Rpc may not work as intended!", WebSocketHandlerMapping.class.getSimpleName()));
+        else {
+            String message = "%s was not found. The WS Rpc and Http Rpc may not work as intended!";
+            String formattedMsg = String.format(message, WebSocketHandlerMapping.class.getName());
+            log.severe(formattedMsg);
+        }
     }
 
 }
