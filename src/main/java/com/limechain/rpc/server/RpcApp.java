@@ -15,7 +15,7 @@ import java.util.Collections;
 @ComponentScan(basePackages = {
         "com.limechain.rpc.config",
         "com.limechain.rpc.methods",
-        "com.limechain.rpc.ws.server",
+        "com.limechain.rpc.server",
         "com.limechain.storage"
 })
 public class RpcApp {
