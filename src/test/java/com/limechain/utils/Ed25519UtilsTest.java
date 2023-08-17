@@ -37,7 +37,7 @@ class Ed25519UtilsTest {
     }
 
     @Test
-    void loadPrivateKeyFailsOddKeyKel() {
+    void loadPrivateKeyFailsOddKeyLen() {
         byte[] tooShort = {109, -89, 75, 125, 88, 37, -93, 89};
         byte[] tooLong = {109, -89, 75, 125, 88, 37, -93, 89, 109, -89, 75, 125, 88, 37, -93, 89, 11, -93, -76, -39,
                 111, -33, -101, -51, -19, 63, 124, -90, 40, -33, 119, -108, 91, 127, 123, -54, -110, -89, -11, 10,};
