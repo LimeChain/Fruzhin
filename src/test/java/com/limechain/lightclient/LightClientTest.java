@@ -15,7 +15,7 @@ import static org.mockito.Mockito.verify;
 class LightClientTest {
     private LightClient lightClient;
 
-    private RpcApp wsRpc;
+    private RpcApp rpcApp;
     private String[] args;
 
     // Setting private fields. Not a good idea in general
@@ -29,10 +29,10 @@ class LightClientTest {
 
     @BeforeEach
     public void setup() {
-        wsRpc = mock(RpcApp.class);
+        rpcApp = mock(RpcApp.class);
         args = new String[]{"some args"};
 
-        lightClient = new LightClient(args, wsRpc);
+        lightClient = new LightClient(args, rpcApp);
     }
 
     @Test
@@ -45,7 +45,7 @@ class LightClientTest {
 
         lightClient.stop();
 
-        verify(wsRpc, times(1)).stop();
+        verify(rpcApp, times(1)).stop();
 
     }
 }

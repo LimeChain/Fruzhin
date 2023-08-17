@@ -18,14 +18,14 @@ import java.util.logging.Level;
 public class LightClient {
     // TODO: Add service dependencies i.e rpc, sync, network, etc.
     private final String[] cliArgs;
-    private final RpcApp wsRpc;
+    private final RpcApp rpcApp;
     private final ConnectionManager connectionManager = ConnectionManager.getInstance();
     private Network network;
     private WarpSyncMachine warpSyncMachine;
 
-    public LightClient(String[] cliArgs, RpcApp wsRpc) {
+    public LightClient(String[] cliArgs, RpcApp rpcApp) {
         this.cliArgs = cliArgs;
-        this.wsRpc = wsRpc;
+        this.rpcApp = rpcApp;
     }
 
     /**
@@ -34,7 +34,7 @@ public class LightClient {
     @SneakyThrows
     public void start() {
         // TODO: Add business logic
-        this.wsRpc.start(cliArgs);
+        this.rpcApp.start(cliArgs);
 
         this.network = AppBean.getBean(Network.class);
         this.network.start();
@@ -61,7 +61,7 @@ public class LightClient {
      */
     public void stop() {
         // TODO: Stop running services
-        this.wsRpc.stop();
+        this.rpcApp.stop();
         log.log(Level.INFO, "\uD83D\uDED1Stopped light client!");
     }
 }
