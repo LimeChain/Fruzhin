@@ -44,7 +44,7 @@ import java.util.logging.Level;
 import static com.limechain.network.kad.KademliaService.REPLICATION;
 
 /**
- * A Singleton Network class that handles all peer connections and Kademlia
+ * A Network class that handles all peer connections and Kademlia
  */
 @Component
 @Log
