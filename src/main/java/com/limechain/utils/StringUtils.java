@@ -1,12 +1,12 @@
 package com.limechain.utils;
 
 import com.google.protobuf.ByteString;
+import lombok.experimental.UtilityClass;
 
-import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
 import java.security.InvalidParameterException;
 import java.util.regex.Pattern;
 
+@UtilityClass
 public class StringUtils {
     private static final Pattern HEX_PATTERN = Pattern.compile("^(0x)?[0-9a-fA-F]+$");
 

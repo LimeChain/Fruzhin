@@ -2,7 +2,9 @@ package com.limechain.network.protocol.blockannounce;
 
 import com.limechain.network.kad.KademliaService;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshake;
+import com.limechain.utils.RandomGenerationUtils;
 import io.emeraldpay.polkaj.types.Hash256;
+import io.ipfs.multiaddr.MultiAddress;
 import io.ipfs.multihash.Multihash;
 import io.libp2p.core.Host;
 import io.libp2p.core.PeerId;
@@ -12,18 +14,19 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.peergos.HostBuilder;
 
+import java.math.BigInteger;
 import java.util.List;
-import java.util.Random;
 
-public class BlockAnnounceTest {
+class BlockAnnounceTest {
     @Disabled("This is an integration test")
     @Test
-    public void receivesNotifications() {
+    void receivesNotifications() {
         Host senderNode = null;
         try {
-            HostBuilder hostBuilder1 =
-                    (new HostBuilder()).generateIdentity().listenLocalhost(
-                            10000 + new Random().nextInt(50000));
+            MultiAddress multiAddress = RandomGenerationUtils.generateRandomAddress();
+            HostBuilder hostBuilder1 = new HostBuilder()
+                    .generateIdentity()
+                    .listen(List.of(multiAddress));
 
             var blockAnnounce = new BlockAnnounce("/dot/block-announces/1", new BlockAnnounceProtocol());
             var kademliaService = new KademliaService("/dot/kad",
@@ -46,11 +49,11 @@ public class BlockAnnounceTest {
             kademliaService.connectBootNodes(receivers);
 
             var handshake = new BlockAnnounceHandshake() {{
-                nodeRole = 4;
-                bestBlockHash = Hash256.from("0x7b22fc4469863c9671686c189a3238708033d364a77ba8d83e78777e7563f346");
-                bestBlock = "0";
-                genesisBlockHash = Hash256.from(
-                        "0x7b22fc4469863c9671686c189a3238708033d364a77ba8d83e78777e7563f346");
+                setNodeRole(4);
+                setBestBlockHash(Hash256.from("0x7b22fc4469863c9671686c189a3238708033d364a77ba8d83e78777e7563f346"));
+                setBestBlock(BigInteger.ZERO);
+                setGenesisBlockHash(Hash256.from(
+                        "0x7b22fc4469863c9671686c189a3238708033d364a77ba8d83e78777e7563f346"));
             }};
 
             Multiaddr[] addr = senderNode.getAddressBook().get(peerId)
@@ -62,7 +65,7 @@ public class BlockAnnounceTest {
             if (addr.length == 0)
                 throw new IllegalStateException("No addresses known for peer " + peerId);
 
-            blockAnnounce.sendHandshake(senderNode, senderNode.getAddressBook(), peerId, handshake);
+            blockAnnounce.sendHandshake(senderNode, senderNode.getAddressBook(), peerId);
 
             Thread.sleep(60000);
         } catch (

@@ -1,6 +1,8 @@
 package com.limechain.network.protocol.warp;
 
 import com.limechain.network.kad.KademliaService;
+import com.limechain.utils.RandomGenerationUtils;
+import io.ipfs.multiaddr.MultiAddress;
 import io.ipfs.multihash.Multihash;
 import io.libp2p.core.Host;
 import io.libp2p.core.PeerId;
@@ -10,19 +12,20 @@ import org.junit.jupiter.api.Test;
 import org.peergos.HostBuilder;
 
 import java.util.List;
-import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-public class SyncTest {
+class SyncTest {
     @Disabled("This is an integration test")
     @Test
-    public void remoteFunctions_return_correctData() {
+    void remoteFunctions_return_correctData() {
         Host senderNode = null;
 
         try {
-            HostBuilder hostBuilder1 =
-                    (new HostBuilder()).generateIdentity().listenLocalhost(10000 + new Random().nextInt(50000));
+            MultiAddress address = RandomGenerationUtils.generateRandomAddress();
+            HostBuilder hostBuilder1 = new HostBuilder()
+                    .generateIdentity()
+                    .listen(List.of(address));
 
             var warpSync = new WarpSync("/dot/sync/warp", new WarpSyncProtocol());
             var kademliaService = new KademliaService("/dot/kad",

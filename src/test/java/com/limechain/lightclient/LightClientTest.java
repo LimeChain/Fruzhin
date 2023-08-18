@@ -1,8 +1,7 @@
 package com.limechain.lightclient;
 
 import com.limechain.network.Network;
-import com.limechain.rpc.http.server.HttpRpc;
-import com.limechain.rpc.ws.server.WebSocketRPC;
+import com.limechain.rpc.server.RpcApp;
 import com.limechain.sync.warpsync.WarpSyncMachine;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,11 +12,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-public class LightClientTest {
+class LightClientTest {
     private LightClient lightClient;
 
-    private HttpRpc httpRpc;
-    private WebSocketRPC wsRpc;
+    private RpcApp rpcApp;
     private String[] args;
 
     // Setting private fields. Not a good idea in general
@@ -31,11 +29,10 @@ public class LightClientTest {
 
     @BeforeEach
     public void setup() {
-        httpRpc = mock(HttpRpc.class);
-        wsRpc = mock(WebSocketRPC.class);
+        rpcApp = mock(RpcApp.class);
         args = new String[]{"some args"};
 
-        lightClient = new LightClient(args, httpRpc, wsRpc);
+        lightClient = new LightClient(args, rpcApp);
     }
 
     @Test
@@ -48,8 +45,7 @@ public class LightClientTest {
 
         lightClient.stop();
 
-        verify(httpRpc, times(1)).stop();
-        verify(wsRpc, times(1)).stop();
+        verify(rpcApp, times(1)).stop();
 
     }
 }

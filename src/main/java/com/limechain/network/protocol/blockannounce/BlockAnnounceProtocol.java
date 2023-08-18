@@ -2,7 +2,6 @@ package com.limechain.network.protocol.blockannounce;
 
 import com.limechain.network.encoding.Leb128LengthFrameDecoder;
 import com.limechain.network.encoding.Leb128LengthFrameEncoder;
-import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshake;
 import io.libp2p.core.Stream;
 import io.libp2p.protocol.ProtocolHandler;
 import io.libp2p.protocol.ProtocolMessageHandler;
@@ -77,7 +76,7 @@ public class BlockAnnounceProtocol extends ProtocolHandler<BlockAnnounceControll
         }
 
         @Override
-        public void sendHandshake(BlockAnnounceHandshake req) {
+        public void sendHandshake() {
             engine.writeHandshakeToStream(stream, stream.remotePeerId());
         }
     }

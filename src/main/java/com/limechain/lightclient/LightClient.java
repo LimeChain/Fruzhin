@@ -2,9 +2,8 @@ package com.limechain.lightclient;
 
 import com.limechain.network.ConnectionManager;
 import com.limechain.network.Network;
-import com.limechain.rpc.http.server.AppBean;
-import com.limechain.rpc.http.server.HttpRpc;
-import com.limechain.rpc.ws.server.WebSocketRPC;
+import com.limechain.rpc.server.AppBean;
+import com.limechain.rpc.server.RpcApp;
 import com.limechain.sync.warpsync.WarpSyncMachine;
 import lombok.SneakyThrows;
 import lombok.extern.java.Log;
@@ -19,16 +18,14 @@ import java.util.logging.Level;
 public class LightClient {
     // TODO: Add service dependencies i.e rpc, sync, network, etc.
     private final String[] cliArgs;
-    private final HttpRpc httpRpc;
-    private final WebSocketRPC wsRpc;
+    private final RpcApp rpcApp;
     private final ConnectionManager connectionManager = ConnectionManager.getInstance();
     private Network network;
     private WarpSyncMachine warpSyncMachine;
 
-    public LightClient(String[] cliArgs, HttpRpc httpRpc, WebSocketRPC wsRpc) {
+    public LightClient(String[] cliArgs, RpcApp rpcApp) {
         this.cliArgs = cliArgs;
-        this.httpRpc = httpRpc;
-        this.wsRpc = wsRpc;
+        this.rpcApp = rpcApp;
     }
 
     /**
@@ -37,8 +34,7 @@ public class LightClient {
     @SneakyThrows
     public void start() {
         // TODO: Add business logic
-        this.httpRpc.start(cliArgs);
-        this.wsRpc.start(cliArgs);
+        this.rpcApp.start(cliArgs);
 
         this.network = AppBean.getBean(Network.class);
         this.network.start();
@@ -65,8 +61,7 @@ public class LightClient {
      */
     public void stop() {
         // TODO: Stop running services
-        this.httpRpc.stop();
-        this.wsRpc.stop();
+        this.rpcApp.stop();
         log.log(Level.INFO, "\uD83D\uDED1Stopped light client!");
     }
 }

@@ -14,8 +14,8 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 public class HostConfigTest {
-    private final String westendGenesisPath = "genesis/westend.json";
-    private final String kusamaGenesisPath = "genesis/kusama.json";
+    private final String westendGenesisPath = "genesis/westend2.json";
+    private final String kusamaGenesisPath = "genesis/ksmcc3.json";
     private final String polkadotGenesisPath = "genesis/polkadot.json";
     private CliArguments cliArguments;
 

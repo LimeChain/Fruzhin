@@ -15,6 +15,6 @@ public class NeighbourMessageScaleWriter implements ScaleWriter<NeighbourMessage
         writer.writeByte(neighbourMessage.getVersion());
         new UInt64Writer().write(writer, neighbourMessage.getRound());
         new UInt64Writer().write(writer, neighbourMessage.getSetId());
-        writer.writeUint32(neighbourMessage.getLastFinalizedBlock());
+        writer.writeUint32(neighbourMessage.getLastFinalizedBlock().longValue());
     }
 }

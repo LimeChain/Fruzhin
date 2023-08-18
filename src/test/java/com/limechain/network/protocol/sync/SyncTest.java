@@ -3,6 +3,8 @@ package com.limechain.network.protocol.sync;
 import com.google.protobuf.ByteString;
 import com.limechain.network.kad.KademliaService;
 import com.limechain.network.protocol.sync.pb.SyncMessage;
+import com.limechain.utils.RandomGenerationUtils;
+import io.ipfs.multiaddr.MultiAddress;
 import io.ipfs.multihash.Multihash;
 import io.libp2p.core.Host;
 import io.libp2p.core.PeerId;
@@ -14,7 +16,6 @@ import org.junit.jupiter.api.TestInstance;
 import org.peergos.HostBuilder;
 
 import java.util.List;
-import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -29,8 +30,10 @@ public class SyncTest {
 
     @BeforeAll
     public void init() {
-        HostBuilder hostBuilder = (new HostBuilder()).generateIdentity()
-                .listenLocalhost(10000 + new Random().nextInt(50000));
+        MultiAddress address = RandomGenerationUtils.generateRandomAddress();
+        HostBuilder hostBuilder = new HostBuilder()
+                .generateIdentity()
+                .listen(List.of(address));
 
         syncService = new SyncMessages("/dot/sync/2", new SyncProtocol());
         kademliaService = new KademliaService("/dot/kad",
