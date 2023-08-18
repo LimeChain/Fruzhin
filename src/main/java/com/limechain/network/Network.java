@@ -80,29 +80,12 @@ public class Network {
      * @param repository
      * @param cliArgs
      */
-    private Network(ChainService chainService, HostConfig hostConfig, KVRepository<String, Object> repository,
+    public Network(ChainService chainService, HostConfig hostConfig, KVRepository<String, Object> repository,
                     CliArguments cliArgs) {
         this.initializeProtocols(chainService, hostConfig, repository, cliArgs);
         this.bootNodes = chainService.getGenesis().getBootNodes();
         this.chain = hostConfig.getChain();
-    }
-
-    /**
-     * Initializes singleton Network instance
-     * This is used two times on startup
-     *
-     * @return Network instance saved in class or if not found returns new Network instance
-     */
-    public static Network initialize(ChainService chainService, HostConfig hostConfig,
-                                     KVRepository<String, Object> repository, CliArguments cliArgs) {
-        if (network != null) {
-            log.log(Level.WARNING, "Network module already initialized.");
-            return network;
-        }
-        network = new Network(chainService, hostConfig, repository, cliArgs);
         SyncedState.getInstance().setNetwork(network);
-        log.log(Level.INFO, "Initialized network module!");
-        return network;
     }
 
     private void initializeProtocols(ChainService chainService, HostConfig hostConfig,
@@ -183,7 +166,6 @@ public class Network {
         kademliaService.connectBootNodes(this.bootNodes);
         started = true;
         log.log(Level.INFO, "Started network module!");
-
     }
 
     public String getPeerId() {

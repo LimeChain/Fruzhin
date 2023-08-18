@@ -40,7 +40,7 @@ public class LightClient {
         this.network.start();
 
         while (true) {
-            if (connectionManager.getPeerIds().size() > 0) {
+            if (!connectionManager.getPeerIds().isEmpty()) {
                 if (this.network.currentSelectedPeer != null) {
                     log.log(Level.INFO, "Node successfully connected to a peer! Sync can start!");
                     this.warpSyncMachine = AppBean.getBean(WarpSyncMachine.class);
