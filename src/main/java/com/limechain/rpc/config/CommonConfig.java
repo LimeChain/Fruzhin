@@ -61,6 +61,6 @@ public class CommonConfig {
 
     @Bean
     public WarpSyncMachine sync(Network network, ChainService chainService) {
-        return WarpSyncMachine.initialize(network, chainService);
+        return new WarpSyncMachine(network, chainService);
     }
 }
