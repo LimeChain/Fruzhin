@@ -5,11 +5,13 @@ import com.limechain.constants.GenesisBlockHash;
 import com.limechain.network.Network;
 import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshake;
-import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceMessage;
 import com.limechain.network.protocol.grandpa.messages.commit.CommitMessage;
 import com.limechain.network.protocol.grandpa.messages.neighbour.NeighbourMessage;
+import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.network.protocol.warp.dto.ConsensusEngine;
 import com.limechain.network.protocol.warp.dto.HeaderDigest;
+import com.limechain.network.protocol.warp.scale.BlockHeaderReader;
+import com.limechain.network.protocol.warp.scale.JustificationReader;
 import com.limechain.rpc.server.AppBean;
 import com.limechain.runtime.Runtime;
 import com.limechain.sync.JustificationVerifier;
@@ -26,12 +28,11 @@ import lombok.extern.java.Log;
 import org.javatuples.Pair;
 
 import java.math.BigInteger;
-import java.util.Arrays;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.logging.Level;
+
+import static com.limechain.network.protocol.sync.pb.SyncMessage.BlockResponse;
 
 @Log
 public class SyncedState {
@@ -54,11 +55,7 @@ public class SyncedState {
     private Authority[] authoritySet;
     @Getter
     @Setter
-    private BigInteger setId;
-
-    @Getter
-    @Setter
-    private BigInteger latestSetId = BigInteger.ZERO;
+    private BigInteger setId = BigInteger.ZERO;
 
     @Getter
     @Setter
@@ -80,8 +77,6 @@ public class SyncedState {
     private boolean warpSyncFinished;
     private final PriorityQueue<Pair<BigInteger, Authority[]>> scheduledAuthorityChanges =
             new PriorityQueue<>(Comparator.comparing(Pair::getValue0));
-    private final Map<BigInteger, BlockAnnounceMessage> pendingAuthorityChanges = new HashMap<>();
-
     public static SyncedState getInstance() {
         return INSTANCE;
     }
@@ -137,44 +132,47 @@ public class SyncedState {
         lastFinalizedBlockHash = commitMessage.getVote().getBlockHash();
         lastFinalizedBlockNumber = commitMessage.getVote().getBlockNumber();
         log.log(Level.INFO, "Reached block #" + lastFinalizedBlockNumber);
-        checkPendingChanges();
-        handleScheduledEvents();
     }
 
-    private void checkPendingChanges() {
-        BlockAnnounceMessage pendingBlock = pendingAuthorityChanges.get(lastFinalizedBlockNumber);
-        if (pendingBlock == null) {
-            return;
+    public void updateSetData(NeighbourMessage neighbourMessage, PeerId peerId) {
+        BigInteger setChangeBlock = neighbourMessage.getLastFinalizedBlock().add(BigInteger.ONE);
+
+        BlockResponse response = network.syncBlock(peerId, setChangeBlock);
+        var block = response.getBlocksList().get(0);
+
+        var justification = new JustificationReader().read(
+                new ScaleCodecReader(block.getJustification().toByteArray()));
+        boolean verified = JustificationVerifier.verify(justification.precommits, justification.round);
+        if (verified) {
+            var header = new BlockHeaderReader().read(new ScaleCodecReader(block.getHeader().toByteArray()));
+            handleAuthorityChanges(header.getDigest(), setChangeBlock);
+            BlockHeader blockHeader = new BlockHeaderReader().read(
+                    new ScaleCodecReader(block.getHeader().toByteArray()));
+            this.lastFinalizedBlockNumber = blockHeader.getBlockNumber();
+            this.lastFinalizedBlockHash = new Hash256(blockHeader.getHash());
+            handleScheduledEvents();
         }
-        Hash256 pendingBlockHash = new Hash256(pendingBlock.getHeader().getHash());
-        if (pendingBlockHash.equals(lastFinalizedBlockHash)) {
-            handleAuthorityChanges(pendingBlock.getHeader().getDigest());
-        }
-        pendingAuthorityChanges.remove(lastFinalizedBlockNumber);
     }
 
     public void handleScheduledEvents() {
         Pair<BigInteger, Authority[]> data = scheduledAuthorityChanges.peek();
+        boolean updated = false;
         while (data != null) {
             if (data.getValue0().compareTo(this.getLastFinalizedBlockNumber()) < 1) {
                 authoritySet = data.getValue1();
                 setId = setId.add(BigInteger.ONE);
+                latestRound = BigInteger.ONE;
                 scheduledAuthorityChanges.poll();
+                updated = true;
             } else break;
             data = scheduledAuthorityChanges.peek();
         }
-    }
-
-    public void syncBlockAnnounce(BlockAnnounceMessage blockAnnounce) {
-        boolean hasGrandpaConsensusMessage = Arrays.stream(blockAnnounce.getHeader().getDigest())
-                .anyMatch(digest -> digest.getId() == ConsensusEngine.GRANDPA);
-
-        if (hasGrandpaConsensusMessage) {
-            pendingAuthorityChanges.put(blockAnnounce.getHeader().getBlockNumber(), blockAnnounce);
+        if (warpSyncFinished && updated) {
+            new Thread(() -> network.sendNeighbourMessages()).start();
         }
     }
 
-    public void handleAuthorityChanges(HeaderDigest[] headerDigests) {
+    public void handleAuthorityChanges(HeaderDigest[] headerDigests, BigInteger blockNumber) {
         // Update authority set and set id
         AuthoritySetChange authorityChanges;
         for (HeaderDigest digest : headerDigests) {
@@ -192,14 +190,16 @@ public class SyncedState {
                         ScheduledChangeReader authorityChangesReader = new ScheduledChangeReader();
                         authorityChanges = authorityChangesReader.read(reader);
                         scheduledAuthorityChanges
-                                .add(new Pair<>(authorityChanges.getDelay(), authorityChanges.getAuthorities()));
+                                .add(new Pair<>(blockNumber.add(authorityChanges.getDelay()),
+                                        authorityChanges.getAuthorities()));
                         return;
                     }
                     case FORCED_CHANGE -> {
                         ForcedChangeReader authorityForcedChangesReader = new ForcedChangeReader();
                         authorityChanges = authorityForcedChangesReader.read(reader);
                         scheduledAuthorityChanges
-                                .add(new Pair<>(authorityChanges.getDelay(), authorityChanges.getAuthorities()));
+                                .add(new Pair<>(blockNumber.add(authorityChanges.getDelay()),
+                                        authorityChanges.getAuthorities()));
                         return;
                     }
                     case ON_DISABLED -> {

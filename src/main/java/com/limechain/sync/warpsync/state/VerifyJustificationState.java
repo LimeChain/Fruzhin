@@ -1,7 +1,6 @@
 package com.limechain.sync.warpsync.state;
 
 import com.limechain.network.protocol.warp.dto.WarpSyncFragment;
-import com.limechain.network.protocol.warp.dto.WarpSyncJustification;
 import com.limechain.sync.JustificationVerifier;
 import com.limechain.sync.warpsync.SyncedState;
 import com.limechain.sync.warpsync.WarpSyncMachine;
@@ -57,7 +56,9 @@ public class VerifyJustificationState implements WarpSyncState {
             syncedState.setLastFinalizedBlockNumber(fragment.getJustification().targetBlock);
 
             try {
-                syncedState.handleAuthorityChanges(fragment.getHeader().getDigest());
+                syncedState.handleAuthorityChanges(
+                        fragment.getHeader().getDigest(),
+                        fragment.getJustification().targetBlock);
                 log.log(Level.INFO, "Verified justification. Block hash is now at #"
                         + syncedState.getLastFinalizedBlockNumber() + ": "
                         + syncedState.getLastFinalizedBlockHash().toString()
