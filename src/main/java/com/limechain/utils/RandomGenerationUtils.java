@@ -2,9 +2,11 @@ package com.limechain.utils;
 
 import com.limechain.network.Network;
 import io.ipfs.multiaddr.MultiAddress;
+import lombok.experimental.UtilityClass;
 
 import java.util.Random;
 
+@UtilityClass
 public class RandomGenerationUtils {
     public static byte[] generateBytes(int length) {
         Random generator = new Random(0);

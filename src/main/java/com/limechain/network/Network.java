@@ -2,6 +2,7 @@ package com.limechain.network;
 
 import com.limechain.chain.Chain;
 import com.limechain.chain.ChainService;
+import com.limechain.cli.CliArguments;
 import com.limechain.config.HostConfig;
 import com.limechain.network.kad.KademliaService;
 import com.limechain.network.protocol.blockannounce.BlockAnnounceService;
@@ -14,12 +15,17 @@ import com.limechain.network.protocol.sync.pb.SyncMessage;
 import com.limechain.network.protocol.sync.pb.SyncMessage.BlockResponse;
 import com.limechain.network.protocol.warp.WarpSyncService;
 import com.limechain.network.protocol.warp.dto.WarpSyncResponse;
+import com.limechain.storage.DBConstants;
+import com.limechain.storage.KVRepository;
 import com.limechain.sync.warpsync.SyncedState;
+import com.limechain.utils.Ed25519Utils;
+import com.limechain.utils.StringUtils;
 import io.ipfs.multiaddr.MultiAddress;
 import io.ipfs.multihash.Multihash;
 import io.libp2p.core.Host;
 import io.libp2p.core.PeerId;
 import io.libp2p.core.multiformats.Multiaddr;
+import io.libp2p.crypto.keys.Ed25519PrivateKey;
 import io.libp2p.protocol.PingProtocol;
 import lombok.Getter;
 import lombok.extern.java.Log;
@@ -30,6 +36,7 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -70,9 +77,12 @@ public class Network {
      *
      * @param chainService chain specification information containing boot nodes
      * @param hostConfig   host configuration containing current network
+     * @param repository
+     * @param cliArgs
      */
-    private Network(ChainService chainService, HostConfig hostConfig) {
-        this.initializeProtocols(chainService, hostConfig);
+    private Network(ChainService chainService, HostConfig hostConfig, KVRepository<String, Object> repository,
+                    CliArguments cliArgs) {
+        this.initializeProtocols(chainService, hostConfig, repository, cliArgs);
         this.bootNodes = chainService.getGenesis().getBootNodes();
         this.chain = hostConfig.getChain();
     }
@@ -83,24 +93,29 @@ public class Network {
      *
      * @return Network instance saved in class or if not found returns new Network instance
      */
-    public static Network initialize(ChainService chainService, HostConfig hostConfig) {
+    public static Network initialize(ChainService chainService, HostConfig hostConfig,
+                                     KVRepository<String, Object> repository, CliArguments cliArgs) {
         if (network != null) {
             log.log(Level.WARNING, "Network module already initialized.");
             return network;
         }
-        network = new Network(chainService, hostConfig);
+        network = new Network(chainService, hostConfig, repository, cliArgs);
         SyncedState.getInstance().setNetwork(network);
         log.log(Level.INFO, "Initialized network module!");
         return network;
     }
 
-    private void initializeProtocols(ChainService chainService, HostConfig hostConfig) {
+    private void initializeProtocols(ChainService chainService, HostConfig hostConfig,
+                                     KVRepository<String, Object> repository, CliArguments cliArgs) {
         boolean isLocalEnabled = hostConfig.getChain() == Chain.LOCAL;
         boolean clientMode = true;
 
         HostBuilder hostBuilder = new HostBuilder()
-                .generateIdentity()
                 .listen(List.of(new MultiAddress(LOCAL_IPV4_TCP_ADDRESS + HOST_PORT)));
+
+        // The peerId is generated from the privateKey of the node
+        hostBuilder.setPrivKey(loadPrivateKeyFromDB(repository, cliArgs));
+        log.info("Current peerId " + hostBuilder.getPeerId().toString());
         Multihash hostId = Multihash.deserialize(hostBuilder.getPeerId().getBytes());
 
         String pingProtocol = ProtocolUtils.getPingProtocol();
@@ -136,6 +151,31 @@ public class Network {
         this.host = hostBuilder.build();
         IdentifyBuilder.addIdentifyProtocol(this.host);
         kademliaService.setHost(host);
+    }
+
+    private Ed25519PrivateKey loadPrivateKeyFromDB(KVRepository<String, Object> repository, CliArguments cliArgs) {
+        Ed25519PrivateKey privateKey;
+
+        if (cliArgs.nodeKey() != null && !cliArgs.nodeKey().isBlank()) {
+            try {
+                privateKey = Ed25519Utils.loadPrivateKey(StringUtils.hexToBytes(cliArgs.nodeKey()));
+                log.log(Level.INFO, "PeerId loaded from arguments!");
+                return privateKey;
+            } catch (IllegalArgumentException ex) {
+                log.severe("Provided secret key hex is invalid!");
+            }
+        }
+
+        Optional<Object> peerIdKeyBytes = repository.find(DBConstants.PEER_ID);
+        if (peerIdKeyBytes.isPresent()) {
+            privateKey = Ed25519Utils.loadPrivateKey((byte[]) peerIdKeyBytes.get());
+            log.log(Level.INFO, "PeerId loaded from database!");
+        } else {
+            privateKey = Ed25519Utils.generatePrivateKey();
+            repository.save(DBConstants.PEER_ID, privateKey.raw());
+            log.log(Level.INFO, "Generated new peerId!");
+        }
+        return privateKey;
     }
 
     public void start() {
@@ -212,7 +252,7 @@ public class Network {
 
     public void updateCurrentSelectedPeer() {
         Random random = new Random();
-        if(connectionManager.getPeerIds().isEmpty()) return;
+        if (connectionManager.getPeerIds().isEmpty()) return;
         this.currentSelectedPeer = connectionManager.getPeerIds().stream()
                 .skip(random.nextInt(connectionManager.getPeerIds().size())).findAny().orElse(null);
     }

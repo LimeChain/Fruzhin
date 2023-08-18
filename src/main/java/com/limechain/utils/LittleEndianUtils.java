@@ -1,8 +1,11 @@
 package com.limechain.utils;
 
+import lombok.experimental.UtilityClass;
+
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
+@UtilityClass
 public class LittleEndianUtils {
     public static byte[] convertBytes(byte[] byteArray) {
         // Create a ByteBuffer and set its order to little-endian
