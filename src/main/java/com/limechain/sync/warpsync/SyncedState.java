@@ -9,7 +9,10 @@ import com.limechain.network.protocol.grandpa.messages.commit.CommitMessage;
 import com.limechain.network.protocol.grandpa.messages.neighbour.NeighbourMessage;
 import com.limechain.rpc.server.AppBean;
 import com.limechain.runtime.Runtime;
+import com.limechain.storage.DBConstants;
+import com.limechain.storage.KVRepository;
 import com.limechain.sync.JustificationVerifier;
+import com.limechain.sync.warpsync.dto.StateDto;
 import io.emeraldpay.polkaj.types.Hash256;
 import io.libp2p.core.PeerId;
 import lombok.Getter;
@@ -17,53 +20,31 @@ import lombok.Setter;
 import lombok.extern.java.Log;
 
 import java.math.BigInteger;
+import java.util.Optional;
 import java.util.logging.Level;
 
+@Getter
+@Setter
 @Log
 public class SyncedState {
-    private static final SyncedState INSTANCE = new SyncedState();
     public static final int NEIGHBOUR_MESSAGE_VERSION = 1;
-    @Getter
-    @Setter
+    private static final SyncedState INSTANCE = new SyncedState();
     private Hash256 lastFinalizedBlockHash;
-    @Getter
-    @Setter
     private boolean isFinished;
-    @Getter
-    @Setter
     private Hash256 stateRoot;
-    @Getter
-    @Setter
     private BigInteger lastFinalizedBlockNumber = BigInteger.ZERO;
-    @Getter
-    @Setter
     private Authority[] authoritySet;
-    @Getter
-    @Setter
     private BigInteger setId;
 
-    @Getter
-    @Setter
     private BigInteger latestSetId = BigInteger.ZERO;
 
-    @Getter
-    @Setter
     private BigInteger latestRound = BigInteger.ONE;
 
-    @Getter
-    @Setter
     private byte[] runtimeCode;
-    @Getter
-    @Setter
     private byte[] heapPages;
-    @Getter
-    @Setter
     private Runtime runtime;
-    @Setter
-    private Network network;
-    @Setter
-    @Getter
     private boolean warpSyncFinished;
+    private KVRepository<String, Object> repository;
 
     public static SyncedState getInstance() {
         return INSTANCE;
@@ -120,5 +101,24 @@ public class SyncedState {
         lastFinalizedBlockHash = commitMessage.getVote().getBlockHash();
         lastFinalizedBlockNumber = commitMessage.getVote().getBlockNumber();
         log.log(Level.INFO, "Reached block #" + lastFinalizedBlockNumber);
+        saveState();
+    }
+
+    public void saveState() {
+        StateDto stateDto = new StateDto(
+                latestRound,
+                lastFinalizedBlockHash.toString(),
+                lastFinalizedBlockNumber
+        );
+        repository.save(DBConstants.SYNC_STATE_KEY, stateDto);
+    }
+
+    public void loadState() {
+        Optional<Object> syncState = repository.find(DBConstants.SYNC_STATE_KEY);
+        if (syncState.isPresent() && syncState.get() instanceof StateDto state) {
+            this.latestRound = state.latestRound();
+            this.lastFinalizedBlockHash = Hash256.from(state.lastFinalizedBlockHash());
+            this.lastFinalizedBlockNumber = state.lastFinalizedBlockNumber();
+        }
     }
 }

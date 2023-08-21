@@ -85,7 +85,6 @@ public class Network {
         this.initializeProtocols(chainService, hostConfig, repository, cliArgs);
         this.bootNodes = chainService.getGenesis().getBootNodes();
         this.chain = hostConfig.getChain();
-        SyncedState.getInstance().setNetwork(network);
     }
 
     private void initializeProtocols(ChainService chainService, HostConfig hostConfig,

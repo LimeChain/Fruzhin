@@ -9,4 +9,8 @@ public class DBConstants {
      * Key under which the genesis chain spec is stored
      */
     public static final String GENESIS_KEY = "genesis";
+    /**
+     * Key under which the latest sync state is stored
+     */
+    public static final String SYNC_STATE_KEY = "syncState";
 }

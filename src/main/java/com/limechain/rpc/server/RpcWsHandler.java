@@ -28,12 +28,12 @@ public class RpcWsHandler extends TextWebSocketHandler {
 
     private final JsonRpcBasicServer server;
     private final PubSubService pubSubService = PubSubService.getInstance();
-    private final ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper mapper;
     private final ChainHeadRpc chainHeadRpc;
     private final TransactionRpc transactionRpc;
 
     public RpcWsHandler(RPCMethods rpcMethods, ChainHeadRpc chainHeadRpc, TransactionRpc transactionRpc) {
-        ObjectMapper mapper = new ObjectMapper();
+        this.mapper = new ObjectMapper();
         this.server = new JsonRpcBasicServer(mapper, rpcMethods);
         this.chainHeadRpc = chainHeadRpc;
         this.transactionRpc = transactionRpc;
