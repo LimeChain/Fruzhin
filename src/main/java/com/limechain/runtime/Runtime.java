@@ -29,7 +29,14 @@ public class Runtime {
 
     public Object call(String functionName) {
         log.log(Level.INFO, "Making a runtime call: " + functionName);
+        Object response = null;
         //TODO Call adequate params
-        return instance.exports.getFunction(functionName).apply(1, 1);
+        try {
+            response = instance.exports.getFunction(functionName).apply(0, 0);
+            log.log(Level.INFO, "Runtime call response:" + response);
+        } catch (Exception e) {
+            log.log(Level.WARNING, e.getMessage(), e.getStackTrace());
+        }
+        return response;
     }
 }

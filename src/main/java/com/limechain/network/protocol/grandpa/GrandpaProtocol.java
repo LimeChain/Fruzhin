@@ -7,12 +7,10 @@ import io.libp2p.protocol.ProtocolHandler;
 import io.libp2p.protocol.ProtocolMessageHandler;
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.bytes.ByteArrayEncoder;
-import lombok.extern.java.Log;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.CompletableFuture;
 
-@Log
 public class GrandpaProtocol extends ProtocolHandler<GrandpaController> {
     public static final int TRAFFIC_LIMIT = 1024 * 1024;
     private final GrandpaEngine engine;

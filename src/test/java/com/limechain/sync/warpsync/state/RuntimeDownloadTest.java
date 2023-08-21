@@ -1,26 +1,37 @@
 package com.limechain.sync.warpsync.state;
 
 import com.limechain.network.kad.KademliaService;
+import com.limechain.network.protocol.blockannounce.scale.BlockHeaderScaleWriter;
 import com.limechain.network.protocol.lightclient.LightMessages;
 import com.limechain.network.protocol.lightclient.LightMessagesProtocol;
 import com.limechain.network.protocol.lightclient.pb.LightClientMessage;
+import com.limechain.network.protocol.warp.dto.BlockHeader;
+import com.limechain.network.protocol.warp.dto.HeaderDigest;
+import com.limechain.runtime.Runtime;
 import com.limechain.runtime.RuntimeBuilder;
+import com.limechain.runtime.RuntimeVersion;
+import com.limechain.sync.warpsync.scale.RuntimeVersionReader;
 import com.limechain.trie.Trie;
 import com.limechain.trie.TrieVerifier;
 import com.limechain.trie.decoder.TrieDecoderException;
 import com.limechain.utils.LittleEndianUtils;
 import com.limechain.utils.StringUtils;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
+import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.emeraldpay.polkaj.types.Hash256;
 import io.ipfs.multihash.Multihash;
 import io.libp2p.core.Host;
 import io.libp2p.core.PeerId;
 import io.libp2p.protocol.Ping;
 import lombok.extern.java.Log;
-import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.peergos.HostBuilder;
+import org.wasmer.Memory;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Random;
 import java.util.logging.Level;
@@ -29,80 +40,134 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @Log
 public class RuntimeDownloadTest {
-    @Disabled("This is an integration test")
-    @Test
-    public void runtimeDownloadAndBuildTest() {
-        Host senderNode = null;
-        try {
-            //Setup node and connect to boot nodes
-            HostBuilder hostBuilder1 =
-                    (new HostBuilder()).generateIdentity().listenLocalhost(10000
-                            + new Random().nextInt(50000));
+    static Host senderNode = null;
+    private static Runtime runtime = null;
+    //Block must not be older than 256 than the latest block
+    private static final String stateRootString = "0x01c1726f35aca7b33f8646d949d1c5b1d2e4b14de08aa91a3c19a1b86cd2964d";
+    private static final String blockHash = "0x4a2cefcba32a9910dc3d6aeb752fd694eea1d53188f03f1af2130e407aedd65b";
 
-            var lightMessages = new LightMessages("/dot/light/2", new LightMessagesProtocol());
-            var kademliaService = new KademliaService("/dot/kad",
-                    Multihash.deserialize(hostBuilder1.getPeerId().getBytes()), false, true);
+    @BeforeAll
+    public static void init() throws IOException {
+        //Setup node and connect to boot nodes
+        HostBuilder hostBuilder1 =
+                (new HostBuilder()).generateIdentity().listenLocalhost(10000
+                        + new Random().nextInt(50000));
 
-            hostBuilder1.addProtocols(List.of(new Ping(), lightMessages, kademliaService.getProtocol()));
-            senderNode = hostBuilder1.build();
+        var lightMessages = new LightMessages("/dot/light/2", new LightMessagesProtocol());
+        var kademliaService = new KademliaService("/dot/kad",
+                Multihash.deserialize(hostBuilder1.getPeerId().getBytes()), false, true);
 
-            senderNode.start().join();
+        hostBuilder1.addProtocols(List.of(new Ping(), lightMessages, kademliaService.getProtocol()));
+        senderNode = hostBuilder1.build();
 
-            kademliaService.setHost(senderNode);
-            var peerId = PeerId.fromBase58("12D3KooWFFqjBKoSdQniRpw1Y8W6kkV7takWv1DU2ZMkaA81PYVq");
-            var receivers = new String[]{
-                    "/dns/polkadot-boot-ng.dwellir.com/tcp/30336/p2p/" +
-                            "12D3KooWFFqjBKoSdQniRpw1Y8W6kkV7takWv1DU2ZMkaA81PYVq",
-            };
+        senderNode.start().join();
 
-            kademliaService.connectBootNodes(receivers);
+        kademliaService.setHost(senderNode);
+        var peerId = PeerId.fromBase58("12D3KooWFFqjBKoSdQniRpw1Y8W6kkV7takWv1DU2ZMkaA81PYVq");
+        var receivers = new String[]{
+                "/dns/polkadot-boot-ng.dwellir.com/tcp/30336/p2p/" +
+                        "12D3KooWFFqjBKoSdQniRpw1Y8W6kkV7takWv1DU2ZMkaA81PYVq",
+        };
 
-            //Make a call to retrieve the runtime code information
-            //Block must not be older than 256 than the latest block
-            LightClientMessage.Response response = lightMessages.remoteReadRequest(
-                    senderNode,
-                    kademliaService.getHost().getAddressBook(),
-                    peerId,
-                    "0x8aa206d2dc0386ac0c6e1c4033f2445f209d14b9a11861d6eda4787651705231",
-                    new String[]{StringUtils.toHex(":code")}
-            );
-            assertNotNull(response);
+        kademliaService.connectBootNodes(receivers);
+        //Make a call to retrieve the runtime code information
+        LightClientMessage.Response response = lightMessages.remoteReadRequest(
+                senderNode,
+                kademliaService.getHost().getAddressBook(),
+                peerId,
+                blockHash,
+                new String[]{StringUtils.toHex(":code")}
+        );
+        assertNotNull(response);
 
-            //Parse the runtime code so that we can build it in a module later
-            byte[] codeKey = LittleEndianUtils.convertBytes(StringUtils.hexToBytes(StringUtils.toHex(":code")));
-            var res = response.getRemoteReadResponse();
-            byte[] proof = res.getProof().toByteArray();
+        //Parse the runtime code so that we can build it in a module later
+        byte[] codeKey = LittleEndianUtils.convertBytes(StringUtils.hexToBytes(StringUtils.toHex(":code")));
+        var res = response.getRemoteReadResponse();
+        byte[] proof = res.getProof().toByteArray();
 
-            //Must change to the latest state root when updating block hash
-            Hash256 stateRoot = Hash256.from("0xdfe82c05dd0f9cf5ade3f5544c4311a123627f13dcdb6864bc842a1eae28c7c5");
-            ScaleCodecReader reader = new ScaleCodecReader(proof);
-            int size = reader.readCompactInt();
-            byte[][] decodedProofs = new byte[size][];
-            for (int i = 0; i < size; ++i) {
-                decodedProofs[i] = reader.readByteArray();
-            }
-
-            Trie trie;
-            try {
-                trie = TrieVerifier.buildTrie(decodedProofs, stateRoot.getBytes());
-            } catch (TrieDecoderException e) {
-                throw new RuntimeException("Couldn't build trie from proofs list");
-            }
-            var code = trie.get(codeKey);
-            assertNotNull(code);
-
-            //Build runtime
-            System.out.println("Instantiating module");
-            RuntimeBuilder.buildRuntime(code);
-
-            log.log(Level.INFO, "Runtime and heap pages downloaded");
-        } catch (UnsatisfiedLinkError e) {
-            throw new RuntimeException(e);
-        } finally {
-            if (senderNode != null) {
-                senderNode.stop();
-            }
+        ScaleCodecReader reader = new ScaleCodecReader(proof);
+        int size = reader.readCompactInt();
+        byte[][] decodedProofs = new byte[size][];
+        for (int i = 0; i < size; ++i) {
+            decodedProofs[i] = reader.readByteArray();
         }
+
+        //Must change to the latest state root when updating block hash
+        Hash256 stateRoot = Hash256.from(stateRootString);
+        Trie trie;
+        try {
+            trie = TrieVerifier.buildTrie(decodedProofs, stateRoot.getBytes());
+        } catch (TrieDecoderException e) {
+            throw new RuntimeException("Couldn't build trie from proofs list");
+        }
+        var code = trie.get(codeKey);
+        assertNotNull(code);
+
+        //Build runtime
+        System.out.println("Instantiating module");
+        runtime = RuntimeBuilder.buildRuntime(code);
+        coreInitialize();
     }
 
+    public static void coreInitialize() throws IOException {
+        Memory memory = runtime.getInstance().exports.getMemory("memory");
+        ByteArrayOutputStream buf = new ByteArrayOutputStream();
+        ScaleCodecWriter scaleCodecWriter = new ScaleCodecWriter(buf);
+        BlockHeaderScaleWriter blockHeaderScaleWriter = new BlockHeaderScaleWriter();
+        BlockHeader blockHeader = new BlockHeader();
+        blockHeader.setParentHash(Hash256.from(blockHash));
+        blockHeader.setBlockNumber(BigInteger.valueOf(16871500));
+        blockHeader.setStateRoot(Hash256.from("0x0000000000000000000000000000000000000000000000000000000000000000"));
+        blockHeader.setExtrinsicsRoot(Hash256.from("0x0000000000000000000000000000000000000000000000000000000000000000"));
+        blockHeader.setDigest(new HeaderDigest[]{});
+        blockHeaderScaleWriter.write(scaleCodecWriter, blockHeader);
+        memory.buffer().put(buf.toByteArray());
+        Object[] runtimeResponse = null;
+        try {
+            runtimeResponse = runtime.getInstance().exports.getFunction("Core_initialize_block")
+                    .apply(0, buf.toByteArray().length);
+        } catch (Exception e) {
+            long[] pointers = new long[]{30066183504l, 807453851884l};
+            for (int i = 0; i < 2; i++) {
+                long pointer = pointers[i];
+                int ptr = (int) pointer;
+                int ptrSize = (int) (pointer >> 32);
+                byte[] data = new byte[ptrSize];
+                memory.buffer().get(ptr, data, 0, ptrSize);
+                System.out.println(new String(data));
+            }
+        }
+        log.log(Level.INFO, "Runtime and heap pages downloaded");
+    }
+
+    @Test
+    public void CodeVersionTest() throws IOException {
+        Object[] runtimeResponse =
+                runtime.getInstance().exports.getFunction("Core_version")
+                        .apply(0, 0);
+        long memPointer = (long) runtimeResponse[0];
+        int ptr = (int) memPointer;
+        int ptrLength = (int) (memPointer >> 32);
+        Memory memory = runtime.getInstance().exports.getMemory("memory");
+        byte[] data = new byte[ptrLength];
+        memory.buffer().get(ptr, data, 0, ptrLength);
+        ScaleCodecReader reader = new ScaleCodecReader(data);
+        RuntimeVersionReader runtimeVersionReader = new RuntimeVersionReader();
+        RuntimeVersion runtimeVersion = runtimeVersionReader.read(reader);
+        log.log(Level.INFO, "Runtime and heap pages downloaded");
+    }
+
+    @Test
+    public void BabeApiCurrentEpoch() {
+        Object[] runtimeResponse =
+                runtime.getInstance().exports.getFunction("BabeApi_current_epoch")
+                        .apply(0, 0);
+        long memPointer = (long) runtimeResponse[0];
+        int ptr = (int) memPointer;
+        int ptrLength = (int) (memPointer >> 32);
+        Memory memory = runtime.getInstance().exports.getMemory("memory");
+        byte[] data = new byte[ptrLength];
+        memory.buffer().get(ptr, data, 0, ptrLength);
+        log.log(Level.INFO, "Runtime and heap pages downloaded");
+    }
 }

@@ -7,7 +7,6 @@ import io.ipfs.multihash.Multihash;
 import io.libp2p.core.Host;
 import io.libp2p.core.PeerId;
 import io.libp2p.protocol.Ping;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -42,13 +41,6 @@ public class SyncTest {
         senderNode.start().join();
 
         kademliaService.setHost(senderNode);
-    }
-
-    @AfterAll
-    public void stopNode() {
-        if (senderNode != null) {
-            senderNode.stop();
-        }
     }
 
     @Test

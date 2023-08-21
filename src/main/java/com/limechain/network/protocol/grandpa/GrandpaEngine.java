@@ -88,11 +88,12 @@ public class GrandpaEngine {
         CommitMessage commitMessage = reader.read(new CommitMessageScaleReader());
         if (isBlockAlreadyReached(commitMessage.getVote().getBlockNumber())) {
             log.log(Level.INFO, String.format("Received commit message for already reached block %d from peer %s",
-                            commitMessage.getVote().getBlockNumber(), peerId));
+                    commitMessage.getVote().getBlockNumber(), peerId));
             return;
         }
 
-        log.log(Level.INFO, "Received commit message from peer " + peerId + "\n" + commitMessage);
+        log.log(Level.INFO, "Received commit message from peer " + peerId + "\n"
+                + commitMessage.toString().substring(0, 100) + "...");
         syncedState.syncCommit(commitMessage, peerId);
     }
 
@@ -101,7 +102,7 @@ public class GrandpaEngine {
     }
 
     public void writeHandshakeToStream(Stream stream, PeerId peerId) {
-        byte[] handshake = new byte[] {
+        byte[] handshake = new byte[]{
                 (byte) syncedState.getHandshake().nodeRole
         };
 

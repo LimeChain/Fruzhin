@@ -248,10 +248,12 @@ public class RuntimeBuilder {
                     return argv;
                 }, Arrays.asList(Type.I64, Type.I64, Type.I64), Arrays.asList()),
                 new ImportObject.FuncImport("env", "ext_logging_log_version_1", argv -> {
+                    System.out.println(argv);
                     System.out.println("Message printed in the body of 'ext_logging_log_version_1'");
                     return argv;
                 }, Arrays.asList(Type.I32, Type.I64, Type.I64), Arrays.asList()),
                 new ImportObject.FuncImport("env", "ext_misc_print_num_version_1", argv -> {
+                    System.out.println(argv);
                     System.out.println("Message printed in the body of 'ext_logging_log_version_1'");
                     return argv;
                 }, Arrays.asList(Type.I64), Arrays.asList()),

@@ -14,7 +14,7 @@ public class BlockHeaderScaleWriter implements ScaleWriter<BlockHeader> {
         writer.writeCompact(blockHeader.getBlockNumber().intValue());
         writer.writeUint256(blockHeader.getStateRoot().getBytes());
         writer.writeUint256(blockHeader.getExtrinsicsRoot().getBytes());
-
+        
         HeaderDigest[] digests = blockHeader.getDigest();
         writer.writeCompact(digests.length);
         for (HeaderDigest digest : digests) {

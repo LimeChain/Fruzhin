@@ -39,14 +39,28 @@ public class ChainInformationDownloadState implements WarpSyncState {
         Object[] responses = new Object[runtimeFunctionCalls.length];
 
         //Make a call for every runtime function we need
-        for (int i = 0; i < runtimeFunctionCalls.length; i++) {
-            try {
-                //TODO Make runtime calls here
-                responses[i] = syncedState.getRuntime().call(runtimeFunctionCalls[i]);
-                log.log(Level.INFO, "Made a runtime call \"" + runtimeFunctionCalls[i] + "\" : " + responses[i]);
-            } catch (Exception e) {
-                log.log(Level.WARNING, e.getMessage(), e.getStackTrace());
+        try {
+            //TODO Make runtime calls here
+            if (sync.getChainInformation().runtimeHasAura()) {
+                responses[0] = syncedState.getRuntime().call("AuraApi_slot_duration");
+                responses[1] = syncedState.getRuntime().call("AuraApi_authorities");
             }
+            if (!sync.getChainInformation().getRuntimeBabeVersion().equals(-1)) {
+                responses[2] = syncedState.getRuntime().call("BabeApi_current_epoch");
+                responses[3] = syncedState.getRuntime().call("BabeApi_next_epoch");
+                responses[4] = syncedState.getRuntime().call("BabeApi_configuration");
+            }
+            if (!sync.getChainInformation().getRuntimeGrandpaVersion().equals(-1)) {
+                responses[5] = syncedState.getRuntime().call("GrandpaApi_grandpa_authorities");
+            }
+            if (sync.getChainInformation().runtimeGrandpaSupportsCurrentSetId()) {
+                responses[6] = syncedState.getRuntime().call("GrandpaApi_current_set_id");
+            }
+            for (int i = 0; i < 7; i++) {
+                log.log(Level.INFO, " Runtime call " + i + " " + responses[i]);
+            }
+        } catch (Exception e) {
+            log.log(Level.WARNING, e.getMessage(), e.getStackTrace());
         }
         log.log(Level.INFO, "Downloaded chain information");
     }
