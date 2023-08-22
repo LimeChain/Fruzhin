@@ -18,8 +18,11 @@ import io.libp2p.core.PeerId;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.java.Log;
+import org.javatuples.Pair;
 
 import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
 
@@ -105,20 +108,41 @@ public class SyncedState {
     }
 
     public void saveState() {
+        List<Pair<String, BigInteger>> authorities = Arrays
+                .stream(authoritySet)
+                .map(authority -> {
+                    String key = authority.getPublicKey().toString();
+                    BigInteger weight = authority.getWeight();
+                    return new Pair<>(key, weight);
+                }).toList();
+
         StateDto stateDto = new StateDto(
                 latestRound,
                 lastFinalizedBlockHash.toString(),
-                lastFinalizedBlockNumber
+                lastFinalizedBlockNumber,
+                authorities,
+                setId
         );
         repository.save(DBConstants.SYNC_STATE_KEY, stateDto);
     }
 
-    public void loadState() {
+    public boolean loadState() {
         Optional<Object> syncState = repository.find(DBConstants.SYNC_STATE_KEY);
         if (syncState.isPresent() && syncState.get() instanceof StateDto state) {
             this.latestRound = state.latestRound();
             this.lastFinalizedBlockHash = Hash256.from(state.lastFinalizedBlockHash());
             this.lastFinalizedBlockNumber = state.lastFinalizedBlockNumber();
+            this.authoritySet = state.authoritySet()
+                    .stream()
+                    .map(pair -> {
+                        Hash256 publicKey = Hash256.from(pair.getValue0());
+                        BigInteger weight = pair.getValue1();
+                        return new Authority(publicKey, weight);
+                    }).toArray(Authority[]::new);
+
+            this.setId = state.setId();
+            return true;
         }
+        return false;
     }
 }
