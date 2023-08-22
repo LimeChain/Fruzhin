@@ -43,8 +43,8 @@ public class RuntimeDownloadTest {
     static Host senderNode = null;
     private static Runtime runtime = null;
     //Block must not be older than 256 than the latest block
-    private static final String stateRootString = "0x01c1726f35aca7b33f8646d949d1c5b1d2e4b14de08aa91a3c19a1b86cd2964d";
-    private static final String blockHash = "0x4a2cefcba32a9910dc3d6aeb752fd694eea1d53188f03f1af2130e407aedd65b";
+    private static final String stateRootString = "0xcd95074fcf8e8ad450cef04d4d3ae851987f025faf0e8044a79720c3ce9e5730";
+    private static final String blockHash = "0xfbbb584c1e55d38b2cad5f6d6efec84d659d527f6461ac37166c789c663f5f53";
 
     @BeforeAll
     public static void init() throws IOException {
@@ -125,8 +125,9 @@ public class RuntimeDownloadTest {
         Object[] runtimeResponse = null;
         try {
             runtimeResponse = runtime.getInstance().exports.getFunction("Core_initialize_block")
-                    .apply(0, buf.toByteArray().length);
+                    .apply(0,0);
         } catch (Exception e) {
+            log.log(Level.WARNING, e.getMessage(), e.getStackTrace());
             long[] pointers = new long[]{30066183504l, 807453851884l};
             for (int i = 0; i < 2; i++) {
                 long pointer = pointers[i];

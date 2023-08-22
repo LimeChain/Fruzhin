@@ -1,6 +1,7 @@
 package com.limechain.runtime;
 
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.java.Log;
 import org.wasmer.Instance;
 import org.wasmer.Module;
@@ -12,12 +13,12 @@ import static com.limechain.runtime.RuntimeBuilder.getImports;
 @Getter
 @Log
 public class Runtime {
+    @Setter
     private RuntimeVersion version;
     private Instance instance;
     private int heapPages;
 
-    public Runtime(Module module, int heapPages, RuntimeVersion version) {
-        this.version = version;
+    public Runtime(Module module, int heapPages) {
         this.heapPages = heapPages;
         this.instance = module.instantiate(getImports(module, heapPages));
     }

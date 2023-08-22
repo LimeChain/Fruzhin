@@ -1,9 +1,12 @@
 package com.limechain.runtime;
 
 import com.github.luben.zstd.Zstd;
+import com.limechain.sync.warpsync.scale.RuntimeVersionReader;
 import com.limechain.utils.ByteArrayUtils;
+import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import org.wasmer.ImportObject;
 import org.wasmer.Imports;
+import org.wasmer.Memory;
 import org.wasmer.Module;
 import org.wasmer.Type;
 import lombok.extern.java.Log;
@@ -25,13 +28,14 @@ public class RuntimeBuilder {
                     code, ZSTD_PREFIX.length, code.length), MAX_ZSTD_DECOMPRESSED_SIZE);
         } else wasmBinary = code;
 
-        RuntimeVersion runtimeVersion = getRuntimeVersion(wasmBinary);
         Module module = new Module(wasmBinary);
-
-        return new Runtime(module, DEFAULT_HEAP_PAGES, runtimeVersion);
+        Runtime runtime = new Runtime(module, DEFAULT_HEAP_PAGES);
+        RuntimeVersion runtimeVersion = getRuntimeVersion(wasmBinary, runtime);
+        runtime.setVersion(runtimeVersion);
+        return runtime;
     }
 
-    private static RuntimeVersion getRuntimeVersion(byte[] wasmBinary) {
+    private static RuntimeVersion getRuntimeVersion(byte[] wasmBinary, Runtime runtime) {
         // byte value of \0asm concatenated with 0x1, 0x0, 0x0, 0x0 from smoldot runtime_version.rs#97
         byte[] searchKey = new byte[]{0x00, 0x61, 0x73, 0x6D, 0x1, 0x0, 0x0, 0x0};
 
@@ -41,11 +45,28 @@ public class RuntimeBuilder {
         wasmSections.parseCustomSections(wasmBinary);
         if (wasmSections.getRuntimeVersion() != null && wasmSections.getRuntimeVersion().getRuntimeApis() != null) {
             return wasmSections.getRuntimeVersion();
-        } else throw new RuntimeException("Could not get Runtime version");
+        } else {
+            //If we couldn't get the data from the wasm custom sections fallback to Core_version call
+            Object[] response =
+                    runtime.getInstance().exports.getFunction("Core_version")
+                            .apply(0, 0);
+            long memPointer = (long) response[0];
+            int ptr = (int) memPointer;
+            int ptrLength = (int) (memPointer >> 32);
+            byte[] data = new byte[ptrLength];
+
+            Memory memory = runtime.getInstance().exports.getMemory("memory");
+            memory.buffer().get(ptr, data, 0, ptrLength);
+
+            ScaleCodecReader reader = new ScaleCodecReader(data);
+            RuntimeVersionReader runtimeVersionReader = new RuntimeVersionReader();
+            RuntimeVersion runtimeVersion = runtimeVersionReader.read(reader);
+            return runtimeVersion;
+        }
     }
 
     static Imports getImports(Module module, int minPages) {
-        ImportObject.MemoryImport memory= new ImportObject.MemoryImport("env", 22, false);
+        ImportObject.MemoryImport memory = new ImportObject.MemoryImport("env", 22, false);
         return Imports.from(Arrays.asList(
                 new ImportObject.FuncImport("env", "ext_storage_set_version_1", argv -> {
                     System.out.println("Message printed in the body of 'ext_storage_set_version_1'");
@@ -248,13 +269,15 @@ public class RuntimeBuilder {
                     return argv;
                 }, Arrays.asList(Type.I64, Type.I64, Type.I64), Arrays.asList()),
                 new ImportObject.FuncImport("env", "ext_logging_log_version_1", argv -> {
-                    System.out.println(argv);
                     System.out.println("Message printed in the body of 'ext_logging_log_version_1'");
+                    System.out.println("Printing log arguments");
+                    System.out.println(argv);
                     return argv;
                 }, Arrays.asList(Type.I32, Type.I64, Type.I64), Arrays.asList()),
                 new ImportObject.FuncImport("env", "ext_misc_print_num_version_1", argv -> {
-                    System.out.println(argv);
                     System.out.println("Message printed in the body of 'ext_logging_log_version_1'");
+                    System.out.println("Printing log arguments");
+                    System.out.println(argv);
                     return argv;
                 }, Arrays.asList(Type.I64), Arrays.asList()),
                 memory), module);

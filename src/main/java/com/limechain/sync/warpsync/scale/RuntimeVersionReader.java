@@ -1,10 +1,13 @@
 package com.limechain.sync.warpsync.scale;
 
+import com.limechain.runtime.RuntimeApis;
 import com.limechain.runtime.RuntimeVersion;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleReader;
 
 import java.math.BigInteger;
+
+import static com.limechain.runtime.RuntimeApis.API_VERSION_LENGTH;
 
 public class RuntimeVersionReader implements ScaleReader<RuntimeVersion> {
     @Override
@@ -16,13 +19,17 @@ public class RuntimeVersionReader implements ScaleReader<RuntimeVersion> {
         runtimeVersion.setSpecVersion(BigInteger.valueOf(reader.readUint32()));
         runtimeVersion.setImplementationVersion(BigInteger.valueOf(reader.readUint32()));
 
-        // Probably only reads a 0 byte since the runtime apis have been moved to a different custom sections
+        // Reads 0 when reading from wasm sections because runtime apis were moved in a different wasm section
+        // Reads the actual runtimeApis when decoding the Core_Version call
+        RuntimeApis runtimeApis = new RuntimeApis();
         int apiVersionsSize = reader.readCompactInt();
-        byte[][] apiVersions = new byte[apiVersionsSize][];
-        long[] apiVersionsNumbers = new long[apiVersionsSize];
         for (int i = 0; i < apiVersionsSize; i++) {
-            apiVersions[i] = reader.readByteArray(8);
-            apiVersionsNumbers[i] = reader.readUint32();
+            runtimeApis.getApiVersions().add(reader.readByteArray(API_VERSION_LENGTH));
+            runtimeApis.getApiVersionsNumbers().add(BigInteger.valueOf(reader.readUint32()));
+        }
+
+        if (apiVersionsSize > 0) {
+            runtimeVersion.setRuntimeApis(runtimeApis);
         }
 
         runtimeVersion.setTransactionVersion(BigInteger.valueOf(reader.readUint32()));
