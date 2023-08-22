@@ -13,6 +13,7 @@ import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.libp2p.core.PeerId;
 import io.libp2p.core.Stream;
 import lombok.extern.java.Log;
+import org.apache.tomcat.util.buf.HexUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -62,7 +63,11 @@ public class BlockAnnounceEngine {
         ScaleCodecReader reader = new ScaleCodecReader(msg);
         BlockAnnounceMessage announce = reader.read(new BlockAnnounceMessageScaleReader());
         connectionManager.updatePeer(peerId, announce);
-        log.log(Level.INFO, "Received block announce: \n" + announce);
+        log.log(Level.INFO, "Received block announce for block #" + announce.getHeader().getBlockNumber() +
+                " from " + peerId +
+                " with hash:0x" + HexUtils.toHexString(announce.getHeader().getHash()) +
+                " parentHash:" + announce.getHeader().getParentHash() +
+                " stateRoot:" + announce.getHeader().getStateRoot());
     }
 
     public void writeHandshakeToStream(Stream stream, PeerId peerId) {
