@@ -312,10 +312,6 @@ public class Network {
         if (!SyncedState.getInstance().isWarpSyncFinished()) {
             return;
         }
-        connectionManager.getPeerIds().forEach(this::sendNeighbourMessage);
-    }
-
-    private void sendNeighbourMessage(PeerId peerId) {
-        grandpaService.getProtocol().sendNeighbourMessage(this.host, this.host.getAddressBook(), peerId);
+        connectionManager.getPeerIds().forEach(peerId -> grandpaService.sendNeighbourMessage(this.host, peerId));
     }
 }

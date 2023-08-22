@@ -44,23 +44,23 @@ public class ConnectionManager {
     private void addStream(Stream stream, ProtocolStreamType type) {
         PeerId peerId = stream.remotePeerId();
         PeerInfo peerInfo = Optional.ofNullable(peers.get(peerId)).orElseGet(() -> addNewPeer(peerId));
-        ProtocolStreams streams =
+        ProtocolStreams protocolStreams =
                 type == ProtocolStreamType.GRANDPA
                         ? peerInfo.getGrandpaStreams()
                         : peerInfo.getBlockAnnounceStreams();
 
         if (stream.isInitiator()) {
-            if (streams.getInitiator() != null) {
+            if (protocolStreams.getInitiator() != null) {
                 stream.close();
                 return;
             }
-            streams.setInitiator(stream);
+            protocolStreams.setInitiator(stream);
         } else {
-            if (streams.getResponder() != null) {
+            if (protocolStreams.getResponder() != null) {
                 stream.close();
                 return;
             }
-            streams.setResponder(stream);
+            protocolStreams.setResponder(stream);
         }
     }
 
@@ -135,11 +135,11 @@ public class ConnectionManager {
     }
 
     public boolean isGrandpaConnected(PeerId peerId) {
-        return peers.containsKey(peerId) && peers.get(peerId).isGrandpaConnected();
+        return peers.containsKey(peerId) && peers.get(peerId).getGrandpaStreams() != null;
     }
 
     public boolean isBlockAnnounceConnected(PeerId peerId) {
-        return peers.containsKey(peerId) && peers.get(peerId).isBlockAnnounceConnected();
+        return peers.containsKey(peerId) && peers.get(peerId).getBlockAnnounceStreams() != null;
     }
 
     public Set<PeerId> getPeerIds(){

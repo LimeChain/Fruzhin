@@ -16,12 +16,4 @@ public class PeerInfo {
     private int latestBlock;
     private final ProtocolStreams blockAnnounceStreams = new ProtocolStreams();
     private final ProtocolStreams grandpaStreams = new ProtocolStreams();
-
-    public boolean isGrandpaConnected() {
-        return grandpaStreams.getResponder() != null;
-    }
-
-    public boolean isBlockAnnounceConnected() {
-        return blockAnnounceStreams.getResponder() != null;
-    }
 }

@@ -1,6 +1,7 @@
 package com.limechain.network;
 
 import com.limechain.network.dto.PeerInfo;
+import com.limechain.network.dto.ProtocolStreams;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceMessage;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import io.emeraldpay.polkaj.types.Hash256;
@@ -69,14 +70,14 @@ class ConnectionManagerTest {
     @Test
     void isBlockAnnounceConnected() {
         connectionManager.peers.put(peerId, peerInfo);
-        when(peerInfo.isBlockAnnounceConnected()).thenReturn(true);
+        when(peerInfo.getBlockAnnounceStreams()).thenReturn(mock(ProtocolStreams.class));
         assertTrue(connectionManager.isBlockAnnounceConnected(peerId));
     }
 
     @Test
     void isGrandpaConnected() {
         connectionManager.peers.put(peerId, peerInfo);
-        when(peerInfo.isGrandpaConnected()).thenReturn(true);
+        when(peerInfo.getGrandpaStreams()).thenReturn(mock(ProtocolStreams.class));
         assertTrue(connectionManager.isGrandpaConnected(peerId));
     }
 

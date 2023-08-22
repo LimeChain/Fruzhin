@@ -17,11 +17,9 @@ import java.util.logging.Level;
 @Log
 public class GrandpaProtocol extends ProtocolHandler<GrandpaController> {
     private static final long TRAFFIC_LIMIT = Long.MAX_VALUE;
-    private final GrandpaEngine engine;
 
     public GrandpaProtocol() {
         super(TRAFFIC_LIMIT, TRAFFIC_LIMIT);
-        this.engine = new GrandpaEngine();
     }
 
     @NotNull
@@ -41,24 +39,18 @@ public class GrandpaProtocol extends ProtocolHandler<GrandpaController> {
         stream.pushHandler(new Leb128LengthFrameEncoder());
 
         stream.pushHandler(new ByteArrayEncoder());
-        GrandpaProtocol.NotificationHandler handler = new GrandpaProtocol.NotificationHandler(engine, stream);
+        GrandpaProtocol.NotificationHandler handler = new GrandpaProtocol.NotificationHandler(stream);
         stream.pushHandler(handler);
         return CompletableFuture.completedFuture(handler);
     }
 
-    public void sendNeighbourMessage(Stream stream) {
-        engine.writeNeighbourMessage(stream, stream.remotePeerId());
-    }
-
-    static class NotificationHandler implements ProtocolMessageHandler<ByteBuf>, GrandpaController {
+    static class NotificationHandler extends GrandpaController implements ProtocolMessageHandler<ByteBuf> {
         ConnectionManager connectionManager = ConnectionManager.getInstance();
-        private final GrandpaEngine engine;
-        private final Stream stream;
 
-        public NotificationHandler(GrandpaEngine engine, Stream stream) {
-            this.engine = engine;
-            this.stream = stream;
+        public NotificationHandler(Stream stream) {
+            super(stream);
         }
+
         @Override
         public void onMessage(@NotNull Stream stream, ByteBuf msg) {
             byte[] messageBytes = new byte[msg.readableBytes()];
@@ -68,8 +60,8 @@ public class GrandpaProtocol extends ProtocolHandler<GrandpaController> {
 
         @Override
         public void onClosed(Stream stream) {
-            log.log(Level.INFO, "Grandpa stream closed for peer " + stream.remotePeerId());
             connectionManager.closeGrandpaStream(stream);
+            log.log(Level.INFO, "Grandpa stream closed for peer " + stream.remotePeerId());
             ProtocolMessageHandler.super.onClosed(stream);
         }
 
@@ -83,16 +75,6 @@ public class GrandpaProtocol extends ProtocolHandler<GrandpaController> {
                 log.log(Level.WARNING, "Grandpa Exception with unknown cause");
             }
             ProtocolMessageHandler.super.onException(cause);
-        }
-
-        @Override
-        public void sendHandshake() {
-            engine.writeHandshakeToStream(stream, stream.remotePeerId());
-        }
-
-        @Override
-        public void sendNeighbourMessage() {
-            engine.writeNeighbourMessage(stream, stream.remotePeerId());
         }
     }
 }
