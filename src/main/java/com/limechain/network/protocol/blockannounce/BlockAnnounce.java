@@ -1,7 +1,6 @@
 package com.limechain.network.protocol.blockannounce;
 
 import com.limechain.network.StrictProtocolBinding;
-import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshake;
 import io.libp2p.core.AddressBook;
 import io.libp2p.core.Host;
 import io.libp2p.core.PeerId;
@@ -15,9 +14,9 @@ public class BlockAnnounce extends StrictProtocolBinding<BlockAnnounceController
         super(protocolId, protocol);
     }
 
-    public void sendHandshake(Host us, AddressBook addrs, PeerId peer, BlockAnnounceHandshake handshake) {
+    public void sendHandshake(Host us, AddressBook addrs, PeerId peer) {
         BlockAnnounceController controller = dialPeer(us, peer, addrs);
-        controller.sendHandshake(handshake);
+        controller.sendHandshake();
         log.log(Level.INFO, "Sent block announce handshake");
     }
 }

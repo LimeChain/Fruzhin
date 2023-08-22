@@ -8,9 +8,9 @@ import java.io.IOException;
 public class BlockAnnounceHandshakeScaleWriter implements ScaleWriter<BlockAnnounceHandshake> {
     @Override
     public void write(ScaleCodecWriter writer, BlockAnnounceHandshake handshake) throws IOException {
-        writer.writeByte(handshake.nodeRole);
-        writer.writeUint32(Long.parseLong(handshake.bestBlock));
-        writer.writeUint256(handshake.bestBlockHash.getBytes());
-        writer.writeUint256(handshake.genesisBlockHash.getBytes());
+        writer.writeByte(handshake.getNodeRole());
+        writer.writeUint32(handshake.getBestBlock().longValue());
+        writer.writeUint256(handshake.getBestBlockHash().getBytes());
+        writer.writeUint256(handshake.getGenesisBlockHash().getBytes());
     }
 }

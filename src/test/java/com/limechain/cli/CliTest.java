@@ -42,7 +42,7 @@ public class CliTest {
 
     @Test
     public void parseArgs_returns_shortNetworkParameter() {
-        CliArguments arguments = cli.parseArgs(new String[]{"--n", "polkadot"});
+        CliArguments arguments = cli.parseArgs(new String[]{"-n", "polkadot"});
         assertEquals(arguments.network(), "polkadot");
     }
 

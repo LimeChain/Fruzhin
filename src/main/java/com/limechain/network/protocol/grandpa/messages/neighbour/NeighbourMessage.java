@@ -13,5 +13,5 @@ public class NeighbourMessage {
     private int version;
     private BigInteger round;
     private BigInteger setId;
-    private long lastFinalizedBlock;
+    private BigInteger lastFinalizedBlock;
 }

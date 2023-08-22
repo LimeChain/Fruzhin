@@ -68,7 +68,7 @@ class ConnectionManagerTest {
 
         connectionManager.updatePeer(peerId, message);
 
-        verify(peerInfo).setBestBlock("10");
+        verify(peerInfo).setBestBlock(BigInteger.TEN);
         verify(peerInfo).setBestBlockHash(new Hash256(hash));
     }
 

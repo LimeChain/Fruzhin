@@ -7,6 +7,7 @@ import io.libp2p.core.Host;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.java.Log;
+import org.peergos.blockstore.RamBlockstore;
 import org.peergos.protocol.dht.Kademlia;
 import org.peergos.protocol.dht.KademliaEngine;
 import org.peergos.protocol.dht.RamProviderStore;
@@ -41,7 +42,8 @@ public class KademliaService extends NetworkService<Kademlia> {
      * @param localEnabled
      */
     private void initialize(String protocolId, Multihash hostId, boolean localEnabled, boolean clientMode) {
-        protocol = new Kademlia(new KademliaEngine(hostId, new RamProviderStore(), new RamRecordStore()),
+        protocol = new Kademlia(
+                new KademliaEngine(hostId, new RamProviderStore(), new RamRecordStore(), new RamBlockstore()),
                 protocolId, REPLICATION, ALPHA, localEnabled, clientMode);
     }
 

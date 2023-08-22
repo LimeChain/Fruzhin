@@ -2,6 +2,8 @@ package com.limechain.network.protocol.lightclient;
 
 import com.limechain.network.kad.KademliaService;
 import com.limechain.network.protocol.lightclient.pb.LightClientMessage;
+import com.limechain.utils.RandomGenerationUtils;
+import io.ipfs.multiaddr.MultiAddress;
 import io.ipfs.multihash.Multihash;
 import io.libp2p.core.Host;
 import io.libp2p.core.PeerId;
@@ -11,7 +13,6 @@ import org.junit.jupiter.api.Test;
 import org.peergos.HostBuilder;
 
 import java.util.List;
-import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -22,8 +23,10 @@ public class LightMessagesTest {
     public void remoteReadRequest_return_response() {
         Host senderNode = null;
         try {
-            HostBuilder hostBuilder1 =
-                    (new HostBuilder()).generateIdentity().listenLocalhost(10000 + new Random().nextInt(50000));
+            MultiAddress address = RandomGenerationUtils.generateRandomAddress();
+            HostBuilder hostBuilder1 = new HostBuilder()
+                    .generateIdentity()
+                    .listen(List.of(address));
 
             var lightMessages = new LightMessages("/dot/light/2", new LightMessagesProtocol());
             var kademliaService = new KademliaService("/dot/kad",

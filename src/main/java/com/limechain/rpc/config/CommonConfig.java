@@ -15,10 +15,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Spring configuration class used to instantiate beans used by both http and ws rpc modules.
- * <p>
- * <b>IMPORTANT: This class is invoked twice on Host startup. This means that unless beans are singletons,
- * the http and ws spring apps will hold different bean references.</b>
+ * Spring configuration class used to instantiate beans.
  */
 @Configuration
 public class CommonConfig {
@@ -32,8 +29,12 @@ public class CommonConfig {
     }
 
     @Bean
-    public HostConfig hostConfig(ApplicationArguments arguments) {
-        CliArguments cliArgs = new Cli().parseArgs(arguments.getSourceArgs());
+    public CliArguments cliArgs(ApplicationArguments arguments){
+        return new Cli().parseArgs(arguments.getSourceArgs());
+    }
+
+    @Bean
+    public HostConfig hostConfig(CliArguments cliArgs) {
         return new HostConfig(cliArgs);
     }
 
@@ -53,12 +54,13 @@ public class CommonConfig {
     }
 
     @Bean
-    public Network network(ChainService chainService, HostConfig hostConfig) {
-        return Network.initialize(chainService, hostConfig);
+    public Network network(ChainService chainService, HostConfig hostConfig, KVRepository<String, Object> repository,
+                           CliArguments cliArgs) {
+        return new Network(chainService, hostConfig, repository, cliArgs);
     }
 
     @Bean
     public WarpSyncMachine sync(Network network, ChainService chainService) {
-        return WarpSyncMachine.initialize(network, chainService);
+        return new WarpSyncMachine(network, chainService);
     }
 }

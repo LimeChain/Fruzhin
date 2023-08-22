@@ -7,7 +7,7 @@ import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshake;
 import com.limechain.network.protocol.grandpa.messages.commit.CommitMessage;
 import com.limechain.network.protocol.grandpa.messages.neighbour.NeighbourMessage;
-import com.limechain.rpc.http.server.AppBean;
+import com.limechain.rpc.server.AppBean;
 import com.limechain.runtime.Runtime;
 import com.limechain.sync.JustificationVerifier;
 import io.emeraldpay.polkaj.types.Hash256;
@@ -85,7 +85,7 @@ public class SyncedState {
                 : this.getLastFinalizedBlockHash();
         return new BlockAnnounceHandshake(
                 NodeRole.LIGHT.getValue(),
-                this.getLastFinalizedBlockNumber().toString(),
+                this.getLastFinalizedBlockNumber(),
                 lastFinalizedBlockHash,
                 genesisBlockHash
         );
@@ -96,7 +96,7 @@ public class SyncedState {
                 NEIGHBOUR_MESSAGE_VERSION,
                 this.latestRound,
                 this.setId,
-                this.lastFinalizedBlockNumber.longValue()
+                this.lastFinalizedBlockNumber
         );
     }
 
@@ -112,7 +112,10 @@ public class SyncedState {
         }
     }
 
-    private void updateState(CommitMessage commitMessage) {
+    private synchronized void updateState(CommitMessage commitMessage) {
+        if (commitMessage.getVote().getBlockNumber().compareTo(lastFinalizedBlockNumber) < 1) {
+            return;
+        }
         latestRound = commitMessage.getRoundNumber();
         lastFinalizedBlockHash = commitMessage.getVote().getBlockHash();
         lastFinalizedBlockNumber = commitMessage.getVote().getBlockNumber();

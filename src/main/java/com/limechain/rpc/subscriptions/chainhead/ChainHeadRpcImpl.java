@@ -4,7 +4,7 @@ import com.limechain.rpc.config.SubscriptionName;
 import com.limechain.rpc.pubsub.Topic;
 import com.limechain.rpc.pubsub.publisher.PublisherImpl;
 import com.limechain.rpc.subscriptions.utils.Utils;
-import com.limechain.rpc.ws.client.SubscriptionRpcClient;
+import com.limechain.rpc.client.SubscriptionRpcClient;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
@@ -20,16 +20,16 @@ import java.net.URISyntaxException;
 public class ChainHeadRpcImpl implements ChainHeadRpc {
     
     /**
-     * WebSocket client which forwards the requests to smoldot
+     * WebSocket rpc client which forwards the requests to smoldot
      */
-    private final SubscriptionRpcClient wsClient;
+    private final SubscriptionRpcClient rpcClient;
 
     public ChainHeadRpcImpl(String forwardNodeAddress) {
         try {
-            this.wsClient = new SubscriptionRpcClient(new URI(forwardNodeAddress), new PublisherImpl(),
+            this.rpcClient = new SubscriptionRpcClient(new URI(forwardNodeAddress), new PublisherImpl(),
                     Topic.UNSTABLE_FOLLOW);
             //TODO: Move connect outside constructor
-            wsClient.connectBlocking();
+            rpcClient.connectBlocking();
         } catch (URISyntaxException | InterruptedException e) {
             throw new RuntimeException(e);
         }
@@ -37,39 +37,39 @@ public class ChainHeadRpcImpl implements ChainHeadRpc {
 
     @Override
     public void chainUnstableFollow(boolean runtimeUpdates) {
-        wsClient.send(SubscriptionName.CHAIN_HEAD_UNSTABLE_FOLLOW.getValue(),
+        rpcClient.send(SubscriptionName.CHAIN_HEAD_UNSTABLE_FOLLOW.getValue(),
                 new String[]{String.valueOf(runtimeUpdates)});
     }
 
     @Override
     public void chainUnstableUnfollow(String subscriptionId) {
-        wsClient.send(SubscriptionName.CHAIN_HEAD_UNSTABLE_UNFOLLOW.getValue(),
+        rpcClient.send(SubscriptionName.CHAIN_HEAD_UNSTABLE_UNFOLLOW.getValue(),
                 new String[]{Utils.wrapWithDoubleQuotes(subscriptionId)});
     }
 
     @Override
     public void chainUnstableUnpin(String subscriptionId, String blockHash) {
-        wsClient.send(SubscriptionName.CHAIN_HEAD_UNSTABLE_UNPIN.getValue(),
+        rpcClient.send(SubscriptionName.CHAIN_HEAD_UNSTABLE_UNPIN.getValue(),
                 new String[]{Utils.wrapWithDoubleQuotes(subscriptionId), Utils.wrapWithDoubleQuotes(blockHash)});
     }
 
     @Override
     public void chainUnstableCall(String subscriptionId, String blockHash, String function, String callParameters) {
-        wsClient.send(SubscriptionName.CHAIN_HEAD_UNSTABLE_CALL.getValue(),
+        rpcClient.send(SubscriptionName.CHAIN_HEAD_UNSTABLE_CALL.getValue(),
                 new String[]{Utils.wrapWithDoubleQuotes(subscriptionId), Utils.wrapWithDoubleQuotes(blockHash),
                         Utils.wrapWithDoubleQuotes(function), Utils.wrapWithDoubleQuotes(callParameters)});
     }
 
     @Override
     public void chainUnstableStorage(String subscriptionId, String blockHash, String key) {
-        wsClient.send(SubscriptionName.CHAIN_HEAD_UNSTABLE_STORAGE.getValue(),
+        rpcClient.send(SubscriptionName.CHAIN_HEAD_UNSTABLE_STORAGE.getValue(),
                 new String[]{Utils.wrapWithDoubleQuotes(subscriptionId), Utils.wrapWithDoubleQuotes(blockHash),
                         Utils.wrapWithDoubleQuotes(key)});
     }
 
     @Override
     public void chainUnstableStopCall(String subscriptionId) {
-        wsClient.send(SubscriptionName.CHAIN_HEAD_UNSTABLE_STOP_CALL.getValue(),
+        rpcClient.send(SubscriptionName.CHAIN_HEAD_UNSTABLE_STOP_CALL.getValue(),
                 new String[]{Utils.wrapWithDoubleQuotes(subscriptionId)});
     }
 }

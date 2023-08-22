@@ -19,7 +19,6 @@ import java.math.BigInteger;
 import java.util.Comparator;
 import java.util.PriorityQueue;
 import java.util.Queue;
-import java.util.logging.Level;
 
 @Log
 public class WarpSyncMachine {
@@ -45,22 +44,6 @@ public class WarpSyncMachine {
     public WarpSyncMachine(Network network, ChainService chainService) {
         this.networkService = network;
         this.chainService = chainService;
-    }
-
-    /**
-     * Initializes singleton Network instance
-     * This is used two times on startup
-     *
-     * @return Network instance saved in class or if not found returns new Network instance
-     */
-    public static WarpSyncMachine initialize(Network network, ChainService chainService) {
-        if (warpSync != null) {
-            log.log(Level.WARNING, "Warp Sync State Machine already initialized.");
-            return warpSync;
-        }
-        warpSync = new WarpSyncMachine(network, chainService);
-        log.log(Level.INFO, "Initialized Warp Sync State Machine module!");
-        return warpSync;
     }
 
     public void nextState() {

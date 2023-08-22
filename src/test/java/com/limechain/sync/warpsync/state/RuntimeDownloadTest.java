@@ -15,16 +15,19 @@ import com.limechain.trie.Trie;
 import com.limechain.trie.TrieVerifier;
 import com.limechain.trie.decoder.TrieDecoderException;
 import com.limechain.utils.LittleEndianUtils;
+import com.limechain.utils.RandomGenerationUtils;
 import com.limechain.utils.StringUtils;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.emeraldpay.polkaj.types.Hash256;
+import io.ipfs.multiaddr.MultiAddress;
 import io.ipfs.multihash.Multihash;
 import io.libp2p.core.Host;
 import io.libp2p.core.PeerId;
 import io.libp2p.protocol.Ping;
 import lombok.extern.java.Log;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.peergos.HostBuilder;
 import org.wasmer.Memory;
@@ -33,25 +36,27 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.List;
-import java.util.Random;
 import java.util.logging.Level;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @Log
+@Disabled
 public class RuntimeDownloadTest {
     static Host senderNode = null;
     private static Runtime runtime = null;
     //Block must not be older than 256 than the latest block
-    private static final String stateRootString = "0xcd95074fcf8e8ad450cef04d4d3ae851987f025faf0e8044a79720c3ce9e5730";
-    private static final String blockHash = "0xfbbb584c1e55d38b2cad5f6d6efec84d659d527f6461ac37166c789c663f5f53";
+    private static final String STATE_ROOT_STRING
+            = "0x48fcac62d9a14ec3676ca9c30eb0cc5b14d48da30d6064475709ac0ea433fe04";
+    private static final String BLOCK_HASH
+            = "0x753946bdc73a8d86daeaf0b058e0bb44c4e925019ecc06ce38f2fb085d1232fe";
 
     @BeforeAll
     public static void init() throws IOException {
         //Setup node and connect to boot nodes
+        MultiAddress address = RandomGenerationUtils.generateRandomAddress();
         HostBuilder hostBuilder1 =
-                (new HostBuilder()).generateIdentity().listenLocalhost(10000
-                        + new Random().nextInt(50000));
+                (new HostBuilder()).generateIdentity().listen(List.of(address));
 
         var lightMessages = new LightMessages("/dot/light/2", new LightMessagesProtocol());
         var kademliaService = new KademliaService("/dot/kad",
@@ -75,7 +80,7 @@ public class RuntimeDownloadTest {
                 senderNode,
                 kademliaService.getHost().getAddressBook(),
                 peerId,
-                blockHash,
+                BLOCK_HASH,
                 new String[]{StringUtils.toHex(":code")}
         );
         assertNotNull(response);
@@ -93,7 +98,7 @@ public class RuntimeDownloadTest {
         }
 
         //Must change to the latest state root when updating block hash
-        Hash256 stateRoot = Hash256.from(stateRootString);
+        Hash256 stateRoot = Hash256.from(STATE_ROOT_STRING);
         Trie trie;
         try {
             trie = TrieVerifier.buildTrie(decodedProofs, stateRoot.getBytes());
@@ -115,17 +120,19 @@ public class RuntimeDownloadTest {
         ScaleCodecWriter scaleCodecWriter = new ScaleCodecWriter(buf);
         BlockHeaderScaleWriter blockHeaderScaleWriter = new BlockHeaderScaleWriter();
         BlockHeader blockHeader = new BlockHeader();
-        blockHeader.setParentHash(Hash256.from(blockHash));
+        blockHeader.setParentHash(Hash256.from(BLOCK_HASH));
         blockHeader.setBlockNumber(BigInteger.valueOf(16871500));
-        blockHeader.setStateRoot(Hash256.from("0x0000000000000000000000000000000000000000000000000000000000000000"));
-        blockHeader.setExtrinsicsRoot(Hash256.from("0x0000000000000000000000000000000000000000000000000000000000000000"));
+        blockHeader.setStateRoot(
+                Hash256.from("0x0000000000000000000000000000000000000000000000000000000000000000"));
+        blockHeader.setExtrinsicsRoot(
+                Hash256.from("0x0000000000000000000000000000000000000000000000000000000000000000"));
         blockHeader.setDigest(new HeaderDigest[]{});
         blockHeaderScaleWriter.write(scaleCodecWriter, blockHeader);
         memory.buffer().put(buf.toByteArray());
         Object[] runtimeResponse = null;
         try {
             runtimeResponse = runtime.getInstance().exports.getFunction("Core_initialize_block")
-                    .apply(0,0);
+                    .apply(0, 0);
         } catch (Exception e) {
             log.log(Level.WARNING, e.getMessage(), e.getStackTrace());
             long[] pointers = new long[]{30066183504l, 807453851884l};

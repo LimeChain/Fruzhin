@@ -23,6 +23,7 @@ import java.util.logging.Level;
 public class Cli {
     public static final String NETWORK = "network";
     public static final String DB_PATH = "db-path";
+    public static final String NODE_KEY = "node-key";
     private static final String DB_RECREATE = "db-recreate";
 
     /**
@@ -51,8 +52,9 @@ public class Cli {
             if (!validChains.contains(network) && !network.isEmpty()) throw new ParseException("Invalid network");
             String dbPath = cmd.getOptionValue(DB_PATH, DBInitializer.DEFAULT_DIRECTORY);
             boolean dbRecreate = cmd.hasOption(DB_RECREATE);
+            String nodeKey = cmd.getOptionValue(NODE_KEY);
 
-            return new CliArguments(network, dbPath, dbRecreate);
+            return new CliArguments(network, dbPath, dbRecreate, nodeKey);
         } catch (ParseException e) {
             log.log(Level.SEVERE, "Failed to parse cli arguments", e);
             formatter.printHelp("Specify the network name - " + String.join(", ", validChains), options);
@@ -70,13 +72,17 @@ public class Cli {
         Option networkOption = new Option("n", NETWORK, true, "Client network");
         Option dbPathOption = new Option(null, DB_PATH, true, "RocksDB path");
         Option dbClean = new Option("dbc", DB_RECREATE, false, "Clean the DB");
+        Option nodeKey = new Option(null, NODE_KEY, true, "HEX for secret Ed25519 key");
+
         networkOption.setRequired(false);
         dbPathOption.setRequired(false);
         dbClean.setRequired(false);
+        nodeKey.setRequired(false);
 
         options.addOption(networkOption);
         options.addOption(dbPathOption);
         options.addOption(dbClean);
+        options.addOption(nodeKey);
         return options;
     }
 
