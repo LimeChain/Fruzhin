@@ -1,5 +1,6 @@
 package com.limechain.network;
 
+import com.limechain.network.dto.PeerInfo;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceMessage;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import io.emeraldpay.polkaj.types.Hash256;
@@ -25,13 +26,6 @@ class ConnectionManagerTest {
     @BeforeEach
     void setUp() {
         connectionManager = new ConnectionManager();
-    }
-
-    @Test
-    void addPeer() {
-        connectionManager.addPeer(peerId, peerInfo);
-
-        assertSame(peerInfo, connectionManager.peers.get(peerId));
     }
 
     @Test

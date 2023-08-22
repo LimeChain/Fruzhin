@@ -1,5 +1,6 @@
 package com.limechain.network.protocol.grandpa;
 
+import com.limechain.network.ConnectionManager;
 import com.limechain.network.encoding.Leb128LengthFrameDecoder;
 import com.limechain.network.encoding.Leb128LengthFrameEncoder;
 import io.libp2p.core.Stream;
@@ -26,18 +27,16 @@ public class GrandpaProtocol extends ProtocolHandler<GrandpaController> {
     @NotNull
     @Override
     protected CompletableFuture<GrandpaController> onStartInitiator(Stream stream) {
-        stream.pushHandler(new Leb128LengthFrameDecoder());
-        stream.pushHandler(new Leb128LengthFrameEncoder());
-
-        stream.pushHandler(new ByteArrayEncoder());
-        GrandpaProtocol.NotificationHandler handler = new GrandpaProtocol.NotificationHandler(engine, stream);
-        stream.pushHandler(handler);
-        return CompletableFuture.completedFuture(handler);
+        return onStartStream(stream);
     }
 
     @NotNull
     @Override
     protected CompletableFuture<GrandpaController> onStartResponder(Stream stream) {
+        return onStartStream(stream);
+    }
+
+    private CompletableFuture<GrandpaController> onStartStream(Stream stream) {
         stream.pushHandler(new Leb128LengthFrameDecoder());
         stream.pushHandler(new Leb128LengthFrameEncoder());
 
@@ -47,7 +46,12 @@ public class GrandpaProtocol extends ProtocolHandler<GrandpaController> {
         return CompletableFuture.completedFuture(handler);
     }
 
+    public void sendNeighbourMessage(Stream stream) {
+        engine.writeNeighbourMessage(stream, stream.remotePeerId());
+    }
+
     static class NotificationHandler implements ProtocolMessageHandler<ByteBuf>, GrandpaController {
+        ConnectionManager connectionManager = ConnectionManager.getInstance();
         private final GrandpaEngine engine;
         private final Stream stream;
 
@@ -65,11 +69,13 @@ public class GrandpaProtocol extends ProtocolHandler<GrandpaController> {
         @Override
         public void onClosed(Stream stream) {
             log.log(Level.INFO, "Grandpa stream closed for peer " + stream.remotePeerId());
+            connectionManager.closeGrandpaStream(stream);
             ProtocolMessageHandler.super.onClosed(stream);
         }
 
         @Override
         public void onException(Throwable cause) {
+            connectionManager.closeGrandpaStream(stream);
             if (cause != null) {
                 log.log(Level.WARNING, "Grandpa Exception: " + cause.getMessage());
                 cause.printStackTrace();

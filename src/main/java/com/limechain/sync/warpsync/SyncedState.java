@@ -16,7 +16,7 @@ import com.limechain.rpc.server.AppBean;
 import com.limechain.runtime.Runtime;
 import com.limechain.sync.JustificationVerifier;
 import com.limechain.sync.warpsync.dto.AuthoritySetChange;
-import com.limechain.sync.warpsync.dto.GrandpaMessageType;
+import com.limechain.sync.warpsync.dto.GrandpaDigestMessageType;
 import com.limechain.sync.warpsync.scale.ForcedChangeReader;
 import com.limechain.sync.warpsync.scale.ScheduledChangeReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
@@ -142,7 +142,8 @@ public class SyncedState {
 
         var justification = new JustificationReader().read(
                 new ScaleCodecReader(block.getJustification().toByteArray()));
-        boolean verified = JustificationVerifier.verify(justification.precommits, justification.round);
+        boolean verified = justification != null
+                && JustificationVerifier.verify(justification.precommits, justification.round);
         if (verified) {
             var header = new BlockHeaderReader().read(new ScaleCodecReader(block.getHeader().toByteArray()));
             handleAuthorityChanges(header.getDigest(), setChangeBlock);
@@ -178,7 +179,7 @@ public class SyncedState {
         for (HeaderDigest digest : headerDigests) {
             if (digest.getId() == ConsensusEngine.GRANDPA) {
                 ScaleCodecReader reader = new ScaleCodecReader(digest.getMessage());
-                GrandpaMessageType type = GrandpaMessageType.fromId(reader.readByte());
+                GrandpaDigestMessageType type = GrandpaDigestMessageType.fromId(reader.readByte());
 
                 if (type == null) {
                     log.log(Level.SEVERE, "Could not get grandpa message type");

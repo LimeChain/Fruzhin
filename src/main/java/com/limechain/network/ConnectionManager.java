@@ -1,13 +1,19 @@
 package com.limechain.network;
 
+import com.limechain.network.dto.PeerInfo;
+import com.limechain.network.dto.ProtocolStreamType;
+import com.limechain.network.dto.ProtocolStreams;
+import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshake;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceMessage;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import io.emeraldpay.polkaj.types.Hash256;
 import io.libp2p.core.PeerId;
+import io.libp2p.core.Stream;
 
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 public class ConnectionManager {
@@ -23,21 +29,93 @@ public class ConnectionManager {
         return INSTANCE;
     }
 
-    public void addPeer(PeerId peerId, PeerInfo peerInfo) {
-        peers.put(peerId, peerInfo);
-    }
-
     public PeerInfo getPeerInfo(PeerId peerId) {
        return peers.get(peerId);
     }
 
-    public void updatePeer(PeerId peerId, BlockAnnounceMessage blockAnnounceMessage) {
-        final var peer = peers.get(peerId);
-        updateLatestBlock(peer, blockAnnounceMessage.getHeader().getBlockNumber());
+    public void addBlockAnnounceStream(Stream stream) {
+        addStream(stream, ProtocolStreamType.BLOCK_ANNOUNCE);
+    }
 
+    public void addGrandpaStream(Stream stream) {
+        addStream(stream, ProtocolStreamType.GRANDPA);
+    }
+
+    private void addStream(Stream stream, ProtocolStreamType type) {
+        PeerId peerId = stream.remotePeerId();
+        PeerInfo peerInfo = Optional.ofNullable(peers.get(peerId)).orElseGet(() -> addNewPeer(peerId));
+        ProtocolStreams streams =
+                type == ProtocolStreamType.GRANDPA
+                        ? peerInfo.getGrandpaStreams()
+                        : peerInfo.getBlockAnnounceStreams();
+
+        if (stream.isInitiator()) {
+            if (streams.getInitiator() != null) {
+                stream.close();
+                return;
+            }
+            streams.setInitiator(stream);
+        } else {
+            if (streams.getResponder() != null) {
+                stream.close();
+                return;
+            }
+            streams.setResponder(stream);
+        }
+    }
+
+    private PeerInfo addNewPeer(PeerId peerId) {
+        PeerInfo peerInfo = new PeerInfo();
+        peers.put(peerId, peerInfo);
+        return peerInfo;
+    }
+
+    public void closeGrandpaStream(Stream stream) {
+        PeerInfo peerInfo = peers.get(stream.remotePeerId());
+        if (peerInfo == null) {
+            return;
+        }
+
+        if (stream.isInitiator()) {
+            peerInfo.getGrandpaStreams().setInitiator(null);
+        } else {
+            peerInfo.getGrandpaStreams().setResponder(null);
+        }
+    }
+
+    public void closeBlockAnnounceStream(Stream stream) {
+        PeerInfo peerInfo = peers.get(stream.remotePeerId());
+        if (peerInfo == null) {
+            return;
+        }
+
+        if (stream.isInitiator()) {
+            peerInfo.getBlockAnnounceStreams().setInitiator(null);
+        } else {
+            peerInfo.getBlockAnnounceStreams().setResponder(null);
+        }
+    }
+
+    public void updatePeer(PeerId peerId, BlockAnnounceMessage blockAnnounceMessage) {
+        PeerInfo peer = peers.get(peerId);
+        if (peer == null) {
+            return;
+        }
+        updateLatestBlock(peer, blockAnnounceMessage.getHeader().getBlockNumber());
         if (blockAnnounceMessage.isBestBlock()) {
             updateBestBlock(peer, blockAnnounceMessage.getHeader());
         }
+    }
+
+    public void updatePeer(PeerId peerId, BlockAnnounceHandshake blockAnnounceHandshake) {
+        PeerInfo peerInfo = peers.get(peerId);
+        if (peerInfo == null) {
+            return;
+        }
+        peerInfo.setNodeRole(blockAnnounceHandshake.getNodeRole());
+        peerInfo.setGenesisBlockHash(blockAnnounceHandshake.getGenesisBlockHash());
+        peerInfo.setBestBlock(blockAnnounceHandshake.getBestBlock());
+        peerInfo.setBestBlockHash(blockAnnounceHandshake.getBestBlockHash());
     }
 
     private void updateLatestBlock(PeerInfo peerInfo, BigInteger announcedBlock) {

@@ -1,7 +1,6 @@
 package com.limechain.network.protocol.blockannounce;
 
 import com.limechain.network.ConnectionManager;
-import com.limechain.network.PeerInfo;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshake;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshakeScaleReader;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshakeScaleWriter;
@@ -48,10 +47,12 @@ public class BlockAnnounceEngine {
         */
         if (connectedToPeer) {
             log.log(Level.INFO, "Received existing handshake from " + peerId);
+            stream.close();
         } else {
             ScaleCodecReader reader = new ScaleCodecReader(msg);
             BlockAnnounceHandshake handshake = reader.read(new BlockAnnounceHandshakeScaleReader());
-            connectionManager.addPeer(peerId, new PeerInfo(handshake));
+            connectionManager.addBlockAnnounceStream(stream);
+            connectionManager.updatePeer(peerId, handshake);
             log.log(Level.INFO, "Received handshake from " + peerId + "\n" +
                     handshake);
             writeHandshakeToStream(stream, peerId);
@@ -62,7 +63,7 @@ public class BlockAnnounceEngine {
         ScaleCodecReader reader = new ScaleCodecReader(msg);
         BlockAnnounceMessage announce = reader.read(new BlockAnnounceMessageScaleReader());
         connectionManager.updatePeer(peerId, announce);
-        log.log(Level.INFO, "Received block announce: \n" + announce);
+        log.log(Level.FINE, "Received block announce: \n" + announce);
     }
 
     public void writeHandshakeToStream(Stream stream, PeerId peerId) {
@@ -75,9 +76,5 @@ public class BlockAnnounceEngine {
 
         log.log(Level.INFO, "Sending handshake to " + peerId);
         stream.writeAndFlush(buf.toByteArray());
-    }
-
-    public void removePeerHandshake(PeerId peerId) {
-        connectionManager.removePeer(peerId);
     }
 }

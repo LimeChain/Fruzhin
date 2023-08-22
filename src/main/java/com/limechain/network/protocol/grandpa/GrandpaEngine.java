@@ -1,7 +1,6 @@
 package com.limechain.network.protocol.grandpa;
 
 import com.limechain.network.ConnectionManager;
-import com.limechain.network.PeerInfo;
 import com.limechain.network.protocol.grandpa.messages.GrandpaMessageType;
 import com.limechain.network.protocol.grandpa.messages.commit.CommitMessage;
 import com.limechain.network.protocol.grandpa.messages.commit.CommitMessageScaleReader;
@@ -27,7 +26,6 @@ public class GrandpaEngine {
     private final SyncedState syncedState = SyncedState.getInstance();
 
     public void receiveRequest(byte[] msg, PeerId peerId, Stream stream) {
-        boolean connectedToPeer = connectionManager.isGrandpaConnected(peerId);
         GrandpaMessageType messageType = getGrandpaMessageType(msg);
 
         if (messageType == null) {
@@ -35,16 +33,39 @@ public class GrandpaEngine {
             return;
         }
 
+        if (stream.isInitiator()) {
+            handleInitiatorStreamMessage(msg, messageType, stream);
+        } else {
+            handleResponderStreamMessage(msg, messageType, stream);
+        }
+    }
+
+    private void handleInitiatorStreamMessage(byte[] message, GrandpaMessageType messageType, Stream stream) {
+        PeerId peerId = stream.remotePeerId();
+        if (messageType != GrandpaMessageType.HANDSHAKE) {
+            stream.close();
+            log.log(Level.WARNING, "Non handshake message on initiator grandpa stream from peer " + peerId);
+            return;
+        }
+        connectionManager.addGrandpaStream(stream);
+        log.log(Level.INFO, "Received grandpa handshake from " + peerId);
+        writeNeighbourMessage(stream, peerId);
+    }
+
+    private void handleResponderStreamMessage(byte[] message, GrandpaMessageType messageType, Stream stream) {
+        PeerId peerId = stream.remotePeerId();
+        boolean connectedToPeer = connectionManager.isGrandpaConnected(peerId);
+
         if (!connectedToPeer && messageType != GrandpaMessageType.HANDSHAKE) {
             log.log(Level.WARNING, "No handshake for grandpa message from Peer " + peerId);
             return;
         }
 
         switch (messageType) {
-            case HANDSHAKE -> handleHandshake(msg, peerId, stream);
+            case HANDSHAKE -> handleHandshake(message, peerId, stream);
             case VOTE -> log.log(Level.INFO, "Vote message received from Peer " + peerId);
-            case COMMIT -> handleCommitMessage(msg, peerId);
-            case NEIGHBOUR -> handleNeighbourMessage(msg, peerId);
+            case COMMIT -> handleCommitMessage(message, peerId);
+            case NEIGHBOUR -> handleNeighbourMessage(message, peerId);
             case CATCH_UP_REQUEST -> log.log(Level.INFO, "Catch up request received from Peer " + peerId);
             case CATCH_UP_RESPONSE -> log.log(Level.INFO, "Catch up response received from Peer " + peerId);
         }
@@ -58,23 +79,11 @@ public class GrandpaEngine {
     }
 
     private void handleHandshake(byte[] msg, PeerId peerId, Stream stream) {
-        if (stream.isInitiator()) {
-            log.log(Level.INFO, "Received grandpa handshake from " + peerId);
-            writeNeighbourMessage(stream, peerId);
-            return;
-        }
-
-        PeerInfo peerInfo = connectionManager.getPeerInfo(peerId);
-
-        if (peerInfo != null && peerInfo.isGrandpaConnected()) {
+        if (connectionManager.isGrandpaConnected(peerId)) {
             log.log(Level.INFO, "Received existing grandpa handshake from " + peerId);
         } else {
-            if (peerInfo == null) {
-                peerInfo = new PeerInfo();
-                connectionManager.addPeer(peerId, peerInfo);
-            }
-            peerInfo.setNodeRole(msg[0]);
-            peerInfo.setGrandpaConnected(true);
+            connectionManager.addGrandpaStream(stream);
+            connectionManager.getPeerInfo(peerId).setNodeRole(msg[0]);
             log.log(Level.INFO, "Received grandpa handshake from " + peerId);
         }
         writeHandshakeToStream(stream, peerId);
@@ -126,6 +135,5 @@ public class GrandpaEngine {
 
         log.log(Level.INFO, "Sending neighbour message to peer " + peerId);
         stream.writeAndFlush(buf.toByteArray());
-        stream.close().join();
     }
 }
