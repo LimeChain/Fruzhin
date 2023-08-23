@@ -106,10 +106,10 @@ public class SyncedState {
         lastFinalizedBlockHash = commitMessage.getVote().getBlockHash();
         lastFinalizedBlockNumber = commitMessage.getVote().getBlockNumber();
         log.log(Level.INFO, "Reached block #" + lastFinalizedBlockNumber);
-        saveState();
+        persistState();
     }
 
-    public void saveState() {
+    public void persistState() {
         List<Pair<String, BigInteger>> authorities = Arrays
                 .stream(authoritySet)
                 .map(authority -> {
@@ -150,16 +150,16 @@ public class SyncedState {
     }
 
     public void saveProofState(byte[][] proof) {
-        repository.save(DBConstants.STATE_TRIE_PROOF, proof);
-        repository.save(DBConstants.STATE_TRIE_ROOT_STATE, stateRoot.toString());
+        repository.save(DBConstants.STATE_TRIE_MERKLE_PROOF, proof);
+        repository.save(DBConstants.STATE_TRIE_ROOT_HASH, stateRoot.toString());
     }
 
     public byte[][] loadProof() {
-        return (byte[][]) repository.find(DBConstants.STATE_TRIE_PROOF).orElse(null);
+        return (byte[][]) repository.find(DBConstants.STATE_TRIE_MERKLE_PROOF).orElse(null);
     }
 
     public Hash256 loadStateRoot() {
-        Object storedRootState = repository.find(DBConstants.STATE_TRIE_ROOT_STATE).orElse(null);
+        Object storedRootState = repository.find(DBConstants.STATE_TRIE_ROOT_HASH).orElse(null);
         return storedRootState == null ? null : Hash256.from(storedRootState.toString());
     }
 }

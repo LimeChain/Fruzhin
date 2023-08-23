@@ -38,7 +38,7 @@ public class RuntimeDownloadState implements WarpSyncState {
         byte[][] merkleProof = syncedState.loadProof();
         Hash256 stateRoot = syncedState.loadStateRoot();
         ChainService chainService = AppBean.getBean(ChainService.class);
-        if(!chainService.isLocalChain() && merkleProof != null && stateRoot != null){
+        if(merkleProof != null && stateRoot != null){
             log.log(Level.INFO, "Loading saved runtime...");
             setCodeAndHeapPages(merkleProof, stateRoot);
             return;
