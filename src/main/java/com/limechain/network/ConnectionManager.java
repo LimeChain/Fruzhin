@@ -67,4 +67,7 @@ public class ConnectionManager {
     public Set<PeerId> getPeerIds(){
         return peers.keySet();
     }
+    public void removeAllPeers(){
+        peers.clear();
+    }
 }
