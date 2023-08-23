@@ -50,6 +50,7 @@ public class SyncedState {
     private boolean warpSyncFinished;
     private KVRepository<String, Object> repository;
     private Trie trie;
+    private Network network;
 
     public static SyncedState getInstance() {
         return INSTANCE;
@@ -57,7 +58,9 @@ public class SyncedState {
 
     public BlockAnnounceHandshake getHandshake() {
         Hash256 genesisBlockHash;
-        Network network = AppBean.getBean(Network.class);
+        if (network == null)
+            network = AppBean.getBean(Network.class);
+        
         switch (network.getChain()) {
             case POLKADOT -> genesisBlockHash = GenesisBlockHash.POLKADOT;
             case KUSAMA -> genesisBlockHash = GenesisBlockHash.KUSAMA;
