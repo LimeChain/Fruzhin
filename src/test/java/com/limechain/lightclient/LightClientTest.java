@@ -45,6 +45,7 @@ class LightClientTest {
 
         lightClient.stop();
 
+        verify(network, times(1)).stop();
         verify(rpcApp, times(1)).stop();
 
     }
