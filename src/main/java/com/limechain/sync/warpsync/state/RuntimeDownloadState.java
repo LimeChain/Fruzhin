@@ -1,8 +1,6 @@
 package com.limechain.sync.warpsync.state;
 
-import com.limechain.chain.ChainService;
 import com.limechain.network.protocol.lightclient.pb.LightClientMessage;
-import com.limechain.rpc.server.AppBean;
 import com.limechain.sync.warpsync.SyncedState;
 import com.limechain.sync.warpsync.WarpSyncMachine;
 import com.limechain.trie.Trie;
@@ -37,7 +35,6 @@ public class RuntimeDownloadState implements WarpSyncState {
     public void handle(WarpSyncMachine sync) {
         byte[][] merkleProof = syncedState.loadProof();
         Hash256 stateRoot = syncedState.loadStateRoot();
-        ChainService chainService = AppBean.getBean(ChainService.class);
         if(merkleProof != null && stateRoot != null){
             log.log(Level.INFO, "Loading saved runtime...");
             setCodeAndHeapPages(merkleProof, stateRoot);
