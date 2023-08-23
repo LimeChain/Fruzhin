@@ -68,6 +68,7 @@ public class BlockAnnounceEngine {
                 " with hash:0x" + HexUtils.toHexString(announce.getHeader().getHash()) +
                 " parentHash:" + announce.getHeader().getParentHash() +
                 " stateRoot:" + announce.getHeader().getStateRoot());
+        //TODO: Should update Trie (and merkle proofs?) and save them in db
     }
 
     public void writeHandshakeToStream(Stream stream, PeerId peerId) {

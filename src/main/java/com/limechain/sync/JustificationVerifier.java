@@ -32,7 +32,7 @@ public class JustificationVerifier {
 
         // Implementation from: https://github.com/smol-dot/smoldot
         // lib/src/finality/justification/verify.rs
-        if (precommits.length < (authorities.length * 2 / 3) + 1) {
+        if (authorities == null || precommits.length < (authorities.length * 2 / 3) + 1) {
             log.log(Level.WARNING, "Not enough signatures");
             return false;
         }
