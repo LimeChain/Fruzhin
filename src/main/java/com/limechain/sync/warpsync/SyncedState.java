@@ -13,6 +13,7 @@ import com.limechain.storage.DBConstants;
 import com.limechain.storage.KVRepository;
 import com.limechain.sync.JustificationVerifier;
 import com.limechain.sync.warpsync.dto.StateDto;
+import com.limechain.trie.Trie;
 import io.emeraldpay.polkaj.types.Hash256;
 import io.libp2p.core.PeerId;
 import lombok.Getter;
@@ -48,6 +49,7 @@ public class SyncedState {
     private Runtime runtime;
     private boolean warpSyncFinished;
     private KVRepository<String, Object> repository;
+    private Trie trie;
 
     public static SyncedState getInstance() {
         return INSTANCE;
@@ -141,8 +143,23 @@ public class SyncedState {
                     }).toArray(Authority[]::new);
 
             this.setId = state.setId();
+
             return true;
         }
         return false;
+    }
+
+    public void saveProofState(byte[][] proof) {
+        repository.save(DBConstants.STATE_TRIE_PROOF, proof);
+        repository.save(DBConstants.STATE_TRIE_ROOT_STATE, stateRoot.toString());
+    }
+
+    public byte[][] loadProof() {
+        return (byte[][]) repository.find(DBConstants.STATE_TRIE_PROOF).orElse(null);
+    }
+
+    public Hash256 loadStateRoot() {
+        Object storedRootState = repository.find(DBConstants.STATE_TRIE_ROOT_STATE).orElse(null);
+        return storedRootState == null ? null : Hash256.from(storedRootState.toString());
     }
 }

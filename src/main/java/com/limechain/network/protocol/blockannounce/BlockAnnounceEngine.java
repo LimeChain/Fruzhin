@@ -63,6 +63,8 @@ public class BlockAnnounceEngine {
         BlockAnnounceMessage announce = reader.read(new BlockAnnounceMessageScaleReader());
         connectionManager.updatePeer(peerId, announce);
         log.log(Level.INFO, "Received block announce: \n" + announce);
+
+        //TODO: Should update Trie (and merkle proofs?) and save them in db
     }
 
     public void writeHandshakeToStream(Stream stream, PeerId peerId) {
