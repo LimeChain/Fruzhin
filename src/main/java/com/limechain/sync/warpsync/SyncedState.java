@@ -7,9 +7,12 @@ import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshake;
 import com.limechain.network.protocol.grandpa.messages.commit.CommitMessage;
 import com.limechain.network.protocol.grandpa.messages.neighbour.NeighbourMessage;
+import com.limechain.network.protocol.sync.pb.SyncMessage.BlockResponse;
+import com.limechain.network.protocol.sync.pb.SyncMessage.BlockData;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.network.protocol.warp.dto.ConsensusEngine;
 import com.limechain.network.protocol.warp.dto.HeaderDigest;
+import com.limechain.network.protocol.warp.dto.Justification;
 import com.limechain.network.protocol.warp.scale.BlockHeaderReader;
 import com.limechain.network.protocol.warp.scale.JustificationReader;
 import com.limechain.rpc.server.AppBean;
@@ -38,8 +41,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
-
-import static com.limechain.network.protocol.sync.pb.SyncMessage.BlockResponse;
 
 @Getter
 @Setter
@@ -187,14 +188,14 @@ public class SyncedState {
 
     private void updateSetData(BigInteger setChangeBlock, PeerId peerId) {
         BlockResponse response = network.syncBlock(peerId, setChangeBlock);
-        var block = response.getBlocksList().get(0);
+        BlockData block = response.getBlocksList().get(0);
 
-        var justification = new JustificationReader().read(
+        Justification justification = new JustificationReader().read(
                 new ScaleCodecReader(block.getJustification().toByteArray()));
         boolean verified = justification != null
                 && JustificationVerifier.verify(justification.precommits, justification.round);
         if (verified) {
-            var header = new BlockHeaderReader().read(new ScaleCodecReader(block.getHeader().toByteArray()));
+            BlockHeader header = new BlockHeaderReader().read(new ScaleCodecReader(block.getHeader().toByteArray()));
             handleAuthorityChanges(header.getDigest(), setChangeBlock);
             BlockHeader blockHeader = new BlockHeaderReader().read(
                     new ScaleCodecReader(block.getHeader().toByteArray()));

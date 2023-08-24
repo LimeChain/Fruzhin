@@ -33,18 +33,19 @@ public class GrandpaEngine {
         return INSTANCE;
     }
 
-    public void receiveRequest(byte[] msg, PeerId peerId, Stream stream) {
-        GrandpaMessageType messageType = getGrandpaMessageType(msg);
+    public void receiveRequest(byte[] message, PeerId peerId, Stream stream) {
+        GrandpaMessageType messageType = getGrandpaMessageType(message);
 
         if (messageType == null) {
-            log.log(Level.WARNING, String.format("Unknown grandpa message type \"%d\" from Peer %s", msg[0], peerId));
+            log.log(Level.WARNING,
+                    String.format("Unknown grandpa message type \"%d\" from Peer %s", message[0], peerId));
             return;
         }
 
         if (stream.isInitiator()) {
-            handleInitiatorStreamMessage(msg, messageType, stream);
+            handleInitiatorStreamMessage(message, messageType, stream);
         } else {
-            handleResponderStreamMessage(msg, messageType, stream);
+            handleResponderStreamMessage(message, messageType, stream);
         }
     }
 
@@ -79,33 +80,33 @@ public class GrandpaEngine {
         }
     }
 
-    private GrandpaMessageType getGrandpaMessageType(byte[] msg) {
-        if (msg.length == HANDSHAKE_LENGTH) {
+    private GrandpaMessageType getGrandpaMessageType(byte[] message) {
+        if (message.length == HANDSHAKE_LENGTH) {
             return GrandpaMessageType.HANDSHAKE;
         }
-        return GrandpaMessageType.getByType(msg[0]);
+        return GrandpaMessageType.getByType(message[0]);
     }
 
-    private void handleHandshake(byte[] msg, PeerId peerId, Stream stream) {
+    private void handleHandshake(byte[] message, PeerId peerId, Stream stream) {
         if (connectionManager.isGrandpaConnected(peerId)) {
             log.log(Level.INFO, "Received existing grandpa handshake from " + peerId);
         } else {
             connectionManager.addGrandpaStream(stream);
-            connectionManager.getPeerInfo(peerId).setNodeRole(msg[0]);
+            connectionManager.getPeerInfo(peerId).setNodeRole(message[0]);
             log.log(Level.INFO, "Received grandpa handshake from " + peerId);
         }
         writeHandshakeToStream(stream, peerId);
     }
 
-    private void handleNeighbourMessage(byte[] msg, PeerId peerId) {
-        ScaleCodecReader reader = new ScaleCodecReader(msg);
+    private void handleNeighbourMessage(byte[] message, PeerId peerId) {
+        ScaleCodecReader reader = new ScaleCodecReader(message);
         NeighbourMessage neighbourMessage = reader.read(new NeighbourMessageScaleReader());
         log.log(Level.INFO, "Received neighbour message from Peer " + peerId + "\n" + neighbourMessage);
         new Thread(() -> syncedState.syncNeighbourMessage(neighbourMessage, peerId)).start();
     }
 
-    private void handleCommitMessage(byte[] msg, PeerId peerId) {
-        ScaleCodecReader reader = new ScaleCodecReader(msg);
+    private void handleCommitMessage(byte[] message, PeerId peerId) {
+        ScaleCodecReader reader = new ScaleCodecReader(message);
         CommitMessage commitMessage = reader.read(new CommitMessageScaleReader());
         synchronized (this) {
             if (isBlockAlreadyReached(commitMessage.getVote().getBlockNumber())) {

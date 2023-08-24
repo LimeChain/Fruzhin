@@ -16,4 +16,11 @@ public class PeerInfo {
     private int latestBlock;
     private final ProtocolStreams blockAnnounceStreams = new ProtocolStreams();
     private final ProtocolStreams grandpaStreams = new ProtocolStreams();
+
+    public ProtocolStreams getProtocolStreams(ProtocolStreamType type) {
+        return switch (type) {
+            case GRANDPA -> grandpaStreams;
+            case BLOCK_ANNOUNCE -> blockAnnounceStreams;
+        };
+    }
 }
