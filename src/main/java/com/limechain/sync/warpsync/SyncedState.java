@@ -120,7 +120,7 @@ public class SyncedState {
                 + " for block #" + commitMessage.getVote().getBlockNumber()
                 + " with hash " + commitMessage.getVote().getBlockHash()
                 + " with setId " + commitMessage.getSetId() + " and round " + commitMessage.getRoundNumber()
-                + " with " + commitMessage.getPrecommits().length + "voters");
+                + " with " + commitMessage.getPrecommits().length + " voters");
 
         boolean verified = JustificationVerifier.verify(commitMessage.getPrecommits(), commitMessage.getRoundNumber());
         if (!verified) {
@@ -215,18 +215,24 @@ public class SyncedState {
         BlockResponse response = network.syncBlock(peerId, setChangeBlock);
         BlockData block = response.getBlocksList().get(0);
 
+        if (block.getIsEmptyJustification()) {
+            log.log(Level.WARNING, "No justification for block " + setChangeBlock);
+            return;
+        }
+
         Justification justification = new JustificationReader().read(
                 new ScaleCodecReader(block.getJustification().toByteArray()));
         boolean verified = justification != null
                 && JustificationVerifier.verify(justification.precommits, justification.round);
+
         if (verified) {
             BlockHeader header = new BlockHeaderReader().read(new ScaleCodecReader(block.getHeader().toByteArray()));
+            this.lastFinalizedBlockNumber = header.getBlockNumber();
+            this.lastFinalizedBlockHash = new Hash256(header.getHash());
+
             handleAuthorityChanges(header.getDigest(), setChangeBlock);
-            BlockHeader blockHeader = new BlockHeaderReader().read(
-                    new ScaleCodecReader(block.getHeader().toByteArray()));
-            this.lastFinalizedBlockNumber = blockHeader.getBlockNumber();
-            this.lastFinalizedBlockHash = new Hash256(blockHeader.getHash());
             handleScheduledEvents();
+            persistState();
         }
     }
 
@@ -244,6 +250,7 @@ public class SyncedState {
             data = scheduledAuthorityChanges.peek();
         }
         if (warpSyncFinished && updated) {
+            log.log(Level.INFO, "Successfully transitioned to authority set id: " + setId);
             new Thread(() -> network.sendNeighbourMessages()).start();
         }
     }
