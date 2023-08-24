@@ -103,7 +103,25 @@ public class SyncedState {
         );
     }
 
+    /**
+     * Sync our state according to a received commit message.
+     * Synchronized to avoid race condition between checking and updating latest block
+     * @param commitMessage received commit message
+     * @param peerId sender of the message
+     */
     public synchronized void syncCommit(CommitMessage commitMessage, PeerId peerId) {
+        if (commitMessage.getVote().getBlockNumber().compareTo(lastFinalizedBlockNumber) <= 0) {
+            log.log(Level.FINE, String.format("Received commit message for finalized block %d from peer %s",
+                    commitMessage.getVote().getBlockNumber(), peerId));
+            return;
+        }
+
+        log.log(Level.INFO, "Received commit message from peer " + peerId
+                + " for block #" + commitMessage.getVote().getBlockNumber()
+                + " with hash " + commitMessage.getVote().getBlockHash()
+                + " with setId " + commitMessage.getSetId() + " and round " + commitMessage.getRoundNumber()
+                + " with " + commitMessage.getPrecommits().length + "voters");
+
         boolean verified = JustificationVerifier.verify(commitMessage.getPrecommits(), commitMessage.getRoundNumber());
         if (!verified) {
             log.log(Level.WARNING, "Could not verify commit from peer: " + peerId);
@@ -180,6 +198,13 @@ public class SyncedState {
         return storedRootState == null ? null : Hash256.from(storedRootState.toString());
     }
 
+    /**
+     * Sync our state according to a neighbour message we receive.
+     * Try to update our set data (id and authorities) if neighbour has a greater set id than us.
+     * Synchronized to avoid race condition between checking and updating set id
+     * @param neighbourMessage received neighbour message
+     * @param peerId sender of message
+     */
     public synchronized void syncNeighbourMessage(NeighbourMessage neighbourMessage, PeerId peerId) {
         if (warpSyncFinished && neighbourMessage.getSetId().compareTo(setId) > 0) {
             updateSetData(neighbourMessage.getLastFinalizedBlock().add(BigInteger.ONE), peerId);

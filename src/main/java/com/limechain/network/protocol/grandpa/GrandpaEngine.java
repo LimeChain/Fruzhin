@@ -16,22 +16,14 @@ import lombok.extern.java.Log;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.math.BigInteger;
 import java.util.logging.Level;
 
 @Log
 public class GrandpaEngine {
-    private static final GrandpaEngine INSTANCE = new GrandpaEngine();
     private static final int HANDSHAKE_LENGTH = 1;
 
     private final ConnectionManager connectionManager = ConnectionManager.getInstance();
     private final SyncedState syncedState = SyncedState.getInstance();
-
-    protected GrandpaEngine() {}
-
-    public static GrandpaEngine getInstance() {
-        return INSTANCE;
-    }
 
     public void receiveRequest(byte[] message, PeerId peerId, Stream stream) {
         GrandpaMessageType messageType = getGrandpaMessageType(message);
@@ -108,24 +100,7 @@ public class GrandpaEngine {
     private void handleCommitMessage(byte[] message, PeerId peerId) {
         ScaleCodecReader reader = new ScaleCodecReader(message);
         CommitMessage commitMessage = reader.read(new CommitMessageScaleReader());
-        synchronized (this) {
-            if (isBlockAlreadyReached(commitMessage.getVote().getBlockNumber())) {
-                log.log(Level.FINE, String.format("Received commit message for finalized block %d from peer %s",
-                        commitMessage.getVote().getBlockNumber(), peerId));
-                return;
-            }
-
-            log.log(Level.INFO, "Received commit message from peer " + peerId
-                    + " for block #" + commitMessage.getVote().getBlockNumber()
-                    + " with hash " + commitMessage.getVote().getBlockHash()
-                    + " with setId " + commitMessage.getSetId() + " and round " + commitMessage.getRoundNumber()
-                    + " with " + commitMessage.getPrecommits().length + "voters");
-            syncedState.syncCommit(commitMessage, peerId);
-        }
-    }
-
-    private boolean isBlockAlreadyReached(BigInteger blockNumber) {
-        return syncedState.getLastFinalizedBlockNumber().compareTo(blockNumber) >= 0;
+        syncedState.syncCommit(commitMessage, peerId);
     }
 
     public void writeHandshakeToStream(Stream stream, PeerId peerId) {
