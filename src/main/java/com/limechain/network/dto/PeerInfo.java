@@ -13,7 +13,7 @@ public class PeerInfo {
     private BigInteger bestBlock;
     private Hash256 bestBlockHash;
     private Hash256 genesisBlockHash;
-    private BigInteger latestBlock;
+    private BigInteger latestBlock = BigInteger.ZERO;
     private final ProtocolStreams blockAnnounceStreams = new ProtocolStreams();
     private final ProtocolStreams grandpaStreams = new ProtocolStreams();
 
