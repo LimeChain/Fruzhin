@@ -11,7 +11,6 @@ import io.libp2p.core.PeerId;
 import io.libp2p.core.Stream;
 import lombok.extern.java.Log;
 
-import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -94,20 +93,10 @@ public class ConnectionManager {
         }
     }
 
-    public void updatePeer(PeerId peerId, BlockAnnounceMessage blockAnnounceMessage) {
-        PeerInfo peer = peers.get(peerId);
-        if (peer == null) {
-            return;
-        }
-        updateLatestBlock(peer, blockAnnounceMessage.getHeader().getBlockNumber());
-        if (blockAnnounceMessage.isBestBlock()) {
-            updateBestBlock(peer, blockAnnounceMessage.getHeader());
-        }
-    }
-
     public void updatePeer(PeerId peerId, BlockAnnounceHandshake blockAnnounceHandshake) {
         PeerInfo peerInfo = peers.get(peerId);
         if (peerInfo == null) {
+            log.log(Level.WARNING, "Trying to update missing peer " + peerId);
             return;
         }
         peerInfo.setNodeRole(blockAnnounceHandshake.getNodeRole());
@@ -116,16 +105,21 @@ public class ConnectionManager {
         peerInfo.setBestBlockHash(blockAnnounceHandshake.getBestBlockHash());
     }
 
-    private void updateLatestBlock(PeerInfo peerInfo, BigInteger announcedBlock) {
-        BigInteger latestRecordedBlock = BigInteger.valueOf(peerInfo.getLatestBlock());
-        if (announcedBlock.compareTo(latestRecordedBlock) > 0) {
-            peerInfo.setLatestBlock(announcedBlock.intValue());
+    public void updatePeer(PeerId peerId, BlockAnnounceMessage blockAnnounceMessage) {
+        PeerInfo peerInfo = peers.get(peerId);
+        if (peerInfo == null) {
+            log.log(Level.WARNING, "Trying to update missing peer " + peerId);
+            return;
         }
-    }
 
-    private void updateBestBlock(PeerInfo peerInfo, BlockHeader blockHeader) {
-        peerInfo.setBestBlock(blockHeader.getBlockNumber());
-        peerInfo.setBestBlockHash(new Hash256(blockHeader.getHash()));
+        BlockHeader blockHeader = blockAnnounceMessage.getHeader();
+        if (blockHeader.getBlockNumber().compareTo(peerInfo.getLatestBlock()) > 0) {
+            peerInfo.setLatestBlock(blockHeader.getBlockNumber());
+        }
+        if (blockAnnounceMessage.isBestBlock()) {
+            peerInfo.setBestBlock(blockHeader.getBlockNumber());
+            peerInfo.setBestBlockHash(new Hash256(blockHeader.getHash()));
+        }
     }
 
     public void removePeer(PeerId peerId) {

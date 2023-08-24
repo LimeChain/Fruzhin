@@ -22,11 +22,12 @@ import static org.mockito.Mockito.when;
 class ConnectionManagerTest {
     ConnectionManager connectionManager;
     PeerId peerId = mock(PeerId.class);
-    PeerInfo peerInfo = mock(PeerInfo.class);
+    PeerInfo peerInfo;
 
     @BeforeEach
     void setUp() {
         connectionManager = new ConnectionManager();
+        peerInfo = mock(PeerInfo.class);
     }
 
     @Test
@@ -40,6 +41,7 @@ class ConnectionManagerTest {
     @Test
     void updatePeerShouldDoNothingIfNotBestBlock() {
         connectionManager.peers.put(peerId, peerInfo);
+        when(peerInfo.getLatestBlock()).thenReturn(BigInteger.ZERO);
         BlockAnnounceMessage message = mock(BlockAnnounceMessage.class);
         when(message.isBestBlock()).thenReturn(false);
         BlockHeader header = mock(BlockHeader.class);
@@ -52,6 +54,7 @@ class ConnectionManagerTest {
     @Test
     void updatePeerShouldUpdateWhenBestBlock() {
         connectionManager.peers.put(peerId, peerInfo);
+        when(peerInfo.getLatestBlock()).thenReturn(BigInteger.ZERO);
         BlockAnnounceMessage message = mock(BlockAnnounceMessage.class);
         when(message.isBestBlock()).thenReturn(true);
         BlockHeader header = mock(BlockHeader.class);

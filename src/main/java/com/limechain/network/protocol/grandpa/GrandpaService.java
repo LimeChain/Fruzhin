@@ -6,6 +6,8 @@ import io.libp2p.core.Host;
 import io.libp2p.core.PeerId;
 import io.libp2p.core.Stream;
 
+import java.util.Optional;
+
 public class GrandpaService extends NetworkService<Grandpa> {
     ConnectionManager connectionManager = ConnectionManager.getInstance();
     public GrandpaService(String protocolId) {
@@ -13,13 +15,21 @@ public class GrandpaService extends NetworkService<Grandpa> {
     }
 
     public void sendNeighbourMessage(Host us, PeerId peerId) {
-        Stream grandpaStream = connectionManager.getPeerInfo(peerId).getGrandpaStreams().getInitiator();
-        if (grandpaStream != null) {
-            GrandpaController controller = new GrandpaController(grandpaStream);
-            controller.sendNeighbourMessage();
-        } else {
-            GrandpaController controller = this.protocol.dialPeer(us, peerId, us.getAddressBook());
-            controller.sendHandshake();
-        }
+        Optional.ofNullable(connectionManager.getPeerInfo(peerId))
+                .map(p -> p.getGrandpaStreams().getInitiator())
+                .ifPresentOrElse(
+                        this::sendNeighbourMessage,
+                        () -> sendHandshake(us, peerId)
+                );
+    }
+
+    private void sendNeighbourMessage(Stream stream) {
+        GrandpaController controller = new GrandpaController(stream);
+        controller.sendNeighbourMessage();
+    }
+
+    private void sendHandshake(Host us, PeerId peerId) {
+        GrandpaController controller = this.protocol.dialPeer(us, peerId, us.getAddressBook());
+        controller.sendHandshake();
     }
 }
