@@ -53,7 +53,6 @@ public class SyncedState {
     private BigInteger lastFinalizedBlockNumber = BigInteger.ZERO;
     private Authority[] authoritySet;
     private BigInteger setId = BigInteger.ZERO;
-
     private BigInteger latestRound = BigInteger.ONE;
 
     private byte[] runtimeCode;
@@ -63,9 +62,9 @@ public class SyncedState {
     private KVRepository<String, Object> repository;
     private Trie trie;
     private Network network;
-
     private final PriorityQueue<Pair<BigInteger, Authority[]>> scheduledAuthorityChanges =
             new PriorityQueue<>(Comparator.comparing(Pair::getValue0));
+
     public static SyncedState getInstance() {
         return INSTANCE;
     }
@@ -103,7 +102,7 @@ public class SyncedState {
         );
     }
 
-    public void syncCommit(CommitMessage commitMessage, PeerId peerId) {
+    public synchronized void syncCommit(CommitMessage commitMessage, PeerId peerId) {
         boolean verified = JustificationVerifier.verify(commitMessage.getPrecommits(), commitMessage.getRoundNumber());
         if (!verified) {
             log.log(Level.WARNING, "Could not verify commit from peer: " + peerId);
@@ -115,7 +114,7 @@ public class SyncedState {
         }
     }
 
-    private synchronized void updateState(CommitMessage commitMessage) {
+    private void updateState(CommitMessage commitMessage) {
         if (commitMessage.getVote().getBlockNumber().compareTo(lastFinalizedBlockNumber) < 1) {
             return;
         }
@@ -180,9 +179,13 @@ public class SyncedState {
         return storedRootState == null ? null : Hash256.from(storedRootState.toString());
     }
 
-    public void updateSetData(NeighbourMessage neighbourMessage, PeerId peerId) {
-        BigInteger setChangeBlock = neighbourMessage.getLastFinalizedBlock().add(BigInteger.ONE);
+    public synchronized void syncNeighbourMessage(NeighbourMessage neighbourMessage, PeerId peerId) {
+        if (warpSyncFinished && neighbourMessage.getSetId().compareTo(setId) > 0) {
+            updateSetData(neighbourMessage.getLastFinalizedBlock().add(BigInteger.ONE), peerId);
+        }
+    }
 
+    private void updateSetData(BigInteger setChangeBlock, PeerId peerId) {
         BlockResponse response = network.syncBlock(peerId, setChangeBlock);
         var block = response.getBlocksList().get(0);
 

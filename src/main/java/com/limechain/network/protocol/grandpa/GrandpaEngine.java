@@ -21,9 +21,17 @@ import java.util.logging.Level;
 
 @Log
 public class GrandpaEngine {
+    private static final GrandpaEngine INSTANCE = new GrandpaEngine();
     private static final int HANDSHAKE_LENGTH = 1;
+
     private final ConnectionManager connectionManager = ConnectionManager.getInstance();
     private final SyncedState syncedState = SyncedState.getInstance();
+
+    protected GrandpaEngine() {}
+
+    public static GrandpaEngine getInstance() {
+        return INSTANCE;
+    }
 
     public void receiveRequest(byte[] msg, PeerId peerId, Stream stream) {
         GrandpaMessageType messageType = getGrandpaMessageType(msg);
@@ -93,23 +101,26 @@ public class GrandpaEngine {
         ScaleCodecReader reader = new ScaleCodecReader(msg);
         NeighbourMessage neighbourMessage = reader.read(new NeighbourMessageScaleReader());
         log.log(Level.INFO, "Received neighbour message from Peer " + peerId + "\n" + neighbourMessage);
-        if (syncedState.isWarpSyncFinished()
-                && neighbourMessage.getSetId().compareTo(syncedState.getSetId()) > 0) {
-            new Thread(() -> syncedState.updateSetData(neighbourMessage, peerId)).start();
-        }
+        new Thread(() -> syncedState.syncNeighbourMessage(neighbourMessage, peerId)).start();
     }
 
     private void handleCommitMessage(byte[] msg, PeerId peerId) {
         ScaleCodecReader reader = new ScaleCodecReader(msg);
         CommitMessage commitMessage = reader.read(new CommitMessageScaleReader());
-        if (isBlockAlreadyReached(commitMessage.getVote().getBlockNumber())) {
-            log.log(Level.FINE, String.format("Received commit message for finalized block %d from peer %s",
-                            commitMessage.getVote().getBlockNumber(), peerId));
-            return;
-        }
+        synchronized (this) {
+            if (isBlockAlreadyReached(commitMessage.getVote().getBlockNumber())) {
+                log.log(Level.FINE, String.format("Received commit message for finalized block %d from peer %s",
+                        commitMessage.getVote().getBlockNumber(), peerId));
+                return;
+            }
 
-        log.log(Level.INFO, "Received commit message from peer " + peerId + "\n" + commitMessage);
-        syncedState.syncCommit(commitMessage, peerId);
+            log.log(Level.INFO, "Received commit message from peer " + peerId
+                    + " for block #" + commitMessage.getVote().getBlockNumber()
+                    + " with hash " + commitMessage.getVote().getBlockHash()
+                    + " with setId " + commitMessage.getSetId() + " and round " + commitMessage.getRoundNumber()
+                    + " with " + commitMessage.getPrecommits().length + "voters");
+            syncedState.syncCommit(commitMessage, peerId);
+        }
     }
 
     private boolean isBlockAlreadyReached(BigInteger blockNumber) {
