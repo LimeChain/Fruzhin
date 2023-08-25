@@ -59,6 +59,7 @@ public class GrandpaEngine {
 
         if (!connectedToPeer && messageType != GrandpaMessageType.HANDSHAKE) {
             log.log(Level.WARNING, "No handshake for grandpa message from Peer " + peerId);
+            stream.close();
             return;
         }
 
@@ -82,6 +83,7 @@ public class GrandpaEngine {
     private void handleHandshake(byte[] message, PeerId peerId, Stream stream) {
         if (connectionManager.isGrandpaConnected(peerId)) {
             log.log(Level.INFO, "Received existing grandpa handshake from " + peerId);
+            stream.close();
         } else {
             connectionManager.addGrandpaStream(stream);
             connectionManager.getPeerInfo(peerId).setNodeRole(message[0]);
