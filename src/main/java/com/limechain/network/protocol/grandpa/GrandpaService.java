@@ -8,12 +8,21 @@ import io.libp2p.core.Stream;
 
 import java.util.Optional;
 
+/**
+ * Service used to send messages on {@link Grandpa} protocol.
+ */
 public class GrandpaService extends NetworkService<Grandpa> {
     ConnectionManager connectionManager = ConnectionManager.getInstance();
     public GrandpaService(String protocolId) {
         this.protocol = new Grandpa(protocolId, new GrandpaProtocol());
     }
 
+    /**
+     * Send a neighbour message to peer. If there is no initiator stream opened with peer, send a handshake instead.
+     *
+     * @param us our host object
+     * @param peerId message receiver
+     */
     public void sendNeighbourMessage(Host us, PeerId peerId) {
         Optional.ofNullable(connectionManager.getPeerInfo(peerId))
                 .map(p -> p.getGrandpaStreams().getInitiator())

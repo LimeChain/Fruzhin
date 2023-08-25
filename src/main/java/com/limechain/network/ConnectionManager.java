@@ -17,6 +17,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Level;
 
+/**
+ * Singleton class, controlling connected peer info and streams.
+ */
 @Log
 public class ConnectionManager {
     private static ConnectionManager INSTANCE;
@@ -31,14 +34,30 @@ public class ConnectionManager {
         return INSTANCE;
     }
 
+    /**
+     * Get info of connected peer.
+     *
+     * @param peerId id of peer
+     * @return known peer state and connected streams
+     */
     public PeerInfo getPeerInfo(PeerId peerId) {
        return peers.get(peerId);
     }
 
+    /**
+     * Add a Block Announce stream in peer info. Peer id is retrieved from the stream.
+     *
+     * @param stream stream to be added
+     */
     public void addBlockAnnounceStream(Stream stream) {
         addStream(stream, ProtocolStreamType.BLOCK_ANNOUNCE);
     }
 
+    /**
+     * Add a GRANDPA stream in peer info. Peer id is retrieved from the stream.
+     *
+     * @param stream stream to be added
+     */
     public void addGrandpaStream(Stream stream) {
         addStream(stream, ProtocolStreamType.GRANDPA);
     }
@@ -69,10 +88,20 @@ public class ConnectionManager {
         return peerInfo;
     }
 
+    /**
+     * Remove a GRANDPA stream from peer info. Peer id is retrieved from the stream.
+     *
+     * @param stream stream to be closed
+     */
     public void closeGrandpaStream(Stream stream) {
         closeStream(stream, ProtocolStreamType.GRANDPA);
     }
 
+    /**
+     * Remove a Block Announce stream from peer info. Peer id is retrieved from the stream.
+     *
+     * @param stream stream to be closed
+     */
     public void closeBlockAnnounceStream(Stream stream) {
         closeStream(stream, ProtocolStreamType.BLOCK_ANNOUNCE);
     }
@@ -93,6 +122,13 @@ public class ConnectionManager {
         }
     }
 
+    /**
+     * Update peer info (node role, genesis block hash and best block number and hash),
+     * based on a received Block Announce Handshake.
+     *
+     * @param peerId peer to be updated
+     * @param blockAnnounceHandshake received handshake
+     */
     public void updatePeer(PeerId peerId, BlockAnnounceHandshake blockAnnounceHandshake) {
         PeerInfo peerInfo = peers.get(peerId);
         if (peerInfo == null) {
@@ -105,6 +141,12 @@ public class ConnectionManager {
         peerInfo.setBestBlockHash(blockAnnounceHandshake.getBestBlockHash());
     }
 
+    /**
+     * Update peer info (latest block and best block number and hash), based on a received Block Announce Message.
+     *
+     * @param peerId peer to be updated
+     * @param blockAnnounceMessage received message
+     */
     public void updatePeer(PeerId peerId, BlockAnnounceMessage blockAnnounceMessage) {
         PeerInfo peerInfo = peers.get(peerId);
         if (peerInfo == null) {
@@ -122,18 +164,31 @@ public class ConnectionManager {
         }
     }
 
-    public void removePeer(PeerId peerId) {
-        peers.remove(peerId);
-    }
-
+    /**
+     * Check if we have an open GRANDPA responder stream with peer.
+     *
+     * @param peerId peer to check
+     * @return do peer info and GRANDPA responder stream exist
+     */
     public boolean isGrandpaConnected(PeerId peerId) {
         return peers.containsKey(peerId) && peers.get(peerId).getGrandpaStreams().getResponder() != null;
     }
 
+    /**
+     * Check if we have an open Block Announce responder stream with peer.
+     *
+     * @param peerId peer to check
+     * @return do peer info and Block Announce responder stream exist
+     */
     public boolean isBlockAnnounceConnected(PeerId peerId) {
         return peers.containsKey(peerId) && peers.get(peerId).getBlockAnnounceStreams().getResponder() != null;
     }
 
+    /**
+     * Get the ids of all peers with open connections.
+     *
+     * @return set of connected peer ids
+     */
     public Set<PeerId> getPeerIds(){
         return peers.keySet();
     }

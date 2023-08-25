@@ -31,14 +31,6 @@ class ConnectionManagerTest {
     }
 
     @Test
-    void removePeer() {
-        connectionManager.peers.put(peerId, peerInfo);
-        connectionManager.removePeer(peerId);
-
-        assertFalse(connectionManager.peers.containsKey(peerId));
-    }
-
-    @Test
     void updatePeerShouldDoNothingIfNotBestBlock() {
         connectionManager.peers.put(peerId, peerInfo);
         when(peerInfo.getLatestBlock()).thenReturn(BigInteger.ZERO);

@@ -18,6 +18,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.logging.Level;
 
+/**
+ * Engine for handling transactions on GRANDPA streams.
+ */
 @Log
 public class GrandpaEngine {
     private static final int HANDSHAKE_LENGTH = 1;
@@ -25,6 +28,21 @@ public class GrandpaEngine {
     private final ConnectionManager connectionManager = ConnectionManager.getInstance();
     private final SyncedState syncedState = SyncedState.getInstance();
 
+    /**
+     * Handle a received request as follows:
+     *
+     * <p><b>On streams we initiated:</b>  add new streams we receive a handshake message on to peer streams,
+     * ignore all other message types.
+     *
+     * <p><b>On responder streams: </b>
+     * <p>On handshake add streams to non-connected peers and ignore for already connected ones. </p>
+     * <p>On neighbour and commit messages, sync received data using {@link SyncedState}. </p>
+     * <p>Only log other message types. </p>
+     *
+     * @param message received message as byre array
+     * @param peerId peer id of sender
+     * @param stream stream, where the request was received
+     */
     public void receiveRequest(byte[] message, PeerId peerId, Stream stream) {
         GrandpaMessageType messageType = getGrandpaMessageType(message);
 
@@ -105,6 +123,12 @@ public class GrandpaEngine {
         syncedState.syncCommit(commitMessage, peerId);
     }
 
+    /**
+     * Send our GRANDPA handshake on given stream.
+     *
+     * @param stream stream to write message to
+     * @param peerId peer to send to
+     */
     public void writeHandshakeToStream(Stream stream, PeerId peerId) {
         byte[] handshake = new byte[] {
                 (byte) syncedState.getHandshake().getNodeRole()
@@ -114,6 +138,12 @@ public class GrandpaEngine {
         stream.writeAndFlush(handshake);
     }
 
+    /**
+     * Send our GRANDPA neighbour message from {@link SyncedState} on given stream.
+     *
+     * @param stream stream to write message to
+     * @param peerId peer to send to
+     */
     public void writeNeighbourMessage(Stream stream, PeerId peerId) {
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
         try (ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {

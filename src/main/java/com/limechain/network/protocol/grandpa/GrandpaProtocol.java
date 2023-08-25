@@ -14,20 +14,38 @@ import org.jetbrains.annotations.NotNull;
 import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 
+/**
+ * Handler for GRANDPA protocol messages and streams.
+ */
 @Log
 public class GrandpaProtocol extends ProtocolHandler<GrandpaController> {
     private static final long TRAFFIC_LIMIT = Long.MAX_VALUE;
 
+    /**
+     * Create a handler with {@link Long#MAX_VALUE} traffic limit
+     */
     public GrandpaProtocol() {
         super(TRAFFIC_LIMIT, TRAFFIC_LIMIT);
     }
 
+    /**
+     * Handle new initiator stream opened and add channel and notification handlers to it.
+     *
+     * @param stream stream opened
+     * @return async controller for the stream
+     */
     @NotNull
     @Override
     protected CompletableFuture<GrandpaController> onStartInitiator(Stream stream) {
         return onStartStream(stream);
     }
 
+    /**
+     * Handle new responder stream opened and add channel and notification handlers to it.
+     *
+     * @param stream stream opened
+     * @return async controller for the stream
+     */
     @NotNull
     @Override
     protected CompletableFuture<GrandpaController> onStartResponder(Stream stream) {
@@ -44,6 +62,9 @@ public class GrandpaProtocol extends ProtocolHandler<GrandpaController> {
         return CompletableFuture.completedFuture(handler);
     }
 
+    /**
+     * Handler for notifications received on a GRANDPA protocol.
+     */
     static class NotificationHandler extends GrandpaController implements ProtocolMessageHandler<ByteBuf> {
         ConnectionManager connectionManager = ConnectionManager.getInstance();
 
