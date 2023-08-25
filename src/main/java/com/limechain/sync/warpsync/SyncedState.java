@@ -42,34 +42,48 @@ import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
 
+/**
+ * Singleton class, holding and handling the synced state of our node.
+ */
 @Getter
 @Setter
 @Log
 public class SyncedState {
-    public static final int NEIGHBOUR_MESSAGE_VERSION = 1;
     private static final SyncedState INSTANCE = new SyncedState();
-    private Hash256 lastFinalizedBlockHash;
-    private boolean isFinished;
-    private Hash256 stateRoot;
-    private BigInteger lastFinalizedBlockNumber = BigInteger.ZERO;
-    private Authority[] authoritySet;
-    private BigInteger setId = BigInteger.ZERO;
-    private BigInteger latestRound = BigInteger.ONE;
-
-    private byte[] runtimeCode;
-    private byte[] heapPages;
-    private Runtime runtime;
-    private boolean warpSyncFinished;
-    private KVRepository<String, Object> repository;
-    private Trie trie;
-    private Network network;
-    private final PriorityQueue<Pair<BigInteger, Authority[]>> scheduledAuthorityChanges =
-            new PriorityQueue<>(Comparator.comparing(Pair::getValue0));
-
+    protected SyncedState() {}
     public static SyncedState getInstance() {
         return INSTANCE;
     }
 
+    public static final int NEIGHBOUR_MESSAGE_VERSION = 1;
+
+    private boolean warpSyncFragmentsFinished;
+    private boolean warpSyncFinished;
+
+    private BigInteger lastFinalizedBlockNumber = BigInteger.ZERO;
+    private Hash256 lastFinalizedBlockHash;
+    private Hash256 stateRoot;
+
+    private Authority[] authoritySet;
+    private BigInteger setId = BigInteger.ZERO;
+    private BigInteger latestRound = BigInteger.ONE;
+
+    private Runtime runtime;
+    private byte[] runtimeCode;
+    private byte[] heapPages;
+
+    private KVRepository<String, Object> repository;
+    private Trie trie;
+    private Network network;
+
+    private final PriorityQueue<Pair<BigInteger, Authority[]>> scheduledAuthorityChanges =
+            new PriorityQueue<>(Comparator.comparing(Pair::getValue0));
+
+    /**
+     * Create a Block Announce handshake based on our state
+     *
+     * @return our Block Announce handshake
+     */
     public BlockAnnounceHandshake getHandshake() {
         Hash256 genesisBlockHash;
         if (network == null)
@@ -83,17 +97,22 @@ public class SyncedState {
             default -> throw new IllegalStateException("Unexpected value: " + network.chain);
         }
 
-        Hash256 lastFinalizedBlockHash = this.getLastFinalizedBlockHash() == null
+        Hash256 lastFinalizedBlockHash = this.lastFinalizedBlockHash == null
                 ? genesisBlockHash
-                : this.getLastFinalizedBlockHash();
+                : this.lastFinalizedBlockHash;
         return new BlockAnnounceHandshake(
                 NodeRole.LIGHT.getValue(),
-                this.getLastFinalizedBlockNumber(),
+                this.lastFinalizedBlockNumber,
                 lastFinalizedBlockHash,
                 genesisBlockHash
         );
     }
 
+    /**
+     * Create a GRANDPA handshake based on our state
+     *
+     * @return our GRANDPA handshake
+     */
     public NeighbourMessage getNeighbourMessage() {
         return new NeighbourMessage(
                 NEIGHBOUR_MESSAGE_VERSION,
@@ -106,6 +125,7 @@ public class SyncedState {
     /**
      * Sync our state according to a received commit message.
      * Synchronized to avoid race condition between checking and updating latest block
+     *
      * @param commitMessage received commit message
      * @param peerId sender of the message
      */
@@ -144,64 +164,11 @@ public class SyncedState {
         persistState();
     }
 
-    public void persistState() {
-        List<Pair<String, BigInteger>> authorities = Arrays
-                .stream(authoritySet)
-                .map(authority -> {
-                    String key = authority.getPublicKey().toString();
-                    BigInteger weight = authority.getWeight();
-                    return new Pair<>(key, weight);
-                }).toList();
-
-        StateDto stateDto = new StateDto(
-                latestRound,
-                lastFinalizedBlockHash.toString(),
-                lastFinalizedBlockNumber,
-                authorities,
-                setId
-        );
-        repository.save(DBConstants.SYNC_STATE_KEY, stateDto);
-    }
-
-    public boolean loadState() {
-        Optional<Object> syncState = repository.find(DBConstants.SYNC_STATE_KEY);
-        if (syncState.isPresent() && syncState.get() instanceof StateDto state) {
-            this.latestRound = state.latestRound();
-            this.lastFinalizedBlockHash = Hash256.from(state.lastFinalizedBlockHash());
-            this.lastFinalizedBlockNumber = state.lastFinalizedBlockNumber();
-            this.authoritySet = state.authoritySet()
-                    .stream()
-                    .map(pair -> {
-                        Hash256 publicKey = Hash256.from(pair.getValue0());
-                        BigInteger weight = pair.getValue1();
-                        return new Authority(publicKey, weight);
-                    }).toArray(Authority[]::new);
-
-            this.setId = state.setId();
-
-            return true;
-        }
-        return false;
-    }
-
-    public void saveProofState(byte[][] proof) {
-        repository.save(DBConstants.STATE_TRIE_MERKLE_PROOF, proof);
-        repository.save(DBConstants.STATE_TRIE_ROOT_HASH, stateRoot.toString());
-    }
-
-    public byte[][] loadProof() {
-        return (byte[][]) repository.find(DBConstants.STATE_TRIE_MERKLE_PROOF).orElse(null);
-    }
-
-    public Hash256 loadStateRoot() {
-        Object storedRootState = repository.find(DBConstants.STATE_TRIE_ROOT_HASH).orElse(null);
-        return storedRootState == null ? null : Hash256.from(storedRootState.toString());
-    }
-
     /**
      * Sync our state according to a neighbour message we receive.
      * Try to update our set data (id and authorities) if neighbour has a greater set id than us.
      * Synchronized to avoid race condition between checking and updating set id
+     *
      * @param neighbourMessage received neighbour message
      * @param peerId sender of message
      */
@@ -236,6 +203,9 @@ public class SyncedState {
         }
     }
 
+    /**
+     * Execute authority changes, scheduled for current block.
+     */
     public void handleScheduledEvents() {
         Pair<BigInteger, Authority[]> data = scheduledAuthorityChanges.peek();
         boolean updated = false;
@@ -255,6 +225,12 @@ public class SyncedState {
         }
     }
 
+    /**
+     * Handle authority changes in block header digest and schedule them.
+     *
+     * @param headerDigests digest of block header
+     * @param blockNumber block, containing the digest
+     */
     public void handleAuthorityChanges(HeaderDigest[] headerDigests, BigInteger blockNumber) {
         // Update authority set and set id
         AuthoritySetChange authorityChanges;
@@ -300,5 +276,67 @@ public class SyncedState {
                 }
             }
         }
+    }
+
+    /**
+     * Persist our current state to DB.
+     */
+    public void persistState() {
+        List<Pair<String, BigInteger>> authorities = Arrays
+                .stream(authoritySet)
+                .map(authority -> {
+                    String key = authority.getPublicKey().toString();
+                    BigInteger weight = authority.getWeight();
+                    return new Pair<>(key, weight);
+                }).toList();
+
+        StateDto stateDto = new StateDto(
+                latestRound,
+                lastFinalizedBlockHash.toString(),
+                lastFinalizedBlockNumber,
+                authorities,
+                setId
+        );
+        repository.save(DBConstants.SYNC_STATE_KEY, stateDto);
+    }
+
+    /**
+     * Load our saved state from the DB.
+     *
+     * @return is the state loaded successfully
+     */
+    public boolean loadState() {
+        Optional<Object> syncState = repository.find(DBConstants.SYNC_STATE_KEY);
+        if (syncState.isPresent() && syncState.get() instanceof StateDto state) {
+            this.latestRound = state.latestRound();
+            this.lastFinalizedBlockHash = Hash256.from(state.lastFinalizedBlockHash());
+            this.lastFinalizedBlockNumber = state.lastFinalizedBlockNumber();
+            this.authoritySet = state.authoritySet()
+                    .stream()
+                    .map(pair -> {
+                        Hash256 publicKey = Hash256.from(pair.getValue0());
+                        BigInteger weight = pair.getValue1();
+                        return new Authority(publicKey, weight);
+                    }).toArray(Authority[]::new);
+
+            this.setId = state.setId();
+
+            return true;
+        }
+        return false;
+    }
+
+    public void saveProofState(byte[][] proof) {
+        repository.save(DBConstants.STATE_TRIE_MERKLE_PROOF, proof);
+        repository.save(DBConstants.STATE_TRIE_ROOT_HASH, stateRoot.toString());
+    }
+
+    public byte[][] loadProof() {
+        return (byte[][]) repository.find(DBConstants.STATE_TRIE_MERKLE_PROOF).orElse(null);
+    }
+
+    public Hash256 loadStateRoot() {
+        Object storedRootState = repository.find(DBConstants.STATE_TRIE_ROOT_HASH).orElse(null);
+        return storedRootState == null ? null : Hash256.from(storedRootState.toString());
     }
 }

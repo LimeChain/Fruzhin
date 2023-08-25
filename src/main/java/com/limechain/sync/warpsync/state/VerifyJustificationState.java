@@ -25,7 +25,7 @@ public class VerifyJustificationState implements WarpSyncState {
 
         if (!sync.getFragmentsQueue().isEmpty()) {
             sync.setWarpSyncState(new VerifyJustificationState());
-        } else if (syncedState.isFinished()) {
+        } else if (syncedState.isWarpSyncFragmentsFinished()) {
             sync.setWarpSyncState(new RuntimeDownloadState());
         } else {
             sync.setWarpSyncState(new RequestFragmentsState(syncedState.getLastFinalizedBlockHash()));

@@ -60,7 +60,7 @@ public class RequestFragmentsState implements WarpSyncState {
                 log.log(Level.WARNING, "No fragments received.");
                 return;
             }
-            syncedState.setFinished(resp.isFinished());
+            syncedState.setWarpSyncFragmentsFinished(resp.isFinished());
             sync.setFragmentsQueue(new LinkedBlockingQueue<>(
                     Arrays.stream(resp.getFragments()).collect(java.util.stream.Collectors.toList()))
             );
