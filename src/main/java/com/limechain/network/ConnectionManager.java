@@ -127,11 +127,11 @@ public class ConnectionManager {
     }
 
     public boolean isGrandpaConnected(PeerId peerId) {
-        return peers.containsKey(peerId) && peers.get(peerId).getGrandpaStreams() != null;
+        return peers.containsKey(peerId) && peers.get(peerId).getGrandpaStreams().getResponder() != null;
     }
 
     public boolean isBlockAnnounceConnected(PeerId peerId) {
-        return peers.containsKey(peerId) && peers.get(peerId).getBlockAnnounceStreams() != null;
+        return peers.containsKey(peerId) && peers.get(peerId).getBlockAnnounceStreams().getResponder() != null;
     }
 
     public Set<PeerId> getPeerIds(){
