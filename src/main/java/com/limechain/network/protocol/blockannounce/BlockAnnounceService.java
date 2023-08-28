@@ -1,15 +1,9 @@
 package com.limechain.network.protocol.blockannounce;
 
-import io.libp2p.core.multistream.ProtocolBinding;
+import com.limechain.network.protocol.NetworkService;
 
-public class BlockAnnounceService {
-    private final BlockAnnounce blockAnnounce;
-
+public class BlockAnnounceService extends NetworkService<BlockAnnounce> {
     public BlockAnnounceService(String protocolId) {
-        this.blockAnnounce = new BlockAnnounce(protocolId, new BlockAnnounceProtocol());
-    }
-
-    public ProtocolBinding getProtocol() {
-        return this.blockAnnounce;
+        this.protocol = new BlockAnnounce(protocolId, new BlockAnnounceProtocol());
     }
 }
