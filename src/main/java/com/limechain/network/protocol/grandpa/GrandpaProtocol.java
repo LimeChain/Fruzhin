@@ -22,14 +22,14 @@ public class GrandpaProtocol extends ProtocolHandler<GrandpaController> {
     private static final long TRAFFIC_LIMIT = Long.MAX_VALUE;
 
     /**
-     * Create a handler with {@link Long#MAX_VALUE} traffic limit
+     * Creates a handler with {@link Long#MAX_VALUE} traffic limit. This is a global decreasing limit for the protocol, that gets reduced by the size of each message. In the future it should be changed to a per-message limit
      */
     public GrandpaProtocol() {
         super(TRAFFIC_LIMIT, TRAFFIC_LIMIT);
     }
 
     /**
-     * Handle new initiator stream opened and add channel and notification handlers to it.
+     * Handles a new opened initiator stream and adds channel and notification handlers to it.
      *
      * @param stream stream opened
      * @return async controller for the stream
@@ -41,7 +41,7 @@ public class GrandpaProtocol extends ProtocolHandler<GrandpaController> {
     }
 
     /**
-     * Handle new responder stream opened and add channel and notification handlers to it.
+     * Handles a new opened responder stream and adds channel and notification handlers to it.
      *
      * @param stream stream opened
      * @return async controller for the stream
@@ -63,7 +63,7 @@ public class GrandpaProtocol extends ProtocolHandler<GrandpaController> {
     }
 
     /**
-     * Handler for notifications received on a GRANDPA protocol.
+     * Handler for notifications received on the GRANDPA protocol.
      */
     static class NotificationHandler extends GrandpaController implements ProtocolMessageHandler<ByteBuf> {
         ConnectionManager connectionManager = ConnectionManager.getInstance();

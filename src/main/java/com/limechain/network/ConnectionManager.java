@@ -18,7 +18,7 @@ import java.util.Set;
 import java.util.logging.Level;
 
 /**
- * Singleton class, controlling connected peer info and streams.
+ * Singleton class that controls connected peer info and streams.
  */
 @Log
 public class ConnectionManager {
@@ -35,9 +35,9 @@ public class ConnectionManager {
     }
 
     /**
-     * Get info of connected peer.
+     * Gets info of a connected peer.
      *
-     * @param peerId id of peer
+     * @param peerId id of the peer
      * @return known peer state and connected streams
      */
     public PeerInfo getPeerInfo(PeerId peerId) {
@@ -45,7 +45,7 @@ public class ConnectionManager {
     }
 
     /**
-     * Add a Block Announce stream in peer info. Peer id is retrieved from the stream.
+     * Adds a Block Announce stream to the peer info. Peer id is retrieved from the stream.
      *
      * @param stream stream to be added
      */
@@ -54,7 +54,7 @@ public class ConnectionManager {
     }
 
     /**
-     * Add a GRANDPA stream in peer info. Peer id is retrieved from the stream.
+     * Adds a GRANDPA stream to the peer info. Peer id is retrieved from the stream.
      *
      * @param stream stream to be added
      */
@@ -89,7 +89,7 @@ public class ConnectionManager {
     }
 
     /**
-     * Remove a GRANDPA stream from peer info. Peer id is retrieved from the stream.
+     * Removes a GRANDPA stream from the peer info. Peer id is retrieved from the stream.
      *
      * @param stream stream to be closed
      */
@@ -98,7 +98,7 @@ public class ConnectionManager {
     }
 
     /**
-     * Remove a Block Announce stream from peer info. Peer id is retrieved from the stream.
+     * Removes a Block Announce stream from the peer info. Peer id is retrieved from the stream.
      *
      * @param stream stream to be closed
      */
@@ -123,11 +123,11 @@ public class ConnectionManager {
     }
 
     /**
-     * Update peer info (node role, genesis block hash and best block number and hash),
-     * based on a received Block Announce Handshake.
+     * Updates peer info (node role, genesis block hash, best block number and best block hash)
+     * based on a Block Announce Handshake.
      *
      * @param peerId peer to be updated
-     * @param blockAnnounceHandshake received handshake
+     * @param blockAnnounceHandshake handshake
      */
     public void updatePeer(PeerId peerId, BlockAnnounceHandshake blockAnnounceHandshake) {
         PeerInfo peerInfo = peers.get(peerId);
@@ -142,10 +142,10 @@ public class ConnectionManager {
     }
 
     /**
-     * Update peer info (latest block and best block number and hash), based on a received Block Announce Message.
+     * Updates peer info (latest block, best block number and  best block hash) based on a Block Announce Message.
      *
      * @param peerId peer to be updated
-     * @param blockAnnounceMessage received message
+     * @param blockAnnounceMessage message
      */
     public void updatePeer(PeerId peerId, BlockAnnounceMessage blockAnnounceMessage) {
         PeerInfo peerInfo = peers.get(peerId);
@@ -165,7 +165,7 @@ public class ConnectionManager {
     }
 
     /**
-     * Check if we have an open GRANDPA responder stream with peer.
+     * Checks if we have an open GRANDPA responder stream with a peer.
      *
      * @param peerId peer to check
      * @return do peer info and GRANDPA responder stream exist
@@ -175,7 +175,7 @@ public class ConnectionManager {
     }
 
     /**
-     * Check if we have an open Block Announce responder stream with peer.
+     * Checks if we have an open Block Announce responder stream with a peer.
      *
      * @param peerId peer to check
      * @return do peer info and Block Announce responder stream exist
@@ -185,7 +185,7 @@ public class ConnectionManager {
     }
 
     /**
-     * Get the ids of all peers with open connections.
+     * Gets the ids of all peers with open connections. Open connection means either Grandpa or Block Announce stream has been opened.
      *
      * @return set of connected peer ids
      */

@@ -43,7 +43,7 @@ import java.util.Optional;
 import java.util.logging.Level;
 
 /**
- * Singleton class, holding and handling the synced state of our node.
+ * Singleton class, holds and handles the synced state of the Host.
  */
 @Getter
 @Setter
@@ -80,7 +80,7 @@ public class SyncedState {
             new PriorityQueue<>(Comparator.comparing(Pair::getValue0));
 
     /**
-     * Create a Block Announce handshake based on our state
+     * Creates a Block Announce handshake based on the latest finalized Host state
      *
      * @return our Block Announce handshake
      */
@@ -109,7 +109,7 @@ public class SyncedState {
     }
 
     /**
-     * Create a GRANDPA handshake based on our state
+     * Creates a GRANDPA handshake based on the latest finalized Host state
      *
      * @return our GRANDPA handshake
      */
@@ -123,7 +123,7 @@ public class SyncedState {
     }
 
     /**
-     * Sync our state according to a received commit message.
+     * Updates the Host's state with information from a commit message.
      * Synchronized to avoid race condition between checking and updating latest block
      *
      * @param commitMessage received commit message
@@ -204,7 +204,7 @@ public class SyncedState {
     }
 
     /**
-     * Execute authority changes, scheduled for current block.
+     * Executes authority changes, scheduled for the current block.
      */
     public void handleScheduledEvents() {
         Pair<BigInteger, Authority[]> data = scheduledAuthorityChanges.peek();
@@ -226,10 +226,10 @@ public class SyncedState {
     }
 
     /**
-     * Handle authority changes in block header digest and schedule them.
+     * Handles authority changes coming from a block header digest and schedules them.
      *
-     * @param headerDigests digest of block header
-     * @param blockNumber block, containing the digest
+     * @param headerDigests digest of the block header
+     * @param blockNumber block that contains the digest
      */
     public void handleAuthorityChanges(HeaderDigest[] headerDigests, BigInteger blockNumber) {
         // Update authority set and set id
@@ -279,7 +279,7 @@ public class SyncedState {
     }
 
     /**
-     * Persist our current state to DB.
+     * Persists the Host's current state to the DB.
      */
     public void persistState() {
         List<Pair<String, BigInteger>> authorities = Arrays
@@ -301,7 +301,7 @@ public class SyncedState {
     }
 
     /**
-     * Load our saved state from the DB.
+     * Loads the Host's saved state from the DB.
      *
      * @return is the state loaded successfully
      */
