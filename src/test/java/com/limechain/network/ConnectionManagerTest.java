@@ -6,6 +6,7 @@ import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceMessage;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import io.emeraldpay.polkaj.types.Hash256;
 import io.libp2p.core.PeerId;
+import io.libp2p.core.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -28,6 +29,12 @@ class ConnectionManagerTest {
     void setUp() {
         connectionManager = new ConnectionManager();
         peerInfo = mock(PeerInfo.class);
+    }
+
+    @Test
+    void getPeerInfo() {
+        connectionManager.peers.put(peerId, peerInfo);
+
     }
 
     @Test
@@ -65,14 +72,18 @@ class ConnectionManagerTest {
     @Test
     void isBlockAnnounceConnected() {
         connectionManager.peers.put(peerId, peerInfo);
-        when(peerInfo.getBlockAnnounceStreams()).thenReturn(mock(ProtocolStreams.class));
+        ProtocolStreams protocolStreams = mock(ProtocolStreams.class);
+        when(peerInfo.getBlockAnnounceStreams()).thenReturn(protocolStreams);
+        when(protocolStreams.getResponder()).thenReturn(mock(Stream.class));
         assertTrue(connectionManager.isBlockAnnounceConnected(peerId));
     }
 
     @Test
     void isGrandpaConnected() {
         connectionManager.peers.put(peerId, peerInfo);
-        when(peerInfo.getGrandpaStreams()).thenReturn(mock(ProtocolStreams.class));
+        ProtocolStreams protocolStreams = mock(ProtocolStreams.class);
+        when(peerInfo.getGrandpaStreams()).thenReturn(protocolStreams);
+        when(protocolStreams.getResponder()).thenReturn(mock(Stream.class));
         assertTrue(connectionManager.isGrandpaConnected(peerId));
     }
 
