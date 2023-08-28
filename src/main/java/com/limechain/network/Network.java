@@ -170,8 +170,8 @@ public class Network {
     public void stop(){
         log.log(Level.INFO, "Stopping network module...");
         started = false;
-        host.stop();
         connectionManager.removeAllPeers();
+        host.stop();
         log.log(Level.INFO, "Stopped network module!");
     }
 
