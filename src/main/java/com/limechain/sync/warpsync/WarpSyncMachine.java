@@ -20,6 +20,8 @@ import java.math.BigInteger;
 import java.util.Comparator;
 import java.util.PriorityQueue;
 import java.util.Queue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Log
 public class WarpSyncMachine {
@@ -41,6 +43,7 @@ public class WarpSyncMachine {
 
     @Getter
     private ChainInformation chainInformation = new ChainInformation();
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     public WarpSyncMachine(Network network, ChainService chainService, KVRepository<String, Object> repository) {
         this.networkService = network;
@@ -81,13 +84,21 @@ public class WarpSyncMachine {
         // Always start with requesting fragments
         this.warpSyncState = new RequestFragmentsState(initStateHash);
 
-        // Process should be non-blocking...
-        while (this.warpSyncState.getClass() != FinishedState.class) {
-            this.handleState();
-            this.nextState();
-        }
+        executor.submit(() -> {
+            while (this.warpSyncState.getClass() != FinishedState.class) {
+                this.handleState();
+                this.nextState();
+            }
 
-        startFullSync();
+            startFullSync();
+        });
+    }
+
+    public void stop(){
+        log.info("Stopping warp sync machine");
+        executor.shutdown();
+        this.warpSyncState = null;
+        log.info("Warp sync machine stopped.");
     }
 
     private void startFullSync() {
