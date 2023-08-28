@@ -14,14 +14,14 @@ public class GrandpaController {
     }
 
     /**
-     * Send a handshake message on the controller stream.
+     * Sends a handshake message over the controller stream.
      */
     public void sendHandshake() {
         engine.writeHandshakeToStream(stream, stream.remotePeerId());
     }
 
     /**
-     * Send a neighbour message on the controller stream.
+     * Sends a neighbour message over the controller stream.
      */
     public void sendNeighbourMessage() {
         engine.writeNeighbourMessage(stream, stream.remotePeerId());

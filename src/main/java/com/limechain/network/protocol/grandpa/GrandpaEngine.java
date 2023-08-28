@@ -29,15 +29,15 @@ public class GrandpaEngine {
     private final SyncedState syncedState = SyncedState.getInstance();
 
     /**
-     * Handle a received request as follows:
+     * Handles an incoming request as follows:
      *
      * <p><b>On streams we initiated:</b>  add new streams we receive a handshake message on to peer streams,
      * ignore all other message types.
      *
-     * <p><b>On responder streams: </b>
-     * <p>On handshake add streams to non-connected peers and ignore for already connected ones. </p>
-     * <p>On neighbour and commit messages, sync received data using {@link SyncedState}. </p>
-     * <p>Only log other message types. </p>
+     * <p><b>On responder stream: </b>
+     * <p>If message payload contains a valid handshake, adds the stream when the peers is not connected already, ignore otherwise. </p>
+     * <p>On neighbour and commit messages, syncs received data using {@link SyncedState}. </p>
+     * <p>Logs and ignores other message types. </p>
      *
      * @param message received message as byre array
      * @param peerId peer id of sender
@@ -124,9 +124,9 @@ public class GrandpaEngine {
     }
 
     /**
-     * Send our GRANDPA handshake on given stream.
+     * Send our GRANDPA handshake on a given <b>initiator</b> stream.
      *
-     * @param stream stream to write message to
+     * @param stream <b>initiator</b> stream to write the message to
      * @param peerId peer to send to
      */
     public void writeHandshakeToStream(Stream stream, PeerId peerId) {
@@ -139,9 +139,9 @@ public class GrandpaEngine {
     }
 
     /**
-     * Send our GRANDPA neighbour message from {@link SyncedState} on given stream.
+     * Send our GRANDPA neighbour message from {@link SyncedState} on a given <b>responder</b> stream.
      *
-     * @param stream stream to write message to
+     * @param stream <b>responder</b> stream to write the message to
      * @param peerId peer to send to
      */
     public void writeNeighbourMessage(Stream stream, PeerId peerId) {
