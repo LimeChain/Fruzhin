@@ -229,10 +229,6 @@ public class RuntimeBuilder {
                     System.out.println("Message printed in the body of 'ext_default_child_storage_clear_version_1'");
                     return argv;
                 }, Arrays.asList(Type.I64, Type.I64), Arrays.asList()),
-                new ImportObject.FuncImport("env", "ext_misc_print_hex_version_1", argv -> {
-                    System.out.println("Message printed in the body of 'ext_misc_print_hex_version_1'");
-                    return argv;
-                }, Arrays.asList(Type.I64), Arrays.asList()),
                 new ImportObject.FuncImport("env",
                         "ext_default_child_storage_get_version_1", argv -> {
                     System.out.println("Message printed in the body of 'ext_default_child_storage_get_version_1'");
@@ -251,8 +247,12 @@ public class RuntimeBuilder {
                     System.out.println("Message printed in the body of 'ext_logging_log_version_1'");
                     return argv;
                 }, Arrays.asList(Type.I32, Type.I64, Type.I64), Arrays.asList()),
+                new ImportObject.FuncImport("env", "ext_logging_max_level", argv -> {
+                    System.out.println("Message printed in the body of 'ext_logging_max_level'");
+                    return argv;
+                }, Arrays.asList(Type.I64), Arrays.asList()),
                 new ImportObject.FuncImport("env", "ext_misc_print_num_version_1", argv -> {
-                    System.out.println("Message printed in the body of 'ext_logging_log_version_1'");
+                    System.out.println("Message printed in the body of 'ext_misc_print_num_version_1'");
                     return argv;
                 }, Arrays.asList(Type.I64), Arrays.asList()),
                 memory), module);
