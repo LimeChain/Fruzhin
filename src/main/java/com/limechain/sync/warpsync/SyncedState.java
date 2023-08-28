@@ -165,8 +165,8 @@ public class SyncedState {
     }
 
     /**
-     * Sync our state according to a neighbour message we receive.
-     * Try to update our set data (id and authorities) if neighbour has a greater set id than us.
+     * Updates the Host's state with information from a neighbour message.
+     * Tries to update Host's set data (id and authorities) if neighbour has a greater set id than the Host.
      * Synchronized to avoid race condition between checking and updating set id
      *
      * @param neighbourMessage received neighbour message
@@ -326,14 +326,28 @@ public class SyncedState {
         return false;
     }
 
+    /**
+     * Saves the merkle proof and root hash of the state trie
+     * @param proof array of proof byte arrays
+     */
     public void saveProofState(byte[][] proof) {
         repository.save(DBConstants.STATE_TRIE_MERKLE_PROOF, proof);
         repository.save(DBConstants.STATE_TRIE_ROOT_HASH, stateRoot.toString());
     }
 
+    /**
+     * Loads the saved state trie merkle proof
+     * @return array of proof byte arrays
+     */
+
     public byte[][] loadProof() {
         return (byte[][]) repository.find(DBConstants.STATE_TRIE_MERKLE_PROOF).orElse(null);
     }
+
+    /**
+     * Loads the saved state trie root hash
+     * @return root hash
+     */
 
     public Hash256 loadStateRoot() {
         Object storedRootState = repository.find(DBConstants.STATE_TRIE_ROOT_HASH).orElse(null);
