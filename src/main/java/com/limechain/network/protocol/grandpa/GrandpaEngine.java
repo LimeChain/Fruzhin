@@ -29,15 +29,15 @@ public class GrandpaEngine {
     private final SyncedState syncedState = SyncedState.getInstance();
 
     /**
-     * Handle a received request as follows:
+     * Handles a received request as follows:
      *
-     * <p><b>On streams we initiated:</b>  add new streams we receive a handshake message on to peer streams,
-     * ignore all other message types.
+     * <p><b>On streams we initiated:</b>  adds streams, where we receive a handshake message,
+     * to peer's {@link com.limechain.network.dto.PeerInfo}, ignores all other message types.
      *
      * <p><b>On responder streams: </b>
-     * <p>On handshake add streams to non-connected peers and ignore for already connected ones. </p>
-     * <p>On neighbour and commit messages, sync received data using {@link SyncedState}. </p>
-     * <p>Only log other message types. </p>
+     * <p>On handshake adds streams to non-connected peers and ignores for already connected ones. </p>
+     * <p>On neighbour and commit messages, syncs received data using {@link SyncedState}. </p>
+     * <p>Only logs other message types. </p>
      *
      * @param message received message as byre array
      * @param peerId peer id of sender
@@ -124,7 +124,7 @@ public class GrandpaEngine {
     }
 
     /**
-     * Send our GRANDPA handshake on given stream.
+     * Sends host's GRANDPA handshake on given stream.
      *
      * @param stream stream to write message to
      * @param peerId peer to send to
@@ -139,7 +139,7 @@ public class GrandpaEngine {
     }
 
     /**
-     * Send our GRANDPA neighbour message from {@link SyncedState} on given stream.
+     * Sends host's GRANDPA neighbour message from {@link SyncedState} on given stream.
      *
      * @param stream stream to write message to
      * @param peerId peer to send to
