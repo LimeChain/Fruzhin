@@ -64,5 +64,6 @@ public class LightClient {
         this.warpSyncMachine.stop();
         this.rpcApp.stop();
         log.log(Level.INFO, "\uD83D\uDED1Stopped light client!");
+        System.exit(0);
     }
 }
