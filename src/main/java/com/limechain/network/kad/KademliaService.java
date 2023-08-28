@@ -15,7 +15,6 @@ import org.peergos.protocol.dht.RamRecordStore;
 
 import java.util.Random;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -57,7 +56,7 @@ public class KademliaService extends NetworkService<Kademlia> {
         var bootstrapMultiAddress = Stream.of(bootNodes)
                 .map(DnsUtils::dnsNodeToIp4)
                 .map(MultiAddress::new)
-                .collect(Collectors.toList());
+                .toList();
         int successfulBootNodes = protocol.bootstrapRoutingTable(host, bootstrapMultiAddress,
                 addr -> !addr.contains("wss") && !addr.contains("ws"));
         if (successfulBootNodes > 0)

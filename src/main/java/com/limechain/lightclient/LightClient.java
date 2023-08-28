@@ -62,6 +62,7 @@ public class LightClient {
     public void stop() {
         // TODO: Stop running services
         this.warpSyncMachine.stop();
+        this.network.stop();
         this.rpcApp.stop();
         log.log(Level.INFO, "\uD83D\uDED1Stopped light client!");
         System.exit(0);

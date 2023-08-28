@@ -2,16 +2,16 @@ package com.limechain.network.protocol.warp.scale;
 
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.network.protocol.warp.dto.Precommit;
-import com.limechain.network.protocol.warp.dto.WarpSyncJustification;
+import com.limechain.network.protocol.warp.dto.Justification;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleReader;
 import io.emeraldpay.polkaj.scale.reader.UInt64Reader;
 import io.emeraldpay.polkaj.types.Hash256;
 
-public class JustificationReader implements ScaleReader<WarpSyncJustification> {
+public class JustificationReader implements ScaleReader<Justification> {
     @Override
-    public WarpSyncJustification read(ScaleCodecReader reader) {
-        WarpSyncJustification justification = new WarpSyncJustification();
+    public Justification read(ScaleCodecReader reader) {
+        Justification justification = new Justification();
         justification.setRound(new UInt64Reader().read(reader));
         justification.setTargetHash(new Hash256(reader.readUint256()));
         justification.setTargetBlock(new VarUint64Reader(4).read(reader));

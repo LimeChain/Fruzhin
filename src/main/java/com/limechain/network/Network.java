@@ -11,7 +11,6 @@ import com.limechain.network.protocol.lightclient.LightMessagesService;
 import com.limechain.network.protocol.lightclient.pb.LightClientMessage;
 import com.limechain.network.protocol.ping.Ping;
 import com.limechain.network.protocol.sync.SyncService;
-import com.limechain.network.protocol.sync.pb.SyncMessage;
 import com.limechain.network.protocol.sync.pb.SyncMessage.BlockResponse;
 import com.limechain.network.protocol.warp.WarpSyncService;
 import com.limechain.network.protocol.warp.dto.WarpSyncResponse;
@@ -42,6 +41,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
 import static com.limechain.network.kad.KademliaService.REPLICATION;
+import static com.limechain.network.protocol.sync.pb.SyncMessage.Direction;
 
 /**
  * A Network class that handles all peer connections and Kademlia
@@ -167,6 +167,14 @@ public class Network {
         log.log(Level.INFO, "Started network module!");
     }
 
+    public void stop(){
+        log.log(Level.INFO, "Stopping network module...");
+        started = false;
+        connectionManager.removeAllPeers();
+        host.stop();
+        log.log(Level.INFO, "Stopped network module!");
+    }
+
     public String getPeerId() {
         return this.host.getPeerId().toString();
     }
@@ -238,7 +246,7 @@ public class Network {
                 .skip(random.nextInt(connectionManager.getPeerIds().size())).findAny().orElse(null);
     }
 
-    public BlockResponse syncBlock(PeerId peerId, BigInteger blockNumber, BigInteger lastBlockNumber) {
+    public BlockResponse syncBlock(PeerId peerId, BigInteger lastBlockNumber) {
         this.currentSelectedPeer = peerId;
         // TODO: fields, hash, direction and maxBlocks values not verified
         // TODO: when debugging could not get a value returned
@@ -249,7 +257,7 @@ public class Network {
                 19,
                 null,
                 lastBlockNumber.intValue(),
-                SyncMessage.Direction.Ascending,
+                Direction.Ascending,
                 1);
     }
 
@@ -288,15 +296,11 @@ public class Network {
         return false;
     }
 
-    @Scheduled(fixedDelay = 5, timeUnit = TimeUnit.MINUTES)
+    @Scheduled(fixedRate = 5, initialDelay = 5, timeUnit = TimeUnit.MINUTES)
     public void sendNeighbourMessages() {
         if (!SyncedState.getInstance().isWarpSyncFinished()) {
             return;
         }
-        connectionManager.getPeerIds().forEach(this::sendNeighbourMessage);
-    }
-
-    private void sendNeighbourMessage(PeerId peerId) {
-        grandpaService.getProtocol().sendHandshake(this.host, this.host.getAddressBook(), peerId);
+        connectionManager.getPeerIds().forEach(peerId -> grandpaService.sendNeighbourMessage(this.host, peerId));
     }
 }
