@@ -18,7 +18,8 @@ public class GrandpaService extends NetworkService<Grandpa> {
     }
 
     /**
-     * Sends a neighbour message to a peer. If there is no initiator stream opened with the peer, sends a handshake instead.
+     * Sends a neighbour message to a peer. If there is no initiator stream opened with the peer,
+     * sends a handshake instead.
      *
      * @param us our host object
      * @param peerId message receiver

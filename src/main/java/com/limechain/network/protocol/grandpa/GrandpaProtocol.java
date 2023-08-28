@@ -22,7 +22,9 @@ public class GrandpaProtocol extends ProtocolHandler<GrandpaController> {
     private static final long TRAFFIC_LIMIT = Long.MAX_VALUE;
 
     /**
-     * Creates a handler with {@link Long#MAX_VALUE} traffic limit. This is a global decreasing limit for the protocol, that gets reduced by the size of each message. In the future it should be changed to a per-message limit
+     * Creates a handler with {@link Long#MAX_VALUE} traffic limit.
+     * This is a global decreasing limit for the protocol, that gets reduced by the size of each message.
+     * In the future it should be changed to a per-message limit
      */
     public GrandpaProtocol() {
         super(TRAFFIC_LIMIT, TRAFFIC_LIMIT);

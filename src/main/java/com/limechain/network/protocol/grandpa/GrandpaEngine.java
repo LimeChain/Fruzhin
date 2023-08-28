@@ -35,7 +35,8 @@ public class GrandpaEngine {
      * to initiator streams in peer's {@link com.limechain.network.dto.PeerInfo} , ignores all other message types.
      *
      * <p><b>On responder stream: </b>
-     * <p>If message payload contains a valid handshake, adds the stream when the peers is not connected already, ignore otherwise. </p>
+     * <p>If message payload contains a valid handshake, adds the stream when the peers is not connected already,
+     * ignore otherwise. </p>
      * <p>On neighbour and commit messages, syncs received data using {@link SyncedState}. </p>
      * <p>Logs and ignores other message types. </p>
      *

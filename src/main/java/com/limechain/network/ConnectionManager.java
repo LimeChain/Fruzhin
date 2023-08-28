@@ -185,7 +185,8 @@ public class ConnectionManager {
     }
 
     /**
-     * Gets the ids of all peers with open connections. Open connection means either Grandpa or Block Announce stream has been opened.
+     * Gets the ids of all peers with open connections.
+     * Open connection means either Grandpa or Block Announce stream has been opened.
      *
      * @return set of connected peer ids
      */
