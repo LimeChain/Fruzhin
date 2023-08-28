@@ -167,6 +167,14 @@ public class Network {
         log.log(Level.INFO, "Started network module!");
     }
 
+    public void stop(){
+        log.log(Level.INFO, "Stopping network module...");
+        started = false;
+        connectionManager.removeAllPeers();
+        host.stop();
+        log.log(Level.INFO, "Stopped network module!");
+    }
+
     public String getPeerId() {
         return this.host.getPeerId().toString();
     }

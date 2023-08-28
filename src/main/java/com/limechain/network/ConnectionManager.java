@@ -193,4 +193,21 @@ public class ConnectionManager {
     public Set<PeerId> getPeerIds(){
         return peers.keySet();
     }
+    public void removeAllPeers(){
+        peers.forEach((peerId, peerInfo) -> {
+            closeProtocolStream(peerInfo.getBlockAnnounceStreams());
+            closeProtocolStream(peerInfo.getGrandpaStreams());
+        });
+        peers.clear();
+    }
+
+    private void closeProtocolStream(final ProtocolStreams streams){
+        if (streams == null) return;
+        if (streams.getInitiator() != null) {
+            streams.getInitiator().close();
+        }
+        if (streams.getResponder() != null) {
+            streams.getResponder().close();
+        }
+    }
 }
