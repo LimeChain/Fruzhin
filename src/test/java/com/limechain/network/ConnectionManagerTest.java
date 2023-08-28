@@ -16,7 +16,9 @@ import java.util.Arrays;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -34,7 +36,7 @@ class ConnectionManagerTest {
     @Test
     void getPeerInfo() {
         connectionManager.peers.put(peerId, peerInfo);
-
+        assertSame(peerInfo, connectionManager.getPeerInfo(peerId));
     }
 
     @Test
@@ -48,6 +50,8 @@ class ConnectionManagerTest {
         when(header.getBlockNumber()).thenReturn(BigInteger.TEN);
 
         connectionManager.updatePeer(peerId, message);
+        verify(peerInfo, never()).setBestBlock(any());
+        verify(peerInfo, never()).setBestBlockHash(any());
     }
 
     @Test
