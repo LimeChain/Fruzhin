@@ -202,7 +202,7 @@ public class ConnectionManager {
     }
 
     private void closeProtocolStream(final ProtocolStreams streams){
-        if(streams == null) return;
+        if (streams == null) return;
         if (streams.getInitiator() != null) {
             streams.getInitiator().close();
         }
