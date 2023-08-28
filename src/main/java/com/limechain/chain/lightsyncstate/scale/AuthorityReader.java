@@ -9,7 +9,6 @@ import io.emeraldpay.polkaj.types.Hash256;
 public class AuthorityReader implements ScaleReader<Authority> {
     @Override
     public Authority read(ScaleCodecReader reader) {
-        Authority authority = new Authority(new Hash256(reader.readUint256()), new UInt64Reader().read(reader));
-        return authority;
+        return new Authority(new Hash256(reader.readUint256()), new UInt64Reader().read(reader));
     }
 }

@@ -1,5 +1,6 @@
 package com.limechain.network.protocol.blockannounce;
 
+import com.limechain.network.ConnectionManager;
 import com.limechain.network.encoding.Leb128LengthFrameDecoder;
 import com.limechain.network.encoding.Leb128LengthFrameEncoder;
 import io.libp2p.core.Stream;
@@ -64,13 +65,14 @@ public class BlockAnnounceProtocol extends ProtocolHandler<BlockAnnounceControll
         @Override
         public void onClosed(Stream stream) {
             log.log(Level.INFO, "Block announce stream closed for peer " + stream.remotePeerId());
-            engine.removePeerHandshake(stream.remotePeerId());
+            ConnectionManager.getInstance().closeBlockAnnounceStream(stream);
             ProtocolMessageHandler.super.onClosed(stream);
         }
 
         @Override
         public void onException(Throwable cause) {
             log.log(Level.WARNING, "Block Announce Exception: " + cause.getMessage());
+            ConnectionManager.getInstance().closeBlockAnnounceStream(stream);
             cause.printStackTrace();
             ProtocolMessageHandler.super.onException(cause);
         }
