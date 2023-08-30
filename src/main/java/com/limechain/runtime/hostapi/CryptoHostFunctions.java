@@ -1,11 +1,13 @@
 package com.limechain.runtime.hostapi;
 
+import lombok.experimental.UtilityClass;
 import org.wasmer.ImportObject;
 import org.wasmer.Type;
 
 import java.util.Arrays;
 import java.util.List;
 
+@UtilityClass
 public class CryptoHostFunctions {
 
     public static List<ImportObject> getFunctions() {
