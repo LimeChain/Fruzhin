@@ -1,5 +1,6 @@
-package com.limechain.runtime;
+package com.limechain.runtime.hostapi;
 
+import com.limechain.runtime.Runtime;
 import com.limechain.storage.KVRepository;
 import com.limechain.sync.warpsync.SyncedState;
 import lombok.extern.java.Log;
