@@ -104,10 +104,6 @@ public class HostApi {
         };
     }
 
-    public static void setRepository(KVRepository<String, Object> repository) {
-        HostApi.repository = repository;
-    }
-
     public static int extAllocatorMallocVersion1(int size) {
         Memory memory = getMemory();
         ByteBuffer buffer = getByteBuffer(memory);
