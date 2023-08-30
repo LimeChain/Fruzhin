@@ -1,6 +1,7 @@
 package com.limechain.network;
 
 import com.limechain.network.dto.PeerInfo;
+import com.limechain.network.dto.ProtocolStreamType;
 import com.limechain.network.dto.ProtocolStreams;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceMessage;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
@@ -21,11 +22,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
 class ConnectionManagerTest {
-    ConnectionManager connectionManager;
-    PeerId peerId = mock(PeerId.class);
-    PeerInfo peerInfo;
+    private ConnectionManager connectionManager;
+    private final PeerId peerId = mock(PeerId.class);
+    private PeerInfo peerInfo;
 
     @BeforeEach
     void setUp() {
@@ -33,6 +33,195 @@ class ConnectionManagerTest {
         peerInfo = mock(PeerInfo.class);
     }
 
+    // BLOCK ANNOUNCE TESTS
+    @Test
+    void addBlockAnnounceStreamShouldAddPeerIfNotPresent() {
+        Stream stream = mock(Stream.class);
+        when(stream.remotePeerId()).thenReturn(peerId);
+        when(stream.isInitiator()).thenReturn(false);
+
+        connectionManager.addBlockAnnounceStream(stream);
+
+        assertTrue(connectionManager.peers.containsKey(peerId));
+    }
+
+    @Test
+    void addBlockAnnounceResponderStreamShouldAddStreamToExistingPeer() {
+        Stream stream = mock(Stream.class);
+        when(stream.remotePeerId()).thenReturn(peerId);
+        when(stream.isInitiator()).thenReturn(false);
+        ProtocolStreams protocolStreams = mock(ProtocolStreams.class);
+        when(peerInfo.getProtocolStreams(ProtocolStreamType.BLOCK_ANNOUNCE)).thenReturn(protocolStreams);
+        connectionManager.peers.put(peerId, peerInfo);
+
+        connectionManager.addBlockAnnounceStream(stream);
+
+        verify(protocolStreams).setResponder(stream);
+    }
+
+    @Test
+    void addBlockAnnounceInitiatorStreamShouldAddStreamToExistingPeer() {
+        Stream stream = mock(Stream.class);
+        when(stream.remotePeerId()).thenReturn(peerId);
+        when(stream.isInitiator()).thenReturn(true);
+        ProtocolStreams protocolStreams = mock(ProtocolStreams.class);
+        when(peerInfo.getProtocolStreams(ProtocolStreamType.BLOCK_ANNOUNCE)).thenReturn(protocolStreams);
+        connectionManager.peers.put(peerId, peerInfo);
+
+        connectionManager.addBlockAnnounceStream(stream);
+
+        verify(protocolStreams).setInitiator(stream);
+    }
+
+    @Test
+    void addBlockAnnounceResponderStreamWhenAlreadyConnectedShouldCloseStream() {
+        Stream stream = mock(Stream.class);
+        when(stream.remotePeerId()).thenReturn(peerId);
+        when(stream.isInitiator()).thenReturn(false);
+        ProtocolStreams protocolStreams = mock(ProtocolStreams.class);
+        when(protocolStreams.getResponder()).thenReturn(mock(Stream.class));
+        when(peerInfo.getProtocolStreams(ProtocolStreamType.BLOCK_ANNOUNCE)).thenReturn(protocolStreams);
+        connectionManager.peers.put(peerId, peerInfo);
+
+        connectionManager.addBlockAnnounceStream(stream);
+
+        verify(protocolStreams, never()).setResponder(any());
+        verify(stream).close();
+    }
+
+    @Test
+    void closeBlockAnnounceInitiatorStream() {
+        Stream stream = mock(Stream.class);
+        when(stream.remotePeerId()).thenReturn(peerId);
+        when(stream.isInitiator()).thenReturn(true);
+        ProtocolStreams protocolStreams = mock(ProtocolStreams.class);
+        when(protocolStreams.getResponder()).thenReturn(mock(Stream.class));
+        when(peerInfo.getProtocolStreams(ProtocolStreamType.BLOCK_ANNOUNCE)).thenReturn(protocolStreams);
+        connectionManager.peers.put(peerId, peerInfo);
+
+        connectionManager.closeBlockAnnounceStream(stream);
+
+        verify(protocolStreams).setInitiator(null);
+    }
+
+    @Test
+    void closeBlockAnnounceResponderStream() {
+        Stream stream = mock(Stream.class);
+        when(stream.remotePeerId()).thenReturn(peerId);
+        when(stream.isInitiator()).thenReturn(false);
+        ProtocolStreams protocolStreams = mock(ProtocolStreams.class);
+        when(protocolStreams.getResponder()).thenReturn(mock(Stream.class));
+        when(peerInfo.getProtocolStreams(ProtocolStreamType.BLOCK_ANNOUNCE)).thenReturn(protocolStreams);
+        connectionManager.peers.put(peerId, peerInfo);
+
+        connectionManager.closeBlockAnnounceStream(stream);
+
+        verify(protocolStreams).setResponder(null);
+    }
+
+    // GRANDPA TESTS
+    @Test
+    void addGrandpaStreamShouldAddPeerIfNotPresent() {
+        Stream stream = mock(Stream.class);
+        when(stream.remotePeerId()).thenReturn(peerId);
+        when(stream.isInitiator()).thenReturn(false);
+
+        connectionManager.addGrandpaStream(stream);
+
+        assertTrue(connectionManager.peers.containsKey(peerId));
+    }
+
+    @Test
+    void addGrandpaResponderStreamShouldAddStreamToExistingPeer() {
+        Stream stream = mock(Stream.class);
+        when(stream.remotePeerId()).thenReturn(peerId);
+        when(stream.isInitiator()).thenReturn(false);
+        ProtocolStreams protocolStreams = mock(ProtocolStreams.class);
+        when(peerInfo.getProtocolStreams(ProtocolStreamType.GRANDPA)).thenReturn(protocolStreams);
+        connectionManager.peers.put(peerId, peerInfo);
+
+        connectionManager.addGrandpaStream(stream);
+
+        verify(protocolStreams).setResponder(stream);
+    }
+
+    @Test
+    void addGrandpaInitiatorStreamShouldAddStreamToExistingPeer() {
+        Stream stream = mock(Stream.class);
+        when(stream.remotePeerId()).thenReturn(peerId);
+        when(stream.isInitiator()).thenReturn(true);
+        ProtocolStreams protocolStreams = mock(ProtocolStreams.class);
+        when(peerInfo.getProtocolStreams(ProtocolStreamType.GRANDPA)).thenReturn(protocolStreams);
+        connectionManager.peers.put(peerId, peerInfo);
+
+        connectionManager.addGrandpaStream(stream);
+
+        verify(protocolStreams).setInitiator(stream);
+    }
+
+    @Test
+    void addGrandpaInitiatorStreamWhenAlreadyConnectedShouldCloseStream() {
+        Stream stream = mock(Stream.class);
+        when(stream.remotePeerId()).thenReturn(peerId);
+        when(stream.isInitiator()).thenReturn(true);
+        ProtocolStreams protocolStreams = mock(ProtocolStreams.class);
+        when(protocolStreams.getInitiator()).thenReturn(mock(Stream.class));
+        when(peerInfo.getProtocolStreams(ProtocolStreamType.GRANDPA)).thenReturn(protocolStreams);
+        connectionManager.peers.put(peerId, peerInfo);
+
+        connectionManager.addGrandpaStream(stream);
+
+        verify(protocolStreams, never()).setInitiator(any());
+        verify(stream).close();
+    }
+
+    @Test
+    void addGrandpaResponderStreamWhenAlreadyConnectedShouldCloseStream() {
+        Stream stream = mock(Stream.class);
+        when(stream.remotePeerId()).thenReturn(peerId);
+        when(stream.isInitiator()).thenReturn(false);
+        ProtocolStreams protocolStreams = mock(ProtocolStreams.class);
+        when(protocolStreams.getResponder()).thenReturn(mock(Stream.class));
+        when(peerInfo.getProtocolStreams(ProtocolStreamType.GRANDPA)).thenReturn(protocolStreams);
+        connectionManager.peers.put(peerId, peerInfo);
+
+        connectionManager.addGrandpaStream(stream);
+
+        verify(protocolStreams, never()).setResponder(any());
+        verify(stream).close();
+    }
+
+    @Test
+    void closeGrandpaInitiatorStream() {
+        Stream stream = mock(Stream.class);
+        when(stream.remotePeerId()).thenReturn(peerId);
+        when(stream.isInitiator()).thenReturn(true);
+        ProtocolStreams protocolStreams = mock(ProtocolStreams.class);
+        when(protocolStreams.getResponder()).thenReturn(mock(Stream.class));
+        when(peerInfo.getProtocolStreams(ProtocolStreamType.GRANDPA)).thenReturn(protocolStreams);
+        connectionManager.peers.put(peerId, peerInfo);
+
+        connectionManager.closeGrandpaStream(stream);
+
+        verify(protocolStreams).setInitiator(null);
+    }
+
+    @Test
+    void closeGrandpaResponderStream() {
+        Stream stream = mock(Stream.class);
+        when(stream.remotePeerId()).thenReturn(peerId);
+        when(stream.isInitiator()).thenReturn(false);
+        ProtocolStreams protocolStreams = mock(ProtocolStreams.class);
+        when(protocolStreams.getResponder()).thenReturn(mock(Stream.class));
+        when(peerInfo.getProtocolStreams(ProtocolStreamType.GRANDPA)).thenReturn(protocolStreams);
+        connectionManager.peers.put(peerId, peerInfo);
+
+        connectionManager.closeGrandpaStream(stream);
+
+        verify(protocolStreams).setResponder(null);
+    }
+
+    // OTHER
     @Test
     void getPeerInfo() {
         connectionManager.peers.put(peerId, peerInfo);
