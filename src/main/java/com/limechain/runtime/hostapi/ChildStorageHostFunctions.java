@@ -13,7 +13,6 @@ public class ChildStorageHostFunctions {
     public static List<ImportObject> getFunctions() {
         return Arrays.asList(
                 HostFunctions.getImportObject("ext_default_child_storage_set_version_1", argv -> {
-                    return HostFunctions.EMPTY_LIST_OF_NUMBER;
                 }, List.of(Type.I64, Type.I64, Type.I64)),
                 HostFunctions.getImportObject(
                         "ext_default_child_storage_get_version_1", argv -> {
@@ -23,10 +22,8 @@ public class ChildStorageHostFunctions {
                     return argv;
                 }, List.of(Type.I64, Type.I64, Type.I64, Type.I32), Type.I64),
                 HostFunctions.getImportObject("ext_default_child_storage_clear_version_1", argv -> {
-                    return HostFunctions.EMPTY_LIST_OF_NUMBER;
                 }, List.of(Type.I64, Type.I64)),
                 HostFunctions.getImportObject("ext_default_child_storage_storage_kill_version_1", argv -> {
-                    return HostFunctions.EMPTY_LIST_OF_NUMBER;
                 }, List.of(Type.I64)),
                 HostFunctions.getImportObject("ext_default_child_storage_storage_kill_version_2", argv -> {
                     return argv;

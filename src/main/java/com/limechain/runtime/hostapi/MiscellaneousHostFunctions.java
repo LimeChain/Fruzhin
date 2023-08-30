@@ -13,26 +13,27 @@ public class MiscellaneousHostFunctions {
     public static List<ImportObject> getFunctions() {
         return Arrays.asList(
                 HostFunctions.getImportObject("ext_misc_print_num_version_1", argv -> {
-                    return HostFunctions.EMPTY_LIST_OF_NUMBER;
+
                 }, List.of(Type.I64)),
                 HostFunctions.getImportObject("ext_misc_print_utf8_version_1", argv -> {
-                    return HostFunctions.EMPTY_LIST_OF_NUMBER;
+
                 }, List.of(Type.I64)),
                 HostFunctions.getImportObject("ext_misc_print_hex_version_1", argv -> {
                     HostApi.extMiscPrintHex((long) argv.get(0));
-                    return HostFunctions.EMPTY_LIST_OF_NUMBER;
-                }, List.of(Type.I64)),
+                    }, List.of(Type.I64)),
                 HostFunctions.getImportObject("ext_misc_runtime_version_version_1", argv -> {
                     return argv;
                 }, List.of(Type.I64), Type.I64),
                 HostFunctions.getImportObject("ext_logging_log_version_1", argv -> {
                     HostApi.extLoggingLog((Integer) argv.get(0), (Long) argv.get(1), (Long) argv.get(2));
-                    return HostFunctions.EMPTY_LIST_OF_NUMBER;
                 }, Arrays.asList(Type.I32, Type.I64, Type.I64)),
                 HostFunctions.getImportObject("ext_logging_max_level", argv -> {
-                    HostApi.extLoggingLog((Integer) argv.get(0), (Long) argv.get(1), (Long) argv.get(2));
-                    return HostFunctions.EMPTY_LIST_OF_NUMBER;
-                }, List.of(), Type.I64));
+                    //TODO: Update
+                    return argv;
+                }, List.of(), Type.I64),
+                HostFunctions.getImportObject("ext_panic_handler_abort_on_panic_version_1", argv -> {
+                    HostApi.extPanicHandlerAbortOnPanicVersion1((Long) argv.get(0));
+                }, List.of(Type.I64)));
     }
 
 }

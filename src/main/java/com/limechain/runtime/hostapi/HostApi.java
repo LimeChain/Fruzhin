@@ -185,4 +185,9 @@ public class HostApi {
     public static void extAllocatorFreeVersion1() {
         //Not supported in Java?
     }
+
+    public static void extPanicHandlerAbortOnPanicVersion1(long messagePtr) {
+        byte[] data = getDataFromMemory(messagePtr);
+        log.severe(String.valueOf(data));
+    }
 }

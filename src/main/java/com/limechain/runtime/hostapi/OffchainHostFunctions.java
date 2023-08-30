@@ -25,16 +25,16 @@ public class OffchainHostFunctions {
                     return argv;
                 }, HostFunctions.EMPTY_LIST_OF_TYPES, Type.I64),
                 HostFunctions.getImportObject("ext_offchain_sleep_until_version_1", argv -> {
-                    return HostFunctions.EMPTY_LIST_OF_NUMBER;
+
                 }, List.of(Type.I64)),
                 HostFunctions.getImportObject("ext_offchain_random_seed_version_1", argv -> {
                     return argv;
                 }, HostFunctions.EMPTY_LIST_OF_TYPES, Type.I32),
                 HostFunctions.getImportObject("ext_offchain_local_storage_set_version_1", argv -> {
-                    return HostFunctions.EMPTY_LIST_OF_NUMBER;
+
                 }, List.of(Type.I32, Type.I64, Type.I64)),
                 HostFunctions.getImportObject("ext_offchain_local_storage_clear_version_1", argv -> {
-                    return HostFunctions.EMPTY_LIST_OF_NUMBER;
+
                 }, List.of(Type.I32, Type.I64)),
                 HostFunctions.getImportObject("ext_offchain_local_storage_compare_and_set_version_1", argv -> {
                     return argv;
@@ -64,10 +64,10 @@ public class OffchainHostFunctions {
                  * Offchain index
                  */
                 HostFunctions.getImportObject("ext_offchain_index_set_version_1", argv -> {
-                    return HostFunctions.EMPTY_LIST_OF_NUMBER;
+
                 }, List.of(Type.I64, Type.I64)),
                 HostFunctions.getImportObject("ext_offchain_index_clear_version_1", argv -> {
-                    return HostFunctions.EMPTY_LIST_OF_NUMBER;
+
                 }, List.of(Type.I64))
         );
     }

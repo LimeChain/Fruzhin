@@ -18,7 +18,6 @@ public class AllocatorHostFunctions {
                 }, List.of(Type.I32), Type.I32),
                 HostFunctions.getImportObject("ext_allocator_free_version_1", argv -> {
                     HostApi.extAllocatorFreeVersion1();
-                    return HostFunctions.EMPTY_LIST_OF_NUMBER;
                 }, List.of(Type.I32)));
     }
 

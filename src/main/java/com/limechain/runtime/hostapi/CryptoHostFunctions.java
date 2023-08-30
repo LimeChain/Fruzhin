@@ -84,7 +84,7 @@ public class CryptoHostFunctions {
                     return argv;
                 }, List.of(Type.I32, Type.I32), Type.I64),
                 HostFunctions.getImportObject("ext_crypto_start_batch_verify", argv -> {
-                    return HostFunctions.EMPTY_LIST_OF_NUMBER;
+
                 }, HostFunctions.EMPTY_LIST_OF_TYPES),
                 HostFunctions.getImportObject("ext_crypto_finish_batch_verify", argv -> {
                     return argv;
