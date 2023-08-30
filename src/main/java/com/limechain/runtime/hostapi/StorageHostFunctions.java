@@ -26,7 +26,8 @@ public class StorageHostFunctions {
                 }, List.of(Type.I64, Type.I64, Type.I32), List.of(Type.I64)),
                 new ImportObject.FuncImport("env", "ext_storage_clear_version_1", argv -> {
                     System.out.println("Message printed in the body of 'ext_storage_clear_version_1'");
-                    return argv;
+                    HostApi.extStorageClearVersion1((Long) argv.get(0));
+                    return List.of();
                 }, List.of(Type.I64), List.of()),
                 new ImportObject.FuncImport("env", "ext_storage_exists_version_1", argv -> {
                     System.out.println("Message printed in the body of 'ext_storage_exists_version_1'");
@@ -38,7 +39,7 @@ public class StorageHostFunctions {
                 }, List.of(Type.I64), List.of()),
                 new ImportObject.FuncImport("env", "ext_storage_clear_prefix_version_2", argv -> {
                     System.out.println("Message printed in the body of 'ext_storage_clear_prefix_version_2'");
-                    return argv;
+                    return List.of(HostApi.extStorageClearPrefixVersion2((Long) argv.get(0),(Long) argv.get(1)));
                 }, List.of(Type.I64, Type.I64), List.of(Type.I64)),
                 new ImportObject.FuncImport("env", "ext_storage_append_version_1", argv -> {
                     System.out.println("Message printed in the body of 'ext_storage_append_version_1'");

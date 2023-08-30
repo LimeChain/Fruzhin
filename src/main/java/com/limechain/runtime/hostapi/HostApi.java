@@ -3,17 +3,20 @@ package com.limechain.runtime.hostapi;
 import com.limechain.runtime.Runtime;
 import com.limechain.storage.KVRepository;
 import com.limechain.sync.warpsync.SyncedState;
+import lombok.experimental.UtilityClass;
 import lombok.extern.java.Log;
 import net.openhft.hashing.LongHashFunction;
 import org.apache.tomcat.util.buf.HexUtils;
 import org.wasmer.Memory;
 
 import java.lang.reflect.Field;
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.logging.Level;
 
 @Log
+@UtilityClass
 public class HostApi {
 
     private static final String KEY_TO_IGNORE = ":child_storage:default:";
@@ -36,6 +39,21 @@ public class HostApi {
         return 0;
     }
 
+    public static void extStorageClearVersion1(long keyPtr) {
+        byte[] key = getDataFromMemory(keyPtr);
+        repository.delete(new String(key));
+    }
+
+    public static long extStorageClearPrefixVersion2(long prefixPtr, long limitPtr) {
+        String prefix = new String(getDataFromMemory(prefixPtr));
+        int dataToHash = new BigInteger(getDataFromMemory(limitPtr)).intValue();
+
+        int deleted = repository.deletePrefix(prefix, dataToHash);
+        //TODO: Count how many are left?
+
+        return 0;
+    }
+
     public static byte[] getDataFromMemory(long pointer) {
         int ptr = (int) pointer;
         int ptrLength = (int) (pointer >> 32);
@@ -50,8 +68,9 @@ public class HostApi {
         Memory memory = getMemory();
         ByteBuffer buffer = getByteBuffer(memory);
         int position = buffer.position();
-        buffer.put(data, 0, data.length);
+        buffer.put(position, data, 0, data.length);
         buffer.position(position + data.length);
+
         return position;
     }
 
@@ -168,5 +187,6 @@ public class HostApi {
     }
 
     public static void extAllocatorFreeVersion1() {
+        //Not supported in Java?
     }
 }
