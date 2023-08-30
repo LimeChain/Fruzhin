@@ -14,7 +14,7 @@ public class OffchainHostFunctions {
         return Arrays.asList(new ImportObject.FuncImport("env", "ext_offchain_is_validator_version_1", argv -> {
                     System.out.println("Message printed in the body of 'ext_offchain_is_validator_version_1'");
                     return argv;
-                }, List.of(), List.of(Type.I32)),
+                }, HostFunctions.EMPTY_LIST_OF_TYPES, List.of(Type.I32)),
                 new ImportObject.FuncImport("env",
                         "ext_offchain_submit_transaction_version_1", argv -> {
                     System.out.println("Message printed in the body of 'ext_offchain_submit_transaction_version_1'");
@@ -23,29 +23,29 @@ public class OffchainHostFunctions {
                 new ImportObject.FuncImport("env", "ext_offchain_network_state_version_1", argv -> {
                     System.out.println("Message printed in the body of 'ext_offchain_network_state_version_1'");
                     return argv;
-                }, List.of(), List.of(Type.I64)),
+                }, HostFunctions.EMPTY_LIST_OF_TYPES, List.of(Type.I64)),
                 new ImportObject.FuncImport("env", "ext_offchain_timestamp_version_1", argv -> {
                     System.out.println("Message printed in the body of 'ext_offchain_timestamp_version_1'");
                     return argv;
-                }, List.of(), List.of(Type.I64)),
+                }, HostFunctions.EMPTY_LIST_OF_TYPES, List.of(Type.I64)),
                 new ImportObject.FuncImport("env", "ext_offchain_sleep_until_version_1", argv -> {
                     System.out.println("Message printed in the body of 'ext_offchain_sleep_until_version_1'");
-                    return argv;
-                }, List.of(Type.I64), List.of()),
+                    return HostFunctions.EMPTY_LIST_OF_NUMBER;
+                }, List.of(Type.I64), HostFunctions.EMPTY_LIST_OF_TYPES),
                 new ImportObject.FuncImport("env", "ext_offchain_random_seed_version_1", argv -> {
                     System.out.println("Message printed in the body of 'ext_offchain_random_seed_version_1'");
                     return argv;
-                }, List.of(), List.of(Type.I32)),
+                }, HostFunctions.EMPTY_LIST_OF_TYPES, List.of(Type.I32)),
                 new ImportObject.FuncImport("env",
                         "ext_offchain_local_storage_set_version_1", argv -> {
                     System.out.println("Message printed in the body of 'ext_offchain_local_storage_set_version_1'");
-                    return argv;
-                }, List.of(Type.I32, Type.I64, Type.I64), List.of()),
+                    return HostFunctions.EMPTY_LIST_OF_NUMBER;
+                }, List.of(Type.I32, Type.I64, Type.I64), HostFunctions.EMPTY_LIST_OF_TYPES),
                 new ImportObject.FuncImport("env",
                         "ext_offchain_local_storage_clear_version_1", argv -> {
                     System.out.println("Message printed in the body of 'ext_offchain_local_storage_clear_version_1'");
-                    return argv;
-                }, List.of(Type.I32, Type.I64), List.of()),
+                    return HostFunctions.EMPTY_LIST_OF_NUMBER;
+                }, List.of(Type.I32, Type.I64), HostFunctions.EMPTY_LIST_OF_TYPES),
                 new ImportObject.FuncImport("env",
                         "ext_offchain_local_storage_compare_and_set_version_1", argv -> {
                     System.out.println("Message printed in the body of " +
@@ -93,12 +93,12 @@ public class OffchainHostFunctions {
                  */
                 new ImportObject.FuncImport("env", "ext_offchain_index_set_version_1", argv -> {
                     System.out.println("Message printed in the body of 'ext_offchain_index_set_version_1'");
-                    return argv;
-                }, List.of(Type.I64, Type.I64), List.of()),
+                    return HostFunctions.EMPTY_LIST_OF_NUMBER;
+                }, List.of(Type.I64, Type.I64), HostFunctions.EMPTY_LIST_OF_TYPES),
                 new ImportObject.FuncImport("env", "ext_offchain_index_clear_version_1", argv -> {
                     System.out.println("Message printed in the body of 'ext_offchain_index_clear_version_1'");
-                    return argv;
-                }, List.of(Type.I64), List.of())
+                    return HostFunctions.EMPTY_LIST_OF_NUMBER;
+                }, List.of(Type.I64), HostFunctions.EMPTY_LIST_OF_TYPES)
         );
     }
 

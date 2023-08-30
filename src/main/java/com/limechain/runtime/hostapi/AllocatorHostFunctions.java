@@ -13,15 +13,13 @@ public class AllocatorHostFunctions {
 
     public static List<ImportObject> getFunctions() {
         return Arrays.asList(
-                new ImportObject.FuncImport("env", "ext_allocator_malloc_version_1", argv -> {
-                    System.out.println("Message printed in the body of 'ext_allocator_malloc_version_1'");
+                HostFunctions.getImportObject("ext_allocator_malloc_version_1", argv -> {
                     return Collections.singletonList(HostApi.extAllocatorMallocVersion1((int) argv.get(0)));
-                }, List.of(Type.I32), List.of(Type.I32)),
-                new ImportObject.FuncImport("env", "ext_allocator_free_version_1", argv -> {
-                    System.out.println("Message printed in the body of 'ext_allocator_free_version_1'");
+                }, List.of(Type.I32), Type.I32),
+                HostFunctions.getImportObject("ext_allocator_free_version_1", argv -> {
                     HostApi.extAllocatorFreeVersion1();
-                    return Collections.emptyList();
-                }, List.of(Type.I32), List.of()));
+                    return HostFunctions.EMPTY_LIST_OF_NUMBER;
+                }, List.of(Type.I32)));
     }
 
 }
