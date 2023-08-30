@@ -30,17 +30,20 @@ public class ChildStorageHostFunctions {
                 }, List.of(Type.I64, Type.I64), List.of()),
                 new ImportObject.FuncImport("env",
                         "ext_default_child_storage_storage_kill_version_1", argv -> {
-                    System.out.println("Message printed in the body of 'ext_default_child_storage_storage_kill_version_1'");
+                    System.out.println("Message printed in the body of " +
+                            "'ext_default_child_storage_storage_kill_version_1'");
                     return argv;
                 }, List.of(Type.I64), List.of()),
                 new ImportObject.FuncImport("env",
                         "ext_default_child_storage_storage_kill_version_2", argv -> {
-                    System.out.println("Message printed in the body of 'ext_default_child_storage_storage_kill_version_2'");
+                    System.out.println("Message printed in the body of " +
+                            "'ext_default_child_storage_storage_kill_version_2'");
                     return argv;
                 }, List.of(Type.I64, Type.I64), List.of(Type.I32)),
                 new ImportObject.FuncImport("env",
                         "ext_default_child_storage_storage_kill_version_3", argv -> {
-                    System.out.println("Message printed in the body of 'ext_default_child_storage_storage_kill_version_3'");
+                    System.out.println("Message printed in the body of " +
+                            "'ext_default_child_storage_storage_kill_version_3'");
                     return argv;
                 }, List.of(Type.I64, Type.I64), List.of(Type.I64)),
                 new ImportObject.FuncImport("env",
@@ -50,12 +53,14 @@ public class ChildStorageHostFunctions {
                 }, List.of(Type.I64, Type.I64), List.of(Type.I32)),
                 new ImportObject.FuncImport("env",
                         "ext_default_child_storage_clear_prefix_version_1", argv -> {
-                    System.out.println("Message printed in the body of 'ext_default_child_storage_clear_prefix_version_1'");
+                    System.out.println("Message printed in the body of " +
+                            "'ext_default_child_storage_clear_prefix_version_1'");
                     return argv;
                 }, List.of(Type.I64), List.of(Type.I64)),
                 new ImportObject.FuncImport("env",
                         "ext_default_child_storage_clear_prefix_version_2", argv -> {
-                    System.out.println("Message printed in the body of 'ext_default_child_storage_clear_prefix_version_2'");
+                    System.out.println("Message printed in the body of " +
+                            "'ext_default_child_storage_clear_prefix_version_2'");
                     return argv;
                 }, List.of(Type.I64, Type.I64, Type.I64), List.of(Type.I64)),
                 new ImportObject.FuncImport("env",

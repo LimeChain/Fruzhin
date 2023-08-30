@@ -82,7 +82,8 @@ public class OffchainHostFunctions {
                 }, List.of(Type.I32), List.of(Type.I64)),
                 new ImportObject.FuncImport("env",
                         "ext_offchain_http_response_read_body_version_1", argv -> {
-                    System.out.println("Message printed in the body of 'ext_offchain_http_response_read_body_version_1'");
+                    System.out.println("Message printed in the body of " +
+                            "'ext_offchain_http_response_read_body_version_1'");
                     return argv;
                 }, List.of(Type.I32, Type.I64, Type.I64), List.of(Type.I64)),
                 /*

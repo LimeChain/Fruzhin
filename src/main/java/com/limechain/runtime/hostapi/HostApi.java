@@ -16,7 +16,7 @@ import java.util.logging.Level;
 @Log
 public class HostApi {
 
-    private static final String keyToIgnore = ":child_storage:default:";
+    private static final String KEY_TO_IGNORE = ":child_storage:default:";
     private static Runtime runtime;
     private static KVRepository<String, Object> repository = SyncedState.getInstance().getRepository();
 
