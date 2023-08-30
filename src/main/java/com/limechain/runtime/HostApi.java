@@ -154,13 +154,16 @@ public class HostApi {
     }
 
     private static byte[] hash64(int seed, byte[] dataToHash) {
-        LongHashFunction h3 = LongHashFunction.xx(seed);
-        long res3 = h3.hashBytes(dataToHash.clone());
-        ByteBuffer buffer3 = ByteBuffer.allocate(8);
-        buffer3.order(ByteOrder.LITTLE_ENDIAN);
-        buffer3.putLong(res3);
-        byte[] hash3 = buffer3.array();
-        return hash3;
+        final long res3 = LongHashFunction
+                .xx(seed)
+                .hashBytes(dataToHash.clone());
+
+        final ByteBuffer buffer = ByteBuffer
+                .allocate(8)
+                .order(ByteOrder.LITTLE_ENDIAN)
+                .putLong(res3);
+
+        return buffer.array();
     }
 
     public static void extAllocatorFreeVersion1() {
