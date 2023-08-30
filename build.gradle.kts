@@ -43,11 +43,6 @@ dependencies {
     // TODO: Publish imported packages to mvnrepository and import them
     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
 
-    // JSON-RPC dependencies
-    // Needed for strange error when starting up json rpc server
-    // See: https://github.com/briandilley/jsonrpc4j/issues/280
-    implementation("javax.jws:javax.jws-api:1.1")
-
     implementation("org.springframework.boot:spring-boot-starter-web")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 
