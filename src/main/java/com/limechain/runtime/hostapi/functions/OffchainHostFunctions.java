@@ -60,9 +60,6 @@ public class OffchainHostFunctions {
                 HostFunctions.getImportObject("ext_offchain_http_response_read_body_version_1", argv -> {
                     return argv;
                 }, List.of(Type.I32, Type.I64, Type.I64), Type.I64),
-                /*
-                 * Offchain index
-                 */
                 HostFunctions.getImportObject("ext_offchain_index_set_version_1", argv -> {
 
                 }, List.of(Type.I64, Type.I64)),
