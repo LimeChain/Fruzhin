@@ -1,4 +1,4 @@
-package com.limechain.runtime.hostapi;
+package com.limechain.runtime.hostapi.functions;
 
 import lombok.experimental.UtilityClass;
 import org.wasmer.ImportObject;
