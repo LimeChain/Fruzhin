@@ -60,7 +60,7 @@ public class CommonConfig {
     }
 
     @Bean
-    public WarpSyncMachine sync(Network network, ChainService chainService) {
-        return new WarpSyncMachine(network, chainService);
+    public WarpSyncMachine sync(Network network, ChainService chainService, KVRepository<String, Object> repository) {
+        return new WarpSyncMachine(network, chainService, repository);
     }
 }

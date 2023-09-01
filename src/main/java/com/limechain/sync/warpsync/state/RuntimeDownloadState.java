@@ -9,6 +9,7 @@ import com.limechain.trie.decoder.TrieDecoderException;
 import com.limechain.utils.LittleEndianUtils;
 import com.limechain.utils.StringUtils;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
+import io.emeraldpay.polkaj.types.Hash256;
 import lombok.extern.java.Log;
 
 import java.util.logging.Level;
@@ -33,16 +34,25 @@ public class RuntimeDownloadState implements WarpSyncState {
 
     @Override
     public void handle(WarpSyncMachine sync) {
+        byte[][] merkleProof = syncedState.loadProof();
+        Hash256 stateRoot = syncedState.loadStateRoot();
+        if(merkleProof != null && stateRoot != null){
+            log.log(Level.INFO, "Loading saved runtime...");
+            setCode(merkleProof, stateRoot);
+            return;
+        }
         log.log(Level.INFO, "Downloading runtime...");
+
         LightClientMessage.Response response = sync.getNetworkService().makeRemoteReadRequest(
                 syncedState.getLastFinalizedBlockHash().toString(),
                 new String[]{StringUtils.toHex(":code")});
 
         byte[] proof = response.getRemoteReadResponse().getProof().toByteArray();
-
         byte[][] decodedProofs = decodeProof(proof);
+        
+        syncedState.saveProofState(decodedProofs);
 
-        setCode(decodedProofs);
+        setCode(decodedProofs, syncedState.getStateRoot());
     }
 
     private byte[][] decodeProof(byte[] proof) {
@@ -56,10 +66,11 @@ public class RuntimeDownloadState implements WarpSyncState {
         return decodedProofs;
     }
 
-    private void setCode(byte[][] decodedProofs) {
+    private void setCode(byte[][] decodedProofs, Hash256 stateRoot) {
         Trie trie;
         try {
-            trie = TrieVerifier.buildTrie(decodedProofs, syncedState.getStateRoot().getBytes());
+            trie = TrieVerifier.buildTrie(decodedProofs, stateRoot.getBytes());
+            SyncedState.getInstance().setTrie(trie);
             var code = trie.get(codeKey);
             if (code == null) {
                 this.error = new RuntimeException("Couldn't retrieve runtime code from trie");

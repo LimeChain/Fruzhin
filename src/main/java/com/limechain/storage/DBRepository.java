@@ -5,12 +5,15 @@ import org.apache.commons.io.FileUtils;
 import org.rocksdb.Options;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
+import org.rocksdb.RocksIterator;
 import org.springframework.util.SerializationUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
 
@@ -70,7 +73,8 @@ public class DBRepository implements KVRepository<String, Object> {
 
     @Override
     public synchronized boolean save(String key, Object value) {
-        log.log(Level.INFO, String.format("saving value '%s' with key '%s'", value, key));
+        log.log(Level.INFO, String.format("saving value '%s'... with key '%s'",
+                value.toString().substring(0, 100), key));
         try {
             db.put(getPrefixedKey(key), SerializationUtils.serialize(value));
         } catch (RocksDBException e) {
@@ -112,6 +116,33 @@ public class DBRepository implements KVRepository<String, Object> {
             return false;
         }
         return true;
+    }
+
+    @Override
+    public synchronized int deletePrefix(String prefixSeek, int limit) {
+        log.log(Level.INFO, String.format("deleting %d keys with prefix '%s'", limit, prefixSeek));
+        try {
+            String prefix = new String(getPrefixedKey(prefixSeek));
+            List<String> keysToDelete = new ArrayList<>();
+
+            RocksIterator rocksIterator = db.newIterator();
+            for (rocksIterator.seek(prefix.getBytes()); rocksIterator.isValid(); rocksIterator.next()) {
+                String key = new String(rocksIterator.key());
+
+                if (key.startsWith(prefix) && keysToDelete.size() < limit) {
+                    keysToDelete.add(key);
+                }
+            }
+
+            for (String keyToDelete : keysToDelete) {
+                db.delete(keyToDelete.getBytes());
+            }
+            return keysToDelete.size();
+        } catch (RocksDBException e) {
+            log.log(Level.SEVERE,
+                    String.format("Error deleting entry, cause: '%s', message: '%s'", e.getCause(), e.getMessage()));
+            return -1;
+        }
     }
 
     public byte[] getPrefixedKey(String key) {

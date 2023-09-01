@@ -7,6 +7,7 @@ import com.limechain.network.protocol.lightclient.pb.LightClientMessage;
 import com.limechain.runtime.Runtime;
 import com.limechain.runtime.RuntimeBuilder;
 import com.limechain.runtime.RuntimeVersion;
+import com.limechain.runtime.hostapi.HostApi;
 import com.limechain.sync.warpsync.scale.RuntimeVersionReader;
 import com.limechain.trie.Trie;
 import com.limechain.trie.TrieVerifier;
@@ -107,10 +108,11 @@ public class RuntimeDownloadTest {
 
     @Test
     public void CoreVersionTest() {
-        byte[] response =
+        Object[] response =
                 runtime.call("Core_version");
         assertNotNull(response);
-        ScaleCodecReader reader = new ScaleCodecReader(response);
+        byte[] data = HostApi.getDataFromMemory((long) response[0]);
+        ScaleCodecReader reader = new ScaleCodecReader(data);
         RuntimeVersionReader runtimeVersionReader = new RuntimeVersionReader();
         RuntimeVersion runtimeVersion = runtimeVersionReader.read(reader);
         log.log(Level.INFO, "Core Version Decoded");
