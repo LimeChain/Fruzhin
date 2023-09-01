@@ -77,12 +77,12 @@ public class CryptoHostFunctions {
                 }, List.of(Type.I32, Type.I32), Type.I64),
                 HostApi.getImportObject("ext_crypto_secp256k1_ecdsa_recover_compressed_version_1",
                         argv -> {
-                    return argv;
-                }, List.of(Type.I32, Type.I32), Type.I64),
+                            return argv;
+                        }, List.of(Type.I32, Type.I32), Type.I64),
                 HostApi.getImportObject("ext_crypto_secp256k1_ecdsa_recover_compressed_version_2",
                         argv -> {
-                    return argv;
-                }, List.of(Type.I32, Type.I32), Type.I64),
+                            return argv;
+                        }, List.of(Type.I32, Type.I32), Type.I64),
                 HostApi.getImportObject("ext_crypto_start_batch_verify", argv -> {
 
                 }, HostApi.EMPTY_LIST_OF_TYPES),

@@ -12,7 +12,6 @@ import java.util.List;
 
 @UtilityClass
 public class AllocatorHostFunctions {
-
     public static List<ImportObject> getFunctions() {
         return Arrays.asList(
                 HostApi.getImportObject("ext_allocator_malloc_version_1", argv -> {
@@ -23,7 +22,6 @@ public class AllocatorHostFunctions {
                     //Not sure if currently we can support freeing the memory in java
                 }, List.of(Type.I32)));
     }
-
 
     private static int extAllocatorMallocVersion1(int size) {
         Memory memory = HostApi.getMemory();

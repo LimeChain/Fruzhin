@@ -26,7 +26,7 @@ public class HashingHostFunctions {
                 }, List.of(Type.I64), Type.I32),
                 HostApi.getImportObject("ext_hashing_blake2_128_version_1", argv -> {
                     return argv;
-                }, List.of(Type.I64), Type.I32),   // Unknown import?
+                }, List.of(Type.I64), Type.I32),
                 HostApi.getImportObject("ext_hashing_blake2_256_version_1", argv -> {
                     return argv;
                 }, List.of(Type.I64), Type.I32),

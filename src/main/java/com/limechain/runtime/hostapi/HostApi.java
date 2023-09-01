@@ -23,13 +23,13 @@ public class HostApi {
     protected static final List<Type> EMPTY_LIST_OF_TYPES = List.of();
 
     protected static final String KEY_TO_IGNORE = ":child_storage:default:";
-    protected static Runtime runtime;
     protected static final KVRepository<String, Object> repository = SyncedState.getInstance().getRepository();
+    protected static Runtime runtime;
 
     protected static ImportObject getImportObject(final String functionName,
-                                               final UnaryOperator<List<Number>> function,
-                                               final List<Type> args,
-                                               final Type retType) {
+                                                  final UnaryOperator<List<Number>> function,
+                                                  final List<Type> args,
+                                                  final Type retType) {
         return new ImportObject.FuncImport("env", functionName, argv -> {
             System.out.printf("Message printed in the body of '%s%n'", functionName);
             return function.apply(argv);
@@ -37,8 +37,8 @@ public class HostApi {
     }
 
     protected static ImportObject getImportObject(final String functionName,
-                                               final Consumer<List<Number>> function,
-                                               final List<Type> args) {
+                                                  final Consumer<List<Number>> function,
+                                                  final List<Type> args) {
         return new ImportObject.FuncImport("env", functionName, argv -> {
             System.out.printf("Message printed in the body of '%s%n'", functionName);
             function.accept(argv);
@@ -70,12 +70,9 @@ public class HostApi {
         return runtime.getInstance().exports.getMemory("memory");
     }
 
-
-
     public static void setRuntime(Runtime runtime) {
         HostApi.runtime = runtime;
     }
-
 
     protected static ByteBuffer getByteBuffer(Memory memory) {
         ByteBuffer buffer;

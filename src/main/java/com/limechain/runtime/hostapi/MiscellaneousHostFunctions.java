@@ -24,7 +24,7 @@ public class MiscellaneousHostFunctions {
                 }, List.of(Type.I64)),
                 HostApi.getImportObject("ext_misc_print_hex_version_1", argv -> {
                     extMiscPrintHex((long) argv.get(0));
-                    }, List.of(Type.I64)),
+                }, List.of(Type.I64)),
                 HostApi.getImportObject("ext_misc_runtime_version_version_1", argv -> {
                     return argv;
                 }, List.of(Type.I64), Type.I64),
@@ -50,7 +50,6 @@ public class MiscellaneousHostFunctions {
 
         log.log(getLogLevel(level), new String(target) + ": " + new String(message));
     }
-
 
     private static void extPanicHandlerAbortOnPanicVersion1(long messagePtr) {
         byte[] data = HostApi.getDataFromMemory(messagePtr);

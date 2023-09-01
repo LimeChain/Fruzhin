@@ -16,8 +16,8 @@ public class ChildStorageHostFunctions {
                 }, List.of(Type.I64, Type.I64, Type.I64)),
                 HostApi.getImportObject(
                         "ext_default_child_storage_get_version_1", argv -> {
-                    return argv;
-                }, List.of(Type.I64, Type.I64), Type.I64),
+                            return argv;
+                        }, List.of(Type.I64, Type.I64), Type.I64),
                 HostApi.getImportObject("ext_default_child_storage_read_version_1", argv -> {
                     return argv;
                 }, List.of(Type.I64, Type.I64, Type.I64, Type.I32), Type.I64),
