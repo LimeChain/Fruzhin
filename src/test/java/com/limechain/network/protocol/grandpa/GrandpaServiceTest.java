@@ -7,48 +7,45 @@ import io.libp2p.core.AddressBook;
 import io.libp2p.core.Host;
 import io.libp2p.core.PeerId;
 import io.libp2p.core.Stream;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.MockedConstruction;
-import org.springframework.test.util.ReflectionTestUtils;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockConstruction;
-import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class GrandpaServiceTest {
-    private GrandpaService grandpaService;
-    private final PeerInfo peerInfo = mock(PeerInfo.class);
-    private final ProtocolStreams protocolStreams = mock(ProtocolStreams.class);
-    private final Host host = mock(Host.class);
-    private final PeerId peerId = mock(PeerId.class);
-    private static final ConnectionManager CONNECTION_MANAGER = mock(ConnectionManager.class);
-
-    @BeforeAll
-    static void init() {
-        mockStatic(ConnectionManager.class).when(ConnectionManager::getInstance).thenReturn(CONNECTION_MANAGER);
-    }
-
-    @BeforeEach
-    void setup() {
-        grandpaService = new GrandpaService("pid");
-    }
+    @InjectMocks
+    private GrandpaService grandpaService = new GrandpaService("pid");
+    @Mock
+    private PeerInfo peerInfo;
+    @Mock
+    private ProtocolStreams protocolStreams;
+    @Mock
+    private Host host;
+    @Mock
+    private PeerId peerId;
+    @Mock
+    private ConnectionManager connectionManager;
+    @Mock
+    private Grandpa protocol;
 
     @Test
     void sendNeighbourMessageWhenNotConnectionShouldSendHandshake() {
         AddressBook addressBook = mock(AddressBook.class);
-        Grandpa grandpa = mock(Grandpa.class);
         GrandpaController grandpaController = mock(GrandpaController.class);
-        ReflectionTestUtils.setField(grandpaService, "protocol", grandpa);
-        when(CONNECTION_MANAGER.getPeerInfo(peerId)).thenReturn(peerInfo);
+        when(connectionManager.getPeerInfo(peerId)).thenReturn(peerInfo);
         when(peerInfo.getGrandpaStreams()).thenReturn(protocolStreams);
         when(protocolStreams.getInitiator()).thenReturn(null);
         when(host.getAddressBook()).thenReturn(addressBook);
-        when(grandpa.dialPeer(host, peerId, addressBook)).thenReturn(grandpaController);
+        when(protocol.dialPeer(host, peerId, addressBook)).thenReturn(grandpaController);
 
         grandpaService.sendNeighbourMessage(host, peerId);
 
@@ -60,7 +57,7 @@ class GrandpaServiceTest {
         PeerInfo peerInfo = mock(PeerInfo.class);
         ProtocolStreams protocolStreams = mock(ProtocolStreams.class);
         Stream stream = mock(Stream.class);
-        when(CONNECTION_MANAGER.getPeerInfo(peerId)).thenReturn(peerInfo);
+        when(connectionManager.getPeerInfo(peerId)).thenReturn(peerInfo);
         when(peerInfo.getGrandpaStreams()).thenReturn(protocolStreams);
         when(protocolStreams.getInitiator()).thenReturn(stream);
 

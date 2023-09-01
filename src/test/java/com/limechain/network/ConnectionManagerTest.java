@@ -8,8 +8,11 @@ import com.limechain.network.protocol.warp.dto.BlockHeader;
 import io.emeraldpay.polkaj.types.Hash256;
 import io.libp2p.core.PeerId;
 import io.libp2p.core.Stream;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -22,16 +25,15 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-class ConnectionManagerTest {
-    private ConnectionManager connectionManager;
-    private final PeerId peerId = mock(PeerId.class);
-    private PeerInfo peerInfo;
 
-    @BeforeEach
-    void setUp() {
-        connectionManager = new ConnectionManager();
-        peerInfo = mock(PeerInfo.class);
-    }
+@ExtendWith(MockitoExtension.class)
+class ConnectionManagerTest {
+    @InjectMocks
+    private ConnectionManager connectionManager;
+    @Mock
+    private PeerId peerId;
+    @Mock
+    private PeerInfo peerInfo;
 
     // BLOCK ANNOUNCE TESTS
     @Test
@@ -95,7 +97,6 @@ class ConnectionManagerTest {
         when(stream.remotePeerId()).thenReturn(peerId);
         when(stream.isInitiator()).thenReturn(true);
         ProtocolStreams protocolStreams = mock(ProtocolStreams.class);
-        when(protocolStreams.getResponder()).thenReturn(mock(Stream.class));
         when(peerInfo.getProtocolStreams(ProtocolStreamType.BLOCK_ANNOUNCE)).thenReturn(protocolStreams);
         connectionManager.peers.put(peerId, peerInfo);
 
@@ -110,7 +111,6 @@ class ConnectionManagerTest {
         when(stream.remotePeerId()).thenReturn(peerId);
         when(stream.isInitiator()).thenReturn(false);
         ProtocolStreams protocolStreams = mock(ProtocolStreams.class);
-        when(protocolStreams.getResponder()).thenReturn(mock(Stream.class));
         when(peerInfo.getProtocolStreams(ProtocolStreamType.BLOCK_ANNOUNCE)).thenReturn(protocolStreams);
         connectionManager.peers.put(peerId, peerInfo);
 
@@ -197,7 +197,6 @@ class ConnectionManagerTest {
         when(stream.remotePeerId()).thenReturn(peerId);
         when(stream.isInitiator()).thenReturn(true);
         ProtocolStreams protocolStreams = mock(ProtocolStreams.class);
-        when(protocolStreams.getResponder()).thenReturn(mock(Stream.class));
         when(peerInfo.getProtocolStreams(ProtocolStreamType.GRANDPA)).thenReturn(protocolStreams);
         connectionManager.peers.put(peerId, peerInfo);
 
@@ -212,7 +211,6 @@ class ConnectionManagerTest {
         when(stream.remotePeerId()).thenReturn(peerId);
         when(stream.isInitiator()).thenReturn(false);
         ProtocolStreams protocolStreams = mock(ProtocolStreams.class);
-        when(protocolStreams.getResponder()).thenReturn(mock(Stream.class));
         when(peerInfo.getProtocolStreams(ProtocolStreamType.GRANDPA)).thenReturn(protocolStreams);
         connectionManager.peers.put(peerId, peerInfo);
 

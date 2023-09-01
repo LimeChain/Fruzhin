@@ -25,8 +25,8 @@ import java.util.logging.Level;
 public class GrandpaEngine {
     private static final int HANDSHAKE_LENGTH = 1;
 
-    private final ConnectionManager connectionManager = ConnectionManager.getInstance();
-    private final SyncedState syncedState = SyncedState.getInstance();
+    protected ConnectionManager connectionManager = ConnectionManager.getInstance();
+    protected SyncedState syncedState = SyncedState.getInstance();
 
     /**
      * Handles an incoming request as follows:
@@ -76,7 +76,7 @@ public class GrandpaEngine {
         boolean connectedToPeer = connectionManager.isGrandpaConnected(peerId);
 
         if (!connectedToPeer && messageType != GrandpaMessageType.HANDSHAKE) {
-            log.log(Level.WARNING, "No handshake for grandpa message from Peer " + peerId);
+            log.log(Level.WARNING,"No handshake for grandpa message from Peer " + peerId);
             stream.close();
             return;
         }

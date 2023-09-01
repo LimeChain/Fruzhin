@@ -4,21 +4,28 @@ import io.libp2p.core.PeerId;
 import io.libp2p.core.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class GrandpaControllerTest {
+    @InjectMocks
     private GrandpaController grandpaController;
-    private final Stream stream = mock(Stream.class);
-    private final PeerId peerId = mock(PeerId.class);
-    private final GrandpaEngine engine = mock(GrandpaEngine.class);
+    @Mock
+    private Stream stream;
+    @Mock
+    private PeerId peerId;
+    @Mock
+    private GrandpaEngine engine;
 
     @BeforeEach
     void setup() {
         when(stream.remotePeerId()).thenReturn(peerId);
-        grandpaController = new GrandpaController(stream);
         grandpaController.engine = engine;
     }
 
