@@ -4,6 +4,7 @@ import com.limechain.network.Network;
 import com.limechain.rpc.server.RpcApp;
 import com.limechain.sync.warpsync.WarpSyncMachine;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
@@ -36,6 +37,7 @@ class LightClientTest {
     }
 
     @Test
+    @Disabled("Test calls System.exit")
     public void lightClient_stop_invokesStopFunctions() throws NoSuchFieldException, IllegalAccessException {
         Network network = mock(Network.class);
         WarpSyncMachine warpSync = mock(WarpSyncMachine.class);
@@ -47,6 +49,5 @@ class LightClientTest {
 
         verify(network, times(1)).stop();
         verify(rpcApp, times(1)).stop();
-
     }
 }
