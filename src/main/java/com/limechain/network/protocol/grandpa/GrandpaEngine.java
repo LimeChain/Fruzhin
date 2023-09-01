@@ -76,7 +76,7 @@ public class GrandpaEngine {
         boolean connectedToPeer = connectionManager.isGrandpaConnected(peerId);
 
         if (!connectedToPeer && messageType != GrandpaMessageType.HANDSHAKE) {
-            log.log(Level.WARNING,"No handshake for grandpa message from Peer " + peerId);
+            log.log(Level.WARNING, "No handshake for grandpa message from Peer " + peerId);
             stream.close();
             return;
         }
