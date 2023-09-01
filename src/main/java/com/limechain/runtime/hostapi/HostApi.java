@@ -3,7 +3,6 @@ package com.limechain.runtime.hostapi;
 import com.limechain.runtime.Runtime;
 import com.limechain.storage.KVRepository;
 import com.limechain.sync.warpsync.SyncedState;
-import lombok.experimental.UtilityClass;
 import lombok.extern.java.Log;
 import net.openhft.hashing.LongHashFunction;
 import org.apache.tomcat.util.buf.HexUtils;
@@ -16,12 +15,11 @@ import java.nio.ByteOrder;
 import java.util.logging.Level;
 
 @Log
-@UtilityClass
 public class HostApi {
 
-    private static final String KEY_TO_IGNORE = ":child_storage:default:";
-    private static Runtime runtime;
-    private static KVRepository<String, Object> repository = SyncedState.getInstance().getRepository();
+    protected static final String KEY_TO_IGNORE = ":child_storage:default:";
+    protected static Runtime runtime;
+    protected static final KVRepository<String, Object> repository = SyncedState.getInstance().getRepository();
 
     public static void extStorageSetVersion1(long keyPtr, long valuePtr) {
         byte[] key = getDataFromMemory(keyPtr);
@@ -74,7 +72,7 @@ public class HostApi {
         return position;
     }
 
-    private static Memory getMemory() {
+    protected static Memory getMemory() {
         return runtime.getInstance().exports.getMemory("memory");
     }
 
@@ -104,19 +102,8 @@ public class HostApi {
         };
     }
 
-    public static int extAllocatorMallocVersion1(int size) {
-        Memory memory = getMemory();
-        ByteBuffer buffer = getByteBuffer(memory);
-        int position = buffer.position();
-        if (size > buffer.limit() - position) {
-            memory.grow(buffer.limit() - position);
-        }
-        buffer.position(position + size);
 
-        return position;
-    }
-
-    private static ByteBuffer getByteBuffer(Memory memory) {
+    protected static ByteBuffer getByteBuffer(Memory memory) {
         ByteBuffer buffer;
         try {
             Field bufferField = memory.getClass().getDeclaredField("buffer");
