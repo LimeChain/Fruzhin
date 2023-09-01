@@ -136,7 +136,7 @@ public class DBRepository implements KVRepository<String, Object> {
             for (String keyToDelete : keysToDelete) {
                 db.delete(keyToDelete.getBytes());
             }
-            return  keysToDelete.size();
+            return keysToDelete.size();
         } catch (RocksDBException e) {
             log.log(Level.SEVERE,
                     String.format("Error deleting entry, cause: '%s', message: '%s'", e.getCause(), e.getMessage()));
