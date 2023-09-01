@@ -8,6 +8,11 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Implementations of the Storage HostAPI functions
+ * For more info check
+ * {<a href="https://spec.polkadot.network/chap-host-api#sect-storage-api">Storage API</a>}
+ */
 @UtilityClass
 public class StorageHostFunctions {
 

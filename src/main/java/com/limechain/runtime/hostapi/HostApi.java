@@ -15,6 +15,10 @@ import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 import java.util.logging.Level;
 
+/**
+ * Holds some common methods and services used by the different
+ * HostApi functions implementations
+ */
 @Log
 public class HostApi {
 

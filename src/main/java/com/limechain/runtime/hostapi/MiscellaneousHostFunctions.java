@@ -10,6 +10,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 
+/**
+ * Implementations of the Miscellaneous HostAPI functions
+ * For more info check
+ * {<a href="https://spec.polkadot.network/chap-host-api#sect-misc-api">Miscellaneous API</a>}
+ */
 @UtilityClass
 @Log
 public class MiscellaneousHostFunctions {

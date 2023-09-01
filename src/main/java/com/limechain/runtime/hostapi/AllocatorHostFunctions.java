@@ -10,6 +10,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Implementations of the Allocator HostAPI functions
+ * For more info check
+ * {<a href="https://spec.polkadot.network/chap-host-api#sect-allocator-api">Allocator API</a>}
+ */
 @UtilityClass
 public class AllocatorHostFunctions {
     public static List<ImportObject> getFunctions() {

@@ -7,6 +7,11 @@ import org.wasmer.Type;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Implementations of the Trie HostAPI functions
+ * For more info check
+ * {<a href="https://spec.polkadot.network/chap-host-api#sect-trie-api">Trie API</a>}
+ */
 @UtilityClass
 public class TrieHostFunctions {
 
