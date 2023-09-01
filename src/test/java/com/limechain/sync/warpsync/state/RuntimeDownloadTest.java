@@ -1,12 +1,9 @@
 package com.limechain.sync.warpsync.state;
 
 import com.limechain.network.kad.KademliaService;
-import com.limechain.network.protocol.blockannounce.scale.BlockHeaderScaleWriter;
 import com.limechain.network.protocol.lightclient.LightMessages;
 import com.limechain.network.protocol.lightclient.LightMessagesProtocol;
 import com.limechain.network.protocol.lightclient.pb.LightClientMessage;
-import com.limechain.network.protocol.warp.dto.BlockHeader;
-import com.limechain.network.protocol.warp.dto.HeaderDigest;
 import com.limechain.runtime.Runtime;
 import com.limechain.runtime.RuntimeBuilder;
 import com.limechain.runtime.RuntimeVersion;
@@ -18,7 +15,6 @@ import com.limechain.utils.LittleEndianUtils;
 import com.limechain.utils.RandomGenerationUtils;
 import com.limechain.utils.StringUtils;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
-import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.emeraldpay.polkaj.types.Hash256;
 import io.ipfs.multiaddr.MultiAddress;
 import io.ipfs.multihash.Multihash;
@@ -30,11 +26,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.peergos.HostBuilder;
-import org.wasmer.Memory;
-
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.math.BigInteger;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -47,12 +39,17 @@ public class RuntimeDownloadTest {
     private static Runtime runtime = null;
     //Block must not be older than 256 than the latest block
     private static final String STATE_ROOT_STRING
-            = "0x48fcac62d9a14ec3676ca9c30eb0cc5b14d48da30d6064475709ac0ea433fe04";
+            = "0x9343bea828cc470e94b6674b53c24cf3daea7ea5f304aa70485816f44350b084";
     private static final String BLOCK_HASH
-            = "0x753946bdc73a8d86daeaf0b058e0bb44c4e925019ecc06ce38f2fb085d1232fe";
+            = "0xe5061e90ffa24b51dc1e9e4ccb1baedb7ba776da8fd4e117ac8b9085837d6ef6";
+
+    private static final PeerId PEER_ID = PeerId.fromBase58("12D3KooWHsvEicXjWWraktbZ4MQBizuyADQtuEGr3NbDvtm5rFA5");
+    private static final String[] RECEIVERS = new String[]{
+            "/dns/p2p.0.polkadot.network/tcp/30333/p2p/12D3KooWHsvEicXjWWraktbZ4MQBizuyADQtuEGr3NbDvtm5rFA5",
+    };
 
     @BeforeAll
-    public static void init() throws IOException {
+    public static void init() {
         //Setup node and connect to boot nodes
         MultiAddress address = RandomGenerationUtils.generateRandomAddress();
         HostBuilder hostBuilder1 =
@@ -68,18 +65,13 @@ public class RuntimeDownloadTest {
         senderNode.start().join();
 
         kademliaService.setHost(senderNode);
-        var peerId = PeerId.fromBase58("12D3KooWFFqjBKoSdQniRpw1Y8W6kkV7takWv1DU2ZMkaA81PYVq");
-        var receivers = new String[]{
-                "/dns/polkadot-boot-ng.dwellir.com/tcp/30336/p2p/" +
-                        "12D3KooWFFqjBKoSdQniRpw1Y8W6kkV7takWv1DU2ZMkaA81PYVq",
-        };
 
-        kademliaService.connectBootNodes(receivers);
+        kademliaService.connectBootNodes(RECEIVERS);
         //Make a call to retrieve the runtime code information
         LightClientMessage.Response response = lightMessages.remoteReadRequest(
                 senderNode,
                 kademliaService.getHost().getAddressBook(),
-                peerId,
+                PEER_ID,
                 BLOCK_HASH,
                 new String[]{StringUtils.toHex(":code")}
         );
@@ -111,71 +103,16 @@ public class RuntimeDownloadTest {
         //Build runtime
         System.out.println("Instantiating module");
         runtime = RuntimeBuilder.buildRuntime(code);
-        coreInitialize();
-    }
-
-    public static void coreInitialize() throws IOException {
-        Memory memory = runtime.getInstance().exports.getMemory("memory");
-        ByteArrayOutputStream buf = new ByteArrayOutputStream();
-        ScaleCodecWriter scaleCodecWriter = new ScaleCodecWriter(buf);
-        BlockHeaderScaleWriter blockHeaderScaleWriter = new BlockHeaderScaleWriter();
-        BlockHeader blockHeader = new BlockHeader();
-        blockHeader.setParentHash(Hash256.from(BLOCK_HASH));
-        blockHeader.setBlockNumber(BigInteger.valueOf(16871500));
-        blockHeader.setStateRoot(
-                Hash256.from("0x0000000000000000000000000000000000000000000000000000000000000000"));
-        blockHeader.setExtrinsicsRoot(
-                Hash256.from("0x0000000000000000000000000000000000000000000000000000000000000000"));
-        blockHeader.setDigest(new HeaderDigest[]{});
-        blockHeaderScaleWriter.write(scaleCodecWriter, blockHeader);
-        memory.buffer().put(buf.toByteArray());
-        Object[] runtimeResponse = null;
-        try {
-            runtimeResponse = runtime.getInstance().exports.getFunction("Core_initialize_block")
-                    .apply(0, 0);
-        } catch (Exception e) {
-            log.log(Level.WARNING, e.getMessage(), e.getStackTrace());
-            long[] pointers = new long[]{30066183504l, 807453851884l};
-            for (int i = 0; i < 2; i++) {
-                long pointer = pointers[i];
-                int ptr = (int) pointer;
-                int ptrSize = (int) (pointer >> 32);
-                byte[] data = new byte[ptrSize];
-                memory.buffer().get(ptr, data, 0, ptrSize);
-                System.out.println(new String(data));
-            }
-        }
-        log.log(Level.INFO, "Runtime and heap pages downloaded");
     }
 
     @Test
-    public void CodeVersionTest() throws IOException {
-        Object[] runtimeResponse =
-                runtime.getInstance().exports.getFunction("Core_version")
-                        .apply(0, 0);
-        long memPointer = (long) runtimeResponse[0];
-        int ptr = (int) memPointer;
-        int ptrLength = (int) (memPointer >> 32);
-        Memory memory = runtime.getInstance().exports.getMemory("memory");
-        byte[] data = new byte[ptrLength];
-        memory.buffer().get(ptr, data, 0, ptrLength);
-        ScaleCodecReader reader = new ScaleCodecReader(data);
+    public void CoreVersionTest() {
+        byte[] response =
+                runtime.call("Core_version");
+        assertNotNull(response);
+        ScaleCodecReader reader = new ScaleCodecReader(response);
         RuntimeVersionReader runtimeVersionReader = new RuntimeVersionReader();
         RuntimeVersion runtimeVersion = runtimeVersionReader.read(reader);
-        log.log(Level.INFO, "Runtime and heap pages downloaded");
-    }
-
-    @Test
-    public void BabeApiCurrentEpoch() {
-        Object[] runtimeResponse =
-                runtime.getInstance().exports.getFunction("BabeApi_current_epoch")
-                        .apply(0, 0);
-        long memPointer = (long) runtimeResponse[0];
-        int ptr = (int) memPointer;
-        int ptrLength = (int) (memPointer >> 32);
-        Memory memory = runtime.getInstance().exports.getMemory("memory");
-        byte[] data = new byte[ptrLength];
-        memory.buffer().get(ptr, data, 0, ptrLength);
-        log.log(Level.INFO, "Runtime and heap pages downloaded");
+        log.log(Level.INFO, "Core Version Decoded");
     }
 }

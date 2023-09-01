@@ -19,7 +19,7 @@ public class ChainInformationBuildState implements WarpSyncState {
     @Override
     public void next(WarpSyncMachine sync) {
         log.log(Level.INFO, "Done with runtime build");
-        sync.setWarpSyncState(new ChainInformationDownloadState());
+        sync.setWarpSyncState(new FinishedState());
     }
 
     @Override

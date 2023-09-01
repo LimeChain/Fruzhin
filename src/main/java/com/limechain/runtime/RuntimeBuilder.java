@@ -12,6 +12,7 @@ import org.wasmer.Type;
 import lombok.extern.java.Log;
 
 import java.util.Arrays;
+import java.util.List;
 
 @Log
 public class RuntimeBuilder {
@@ -47,25 +48,18 @@ public class RuntimeBuilder {
             return wasmSections.getRuntimeVersion();
         } else {
             //If we couldn't get the data from the wasm custom sections fallback to Core_version call
-            Object[] response =
-                    runtime.getInstance().exports.getFunction("Core_version")
-                            .apply(0, 0);
-            long memPointer = (long) response[0];
-            int ptr = (int) memPointer;
-            int ptrLength = (int) (memPointer >> 32);
-            byte[] data = new byte[ptrLength];
+            byte[] response = runtime.call("Code_version");
 
-            Memory memory = runtime.getInstance().exports.getMemory("memory");
-            memory.buffer().get(ptr, data, 0, ptrLength);
-
-            ScaleCodecReader reader = new ScaleCodecReader(data);
+            ScaleCodecReader reader = new ScaleCodecReader(response);
             RuntimeVersionReader runtimeVersionReader = new RuntimeVersionReader();
+            /* TODO: Some bytes from the data corresponding to the implementation name are not returned as expected
+                by the imported memory. */
             RuntimeVersion runtimeVersion = runtimeVersionReader.read(reader);
             return runtimeVersion;
         }
     }
 
-    static Imports getImports(Module module, int minPages) {
+    static Imports getImports(Runtime runtime, Module module, int minPages) {
         ImportObject.MemoryImport memory = new ImportObject.MemoryImport("env", 22, false);
         return Imports.from(Arrays.asList(
                 new ImportObject.FuncImport("env", "ext_storage_set_version_1", argv -> {
@@ -270,14 +264,12 @@ public class RuntimeBuilder {
                 }, Arrays.asList(Type.I64, Type.I64, Type.I64), Arrays.asList()),
                 new ImportObject.FuncImport("env", "ext_logging_log_version_1", argv -> {
                     System.out.println("Message printed in the body of 'ext_logging_log_version_1'");
-                    System.out.println("Printing log arguments");
-                    System.out.println(argv);
+                    System.out.println("Printing logs");
+                    runtime.printLogData(argv);
                     return argv;
                 }, Arrays.asList(Type.I32, Type.I64, Type.I64), Arrays.asList()),
                 new ImportObject.FuncImport("env", "ext_misc_print_num_version_1", argv -> {
-                    System.out.println("Message printed in the body of 'ext_logging_log_version_1'");
-                    System.out.println("Printing log arguments");
-                    System.out.println(argv);
+                    System.out.println("Message printed in the body of 'ext_misc_print_num_version_1'");
                     return argv;
                 }, Arrays.asList(Type.I64), Arrays.asList()),
                 memory), module);
