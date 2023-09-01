@@ -125,7 +125,7 @@ public class DBRepository implements KVRepository<String, Object> {
             List<String> keysToDelete = new ArrayList<>();
 
             RocksIterator rocksIterator = db.newIterator();
-            for(rocksIterator.seek(prefix.getBytes()); rocksIterator.isValid(); rocksIterator.next()){
+            for (rocksIterator.seek(prefix.getBytes()); rocksIterator.isValid(); rocksIterator.next()){
                 String key = new String(rocksIterator.key());
 
                 if(key.startsWith(prefix) && keysToDelete.size() < limit){
