@@ -15,7 +15,7 @@ public class TrieHostFunctions {
                 HostApi.getImportObject("ext_trie_blake2_256_root_version_1", argv -> {
                     return argv;
                 }, List.of(Type.I64), Type.I32),
-                HostApi.getImportObject( "ext_trie_blake2_256_root_version_2", argv -> {
+                HostApi.getImportObject("ext_trie_blake2_256_root_version_2", argv -> {
                     return argv;
                 }, List.of(Type.I64, Type.I32), Type.I32),
                 HostApi.getImportObject("ext_trie_blake2_256_ordered_root_version_1", argv -> {
