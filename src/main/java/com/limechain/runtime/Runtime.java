@@ -3,7 +3,6 @@ package com.limechain.runtime;
 import lombok.Getter;
 import lombok.extern.java.Log;
 import org.wasmer.Instance;
-import org.wasmer.Memory;
 import org.wasmer.Module;
 
 import java.util.logging.Level;
@@ -16,13 +15,10 @@ public class Runtime {
     private RuntimeVersion version;
     private Instance instance;
     private int heapPages;
-    @Getter
-    private Memory memory;
 
     public Runtime(Module module, int heapPages) {
         this.heapPages = heapPages;
         this.instance = module.instantiate(getImports(module));
-        this.memory = this.instance.exports.getMemory("memory");
     }
 
     /**
