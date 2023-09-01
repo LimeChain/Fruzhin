@@ -1,4 +1,4 @@
-package com.limechain.runtime.hostapi.functions;
+package com.limechain.runtime.hostapi;
 
 import lombok.experimental.UtilityClass;
 import org.wasmer.ImportObject;
@@ -12,40 +12,40 @@ public class TrieHostFunctions {
 
     public static List<ImportObject> getFunctions() {
         return Arrays.asList(
-                HostFunctions.getImportObject("ext_trie_blake2_256_root_version_1", argv -> {
+                HostApi.getImportObject("ext_trie_blake2_256_root_version_1", argv -> {
                     return argv;
                 }, List.of(Type.I64), Type.I32),
-                HostFunctions.getImportObject( "ext_trie_blake2_256_root_version_2", argv -> {
+                HostApi.getImportObject( "ext_trie_blake2_256_root_version_2", argv -> {
                     return argv;
                 }, List.of(Type.I64, Type.I32), Type.I32),
-                HostFunctions.getImportObject("ext_trie_blake2_256_ordered_root_version_1", argv -> {
+                HostApi.getImportObject("ext_trie_blake2_256_ordered_root_version_1", argv -> {
                     return argv;
                 }, List.of(Type.I64), Type.I32),
-                HostFunctions.getImportObject("ext_trie_blake2_256_ordered_root_version_2", argv -> {
+                HostApi.getImportObject("ext_trie_blake2_256_ordered_root_version_2", argv -> {
                     return argv;
                 }, List.of(Type.I64, Type.I32), Type.I32),
-                HostFunctions.getImportObject("ext_trie_keccak_256_root_version_1", argv -> {
+                HostApi.getImportObject("ext_trie_keccak_256_root_version_1", argv -> {
                     return argv;
                 }, List.of(Type.I64), Type.I32),
-                HostFunctions.getImportObject("ext_trie_keccak_256_root_version_2", argv -> {
+                HostApi.getImportObject("ext_trie_keccak_256_root_version_2", argv -> {
                     return argv;
                 }, List.of(Type.I64, Type.I32), Type.I32),
-                HostFunctions.getImportObject("ext_trie_keccak_256_ordered_root_version_1", argv -> {
+                HostApi.getImportObject("ext_trie_keccak_256_ordered_root_version_1", argv -> {
                     return argv;
                 }, List.of(Type.I64), Type.I32),
-                HostFunctions.getImportObject("ext_trie_keccak_256_ordered_root_version_2", argv -> {
+                HostApi.getImportObject("ext_trie_keccak_256_ordered_root_version_2", argv -> {
                     return argv;
                 }, List.of(Type.I64, Type.I32), Type.I32),
-                HostFunctions.getImportObject("ext_trie_blake2_256_verify_proof_version_1", argv -> {
+                HostApi.getImportObject("ext_trie_blake2_256_verify_proof_version_1", argv -> {
                     return argv;
                 }, List.of(Type.I32, Type.I64, Type.I64, Type.I64), Type.I32),
-                HostFunctions.getImportObject("ext_trie_blake2_256_verify_proof_version_2", argv -> {
+                HostApi.getImportObject("ext_trie_blake2_256_verify_proof_version_2", argv -> {
                     return argv;
                 }, List.of(Type.I32, Type.I64, Type.I64, Type.I64, Type.I32), Type.I32),
-                HostFunctions.getImportObject("ext_trie_keccak_256_verify_proof_version_1", argv -> {
+                HostApi.getImportObject("ext_trie_keccak_256_verify_proof_version_1", argv -> {
                     return argv;
                 }, List.of(Type.I32, Type.I64, Type.I64, Type.I64), Type.I32),
-                HostFunctions.getImportObject("ext_trie_keccak_256_verify_proof_version_2", argv -> {
+                HostApi.getImportObject("ext_trie_keccak_256_verify_proof_version_2", argv -> {
                     return argv;
                 }, List.of(Type.I32, Type.I64, Type.I64, Type.I64, Type.I32), Type.I32)
         );

@@ -1,15 +1,15 @@
 package com.limechain.runtime;
 
 import com.github.luben.zstd.Zstd;
-import com.limechain.runtime.hostapi.functions.AllocatorHostFunctions;
-import com.limechain.runtime.hostapi.functions.ChildStorageHostFunctions;
-import com.limechain.runtime.hostapi.functions.CryptoHostFunctions;
-import com.limechain.runtime.hostapi.functions.HashingHostFunctions;
+import com.limechain.runtime.hostapi.AllocatorHostFunctions;
+import com.limechain.runtime.hostapi.ChildStorageHostFunctions;
+import com.limechain.runtime.hostapi.CryptoHostFunctions;
+import com.limechain.runtime.hostapi.HashingHostFunctions;
 import com.limechain.runtime.hostapi.HostApi;
-import com.limechain.runtime.hostapi.functions.MiscellaneousHostFunctions;
-import com.limechain.runtime.hostapi.functions.OffchainHostFunctions;
-import com.limechain.runtime.hostapi.functions.StorageHostFunctions;
-import com.limechain.runtime.hostapi.functions.TrieHostFunctions;
+import com.limechain.runtime.hostapi.MiscellaneousHostFunctions;
+import com.limechain.runtime.hostapi.OffchainHostFunctions;
+import com.limechain.runtime.hostapi.StorageHostFunctions;
+import com.limechain.runtime.hostapi.TrieHostFunctions;
 import com.limechain.utils.ByteArrayUtils;
 import lombok.extern.java.Log;
 import org.wasmer.ImportObject;

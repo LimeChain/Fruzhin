@@ -1,6 +1,5 @@
-package com.limechain.runtime.hostapi.functions;
+package com.limechain.runtime.hostapi;
 
-import com.limechain.runtime.hostapi.HostApi;
 import lombok.experimental.UtilityClass;
 import net.openhft.hashing.LongHashFunction;
 import org.wasmer.ImportObject;
@@ -12,46 +11,46 @@ import java.util.Arrays;
 import java.util.List;
 
 @UtilityClass
-public class HashingHostFunctions extends HostApi {
+public class HashingHostFunctions {
 
     public static List<ImportObject> getFunctions() {
         return Arrays.asList(
-                HostFunctions.getImportObject("ext_hashing_keccak_256_version_1", argv -> {
+                HostApi.getImportObject("ext_hashing_keccak_256_version_1", argv -> {
                     return argv;
                 }, List.of(Type.I64), Type.I32),
-                HostFunctions.getImportObject("ext_hashing_keccak_512_version_1", argv -> {
+                HostApi.getImportObject("ext_hashing_keccak_512_version_1", argv -> {
                     return argv;
                 }, List.of(Type.I64), Type.I32),
-                HostFunctions.getImportObject("ext_hashing_sha2_256_version_1", argv -> {
+                HostApi.getImportObject("ext_hashing_sha2_256_version_1", argv -> {
                     return argv;
                 }, List.of(Type.I64), Type.I32),
-                HostFunctions.getImportObject("ext_hashing_blake2_128_version_1", argv -> {
+                HostApi.getImportObject("ext_hashing_blake2_128_version_1", argv -> {
                     return argv;
                 }, List.of(Type.I64), Type.I32),   // Unknown import?
-                HostFunctions.getImportObject("ext_hashing_blake2_256_version_1", argv -> {
+                HostApi.getImportObject("ext_hashing_blake2_256_version_1", argv -> {
                     return argv;
                 }, List.of(Type.I64), Type.I32),
-                HostFunctions.getImportObject("ext_hashing_twox_64_version_1", argv -> {
+                HostApi.getImportObject("ext_hashing_twox_64_version_1", argv -> {
                     return List.of(extHashingTwox64Version1((long) argv.get(0)));
                 }, List.of(Type.I64), Type.I32),
-                HostFunctions.getImportObject("ext_hashing_twox_128_version_1", argv -> {
+                HostApi.getImportObject("ext_hashing_twox_128_version_1", argv -> {
                     return List.of(extHashingTwox128Version1((long) argv.get(0)));
                 }, List.of(Type.I64), Type.I32),
-                HostFunctions.getImportObject("ext_hashing_twox_256_version_1", argv -> {
+                HostApi.getImportObject("ext_hashing_twox_256_version_1", argv -> {
                     return List.of(extHashingTwox256Version1((long) argv.get(0)));
                 }, List.of(Type.I64), Type.I32));
     }
 
     private static int extHashingTwox64Version1(long addr) {
-        byte[] dataToHash = getDataFromMemory(addr);
+        byte[] dataToHash = HostApi.getDataFromMemory(addr);
 
         byte[] hash0 = hash64(0, dataToHash);
 
-        return putDataToMemory(hash0);
+        return HostApi.putDataToMemory(hash0);
     }
 
     private static int extHashingTwox128Version1(long addr) {
-        byte[] dataToHash = getDataFromMemory(addr);
+        byte[] dataToHash = HostApi.getDataFromMemory(addr);
 
         byte[] hash0 = hash64(0, dataToHash);
         byte[] hash1 = hash64(1, dataToHash);
@@ -61,11 +60,11 @@ public class HashingHostFunctions extends HostApi {
         buffer.put(hash1);
 
         byte[] byteArray = buffer.array();
-        return putDataToMemory(byteArray);
+        return HostApi.putDataToMemory(byteArray);
     }
 
     private static int extHashingTwox256Version1(long addr) {
-        byte[] dataToHash = getDataFromMemory(addr);
+        byte[] dataToHash = HostApi.getDataFromMemory(addr);
 
         byte[] hash0 = hash64(0, dataToHash);
         byte[] hash1 = hash64(1, dataToHash);
@@ -79,7 +78,7 @@ public class HashingHostFunctions extends HostApi {
         buffer.put(hash3);
 
         byte[] byteArray = buffer.array();
-        return putDataToMemory(byteArray);
+        return HostApi.putDataToMemory(byteArray);
     }
 
     private static byte[] hash64(int seed, byte[] dataToHash) {
