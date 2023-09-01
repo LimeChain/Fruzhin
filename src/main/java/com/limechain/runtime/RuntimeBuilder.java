@@ -10,9 +10,7 @@ import com.limechain.runtime.hostapi.MiscellaneousHostFunctions;
 import com.limechain.runtime.hostapi.OffchainHostFunctions;
 import com.limechain.runtime.hostapi.StorageHostFunctions;
 import com.limechain.runtime.hostapi.TireHostFunctions;
-import com.limechain.sync.warpsync.scale.RuntimeVersionReader;
 import com.limechain.utils.ByteArrayUtils;
-import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import lombok.extern.java.Log;
 import org.wasmer.ImportObject;
 import org.wasmer.Imports;
@@ -54,18 +52,7 @@ public class RuntimeBuilder {
         wasmSections.parseCustomSections(wasmBinary);
         if (wasmSections.getRuntimeVersion() != null && wasmSections.getRuntimeVersion().getRuntimeApis() != null) {
             return wasmSections.getRuntimeVersion();
-        } else {
-            //If we couldn't get the data from the wasm custom sections fallback to Core_version call
-            Object[] response =
-                    runtime.getInstance().exports.getFunction("Core_version")
-                            .apply(0, 0);
-
-            byte[] data = HostApi.getDataFromMemory((Long) response[0]);
-            ScaleCodecReader reader = new ScaleCodecReader(data);
-            RuntimeVersionReader runtimeVersionReader = new RuntimeVersionReader();
-            RuntimeVersion runtimeVersion = runtimeVersionReader.read(reader);
-            return runtimeVersion;
-        }
+        } else throw new RuntimeException("Could not get Runtime version");
     }
 
     static Imports getImports(Module module) {
