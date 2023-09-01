@@ -4,14 +4,11 @@ import com.limechain.runtime.Runtime;
 import com.limechain.storage.KVRepository;
 import com.limechain.sync.warpsync.SyncedState;
 import lombok.extern.java.Log;
-import net.openhft.hashing.LongHashFunction;
-import org.apache.tomcat.util.buf.HexUtils;
 import org.wasmer.Memory;
 
 import java.lang.reflect.Field;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.logging.Level;
 
 @Log
@@ -76,31 +73,13 @@ public class HostApi {
         return runtime.getInstance().exports.getMemory("memory");
     }
 
-    public static void extMiscPrintHex(long pointer) {
-        byte[] data = getDataFromMemory(pointer);
-        System.out.println(HexUtils.toHexString(data));
-    }
 
-    public static void extLoggingLog(int level, long targetPtr, long messagePtr) {
-        byte[] target = getDataFromMemory(targetPtr);
-        byte[] message = getDataFromMemory(messagePtr);
-
-        log.log(getLogLevel(level), new String(target) + ": " + new String(message));
-    }
 
     public static void setRuntime(Runtime runtime) {
         HostApi.runtime = runtime;
     }
 
-    private static Level getLogLevel(int i) {
-        return switch (i) {
-            case 0 -> Level.SEVERE;
-            case 1 -> Level.WARNING;
-            case 2 -> Level.INFO;
-            case 3 -> Level.FINE;
-            default -> Level.FINEST;
-        };
-    }
+
 
 
     protected static ByteBuffer getByteBuffer(Memory memory) {
@@ -117,9 +96,4 @@ public class HostApi {
     }
 
 
-
-    public static void extPanicHandlerAbortOnPanicVersion1(long messagePtr) {
-        byte[] data = getDataFromMemory(messagePtr);
-        log.severe(String.valueOf(data));
-    }
 }
