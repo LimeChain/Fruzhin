@@ -9,7 +9,7 @@ import com.limechain.runtime.hostapi.HostApi;
 import com.limechain.runtime.hostapi.functions.MiscellaneousHostFunctions;
 import com.limechain.runtime.hostapi.functions.OffchainHostFunctions;
 import com.limechain.runtime.hostapi.functions.StorageHostFunctions;
-import com.limechain.runtime.hostapi.functions.TireHostFunctions;
+import com.limechain.runtime.hostapi.functions.TrieHostFunctions;
 import com.limechain.utils.ByteArrayUtils;
 import lombok.extern.java.Log;
 import org.wasmer.ImportObject;
@@ -64,7 +64,7 @@ public class RuntimeBuilder {
         objects.addAll(CryptoHostFunctions.getFunctions());
         objects.addAll(HashingHostFunctions.getFunctions());
         objects.addAll(OffchainHostFunctions.getFunctions());
-        objects.addAll(TireHostFunctions.getFunctions());
+        objects.addAll(TrieHostFunctions.getFunctions());
         objects.addAll(MiscellaneousHostFunctions.getFunctions());
         objects.addAll(AllocatorHostFunctions.getFunctions());
         objects.add(memory);

@@ -8,7 +8,7 @@ import java.util.Arrays;
 import java.util.List;
 
 @UtilityClass
-public class TireHostFunctions {
+public class TrieHostFunctions {
 
     public static List<ImportObject> getFunctions() {
         return Arrays.asList(
