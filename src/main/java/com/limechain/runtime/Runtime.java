@@ -16,10 +16,9 @@ public class Runtime {
     private Instance instance;
     private int heapPages;
 
-    public Runtime(Module module, int heapPages, RuntimeVersion version) {
-        this.version = version;
+    public Runtime(Module module, int heapPages) {
         this.heapPages = heapPages;
-        this.instance = module.instantiate(getImports(module, heapPages));
+        this.instance = module.instantiate(getImports(module));
     }
 
     public Object callNoParams(String functionName) {
@@ -31,5 +30,9 @@ public class Runtime {
         log.log(Level.INFO, "Making a runtime call: " + functionName);
         //TODO Call adequate params
         return instance.exports.getFunction(functionName).apply(1, 1);
+    }
+
+    public void setVersion(RuntimeVersion runtimeVersion) {
+        this.version = runtimeVersion;
     }
 }
