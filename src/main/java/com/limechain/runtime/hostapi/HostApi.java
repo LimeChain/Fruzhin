@@ -16,7 +16,7 @@ import java.util.function.UnaryOperator;
 import java.util.logging.Level;
 
 /**
- * Holds some common methods and services used by the different
+ * Holds common methods and services used by the different
  * HostApi functions implementations
  */
 @Log
