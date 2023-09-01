@@ -182,8 +182,8 @@ public class HostApi {
         return buffer.array();
     }
 
-    public static void extAllocatorFreeVersion1() {
-        //Not supported in Java?
+    public static void extAllocatorFreeVersion1(int i) {
+        //TODO: Try marking the part of the bytebuffer as free?
     }
 
     public static void extPanicHandlerAbortOnPanicVersion1(long messagePtr) {
