@@ -46,9 +46,9 @@ public class HostApi {
 
     public static long extStorageClearPrefixVersion2(long prefixPtr, long limitPtr) {
         String prefix = new String(getDataFromMemory(prefixPtr));
-        int dataToHash = new BigInteger(getDataFromMemory(limitPtr)).intValue();
+        int limit = new BigInteger(getDataFromMemory(limitPtr)).intValue();
 
-        int deleted = repository.deletePrefix(prefix, dataToHash);
+        int deleted = repository.deletePrefix(prefix, limit);
         //TODO: Count how many are left?
 
         return 0;

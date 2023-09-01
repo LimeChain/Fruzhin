@@ -119,7 +119,7 @@ public class DBRepository implements KVRepository<String, Object> {
 
     @Override
     public synchronized int deletePrefix(String prefixSeek, int limit) {
-        log.log(Level.INFO, String.format("deleting %n keys with prefix '%s'", limit, prefixSeek));
+        log.log(Level.INFO, String.format("deleting %d keys with prefix '%s'", limit, prefixSeek));
         try {
             String prefix = new String(getPrefixedKey(prefixSeek));
             List<String> keysToDelete = new ArrayList<>();
