@@ -57,7 +57,7 @@ public class RuntimeBuilder {
             return wasmSections.getRuntimeVersion();
         } else {
             //If we couldn't get the data from the wasm custom sections fallback to Core_version call
-            Object[] response = runtime.call("Code_version");
+            Object[] response = runtime.call("Core_version");
             byte[] data = HostApi.getDataFromMemory((long) response[0]);
             ScaleCodecReader reader = new ScaleCodecReader(data);
             RuntimeVersionReader runtimeVersionReader = new RuntimeVersionReader();
