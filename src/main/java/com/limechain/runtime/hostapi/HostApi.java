@@ -2,7 +2,6 @@ package com.limechain.runtime.hostapi;
 
 import com.limechain.runtime.Runtime;
 import com.limechain.storage.KVRepository;
-import com.limechain.sync.warpsync.SyncedState;
 import lombok.extern.java.Log;
 import org.wasmer.ImportObject;
 import org.wasmer.Memory;
@@ -23,7 +22,8 @@ public class HostApi {
     protected static final List<Type> EMPTY_LIST_OF_TYPES = List.of();
 
     protected static final String KEY_TO_IGNORE = ":child_storage:default:";
-    protected static final KVRepository<String, Object> repository = SyncedState.getInstance().getRepository();
+
+    protected static KVRepository<String, Object> repository;
     protected static Runtime runtime;
 
     protected static ImportObject getImportObject(final String functionName,
@@ -72,6 +72,10 @@ public class HostApi {
 
     public static void setRuntime(Runtime runtime) {
         HostApi.runtime = runtime;
+    }
+
+    public static void setRepository(KVRepository<String, Object> repository) {
+        HostApi.repository = repository;
     }
 
     protected static ByteBuffer getByteBuffer(Memory memory) {
