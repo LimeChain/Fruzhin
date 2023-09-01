@@ -116,58 +116,7 @@ public class HostApi {
         return buffer != null ? buffer : memory.buffer();
     }
 
-    public static int extHashingTwox64Version1(long addr) {
-        byte[] dataToHash = getDataFromMemory(addr);
 
-        byte[] hash0 = hash64(0, dataToHash);
-
-        return putDataToMemory(hash0);
-    }
-
-    public static int extHashingTwox128Version1(long addr) {
-        byte[] dataToHash = getDataFromMemory(addr);
-
-        byte[] hash0 = hash64(0, dataToHash);
-        byte[] hash1 = hash64(1, dataToHash);
-
-        ByteBuffer buffer = ByteBuffer.allocate(16);
-        buffer.put(hash0);
-        buffer.put(hash1);
-
-        byte[] byteArray = buffer.array();
-        return putDataToMemory(byteArray);
-    }
-
-    public static int extHashingTwox256Version1(long addr) {
-        byte[] dataToHash = getDataFromMemory(addr);
-
-        byte[] hash0 = hash64(0, dataToHash);
-        byte[] hash1 = hash64(1, dataToHash);
-        byte[] hash2 = hash64(2, dataToHash);
-        byte[] hash3 = hash64(3, dataToHash);
-
-        ByteBuffer buffer = ByteBuffer.allocate(32);
-        buffer.put(hash0);
-        buffer.put(hash1);
-        buffer.put(hash2);
-        buffer.put(hash3);
-
-        byte[] byteArray = buffer.array();
-        return putDataToMemory(byteArray);
-    }
-
-    private static byte[] hash64(int seed, byte[] dataToHash) {
-        final long res3 = LongHashFunction
-                .xx(seed)
-                .hashBytes(dataToHash.clone());
-
-        final ByteBuffer buffer = ByteBuffer
-                .allocate(8)
-                .order(ByteOrder.LITTLE_ENDIAN)
-                .putLong(res3);
-
-        return buffer.array();
-    }
 
     public static void extPanicHandlerAbortOnPanicVersion1(long messagePtr) {
         byte[] data = getDataFromMemory(messagePtr);
