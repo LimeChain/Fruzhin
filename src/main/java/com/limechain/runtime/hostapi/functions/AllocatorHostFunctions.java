@@ -18,7 +18,8 @@ public class AllocatorHostFunctions {
                     return Collections.singletonList(HostApi.extAllocatorMallocVersion1((int) argv.get(0)));
                 }, List.of(Type.I32), Type.I32),
                 HostFunctions.getImportObject("ext_allocator_free_version_1", argv -> {
-                    HostApi.extAllocatorFreeVersion1((int) argv.get(0));
+                    //TODO: Try marking the part of the bytebuffer as free?
+                    //Not sure if currently we can support freeing the memory in java
                 }, List.of(Type.I32)));
     }
 

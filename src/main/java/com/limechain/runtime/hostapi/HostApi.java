@@ -182,10 +182,6 @@ public class HostApi {
         return buffer.array();
     }
 
-    public static void extAllocatorFreeVersion1(int i) {
-        //TODO: Try marking the part of the bytebuffer as free?
-    }
-
     public static void extPanicHandlerAbortOnPanicVersion1(long messagePtr) {
         byte[] data = getDataFromMemory(messagePtr);
         log.severe(String.valueOf(data));
