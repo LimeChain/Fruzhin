@@ -7,7 +7,6 @@ import lombok.extern.java.Log;
 import org.wasmer.Memory;
 
 import java.lang.reflect.Field;
-import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.logging.Level;
 
@@ -17,37 +16,6 @@ public class HostApi {
     protected static final String KEY_TO_IGNORE = ":child_storage:default:";
     protected static Runtime runtime;
     protected static final KVRepository<String, Object> repository = SyncedState.getInstance().getRepository();
-
-    public static void extStorageSetVersion1(long keyPtr, long valuePtr) {
-        byte[] key = getDataFromMemory(keyPtr);
-        byte[] value = getDataFromMemory(valuePtr);
-
-        repository.save(new String(key), value);
-    }
-
-    public static int extStorageGetVersion1(long keyPtr) {
-        byte[] key = getDataFromMemory(keyPtr);
-        Object data = repository.find(new String(key)).orElse(null);
-        if (data instanceof byte[] dataArray) {
-            return putDataToMemory(dataArray);
-        }
-        return 0;
-    }
-
-    public static void extStorageClearVersion1(long keyPtr) {
-        byte[] key = getDataFromMemory(keyPtr);
-        repository.delete(new String(key));
-    }
-
-    public static long extStorageClearPrefixVersion2(long prefixPtr, long limitPtr) {
-        String prefix = new String(getDataFromMemory(prefixPtr));
-        int limit = new BigInteger(getDataFromMemory(limitPtr)).intValue();
-
-        int deleted = repository.deletePrefix(prefix, limit);
-        //TODO: Count how many are left?
-
-        return 0;
-    }
 
     public static byte[] getDataFromMemory(long pointer) {
         int ptr = (int) pointer;
@@ -79,9 +47,7 @@ public class HostApi {
         HostApi.runtime = runtime;
     }
 
-
-
-
+    
     protected static ByteBuffer getByteBuffer(Memory memory) {
         ByteBuffer buffer;
         try {
