@@ -19,7 +19,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Objects;
 import java.util.logging.Level;
 
 @Component
@@ -48,7 +47,21 @@ public class RpcWsHandler extends TextWebSocketHandler {
         log.log(Level.INFO, "PARAMS: " + String.join(",", rpcRequest.getParams()));
 
         SubscriptionName method = SubscriptionName.fromString(rpcRequest.getMethod());
-        switch (Objects.requireNonNull(method)) {
+        if (method == null) {
+            if (rpcRequest.getMethod().equals("rpc_methods")) {
+                var result = AppBean.getBean(RPCMethods.class).rpcMethods();
+                session.sendMessage(new TextMessage(mapper.writeValueAsBytes(result)));
+                session.close();
+                return;
+            }
+            log.log(Level.INFO, "Handling the WS request using the normal RPC routes");
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            server.handleRequest(messageStream, outputStream);
+            session.sendMessage(new TextMessage(outputStream.toByteArray()));
+            return;
+        }
+
+        switch (method) {
             case CHAIN_HEAD_UNSTABLE_FOLLOW -> {
                 log.log(Level.INFO, "Subscribing for follow event");
                 pubSubService.addSubscriber(Topic.UNSTABLE_FOLLOW, session);
@@ -88,15 +101,7 @@ public class RpcWsHandler extends TextWebSocketHandler {
                 this.transactionRpc.transactionUnstableUnwatch(rpcRequest.getParams()[0]);
                 pubSubService.removeSubscriber(Topic.UNSTABLE_TRANSACTION_WATCH, session.getId());
             }
-            default -> {
-                // Server should only handle requests if it's not a sub/unsub request
-                // Known issue: WS handler doesn't use interface method names (system_name)
-                // instead it uses implementation ones (systemName)
-                log.log(Level.INFO, "Handling the WS request using the normal RPC routes");
-                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                server.handleRequest(messageStream, outputStream);
-                session.sendMessage(new TextMessage(outputStream.toByteArray()));
-            }
+            default -> log.log(Level.WARNING, "Unknown method: " + rpcRequest.getMethod());
         }
     }
 
