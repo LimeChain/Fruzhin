@@ -40,7 +40,7 @@ public interface SystemRPC {
     String[] systemLocalListenAddress();
 
     @JsonRpcMethod("system_peers")
-    List<Map<String, String>> systemSystemPeers();
+    List<Map<String, Object>> systemSystemPeers();
 
     @JsonRpcMethod("system_addReservedPeer")
     void systemAddReservedPeer(String peerId);

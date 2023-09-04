@@ -74,7 +74,7 @@ public class RPCMethodsImpl implements RPCMethods {
     }
 
     @Override
-    public List<Map<String, String>> systemSystemPeers() {
+    public List<Map<String, Object>> systemSystemPeers() {
         return systemRPC.systemSystemPeers();
     }
 

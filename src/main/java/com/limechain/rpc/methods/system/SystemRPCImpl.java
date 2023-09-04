@@ -110,17 +110,18 @@ public class SystemRPCImpl {
     /**
      * Returns currently connected peers.
      */
-    public List<Map<String, String>> systemSystemPeers() {
+    public List<Map<String, Object>> systemSystemPeers() {
         return connectionManager
                 .getPeerIds()
                 .stream()
                 .map(connectionManager::getPeerInfo)
-                .map(peerInfo -> Map.ofEntries(
-                        entry("peerId", peerInfo.getPeerId().toString()),
-                        entry("roles", peerInfo.getNodeRoleName()),
-                        entry("bestHash", peerInfo.getBestBlockHash().toString()),
-                        entry("bestNumber", peerInfo.getBestBlock().toString())
-                )).toList();
+                .map(peerInfo -> Map.<String, Object>ofEntries(
+                                entry("peerId", peerInfo.getPeerId().toString()),
+                                entry("roles", peerInfo.getNodeRoleName()),
+                                entry("bestHash", peerInfo.getBestBlockHash().toString()),
+                                entry("bestNumber", peerInfo.getBestBlock().longValue())
+                        )
+                ).toList();
     }
 
     /**
