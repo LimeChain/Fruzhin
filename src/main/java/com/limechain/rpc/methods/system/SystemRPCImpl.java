@@ -2,11 +2,16 @@ package com.limechain.rpc.methods.system;
 
 import com.limechain.chain.ChainService;
 import com.limechain.config.SystemInfo;
+import com.limechain.network.ConnectionManager;
 import com.limechain.network.Network;
+import com.limechain.network.dto.PeerInfo;
+import com.limechain.sync.warpsync.SyncedState;
 import com.limechain.sync.warpsync.WarpSyncMachine;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigInteger;
+import java.util.List;
 import java.util.Map;
 
 import static java.util.Map.entry;
@@ -27,6 +32,8 @@ public class SystemRPCImpl {
     private final SystemInfo systemInfo;
     private final Network network;
     private final WarpSyncMachine warpSync;
+    private final SyncedState syncedState = SyncedState.getInstance();
+    private final ConnectionManager connectionManager = ConnectionManager.getInstance();
 
     /**
      * Gets the node's implementation name.
@@ -105,9 +112,18 @@ public class SystemRPCImpl {
     /**
      * Returns currently connected peers.
      */
-    // TODO: Implement in M2.
-    public String[] systemSystemPeers() {
-        return new String[0];
+    public List<Map<String, Object>> systemSystemPeers() {
+        return connectionManager
+                .getPeerIds()
+                .stream()
+                .map(connectionManager::getPeerInfo)
+                .map(peerInfo -> Map.<String, Object>ofEntries(
+                                entry("peerId", peerInfo.getPeerId().toString()),
+                                entry("roles", peerInfo.getNodeRoleName()),
+                                entry("bestHash", peerInfo.getBestBlockHash().toString()),
+                                entry("bestNumber", peerInfo.getBestBlock())
+                        )
+                ).toList();
     }
 
     /**
@@ -132,9 +148,20 @@ public class SystemRPCImpl {
     /**
      * Returns the state of the syncing of the node.
      */
-    // TODO: Implement in Mx.
     public Map<String, Object> systemSyncState() {
-        return null;
+        BigInteger highestBlock = this.connectionManager
+                .getPeerIds()
+                .stream()
+                .map(this.connectionManager::getPeerInfo)
+                .map(PeerInfo::getBestBlock)
+                .max(BigInteger::compareTo)
+                .orElse(BigInteger.ZERO);
+
+        return Map.ofEntries(
+                entry("startingBlock", this.syncedState.getStartingBlockNumber()),
+                entry("currentBlock", this.syncedState.getLastFinalizedBlockNumber()),
+                entry("highestBlock", highestBlock)
+        );
     }
 
     /**

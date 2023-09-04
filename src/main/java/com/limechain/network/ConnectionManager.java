@@ -84,6 +84,7 @@ public class ConnectionManager {
 
     private PeerInfo addNewPeer(PeerId peerId) {
         PeerInfo peerInfo = new PeerInfo();
+        peerInfo.setPeerId(peerId);
         peers.put(peerId, peerInfo);
         return peerInfo;
     }
