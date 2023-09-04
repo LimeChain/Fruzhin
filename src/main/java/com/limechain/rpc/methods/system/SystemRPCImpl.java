@@ -4,11 +4,13 @@ import com.limechain.chain.ChainService;
 import com.limechain.config.SystemInfo;
 import com.limechain.network.ConnectionManager;
 import com.limechain.network.Network;
+import com.limechain.network.dto.PeerInfo;
 import com.limechain.sync.warpsync.SyncedState;
 import com.limechain.sync.warpsync.WarpSyncMachine;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
 
@@ -119,7 +121,7 @@ public class SystemRPCImpl {
                                 entry("peerId", peerInfo.getPeerId().toString()),
                                 entry("roles", peerInfo.getNodeRoleName()),
                                 entry("bestHash", peerInfo.getBestBlockHash().toString()),
-                                entry("bestNumber", peerInfo.getBestBlock().longValue())
+                                entry("bestNumber", peerInfo.getBestBlock())
                         )
                 ).toList();
     }
@@ -147,12 +149,13 @@ public class SystemRPCImpl {
      * Returns the state of the syncing of the node.
      */
     public Map<String, Object> systemSyncState() {
-        long highestBlock = this.connectionManager
+        BigInteger highestBlock = this.connectionManager
                 .getPeerIds()
                 .stream()
                 .map(this.connectionManager::getPeerInfo)
-                .mapToLong(peerInfo -> peerInfo.getBestBlock().longValue())
-                .max().orElse(0);
+                .map(PeerInfo::getBestBlock)
+                .max(BigInteger::compareTo)
+                .orElse(BigInteger.ZERO);
 
         return Map.ofEntries(
                 entry("startingBlock", this.syncedState.getStartingBlockNumber()),
