@@ -60,6 +60,7 @@ public class SyncedState {
     private boolean warpSyncFragmentsFinished;
     private boolean warpSyncFinished;
 
+    private BigInteger startingBlockNumber = BigInteger.ZERO;
     private BigInteger lastFinalizedBlockNumber = BigInteger.ZERO;
     private Hash256 lastFinalizedBlockHash;
     private Hash256 stateRoot;
@@ -311,6 +312,7 @@ public class SyncedState {
             this.latestRound = state.latestRound();
             this.lastFinalizedBlockHash = Hash256.from(state.lastFinalizedBlockHash());
             this.lastFinalizedBlockNumber = state.lastFinalizedBlockNumber();
+            this.startingBlockNumber = lastFinalizedBlockNumber;
             this.authoritySet = state.authoritySet()
                     .stream()
                     .map(pair -> {

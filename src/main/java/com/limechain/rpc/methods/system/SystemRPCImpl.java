@@ -2,7 +2,9 @@ package com.limechain.rpc.methods.system;
 
 import com.limechain.chain.ChainService;
 import com.limechain.config.SystemInfo;
+import com.limechain.network.ConnectionManager;
 import com.limechain.network.Network;
+import com.limechain.sync.warpsync.SyncedState;
 import com.limechain.sync.warpsync.WarpSyncMachine;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,6 +29,8 @@ public class SystemRPCImpl {
     private final SystemInfo systemInfo;
     private final Network network;
     private final WarpSyncMachine warpSync;
+    private final SyncedState syncedState = SyncedState.getInstance();
+    private final ConnectionManager connectionManager = ConnectionManager.getInstance();
 
     /**
      * Gets the node's implementation name.
@@ -134,7 +138,18 @@ public class SystemRPCImpl {
      */
     // TODO: Implement in Mx.
     public Map<String, Object> systemSyncState() {
-        return null;
+        long highestBlock = this.connectionManager
+                .getPeerIds()
+                .stream()
+                .map(this.connectionManager::getPeerInfo)
+                .mapToLong(peerInfo -> peerInfo.getBestBlock().longValue())
+                .max().orElse(0);
+
+        return Map.ofEntries(
+                entry("startingBlock", this.syncedState.getStartingBlockNumber()),
+                entry("currentBlock", this.syncedState.getLastFinalizedBlockNumber()),
+                entry("highestBlock", highestBlock)
+        );
     }
 
     /**
