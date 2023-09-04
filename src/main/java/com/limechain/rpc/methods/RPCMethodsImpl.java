@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -73,7 +74,7 @@ public class RPCMethodsImpl implements RPCMethods {
     }
 
     @Override
-    public String[] systemSystemPeers() {
+    public List<Map<String, String>> systemSystemPeers() {
         return systemRPC.systemSystemPeers();
     }
 

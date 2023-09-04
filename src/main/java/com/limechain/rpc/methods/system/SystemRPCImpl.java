@@ -9,6 +9,7 @@ import com.limechain.sync.warpsync.WarpSyncMachine;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Map;
 
 import static java.util.Map.entry;
@@ -109,9 +110,17 @@ public class SystemRPCImpl {
     /**
      * Returns currently connected peers.
      */
-    // TODO: Implement in M2.
-    public String[] systemSystemPeers() {
-        return new String[0];
+    public List<Map<String, String>> systemSystemPeers() {
+        return connectionManager
+                .getPeerIds()
+                .stream()
+                .map(connectionManager::getPeerInfo)
+                .map(peerInfo -> Map.ofEntries(
+                        entry("peerId", peerInfo.getPeerId().toString()),
+                        entry("roles", peerInfo.getNodeRoleName()),
+                        entry("bestHash", peerInfo.getBestBlockHash().toString()),
+                        entry("bestNumber", peerInfo.getBestBlock().toString())
+                )).toList();
     }
 
     /**
@@ -136,7 +145,6 @@ public class SystemRPCImpl {
     /**
      * Returns the state of the syncing of the node.
      */
-    // TODO: Implement in Mx.
     public Map<String, Object> systemSyncState() {
         long highestBlock = this.connectionManager
                 .getPeerIds()
