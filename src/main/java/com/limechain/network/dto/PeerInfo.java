@@ -1,11 +1,13 @@
 package com.limechain.network.dto;
 
+import com.limechain.network.protocol.blockannounce.NodeRole;
 import io.emeraldpay.polkaj.types.Hash256;
 import io.libp2p.core.PeerId;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigInteger;
+import java.util.Arrays;
 
 @Data
 @NoArgsConstructor
@@ -20,12 +22,12 @@ public class PeerInfo {
     private final ProtocolStreams grandpaStreams = new ProtocolStreams();
 
     public String getNodeRoleName(){
-        return switch (nodeRole) {
-            case 1 -> "FULL";
-            case 2 -> "LIGHT";
-            case 4 -> "AUTHORITY";
-            default -> "NONE";
-        };
+        return Arrays
+                .stream(NodeRole.values())
+                .filter(role -> role.getValue() == nodeRole)
+                .findFirst()
+                .orElse(NodeRole.NONE)
+                .name();
     }
 
     public ProtocolStreams getProtocolStreams(ProtocolStreamType type) {
