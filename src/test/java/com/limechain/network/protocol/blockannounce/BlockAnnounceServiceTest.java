@@ -6,18 +6,49 @@ import com.limechain.utils.RandomGenerationUtils;
 import io.emeraldpay.polkaj.types.Hash256;
 import io.ipfs.multiaddr.MultiAddress;
 import io.ipfs.multihash.Multihash;
+import io.libp2p.core.AddressBook;
 import io.libp2p.core.Host;
 import io.libp2p.core.PeerId;
 import io.libp2p.core.multiformats.Multiaddr;
 import io.libp2p.protocol.Ping;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.peergos.HostBuilder;
 
 import java.math.BigInteger;
 import java.util.List;
 
-class BlockAnnounceTest {
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+class BlockAnnounceServiceTest {
+    @InjectMocks
+    private BlockAnnounceService blockAnnounceService = new BlockAnnounceService("pid");
+    @Mock
+    private BlockAnnounce protocol;
+    @Mock
+    private Host host;
+    @Mock
+    private PeerId peerId;
+    @Mock
+    private AddressBook addressBook;
+    @Mock
+    private BlockAnnounceController blockAnnounceController;
+
+    @Test
+    void sendHandshake() {
+        when(protocol.dialPeer(host, peerId, addressBook)).thenReturn(blockAnnounceController);
+
+        blockAnnounceService.sendHandshake(host, addressBook, peerId);
+
+        verify(blockAnnounceController).sendHandshake();
+    }
+
     @Disabled("This is an integration test")
     @Test
     void receivesNotifications() {
@@ -28,7 +59,8 @@ class BlockAnnounceTest {
                     .generateIdentity()
                     .listen(List.of(multiAddress));
 
-            var blockAnnounce = new BlockAnnounce("/dot/block-announces/1", new BlockAnnounceProtocol());
+            var blockAnnounceService = new BlockAnnounceService("/dot/block-announces/1");
+            var blockAnnounce = blockAnnounceService.getProtocol();
             var kademliaService = new KademliaService("/dot/kad",
                     Multihash.deserialize(hostBuilder1.getPeerId().getBytes()), true, false);
 
@@ -65,7 +97,7 @@ class BlockAnnounceTest {
             if (addr.length == 0)
                 throw new IllegalStateException("No addresses known for peer " + peerId);
 
-            blockAnnounce.sendHandshake(senderNode, senderNode.getAddressBook(), peerId);
+            blockAnnounceService.sendHandshake(senderNode, senderNode.getAddressBook(), peerId);
 
             Thread.sleep(60000);
         } catch (
