@@ -25,8 +25,8 @@ import java.util.logging.Level;
 public class GrandpaEngine {
     private static final int HANDSHAKE_LENGTH = 1;
 
-    private final ConnectionManager connectionManager = ConnectionManager.getInstance();
-    private final SyncedState syncedState = SyncedState.getInstance();
+    protected ConnectionManager connectionManager = ConnectionManager.getInstance();
+    protected SyncedState syncedState = SyncedState.getInstance();
 
     /**
      * Handles an incoming request as follows:
@@ -41,15 +41,14 @@ public class GrandpaEngine {
      * <p>Logs and ignores other message types. </p>
      *
      * @param message received message as byre array
-     * @param peerId peer id of sender
-     * @param stream stream, where the request was received
+     * @param stream  stream, where the request was received
      */
-    public void receiveRequest(byte[] message, PeerId peerId, Stream stream) {
+    public void receiveRequest(byte[] message, Stream stream) {
         GrandpaMessageType messageType = getGrandpaMessageType(message);
 
         if (messageType == null) {
-            log.log(Level.WARNING,
-                    String.format("Unknown grandpa message type \"%d\" from Peer %s", message[0], peerId));
+            log.log(Level.WARNING, String.format("Unknown grandpa message type \"%d\" from Peer %s",
+                    message[0], stream.remotePeerId()));
             return;
         }
 
@@ -107,8 +106,8 @@ public class GrandpaEngine {
             connectionManager.addGrandpaStream(stream);
             connectionManager.getPeerInfo(peerId).setNodeRole(message[0]);
             log.log(Level.INFO, "Received grandpa handshake from " + peerId);
+            writeHandshakeToStream(stream, peerId);
         }
-        writeHandshakeToStream(stream, peerId);
     }
 
     private void handleNeighbourMessage(byte[] message, PeerId peerId) {
