@@ -9,6 +9,9 @@ import com.limechain.rpc.pubsub.Topic;
 import com.limechain.rpc.subscriptions.chainhead.ChainHeadRpc;
 import com.limechain.rpc.subscriptions.transaction.TransactionRpc;
 import lombok.extern.java.Log;
+import org.apache.catalina.connector.Connector;
+import org.apache.catalina.connector.Request;
+import org.apache.coyote.InputBuffer;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
@@ -33,7 +36,7 @@ public class RpcWsHandler extends TextWebSocketHandler {
 
     public RpcWsHandler(RPCMethods rpcMethods, ChainHeadRpc chainHeadRpc, TransactionRpc transactionRpc) {
         this.mapper = new ObjectMapper();
-        this.server = new JsonRpcBasicServer(mapper, rpcMethods);
+        this.server = new JsonRpcBasicServer(mapper, rpcMethods, RPCMethods.class);
         this.chainHeadRpc = chainHeadRpc;
         this.transactionRpc = transactionRpc;
     }
@@ -48,15 +51,10 @@ public class RpcWsHandler extends TextWebSocketHandler {
 
         SubscriptionName method = SubscriptionName.fromString(rpcRequest.getMethod());
         if (method == null) {
-            if (rpcRequest.getMethod().equals("rpc_methods")) {
-                var result = AppBean.getBean(RPCMethods.class).rpcMethods();
-                session.sendMessage(new TextMessage(mapper.writeValueAsBytes(result)));
-                session.close();
-                return;
-            }
             log.log(Level.INFO, "Handling the WS request using the normal RPC routes");
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            server.handleRequest(messageStream, outputStream);
+            Request request = this.buildHttpLikeRequest(message.asBytes());
+            server.handleRequest(request.getInputStream(), outputStream);
             session.sendMessage(new TextMessage(outputStream.toByteArray()));
             return;
         }
@@ -109,5 +107,17 @@ public class RpcWsHandler extends TextWebSocketHandler {
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
         // TODO: Search PubSubService for subscribers that have the closed session id
         // as a subscriber and remove it from the their subscription list
+    }
+
+    private Request buildHttpLikeRequest(byte[] message) {
+        InputBuffer inputBuffer = new SimpleInputBuffer(new ByteArrayInputStream(message));
+
+        org.apache.coyote.Request coyReq = new org.apache.coyote.Request();
+        coyReq.setResponse(new org.apache.coyote.Response());
+        coyReq.setInputBuffer(inputBuffer);
+
+        Request request = new Request(new Connector());
+        request.setCoyoteRequest(coyReq);
+        return request;
     }
 }
