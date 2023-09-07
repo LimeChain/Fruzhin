@@ -8,6 +8,8 @@ import com.limechain.network.protocol.grandpa.messages.commit.CommitMessage;
 import com.limechain.network.protocol.grandpa.messages.commit.CommitMessageScaleReader;
 import com.limechain.network.protocol.grandpa.messages.neighbour.NeighbourMessage;
 import com.limechain.network.protocol.grandpa.messages.neighbour.NeighbourMessageScaleReader;
+import com.limechain.network.protocol.grandpa.messages.vote.VoteMessage;
+import com.limechain.network.protocol.grandpa.messages.vote.VoteMessageScaleReader;
 import com.limechain.sync.warpsync.SyncedState;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.libp2p.core.PeerId;
@@ -190,17 +192,24 @@ class GrandpaEngineTest {
             verify(syncedState).syncNeighbourMessage(neighbourMessage, peerId);
         }
     }
+
     @Test
-    void receiveVoteMessageOnResponderStreamShouldLogAndIgnore() {
-        byte[] message = new byte[] { 0, 2, 3 };
+    void receiveVoteMessageOnResponderStreamShouldDecodeLogAndIgnore() {
+        byte[] message = new byte[]{0, 2, 3};
+        VoteMessage voteMessage = mock(VoteMessage.class);
+
         when(stream.isInitiator()).thenReturn(false);
         when(stream.remotePeerId()).thenReturn(peerId);
         when(connectionManager.isGrandpaConnected(peerId)).thenReturn(true);
 
-        grandpaEngine.receiveRequest(message, stream);
+        try (MockedConstruction<ScaleCodecReader> readerMock = mockConstruction(ScaleCodecReader.class,
+                (mock, context) -> when(mock.read(any(VoteMessageScaleReader.class))).thenReturn(voteMessage))
+        ) {
+            grandpaEngine.receiveRequest(message, stream);
 
-        verifyNoMoreInteractions(connectionManager);
-        verifyNoInteractions(syncedState);
+            verifyNoMoreInteractions(connectionManager);
+            verifyNoInteractions(syncedState);
+        }
     }
 
     @Test
