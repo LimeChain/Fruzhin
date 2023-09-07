@@ -66,6 +66,7 @@ public class BlockAnnounceEngine {
         ScaleCodecReader reader = new ScaleCodecReader(msg);
         BlockAnnounceMessage announce = reader.read(new BlockAnnounceMessageScaleReader());
         connectionManager.updatePeer(peerId, announce);
+        syncedState.syncBlockAnnounce(announce);
         log.log(Level.FINE, "Received block announce for block #" + announce.getHeader().getBlockNumber() +
                 " from " + peerId +
                 " with hash:0x" + HexUtils.toHexString(announce.getHeader().getHash()) +

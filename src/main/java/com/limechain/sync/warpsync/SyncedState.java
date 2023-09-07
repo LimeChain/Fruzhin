@@ -5,12 +5,15 @@ import com.limechain.constants.GenesisBlockHash;
 import com.limechain.network.Network;
 import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshake;
+import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceMessage;
 import com.limechain.network.protocol.grandpa.messages.commit.CommitMessage;
 import com.limechain.network.protocol.grandpa.messages.neighbour.NeighbourMessage;
+import com.limechain.network.protocol.lightclient.pb.LightClientMessage;
 import com.limechain.network.protocol.sync.pb.SyncMessage.BlockResponse;
 import com.limechain.network.protocol.sync.pb.SyncMessage.BlockData;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.network.protocol.warp.dto.ConsensusEngine;
+import com.limechain.network.protocol.warp.dto.DigestType;
 import com.limechain.network.protocol.warp.dto.HeaderDigest;
 import com.limechain.network.protocol.warp.dto.Justification;
 import com.limechain.network.protocol.warp.scale.BlockHeaderReader;
@@ -24,6 +27,10 @@ import com.limechain.sync.warpsync.dto.AuthoritySetChange;
 import com.limechain.sync.warpsync.dto.GrandpaDigestMessageType;
 import com.limechain.sync.warpsync.scale.ForcedChangeReader;
 import com.limechain.sync.warpsync.scale.ScheduledChangeReader;
+import com.limechain.trie.TrieVerifier;
+import com.limechain.trie.decoder.TrieDecoderException;
+import com.limechain.utils.LittleEndianUtils;
+import com.limechain.utils.StringUtils;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import com.limechain.sync.warpsync.dto.StateDto;
 import com.limechain.trie.Trie;
@@ -36,10 +43,12 @@ import org.javatuples.Pair;
 
 import java.math.BigInteger;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.PriorityQueue;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.logging.Level;
 
 /**
@@ -56,6 +65,8 @@ public class SyncedState {
     }
 
     public static final int NEIGHBOUR_MESSAGE_VERSION = 1;
+    private static final byte[] CODE_KEY =
+            LittleEndianUtils.convertBytes(StringUtils.hexToBytes(StringUtils.toHex(":code")));
 
     private boolean warpSyncFragmentsFinished;
     private boolean warpSyncFinished;
@@ -79,6 +90,8 @@ public class SyncedState {
 
     private final PriorityQueue<Pair<BigInteger, Authority[]>> scheduledAuthorityChanges =
             new PriorityQueue<>(Comparator.comparing(Pair::getValue0));
+
+    private final Set<BigInteger> scheduledRuntimeUpdates = new HashSet<>();
 
     /**
      * Creates a Block Announce handshake based on the latest finalized Host state
@@ -123,6 +136,16 @@ public class SyncedState {
         );
     }
 
+    public synchronized void syncBlockAnnounce(BlockAnnounceMessage blockAnnounceMessage) {
+        BigInteger blockNumber = blockAnnounceMessage.getHeader().getBlockNumber();
+        boolean hasRuntimeUpdate = Arrays.stream(blockAnnounceMessage.getHeader().getDigest())
+                .anyMatch(d -> d.getType() == DigestType.RUN_ENV_UPDATED);
+
+        if (!scheduledRuntimeUpdates.contains(blockNumber) && hasRuntimeUpdate) {
+            scheduledRuntimeUpdates.add(blockAnnounceMessage.getHeader().getBlockNumber());
+        }
+    }
+
     /**
      * Updates the Host's state with information from a commit message.
      * Synchronized to avoid race condition between checking and updating latest block
@@ -162,7 +185,53 @@ public class SyncedState {
         lastFinalizedBlockHash = commitMessage.getVote().getBlockHash();
         lastFinalizedBlockNumber = commitMessage.getVote().getBlockNumber();
         log.log(Level.INFO, "Reached block #" + lastFinalizedBlockNumber);
+        if (warpSyncFinished && scheduledRuntimeUpdates.contains(lastFinalizedBlockNumber)) {
+            new Thread(this::updateRuntime).start();
+        }
         persistState();
+    }
+
+    public void updateRuntime() {
+        LightClientMessage.Response response = network.makeRemoteReadRequest(
+                lastFinalizedBlockNumber.toString(),
+                new String[]{StringUtils.toHex(":code")});
+
+        byte[] proof = response.getRemoteReadResponse().getProof().toByteArray();
+        byte[][] decodedProofs = decodeProof(proof);
+
+        saveProofState(decodedProofs);
+
+        setCodeAndHeapPages(decodedProofs, stateRoot);
+        scheduledRuntimeUpdates.remove(lastFinalizedBlockNumber);
+    }
+
+    private byte[][] decodeProof(byte[] proof) {
+        ScaleCodecReader reader = new ScaleCodecReader(proof);
+        int size = reader.readCompactInt();
+        byte[][] decodedProofs = new byte[size][];
+
+        for (int i = 0; i < size; ++i) {
+            decodedProofs[i] = reader.readByteArray();
+        }
+        return decodedProofs;
+    }
+
+    public void setCodeAndHeapPages(byte[][] decodedProofs, Hash256 stateRoot) throws RuntimeException {
+        Trie trie;
+        try {
+            trie = TrieVerifier.buildTrie(decodedProofs, stateRoot.getBytes());
+            SyncedState.getInstance().setTrie(trie);
+            var code = trie.get(CODE_KEY);
+            if (code == null) {
+                throw new RuntimeException("Couldn't retrieve runtime code from trie");
+            }
+            //TODO Heap pages should be fetched from out storage
+            setRuntimeCode(code);
+            log.log(Level.INFO, "Runtime and heap pages downloaded");
+
+        } catch (TrieDecoderException e) {
+            throw new RuntimeException("Couldn't build trie from proofs list: " + e.getMessage());
+        }
     }
 
     /**
