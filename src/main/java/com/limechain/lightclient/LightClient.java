@@ -65,6 +65,10 @@ public class LightClient {
         this.network.stop();
         this.rpcApp.stop();
         log.log(Level.INFO, "\uD83D\uDED1Stopped light client!");
+        doExit();
+    }
+
+    protected void doExit() {
         System.exit(0);
     }
 }
