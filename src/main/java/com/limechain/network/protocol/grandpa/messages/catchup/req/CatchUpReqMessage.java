@@ -1,4 +1,4 @@
-package com.limechain.network.protocol.grandpa.messages.catchupreq;
+package com.limechain.network.protocol.grandpa.messages.catchup.req;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

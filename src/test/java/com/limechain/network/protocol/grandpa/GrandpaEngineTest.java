@@ -4,8 +4,10 @@ import com.limechain.network.ConnectionManager;
 import com.limechain.network.dto.PeerInfo;
 import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshake;
-import com.limechain.network.protocol.grandpa.messages.catchupreq.CatchUpReqMessage;
-import com.limechain.network.protocol.grandpa.messages.catchupreq.CatchUpReqMessageScaleReader;
+import com.limechain.network.protocol.grandpa.messages.catchup.req.CatchUpReqMessage;
+import com.limechain.network.protocol.grandpa.messages.catchup.req.CatchUpReqMessageScaleReader;
+import com.limechain.network.protocol.grandpa.messages.catchup.res.CatchUpMessage;
+import com.limechain.network.protocol.grandpa.messages.catchup.res.CatchUpMessageScaleReader;
 import com.limechain.network.protocol.grandpa.messages.commit.CommitMessage;
 import com.limechain.network.protocol.grandpa.messages.commit.CommitMessageScaleReader;
 import com.limechain.network.protocol.grandpa.messages.neighbour.NeighbourMessage;
@@ -223,8 +225,6 @@ class GrandpaEngineTest {
         when(stream.remotePeerId()).thenReturn(peerId);
         when(connectionManager.isGrandpaConnected(peerId)).thenReturn(true);
 
-        grandpaEngine.receiveRequest(message, stream);
-
         try (MockedConstruction<ScaleCodecReader> readerMock = mockConstruction(ScaleCodecReader.class, (mock, context)
                 -> when(mock.read(any(CatchUpReqMessageScaleReader.class))).thenReturn(catchUpReqMessage))
         ) {
@@ -238,14 +238,20 @@ class GrandpaEngineTest {
     @Test
     void receiveCatchUpResponseMessageOnResponderStreamShouldLogAndIgnore() {
         byte[] message = new byte[] { 4, 2, 3 };
+        CatchUpMessage catchUpMessage = mock(CatchUpMessage.class);
+
         when(stream.isInitiator()).thenReturn(false);
         when(stream.remotePeerId()).thenReturn(peerId);
         when(connectionManager.isGrandpaConnected(peerId)).thenReturn(true);
 
-        grandpaEngine.receiveRequest(message, stream);
+        try (MockedConstruction<ScaleCodecReader> readerMock = mockConstruction(ScaleCodecReader.class, (mock, context)
+                -> when(mock.read(any(CatchUpMessageScaleReader.class))).thenReturn(catchUpMessage))
+        ) {
+            grandpaEngine.receiveRequest(message, stream);
 
-        verifyNoMoreInteractions(connectionManager);
-        verifyNoInteractions(syncedState);
+            verifyNoMoreInteractions(connectionManager);
+            verifyNoInteractions(syncedState);
+        }
     }
 
     // WRITE

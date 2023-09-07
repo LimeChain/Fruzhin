@@ -2,8 +2,10 @@ package com.limechain.network.protocol.grandpa;
 
 import com.limechain.network.ConnectionManager;
 import com.limechain.network.protocol.grandpa.messages.GrandpaMessageType;
-import com.limechain.network.protocol.grandpa.messages.catchupreq.CatchUpReqMessage;
-import com.limechain.network.protocol.grandpa.messages.catchupreq.CatchUpReqMessageScaleReader;
+import com.limechain.network.protocol.grandpa.messages.catchup.req.CatchUpReqMessage;
+import com.limechain.network.protocol.grandpa.messages.catchup.req.CatchUpReqMessageScaleReader;
+import com.limechain.network.protocol.grandpa.messages.catchup.res.CatchUpMessage;
+import com.limechain.network.protocol.grandpa.messages.catchup.res.CatchUpMessageScaleReader;
 import com.limechain.network.protocol.grandpa.messages.commit.CommitMessage;
 import com.limechain.network.protocol.grandpa.messages.commit.CommitMessageScaleReader;
 import com.limechain.network.protocol.grandpa.messages.neighbour.NeighbourMessage;
@@ -91,7 +93,7 @@ public class GrandpaEngine {
             case COMMIT -> handleCommitMessage(message, peerId);
             case NEIGHBOUR -> handleNeighbourMessage(message, peerId);
             case CATCH_UP_REQUEST -> handleCatchupRequestMessage(message, peerId);
-            case CATCH_UP_RESPONSE -> log.log(Level.INFO, "Catch up response received from Peer " + peerId);
+            case CATCH_UP_RESPONSE -> handleCatchupMessage(message, peerId);
         }
     }
 
@@ -136,10 +138,16 @@ public class GrandpaEngine {
 
     private void handleCatchupRequestMessage(byte[] message, PeerId peerId) {
         ScaleCodecReader reader = new ScaleCodecReader(message);
-        CatchUpReqMessage catchUpReqMessage = reader.read(new CatchUpReqMessageScaleReader());;
-        //todo: handle commit message?
+        CatchUpReqMessage catchUpReqMessage = reader.read(new CatchUpReqMessageScaleReader());
+        //todo: handle catchup req message?
         log.log(Level.INFO, "Received catch up request message from Peer " + peerId + "\n" + catchUpReqMessage);
+    }
 
+    private void handleCatchupMessage(byte[] message, PeerId peerId) {
+        ScaleCodecReader reader = new ScaleCodecReader(message);
+        CatchUpMessage catchUpMessage = reader.read(new CatchUpMessageScaleReader());
+        //todo: handle catchup res message?
+        log.log(Level.INFO, "Received catch up message from Peer " + peerId + "\n" + catchUpMessage);
     }
 
     /**
@@ -149,7 +157,7 @@ public class GrandpaEngine {
      * @param peerId peer to send to
      */
     public void writeHandshakeToStream(Stream stream, PeerId peerId) {
-        byte[] handshake = new byte[] {
+        byte[] handshake = new byte[]{
                 (byte) syncedState.getHandshake().getNodeRole()
         };
 

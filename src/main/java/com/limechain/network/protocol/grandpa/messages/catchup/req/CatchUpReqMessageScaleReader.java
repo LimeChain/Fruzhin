@@ -1,4 +1,4 @@
-package com.limechain.network.protocol.grandpa.messages.catchupreq;
+package com.limechain.network.protocol.grandpa.messages.catchup.req;
 
 import com.limechain.network.protocol.grandpa.messages.GrandpaMessageType;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
