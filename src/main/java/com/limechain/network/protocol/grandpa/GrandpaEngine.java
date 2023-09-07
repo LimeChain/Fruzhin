@@ -7,6 +7,8 @@ import com.limechain.network.protocol.grandpa.messages.commit.CommitMessageScale
 import com.limechain.network.protocol.grandpa.messages.neighbour.NeighbourMessage;
 import com.limechain.network.protocol.grandpa.messages.neighbour.NeighbourMessageScaleReader;
 import com.limechain.network.protocol.grandpa.messages.neighbour.NeighbourMessageScaleWriter;
+import com.limechain.network.protocol.grandpa.messages.vote.VoteMessage;
+import com.limechain.network.protocol.grandpa.messages.vote.VoteMessageScaleReader;
 import com.limechain.sync.warpsync.SyncedState;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
@@ -83,7 +85,7 @@ public class GrandpaEngine {
 
         switch (messageType) {
             case HANDSHAKE -> handleHandshake(message, peerId, stream);
-            case VOTE -> log.log(Level.INFO, "Vote message received from Peer " + peerId);
+            case VOTE -> handleVoteMessage(message, peerId);
             case COMMIT -> handleCommitMessage(message, peerId);
             case NEIGHBOUR -> handleNeighbourMessage(message, peerId);
             case CATCH_UP_REQUEST -> log.log(Level.INFO, "Catch up request received from Peer " + peerId);
@@ -115,6 +117,13 @@ public class GrandpaEngine {
         NeighbourMessage neighbourMessage = reader.read(new NeighbourMessageScaleReader());
         log.log(Level.INFO, "Received neighbour message from Peer " + peerId + "\n" + neighbourMessage);
         new Thread(() -> syncedState.syncNeighbourMessage(neighbourMessage, peerId)).start();
+    }
+
+    private void handleVoteMessage(byte[] message, PeerId peerId) {
+        ScaleCodecReader reader = new ScaleCodecReader(message);
+        VoteMessage voteMessage = reader.read(new VoteMessageScaleReader());
+        //todo: use the vote message?
+        log.log(Level.INFO, "Received vote message from Peer " + peerId + "\n" + voteMessage);
     }
 
     private void handleCommitMessage(byte[] message, PeerId peerId) {
