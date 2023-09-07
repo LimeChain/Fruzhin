@@ -1,4 +1,4 @@
-package com.limechain.network.protocol.grandpa.messages.vote;
+package com.limechain.network.protocol.grandpa.messages.catchupreq;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -9,8 +9,7 @@ import java.math.BigInteger;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class VoteMessage {
+public class CatchUpReqMessage {
     private BigInteger round;
     private BigInteger setId;
-    private SignedMessage message;
 }

@@ -4,6 +4,8 @@ import com.limechain.network.ConnectionManager;
 import com.limechain.network.dto.PeerInfo;
 import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshake;
+import com.limechain.network.protocol.grandpa.messages.catchupreq.CatchUpReqMessage;
+import com.limechain.network.protocol.grandpa.messages.catchupreq.CatchUpReqMessageScaleReader;
 import com.limechain.network.protocol.grandpa.messages.commit.CommitMessage;
 import com.limechain.network.protocol.grandpa.messages.commit.CommitMessageScaleReader;
 import com.limechain.network.protocol.grandpa.messages.neighbour.NeighbourMessage;
@@ -215,14 +217,22 @@ class GrandpaEngineTest {
     @Test
     void receiveCatchUpRequestMessageOnResponderStreamShouldLogAndIgnore() {
         byte[] message = new byte[] { 3, 2, 3 };
+        CatchUpReqMessage catchUpReqMessage = mock(CatchUpReqMessage.class);
+
         when(stream.isInitiator()).thenReturn(false);
         when(stream.remotePeerId()).thenReturn(peerId);
         when(connectionManager.isGrandpaConnected(peerId)).thenReturn(true);
 
         grandpaEngine.receiveRequest(message, stream);
 
-        verifyNoMoreInteractions(connectionManager);
-        verifyNoInteractions(syncedState);
+        try (MockedConstruction<ScaleCodecReader> readerMock = mockConstruction(ScaleCodecReader.class, (mock, context)
+                -> when(mock.read(any(CatchUpReqMessageScaleReader.class))).thenReturn(catchUpReqMessage))
+        ) {
+            grandpaEngine.receiveRequest(message, stream);
+
+            verifyNoMoreInteractions(connectionManager);
+            verifyNoInteractions(syncedState);
+        }
     }
 
     @Test

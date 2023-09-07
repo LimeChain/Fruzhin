@@ -2,6 +2,8 @@ package com.limechain.network.protocol.grandpa;
 
 import com.limechain.network.ConnectionManager;
 import com.limechain.network.protocol.grandpa.messages.GrandpaMessageType;
+import com.limechain.network.protocol.grandpa.messages.catchupreq.CatchUpReqMessage;
+import com.limechain.network.protocol.grandpa.messages.catchupreq.CatchUpReqMessageScaleReader;
 import com.limechain.network.protocol.grandpa.messages.commit.CommitMessage;
 import com.limechain.network.protocol.grandpa.messages.commit.CommitMessageScaleReader;
 import com.limechain.network.protocol.grandpa.messages.neighbour.NeighbourMessage;
@@ -88,7 +90,7 @@ public class GrandpaEngine {
             case VOTE -> handleVoteMessage(message, peerId);
             case COMMIT -> handleCommitMessage(message, peerId);
             case NEIGHBOUR -> handleNeighbourMessage(message, peerId);
-            case CATCH_UP_REQUEST -> log.log(Level.INFO, "Catch up request received from Peer " + peerId);
+            case CATCH_UP_REQUEST -> handleCatchupRequestMessage(message, peerId);
             case CATCH_UP_RESPONSE -> log.log(Level.INFO, "Catch up response received from Peer " + peerId);
         }
     }
@@ -122,7 +124,7 @@ public class GrandpaEngine {
     private void handleVoteMessage(byte[] message, PeerId peerId) {
         ScaleCodecReader reader = new ScaleCodecReader(message);
         VoteMessage voteMessage = reader.read(new VoteMessageScaleReader());
-        //todo: use the vote message?
+        //todo: handle vote message?
         log.log(Level.INFO, "Received vote message from Peer " + peerId + "\n" + voteMessage);
     }
 
@@ -130,6 +132,14 @@ public class GrandpaEngine {
         ScaleCodecReader reader = new ScaleCodecReader(message);
         CommitMessage commitMessage = reader.read(new CommitMessageScaleReader());
         syncedState.syncCommit(commitMessage, peerId);
+    }
+
+    private void handleCatchupRequestMessage(byte[] message, PeerId peerId) {
+        ScaleCodecReader reader = new ScaleCodecReader(message);
+        CatchUpReqMessage catchUpReqMessage = reader.read(new CatchUpReqMessageScaleReader());;
+        //todo: handle commit message?
+        log.log(Level.INFO, "Received catch up request message from Peer " + peerId + "\n" + catchUpReqMessage);
+
     }
 
     /**

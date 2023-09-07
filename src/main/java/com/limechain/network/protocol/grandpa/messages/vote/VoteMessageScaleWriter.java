@@ -11,7 +11,7 @@ public class VoteMessageScaleWriter implements ScaleWriter<VoteMessage> {
     @Override
     public void write(ScaleCodecWriter writer, VoteMessage voteMessage) throws IOException {
         writer.writeByte(GrandpaMessageType.VOTE.getType());
-        new UInt64Writer().write(writer, voteMessage.getRoundNumber());
+        new UInt64Writer().write(writer, voteMessage.getRound());
         new UInt64Writer().write(writer, voteMessage.getSetId());
         new SignedMessageScaleWriter().write(writer, voteMessage.getMessage());
     }

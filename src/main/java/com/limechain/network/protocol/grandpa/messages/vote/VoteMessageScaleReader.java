@@ -15,7 +15,7 @@ public class VoteMessageScaleReader implements ScaleReader<VoteMessage> {
         }
 
         VoteMessage voteMessage = new VoteMessage();
-        voteMessage.setRoundNumber(new UInt64Reader().read(reader));
+        voteMessage.setRound(new UInt64Reader().read(reader));
         voteMessage.setSetId(new UInt64Reader().read(reader));
         voteMessage.setMessage(new SignedMessageScaleReader().read(reader));
 
