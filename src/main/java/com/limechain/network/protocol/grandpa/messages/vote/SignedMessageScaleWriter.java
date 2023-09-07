@@ -11,7 +11,7 @@ public class SignedMessageScaleWriter implements ScaleWriter<SignedMessage> {
     public void write(ScaleCodecWriter writer, SignedMessage signedMessage) throws IOException {
         writer.writeByte(signedMessage.getStage().getStage());
         writer.writeUint256(signedMessage.getBlockHash().getBytes());
-        new UInt64Writer().write(writer, signedMessage.getBlockNumber());
+        writer.writeUint32(signedMessage.getBlockNumber().longValue());
         writer.writeByteArray(signedMessage.getSignature().getBytes());
         writer.writeUint256(signedMessage.getAuthorityPublicKey().getBytes());
     }
