@@ -16,14 +16,15 @@ import java.util.logging.Level;
 
 @Log
 public class RuntimeDownloadState implements WarpSyncState {
-    private final SyncedState syncedState = SyncedState.getInstance();
-    private Exception error;
     private static byte[] codeKey =
             LittleEndianUtils.convertBytes(StringUtils.hexToBytes(StringUtils.toHex(":code")));
+    private final SyncedState syncedState = SyncedState.getInstance();
+    private Exception error;
 
     @Override
     public void next(WarpSyncMachine sync) {
         if (this.error != null) {
+            log.log(Level.SEVERE, "Error occurred during runtime download state: " + this.error.getMessage());
             sync.setWarpSyncState(new RequestFragmentsState(syncedState.getLastFinalizedBlockHash()));
             return;
         }
@@ -35,7 +36,7 @@ public class RuntimeDownloadState implements WarpSyncState {
     public void handle(WarpSyncMachine sync) {
         byte[][] merkleProof = syncedState.loadProof();
         Hash256 stateRoot = syncedState.loadStateRoot();
-        if(merkleProof != null && stateRoot != null){
+        if (merkleProof != null && stateRoot != null) {
             log.log(Level.INFO, "Loading saved runtime...");
             setCodeAndHeapPages(merkleProof, stateRoot);
             return;
@@ -48,7 +49,7 @@ public class RuntimeDownloadState implements WarpSyncState {
 
         byte[] proof = response.getRemoteReadResponse().getProof().toByteArray();
         byte[][] decodedProofs = decodeProof(proof);
-        
+
         syncedState.saveProofState(decodedProofs);
 
         setCodeAndHeapPages(decodedProofs, syncedState.getStateRoot());
