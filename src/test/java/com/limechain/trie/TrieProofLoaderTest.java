@@ -14,10 +14,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class TrieProofLoaderTest {
+class TrieProofLoaderTest {
 
     @Test
-    public void loadLeafNodeTest() {
+    void loadLeafNodeTest() {
         Node node = new Node() {{
             this.setPartialKey(new byte[]{1});
             this.setStorageValue(new byte[]{2});
@@ -32,7 +32,7 @@ public class TrieProofLoaderTest {
     }
 
     @Test
-    public void loadBranchChildWithNoHashTest() {
+    void loadBranchChildWithNoHashTest() {
         Node node = new Node() {{
             this.setPartialKey(new byte[]{1});
             this.setStorageValue(new byte[]{2});
@@ -58,7 +58,7 @@ public class TrieProofLoaderTest {
     }
 
     @Test
-    public void loadBranchNodeWithHashTest() {
+    void loadBranchNodeWithHashTest() {
         Node node = new Node() {{
             this.setPartialKey(new byte[]{1});
             this.setStorageValue(new byte[]{2});
@@ -99,7 +99,7 @@ public class TrieProofLoaderTest {
     }
 
     @Test
-    public void loadBranchOneChildWithHashAndOneWithoutHashTest() {
+    void loadBranchOneChildWithHashAndOneWithoutHashTest() {
         Node node = new Node() {{
             this.setPartialKey(new byte[]{1});
             this.setStorageValue(new byte[]{2});
@@ -143,7 +143,7 @@ public class TrieProofLoaderTest {
     }
 
     @Test
-    public void loadBranchNodeWithBranchChildHash() {
+    void loadBranchNodeWithBranchChildHash() {
         Node node = new Node() {{
             this.setPartialKey(new byte[]{1});
             this.setStorageValue(new byte[]{2});
@@ -198,7 +198,7 @@ public class TrieProofLoaderTest {
     }
 
     @Test
-    public void loadChildExceptionTest() {
+    void loadChildExceptionTest() {
         Exception e = assertThrows(TrieDecoderException.class, () -> {
             Node node = new Node() {{
                 this.setPartialKey(new byte[]{1});
@@ -217,11 +217,11 @@ public class TrieProofLoaderTest {
 
             TrieProofLoader.loadProof(digestToEncoding, node);
         });
-        assertTrue(e.getMessage().contains("Node variant is unknown for header byte 00000001"));
+        assertTrue(e.getMessage().contains("Unknown variant: COMPACT_ENCODING"));
     }
 
     @Test
-    public void loadGrandChild() {
+    void loadGrandChild() {
         Node node = new Node() {{
             this.setPartialKey(new byte[]{1});
             this.setStorageValue(new byte[]{1});
@@ -278,7 +278,7 @@ public class TrieProofLoaderTest {
     }
 
     @Test
-    public void loadGrandChildExceptionTest() {
+    void loadGrandChildExceptionTest() {
         Exception e = assertThrows(TrieDecoderException.class, () -> {
 
             Node node = new Node() {{
@@ -312,6 +312,6 @@ public class TrieProofLoaderTest {
             }};
             TrieProofLoader.loadProof(digestToEncoding, node);
         });
-        assertTrue(e.getMessage().contains("Node variant is unknown for header byte 00000001"));
+        assertTrue(e.getMessage().contains("Unknown variant: COMPACT_ENCODING"));
     }
 }

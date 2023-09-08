@@ -29,10 +29,12 @@ public class TrieEncoder {
     public static void encode(Node node, OutputStream buffer) {
         try {
             encodeHeader(node, buffer);
-//            if (node.getStorageValue() == null) {
-//                // Only encode the header of empty node variant
-//                return;
-//            }
+
+            // Only encode the header of empty node variant
+            if (node == null) {
+                return;
+            }
+
             byte[] keyLE = Nibbles.nibblesToKeyLE(node.getPartialKey());
             buffer.write(keyLE);
 
@@ -78,23 +80,35 @@ public class TrieEncoder {
      * @throws TrieEncoderException If any exception occurs during encoding
      */
     public static void encodeHeader(Node node, OutputStream buffer) {
-        int partialKeyLength = node.getPartialKey().length;
-        if (partialKeyLength > MAX_PARTIAL_KEY_LENGTH) {
-            throw new TrieEncoderException("Partial key length is too big: " + partialKeyLength);
-        }
-
         try {
+            if (node == null) {
+                buffer.write(NodeVariant.EMPTY.bits);
+                return;
+            }
+
+            int partialKeyLength = node.getPartialKey().length;
+            if (partialKeyLength > MAX_PARTIAL_KEY_LENGTH) {
+                throw new TrieEncoderException("Partial key length is too big: " + partialKeyLength);
+            }
+
             NodeVariant nodeVariant;
             if (node.getKind() == NodeKind.Leaf) {
-                nodeVariant = NodeVariant.LEAF;
+                if (node.isValueHashed()) {
+                    nodeVariant = NodeVariant.LEAF_WITH_HASHED_VALUE;
+                } else {
+                    nodeVariant = NodeVariant.LEAF;
+                }
             } else if (node.getStorageValue() == null) {
                 nodeVariant = NodeVariant.BRANCH;
+            } else if (node.isValueHashed()) {
+                nodeVariant = NodeVariant.BRANCH_WITH_HASHED_VALUE;
             } else {
                 nodeVariant = NodeVariant.BRANCH_WITH_VALUE;
             }
 
             int headerByte = nodeVariant.bits;
-            int partialKeyLengthMask = nodeVariant.mask;
+            int partialKeyLengthMask = nodeVariant.getPartialKeyLengthHeaderMask();
+
             if (partialKeyLength < partialKeyLengthMask) {
                 // Partial key length fits in header byte
                 headerByte |= partialKeyLength;
@@ -108,10 +122,7 @@ public class TrieEncoder {
             buffer.write(headerByte);
 
             while (true) {
-                headerByte = 255;
-                if (partialKeyLength < 255) {
-                    headerByte = partialKeyLength;
-                }
+                headerByte = Math.min(partialKeyLength, 255);
 
                 buffer.write(headerByte);
                 partialKeyLength -= headerByte;

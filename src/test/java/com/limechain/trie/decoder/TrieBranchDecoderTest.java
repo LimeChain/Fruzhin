@@ -19,7 +19,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TrieBranchDecoderTest {
 
-
     @Test
     void decodeEmptyBranchExceptionTest() {
         byte[] data = new byte[]{};

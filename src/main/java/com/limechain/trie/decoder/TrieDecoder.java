@@ -6,6 +6,7 @@ import lombok.experimental.UtilityClass;
 
 import static com.limechain.trie.decoder.TrieHeaderDecoder.decodeHeader;
 
+//TODO: Are all SCALE readers wrapped in try-catch???
 @UtilityClass
 public class TrieDecoder {
     /**
