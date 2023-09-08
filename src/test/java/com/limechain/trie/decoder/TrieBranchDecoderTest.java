@@ -61,7 +61,7 @@ class TrieBranchDecoderTest {
         ScaleCodecReader reader = new ScaleCodecReader(data);
         Exception e = assertThrows(TrieDecoderException.class, () ->
                 decode(reader, NodeVariant.BRANCH_WITH_VALUE, 1));
-        assertTrue(e.getMessage().contains("Could not decode child hash"));
+        assertTrue(e.getMessage().contains("Could not decode header"));
     }
 
     @Test

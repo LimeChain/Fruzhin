@@ -21,8 +21,8 @@ public class TrieHeaderDecoder {
      * @throws TrieDecoderException if an error occurs while reading the node type or storage value.
      */
     public static TrieHeaderDecoderResult decodeHeader(ScaleCodecReader reader) {
-        byte currentByte = reader.readByte();
         try {
+            byte currentByte = reader.readByte();
             TrieHeaderDecoderResult header = TrieHeaderDecoder.decodeHeaderByte(currentByte);
             int partialKeyLengthHeader = header.partialKeyLengthHeader();
             int partialKeyLengthHeaderMask = header.nodeVariant().getPartialKeyLengthHeaderMask();
