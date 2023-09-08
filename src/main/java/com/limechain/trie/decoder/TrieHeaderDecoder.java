@@ -21,8 +21,8 @@ public class TrieHeaderDecoder {
      * @throws TrieDecoderException if an error occurs while reading the node type or storage value.
      */
     public static TrieHeaderDecoderResult decodeHeader(ScaleCodecReader reader) {
+        byte currentByte = reader.readByte();
         try {
-            byte currentByte = reader.readByte();
             TrieHeaderDecoderResult header = TrieHeaderDecoder.decodeHeaderByte(currentByte);
             int partialKeyLengthHeader = header.partialKeyLengthHeader();
             int partialKeyLengthHeaderMask = header.nodeVariant().getPartialKeyLengthHeaderMask();
@@ -77,7 +77,7 @@ public class TrieHeaderDecoder {
             byte partialKeyLengthHeader = (byte) (headerByte & nodeVariant.getPartialKeyLengthHeaderMask());
             return new TrieHeaderDecoderResult(nodeVariant, partialKeyLengthHeader);
         }
-        throw new TrieDecoderException("Node variant is unknown for header byte " +
+        throw new TrieDecoderException("Node header is unknown: " +
                 String.format("%08d", Integer.parseInt(Integer.toBinaryString(headerByte))));
     }
 }

@@ -33,12 +33,17 @@ public class TrieLeafDecoder {
                 node.setValueHashed(true);
                 return node;
             } catch (IndexOutOfBoundsException e) {
-                throw new TrieDecoderException("Could not decode storage value: " + e.getMessage());
+                throw new TrieDecoderException("Could not decode hashed storage value: " + e.getMessage());
             }
         }
 
         // Normal leaf node
-        node.setStorageValue(reader.readByteArray());
+        try {
+            byte[] storageValue = reader.readByteArray();
+            node.setStorageValue(storageValue);
+        } catch (IndexOutOfBoundsException | UnsupportedOperationException e) {
+            throw new TrieDecoderException("Could not decode storage value: " + e.getMessage());
+        }
         return node;
     }
 }

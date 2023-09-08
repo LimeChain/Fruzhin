@@ -46,7 +46,7 @@ public class TrieBranchDecoder {
                     node.setStorageValue(hashedValue);
                     node.setValueHashed(true);
                 } catch (IndexOutOfBoundsException e) {
-                    throw new TrieDecoderException("Could not decode storage value: " + e.getMessage());
+                    throw new TrieDecoderException("Could not decode hashed storage value: " + e.getMessage());
                 }
             }
             default -> {
@@ -72,7 +72,7 @@ public class TrieBranchDecoder {
                 }
                 node.setDescendants(node.getDescendants() + 1);
                 node.setChildrenAt(child, i);
-            } catch (IndexOutOfBoundsException e) {
+            } catch (IndexOutOfBoundsException | UnsupportedOperationException e) {
                 throw new TrieDecoderException("Could not decode child hash: " + e.getMessage());
             }
 

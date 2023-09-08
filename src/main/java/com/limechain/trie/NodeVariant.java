@@ -11,9 +11,7 @@ public enum NodeVariant {
     LEAF_WITH_HASHED_VALUE(0b0010_0000, 0b1110_0000),
     BRANCH_WITH_HASHED_VALUE(0b0001_0000, 0b1111_0000),
     EMPTY(0b0000_0000, 0b1111_1111),
-    COMPACT_ENCODING(0b0000_0001, 0b1111_1111),
-    INVALID(0b0000_0000, 0b0000_0000);
-
+    COMPACT_ENCODING(0b0000_0001, 0b1111_1111);
     public final int bits;
     public final int mask;
 
@@ -23,6 +21,6 @@ public enum NodeVariant {
     }
 
     public int getPartialKeyLengthHeaderMask() {
-        return ~this.mask;
+        return this.mask ^ 0xFF;
     }
 }
