@@ -1,6 +1,7 @@
 package com.limechain.trie;
 
 import com.limechain.trie.encoder.TrieEncoder;
+import com.limechain.trie.encoder.TrieEncoderException;
 import com.limechain.utils.HashUtils;
 import lombok.Getter;
 import lombok.Setter;
@@ -16,6 +17,7 @@ public class Node {
     public static final int CHILDREN_CAPACITY = 16;
     private byte[] partialKey = new byte[]{};
     private byte[] storageValue;
+    private boolean isValueHashed;
     private int generation;
     private Node[] children;
     private boolean dirty;
@@ -139,12 +141,12 @@ public class Node {
         try {
             TrieEncoder.encode(this, out);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new TrieEncoderException("Could not encode node: " + e.getMessage());
         }
 
         byte[] encoding = out.toByteArray();
-        byte[] merkleValue = writeMerkleValue(encoding);
-        return new Pair<>(encoding, merkleValue);
+        byte[] writtenMerkleValue = writeMerkleValue(encoding);
+        return new Pair<>(encoding, writtenMerkleValue);
     }
 
     /**

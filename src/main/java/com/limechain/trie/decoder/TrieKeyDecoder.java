@@ -2,9 +2,12 @@ package com.limechain.trie.decoder;
 
 import com.limechain.trie.Nibbles;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
+import lombok.experimental.UtilityClass;
 
 import java.util.Arrays;
 
+// TODO: Move TrieKeyDecoder, TrieLeafDecoder, TrieBranchDecoder to a single file
+@UtilityClass
 public class TrieKeyDecoder {
     /**
      * Decodes encoded key data for a given partial key length from a ScaleCodecReader input stream

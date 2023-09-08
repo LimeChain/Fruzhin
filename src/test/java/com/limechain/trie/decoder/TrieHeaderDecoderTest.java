@@ -43,6 +43,6 @@ public class TrieHeaderDecoderTest {
         ScaleCodecReader reader = new ScaleCodecReader(data);
         TrieHeaderDecoderResult headerResult = TrieHeaderDecoder.decodeHeaderByte(reader.readByte());
 
-        assertEquals(expectedPartialKeyLength, headerResult.getPartialKeyLengthHeader());
+        assertEquals(expectedPartialKeyLength, headerResult.partialKeyLengthHeader());
     }
 }

@@ -5,6 +5,8 @@ import com.limechain.trie.Node;
 import com.limechain.trie.NodeKind;
 import com.limechain.trie.NodeVariant;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
+import io.emeraldpay.polkaj.types.Hash256;
+import lombok.experimental.UtilityClass;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -14,6 +16,7 @@ import static com.limechain.trie.TrieVerifier.MAX_PARTIAL_KEY_LENGTH;
 /**
  * Encodes a {@link Node} to a {@link OutputStream} buffer.
  */
+@UtilityClass
 public class TrieEncoder {
 
     /**
@@ -26,7 +29,10 @@ public class TrieEncoder {
     public static void encode(Node node, OutputStream buffer) {
         try {
             encodeHeader(node, buffer);
-
+//            if (node.getStorageValue() == null) {
+//                // Only encode the header of empty node variant
+//                return;
+//            }
             byte[] keyLE = Nibbles.nibblesToKeyLE(node.getPartialKey());
             buffer.write(keyLE);
 
@@ -42,10 +48,17 @@ public class TrieEncoder {
             // even if it is empty. Do not encode if the branch is without value.
             // Note leaves and branches with value cannot have a `null` storage value.
             if (node.getStorageValue() != null) {
-                try (ScaleCodecWriter writer = new ScaleCodecWriter(buffer)) {
-                    writer.writeAsList(node.getStorageValue());
-                } catch (IOException e) {
-                    throw new TrieEncoderException(e.getMessage());
+                if (node.isValueHashed()) {
+                    if (node.getStorageValue().length != Hash256.SIZE_BYTES) {
+                        throw new TrieEncoderException("Hashed value must be 32 bytes");
+                    }
+                    buffer.write(node.getStorageValue());
+                } else {
+                    try (ScaleCodecWriter writer = new ScaleCodecWriter(buffer)) {
+                        writer.writeAsList(node.getStorageValue());
+                    } catch (IOException e) {
+                        throw new TrieEncoderException(e.getMessage());
+                    }
                 }
             }
 

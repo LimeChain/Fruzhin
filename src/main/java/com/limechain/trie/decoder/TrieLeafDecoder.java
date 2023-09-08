@@ -1,29 +1,44 @@
 package com.limechain.trie.decoder;
 
 import com.limechain.trie.Node;
+import com.limechain.trie.NodeVariant;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
+import io.emeraldpay.polkaj.types.Hash256;
+import lombok.experimental.UtilityClass;
 
+/**
+ * This class is used to decode leaf nodes from a ScaleCodecReader input stream.
+ */
+@UtilityClass
 public class TrieLeafDecoder {
     /**
-     * Decodes a leaf node from a ScaleCodecReader input stream.
+     * Decodes a leaf or hashed leaf node from a ScaleCodecReader input stream.
      *
-     * @param reader the ScaleCodecReader to read the encoded node data from
+     * @param reader           the ScaleCodecReader to read the encoded node data from
+     * @param variant          the variant of the node to be decoded
      * @param partialKeyLength the length of the partial key to be read
      * @return the decoded Node object
      * @throws TrieDecoderException if an error occurs while decoding the node. This could be
-     * due to an issue reading the children bitmap or the storage value.
+     *                              due to an issue reading the children bitmap or the storage value.
      */
-    public static Node decode(ScaleCodecReader reader, int partialKeyLength) {
+    public static Node decode(ScaleCodecReader reader, NodeVariant variant, int partialKeyLength) {
         Node node = new Node();
         node.setPartialKey(TrieKeyDecoder.decodeKey(reader, partialKeyLength));
 
-        // Decode storage:
-        // https://spec.polkadot.network/sect-metadata#defn-rtm-storage-entry-type
-        try {
-            node.setStorageValue(reader.readByteArray());
-        } catch (IndexOutOfBoundsException | UnsupportedOperationException e) {
-            throw new TrieDecoderException("Could not decode storage value: " + e.getMessage());
+        // Hashed leaf node
+        if (variant == NodeVariant.LEAF_WITH_HASHED_VALUE) {
+            try {
+                byte[] hashedValue = reader.readByteArray(Hash256.SIZE_BYTES);
+                node.setStorageValue(hashedValue);
+                node.setValueHashed(true);
+                return node;
+            } catch (IndexOutOfBoundsException e) {
+                throw new TrieDecoderException("Could not decode storage value: " + e.getMessage());
+            }
         }
+
+        // Normal leaf node
+        node.setStorageValue(reader.readByteArray());
         return node;
     }
 }
