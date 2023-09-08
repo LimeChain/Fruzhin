@@ -67,8 +67,9 @@ public class SyncedState {
     }
 
     public static final int NEIGHBOUR_MESSAGE_VERSION = 1;
-    private static final byte[] CODE_KEY =
-            LittleEndianUtils.convertBytes(StringUtils.hexToBytes(StringUtils.toHex(":code")));
+    private static final String CODE_KEY = StringUtils.toHex(":code");
+    private static final byte[] CODE_KEY_BYTES =
+            LittleEndianUtils.convertBytes(StringUtils.hexToBytes(CODE_KEY));
 
     private boolean warpSyncFragmentsFinished;
     private boolean warpSyncFinished;
@@ -218,7 +219,8 @@ public class SyncedState {
     public void updateRuntimeCode() throws RuntimeCodeException {
         LightClientMessage.Response response = network.makeRemoteReadRequest(
                 lastFinalizedBlockHash.toString(),
-                new String[]{StringUtils.toHex(":code")});
+                new String[]{ CODE_KEY }
+        );
 
         byte[] proof = response.getRemoteReadResponse().getProof().toByteArray();
         byte[][] decodedProofs = decodeProof(proof);
@@ -275,7 +277,7 @@ public class SyncedState {
         try {
             trie = TrieVerifier.buildTrie(decodedProofs, stateRoot.getBytes());
             SyncedState.getInstance().setTrie(trie);
-            var code = trie.get(CODE_KEY);
+            var code = trie.get(CODE_KEY_BYTES);
             if (code == null) {
                 throw new RuntimeCodeException("Couldn't retrieve runtime code from trie");
             }

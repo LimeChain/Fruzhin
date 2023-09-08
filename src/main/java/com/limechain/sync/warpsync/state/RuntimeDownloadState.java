@@ -9,7 +9,7 @@ import java.util.logging.Level;
 
 @Log
 public class RuntimeDownloadState implements WarpSyncState {
-    private final SyncedState syncedState = SyncedState.getInstance();
+    protected SyncedState syncedState = SyncedState.getInstance();
     private Exception error;
 
     @Override

@@ -11,7 +11,7 @@ import java.util.logging.Level;
  */
 @Log
 public class RuntimeBuildState implements WarpSyncState {
-    private final SyncedState syncedState = SyncedState.getInstance();
+    protected SyncedState syncedState = SyncedState.getInstance();
     @Override
     public void next(WarpSyncMachine sync) {
         log.log(Level.INFO, "Done with runtime build");

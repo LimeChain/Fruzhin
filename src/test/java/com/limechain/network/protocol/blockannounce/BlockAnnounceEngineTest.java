@@ -129,4 +129,22 @@ class BlockAnnounceEngineTest {
             verify(connectionManager).updatePeer(peerId, blockAnnounceMessage);
         }
     }
+
+    @Test
+    void receiveBlockAnnounceWhenConnectedShouldSyncMessage() {
+        byte[] message = new byte[] { 1, 2, 3 };
+        BlockAnnounceMessage blockAnnounceMessage = mock(BlockAnnounceMessage.class);
+        when(blockAnnounceMessage.getHeader()).thenReturn(mock(BlockHeader.class));
+        when(stream.remotePeerId()).thenReturn(peerId);
+        when(connectionManager.isBlockAnnounceConnected(peerId)).thenReturn(true);
+
+        try (MockedConstruction<ScaleCodecReader> readerMock = mockConstruction(ScaleCodecReader.class,
+                (mock, context) -> when(mock.read(any(BlockAnnounceMessageScaleReader.class)))
+                        .thenReturn(blockAnnounceMessage))
+        ) {
+            blockAnnounceEngine.receiveRequest(message, stream);
+
+            verify(syncedState).syncBlockAnnounce(blockAnnounceMessage);
+        }
+    }
 }
