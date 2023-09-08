@@ -20,11 +20,13 @@ import com.limechain.network.protocol.warp.scale.BlockHeaderReader;
 import com.limechain.network.protocol.warp.scale.JustificationReader;
 import com.limechain.rpc.server.AppBean;
 import com.limechain.runtime.Runtime;
+import com.limechain.runtime.RuntimeBuilder;
 import com.limechain.storage.DBConstants;
 import com.limechain.storage.KVRepository;
 import com.limechain.sync.JustificationVerifier;
 import com.limechain.sync.warpsync.dto.AuthoritySetChange;
 import com.limechain.sync.warpsync.dto.GrandpaDigestMessageType;
+import com.limechain.sync.warpsync.dto.RuntimeCodeException;
 import com.limechain.sync.warpsync.scale.ForcedChangeReader;
 import com.limechain.sync.warpsync.scale.ScheduledChangeReader;
 import com.limechain.trie.TrieVerifier;
@@ -91,7 +93,7 @@ public class SyncedState {
     private final PriorityQueue<Pair<BigInteger, Authority[]>> scheduledAuthorityChanges =
             new PriorityQueue<>(Comparator.comparing(Pair::getValue0));
 
-    private final Set<BigInteger> scheduledRuntimeUpdates = new HashSet<>();
+    private final Set<BigInteger> scheduledRuntimeUpdateBlocks = new HashSet<>();
 
     /**
      * Creates a Block Announce handshake based on the latest finalized Host state
@@ -136,19 +138,25 @@ public class SyncedState {
         );
     }
 
-    public synchronized void syncBlockAnnounce(BlockAnnounceMessage blockAnnounceMessage) {
-        BigInteger blockNumber = blockAnnounceMessage.getHeader().getBlockNumber();
+    /**
+     * Update the state with information from a block announce message.
+     * Schedule runtime updates found in header, to be executed when block is verified.
+     *
+     * @param blockAnnounceMessage received block announce message
+     */
+    public void syncBlockAnnounce(BlockAnnounceMessage blockAnnounceMessage) {
         boolean hasRuntimeUpdate = Arrays.stream(blockAnnounceMessage.getHeader().getDigest())
                 .anyMatch(d -> d.getType() == DigestType.RUN_ENV_UPDATED);
 
-        if (!scheduledRuntimeUpdates.contains(blockNumber) && hasRuntimeUpdate) {
-            scheduledRuntimeUpdates.add(blockAnnounceMessage.getHeader().getBlockNumber());
+        if (hasRuntimeUpdate) {
+            scheduledRuntimeUpdateBlocks.add(blockAnnounceMessage.getHeader().getBlockNumber());
         }
     }
 
     /**
      * Updates the Host's state with information from a commit message.
      * Synchronized to avoid race condition between checking and updating latest block
+     * Scheduled runtime updates for synchronized blocks are executed.
      *
      * @param commitMessage received commit message
      * @param peerId sender of the message
@@ -185,15 +193,31 @@ public class SyncedState {
         lastFinalizedBlockHash = commitMessage.getVote().getBlockHash();
         lastFinalizedBlockNumber = commitMessage.getVote().getBlockNumber();
         log.log(Level.INFO, "Reached block #" + lastFinalizedBlockNumber);
-        if (warpSyncFinished && scheduledRuntimeUpdates.contains(lastFinalizedBlockNumber)) {
+        if (warpSyncFinished && scheduledRuntimeUpdateBlocks.contains(lastFinalizedBlockNumber)) {
             new Thread(this::updateRuntime).start();
         }
         persistState();
     }
 
-    public void updateRuntime() {
+    private void updateRuntime() {
+        try {
+            updateRuntimeCode();
+            buildRuntime();
+            scheduledRuntimeUpdateBlocks.remove(lastFinalizedBlockNumber);
+        } catch (RuntimeCodeException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Update the runtime code and heap pages, by requesting the code field of the last finalized block, using the
+     * Light Messages protocol.
+     *
+     * @throws RuntimeCodeException runtime code could not be retrieved
+     */
+    public void updateRuntimeCode() throws RuntimeCodeException {
         LightClientMessage.Response response = network.makeRemoteReadRequest(
-                lastFinalizedBlockNumber.toString(),
+                lastFinalizedBlockHash.toString(),
                 new String[]{StringUtils.toHex(":code")});
 
         byte[] proof = response.getRemoteReadResponse().getProof().toByteArray();
@@ -202,7 +226,6 @@ public class SyncedState {
         saveProofState(decodedProofs);
 
         setCodeAndHeapPages(decodedProofs, stateRoot);
-        scheduledRuntimeUpdates.remove(lastFinalizedBlockNumber);
     }
 
     private byte[][] decodeProof(byte[] proof) {
@@ -216,21 +239,52 @@ public class SyncedState {
         return decodedProofs;
     }
 
-    public void setCodeAndHeapPages(byte[][] decodedProofs, Hash256 stateRoot) throws RuntimeException {
+    private void saveProofState(byte[][] proof) {
+        repository.save(DBConstants.STATE_TRIE_MERKLE_PROOF, proof);
+        repository.save(DBConstants.STATE_TRIE_ROOT_HASH, stateRoot.toString());
+    }
+
+    /**
+     * Build the runtime from the available runtime code.
+     */
+    public void buildRuntime() {
+        try {
+            runtime = RuntimeBuilder.buildRuntime(runtimeCode);
+        } catch (UnsatisfiedLinkError e) {
+            log.log(Level.SEVERE, "Error loading wasm module");
+            log.log(Level.SEVERE, e.getMessage(), e.getStackTrace());
+        }
+    }
+
+    /**
+     * Load a saved runtime from database
+     * @throws RuntimeCodeException no proof or state root available, or unable to build code
+     */
+    public void loadSavedRuntimeCode() throws RuntimeCodeException {
+        byte[][] merkleProof = (byte[][]) repository.find(DBConstants.STATE_TRIE_MERKLE_PROOF)
+                .orElseThrow(() -> new RuntimeCodeException("No available merkle proof"));
+        Hash256 stateRoot = repository.find(DBConstants.STATE_TRIE_ROOT_HASH)
+                .map(storedRootState -> Hash256.from(storedRootState.toString()))
+                .orElseThrow(() -> new RuntimeCodeException("No available state root"));
+
+        setCodeAndHeapPages(merkleProof, stateRoot);
+    }
+
+    private void setCodeAndHeapPages(byte[][] decodedProofs, Hash256 stateRoot) throws RuntimeCodeException {
         Trie trie;
         try {
             trie = TrieVerifier.buildTrie(decodedProofs, stateRoot.getBytes());
             SyncedState.getInstance().setTrie(trie);
             var code = trie.get(CODE_KEY);
             if (code == null) {
-                throw new RuntimeException("Couldn't retrieve runtime code from trie");
+                throw new RuntimeCodeException("Couldn't retrieve runtime code from trie");
             }
             //TODO Heap pages should be fetched from out storage
             setRuntimeCode(code);
             log.log(Level.INFO, "Runtime and heap pages downloaded");
 
         } catch (TrieDecoderException e) {
-            throw new RuntimeException("Couldn't build trie from proofs list: " + e.getMessage());
+            throw new RuntimeCodeException("Couldn't build trie from proofs list: " + e.getMessage());
         }
     }
 
@@ -395,33 +449,5 @@ public class SyncedState {
             return true;
         }
         return false;
-    }
-
-    /**
-     * Saves the merkle proof and root hash of the state trie
-     * @param proof array of proof byte arrays
-     */
-    public void saveProofState(byte[][] proof) {
-        repository.save(DBConstants.STATE_TRIE_MERKLE_PROOF, proof);
-        repository.save(DBConstants.STATE_TRIE_ROOT_HASH, stateRoot.toString());
-    }
-
-    /**
-     * Loads the saved state trie merkle proof
-     * @return array of proof byte arrays
-     */
-
-    public byte[][] loadProof() {
-        return (byte[][]) repository.find(DBConstants.STATE_TRIE_MERKLE_PROOF).orElse(null);
-    }
-
-    /**
-     * Loads the saved state trie root hash
-     * @return root hash
-     */
-
-    public Hash256 loadStateRoot() {
-        Object storedRootState = repository.find(DBConstants.STATE_TRIE_ROOT_HASH).orElse(null);
-        return storedRootState == null ? null : Hash256.from(storedRootState.toString());
     }
 }
