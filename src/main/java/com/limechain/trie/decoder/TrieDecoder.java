@@ -8,6 +8,8 @@ import static com.limechain.trie.decoder.TrieHeaderDecoder.decodeHeader;
 
 /**
  * This class is used to decode nodes and their children from a byte array.
+ * <p>
+ * Inspired by Gossamer’s implementation approach
  */
 @UtilityClass
 public class TrieDecoder {

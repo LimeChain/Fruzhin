@@ -11,6 +11,8 @@ import java.util.Map;
 
 /**
  * This class is used to verify a given key and value belongs to the trie by recreating it
+ * <p>
+ * Inspired by Gossamer’s implementation approach
  */
 @Log
 @UtilityClass

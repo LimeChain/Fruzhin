@@ -9,6 +9,8 @@ import java.util.Map;
 
 /**
  * This class is used to load a state trie from a map containing hashed node digest as keys
+ * <p>
+ * Inspired by Gossamer’s implementation approach
  */
 @UtilityClass
 public class TrieProofLoader {

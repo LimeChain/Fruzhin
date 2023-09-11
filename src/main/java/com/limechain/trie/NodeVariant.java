@@ -3,6 +3,8 @@ package com.limechain.trie;
 /**
  * Enum containing the different node variant bits and masks specified
  * <a href="https://spec.polkadot.network/#defn-node-header">here</a>
+ * <p>
+ * Inspired by Gossamer’s implementation approach
  */
 public enum NodeVariant {
     LEAF(0b0100_0000, 0b1100_0000),

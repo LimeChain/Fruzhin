@@ -15,6 +15,8 @@ import static com.limechain.trie.TrieVerifier.MAX_PARTIAL_KEY_LENGTH;
 
 /**
  * Encodes a {@link Node} to a {@link OutputStream} buffer.
+ * <p>
+ * Inspired by Gossamer’s implementation approach
  */
 @UtilityClass
 public class TrieEncoder {
