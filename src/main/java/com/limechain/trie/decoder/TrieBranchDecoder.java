@@ -4,7 +4,12 @@ import com.limechain.trie.Node;
 import com.limechain.trie.NodeVariant;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.types.Hash256;
+import lombok.experimental.UtilityClass;
 
+/**
+ * This class is used to decode branch nodes and their children from a ScaleCodecReader input stream.
+ */
+@UtilityClass
 public class TrieBranchDecoder {
     public static final int CHILD_BITMAP_SIZE = 2;
 
@@ -12,13 +17,13 @@ public class TrieBranchDecoder {
      * Decodes a branch node and its children recursively from a ScaleCodecReader input stream.
      *
      * @param reader           the ScaleCodecReader to read the encoded node data from
-     * @param variantByte      the variant byte that represents the node variant
+     * @param variant          the variant of the node to be decoded
      * @param partialKeyLength the length of the partial key to be read
      * @return the decoded Node object
      * @throws TrieDecoderException if an error occurs while decoding the node. This could be
      *                              due to an issue reading the children bitmap or the storage value.
      */
-    public static Node decode(ScaleCodecReader reader, byte variantByte, int partialKeyLength) {
+    public static Node decode(ScaleCodecReader reader, NodeVariant variant, int partialKeyLength) {
         Node node = new Node();
         node.setChildren(new Node[Node.CHILDREN_CAPACITY]);
         node.setPartialKey(TrieKeyDecoder.decodeKey(reader, partialKeyLength));
@@ -30,48 +35,52 @@ public class TrieBranchDecoder {
             throw new TrieDecoderException("Could not decode children bitmap: " + error.getMessage());
         }
 
-        int variant = variantByte & 0xff;
-        if (variant == NodeVariant.BRANCH_WITH_VALUE.bits) {
-            try {
-                node.setStorageValue(reader.readByteArray());
-            } catch (IndexOutOfBoundsException e) {
-                throw new TrieDecoderException("Could not decode storage value: " + e.getMessage());
+        switch (variant) {
+            case BRANCH_WITH_VALUE -> {
+                try {
+                    node.setStorageValue(reader.readByteArray());
+                } catch (IndexOutOfBoundsException e) {
+                    throw new TrieDecoderException("Could not decode storage value: " + e.getMessage());
+                }
+            }
+            case BRANCH_WITH_HASHED_VALUE -> {
+                try {
+                    byte[] hashedValue = reader.readByteArray(Hash256.SIZE_BYTES);
+                    node.setStorageValue(hashedValue);
+                    node.setValueHashed(true);
+                } catch (IndexOutOfBoundsException e) {
+                    throw new TrieDecoderException("Could not decode hashed storage value: " + e.getMessage());
+                }
+            }
+            default -> {
+                // Do nothing
             }
         }
 
-        decodeChildren(node, childrenBitmap, reader);
-        return node;
-    }
-
-    /**
-     * Decodes the children of a given Node from a ScaleCodecReader input stream and sets them to the node
-     *
-     * @param node           the Node object whose children are to be decoded
-     * @param childrenBitmap the bitmap representing the presence of children in the node
-     * @param reader         the ScaleCodecReader to read the encoded child node data from
-     * @throws TrieDecoderException if an error occurs while decoding the child node, e.g.
-     *                              due to an issue reading the child's hash value.
-     */
-    private static void decodeChildren(Node node, byte[] childrenBitmap, ScaleCodecReader reader) {
+        // Decode children
         for (int i = 0; i < Node.CHILDREN_CAPACITY; i++) {
             // Skip if the bit is not set
             if (((childrenBitmap[i / 8] >> (i % 8)) & 1) != 1) {
                 continue;
             }
-            byte[] hash;
+
             try {
-                hash = reader.readByteArray();
-            } catch (IndexOutOfBoundsException e) {
+                byte[] hash = reader.readByteArray();
+                Node child = new Node();
+                child.setMerkleValue(hash);
+                if (hash.length < Hash256.SIZE_BYTES) {
+                    child = TrieDecoder.decode(hash);
+                    if (child == null) throw new TrieDecoderException("Could not decode inlined child node");
+                    node.setDescendants(node.getDescendants() + child.getDescendants());
+                }
+                node.setDescendants(node.getDescendants() + 1);
+                node.setChildrenAt(child, i);
+            } catch (IndexOutOfBoundsException | UnsupportedOperationException e) {
                 throw new TrieDecoderException("Could not decode child hash: " + e.getMessage());
             }
-            Node child = new Node();
-            child.setMerkleValue(hash);
-            if (hash.length < Hash256.SIZE_BYTES) {
-                child = TrieDecoder.decode(hash);
-                node.setDescendants(node.getDescendants() + child.getDescendants());
-            }
-            node.setDescendants(node.getDescendants() + 1);
-            node.setChildrenAt(child, i);
+
         }
+
+        return node;
     }
 }

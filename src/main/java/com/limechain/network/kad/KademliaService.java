@@ -82,7 +82,7 @@ public class KademliaService extends NetworkService<Kademlia> {
         });
     }
 
-    private Multihash randomPeerId() {
+    private Multihash randomPeerId(){
         byte[] hash = new byte[32];
         new Random().nextBytes(hash);
         return new Multihash(Multihash.Type.sha2_256, hash);

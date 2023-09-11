@@ -1,7 +1,7 @@
 package com.limechain.trie;
 
 import com.limechain.trie.decoder.TrieDecoder;
-import com.limechain.trie.decoder.TrieDecoderException;
+import lombok.experimental.UtilityClass;
 import lombok.extern.java.Log;
 import org.apache.tomcat.util.buf.HexUtils;
 import org.bouncycastle.util.Arrays;
@@ -9,7 +9,13 @@ import org.bouncycastle.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * This class is used to verify a given key and value belongs to the trie by recreating it
+ * <p>
+ * Inspired by Gossamer’s implementation approach
+ */
 @Log
+@UtilityClass
 public class TrieVerifier {
     public static final int MAX_PARTIAL_KEY_LENGTH = 65535;
 
@@ -24,7 +30,7 @@ public class TrieVerifier {
     public static boolean verify(byte[][] encodedProofNodes, byte[] rootHash, byte[] key, byte[] value) {
         Trie proofTrie = buildTrie(encodedProofNodes, rootHash);
         byte[] proofTrieValue = proofTrie.get(key);
-        if (proofTrieValue == null) {
+        if (java.util.Arrays.equals(proofTrieValue, new byte[0])) {
             throw new IllegalStateException("Key not found in proof trie hash");
         }
         if (value.length > 0 && !Arrays.areEqual(value, proofTrieValue)) {

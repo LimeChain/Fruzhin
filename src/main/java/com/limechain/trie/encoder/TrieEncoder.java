@@ -5,6 +5,8 @@ import com.limechain.trie.Node;
 import com.limechain.trie.NodeKind;
 import com.limechain.trie.NodeVariant;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
+import io.emeraldpay.polkaj.types.Hash256;
+import lombok.experimental.UtilityClass;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -13,7 +15,10 @@ import static com.limechain.trie.TrieVerifier.MAX_PARTIAL_KEY_LENGTH;
 
 /**
  * Encodes a {@link Node} to a {@link OutputStream} buffer.
+ * <p>
+ * Inspired by Gossamer’s implementation approach
  */
+@UtilityClass
 public class TrieEncoder {
 
     /**
@@ -27,31 +32,51 @@ public class TrieEncoder {
         try {
             encodeHeader(node, buffer);
 
+            // Only encode the header of empty node variant
+            if (node == null) {
+                return;
+            }
+
             byte[] keyLE = Nibbles.nibblesToKeyLE(node.getPartialKey());
             buffer.write(keyLE);
 
             if (node.getKind() == NodeKind.Branch) {
-                try (ScaleCodecWriter writer = new ScaleCodecWriter(buffer)) {
-                    writer.writeUint16(node.getChildrenBitmap());
-                } catch (IOException e) {
-                    throw new TrieEncoderException(e.getMessage());
-                }
+                writeChildrenBitmap(node, buffer);
             }
 
             // Only encode node storage value if the node has a storage value,
             // even if it is empty. Do not encode if the branch is without value.
             // Note leaves and branches with value cannot have a `null` storage value.
             if (node.getStorageValue() != null) {
-                try (ScaleCodecWriter writer = new ScaleCodecWriter(buffer)) {
-                    writer.writeAsList(node.getStorageValue());
-                } catch (IOException e) {
-                    throw new TrieEncoderException(e.getMessage());
+                if (node.isValueHashed()) {
+                    if (node.getStorageValue().length != Hash256.SIZE_BYTES) {
+                        throw new TrieEncoderException("Hashed value must be 32 bytes");
+                    }
+                    buffer.write(node.getStorageValue());
+                } else {
+                    writeHashedValue(buffer, node.getStorageValue());
                 }
             }
 
             if (node.getKind() == NodeKind.Branch) {
                 encodeChildren(node.getChildren(), buffer);
             }
+        } catch (IOException e) {
+            throw new TrieEncoderException(e.getMessage());
+        }
+    }
+
+    private void writeHashedValue(OutputStream buffer, byte[] storageValue) {
+        try (ScaleCodecWriter writer = new ScaleCodecWriter(buffer)) {
+            writer.writeAsList(storageValue);
+        } catch (IOException e) {
+            throw new TrieEncoderException(e.getMessage());
+        }
+    }
+
+    private void writeChildrenBitmap(Node node, OutputStream buffer) {
+        try (ScaleCodecWriter writer = new ScaleCodecWriter(buffer)) {
+            writer.writeUint16(node.getChildrenBitmap());
         } catch (IOException e) {
             throw new TrieEncoderException(e.getMessage());
         }
@@ -65,23 +90,35 @@ public class TrieEncoder {
      * @throws TrieEncoderException If any exception occurs during encoding
      */
     public static void encodeHeader(Node node, OutputStream buffer) {
-        int partialKeyLength = node.getPartialKey().length;
-        if (partialKeyLength > MAX_PARTIAL_KEY_LENGTH) {
-            throw new TrieEncoderException("Partial key length is too big: " + partialKeyLength);
-        }
-
         try {
+            if (node == null) {
+                buffer.write(NodeVariant.EMPTY.bits);
+                return;
+            }
+
+            int partialKeyLength = node.getPartialKey().length;
+            if (partialKeyLength > MAX_PARTIAL_KEY_LENGTH) {
+                throw new TrieEncoderException("Partial key length is too big: " + partialKeyLength);
+            }
+
             NodeVariant nodeVariant;
             if (node.getKind() == NodeKind.Leaf) {
-                nodeVariant = NodeVariant.LEAF;
+                if (node.isValueHashed()) {
+                    nodeVariant = NodeVariant.LEAF_WITH_HASHED_VALUE;
+                } else {
+                    nodeVariant = NodeVariant.LEAF;
+                }
             } else if (node.getStorageValue() == null) {
                 nodeVariant = NodeVariant.BRANCH;
+            } else if (node.isValueHashed()) {
+                nodeVariant = NodeVariant.BRANCH_WITH_HASHED_VALUE;
             } else {
                 nodeVariant = NodeVariant.BRANCH_WITH_VALUE;
             }
 
             int headerByte = nodeVariant.bits;
-            int partialKeyLengthMask = nodeVariant.mask;
+            int partialKeyLengthMask = nodeVariant.getPartialKeyLengthHeaderMask();
+
             if (partialKeyLength < partialKeyLengthMask) {
                 // Partial key length fits in header byte
                 headerByte |= partialKeyLength;
@@ -95,10 +132,7 @@ public class TrieEncoder {
             buffer.write(headerByte);
 
             while (true) {
-                headerByte = 255;
-                if (partialKeyLength < 255) {
-                    headerByte = partialKeyLength;
-                }
+                headerByte = Math.min(partialKeyLength, 255);
 
                 buffer.write(headerByte);
                 partialKeyLength -= headerByte;
@@ -139,10 +173,6 @@ public class TrieEncoder {
      */
     public static void encodeChild(Node child, OutputStream buffer) {
         byte[] merkleValue = child.calculateMerkleValue();
-        try (ScaleCodecWriter writer = new ScaleCodecWriter(buffer)) {
-            writer.writeAsList(merkleValue);
-        } catch (IOException e) {
-            throw new TrieEncoderException(e.getMessage());
-        }
+        writeHashedValue(buffer, merkleValue);
     }
 }

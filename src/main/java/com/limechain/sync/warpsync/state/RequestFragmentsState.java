@@ -62,7 +62,7 @@ public class RequestFragmentsState implements WarpSyncState {
             }
             syncedState.setWarpSyncFragmentsFinished(resp.isFinished());
             sync.setFragmentsQueue(new LinkedBlockingQueue<>(
-                    Arrays.stream(resp.getFragments()).collect(java.util.stream.Collectors.toList()))
+                    Arrays.stream(resp.getFragments()).toList())
             );
 
             this.result = resp;
