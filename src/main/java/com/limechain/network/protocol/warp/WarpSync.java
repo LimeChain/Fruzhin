@@ -22,7 +22,7 @@ public class WarpSync extends StrictProtocolBinding<WarpSyncController> {
     public WarpSyncResponse warpSyncRequest(Host us, AddressBook addrs, PeerId peer, String blockHash) {
         WarpSyncController controller = dialPeer(us, peer, addrs);
         try {
-            WarpSyncResponse resp = controller.warpSyncRequest(blockHash).get(30, TimeUnit.SECONDS);
+            WarpSyncResponse resp = controller.warpSyncRequest(blockHash).get(10, TimeUnit.SECONDS);
             log.log(Level.INFO, "Received warp sync response with " + resp.getFragments().length + " fragments");
             return resp;
         } catch (ExecutionException | InterruptedException | TimeoutException e) {
