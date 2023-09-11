@@ -9,6 +9,9 @@ import java.util.List;
 
 import static com.limechain.trie.TrieVerifier.MAX_PARTIAL_KEY_LENGTH;
 
+/**
+ * This class is used to decode the header of a Trie node from a ScaleCodecReader input stream.
+ */
 @UtilityClass
 public class TrieHeaderDecoder {
 
@@ -65,7 +68,7 @@ public class TrieHeaderDecoder {
      * @return a TrieHeaderDecoderResult object containing the variant bits, partial key length, and the variant mask
      * @throws TrieDecoderException if no matching NodeVariant is found for the given header byte
      */
-    static TrieHeaderDecoderResult decodeHeaderByte(byte headerByte) {
+    public static TrieHeaderDecoderResult decodeHeaderByte(byte headerByte) {
         List<NodeVariant> nodeVariantList = Arrays.asList(NodeVariant.values());
         for (int i = nodeVariantList.size() - 1; i >= 0; i--) {
             NodeVariant nodeVariant = nodeVariantList.get(i);

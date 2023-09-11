@@ -20,6 +20,13 @@ public enum NodeVariant {
         this.mask = mask;
     }
 
+    /**
+     * Returns the partial key length header bit mask corresponding to the variant header bit mask.
+     * Example: for {@link NodeVariant#LEAF} the mask is mask 1100_0000,
+     * the partial key length header mask returned would be 0011_1111.
+     *
+     * @return the partial key length header bit mask
+     */
     public int getPartialKeyLengthHeaderMask() {
         return this.mask ^ 0xFF;
     }

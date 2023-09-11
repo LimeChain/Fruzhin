@@ -6,6 +6,9 @@ import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.experimental.UtilityClass;
 
+/**
+ * This class is used to decode branch nodes and their children from a ScaleCodecReader input stream.
+ */
 @UtilityClass
 public class TrieBranchDecoder {
     public static final int CHILD_BITMAP_SIZE = 2;

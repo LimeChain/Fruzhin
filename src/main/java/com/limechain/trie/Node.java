@@ -145,8 +145,8 @@ public class Node {
         }
 
         byte[] encoding = out.toByteArray();
-        byte[] writtenMerkleValue = writeMerkleValue(encoding);
-        return new Pair<>(encoding, writtenMerkleValue);
+        byte[] maybeHashedMerkleValue = writeMerkleValue(encoding);
+        return new Pair<>(encoding, maybeHashedMerkleValue);
     }
 
     /**
@@ -169,11 +169,12 @@ public class Node {
     public String toString() {
         return "Node{" +
                 "partialKey=" + Arrays.toString(partialKey) +
+                ", merkleValue=" + Arrays.toString(merkleValue) +
                 ", storageValue=" + Arrays.toString(storageValue) +
+                ", isValueHashed=" + isValueHashed +
                 ", generation=" + generation +
                 ", children=" + Arrays.toString(children) +
                 ", dirty=" + dirty +
-                ", merkleValue=" + Arrays.toString(merkleValue) +
                 ", descendants=" + descendants +
                 '}';
     }

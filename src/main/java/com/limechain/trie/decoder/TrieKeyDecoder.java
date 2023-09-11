@@ -6,7 +6,9 @@ import lombok.experimental.UtilityClass;
 
 import java.util.Arrays;
 
-// TODO: Move TrieKeyDecoder, TrieLeafDecoder, TrieBranchDecoder to a single file
+/**
+ * This class is used to decode encoded trie key data from a ScaleCodecReader input stream.
+ */
 @UtilityClass
 public class TrieKeyDecoder {
     /**
