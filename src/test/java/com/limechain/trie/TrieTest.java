@@ -3,7 +3,6 @@ package com.limechain.trie;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 
 class TrieTest {
 
@@ -46,7 +45,7 @@ class TrieTest {
     void retrieveNullParentTest() {
         byte[] key = new byte[]{1};
         Trie trie = Trie.newTrie(null);
-        assertNull(trie.get(key));
+        assertArrayEquals(new byte[0], trie.get(key));
     }
 
     @Test
@@ -68,8 +67,7 @@ class TrieTest {
             this.setPartialKey(new byte[]{1, 2});
             this.setStorageValue(new byte[]{2});
         }};
-        byte[] value = Trie.retrieve(node, key);
-        assertNull(value);
+        assertArrayEquals(new byte[0], Trie.retrieve(node, key));
     }
 
     @Test

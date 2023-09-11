@@ -7,6 +7,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static com.limechain.utils.ByteArrayUtils.commonPrefixLength;
@@ -16,9 +17,9 @@ public class Trie {
     BigInteger generation;
     Node root;
     Map<Hash256, Trie> childTries;
-    ArrayList<Hash256> deltas;
+    List<Hash256> deltas;
 
-    public Trie(BigInteger generation, Node root, Map<Hash256, Trie> childTries, ArrayList<Hash256> deltas) {
+    public Trie(BigInteger generation, Node root, Map<Hash256, Trie> childTries, List<Hash256> deltas) {
         this.generation = generation;
         this.root = root;
         this.childTries = childTries;
