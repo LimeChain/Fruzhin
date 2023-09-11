@@ -30,7 +30,7 @@ public class TrieVerifier {
     public static boolean verify(byte[][] encodedProofNodes, byte[] rootHash, byte[] key, byte[] value) {
         Trie proofTrie = buildTrie(encodedProofNodes, rootHash);
         byte[] proofTrieValue = proofTrie.get(key);
-        if (proofTrieValue == null) {
+        if (java.util.Arrays.equals(proofTrieValue, new byte[0])) {
             throw new IllegalStateException("Key not found in proof trie hash");
         }
         if (value.length > 0 && !Arrays.areEqual(value, proofTrieValue)) {
