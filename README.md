@@ -22,7 +22,7 @@ git clone https://github.com/LimeChain/Fruzhin.git
 cd Fruzhin
 ```
 
-## Build & Setup
+## Setup & Build steps
 
 ### Java Version
 
@@ -34,7 +34,13 @@ version may cause cannot calculate secret errors when running the node:
 org.bouncycastle.tls.crypto.TlsCryptoException: cannot calculate secret
 ```
 
-### Wasmer-Java dylib
+If you have multiple java version installed please make sure you're using 17:
+
+```
+export JAVA_HOME=`/usr/libexec/java_home -v 17.0.8`
+```
+
+### Wasmer-Java dylib setup
 
 ```
 Note: This step will be automated in the future
@@ -50,10 +56,16 @@ Determine the path to your JDK installation by running the following command:
 /usr/libexec/java_home -V
 ```
 
-The path should look something like this:
+The path in which the file should be placed should look something like this:
 
 ```
 /Library/Java/JavaVirtualMachines/amazon-corretto-17.jdk/Contents/Extensions
+```
+
+or this:
+
+```
+/Library/Java/Extensions
 ```
 
 ### Build
