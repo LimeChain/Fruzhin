@@ -214,7 +214,6 @@ class TrieProofLoaderTest {
             put(HexUtils.toHexString(new byte[]{2}), Helper.getBadNodeEncoding());
         }};
 
-
         Exception e = assertThrows(TrieDecoderException.class, () -> TrieProofLoader.loadProof(digestToEncoding, node));
         assertTrue(e.getMessage().contains("Unknown variant: COMPACT_ENCODING"));
     }
