@@ -1,7 +1,7 @@
 package com.limechain.trie;
 
 import com.limechain.trie.decoder.TrieDecoder;
-import com.limechain.trie.decoder.TrieDecoderException;
+import lombok.experimental.UtilityClass;
 import lombok.extern.java.Log;
 import org.apache.tomcat.util.buf.HexUtils;
 import org.bouncycastle.util.Arrays;
@@ -9,7 +9,11 @@ import org.bouncycastle.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * This class is used to verify a given key and value belongs to the trie by recreating it
+ */
 @Log
+@UtilityClass
 public class TrieVerifier {
     public static final int MAX_PARTIAL_KEY_LENGTH = 65535;
 

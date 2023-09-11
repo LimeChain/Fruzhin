@@ -39,11 +39,7 @@ public class TrieEncoder {
             buffer.write(keyLE);
 
             if (node.getKind() == NodeKind.Branch) {
-                try (ScaleCodecWriter writer = new ScaleCodecWriter(buffer)) {
-                    writer.writeUint16(node.getChildrenBitmap());
-                } catch (IOException e) {
-                    throw new TrieEncoderException(e.getMessage());
-                }
+                writeChildrenBitmap(node, buffer);
             }
 
             // Only encode node storage value if the node has a storage value,
@@ -56,17 +52,29 @@ public class TrieEncoder {
                     }
                     buffer.write(node.getStorageValue());
                 } else {
-                    try (ScaleCodecWriter writer = new ScaleCodecWriter(buffer)) {
-                        writer.writeAsList(node.getStorageValue());
-                    } catch (IOException e) {
-                        throw new TrieEncoderException(e.getMessage());
-                    }
+                    writeHashedValue(buffer, node.getStorageValue());
                 }
             }
 
             if (node.getKind() == NodeKind.Branch) {
                 encodeChildren(node.getChildren(), buffer);
             }
+        } catch (IOException e) {
+            throw new TrieEncoderException(e.getMessage());
+        }
+    }
+
+    private void writeHashedValue(OutputStream buffer, byte[] storageValue) {
+        try (ScaleCodecWriter writer = new ScaleCodecWriter(buffer)) {
+            writer.writeAsList(storageValue);
+        } catch (IOException e) {
+            throw new TrieEncoderException(e.getMessage());
+        }
+    }
+
+    private void writeChildrenBitmap(Node node, OutputStream buffer) {
+        try (ScaleCodecWriter writer = new ScaleCodecWriter(buffer)) {
+            writer.writeUint16(node.getChildrenBitmap());
         } catch (IOException e) {
             throw new TrieEncoderException(e.getMessage());
         }
@@ -163,10 +171,6 @@ public class TrieEncoder {
      */
     public static void encodeChild(Node child, OutputStream buffer) {
         byte[] merkleValue = child.calculateMerkleValue();
-        try (ScaleCodecWriter writer = new ScaleCodecWriter(buffer)) {
-            writer.writeAsList(merkleValue);
-        } catch (IOException e) {
-            throw new TrieEncoderException(e.getMessage());
-        }
+        writeHashedValue(buffer, merkleValue);
     }
 }

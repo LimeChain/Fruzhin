@@ -11,9 +11,9 @@ import java.io.IOException;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class TrieHeaderDecoderTest {
+class TrieHeaderDecoderTest {
     @Test
-    public void decodeKeyTest() throws IOException {
+    void decodeKeyTest() throws IOException {
         byte[] expectedPartialKey = new byte[]{9};
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         ScaleCodecWriter writer = new ScaleCodecWriter(out);
@@ -27,7 +27,7 @@ public class TrieHeaderDecoderTest {
     }
 
     @Test
-    public void decodeHeaderByteTest() throws IOException {
+    void decodeHeaderByteTest() throws IOException {
         int expectedPartialKeyLength = 1;
         byte[] expectedPartialKey = new byte[]{9};
         byte[] expectedStorageValue = new byte[]{1, 2, 3};
