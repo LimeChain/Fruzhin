@@ -22,7 +22,53 @@ git clone https://github.com/LimeChain/Fruzhin.git
 cd Fruzhin
 ```
 
-## Build
+## Setup & Build steps
+
+### Java Version
+
+Fruzhin only works
+with [Java 17 Coretto](https://docs.aws.amazon.com/corretto/latest/corretto-17-ug/downloads-list.html). Using any other
+version may cause cannot calculate secret errors when running the node:
+
+```
+org.bouncycastle.tls.crypto.TlsCryptoException: cannot calculate secret
+```
+
+If you have multiple java version installed please make sure you're using 17:
+
+```
+export JAVA_HOME=`/usr/libexec/java_home -v 17.0.8`
+```
+
+### Wasmer-Java dylib setup
+
+```
+Note: This step will be automated in the future
+```
+
+Depending on your architecture type, you will have to grab one of either 2 versions of the wasmer-java dylib file
+from `wasmer-setup` folder.
+After that the file has to be copied to the `Extensions` folder of your JDK installation.
+
+Determine the path to your JDK installation by running the following command:
+
+```bash
+/usr/libexec/java_home -V
+```
+
+The path in which the file should be placed should look something like this:
+
+```
+/Library/Java/JavaVirtualMachines/amazon-corretto-17.jdk/Contents/Extensions
+```
+
+or this:
+
+```
+/Library/Java/Extensions
+```
+
+### Build
 
 ```bash
 ./gradlew build
