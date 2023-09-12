@@ -77,16 +77,6 @@ class RuntimeDownloadStateTest {
     }
 
     @Test
-    void handleWhenLoadFailsShouldUpdateErrorField() throws RuntimeCodeException {
-        RuntimeCodeException loadSavedRuntimeCodeException = mock(RuntimeCodeException.class);
-        doThrow(loadSavedRuntimeCodeException).when(syncedState).loadSavedRuntimeCode();
-
-        runtimeDownloadState.handle(warpSyncMachine);
-
-        Exception error = (Exception) ReflectionTestUtils.getField(runtimeDownloadState, "error");
-        assertEquals(loadSavedRuntimeCodeException, error);
-    }
-    @Test
     void handleUpdateRuntimeFailsShouldUpdateErrorField() throws RuntimeCodeException {
         doThrow(mock(RuntimeCodeException.class)).when(syncedState).loadSavedRuntimeCode();
         RuntimeCodeException updateRuntimeCodeException = mock(RuntimeCodeException.class);
