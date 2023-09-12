@@ -29,13 +29,9 @@ import com.limechain.sync.warpsync.dto.GrandpaDigestMessageType;
 import com.limechain.sync.warpsync.dto.RuntimeCodeException;
 import com.limechain.sync.warpsync.scale.ForcedChangeReader;
 import com.limechain.sync.warpsync.scale.ScheduledChangeReader;
-import com.limechain.trie.TrieVerifier;
-import com.limechain.trie.decoder.TrieDecoderException;
-import com.limechain.utils.LittleEndianUtils;
 import com.limechain.utils.StringUtils;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import com.limechain.sync.warpsync.dto.StateDto;
-import com.limechain.trie.Trie;
 import io.emeraldpay.polkaj.types.Hash256;
 import io.libp2p.core.PeerId;
 import lombok.Getter;
@@ -67,9 +63,7 @@ public class SyncedState {
     }
 
     public static final int NEIGHBOUR_MESSAGE_VERSION = 1;
-    private static final String CODE_KEY = StringUtils.toHex(":code");
-    private static final byte[] CODE_KEY_BYTES =
-            LittleEndianUtils.convertBytes(StringUtils.hexToBytes(CODE_KEY));
+    public static final String CODE_KEY = StringUtils.toHex(":code");
 
     private boolean warpSyncFragmentsFinished;
     private boolean warpSyncFinished;
@@ -88,13 +82,13 @@ public class SyncedState {
     private byte[] heapPages;
 
     private KVRepository<String, Object> repository;
-    private Trie trie;
     private Network network;
+    private RuntimeBuilder runtimeBuilder = new RuntimeBuilder();
 
     private final PriorityQueue<Pair<BigInteger, Authority[]>> scheduledAuthorityChanges =
             new PriorityQueue<>(Comparator.comparing(Pair::getValue0));
 
-    private final Set<BigInteger> scheduledRuntimeUpdateBlocks = new HashSet<>();
+    private Set<BigInteger> scheduledRuntimeUpdateBlocks = new HashSet<>();
 
     /**
      * Creates a Block Announce handshake based on the latest finalized Host state
@@ -118,7 +112,7 @@ public class SyncedState {
                 ? genesisBlockHash
                 : this.lastFinalizedBlockHash;
         return new BlockAnnounceHandshake(
-                NodeRole.LIGHT.getValue(),
+                NodeRole.FULL.getValue(),
                 this.lastFinalizedBlockNumber,
                 lastFinalizedBlockHash,
                 genesisBlockHash
@@ -227,7 +221,7 @@ public class SyncedState {
 
         saveProofState(decodedProofs);
 
-        setCodeAndHeapPages(decodedProofs, stateRoot);
+        this.runtimeCode = runtimeBuilder.buildRuntimeCode(decodedProofs, stateRoot);
     }
 
     private byte[][] decodeProof(byte[] proof) {
@@ -251,7 +245,7 @@ public class SyncedState {
      */
     public void buildRuntime() {
         try {
-            runtime = RuntimeBuilder.buildRuntime(runtimeCode);
+            runtime = runtimeBuilder.buildRuntime(runtimeCode);
         } catch (UnsatisfiedLinkError e) {
             log.log(Level.SEVERE, "Error loading wasm module");
             log.log(Level.SEVERE, e.getMessage(), e.getStackTrace());
@@ -269,25 +263,7 @@ public class SyncedState {
                 .map(storedRootState -> Hash256.from(storedRootState.toString()))
                 .orElseThrow(() -> new RuntimeCodeException("No available state root"));
 
-        setCodeAndHeapPages(merkleProof, stateRoot);
-    }
-
-    private void setCodeAndHeapPages(byte[][] decodedProofs, Hash256 stateRoot) throws RuntimeCodeException {
-        Trie trie;
-        try {
-            trie = TrieVerifier.buildTrie(decodedProofs, stateRoot.getBytes());
-            SyncedState.getInstance().setTrie(trie);
-            var code = trie.get(CODE_KEY_BYTES);
-            if (code == null) {
-                throw new RuntimeCodeException("Couldn't retrieve runtime code from trie");
-            }
-            //TODO Heap pages should be fetched from out storage
-            setRuntimeCode(code);
-            log.log(Level.INFO, "Runtime and heap pages downloaded");
-
-        } catch (TrieDecoderException e) {
-            throw new RuntimeCodeException("Couldn't build trie from proofs list: " + e.getMessage());
-        }
+        this.runtimeCode = runtimeBuilder.buildRuntimeCode(merkleProof, stateRoot);
     }
 
     /**
