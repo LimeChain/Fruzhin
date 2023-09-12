@@ -9,6 +9,9 @@ import com.limechain.rpc.pubsub.Topic;
 import com.limechain.rpc.subscriptions.chainhead.ChainHeadRpc;
 import com.limechain.rpc.subscriptions.transaction.TransactionRpc;
 import lombok.extern.java.Log;
+import org.apache.catalina.connector.Connector;
+import org.apache.catalina.connector.Request;
+import org.apache.coyote.InputBuffer;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
@@ -19,7 +22,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Objects;
 import java.util.logging.Level;
 
 @Component
@@ -34,7 +36,7 @@ public class RpcWsHandler extends TextWebSocketHandler {
 
     public RpcWsHandler(RPCMethods rpcMethods, ChainHeadRpc chainHeadRpc, TransactionRpc transactionRpc) {
         this.mapper = new ObjectMapper();
-        this.server = new JsonRpcBasicServer(mapper, rpcMethods);
+        this.server = new JsonRpcBasicServer(mapper, rpcMethods, RPCMethods.class);
         this.chainHeadRpc = chainHeadRpc;
         this.transactionRpc = transactionRpc;
     }
@@ -48,7 +50,16 @@ public class RpcWsHandler extends TextWebSocketHandler {
         log.log(Level.INFO, "PARAMS: " + String.join(",", rpcRequest.getParams()));
 
         SubscriptionName method = SubscriptionName.fromString(rpcRequest.getMethod());
-        switch (Objects.requireNonNull(method)) {
+        if (method == null) {
+            log.log(Level.INFO, "Handling the WS request using the normal RPC routes");
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            Request request = this.buildHttpLikeRequest(message.asBytes());
+            server.handleRequest(request.getInputStream(), outputStream);
+            session.sendMessage(new TextMessage(outputStream.toByteArray()));
+            return;
+        }
+
+        switch (method) {
             case CHAIN_HEAD_UNSTABLE_FOLLOW -> {
                 log.log(Level.INFO, "Subscribing for follow event");
                 pubSubService.addSubscriber(Topic.UNSTABLE_FOLLOW, session);
@@ -88,15 +99,7 @@ public class RpcWsHandler extends TextWebSocketHandler {
                 this.transactionRpc.transactionUnstableUnwatch(rpcRequest.getParams()[0]);
                 pubSubService.removeSubscriber(Topic.UNSTABLE_TRANSACTION_WATCH, session.getId());
             }
-            default -> {
-                // Server should only handle requests if it's not a sub/unsub request
-                // Known issue: WS handler doesn't use interface method names (system_name)
-                // instead it uses implementation ones (systemName)
-                log.log(Level.INFO, "Handling the WS request using the normal RPC routes");
-                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                server.handleRequest(messageStream, outputStream);
-                session.sendMessage(new TextMessage(outputStream.toByteArray()));
-            }
+            default -> log.log(Level.WARNING, "Unknown method: " + rpcRequest.getMethod());
         }
     }
 
@@ -104,5 +107,17 @@ public class RpcWsHandler extends TextWebSocketHandler {
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
         // TODO: Search PubSubService for subscribers that have the closed session id
         // as a subscriber and remove it from the their subscription list
+    }
+
+    private Request buildHttpLikeRequest(byte[] message) {
+        InputBuffer inputBuffer = new SimpleInputBuffer(new ByteArrayInputStream(message));
+
+        org.apache.coyote.Request coyReq = new org.apache.coyote.Request();
+        coyReq.setResponse(new org.apache.coyote.Response());
+        coyReq.setInputBuffer(inputBuffer);
+
+        Request request = new Request(new Connector());
+        request.setCoyoteRequest(coyReq);
+        return request;
     }
 }

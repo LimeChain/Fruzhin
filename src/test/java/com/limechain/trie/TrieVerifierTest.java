@@ -33,7 +33,7 @@ class TrieVerifierTest {
         var rootHash = HashUtils.hashWithBlake2b(getBadNodeEncoding());
         Exception e = assertThrows(TrieDecoderException.class, () ->
                 TrieVerifier.buildTrie(encodedProofNodes, rootHash));
-        assertTrue(e.getMessage().contains("Node variant is unknown for header byte 00000001"));
+        assertTrue(e.getMessage().contains("Unknown variant: COMPACT_ENCODING"));
     }
 
     @Test
@@ -44,7 +44,7 @@ class TrieVerifierTest {
         var rootHash = HashUtils.hashWithBlake2b(getBadNodeEncoding());
         Exception e = assertThrows(TrieDecoderException.class, () ->
                 TrieVerifier.buildTrie(encodedProofNodes, rootHash));
-        assertTrue(e.getMessage().contains("Node variant is unknown for header byte 00000001"));
+        assertTrue(e.getMessage().contains("Unknown variant: COMPACT_ENCODING"));
     }
 
     @Test
@@ -154,7 +154,7 @@ class TrieVerifierTest {
     }
 
     @Test
-    public void buildingProofTrieExceptionTest() {
+    void buildingProofTrieExceptionTest() {
         byte[] keyLE = new byte[]{1, 1};
         Exception e = assertThrows(IllegalArgumentException.class, () -> {
             byte[] rootHash = new byte[]{1, 2, 3};
@@ -164,7 +164,7 @@ class TrieVerifierTest {
     }
 
     @Test
-    public void valueNotFoundExceptionTest() {
+    void valueNotFoundExceptionTest() {
         ByteArrayOutputStream branchBuffer = new ByteArrayOutputStream();
         ByteArrayOutputStream leafBuffer = new ByteArrayOutputStream();
         TrieEncoder.encode(Helper.branch, branchBuffer);
@@ -184,7 +184,7 @@ class TrieVerifierTest {
     }
 
     @Test
-    public void keyFoundWithNullSearchValueTest() {
+    void keyFoundWithNullSearchValueTest() {
         ByteArrayOutputStream branchBuffer = new ByteArrayOutputStream();
         ByteArrayOutputStream leafBuffer = new ByteArrayOutputStream();
         TrieEncoder.encode(Helper.branch, branchBuffer);
@@ -198,7 +198,7 @@ class TrieVerifierTest {
     }
 
     @Test
-    public void keyFoundWithMismatchValueExceptionTest() {
+    void keyFoundWithMismatchValueExceptionTest() {
         ByteArrayOutputStream branchBuffer = new ByteArrayOutputStream();
         ByteArrayOutputStream leafBuffer = new ByteArrayOutputStream();
         TrieEncoder.encode(Helper.branch, branchBuffer);
@@ -213,7 +213,7 @@ class TrieVerifierTest {
     }
 
     @Test
-    public void keyFoundWithMatchingValue() {
+    void keyFoundWithMatchingValue() {
         ByteArrayOutputStream branchBuffer = new ByteArrayOutputStream();
         ByteArrayOutputStream leafBuffer = new ByteArrayOutputStream();
         TrieEncoder.encode(Helper.branch, branchBuffer);

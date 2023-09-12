@@ -1,5 +1,8 @@
 package com.limechain.trie;
 
+/**
+ * This class is used to convert keys between nibbles and LE(Little-Endian) format.
+ */
 public class Nibbles {
     /**
      * Converts a key in nibbles format to LE format. The key is assumed to be in nibbles format.

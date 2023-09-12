@@ -15,6 +15,7 @@ public class RuntimeDownloadState implements WarpSyncState {
     @Override
     public void next(WarpSyncMachine sync) {
         if (this.error != null) {
+            log.log(Level.SEVERE, "Error occurred during runtime download state: " + this.error.getMessage());
             sync.setWarpSyncState(new RequestFragmentsState(syncedState.getLastFinalizedBlockHash()));
             return;
         }

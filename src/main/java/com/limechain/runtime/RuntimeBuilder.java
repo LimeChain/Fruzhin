@@ -65,7 +65,7 @@ public class RuntimeBuilder {
     }
 
     static Imports getImports(Module module) {
-        ImportObject.MemoryImport memory= new ImportObject.MemoryImport("env", 22, false);
+        ImportObject.MemoryImport memory = new ImportObject.MemoryImport("env", 22, false);
 
         ArrayList<ImportObject> objects = new ArrayList<>();
         objects.addAll(StorageHostFunctions.getFunctions());

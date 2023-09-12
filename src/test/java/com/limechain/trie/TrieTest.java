@@ -3,12 +3,11 @@ package com.limechain.trie;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 
-public class TrieTest {
+class TrieTest {
 
     @Test
-    public void getTest() {
+    void getTest() {
         byte[] key = new byte[]{0x01, 0x19};
         byte[] expectedValue = new byte[]{1, 2, 3, 4, 5};
 
@@ -43,14 +42,14 @@ public class TrieTest {
     }
 
     @Test
-    public void retrieveNullParentTest() {
+    void retrieveNullParentTest() {
         byte[] key = new byte[]{1};
         Trie trie = Trie.newTrie(null);
-        assertNull(trie.get(key));
+        assertArrayEquals(new byte[0], trie.get(key));
     }
 
     @Test
-    public void retrieveMatchLeafKeyTest() {
+    void retrieveMatchLeafKeyTest() {
         byte[] key = new byte[]{1};
         byte[] expectedValue = new byte[]{2};
         Node node = new Node() {{
@@ -62,18 +61,17 @@ public class TrieTest {
     }
 
     @Test
-    public void leafKeyMismatchTest() {
+    void leafKeyMismatchTest() {
         byte[] key = new byte[]{1};
         Node node = new Node() {{
             this.setPartialKey(new byte[]{1, 2});
             this.setStorageValue(new byte[]{2});
         }};
-        byte[] value = Trie.retrieve(node, key);
-        assertNull(value);
+        assertArrayEquals(new byte[0], Trie.retrieve(node, key));
     }
 
     @Test
-    public void branchKeyMatchTest() {
+    void branchKeyMatchTest() {
         byte[] key = new byte[]{1};
         byte[] expectedValue = new byte[]{2};
         Node node = new Node() {{
@@ -92,7 +90,7 @@ public class TrieTest {
     }
 
     @Test
-    public void branchKeyWithEmptySearchKeyTest() {
+    void branchKeyWithEmptySearchKeyTest() {
         byte[] key = new byte[]{};
         byte[] expectedValue = new byte[]{2};
         Node node = new Node() {{
@@ -111,7 +109,7 @@ public class TrieTest {
     }
 
     @Test
-    public void matchBottomLeafInBranch() {
+    void matchBottomLeafInBranch() {
         byte[] key = new byte[]{1, 2, 3, 4, 5};
         byte[] expectedValue = new byte[]{3};
 
