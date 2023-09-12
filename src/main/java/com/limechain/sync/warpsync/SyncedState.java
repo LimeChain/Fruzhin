@@ -112,7 +112,7 @@ public class SyncedState {
                 ? genesisBlockHash
                 : this.lastFinalizedBlockHash;
         return new BlockAnnounceHandshake(
-                NodeRole.FULL.getValue(),
+                NodeRole.LIGHT.getValue(),
                 this.lastFinalizedBlockNumber,
                 lastFinalizedBlockHash,
                 genesisBlockHash
