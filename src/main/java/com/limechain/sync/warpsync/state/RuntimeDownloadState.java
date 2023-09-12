@@ -27,11 +27,12 @@ public class RuntimeDownloadState implements WarpSyncState {
         try {
             log.log(Level.INFO, "Loading saved runtime...");
             syncedState.loadSavedRuntimeCode();
-            return;
         } catch (RuntimeCodeException e) {
-            this.error = e;
+            handleDownloadRuntime();
         }
+    }
 
+    private void handleDownloadRuntime() {
         try {
             log.log(Level.INFO, "Downloading runtime...");
             syncedState.updateRuntimeCode();

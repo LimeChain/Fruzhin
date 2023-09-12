@@ -207,10 +207,8 @@ public class SyncedState {
     /**
      * Update the runtime code and heap pages, by requesting the code field of the last finalized block, using the
      * Light Messages protocol.
-     *
-     * @throws RuntimeCodeException runtime code could not be retrieved
      */
-    public void updateRuntimeCode() throws RuntimeCodeException {
+    public void updateRuntimeCode() {
         LightClientMessage.Response response = network.makeRemoteReadRequest(
                 lastFinalizedBlockHash.toString(),
                 new String[]{ CODE_KEY }
@@ -254,9 +252,8 @@ public class SyncedState {
 
     /**
      * Load a saved runtime from database
-     * @throws RuntimeCodeException no proof or state root available, or unable to build code
      */
-    public void loadSavedRuntimeCode() throws RuntimeCodeException {
+    public void loadSavedRuntimeCode() {
         byte[][] merkleProof = (byte[][]) repository.find(DBConstants.STATE_TRIE_MERKLE_PROOF)
                 .orElseThrow(() -> new RuntimeCodeException("No available merkle proof"));
         Hash256 stateRoot = repository.find(DBConstants.STATE_TRIE_ROOT_HASH)

@@ -81,7 +81,7 @@ public class RuntimeBuilder {
         return Imports.from(objects, module);
     }
 
-    public byte[] buildRuntimeCode(byte[][] decodedProofs, Hash256 stateRoot) throws RuntimeCodeException {
+    public byte[] buildRuntimeCode(byte[][] decodedProofs, Hash256 stateRoot) {
         try {
             Trie trie = TrieVerifier.buildTrie(decodedProofs, stateRoot.getBytes());
             var code = trie.get(CODE_KEY_BYTES);
