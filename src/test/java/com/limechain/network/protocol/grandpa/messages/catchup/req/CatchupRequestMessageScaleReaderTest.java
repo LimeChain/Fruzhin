@@ -25,7 +25,7 @@ class CatchupRequestMessageScaleReaderTest {
     @Test
     void decodeEqualsTest() {
         ScaleCodecReader reader = new ScaleCodecReader(expectedByteArr);
-        CatchUpReqMessage commitMessage = reader.read(new CatchUpReqMessageScaleReader());
+        CatchUpReqMessage commitMessage = reader.read(CatchUpReqMessageScaleReader.getInstance());
 
         assertEquals(expectedCatchupReqMsg, commitMessage);
     }
@@ -33,7 +33,7 @@ class CatchupRequestMessageScaleReaderTest {
     @Test
     void encodeEqualsTest() throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        new CatchUpReqMessageScaleWriter().write(new ScaleCodecWriter(baos), expectedCatchupReqMsg);
+        CatchUpReqMessageScaleWriter.getInstance().write(new ScaleCodecWriter(baos), expectedCatchupReqMsg);
 
         assertArrayEquals(expectedByteArr, baos.toByteArray());
     }

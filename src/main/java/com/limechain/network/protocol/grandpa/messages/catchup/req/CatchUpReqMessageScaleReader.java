@@ -6,6 +6,18 @@ import io.emeraldpay.polkaj.scale.ScaleReader;
 import io.emeraldpay.polkaj.scale.reader.UInt64Reader;
 
 public class CatchUpReqMessageScaleReader implements ScaleReader<CatchUpReqMessage> {
+
+    private static final CatchUpReqMessageScaleReader INSTANCE = new CatchUpReqMessageScaleReader();
+    private final UInt64Reader uint64Reader;
+
+    private CatchUpReqMessageScaleReader() {
+        uint64Reader = new UInt64Reader();
+    }
+
+    public static CatchUpReqMessageScaleReader getInstance() {
+        return INSTANCE;
+    }
+
     @Override
     public CatchUpReqMessage read(ScaleCodecReader reader) {
         int messageType = reader.readByte();
@@ -14,9 +26,10 @@ public class CatchUpReqMessageScaleReader implements ScaleReader<CatchUpReqMessa
                     String.format("Trying to read message of type %d as a catch up request message", messageType));
         }
         CatchUpReqMessage catchUpReqMessage = new CatchUpReqMessage();
-        catchUpReqMessage.setRound(new UInt64Reader().read(reader));
-        catchUpReqMessage.setSetId(new UInt64Reader().read(reader));
+        catchUpReqMessage.setRound(uint64Reader.read(reader));
+        catchUpReqMessage.setSetId(uint64Reader.read(reader));
 
         return catchUpReqMessage;
     }
+
 }
