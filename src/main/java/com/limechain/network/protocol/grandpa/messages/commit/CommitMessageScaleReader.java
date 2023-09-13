@@ -6,6 +6,23 @@ import io.emeraldpay.polkaj.scale.ScaleReader;
 import io.emeraldpay.polkaj.scale.reader.UInt64Reader;
 
 public class CommitMessageScaleReader implements ScaleReader<CommitMessage> {
+
+    private static final CommitMessageScaleReader INSTANCE = new CommitMessageScaleReader();
+
+    private final UInt64Reader uint64Reader;
+    private final VoteScaleReader voteScaleReader;
+    private final CompactJustificationScaleReader compactJustificationScaleReader;
+
+    private CommitMessageScaleReader() {
+        uint64Reader = new UInt64Reader();
+        voteScaleReader = VoteScaleReader.getInstance();
+        compactJustificationScaleReader = CompactJustificationScaleReader.getInstance();
+    }
+
+    public static CommitMessageScaleReader getInstance() {
+        return INSTANCE;
+    }
+
     @Override
     public CommitMessage read(ScaleCodecReader reader) {
         int messageType = reader.readByte();
@@ -14,10 +31,10 @@ public class CommitMessageScaleReader implements ScaleReader<CommitMessage> {
                     String.format("Trying to read message of type %d as a commit message", messageType));
         }
         CommitMessage commitMessage = new CommitMessage();
-        commitMessage.setRoundNumber(new UInt64Reader().read(reader));
-        commitMessage.setSetId(new UInt64Reader().read(reader));
-        commitMessage.setVote(VoteScaleReader.getInstance().read(reader));
-        commitMessage.setPrecommits(new CompactJustificationScaleReader().read(reader));
+        commitMessage.setRoundNumber(uint64Reader.read(reader));
+        commitMessage.setSetId(uint64Reader.read(reader));
+        commitMessage.setVote(voteScaleReader.read(reader));
+        commitMessage.setPrecommits(compactJustificationScaleReader.read(reader));
         return commitMessage;
     }
 }

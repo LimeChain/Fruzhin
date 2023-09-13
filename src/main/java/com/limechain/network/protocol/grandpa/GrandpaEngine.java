@@ -132,7 +132,7 @@ public class GrandpaEngine {
 
     private void handleCommitMessage(byte[] message, PeerId peerId) {
         ScaleCodecReader reader = new ScaleCodecReader(message);
-        CommitMessage commitMessage = reader.read(new CommitMessageScaleReader());
+        CommitMessage commitMessage = reader.read(CommitMessageScaleReader.getInstance());
         syncedState.syncCommit(commitMessage, peerId);
     }
 

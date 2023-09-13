@@ -8,13 +8,23 @@ import java.io.IOException;
 
 public class CompactJustificationScaleWriter implements ScaleWriter<Precommit[]> {
 
+    private static final CompactJustificationScaleWriter INSTANCE = new CompactJustificationScaleWriter();
+
+    private final VoteScaleWriter voteScaleWriter;
+
+    private CompactJustificationScaleWriter() {
+        voteScaleWriter = VoteScaleWriter.getInstance();
+    }
+
+    public static CompactJustificationScaleWriter getInstance() {
+        return INSTANCE;
+    }
+
     @Override
     public void write(ScaleCodecWriter writer, Precommit[] precommits) throws IOException {
-
         writer.writeCompact(precommits.length);
-        VoteScaleWriter voteScaleWriter = new VoteScaleWriter();
 
-        for (int i = 0; i < precommits.length; i++){
+        for (int i = 0; i < precommits.length; i++) {
             Precommit precommit = precommits[i];
             Vote vote = new Vote();
             vote.setBlockHash(precommit.getTargetHash());

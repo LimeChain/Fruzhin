@@ -40,7 +40,7 @@ class CommitMessageScaleReaderTest {
     @Test
     void decodeEqualsTest() {
         ScaleCodecReader reader = new ScaleCodecReader(expectedByteArr);
-        CommitMessage commitMessage = reader.read(new CommitMessageScaleReader());
+        CommitMessage commitMessage = reader.read(CommitMessageScaleReader.getInstance());
 
         assertEquals(expectedCommitMsg, commitMessage);
     }
@@ -48,7 +48,7 @@ class CommitMessageScaleReaderTest {
     @Test
     void encodeEqualsTest() throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        new CommitMessageScaleWriter().write(new ScaleCodecWriter(baos), expectedCommitMsg);
+        CommitMessageScaleWriter.getInstance().write(new ScaleCodecWriter(baos), expectedCommitMsg);
 
         assertArrayEquals(expectedByteArr, baos.toByteArray());
     }

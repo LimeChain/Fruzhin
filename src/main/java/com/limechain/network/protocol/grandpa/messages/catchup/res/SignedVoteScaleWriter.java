@@ -10,7 +10,10 @@ public class SignedVoteScaleWriter implements ScaleWriter<SignedVote> {
 
     private static final SignedVoteScaleWriter INSTANCE = new SignedVoteScaleWriter();
 
+    private final VoteScaleWriter voteScaleWriter;
+
     private SignedVoteScaleWriter() {
+        voteScaleWriter = VoteScaleWriter.getInstance();
     }
 
     public static SignedVoteScaleWriter getInstance() {
@@ -19,8 +22,6 @@ public class SignedVoteScaleWriter implements ScaleWriter<SignedVote> {
 
     @Override
     public void write(ScaleCodecWriter writer, SignedVote signedVote) throws IOException {
-        VoteScaleWriter voteScaleWriter = new VoteScaleWriter();
-
         voteScaleWriter.write(writer, signedVote.getVote());
         writer.writeByteArray(signedVote.getSignature().getBytes());
         writer.writeUint256(signedVote.getAuthorityPublicKey().getBytes());
