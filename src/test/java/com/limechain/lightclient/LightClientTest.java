@@ -4,12 +4,13 @@ import com.limechain.network.Network;
 import com.limechain.rpc.server.RpcApp;
 import com.limechain.sync.warpsync.WarpSyncMachine;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
 
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -33,17 +34,17 @@ class LightClientTest {
         rpcApp = mock(RpcApp.class);
         args = new String[]{"some args"};
 
-        lightClient = new LightClient(args, rpcApp);
+        lightClient = spy(new LightClient(args, rpcApp));
     }
 
     @Test
-    @Disabled("Test calls System.exit")
-    public void lightClient_stop_invokesStopFunctions() throws NoSuchFieldException, IllegalAccessException {
+    void lightClient_stop_invokesStopFunctions() throws NoSuchFieldException, IllegalAccessException {
         Network network = mock(Network.class);
         WarpSyncMachine warpSync = mock(WarpSyncMachine.class);
 
         setPrivateField("network", network);
         setPrivateField("warpSyncMachine", warpSync);
+        doNothing().when(lightClient).doExit();
 
         lightClient.stop();
 

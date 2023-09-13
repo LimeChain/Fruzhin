@@ -4,10 +4,16 @@ import com.limechain.network.ConnectionManager;
 import com.limechain.network.dto.PeerInfo;
 import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshake;
+import com.limechain.network.protocol.grandpa.messages.catchup.req.CatchUpReqMessage;
+import com.limechain.network.protocol.grandpa.messages.catchup.req.CatchUpReqMessageScaleReader;
+import com.limechain.network.protocol.grandpa.messages.catchup.res.CatchUpMessage;
+import com.limechain.network.protocol.grandpa.messages.catchup.res.CatchUpMessageScaleReader;
 import com.limechain.network.protocol.grandpa.messages.commit.CommitMessage;
 import com.limechain.network.protocol.grandpa.messages.commit.CommitMessageScaleReader;
 import com.limechain.network.protocol.grandpa.messages.neighbour.NeighbourMessage;
 import com.limechain.network.protocol.grandpa.messages.neighbour.NeighbourMessageScaleReader;
+import com.limechain.network.protocol.grandpa.messages.vote.VoteMessage;
+import com.limechain.network.protocol.grandpa.messages.vote.VoteMessageScaleReader;
 import com.limechain.sync.warpsync.SyncedState;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.libp2p.core.PeerId;
@@ -190,43 +196,62 @@ class GrandpaEngineTest {
             verify(syncedState).syncNeighbourMessage(neighbourMessage, peerId);
         }
     }
+
     @Test
-    void receiveVoteMessageOnResponderStreamShouldLogAndIgnore() {
-        byte[] message = new byte[] { 0, 2, 3 };
+    void receiveVoteMessageOnResponderStreamShouldDecodeLogAndIgnore() {
+        byte[] message = new byte[]{0, 2, 3};
+        VoteMessage voteMessage = mock(VoteMessage.class);
+
         when(stream.isInitiator()).thenReturn(false);
         when(stream.remotePeerId()).thenReturn(peerId);
         when(connectionManager.isGrandpaConnected(peerId)).thenReturn(true);
 
-        grandpaEngine.receiveRequest(message, stream);
+        try (MockedConstruction<ScaleCodecReader> readerMock = mockConstruction(ScaleCodecReader.class,
+                (mock, context) -> when(mock.read(any(VoteMessageScaleReader.class))).thenReturn(voteMessage))
+        ) {
+            grandpaEngine.receiveRequest(message, stream);
 
-        verifyNoMoreInteractions(connectionManager);
-        verifyNoInteractions(syncedState);
+            verifyNoMoreInteractions(connectionManager);
+            verifyNoInteractions(syncedState);
+        }
     }
 
     @Test
     void receiveCatchUpRequestMessageOnResponderStreamShouldLogAndIgnore() {
         byte[] message = new byte[] { 3, 2, 3 };
+        CatchUpReqMessage catchUpReqMessage = mock(CatchUpReqMessage.class);
+
         when(stream.isInitiator()).thenReturn(false);
         when(stream.remotePeerId()).thenReturn(peerId);
         when(connectionManager.isGrandpaConnected(peerId)).thenReturn(true);
 
-        grandpaEngine.receiveRequest(message, stream);
+        try (MockedConstruction<ScaleCodecReader> readerMock = mockConstruction(ScaleCodecReader.class, (mock, context)
+                -> when(mock.read(any(CatchUpReqMessageScaleReader.class))).thenReturn(catchUpReqMessage))
+        ) {
+            grandpaEngine.receiveRequest(message, stream);
 
-        verifyNoMoreInteractions(connectionManager);
-        verifyNoInteractions(syncedState);
+            verifyNoMoreInteractions(connectionManager);
+            verifyNoInteractions(syncedState);
+        }
     }
 
     @Test
     void receiveCatchUpResponseMessageOnResponderStreamShouldLogAndIgnore() {
         byte[] message = new byte[] { 4, 2, 3 };
+        CatchUpMessage catchUpMessage = mock(CatchUpMessage.class);
+
         when(stream.isInitiator()).thenReturn(false);
         when(stream.remotePeerId()).thenReturn(peerId);
         when(connectionManager.isGrandpaConnected(peerId)).thenReturn(true);
 
-        grandpaEngine.receiveRequest(message, stream);
+        try (MockedConstruction<ScaleCodecReader> readerMock = mockConstruction(ScaleCodecReader.class, (mock, context)
+                -> when(mock.read(any(CatchUpMessageScaleReader.class))).thenReturn(catchUpMessage))
+        ) {
+            grandpaEngine.receiveRequest(message, stream);
 
-        verifyNoMoreInteractions(connectionManager);
-        verifyNoInteractions(syncedState);
+            verifyNoMoreInteractions(connectionManager);
+            verifyNoInteractions(syncedState);
+        }
     }
 
     // WRITE
