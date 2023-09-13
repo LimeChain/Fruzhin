@@ -118,7 +118,7 @@ public class GrandpaEngine {
 
     private void handleNeighbourMessage(byte[] message, PeerId peerId) {
         ScaleCodecReader reader = new ScaleCodecReader(message);
-        NeighbourMessage neighbourMessage = reader.read(new NeighbourMessageScaleReader());
+        NeighbourMessage neighbourMessage = reader.read(NeighbourMessageScaleReader.getInstance());
         log.log(Level.INFO, "Received neighbour message from Peer " + peerId + "\n" + neighbourMessage);
         new Thread(() -> syncedState.syncNeighbourMessage(neighbourMessage, peerId)).start();
     }
@@ -174,7 +174,7 @@ public class GrandpaEngine {
     public void writeNeighbourMessage(Stream stream, PeerId peerId) {
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
         try (ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
-            writer.write(new NeighbourMessageScaleWriter(), syncedState.getNeighbourMessage());
+            writer.write(NeighbourMessageScaleWriter.getInstance(), syncedState.getNeighbourMessage());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
