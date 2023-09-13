@@ -6,18 +6,14 @@ import io.emeraldpay.polkaj.scale.ScaleWriter;
 
 import java.io.IOException;
 
-public class SignedVoteScaleWriter implements ScaleWriter<SignedVote[]> {
+public class SignedVoteScaleWriter implements ScaleWriter<SignedVote> {
 
     @Override
-    public void write(ScaleCodecWriter writer, SignedVote[] signoedVotes) throws IOException {
-        writer.writeCompact(signoedVotes.length);
+    public void write(ScaleCodecWriter writer, SignedVote signedVote) throws IOException {
         VoteScaleWriter voteScaleWriter = new VoteScaleWriter();
 
-        for (int i = 0; i < signoedVotes.length; i++) {
-            SignedVote signedVote = signoedVotes[i];
-            voteScaleWriter.write(writer, signedVote.getVote());
-            writer.writeByteArray(signedVote.getSignature().getBytes());
-            writer.writeUint256(signedVote.getAuthorityPublicKey().getBytes());
-        }
+        voteScaleWriter.write(writer, signedVote.getVote());
+        writer.writeByteArray(signedVote.getSignature().getBytes());
+        writer.writeUint256(signedVote.getAuthorityPublicKey().getBytes());
     }
 }
