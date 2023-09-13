@@ -46,23 +46,9 @@ export JAVA_HOME=`/usr/libexec/java_home -v 17.0.8`
 Note: This step will be automated in the future
 ```
 
-Depending on your architecture type, you will have to grab one of either 2 versions of the wasmer-java dylib file
-from `wasmer-setup` folder.
-After that the file has to be copied to the `Extensions` folder of your JDK installation.
-
-Determine the path to your JDK installation by running the following command:
-
-```bash
-/usr/libexec/java_home -V
-```
-
-The path in which the file should be placed should look something like this:
-
-```
-/Library/Java/JavaVirtualMachines/amazon-corretto-17.jdk/Contents/Extensions
-```
-
-or this:
+Depending on your architecture type, you will have to grab one of either 2 versions(arm/amd) of the wasmer-java dylib
+file from `wasmer-setup` folder.
+Copy the file to the Java `Extensions` folder:
 
 ```
 /Library/Java/Extensions
