@@ -93,7 +93,7 @@ public class GrandpaEngine {
             case COMMIT -> handleCommitMessage(message, peerId);
             case NEIGHBOUR -> handleNeighbourMessage(message, peerId);
             case CATCH_UP_REQUEST -> handleCatchupRequestMessage(message, peerId);
-            case CATCH_UP_RESPONSE -> handleCatchupMessage(message, peerId);
+            case CATCH_UP_RESPONSE -> handleCatchupResponseMessage(message, peerId);
         }
     }
 
@@ -143,7 +143,7 @@ public class GrandpaEngine {
         log.log(Level.INFO, "Received catch up request message from Peer " + peerId + "\n" + catchUpReqMessage);
     }
 
-    private void handleCatchupMessage(byte[] message, PeerId peerId) {
+    private void handleCatchupResponseMessage(byte[] message, PeerId peerId) {
         ScaleCodecReader reader = new ScaleCodecReader(message);
         CatchUpMessage catchUpMessage = reader.read(new CatchUpMessageScaleReader());
         //todo: handle catchup res message (authoring node responsibility)
