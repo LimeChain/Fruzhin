@@ -5,8 +5,6 @@ import io.emeraldpay.polkaj.scale.ScaleWriter;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 
 /**
  * Encodes a `u64` into a SCALE-encoded number whose number of bytes isn't known at compile-time.
@@ -20,14 +18,15 @@ public class VarUint64Writer implements ScaleWriter<BigInteger> {
     }
 
     @Override
-    public void write(ScaleCodecWriter scaleCodecWriter, BigInteger bigInteger) throws IOException {
-        byte[] input = bigInteger.toByteArray();
-        byte[] slice = new byte[blockNumSize];
-        System.arraycopy(input, 0, slice, 0, Math.min(input.length, blockNumSize));
-
-        ByteBuffer buffer = ByteBuffer.wrap(slice);
-        buffer.order(ByteOrder.LITTLE_ENDIAN);
-
-        scaleCodecWriter.writeByteArray(slice);
+    public void write(ScaleCodecWriter wrt, BigInteger value) throws IOException {
+        if (value.compareTo(BigInteger.ZERO) < 0) {
+            throw new IllegalArgumentException("Negative values are not supported: " + value);
+        }
+        if (blockNumSize > 0) {
+            wrt.directWrite(value.and(BigInteger.valueOf(255L)).intValue());
+            for (int i = 1; i < blockNumSize; i++) {
+                wrt.directWrite(value.shiftRight(8 * i).and(BigInteger.valueOf(255L)).intValue());
+            }
+        }
     }
 }
