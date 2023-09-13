@@ -35,7 +35,7 @@ class VoteMessageScaleReaderTest {
     @Test
     void decodeEqualsTest() throws IOException {
         ScaleCodecReader reader = new ScaleCodecReader(expectedByteArr);
-        VoteMessage voteMessage = reader.read(new VoteMessageScaleReader());
+        VoteMessage voteMessage = reader.read(VoteMessageScaleReader.getInstance());
 
         assertEquals(expectedVoteMsg, voteMessage);
     }
@@ -43,7 +43,7 @@ class VoteMessageScaleReaderTest {
     @Test
     void encodeEqualsTest() throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        new VoteMessageScaleWriter().write(new ScaleCodecWriter(baos), expectedVoteMsg);
+        VoteMessageScaleWriter.getInstance().write(new ScaleCodecWriter(baos), expectedVoteMsg);
 
         assertArrayEquals(expectedByteArr, baos.toByteArray());
     }

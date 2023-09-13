@@ -125,7 +125,7 @@ public class GrandpaEngine {
 
     private void handleVoteMessage(byte[] message, PeerId peerId) {
         ScaleCodecReader reader = new ScaleCodecReader(message);
-        VoteMessage voteMessage = reader.read(new VoteMessageScaleReader());
+        VoteMessage voteMessage = reader.read(VoteMessageScaleReader.getInstance());
         //todo: handle vote message (authoring node responsibility?)
         log.log(Level.INFO, "Received vote message from Peer " + peerId + "\n" + voteMessage);
     }

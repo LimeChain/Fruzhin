@@ -6,6 +6,20 @@ import io.emeraldpay.polkaj.scale.ScaleReader;
 import io.emeraldpay.polkaj.scale.reader.UInt64Reader;
 
 public class VoteMessageScaleReader implements ScaleReader<VoteMessage> {
+    private static final VoteMessageScaleReader INSTANCE = new VoteMessageScaleReader();
+
+    private final UInt64Reader uint64Reader;
+    private final SignedMessageScaleReader signedMessageScaleReader;
+
+    private VoteMessageScaleReader() {
+        uint64Reader = new UInt64Reader();
+        signedMessageScaleReader = SignedMessageScaleReader.getInstance();
+    }
+
+    public static VoteMessageScaleReader getInstance() {
+        return INSTANCE;
+    }
+
     @Override
     public VoteMessage read(ScaleCodecReader reader) {
         int messageType = reader.readByte();
@@ -15,9 +29,9 @@ public class VoteMessageScaleReader implements ScaleReader<VoteMessage> {
         }
 
         VoteMessage voteMessage = new VoteMessage();
-        voteMessage.setRound(new UInt64Reader().read(reader));
-        voteMessage.setSetId(new UInt64Reader().read(reader));
-        voteMessage.setMessage(new SignedMessageScaleReader().read(reader));
+        voteMessage.setRound(uint64Reader.read(reader));
+        voteMessage.setSetId(uint64Reader.read(reader));
+        voteMessage.setMessage(signedMessageScaleReader.read(reader));
 
         return voteMessage;
     }
