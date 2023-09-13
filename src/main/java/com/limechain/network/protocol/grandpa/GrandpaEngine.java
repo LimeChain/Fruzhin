@@ -126,7 +126,7 @@ public class GrandpaEngine {
     private void handleVoteMessage(byte[] message, PeerId peerId) {
         ScaleCodecReader reader = new ScaleCodecReader(message);
         VoteMessage voteMessage = reader.read(new VoteMessageScaleReader());
-        //todo: handle vote message?
+        //todo: handle vote message (authoring node responsibility?)
         log.log(Level.INFO, "Received vote message from Peer " + peerId + "\n" + voteMessage);
     }
 
@@ -139,14 +139,14 @@ public class GrandpaEngine {
     private void handleCatchupRequestMessage(byte[] message, PeerId peerId) {
         ScaleCodecReader reader = new ScaleCodecReader(message);
         CatchUpReqMessage catchUpReqMessage = reader.read(new CatchUpReqMessageScaleReader());
-        //todo: handle catchup req message?
+        //todo: handle catchup req message (authoring node responsibility)
         log.log(Level.INFO, "Received catch up request message from Peer " + peerId + "\n" + catchUpReqMessage);
     }
 
     private void handleCatchupMessage(byte[] message, PeerId peerId) {
         ScaleCodecReader reader = new ScaleCodecReader(message);
         CatchUpMessage catchUpMessage = reader.read(new CatchUpMessageScaleReader());
-        //todo: handle catchup res message?
+        //todo: handle catchup res message (authoring node responsibility)
         log.log(Level.INFO, "Received catch up message from Peer " + peerId + "\n" + catchUpMessage);
     }
 

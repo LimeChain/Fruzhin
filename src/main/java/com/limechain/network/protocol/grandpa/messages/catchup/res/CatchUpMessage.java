@@ -1,6 +1,5 @@
 package com.limechain.network.protocol.grandpa.messages.catchup.res;
 
-import com.limechain.network.protocol.warp.dto.Precommit;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -14,8 +13,8 @@ import java.math.BigInteger;
 public class CatchUpMessage {
     private BigInteger round;
     private BigInteger setId;
-    private Precommit[] preVotes;
-    private Precommit[] preCommits;
+    private SignedVote[] preVotes;
+    private SignedVote[] preCommits;
     private Hash256 blockHash;
     private BigInteger blockNumber;
 }
