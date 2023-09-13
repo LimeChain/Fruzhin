@@ -16,7 +16,7 @@ public class CommitMessageScaleReader implements ScaleReader<CommitMessage> {
         CommitMessage commitMessage = new CommitMessage();
         commitMessage.setRoundNumber(new UInt64Reader().read(reader));
         commitMessage.setSetId(new UInt64Reader().read(reader));
-        commitMessage.setVote(new VoteScaleReader().read(reader));
+        commitMessage.setVote(VoteScaleReader.getInstance().read(reader));
         commitMessage.setPrecommits(new CompactJustificationScaleReader().read(reader));
         return commitMessage;
     }

@@ -8,6 +8,15 @@ import java.io.IOException;
 
 public class SignedVoteScaleWriter implements ScaleWriter<SignedVote> {
 
+    private static final SignedVoteScaleWriter INSTANCE = new SignedVoteScaleWriter();
+
+    private SignedVoteScaleWriter() {
+    }
+
+    public static SignedVoteScaleWriter getInstance() {
+        return INSTANCE;
+    }
+
     @Override
     public void write(ScaleCodecWriter writer, SignedVote signedVote) throws IOException {
         VoteScaleWriter voteScaleWriter = new VoteScaleWriter();

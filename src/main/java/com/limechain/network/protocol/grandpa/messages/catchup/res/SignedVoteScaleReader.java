@@ -8,10 +8,19 @@ import io.emeraldpay.polkaj.types.Hash512;
 
 public class SignedVoteScaleReader implements ScaleReader<SignedVote> {
 
+    private static final SignedVoteScaleReader INSTANCE = new SignedVoteScaleReader();
+
+    private final VoteScaleReader voteScaleReader;
+    private SignedVoteScaleReader() {
+        voteScaleReader = VoteScaleReader.getInstance();
+    }
+
+    public static SignedVoteScaleReader getInstance() {
+        return INSTANCE;
+    }
+
     @Override
     public SignedVote read(ScaleCodecReader reader) {
-        VoteScaleReader voteScaleReader = new VoteScaleReader();
-
         SignedVote signedVote = new SignedVote();
         signedVote.setVote(voteScaleReader.read(reader));
         signedVote.setSignature(new Hash512(reader.readByteArray(64)));

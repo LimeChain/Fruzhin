@@ -145,7 +145,7 @@ public class GrandpaEngine {
 
     private void handleCatchupResponseMessage(byte[] message, PeerId peerId) {
         ScaleCodecReader reader = new ScaleCodecReader(message);
-        CatchUpMessage catchUpMessage = reader.read(new CatchUpMessageScaleReader());
+        CatchUpMessage catchUpMessage = reader.read(CatchUpMessageScaleReader.getInstance());
         //todo: handle catchup res message (authoring node responsibility)
         log.log(Level.INFO, "Received catch up message from Peer " + peerId + "\n" + catchUpMessage);
     }

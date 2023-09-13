@@ -10,13 +10,27 @@ import java.io.IOException;
 import java.util.Arrays;
 
 public class CatchUpMessageScaleWriter implements ScaleWriter<CatchUpMessage> {
+    private static final CatchUpMessageScaleWriter INSTANCE = new CatchUpMessageScaleWriter();
+    
+    private final UInt64Writer uint64Writer;
+    private final ListWriter<SignedVote> signedVoteListWriter;
+
+    private CatchUpMessageScaleWriter() {
+        uint64Writer = new UInt64Writer();
+        signedVoteListWriter = new ListWriter<>(SignedVoteScaleWriter.getInstance());
+    }
+
+    public static CatchUpMessageScaleWriter getInstance() {
+        return INSTANCE;
+    }
+
     @Override
     public void write(ScaleCodecWriter writer, CatchUpMessage catchUpMessage) throws IOException {
         writer.writeByte(GrandpaMessageType.CATCH_UP_RESPONSE.getType());
-        new UInt64Writer().write(writer, catchUpMessage.getSetId());
-        new UInt64Writer().write(writer, catchUpMessage.getRound());
-        new ListWriter<>(new SignedVoteScaleWriter()).write(writer, Arrays.asList(catchUpMessage.getPreVotes()));
-        new ListWriter<>(new SignedVoteScaleWriter()).write(writer, Arrays.asList(catchUpMessage.getPreCommits()));
+        uint64Writer.write(writer, catchUpMessage.getSetId());
+        uint64Writer.write(writer, catchUpMessage.getRound());
+        signedVoteListWriter.write(writer, Arrays.asList(catchUpMessage.getPreVotes()));
+        signedVoteListWriter.write(writer, Arrays.asList(catchUpMessage.getPreCommits()));
         writer.writeUint256(catchUpMessage.getBlockHash().getBytes());
         writer.writeUint32(catchUpMessage.getBlockNumber().longValue());
     }

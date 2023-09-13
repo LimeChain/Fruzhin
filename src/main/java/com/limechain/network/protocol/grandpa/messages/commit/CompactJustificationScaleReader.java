@@ -10,7 +10,7 @@ public class CompactJustificationScaleReader implements ScaleReader<Precommit[]>
 
     @Override
     public Precommit[] read(ScaleCodecReader reader) {
-        VoteScaleReader voteScaleReader = new VoteScaleReader();
+        VoteScaleReader voteScaleReader = VoteScaleReader.getInstance();
         int precommitsCount = reader.readCompactInt();
         Precommit[] precommits = new Precommit[precommitsCount];
 
