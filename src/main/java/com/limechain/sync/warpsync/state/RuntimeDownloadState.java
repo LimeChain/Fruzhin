@@ -3,14 +3,20 @@ package com.limechain.sync.warpsync.state;
 import com.limechain.sync.warpsync.SyncedState;
 import com.limechain.sync.warpsync.WarpSyncMachine;
 import com.limechain.sync.warpsync.dto.RuntimeCodeException;
+import lombok.AllArgsConstructor;
 import lombok.extern.java.Log;
 
 import java.util.logging.Level;
 
 @Log
+@AllArgsConstructor
 public class RuntimeDownloadState implements WarpSyncState {
-    protected SyncedState syncedState = SyncedState.getInstance();
+    private final SyncedState syncedState;
     private Exception error;
+
+    public RuntimeDownloadState() {
+        this.syncedState = SyncedState.getInstance();
+    }
 
     @Override
     public void next(WarpSyncMachine sync) {

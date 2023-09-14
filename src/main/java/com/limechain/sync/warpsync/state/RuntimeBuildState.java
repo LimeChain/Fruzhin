@@ -2,6 +2,7 @@ package com.limechain.sync.warpsync.state;
 
 import com.limechain.sync.warpsync.SyncedState;
 import com.limechain.sync.warpsync.WarpSyncMachine;
+import lombok.AllArgsConstructor;
 import lombok.extern.java.Log;
 
 import java.util.logging.Level;
@@ -10,8 +11,14 @@ import java.util.logging.Level;
     Creates a runtime instance using the downloaded code
  */
 @Log
+@AllArgsConstructor
 public class RuntimeBuildState implements WarpSyncState {
-    protected SyncedState syncedState = SyncedState.getInstance();
+    private final SyncedState syncedState;
+
+    public RuntimeBuildState() {
+        this.syncedState = SyncedState.getInstance();
+    }
+
     @Override
     public void next(WarpSyncMachine sync) {
         log.log(Level.INFO, "Done with runtime build");
