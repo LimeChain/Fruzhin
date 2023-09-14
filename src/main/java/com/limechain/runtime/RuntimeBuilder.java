@@ -10,7 +10,14 @@ import com.limechain.runtime.hostapi.MiscellaneousHostFunctions;
 import com.limechain.runtime.hostapi.OffchainHostFunctions;
 import com.limechain.runtime.hostapi.StorageHostFunctions;
 import com.limechain.runtime.hostapi.TrieHostFunctions;
+import com.limechain.sync.warpsync.dto.RuntimeCodeException;
+import com.limechain.trie.Trie;
+import com.limechain.trie.TrieVerifier;
+import com.limechain.trie.decoder.TrieDecoderException;
 import com.limechain.utils.ByteArrayUtils;
+import com.limechain.utils.LittleEndianUtils;
+import com.limechain.utils.StringUtils;
+import io.emeraldpay.polkaj.types.Hash256;
 import lombok.extern.java.Log;
 import org.wasmer.ImportObject;
 import org.wasmer.Imports;
@@ -18,15 +25,17 @@ import org.wasmer.Module;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.logging.Level;
 
 @Log
 public class RuntimeBuilder {
     public static final byte[] ZSTD_PREFIX = new byte[]{82, -68, 83, 118, 70, -37, -114, 5};
     public static final int MAX_ZSTD_DECOMPRESSED_SIZE = 50 * 1024 * 1024;
     public static final int DEFAULT_HEAP_PAGES = 2048;
+    private static final byte[] CODE_KEY_BYTES =
+            LittleEndianUtils.convertBytes(StringUtils.hexToBytes(StringUtils.toHex(":code")));
 
-    public static Runtime buildRuntime(byte[] code) {
-
+    public Runtime buildRuntime(byte[] code) {
         byte[] wasmBinary;
         byte[] wasmBinaryPrefix = Arrays.copyOfRange(code, 0, 8);
         if (Arrays.equals(wasmBinaryPrefix, ZSTD_PREFIX)) {
@@ -36,13 +45,13 @@ public class RuntimeBuilder {
 
         Module module = new Module(wasmBinary);
         Runtime runtime = new Runtime(module, DEFAULT_HEAP_PAGES);
-        RuntimeVersion runtimeVersion = getRuntimeVersion(wasmBinary, runtime);
+        RuntimeVersion runtimeVersion = getRuntimeVersion(wasmBinary);
         runtime.setVersion(runtimeVersion);
         HostApi.setRuntime(runtime);
         return runtime;
     }
 
-    private static RuntimeVersion getRuntimeVersion(byte[] wasmBinary, Runtime runtime) {
+    private RuntimeVersion getRuntimeVersion(byte[] wasmBinary) {
         // byte value of \0asm concatenated with 0x1, 0x0, 0x0, 0x0 from smoldot runtime_version.rs#97
         byte[] searchKey = new byte[]{0x00, 0x61, 0x73, 0x6D, 0x1, 0x0, 0x0, 0x0};
 
@@ -70,5 +79,21 @@ public class RuntimeBuilder {
         objects.add(memory);
 
         return Imports.from(objects, module);
+    }
+
+    public byte[] buildRuntimeCode(byte[][] decodedProofs, Hash256 stateRoot) {
+        try {
+            Trie trie = TrieVerifier.buildTrie(decodedProofs, stateRoot.getBytes());
+            var code = trie.get(CODE_KEY_BYTES);
+            if (code == null) {
+                throw new RuntimeCodeException("Couldn't retrieve runtime code from trie");
+            }
+            //TODO Heap pages should be fetched from out storage
+            log.log(Level.INFO, "Runtime and heap pages downloaded");
+            return code;
+
+        } catch (TrieDecoderException e) {
+            throw new RuntimeCodeException("Couldn't build trie from proofs list: " + e.getMessage());
+        }
     }
 }

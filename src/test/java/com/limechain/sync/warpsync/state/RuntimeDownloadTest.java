@@ -95,7 +95,7 @@ class RuntimeDownloadTest {
 
             //Build runtime
             System.out.println("Instantiating module");
-            RuntimeBuilder.buildRuntime(code);
+            new RuntimeBuilder().buildRuntime(code);
 
             log.log(Level.INFO, "Runtime and heap pages downloaded");
         } catch (UnsatisfiedLinkError e) {

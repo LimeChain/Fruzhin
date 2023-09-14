@@ -1,25 +1,22 @@
 package com.limechain.sync.warpsync.state;
 
-import com.limechain.network.protocol.lightclient.pb.LightClientMessage;
 import com.limechain.sync.warpsync.SyncedState;
 import com.limechain.sync.warpsync.WarpSyncMachine;
-import com.limechain.trie.Trie;
-import com.limechain.trie.TrieVerifier;
-import com.limechain.trie.decoder.TrieDecoderException;
-import com.limechain.utils.LittleEndianUtils;
-import com.limechain.utils.StringUtils;
-import io.emeraldpay.polkaj.scale.ScaleCodecReader;
-import io.emeraldpay.polkaj.types.Hash256;
+import com.limechain.sync.warpsync.dto.RuntimeCodeException;
+import lombok.AllArgsConstructor;
 import lombok.extern.java.Log;
 
 import java.util.logging.Level;
 
 @Log
+@AllArgsConstructor
 public class RuntimeDownloadState implements WarpSyncState {
-    private static byte[] codeKey =
-            LittleEndianUtils.convertBytes(StringUtils.hexToBytes(StringUtils.toHex(":code")));
-    private final SyncedState syncedState = SyncedState.getInstance();
+    private final SyncedState syncedState;
     private Exception error;
+
+    public RuntimeDownloadState() {
+        this.syncedState = SyncedState.getInstance();
+    }
 
     @Override
     public void next(WarpSyncMachine sync) {
@@ -34,54 +31,20 @@ public class RuntimeDownloadState implements WarpSyncState {
 
     @Override
     public void handle(WarpSyncMachine sync) {
-        byte[][] merkleProof = syncedState.loadProof();
-        Hash256 stateRoot = syncedState.loadStateRoot();
-        if (merkleProof != null && stateRoot != null) {
-            log.log(Level.INFO, "Loading saved runtime...");
-            setCodeAndHeapPages(merkleProof, stateRoot);
-            return;
-        }
-        log.log(Level.INFO, "Downloading runtime...");
-
-        LightClientMessage.Response response = sync.getNetworkService().makeRemoteReadRequest(
-                syncedState.getLastFinalizedBlockHash().toString(),
-                new String[]{StringUtils.toHex(":code")});
-
-        byte[] proof = response.getRemoteReadResponse().getProof().toByteArray();
-        byte[][] decodedProofs = decodeProof(proof);
-
-        syncedState.saveProofState(decodedProofs);
-
-        setCodeAndHeapPages(decodedProofs, syncedState.getStateRoot());
-    }
-
-    private byte[][] decodeProof(byte[] proof) {
-        ScaleCodecReader reader = new ScaleCodecReader(proof);
-        int size = reader.readCompactInt();
-        byte[][] decodedProofs = new byte[size][];
-
-        for (int i = 0; i < size; ++i) {
-            decodedProofs[i] = reader.readByteArray();
-        }
-        return decodedProofs;
-    }
-
-    private void setCodeAndHeapPages(byte[][] decodedProofs, Hash256 stateRoot) {
-        Trie trie;
         try {
-            trie = TrieVerifier.buildTrie(decodedProofs, stateRoot.getBytes());
-            SyncedState.getInstance().setTrie(trie);
-            var code = trie.get(codeKey);
-            if (code == null) {
-                this.error = new RuntimeException("Couldn't retrieve runtime code from trie");
-            }
-            //TODO Heap pages should be fetched from out storage
-            if (code == null) return;
-            syncedState.setRuntimeCode(code);
-            log.log(Level.INFO, "Runtime and heap pages downloaded");
+            log.log(Level.INFO, "Loading saved runtime...");
+            syncedState.loadSavedRuntimeCode();
+        } catch (RuntimeCodeException e) {
+            handleDownloadRuntime();
+        }
+    }
 
-        } catch (TrieDecoderException e) {
-            this.error = new RuntimeException("Couldn't build trie from proofs list: " + e.getMessage());
+    private void handleDownloadRuntime() {
+        try {
+            log.log(Level.INFO, "Downloading runtime...");
+            syncedState.updateRuntimeCode();
+        } catch (RuntimeCodeException e) {
+            this.error = e;
         }
     }
 }

@@ -67,8 +67,9 @@ public class WarpSyncMachine {
 
     public void start() {
         final Hash256 initStateHash;
+        this.syncedState.setRepository(repository);
+
         if (this.chainService.getGenesis().getLightSyncState() != null) {
-            this.syncedState.setRepository(repository);
             boolean stateLoaded = this.syncedState.loadState();
 
             if (stateLoaded) {
