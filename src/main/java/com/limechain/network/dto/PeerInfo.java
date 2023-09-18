@@ -16,11 +16,13 @@ public class PeerInfo {
     private BigInteger latestBlock = BigInteger.ZERO;
     private final ProtocolStreams blockAnnounceStreams = new ProtocolStreams();
     private final ProtocolStreams grandpaStreams = new ProtocolStreams();
+    private final ProtocolStreams transactionsStreams = new ProtocolStreams();
 
     public ProtocolStreams getProtocolStreams(ProtocolStreamType type) {
         return switch (type) {
             case GRANDPA -> grandpaStreams;
             case BLOCK_ANNOUNCE -> blockAnnounceStreams;
+            case TRANSACTIONS -> transactionsStreams;
         };
     }
 }

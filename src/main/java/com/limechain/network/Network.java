@@ -12,6 +12,7 @@ import com.limechain.network.protocol.lightclient.pb.LightClientMessage;
 import com.limechain.network.protocol.ping.Ping;
 import com.limechain.network.protocol.sync.SyncService;
 import com.limechain.network.protocol.sync.pb.SyncMessage.BlockResponse;
+import com.limechain.network.protocol.transactions.TransactionsService;
 import com.limechain.network.protocol.warp.WarpSyncService;
 import com.limechain.network.protocol.warp.dto.WarpSyncResponse;
 import com.limechain.storage.DBConstants;
@@ -62,6 +63,7 @@ public class Network {
     public KademliaService kademliaService;
     public BlockAnnounceService blockAnnounceService;
     public GrandpaService grandpaService;
+    public TransactionsService transactionsService;
     public Ping ping;
     public PeerId currentSelectedPeer;
     @Getter
@@ -81,7 +83,7 @@ public class Network {
      * @param cliArgs
      */
     public Network(ChainService chainService, HostConfig hostConfig, KVRepository<String, Object> repository,
-                    CliArguments cliArgs) {
+                   CliArguments cliArgs) {
         this.initializeProtocols(chainService, hostConfig, repository, cliArgs);
         this.bootNodes = chainService.getGenesis().getBootNodes();
         this.chain = hostConfig.getChain();
@@ -109,6 +111,7 @@ public class Network {
         String legacySyncProtocolId = ProtocolUtils.getLegacySyncProtocol(chainId);
         String legacyBlockAnnounceProtocolId = ProtocolUtils.getLegacyBlockAnnounceProtocol(chainId);
         String grandpaProtocolId = ProtocolUtils.getGrandpaLegacyProtocol();
+        String transactionsProtocolId = ProtocolUtils.getTransactionsProtocol(chainId);
 
         kademliaService = new KademliaService(legacyKadProtocolId, hostId, isLocalEnabled, clientMode);
         lightMessagesService = new LightMessagesService(legacyLightProtocolId);
@@ -117,6 +120,7 @@ public class Network {
         blockAnnounceService = new BlockAnnounceService(legacyBlockAnnounceProtocolId);
         grandpaService = new GrandpaService(grandpaProtocolId);
         ping = new Ping(pingProtocol, new PingProtocol());
+        transactionsService = new TransactionsService(transactionsProtocolId);
 
         hostBuilder.addProtocols(
                 List.of(
@@ -126,7 +130,8 @@ public class Network {
                         warpSyncService.getProtocol(),
                         syncService.getProtocol(),
                         blockAnnounceService.getProtocol(),
-                        grandpaService.getProtocol()
+                        grandpaService.getProtocol(),
+                        transactionsService.getProtocol()
                 )
         );
 
@@ -167,7 +172,7 @@ public class Network {
         log.log(Level.INFO, "Started network module!");
     }
 
-    public void stop(){
+    public void stop() {
         log.log(Level.INFO, "Stopping network module...");
         started = false;
         connectionManager.removeAllPeers();
@@ -302,5 +307,7 @@ public class Network {
             return;
         }
         connectionManager.getPeerIds().forEach(peerId -> grandpaService.sendNeighbourMessage(this.host, peerId));
+        connectionManager.getPeerIds().forEach(peerId ->
+                transactionsService.sendTransactionsMessage(this.host, peerId));
     }
 }
