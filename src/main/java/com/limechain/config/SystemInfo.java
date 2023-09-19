@@ -54,8 +54,6 @@ public class SystemInfo {
         log.log(Level.INFO, "Local node identity is: " + hostIdentity);
         log.log(Level.INFO, "Operating System: " + System.getProperty("os.name"));
         log.log(Level.INFO, "CPU architecture: " + System.getProperty("os.arch"));
-
-        //TODO Get highest known block from database
         log.log(Level.INFO, "Highest known block at #" + SyncedState.getInstance().getLastFinalizedBlockNumber());
     }
 }
