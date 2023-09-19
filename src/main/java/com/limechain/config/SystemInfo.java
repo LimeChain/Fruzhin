@@ -2,6 +2,7 @@ package com.limechain.config;
 
 import com.limechain.chain.Chain;
 import com.limechain.network.Network;
+import com.limechain.sync.warpsync.SyncedState;
 import lombok.Getter;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Value;
@@ -55,6 +56,6 @@ public class SystemInfo {
         log.log(Level.INFO, "CPU architecture: " + System.getProperty("os.arch"));
 
         //TODO Get highest known block from database
-        log.log(Level.INFO, "Highest known block at #0");
+        log.log(Level.INFO, "Highest known block at #" + SyncedState.getInstance().getLastFinalizedBlockNumber());
     }
 }

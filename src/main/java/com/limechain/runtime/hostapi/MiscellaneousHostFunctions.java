@@ -36,9 +36,9 @@ public class MiscellaneousHostFunctions {
                 HostApi.getImportObject("ext_logging_log_version_1", argv -> {
                     extLoggingLog((Integer) argv.get(0), (Long) argv.get(1), (Long) argv.get(2));
                 }, Arrays.asList(Type.I32, Type.I64, Type.I64)),
-                HostApi.getImportObject("ext_logging_max_level", argv -> {
+                HostApi.getImportObject("ext_logging_max_level_version_1", argv -> {
                     return argv;
-                }, List.of(), Type.I64),
+                }, List.of(), Type.I32),
                 HostApi.getImportObject("ext_panic_handler_abort_on_panic_version_1", argv -> {
                     extPanicHandlerAbortOnPanicVersion1((Long) argv.get(0));
                 }, List.of(Type.I64)));

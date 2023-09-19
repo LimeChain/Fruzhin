@@ -27,7 +27,6 @@ import java.util.concurrent.Executors;
 @Log
 public class WarpSyncMachine {
     private final ChainService chainService;
-    private final KVRepository<String, Object> repository;
     @Getter
     private final Network networkService;
     @Getter
@@ -45,12 +44,16 @@ public class WarpSyncMachine {
     @Getter
     private ChainInformation chainInformation = new ChainInformation();
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private final boolean stateLoaded;
 
     public WarpSyncMachine(Network network, ChainService chainService, KVRepository<String, Object> repository) {
         this.networkService = network;
         this.chainService = chainService;
-        this.repository = repository;
+
+        this.syncedState.setRepository(repository);
         HostApi.setRepository(repository);
+
+        this.stateLoaded = this.syncedState.loadState();
     }
 
     public void nextState() {
@@ -67,19 +70,14 @@ public class WarpSyncMachine {
 
     public void start() {
         final Hash256 initStateHash;
-        this.syncedState.setRepository(repository);
 
-        if (this.chainService.getGenesis().getLightSyncState() != null) {
-            boolean stateLoaded = this.syncedState.loadState();
-
-            if (stateLoaded) {
-                initStateHash = this.syncedState.getLastFinalizedBlockHash();
-            } else {
-                LightSyncState initState = LightSyncState.decode(this.chainService.getGenesis().getLightSyncState());
-                initStateHash = initState.getFinalizedBlockHeader().getParentHash();
-                this.syncedState.setAuthoritySet(initState.getGrandpaAuthoritySet().getCurrentAuthorities());
-                this.syncedState.setSetId(initState.getGrandpaAuthoritySet().getSetId());
-            }
+        if (stateLoaded) {
+            initStateHash = this.syncedState.getLastFinalizedBlockHash();
+        } else if (this.chainService.getGenesis().getLightSyncState() != null) {
+            LightSyncState initState = LightSyncState.decode(this.chainService.getGenesis().getLightSyncState());
+            initStateHash = initState.getFinalizedBlockHeader().getParentHash();
+            this.syncedState.setAuthoritySet(initState.getGrandpaAuthoritySet().getCurrentAuthorities());
+            this.syncedState.setSetId(initState.getGrandpaAuthoritySet().getSetId());
         } else {
             initStateHash = GenesisBlockHash.LOCAL;
         }

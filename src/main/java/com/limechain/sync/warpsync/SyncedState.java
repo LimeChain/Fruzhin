@@ -247,6 +247,9 @@ public class SyncedState {
         } catch (UnsatisfiedLinkError e) {
             log.log(Level.SEVERE, "Error loading wasm module");
             log.log(Level.SEVERE, e.getMessage(), e.getStackTrace());
+        } catch (Exception e) {
+            log.log(Level.SEVERE, "Error building runtime");
+            log.log(Level.SEVERE, e.getMessage(), e.getStackTrace());
         }
     }
 

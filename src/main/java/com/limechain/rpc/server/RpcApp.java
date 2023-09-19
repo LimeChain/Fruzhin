@@ -1,5 +1,6 @@
 package com.limechain.rpc.server;
 
+import com.limechain.config.SystemInfo;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -41,6 +42,7 @@ public class RpcApp {
         SpringApplication app = new SpringApplication(RpcApp.class);
         app.setDefaultProperties(Collections.singletonMap("server.port", serverPort));
         ConfigurableApplicationContext ctx = app.run(cliArgs);
+        ctx.getBean(SystemInfo.class).logSystemInfo();
         this.springCtx = ctx;
     }
 
