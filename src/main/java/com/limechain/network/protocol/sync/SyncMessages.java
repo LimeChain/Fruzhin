@@ -42,7 +42,7 @@ public class SyncMessages extends StrictProtocolBinding<SyncController> {
         SyncController controller = dialPeer(us, peer, addrs);
         try {
             SyncMessage.StateResponse resp = controller.sendStateRequest(StringUtils.remove0xPrefix(blockHash))
-                    .get(30, TimeUnit.SECONDS);
+                    .get(10, TimeUnit.SECONDS);
             log.log(Level.INFO, "Received state sync response " + resp.toString());
             return resp;
         } catch (ExecutionException | InterruptedException | TimeoutException e) {
