@@ -26,7 +26,6 @@ public class SyncProtocol extends ProtocolHandler<SyncController> {
         super(MAX_REQUEST_SIZE, MAX_RESPONSE_SIZE);
     }
 
-    @NotNull
     private static <T extends ProtocolMessageHandler<ByteBuf> & SyncController> CompletableFuture<SyncController>
     onStartStream(Stream stream, T handler) {
         stream.pushHandler(new ProtobufVarint32FrameDecoder());
@@ -39,11 +38,13 @@ public class SyncProtocol extends ProtocolHandler<SyncController> {
     }
 
     @Override
+    @NotNull
     protected CompletableFuture<SyncController> onStartInitiator(@NotNull Stream stream) {
         return onStartStream(stream, new Sender(stream));
     }
 
     @Override
+    @NotNull
     protected CompletableFuture<SyncController> onStartResponder(@NotNull Stream stream) {
         return onStartStream(stream, new Receiver(stream));
     }
@@ -149,15 +150,11 @@ public class SyncProtocol extends ProtocolHandler<SyncController> {
 
         private void handleStateRequest(SyncMessage.StateRequest stateRequest) {
             //Todo: Create state response
-//            SyncMessage.StateResponse stateResponse = SyncMessage.StateResponse.newBuilder().build();
-//            stream.writeAndFlush(stateResponse);
             stream.closeWrite();
         }
 
         private void handleBlockRequest(SyncMessage.BlockRequest blockRequest) {
             //Todo: create block response (must get the block from the storage)
-//            SyncMessage.BlockResponse blockResponse = SyncMessage.BlockResponse.newBuilder().build();
-//            stream.writeAndFlush(blockResponse);
             stream.closeWrite();
         }
     }
