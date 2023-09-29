@@ -3,6 +3,7 @@ package com.limechain.network.protocol.sync;
 import com.google.protobuf.ByteString;
 import com.limechain.network.protocol.sync.pb.SyncMessage;
 import com.limechain.utils.LittleEndianUtils;
+import org.apache.commons.lang3.NotImplementedException;
 
 import java.nio.ByteBuffer;
 import java.util.concurrent.CompletableFuture;
@@ -10,7 +11,9 @@ import java.util.concurrent.CompletableFuture;
 import static java.util.Objects.isNull;
 
 public interface SyncController {
-    CompletableFuture<SyncMessage.BlockResponse> send(SyncMessage.BlockRequest msg);
+    default <T, E> CompletableFuture<E> send(T req, Class<E> resClass){
+        throw new NotImplementedException("Method not implemented!");
+    }
 
     default CompletableFuture<SyncMessage.BlockResponse> sendBlockRequest(Integer fields,
                                                                           String fromHash,
@@ -28,7 +31,16 @@ public interface SyncController {
             syncMessage = syncMessage.setNumber(ByteString.copyFrom(LittleEndianUtils.intTo32LEBytes(fromNumber)));
 
         var builtSyncMessage = syncMessage.build();
-        return send(builtSyncMessage);
+        return send(builtSyncMessage, SyncMessage.BlockResponse.class);
+    }
+
+    default CompletableFuture<SyncMessage.StateResponse> sendStateRequest(String fromHash) {
+        SyncMessage.StateRequest build = SyncMessage.StateRequest
+                .newBuilder()
+                .setBlock(ByteString.copyFrom(fromHash.getBytes()))
+                .build();
+
+        return send(build, SyncMessage.StateResponse.class);
     }
 
 }
