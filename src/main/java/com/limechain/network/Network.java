@@ -69,6 +69,9 @@ public class Network {
     private WarpSyncService warpSyncService;
     private boolean started = false;
 
+    private boolean loadedProtocols = false;
+    private int bootPeerIndex = 0;
+
     /**
      * Initializes a host for the peer connection,
      * Initializes the Kademlia service
@@ -81,7 +84,7 @@ public class Network {
      * @param cliArgs
      */
     public Network(ChainService chainService, HostConfig hostConfig, KVRepository<String, Object> repository,
-                    CliArguments cliArgs) {
+                   CliArguments cliArgs) {
         this.initializeProtocols(chainService, hostConfig, repository, cliArgs);
         this.bootNodes = chainService.getGenesis().getBootNodes();
         this.chain = hostConfig.getChain();
@@ -123,10 +126,7 @@ public class Network {
                         ping,
                         kademliaService.getProtocol(),
                         lightMessagesService.getProtocol(),
-                        warpSyncService.getProtocol(),
-                        syncService.getProtocol(),
-                        blockAnnounceService.getProtocol(),
-                        grandpaService.getProtocol()
+                        warpSyncService.getProtocol()
                 )
         );
 
@@ -167,7 +167,7 @@ public class Network {
         log.log(Level.INFO, "Started network module!");
     }
 
-    public void stop(){
+    public void stop() {
         log.log(Level.INFO, "Stopping network module...");
         started = false;
         connectionManager.removeAllPeers();
@@ -246,6 +246,14 @@ public class Network {
                 .skip(random.nextInt(connectionManager.getPeerIds().size())).findAny().orElse(null);
     }
 
+    public boolean updateCurrentSelectedPeerWithBootnode() {
+        this.currentSelectedPeer = this.kademliaService.getBootNodePeerIds().get(bootPeerIndex);
+        if (bootPeerIndex > kademliaService.getBootNodePeerIds().size())
+            return false;
+        else bootPeerIndex++;
+        return true;
+    }
+
     public BlockResponse syncBlock(PeerId peerId, BigInteger lastBlockNumber) {
         this.currentSelectedPeer = peerId;
         // TODO: fields, hash, direction and maxBlocks values not verified
@@ -263,24 +271,21 @@ public class Network {
 
     public WarpSyncResponse makeWarpSyncRequest(String blockHash) {
         if (isPeerInvalid()) return null;
-
         return this.warpSyncService.getProtocol().warpSyncRequest(
                 this.host,
                 this.host.getAddressBook(),
-                this.currentSelectedPeer,
+                currentSelectedPeer,
                 blockHash);
     }
 
     public LightClientMessage.Response makeRemoteReadRequest(String blockHash, String[] keys) {
         if (isPeerInvalid()) return null;
-
         return this.lightMessagesService.getProtocol().remoteReadRequest(
                 this.host,
                 this.host.getAddressBook(),
-                this.currentSelectedPeer,
+                currentSelectedPeer,
                 blockHash,
                 keys);
-
     }
 
     private boolean isPeerInvalid() {
@@ -300,6 +305,25 @@ public class Network {
     public void sendNeighbourMessages() {
         if (!SyncedState.getInstance().isWarpSyncFinished()) {
             return;
+        }
+        if (loadedProtocols == false) {
+            kademliaService.getHost().removeProtocolHandler(
+                    kademliaService.getProtocol()
+            );
+            kademliaService.getHost().addProtocolHandler(
+                    syncService.getProtocol()
+            );
+            kademliaService.getHost().addProtocolHandler(
+                    blockAnnounceService.getProtocol()
+            );
+            kademliaService.getHost().addProtocolHandler(
+                    grandpaService.getProtocol()
+            );
+            kademliaService.getHost().addProtocolHandler(
+                    kademliaService.getProtocol()
+            );
+            kademliaService.connectBootNodes(this.bootNodes);
+            loadedProtocols = true;
         }
         connectionManager.getPeerIds().forEach(peerId -> grandpaService.sendNeighbourMessage(this.host, peerId));
     }

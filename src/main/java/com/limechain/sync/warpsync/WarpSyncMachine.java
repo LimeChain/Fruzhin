@@ -51,6 +51,7 @@ public class WarpSyncMachine {
         this.chainService = chainService;
 
         this.syncedState.setRepository(repository);
+        this.syncedState.setNetwork(network);
         HostApi.setRepository(repository);
 
         this.stateLoaded = this.syncedState.loadState();
@@ -81,7 +82,7 @@ public class WarpSyncMachine {
         } else {
             initStateHash = GenesisBlockHash.LOCAL;
         }
-
+        networkService.updateCurrentSelectedPeerWithBootnode();
         // Always start with requesting fragments
         this.warpSyncState = new RequestFragmentsState(initStateHash);
 
