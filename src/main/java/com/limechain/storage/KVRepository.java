@@ -37,11 +37,11 @@ public interface KVRepository<K, V> {
     boolean delete(K key);
 
     /**
-     * Deletes a key-value pair from the DB for the n(limit) key starting with prefix
+     * Deletes key-value pairs from the DB where key starts with prefix, up to a given limit.
      *
      * @param prefix prefix for the key of the pair
      * @param limit maximum entries to delete
-     * @return whether the delete operation was successful
+     * @return how many entries were deleted and if all were deleted
      */
     DeleteByPrefixResult deleteByPrefix(String prefix,@Nullable Long limit);
 
