@@ -9,7 +9,7 @@ import org.wasmer.Type;
 
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
@@ -37,7 +37,7 @@ public class HostApi {
         return new ImportObject.FuncImport("env", functionName, argv -> {
             System.out.printf("Message printed in the body of '%s%n'", functionName);
             return function.apply(argv);
-        }, args, Arrays.asList(retType));
+        }, args, Collections.singletonList(retType));
     }
 
     protected static ImportObject getImportObject(final String functionName,
@@ -93,5 +93,26 @@ public class HostApi {
             buffer = null;
         }
         return buffer != null ? buffer : memory.buffer();
+    }
+
+    public byte[] getDataFromMemory(RuntimePointerSize runtimePointerSize) {
+        Memory memory = getMemory();
+        byte[] data = new byte[runtimePointerSize.size()];
+        memory.buffer().get(runtimePointerSize.pointer(), data, 0, runtimePointerSize.size());
+        return data;
+    }
+
+    public RuntimePointerSize addDataToMemory(byte[] data) {
+        Memory memory = getMemory();
+        ByteBuffer buffer = getByteBuffer(memory);
+        int position = buffer.position();
+        buffer.put(position, data, 0, data.length);
+        buffer.position(position + data.length);
+
+        return new RuntimePointerSize(position, data.length);
+    }
+
+    public void putDataToMemoryBuffer(RuntimePointerSize runtimePointerSize, byte[] data) {
+        //TODO: implement
     }
 }
