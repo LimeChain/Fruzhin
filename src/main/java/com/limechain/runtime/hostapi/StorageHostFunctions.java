@@ -217,15 +217,15 @@ public class StorageHostFunctions {
             return;
         }
 
-        int sequenceLength;
+        int numberOfItems;
         try {
-            sequenceLength = new ScaleCodecReader(sequence).readCompactInt();
+            numberOfItems = new ScaleCodecReader(sequence).readCompactInt();
         } catch (IndexOutOfBoundsException e) {
             repository.save(key, valueToAppend);
             return;
         }
 
-        int sequenceLengthBytesLength = switch (CompactMode.forNumber(sequenceLength)) {
+        int numberOfScaleLengthBytes = switch (CompactMode.forNumber(numberOfItems)) {
             case SINGLE -> 1;
             case TWO -> 2;
             default -> 4;
@@ -233,8 +233,8 @@ public class StorageHostFunctions {
 
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
         try (ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
-            writer.writeCompact(sequenceLength + 1);
-            writer.writeByteArray(Arrays.copyOfRange(sequence, sequenceLengthBytesLength, sequence.length));
+            writer.writeCompact(numberOfItems + 1);
+            writer.writeByteArray(Arrays.copyOfRange(sequence, numberOfScaleLengthBytes, sequence.length));
             writer.writeByteArray(valueToAppend);
         } catch (IOException e) {
             throw new RuntimeException(e);
