@@ -105,6 +105,23 @@ public class DBRepository implements KVRepository<String, Object> {
     }
 
     @Override
+    public synchronized List<String> findKeysByPrefix(String prefixSeek, int limit) {
+        String prefix = new String(getPrefixedKey(prefixSeek));
+        List<String> foundKeys = new ArrayList<>();
+
+        final RocksIterator iterator = db.newIterator();
+        for (iterator.seek(prefix.getBytes()); iterator.isValid() && foundKeys.size() < limit; iterator.next()) {
+            String key = new String(iterator.key());
+
+            if (key.startsWith(prefix)) {
+                foundKeys.add(removePrefixFromKey(key));
+            }
+        }
+
+        return foundKeys;
+    }
+
+    @Override
     public synchronized boolean delete(String key) {
         log.log(Level.INFO, String.format("deleting key '%s'", key));
         try {
@@ -179,6 +196,9 @@ public class DBRepository implements KVRepository<String, Object> {
 
     private byte[] getPrefixedKey(String key) {
         return chainPrefix.concat(key).getBytes();
+    }
+    public String removePrefixFromKey(String key) {
+        return key.substring(chainPrefix.length());
     }
 
     public synchronized void closeConnection() {
