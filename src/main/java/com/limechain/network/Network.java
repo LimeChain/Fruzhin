@@ -153,7 +153,7 @@ public class Network {
             privateKey = Ed25519Utils.loadPrivateKey((byte[]) peerIdKeyBytes.get());
             log.log(Level.INFO, "PeerId loaded from database!");
         } else {
-            privateKey = Ed25519Utils.generatePrivateKey();
+            privateKey = Ed25519Utils.generateKeyPair();
             repository.save(DBConstants.PEER_ID, privateKey.raw());
             log.log(Level.INFO, "Generated new peerId!");
         }

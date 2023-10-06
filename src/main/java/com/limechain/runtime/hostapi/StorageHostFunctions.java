@@ -1,5 +1,6 @@
 package com.limechain.runtime.hostapi;
 
+import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import com.limechain.storage.DBConstants;
 import com.limechain.storage.DeleteByPrefixResult;
 import com.limechain.storage.KVRepository;
@@ -15,7 +16,6 @@ import org.wasmer.Type;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -29,7 +29,7 @@ public class StorageHostFunctions {
     private final KVRepository<String, Object> repository;
 
     public StorageHostFunctions() {
-        this.hostApi = new HostApi();
+        this.hostApi = HostApi.getInstance();
         this.repository = SyncedState.getInstance().getRepository();
     }
 
@@ -40,52 +40,50 @@ public class StorageHostFunctions {
     public List<ImportObject> buildFunctions() {
         return Arrays.asList(
                 HostApi.getImportObject("ext_storage_set_version_1", argv ->
-                        extStorageSetVersion1(new RuntimePointerSize(argv.get(0)), new RuntimePointerSize(argv.get(1))),
+                                extStorageSetVersion1(new RuntimePointerSize(argv.get(0)), new RuntimePointerSize(argv.get(1))),
                         List.of(Type.I64, Type.I64)),
                 HostApi.getImportObject("ext_storage_get_version_1", argv ->
-                        List.of(extStorageGetVersion1(new RuntimePointerSize(argv.get(0))).pointerSize()),
+                                extStorageGetVersion1(new RuntimePointerSize(argv.get(0))).pointerSize(),
                         List.of(Type.I64), Type.I64),
                 HostApi.getImportObject("ext_storage_read_version_1", argv ->
-                        List.of(extStorageReadVersion1(
-                                new RuntimePointerSize(argv.get(0)), new RuntimePointerSize(argv.get(1)),
-                                argv.get(2).intValue()).pointerSize()
-                        ), List.of(Type.I64, Type.I64, Type.I32), Type.I64),
+                                extStorageReadVersion1(
+                                        new RuntimePointerSize(argv.get(0)), new RuntimePointerSize(argv.get(1)),
+                                        argv.get(2).intValue()).pointerSize(),
+                        List.of(Type.I64, Type.I64, Type.I32), Type.I64),
                 HostApi.getImportObject("ext_storage_clear_version_1", argv ->
-                        extStorageClearVersion1(new RuntimePointerSize(argv.get(0))), 
+                        extStorageClearVersion1(new RuntimePointerSize(argv.get(0))),
                         List.of(Type.I64)),
                 HostApi.getImportObject("ext_storage_exists_version_1", argv ->
-                        List.of(extStorageExistsVersion1(new RuntimePointerSize(argv.get(0)))), 
+                        extStorageExistsVersion1(new RuntimePointerSize(argv.get(0))),
                         List.of(Type.I64), Type.I32),
                 HostApi.getImportObject("ext_storage_clear_prefix_version_1", argv ->
-                        extStorageClearPrefixVersion1(new RuntimePointerSize(argv.get(0))), 
+                        extStorageClearPrefixVersion1(new RuntimePointerSize(argv.get(0))),
                         List.of(Type.I64)),
                 HostApi.getImportObject("ext_storage_clear_prefix_version_2", argv ->
-                        List.of(extStorageClearPrefixVersion2(
+                        extStorageClearPrefixVersion2(
                                 new RuntimePointerSize(argv.get(0)), new RuntimePointerSize(argv.get(1))).pointerSize()
-                        ), List.of(Type.I64, Type.I64), Type.I64),
+                        , List.of(Type.I64, Type.I64), Type.I64),
                 HostApi.getImportObject("ext_storage_append_version_1", argv ->
                         extStorageAppendVersion1(
                                 new RuntimePointerSize(argv.get(0)), new RuntimePointerSize(argv.get(1))
                         ), List.of(Type.I64, Type.I64)),
                 HostApi.getImportObject("ext_storage_root_version_1", argv ->
-                        Collections.singletonList(extStorageRootVersion1().pointerSize()),
+                                extStorageRootVersion1().pointerSize(),
                         HostApi.EMPTY_LIST_OF_TYPES, Type.I64),
                 HostApi.getImportObject("ext_storage_root_version_2", argv ->
-                        Collections.singletonList(extStorageRootVersion2(argv.get(0).intValue()).pointerSize()),
+                                extStorageRootVersion2(argv.get(0).intValue()).pointerSize(),
                         List.of(Type.I32), Type.I64),
                 HostApi.getImportObject("ext_storage_changes_root_version_1", argv ->
-                        Collections.singletonList(
                                 extStorageChangesRootVersion1(new RuntimePointerSize(argv.get(0))).pointerSize()
-                        ), List.of(Type.I64), Type.I64),
+                        , List.of(Type.I64), Type.I64),
                 HostApi.getImportObject("ext_storage_next_key_version_1", argv ->
-                        Collections.singletonList(
-                                extStorageNextKeyVersion1(new RuntimePointerSize(argv.get(0))).pointerSize()
-                        ), List.of(Type.I64), Type.I64),
-                HostApi.getImportObject("ext_storage_start_transaction_version_1", argv -> 
+                                extStorageNextKeyVersion1(new RuntimePointerSize(argv.get(0))).pointerSize(),
+                        List.of(Type.I64), Type.I64),
+                HostApi.getImportObject("ext_storage_start_transaction_version_1", argv ->
                         extStorageStartTransactionVersion1(), HostApi.EMPTY_LIST_OF_TYPES),
                 HostApi.getImportObject("ext_storage_rollback_transaction_version_1", argv ->
                         extStorageRollbackTransactionVersion1(), HostApi.EMPTY_LIST_OF_TYPES),
-                HostApi.getImportObject("ext_storage_commit_transaction_version_1", argv -> 
+                HostApi.getImportObject("ext_storage_commit_transaction_version_1", argv ->
                         extStorageCommitTransactionVersion1(), HostApi.EMPTY_LIST_OF_TYPES));
     }
 

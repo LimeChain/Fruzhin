@@ -1,6 +1,7 @@
 package com.limechain.runtime.hostapi;
 
 import com.limechain.runtime.Runtime;
+import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import com.limechain.storage.KVRepository;
 import lombok.extern.java.Log;
 import org.wasmer.ImportObject;
@@ -12,7 +13,7 @@ import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.function.UnaryOperator;
+import java.util.function.Function;
 import java.util.logging.Level;
 
 /**
@@ -22,21 +23,29 @@ import java.util.logging.Level;
 @Log
 public class HostApi {
 
+    private static final HostApi INSTANCE = new HostApi();
+
+    private HostApi() {
+        //Singleton
+    }
+
+    public static HostApi getInstance() {
+        return INSTANCE;
+    }
+
     protected static final List<Number> EMPTY_LIST_OF_NUMBER = List.of();
     protected static final List<Type> EMPTY_LIST_OF_TYPES = List.of();
 
-    protected static final String KEY_TO_IGNORE = ":child_storage:default:";
-
-    protected static KVRepository<String, Object> repository;
-    protected static Runtime runtime;
+    protected KVRepository<String, Object> repository;
+    protected Runtime runtime;
 
     protected static ImportObject getImportObject(final String functionName,
-                                                  final UnaryOperator<List<Number>> function,
+                                                  final Function<List<Number>, Number> function,
                                                   final List<Type> args,
                                                   final Type retType) {
         return new ImportObject.FuncImport("env", functionName, argv -> {
             System.out.printf("Message printed in the body of '%s%n'", functionName);
-            return function.apply(argv);
+            return Collections.singletonList(function.apply(argv));
         }, args, Collections.singletonList(retType));
     }
 
@@ -50,36 +59,17 @@ public class HostApi {
         }, args, EMPTY_LIST_OF_TYPES);
     }
 
-    public static byte[] getDataFromMemory(long pointer) {
-        int ptr = (int) pointer;
-        int ptrLength = (int) (pointer >> 32);
-        byte[] data = new byte[ptrLength];
 
-        Memory memory = getMemory();
-        memory.buffer().get(ptr, data, 0, ptrLength);
-        return data;
-    }
-
-    public static int putDataToMemory(byte[] data) {
-        Memory memory = getMemory();
-        ByteBuffer buffer = getByteBuffer(memory);
-        int position = buffer.position();
-        buffer.put(position, data, 0, data.length);
-        buffer.position(position + data.length);
-
-        return position;
-    }
-
-    protected static Memory getMemory() {
+    protected Memory getMemory() {
         return runtime.getInstance().exports.getMemory("memory");
     }
 
-    public static void setRuntime(Runtime runtime) {
-        HostApi.runtime = runtime;
+    public void setRuntime(Runtime runtime) {
+        this.runtime = runtime;
     }
 
-    public static void setRepository(KVRepository<String, Object> repository) {
-        HostApi.repository = repository;
+    public void setRepository(KVRepository<String, Object> repository) {
+        this.repository = repository;
     }
 
     protected static ByteBuffer getByteBuffer(Memory memory) {
@@ -95,10 +85,15 @@ public class HostApi {
         return buffer != null ? buffer : memory.buffer();
     }
 
-    public byte[] getDataFromMemory(RuntimePointerSize runtimePointerSize) {
+    public byte[] getDataFromMemory(final RuntimePointerSize runtimePointerSize) {
+        return getDataFromMemory(runtimePointerSize.pointer(), runtimePointerSize.size());
+    }
+
+    public byte[] getDataFromMemory(int pointer, int length) {
+        byte[] data = new byte[length];
+
         Memory memory = getMemory();
-        byte[] data = new byte[runtimePointerSize.size()];
-        memory.buffer().get(runtimePointerSize.pointer(), data, 0, runtimePointerSize.size());
+        memory.buffer().get(pointer, data, 0, length);
         return data;
     }
 
@@ -110,6 +105,15 @@ public class HostApi {
         buffer.position(position + data.length);
 
         return new RuntimePointerSize(position, data.length);
+    }
+
+    public int putDataToMemory(byte[] data) {
+        ByteBuffer buffer = getByteBuffer(getMemory());
+        int position = buffer.position();
+        buffer.put(position, data, 0, data.length);
+        buffer.position(position + data.length);
+
+        return position;
     }
 
     public void putDataToMemoryBuffer(RuntimePointerSize runtimePointerSize, byte[] data) {

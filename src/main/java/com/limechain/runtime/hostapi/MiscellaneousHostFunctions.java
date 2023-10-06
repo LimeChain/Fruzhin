@@ -1,6 +1,6 @@
 package com.limechain.runtime.hostapi;
 
-import lombok.experimental.UtilityClass;
+import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import lombok.extern.java.Log;
 import org.apache.tomcat.util.buf.HexUtils;
 import org.wasmer.ImportObject;
@@ -15,11 +15,19 @@ import java.util.logging.Level;
  * For more info check
  * {<a href="https://spec.polkadot.network/chap-host-api#sect-misc-api">Miscellaneous API</a>}
  */
-@UtilityClass
 @Log
 public class MiscellaneousHostFunctions {
 
+    private final HostApi hostApi;
+
+    private MiscellaneousHostFunctions(){
+        this.hostApi = HostApi.getInstance();
+    }
+
     public static List<ImportObject> getFunctions() {
+        return new MiscellaneousHostFunctions().buildFunctions();
+    }
+    public List<ImportObject> buildFunctions() {
         return Arrays.asList(
                 HostApi.getImportObject("ext_misc_print_num_version_1", argv -> {
 
@@ -31,33 +39,33 @@ public class MiscellaneousHostFunctions {
                     extMiscPrintHex((long) argv.get(0));
                 }, List.of(Type.I64)),
                 HostApi.getImportObject("ext_misc_runtime_version_version_1", argv -> {
-                    return argv;
+                    return 0;
                 }, List.of(Type.I64), Type.I64),
                 HostApi.getImportObject("ext_logging_log_version_1", argv -> {
                     extLoggingLog((Integer) argv.get(0), (Long) argv.get(1), (Long) argv.get(2));
                 }, Arrays.asList(Type.I32, Type.I64, Type.I64)),
                 HostApi.getImportObject("ext_logging_max_level_version_1", argv -> {
-                    return argv;
+                    return 0;
                 }, List.of(), Type.I32),
                 HostApi.getImportObject("ext_panic_handler_abort_on_panic_version_1", argv -> {
                     extPanicHandlerAbortOnPanicVersion1((Long) argv.get(0));
                 }, List.of(Type.I64)));
     }
 
-    private static void extMiscPrintHex(long pointer) {
-        byte[] data = HostApi.getDataFromMemory(pointer);
+    private void extMiscPrintHex(long pointer) {
+        byte[] data = hostApi.getDataFromMemory(new RuntimePointerSize(pointer));
         log.info(HexUtils.toHexString(data));
     }
 
-    private static void extLoggingLog(int level, long targetPtr, long messagePtr) {
-        byte[] target = HostApi.getDataFromMemory(targetPtr);
-        byte[] message = HostApi.getDataFromMemory(messagePtr);
+    private void extLoggingLog(int level, long targetPtr, long messagePtr) {
+        byte[] target = hostApi.getDataFromMemory(new RuntimePointerSize(targetPtr));
+        byte[] message = hostApi.getDataFromMemory(new RuntimePointerSize(messagePtr));
 
         log.log(getLogLevel(level), new String(target) + ": " + new String(message));
     }
 
-    private static void extPanicHandlerAbortOnPanicVersion1(long messagePtr) {
-        byte[] data = HostApi.getDataFromMemory(messagePtr);
+    private void extPanicHandlerAbortOnPanicVersion1(long messagePtr) {
+        byte[] data = hostApi.getDataFromMemory(new RuntimePointerSize(messagePtr));
         log.severe(String.valueOf(data));
     }
 

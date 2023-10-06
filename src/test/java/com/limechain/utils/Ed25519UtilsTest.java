@@ -16,7 +16,7 @@ class Ed25519UtilsTest {
 
     @Test
     void generatesPrivateKey() {
-        Ed25519PrivateKey ed25519PrivateKey = Ed25519Utils.generatePrivateKey();
+        Ed25519PrivateKey ed25519PrivateKey = Ed25519Utils.generateKeyPair();
         PeerId peerId = PeerId.fromPubKey(ed25519PrivateKey.publicKey());
 
         assertNotNull(ed25519PrivateKey);

@@ -1,6 +1,7 @@
 package com.limechain.runtime.hostapi;
 
 import com.google.common.primitives.Bytes;
+import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import com.limechain.storage.DeleteByPrefixResult;
 import com.limechain.storage.KVRepository;
 import org.junit.jupiter.api.Test;

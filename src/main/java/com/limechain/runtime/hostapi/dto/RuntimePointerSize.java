@@ -1,4 +1,4 @@
-package com.limechain.runtime.hostapi;
+package com.limechain.runtime.hostapi.dto;
 
 /**
  * The Runtime pointer-size type is an unsigned 64-bit integer representing two consecutive integers.
