@@ -31,7 +31,7 @@ public class DBRepository implements KVRepository<String, Object> {
      * Connection to the DB
      */
     private RocksDB db;
-    private String chainPrefix;
+    private final String chainPrefix;
 
     public DBRepository(String path, String chain, boolean dbRecreate) {
         RocksDB.loadLibrary();
@@ -73,7 +73,7 @@ public class DBRepository implements KVRepository<String, Object> {
 
     @Override
     public synchronized boolean save(String key, Object value) {
-        log.log(Level.INFO, String.format("saving value '%s' with key '%s'", value, key));
+        log.log(Level.FINE, String.format("saving value '%s' with key '%s'", value, key));
         try {
             db.put(getPrefixedKey(key), SerializationUtils.serialize(value));
         } catch (RocksDBException e) {
@@ -101,7 +101,7 @@ public class DBRepository implements KVRepository<String, Object> {
             );
         }
         log.log(Level.INFO, String.format("finding key '%s' returns '%s'", key, value));
-        return value != null ? Optional.of(value) : Optional.empty();
+        return Optional.ofNullable(value);
     }
 
     @Override
@@ -118,33 +118,66 @@ public class DBRepository implements KVRepository<String, Object> {
     }
 
     @Override
-    public synchronized int deletePrefix(String prefixSeek, int limit) {
-        log.log(Level.INFO, String.format("deleting %d keys with prefix '%s'", limit, prefixSeek));
-        try {
-            String prefix = new String(getPrefixedKey(prefixSeek));
-            List<String> keysToDelete = new ArrayList<>();
+    public synchronized DeleteByPrefixResult deleteByPrefix(String prefix, Long limit) {
+        log.log(Level.INFO, String.format("deleting %s keys with prefix '%s'", limit == null ? "all" : limit, prefix));
+        List<byte[]> keysToDelete = findByPrefix(prefix, limit);
 
-            RocksIterator rocksIterator = db.newIterator();
-            for (rocksIterator.seek(prefix.getBytes()); rocksIterator.isValid(); rocksIterator.next()){
-                String key = new String(rocksIterator.key());
-
-                if(key.startsWith(prefix) && keysToDelete.size() < limit){
-                    keysToDelete.add(key);
-                }
+        keysToDelete.forEach(key -> {
+            try {
+                db.delete(key);
+            } catch (RocksDBException e) {
+                log.log(Level.SEVERE, String.format("Error deleting entry, cause: '%s', message: '%s'",
+                                e.getCause(), e.getMessage()));
             }
+        });
 
-            for (String keyToDelete : keysToDelete) {
-                db.delete(keyToDelete.getBytes());
-            }
-            return keysToDelete.size();
-        } catch (RocksDBException e) {
-            log.log(Level.SEVERE,
-                    String.format("Error deleting entry, cause: '%s', message: '%s'", e.getCause(), e.getMessage()));
-            return -1;
-        }
+        boolean allDeleted = findByPrefix(prefix, 1L).isEmpty();
+
+        return new DeleteByPrefixResult(keysToDelete.size(), allDeleted);
     }
 
-    public byte[] getPrefixedKey(String key) {
+    private List<byte[]> findByPrefix(String prefix, Long limit) {
+        String prefixedKey = new String(getPrefixedKey(prefix));
+
+        List<byte[]> values = new ArrayList<>();
+        RocksIterator rocksIterator = db.newIterator();
+        rocksIterator.seek(prefixedKey.getBytes());
+        while (rocksIterator.isValid() && (limit == null || limit < values.size())) {
+            values.add(rocksIterator.key());
+            rocksIterator.next();
+            rocksIterator.seek(prefixedKey.getBytes());
+        }
+        rocksIterator.close();
+
+        return values;
+    }
+
+    @Override
+    public synchronized Optional<String> getNextKey(String key) {
+        RocksIterator iterator = db.newIterator();
+        iterator.seek(getPrefixedKey(key));
+        iterator.next();
+        String nextKey = iterator.isValid() ? new String(iterator.key()) : null;
+        iterator.close();
+        return Optional.ofNullable(nextKey);
+    }
+
+    @Override
+    public void startTransaction() {
+        //TODO: implement
+    }
+
+    @Override
+    public void rollbackTransaction() {
+        //TODO: implement
+    }
+
+    @Override
+    public void commitTransaction() {
+        //TODO: implement
+    }
+
+    private byte[] getPrefixedKey(String key) {
         return chainPrefix.concat(key).getBytes();
     }
 

@@ -1,5 +1,7 @@
 package com.limechain.storage;
 
+import org.springframework.lang.Nullable;
+
 import java.util.Optional;
 
 /**
@@ -35,13 +37,36 @@ public interface KVRepository<K, V> {
     boolean delete(K key);
 
     /**
-     * Deletes a key-value pair from the DB for the n(limit) key starting with prefix
+     * Deletes key-value pairs from the DB where key starts with prefix, up to a given limit.
      *
-     * @param prefixSeek prefix for the key of the pair
+     * @param prefix prefix for the key of the pair
      * @param limit maximum entries to delete
-     * @return whether the delete operation was successful
+     * @return how many entries were deleted and if all were deleted
      */
-    int deletePrefix(String prefixSeek, int limit);
+    DeleteByPrefixResult deleteByPrefix(String prefix, @Nullable Long limit);
+
+    /**
+     * Tries to find the next key after a given key in the DB
+     *
+     * @param key the key to search for
+     * @return Optional result that could contain the value
+     */
+    Optional<K> getNextKey(String key);
+
+    /**
+     * Starts a DB transaction, that can later be committed or rolled back
+     */
+    void startTransaction();
+
+    /**
+     * Rollbacks an active DB transaction, discarding changes.
+     */
+    void rollbackTransaction();
+
+    /**
+     * Commits an active DB transaction, persisting changes.
+     */
+    void commitTransaction();
 
     /**
      * Closes the connection to the DB
