@@ -43,7 +43,7 @@ public interface KVRepository<K, V> {
      * @param limit maximum entries to delete
      * @return how many entries were deleted and if all were deleted
      */
-    DeleteByPrefixResult deleteByPrefix(String prefix,@Nullable Long limit);
+    DeleteByPrefixResult deleteByPrefix(String prefix, @Nullable Long limit);
 
     /**
      * Tries to find the next key after a given key in the DB
