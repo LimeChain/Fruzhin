@@ -9,10 +9,15 @@ import java.security.SecureRandom;
 @UtilityClass
 public class Ed25519Utils {
 
-    public static Ed25519PrivateKey generatePrivateKey(){
+    public static Ed25519PrivateKey generateKeyPair(){
         final Ed25519PrivateKeyParameters parameters = new Ed25519PrivateKeyParameters(new SecureRandom());
 
         return new Ed25519PrivateKey(parameters);
+    }
+
+    public static Ed25519PrivateKey generateKeyPair(byte[] seed) {
+//        TODO: Implement it the correct way
+        return new Ed25519PrivateKey(new Ed25519PrivateKeyParameters(new SecureRandom(seed)));
     }
 
     public static Ed25519PrivateKey loadPrivateKey(final byte[] keyData){
