@@ -3,6 +3,7 @@ package com.limechain.utils;
 import com.limechain.runtime.hostapi.dto.VerifySignature;
 import io.emeraldpay.polkaj.schnorrkel.Schnorrkel;
 import io.emeraldpay.polkaj.schnorrkel.SchnorrkelException;
+import org.web3j.crypto.MnemonicUtils;
 
 public class Sr25519Utils {
 
@@ -17,10 +18,13 @@ public class Sr25519Utils {
         return keyPair;
     }
 
-    public static Schnorrkel.KeyPair generateKeyPair(byte[] seed) {
+    public static Schnorrkel.KeyPair generateKeyPair(final String mnemonic) {
+        byte[] seed = MnemonicUtils.generateSeed(mnemonic, "");
+        byte[] secret = new byte[32];
+        System.arraycopy(seed, 0, secret, 0, 32);
         final Schnorrkel.KeyPair rootKey;
         try {
-            rootKey = Schnorrkel.getInstance().generateKeyPairFromSeed(seed);
+            rootKey = Schnorrkel.getInstance().generateKeyPairFromSeed(secret);
         } catch (SchnorrkelException e) {
             throw new RuntimeException(e);
         }

@@ -251,7 +251,7 @@ public class CryptoHostFunctions {
         final Schnorrkel.KeyPair keyPair;
 
         if (seedString.isPresent()) {
-            keyPair = Sr25519Utils.generateKeyPair(HexUtils.fromHexString(seedString.get()));
+            keyPair = Sr25519Utils.generateKeyPair(seedString.get());
         } else {
             keyPair = Sr25519Utils.generateKeyPair();
         }
@@ -408,7 +408,7 @@ public class CryptoHostFunctions {
     }
 
     private int secp256k1EcdsaRecoverCompressedV1(int signature, int message) {
-        EcdsaPublicKey ecdsaPublicKey = internalSecp256k1RecoverKey(signature, message);
+        PubKey ecdsaPublicKey = internalSecp256k1RecoverKey(signature, message);
         byte[] rawBytes = ecdsaPublicKey.raw();
         return secp2561kScaleKeyResult(rawBytes);
     }
@@ -426,10 +426,16 @@ public class CryptoHostFunctions {
         return hostApi.putDataToMemory(baos.toByteArray());
     }
 
-    private EcdsaPublicKey internalSecp256k1RecoverKey(int signature, int message) {
+    private PubKey internalSecp256k1RecoverKey(int signature, int message) {
         final byte[] messageData = hostApi.getDataFromMemory(message, 32);
         final byte[] signatureData = hostApi.getDataFromMemory(signature, 65);
 
+        BigInteger key = recoverKeyFromSignature(signatureData, messageData);
+
+        return Secp256k1Kt.unmarshalSecp256k1PublicKey(key.toByteArray());
+    }
+
+    private static BigInteger recoverKeyFromSignature(byte[] signatureData, byte[] messageData) {
         if (signatureData[64] >= 27) {
             signatureData[64] -= 27;
         }
