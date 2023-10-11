@@ -40,7 +40,9 @@ public class StorageHostFunctions {
     public List<ImportObject> buildFunctions() {
         return Arrays.asList(
                 HostApi.getImportObject("ext_storage_set_version_1", argv ->
-                                extStorageSetVersion1(new RuntimePointerSize(argv.get(0)), new RuntimePointerSize(argv.get(1))),
+                                extStorageSetVersion1(
+                                        new RuntimePointerSize(argv.get(0)),
+                                        new RuntimePointerSize(argv.get(1))),
                         List.of(Type.I64, Type.I64)),
                 HostApi.getImportObject("ext_storage_get_version_1", argv ->
                                 extStorageGetVersion1(new RuntimePointerSize(argv.get(0))).pointerSize(),

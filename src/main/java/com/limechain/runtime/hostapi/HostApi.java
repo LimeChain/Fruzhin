@@ -58,8 +58,6 @@ public class HostApi {
             return EMPTY_LIST_OF_NUMBER;
         }, args, EMPTY_LIST_OF_TYPES);
     }
-
-
     protected Memory getMemory() {
         return runtime.getInstance().exports.getMemory("memory");
     }

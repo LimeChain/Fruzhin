@@ -16,15 +16,14 @@ import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.emeraldpay.polkaj.scale.reader.StringReader;
 import io.emeraldpay.polkaj.schnorrkel.Schnorrkel;
-import io.emeraldpay.polkaj.schnorrkel.SchnorrkelException;
 import io.libp2p.core.crypto.PubKey;
 import io.libp2p.crypto.keys.EcdsaKt;
 import io.libp2p.crypto.keys.EcdsaPrivateKey;
 import io.libp2p.crypto.keys.EcdsaPublicKey;
-import io.libp2p.crypto.keys.Ed25519Kt;
 import io.libp2p.crypto.keys.Ed25519PrivateKey;
 import kotlin.Pair;
 import org.apache.tomcat.util.buf.HexUtils;
+import org.jetbrains.annotations.NotNull;
 import org.wasmer.ImportObject;
 import org.wasmer.Type;
 import org.web3j.crypto.Sign;
@@ -182,23 +181,14 @@ public class CryptoHostFunctions {
     }
 
     private long ed25519SignV1(int keyTypeId, int publicKey, long message) {
-        final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, 4));
+        final Signature sig = internalGetSignData(keyTypeId, publicKey, message);
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ScaleCodecWriter scaleWriter = new ScaleCodecWriter(baos);
 
-        final byte[] publicKeyData = hostApi.getDataFromMemory(publicKey, 32);
-        final byte[] messageData = hostApi.getDataFromMemory(new RuntimePointerSize(message));
-
-        byte[] privateKey = keyStore.get(keyType, publicKeyData);
-        Signature signature = new Signature(publicKeyData, messageData, privateKey);
+        byte[] signed = Ed25519Utils.signMessage(sig.getPrivateKey(), sig.getMessageData());
         try {
-            if (privateKey == null) {
-                scaleWriter.writeOptional(ScaleCodecWriter::writeByteArray, Optional.empty());
-            } else {
-                byte[] signed = Ed25519Kt.unmarshalEd25519PrivateKey(signature.getPrivateKey()).sign(signature.getMessageData());
-                scaleWriter.writeOptional(ScaleCodecWriter::writeByteArray, signed);
-            }
+            scaleWriter.writeOptional(ScaleCodecWriter::writeByteArray, Optional.ofNullable(signed));
         } catch (IOException e) {
             //Todo: How to handle exceptions?
             return -1;
@@ -207,28 +197,31 @@ public class CryptoHostFunctions {
         return hostApi.putDataToMemory(baos.toByteArray());
     }
 
-    private int ed25519VerifyV1(int signature, long message, int publicKey) {
-        VerifySignature result = internalGetVerifySignature(signature, message, publicKey, Key.ED25519);
-        return internalVerifyEd25519Sig(result);
+    @NotNull
+    private Signature internalGetSignData(int keyTypeId, int publicKey, long message) {
+        final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, 4));
+
+        final byte[] publicKeyData = hostApi.getDataFromMemory(publicKey, 32);
+        final byte[] messageData = hostApi.getDataFromMemory(new RuntimePointerSize(message));
+
+        byte[] privateKey = keyStore.get(keyType, publicKeyData);
+        return new Signature(publicKeyData, messageData, privateKey);
     }
 
+    private int ed25519VerifyV1(int signature, long message, int publicKey) {
+        VerifySignature verifySig = internalGetVerifySignature(signature, message, publicKey, Key.ED25519);
+        return Ed25519Utils.verifySignature(verifySig) ? 1 : 0;
+    }
 
     private int ed25519BatchVerifyV1(int signature, long message, int publicKey) {
-        VerifySignature result = internalGetVerifySignature(signature, message, publicKey, Key.ED25519);
+        VerifySignature verifySig = internalGetVerifySignature(signature, message, publicKey, Key.ED25519);
 
         if(batchVerificationStarted){
-            signaturesToVerify.add(result);
+            signaturesToVerify.add(verifySig);
         }else{
-            return internalVerifyEd25519Sig(result);
+            return Ed25519Utils.verifySignature(verifySig) ? 1 : 0;
         }
         return 1;
-    }
-
-    private static int internalVerifyEd25519Sig(VerifySignature result) {
-        final PubKey pubKey = Ed25519Kt.unmarshalEd25519PublicKey(result.getPublicKeyData());
-        final boolean verified = pubKey.verify(result.getMessageData(), result.getSignatureData());
-
-        return verified ? 0 : 1;
     }
 
     private Number sr25519PublicKeysV1(int keyTypeId) {
@@ -270,25 +263,15 @@ public class CryptoHostFunctions {
     }
 
     private Number sr25519SignV1(int keyTypeId, int publicKey, long message) {
-        final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, 4));
+        Signature sig = internalGetSignData(keyTypeId, publicKey, message);
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ScaleCodecWriter scaleWriter = new ScaleCodecWriter(baos);
 
-        final byte[] publicKeyData = hostApi.getDataFromMemory(publicKey, 32);
-        final byte[] messageData = hostApi.getDataFromMemory(new RuntimePointerSize(message));
-
-        byte[] privateKey = keyStore.get(keyType, publicKeyData);
-        Signature signature = new Signature(publicKeyData, messageData, privateKey);
+        byte[] signed = Sr25519Utils.signMessage(sig.getPublicKeyData(), sig.getPrivateKey(), sig.getMessageData());
         try {
-            if (privateKey == null) {
-                scaleWriter.writeOptional(ScaleCodecWriter::writeByteArray, Optional.empty());
-            } else {
-                Schnorrkel.KeyPair keyPair = new Schnorrkel.KeyPair(signature.getPublicKeyData(), signature.getPrivateKey());
-                byte[] signed = Schnorrkel.getInstance().sign(signature.getMessageData(), keyPair);
-                scaleWriter.writeOptional(ScaleCodecWriter::writeByteArray, signed);
-            }
-        } catch (IOException | SchnorrkelException e) {
+            scaleWriter.writeOptional(ScaleCodecWriter::writeByteArray, Optional.of(signed));
+        } catch (IOException e) {
             //Todo: How to handle exceptions?
             return -1;
         }
@@ -299,7 +282,7 @@ public class CryptoHostFunctions {
     private Number sr25519VerifyV1(int signature, long message, int publicKey) {
         VerifySignature verifiedSignature = internalGetVerifySignature(signature, message, publicKey, Key.SR25519);
 
-        return internalVerifySr25519Sig(verifiedSignature);
+        return Sr25519Utils.verifySignature(verifiedSignature) ? 1 : 0;
     }
 
     private int sr25519BatchVerifyV1(int signature, long message, int publicKey) {
@@ -308,26 +291,11 @@ public class CryptoHostFunctions {
         if(batchVerificationStarted){
             signaturesToVerify.add(verifiedSignature);
         }else{
-            return internalVerifySr25519Sig(verifiedSignature);
+            return Sr25519Utils.verifySignature(verifiedSignature) ? 1 : 0;
         }
 
         return 1;
     }
-
-    private static int internalVerifySr25519Sig(final VerifySignature signature) {
-        boolean verified = false;
-        try {
-            Schnorrkel schnorrkel = Schnorrkel.getInstance();
-            Schnorrkel.PublicKey publicKey = new Schnorrkel.PublicKey(signature.getPublicKeyData());
-            verified = schnorrkel.verify(signature.getSignatureData(), signature.getMessageData(), publicKey);
-        } catch (SchnorrkelException e) {
-            //Todo: How to handle exceptions
-            return 0;
-        }
-
-        return verified ? 1 : 0;
-    }
-
 
     private Number ecdsaPublicKeysV1(int keyTypeId) {
         final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, 4));
@@ -376,12 +344,8 @@ public class CryptoHostFunctions {
 
         byte[] privateKey = keyStore.get(keyType, publicKeyData);
         try {
-            if (privateKey == null) {
-                scaleWriter.writeOptional(ScaleCodecWriter::writeByteArray, Optional.empty());
-            } else {
-                byte[] signed = EcdsaKt.unmarshalEcdsaPrivateKey(privateKey).sign(hashedMessage);
-                scaleWriter.writeOptional(ScaleCodecWriter::writeByteArray, signed);
-            }
+            byte[] signed = EcdsaUtils.signMessage(privateKey, hashedMessage);
+            scaleWriter.writeOptional(ScaleCodecWriter::writeByteArray, Optional.of(signed));
         } catch (IOException e) {
             //Todo: How to handle exceptions?
             return -1;
@@ -406,12 +370,8 @@ public class CryptoHostFunctions {
 
         byte[] privateKey = keyStore.get(keyType, publicKeyData);
         try {
-            if (privateKey == null) {
-                scaleWriter.writeOptional(ScaleCodecWriter::writeByteArray, Optional.empty());
-            } else {
-                byte[] signed = EcdsaKt.unmarshalEcdsaPrivateKey(privateKey).sign(messageData);
-                scaleWriter.writeOptional(ScaleCodecWriter::writeByteArray, signed);
-            }
+            byte[] signed = EcdsaUtils.signMessage(privateKey, messageData);
+            scaleWriter.writeOptional(ScaleCodecWriter::writeByteArray, Optional.of(signed));
         } catch (IOException e) {
             //Todo: How to handle exceptions?
             return -1;
@@ -423,12 +383,12 @@ public class CryptoHostFunctions {
     private Number ecdsaVerifyV1(int signature, long message, int publicKey) {
         final VerifySignature verifySig = internalGetVerifySignature(signature, message, publicKey, Key.ECDSA);
         verifySig.setMessageData(HashUtils.hashWithBlake2b(verifySig.getMessageData()));
-        return internalVerifyEcdsaSig(verifySig);
+        return EcdsaUtils.verifySignature(verifySig) ? 1 : 0;
     }
 
     private int ecdsaVerifyPrehashedV1(int signature, long message, int publicKey) {
         final VerifySignature verifySig = internalGetVerifySignature(signature, message, publicKey, Key.ECDSA);
-        return internalVerifyEcdsaSig(verifySig);
+        return EcdsaUtils.verifySignature(verifySig) ? 1 : 0;
     }
 
     private int ecdsaBatchVerifyV1(int signature, long message, int publicKey) {
@@ -438,16 +398,9 @@ public class CryptoHostFunctions {
         if(batchVerificationStarted){
             signaturesToVerify.add(verifySig);
         }else{
-            return internalVerifyEcdsaSig(verifySig);
+            return EcdsaUtils.verifySignature(verifySig) ? 1 : 0;
         }
         return 1;
-    }
-
-    private static int internalVerifyEcdsaSig(final VerifySignature signature) {
-        final EcdsaPublicKey pubKey = EcdsaKt.unmarshalEcdsaPublicKey(signature.getPublicKeyData());
-        final boolean verified = pubKey.verify(signature.getMessageData(), signature.getSignatureData());
-
-        return verified ? 0 : 1;
     }
 
     private int secp256k1EcdsaRecoverV1(int signature, int message) {
@@ -506,18 +459,18 @@ public class CryptoHostFunctions {
             //TODO: panic?
         }
         batchVerificationStarted = false;
-        int allValid = 1;
+        boolean allValid = true;
         for (Iterator<VerifySignature> iterator = signaturesToVerify.iterator(); iterator.hasNext(); ) {
             VerifySignature verifySignature = iterator.next();
             switch (verifySignature.getKey()) {
-                case ECDSA -> allValid &= internalVerifyEcdsaSig(verifySignature);
-                case ED25519 -> allValid &= internalVerifyEd25519Sig(verifySignature);
-                case SR25519 -> allValid &= internalVerifySr25519Sig(verifySignature);
-                case GENERIC -> allValid &= 1;
+                case ECDSA -> allValid &= EcdsaUtils.verifySignature(verifySignature);
+                case ED25519 -> allValid &= Ed25519Utils.verifySignature(verifySignature);
+                case SR25519 -> allValid &= Sr25519Utils.verifySignature(verifySignature);
+                case GENERIC -> allValid = false;
             }
             iterator.remove();
         }
-        return allValid;
+        return allValid ? 0 : 1;
     }
 
 }
