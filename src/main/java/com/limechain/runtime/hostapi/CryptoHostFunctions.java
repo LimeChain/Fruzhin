@@ -142,7 +142,7 @@ public class CryptoHostFunctions {
     private int ed25519PublicKeysV1(int keyTypeId) {
         final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, 4));
 
-        if (keyType == null || keyType.getKey() != Key.ED25519 && keyType.getKey() != Key.GENERIC) {
+        if (keyType == null || (keyType.getKey() != Key.ED25519 && keyType.getKey() != Key.GENERIC)) {
             //Todo: How to handle exceptions?
             return -1;
         }
@@ -225,7 +225,7 @@ public class CryptoHostFunctions {
     private Number sr25519PublicKeysV1(int keyTypeId) {
         final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, 4));
 
-        if (keyType == null || keyType.getKey() != Key.SR25519 && keyType.getKey() != Key.GENERIC) {
+        if (keyType == null || (keyType.getKey() != Key.SR25519 && keyType.getKey() != Key.GENERIC)) {
             //Todo: How to handle exceptions?
             return -1;
         }
@@ -355,7 +355,7 @@ public class CryptoHostFunctions {
     private Number ecdsaSignPrehashedV1(int keyTypeId, int publicKey, long message) {
         final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, 4));
 
-        if (keyType == null || keyType.getKey() != Key.ECDSA && keyType.getKey() != Key.GENERIC) {
+        if (keyType == null || (keyType.getKey() != Key.ECDSA && keyType.getKey() != Key.GENERIC)) {
             //Todo: How to handle exceptions?
             return -1;
         }
