@@ -166,15 +166,13 @@ public class CryptoHostFunctions {
 
         byte[] publicKeys = keyStore.getPublicKeysByKeyType(keyType);
 
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ScaleCodecWriter scaleWriter = new ScaleCodecWriter(baos);
-        try {
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+             ScaleCodecWriter scaleWriter = new ScaleCodecWriter(baos)) {
             scaleWriter.writeAsList(publicKeys);
+            return hostApi.putDataToMemory(baos.toByteArray());
         } catch (IOException e) {
             throw new RuntimeException("Error while SCALE encoding public keys");
         }
-
-        return hostApi.putDataToMemory(baos.toByteArray());
     }
 
     private int ed25519GenerateV1(int keyTypeId, long seed) {
@@ -197,18 +195,15 @@ public class CryptoHostFunctions {
     private long ed25519SignV1(int keyTypeId, int publicKey, long message) {
         final Signature sig = internalGetSignData(keyTypeId, publicKey, message);
 
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ScaleCodecWriter scaleWriter = new ScaleCodecWriter(baos);
-
         byte[] signed = Ed25519Utils.signMessage(sig.getPrivateKey(), sig.getMessageData());
-        try {
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+             ScaleCodecWriter scaleWriter = new ScaleCodecWriter(baos)) {
             scaleWriter.writeOptional(ScaleCodecWriter::writeByteArray, Optional.ofNullable(signed));
+            return hostApi.putDataToMemory(baos.toByteArray());
         } catch (IOException e) {
-            //Todo: How to handle exceptions?
-            return -1;
+            throw new RuntimeException("Error while SCALE encoding signed message");
         }
 
-        return hostApi.putDataToMemory(baos.toByteArray());
     }
 
     @NotNull
@@ -247,15 +242,13 @@ public class CryptoHostFunctions {
 
         byte[] publicKeys = keyStore.getPublicKeysByKeyType(keyType);
 
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ScaleCodecWriter scaleWriter = new ScaleCodecWriter(baos);
-        try {
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+             ScaleCodecWriter scaleWriter = new ScaleCodecWriter(baos)) {
             scaleWriter.writeAsList(publicKeys);
+            return hostApi.putDataToMemory(baos.toByteArray());
         } catch (IOException e) {
             throw new RuntimeException("Error while SCALE encoding public keys");
         }
-
-        return hostApi.putDataToMemory(baos.toByteArray());
     }
 
     private int generateSr25519KeyPair(int keyTypeId, long seed) {
@@ -276,19 +269,18 @@ public class CryptoHostFunctions {
 
     private Number sr25519SignV1(int keyTypeId, int publicKey, long message) {
         Signature sig = internalGetSignData(keyTypeId, publicKey, message);
-
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ScaleCodecWriter scaleWriter = new ScaleCodecWriter(baos);
-
         byte[] signed = Sr25519Utils.signMessage(sig.getPublicKeyData(), sig.getPrivateKey(), sig.getMessageData());
-        try {
+
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+             ScaleCodecWriter scaleWriter = new ScaleCodecWriter(baos)) {
+
             scaleWriter.writeOptional(ScaleCodecWriter::writeByteArray, Optional.of(signed));
+            return hostApi.putDataToMemory(baos.toByteArray());
+
         } catch (IOException e) {
-            //Todo: How to handle exceptions?
-            return -1;
+            throw new RuntimeException("Error while SCALE encoding signed message");
         }
 
-        return hostApi.putDataToMemory(baos.toByteArray());
     }
 
     private Number sr25519VerifyV1(int signature, long message, int publicKey) {
@@ -318,15 +310,15 @@ public class CryptoHostFunctions {
 
         byte[] publicKeys = keyStore.getPublicKeysByKeyType(keyType);
 
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ScaleCodecWriter scaleWriter = new ScaleCodecWriter(baos);
-        try {
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+             ScaleCodecWriter scaleWriter = new ScaleCodecWriter(baos)) {
+
             scaleWriter.writeAsList(publicKeys);
+            return hostApi.putDataToMemory(baos.toByteArray());
+
         } catch (IOException e) {
             throw new RuntimeException("Error while SCALE encoding public keys");
         }
-
-        return hostApi.putDataToMemory(baos.toByteArray());
     }
 
     public int generateEcdsaKeyPair(int keyTypeId, long seed) {
@@ -345,23 +337,22 @@ public class CryptoHostFunctions {
     private Number ecdsaSignV1(int keyTypeId, int publicKey, long message) {
         final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, 4));
 
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ScaleCodecWriter scaleWriter = new ScaleCodecWriter(baos);
-
         final byte[] publicKeyData = hostApi.getDataFromMemory(publicKey, 33);
         byte[] messageData = hostApi.getDataFromMemory(new RuntimePointerSize(message));
         byte[] hashedMessage = HashUtils.hashWithBlake2b(messageData);
 
         byte[] privateKey = keyStore.get(keyType, publicKeyData);
-        try {
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+             ScaleCodecWriter scaleWriter = new ScaleCodecWriter(baos)) {
+
             byte[] signed = EcdsaUtils.signMessage(privateKey, hashedMessage);
             scaleWriter.writeOptional(ScaleCodecWriter::writeByteArray, Optional.of(signed));
+            return hostApi.putDataToMemory(baos.toByteArray());
+
         } catch (IOException e) {
-            //Todo: How to handle exceptions?
-            return -1;
+            throw new RuntimeException("Error while SCALE encoding signed message");
         }
 
-        return hostApi.putDataToMemory(baos.toByteArray());
     }
 
     private Number ecdsaSignPrehashedV1(int keyTypeId, int publicKey, long message) {
@@ -371,22 +362,20 @@ public class CryptoHostFunctions {
             throw new RuntimeException("Invalid key type");
         }
 
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ScaleCodecWriter scaleWriter = new ScaleCodecWriter(baos);
-
         final byte[] publicKeyData = hostApi.getDataFromMemory(publicKey, 33);
         byte[] messageData = hostApi.getDataFromMemory(new RuntimePointerSize(message));
 
         byte[] privateKey = keyStore.get(keyType, publicKeyData);
-        try {
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+             ScaleCodecWriter scaleWriter = new ScaleCodecWriter(baos)) {
+
             byte[] signed = EcdsaUtils.signMessage(privateKey, messageData);
             scaleWriter.writeOptional(ScaleCodecWriter::writeByteArray, Optional.of(signed));
-        } catch (IOException e) {
-            //Todo: How to handle exceptions?
-            return -1;
-        }
+            return hostApi.putDataToMemory(baos.toByteArray());
 
-        return hostApi.putDataToMemory(baos.toByteArray());
+        } catch (IOException e) {
+            throw new RuntimeException("Error while SCALE encoding signed message");
+        }
     }
 
     private Number ecdsaVerifyV1(int signature, long message, int publicKey) {
@@ -425,16 +414,17 @@ public class CryptoHostFunctions {
     }
 
     private int secp2561kScaleKeyResult(byte[] rawBytes) {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ScaleCodecWriter scaleCodecWriter = new ScaleCodecWriter(baos);
         ResultWriter resultWriter = new ResultWriter();
-        try {
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+             ScaleCodecWriter scaleCodecWriter = new ScaleCodecWriter(baos)) {
+
             resultWriter.writeResult(scaleCodecWriter, true);
             resultWriter.write(scaleCodecWriter, rawBytes);
+            return hostApi.putDataToMemory(baos.toByteArray());
+
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Error while SCALE encoding signed message");
         }
-        return hostApi.putDataToMemory(baos.toByteArray());
     }
 
     private PubKey internalSecp256k1RecoverKey(int signature, int message) {
