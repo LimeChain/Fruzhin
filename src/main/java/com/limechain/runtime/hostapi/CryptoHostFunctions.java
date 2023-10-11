@@ -322,7 +322,7 @@ public class CryptoHostFunctions {
         final byte[] seedData = hostApi.getDataFromMemory(new RuntimePointerSize(seed));
         Optional<String> seedString = new ScaleCodecReader(seedData).readOptional(new StringReader());
 
-        final Pair<EcdsaPrivateKey, EcdsaPublicKey> keyPair = seedString
+        final Pair<PrivKey, PubKey> keyPair = seedString
                 .map(EcdsaUtils::generateKeyPair)
                 .orElseGet(EcdsaUtils::generateKeyPair);
 
@@ -402,8 +402,8 @@ public class CryptoHostFunctions {
     }
 
     private int secp256k1EcdsaRecoverV1(int signature, int message) {
-        EcdsaPublicKey ecdsaPublicKey = internalSecp256k1RecoverKey(signature, message);
-        byte[] uncompressedBytes = ecdsaPublicKey.toUncompressedBytes();
+        PubKey ecdsaPublicKey = internalSecp256k1RecoverKey(signature, message);
+        byte[] uncompressedBytes = EcdsaUtils.decompressSecp256k1(ecdsaPublicKey);
         return secp2561kScaleKeyResult(uncompressedBytes);
     }
 
@@ -450,8 +450,7 @@ public class CryptoHostFunctions {
             //Todo: How to handle exceptions?
             throw new RuntimeException(e);
         }
-
-         return EcdsaKt.unmarshalEcdsaPublicKey(key.toByteArray());
+        return key;
     }
 
     private void startBatchVerify() {
