@@ -1,7 +1,6 @@
 package com.limechain.runtime.allocator;
 
 import lombok.Data;
-import org.springframework.lang.Nullable;
 import org.wasmer.Memory;
 
 import java.util.Optional;
@@ -26,9 +25,8 @@ public class Order {
     private final int value;
     private final int blockSize;
     /**
-     * Pointer to the next free block of this order.
+     * Pointer to the header of the next free block of this order.
      */
-    @Nullable
     private Integer freeHeaderPointer;
 
     /**

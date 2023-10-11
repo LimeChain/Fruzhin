@@ -147,11 +147,14 @@ public class FreeingBumpHeapAllocator {
         int currentPages = pagesFromSize(memory.buffer().limit());
 
         if (currentPages >= MAX_WASM_PAGES) {
-            throw new AllocationError();
+            throw new AllocationError("Max pages already reached.");
         }
 
         if (requiredPages > MAX_WASM_PAGES) {
-            throw new AllocationError();
+            throw new AllocationError(String.format(
+                    "Failed to grow memory from %d pages to at least %d pages due to the maximum limit of %d pages",
+                    currentPages, requiredPages, MAX_WASM_PAGES)
+            );
         }
 
         int nextPages = Math.min(currentPages * 2, MAX_WASM_PAGES);
@@ -163,7 +166,7 @@ public class FreeingBumpHeapAllocator {
     private int pagesFromSize(long size) {
         long pages = (size + PAGE_SIZE - 1) / PAGE_SIZE;
         if (pages > Integer.MAX_VALUE) {
-            throw new AllocationError();
+            throw new AllocationError("Allocator ran out of space");
         }
         return (int) pages;
     }
@@ -201,11 +204,11 @@ public class FreeingBumpHeapAllocator {
 
     private Order getOrderFromHeader(int headerPointer, Memory memory) {
         if (headerPointer < originalHeapBase) {
-            throw new AllocationError();
+            throw new AllocationError("Invalid pointer for deallocation");
         }
         Header header = Header.fromMemory(headerPointer, memory);
         if (!header.isOccupied() || header.getOrder() == null) {
-            throw new AllocationError();
+            throw new AllocationError("No occupied header found at address");
         }
 
         return orders[header.getOrder()];

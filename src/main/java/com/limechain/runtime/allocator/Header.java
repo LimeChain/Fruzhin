@@ -1,6 +1,8 @@
 package com.limechain.runtime.allocator;
 
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.wasmer.Memory;
 
 /**
@@ -17,6 +19,7 @@ import org.wasmer.Memory;
  * and the least significant - the header data (next free block or order).
  */
 @Getter
+@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public class Header {
     private static final long OCCUPIED_HEADER_MASK = 0x00000001_00000000L;
     private static final long FREE_HEADER_MASK = 0x00000000_00000000L;
@@ -25,10 +28,6 @@ public class Header {
 
     private Integer nextFreeHeaderPointer;
     private Integer order;
-
-    private Header(boolean occupied) {
-        this.occupied = occupied;
-    }
 
     /**
      * Creates a header for an occupied block.
