@@ -42,7 +42,7 @@ public class EcdsaUtils {
         PubKey pubKey = Secp256k1Kt.unmarshalSecp256k1PublicKey(signature.getPublicKeyData());
         return pubKey.verify(signature.getMessageData(), signature.getSignatureData());
     }
-    
+
     public static byte[] decompressSecp256k1(PubKey pubKey) {
         byte[] compressedKey = pubKey.raw();
         // Ensure the compressed key is 33 bytes
@@ -51,17 +51,17 @@ public class EcdsaUtils {
         }
 
         // Retrieve the x-coordinate
-        byte[] xBytes = new byte[32];
-        System.arraycopy(compressedKey, 1, xBytes, 0, 32);
-        BigInteger x = new BigInteger(1, xBytes);
+        byte[] xcoordBytes = new byte[32];
+        System.arraycopy(compressedKey, 1, xcoordBytes, 0, 32);
+        BigInteger x = new BigInteger(1, xcoordBytes);
 
         // Define the secp256k1 curve parameters
         BigInteger q = new BigInteger("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F", 16);
         // finite field order
 
         // Calculate the y-coordinate
-        BigInteger ySquared = x.pow(3).add(BigInteger.valueOf(7)).mod(q);
-        BigInteger y = ySquared.modPow(q.add(BigInteger.ONE).divide(BigInteger.valueOf(4)), q);
+        BigInteger ycoordBytes = x.pow(3).add(BigInteger.valueOf(7)).mod(q);
+        BigInteger y = ycoordBytes.modPow(q.add(BigInteger.ONE).divide(BigInteger.valueOf(4)), q);
 
         // Choose the correct y-coordinate
         if (y.testBit(0) != (compressedKey[0] == 0x03)) {
@@ -70,7 +70,7 @@ public class EcdsaUtils {
 
         // Concatenate to form the uncompressed key
         byte[] uncompressedKey = new byte[64];
-        System.arraycopy(xBytes, 0, uncompressedKey, 0, 31);
+        System.arraycopy(xcoordBytes, 0, uncompressedKey, 0, 31);
         System.arraycopy(y.toByteArray(), 0, uncompressedKey, 32, 31);
 
         return uncompressedKey;
