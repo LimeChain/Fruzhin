@@ -7,6 +7,7 @@ import io.libp2p.crypto.keys.Ed25519Kt;
 import io.libp2p.crypto.keys.Ed25519PrivateKey;
 import lombok.experimental.UtilityClass;
 import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters;
+import org.web3j.crypto.MnemonicUtils;
 
 import java.security.SecureRandom;
 import java.util.Arrays;
@@ -22,12 +23,15 @@ public class Ed25519Utils {
         return new Ed25519PrivateKey(parameters);
     }
 
-    public static Ed25519PrivateKey generateKeyPair(byte[] seed) {
+    public static Ed25519PrivateKey generateKeyPair(String mnemonic) {
+        byte[] seed = MnemonicUtils.generateSeed(mnemonic, "");
         byte[] i = hmacSha512("ed25519 seed".getBytes(), seed);
         byte[] il = Arrays.copyOfRange(i, 0, 32);
         Arrays.fill(i, (byte) 0);
 
         final Ed25519PrivateKeyParameters privateKeyParameters = new Ed25519PrivateKeyParameters(il, 0);
+        Arrays.fill(il, (byte) 0);
+
         return new Ed25519PrivateKey(privateKeyParameters);
     }
 

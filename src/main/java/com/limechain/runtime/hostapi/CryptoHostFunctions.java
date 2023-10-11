@@ -16,13 +16,11 @@ import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.emeraldpay.polkaj.scale.reader.StringReader;
 import io.emeraldpay.polkaj.schnorrkel.Schnorrkel;
+import io.libp2p.core.crypto.PrivKey;
 import io.libp2p.core.crypto.PubKey;
-import io.libp2p.crypto.keys.EcdsaKt;
-import io.libp2p.crypto.keys.EcdsaPrivateKey;
-import io.libp2p.crypto.keys.EcdsaPublicKey;
 import io.libp2p.crypto.keys.Ed25519PrivateKey;
+import io.libp2p.crypto.keys.Secp256k1Kt;
 import kotlin.Pair;
-import org.apache.tomcat.util.buf.HexUtils;
 import org.jetbrains.annotations.NotNull;
 import org.wasmer.ImportObject;
 import org.wasmer.Type;
@@ -170,7 +168,7 @@ public class CryptoHostFunctions {
 
         final Ed25519PrivateKey ed25519PrivateKey;
         if (seedString.isPresent()) {
-            ed25519PrivateKey = Ed25519Utils.generateKeyPair(seedData);
+            ed25519PrivateKey = Ed25519Utils.generateKeyPair(seedString.get());
         } else {
             ed25519PrivateKey = Ed25519Utils.generateKeyPair();
         }

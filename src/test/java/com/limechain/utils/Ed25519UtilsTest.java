@@ -3,6 +3,9 @@ package com.limechain.utils;
 import io.libp2p.core.PeerId;
 import io.libp2p.crypto.keys.Ed25519PrivateKey;
 import org.junit.jupiter.api.Test;
+import org.web3j.crypto.MnemonicUtils;
+
+import java.security.SecureRandom;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -43,6 +46,18 @@ class Ed25519UtilsTest {
 
         assertThrows(IllegalArgumentException.class, () -> Ed25519Utils.loadPrivateKey(tooShort));
         assertThrows(IllegalArgumentException.class, () -> Ed25519Utils.loadPrivateKey(tooLong));
+    }
+
+    @Test
+    void generateKeyFromSeedNoException(){
+        SecureRandom secureRandom = new SecureRandom();
+        byte[] entropy = secureRandom.generateSeed(16);
+        String mnemonicString = MnemonicUtils.generateMnemonic(entropy);
+        assertNotNull(mnemonicString);
+
+        Ed25519PrivateKey privKey = Ed25519Utils.generateKeyPair(mnemonicString);
+
+        assertNotNull(privKey);
     }
 
 }
