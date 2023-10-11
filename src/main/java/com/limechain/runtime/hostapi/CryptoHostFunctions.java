@@ -58,6 +58,24 @@ public class CryptoHostFunctions {
         return new CryptoHostFunctions().buildFunctions();
     }
 
+    private static BigInteger recoverKeyFromSignature(byte[] signatureData, byte[] messageData) {
+        if (signatureData[64] >= 27) {
+            signatureData[64] -= 27;
+        }
+        byte v = signatureData[64];
+        byte[] r = Arrays.copyOfRange(signatureData, 0, 32);
+        byte[] s = Arrays.copyOfRange(signatureData, 32, 64);
+
+        BigInteger key = null;
+        try {
+            key = Sign.signedMessageToKey(messageData, new Sign.SignatureData(v, r, s));
+        } catch (SignatureException e) {
+            //Todo: How to handle exceptions?
+            throw new RuntimeException(e);
+        }
+        return key;
+    }
+
     public List<ImportObject> buildFunctions() {
         return Arrays.asList(
                 HostApi.getImportObject("ext_crypto_ed25519_public_keys_version_1", argv ->
@@ -143,8 +161,7 @@ public class CryptoHostFunctions {
         final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, 4));
 
         if (keyType == null || (keyType.getKey() != Key.ED25519 && keyType.getKey() != Key.GENERIC)) {
-            //Todo: How to handle exceptions?
-            return -1;
+            throw new RuntimeException("Invalid key type");
         }
 
         byte[] publicKeys = keyStore.getPublicKeysByKeyType(keyType);
@@ -154,8 +171,7 @@ public class CryptoHostFunctions {
         try {
             scaleWriter.writeAsList(publicKeys);
         } catch (IOException e) {
-            //Todo: How to handle exceptions?
-            return -1;
+            throw new RuntimeException("Error while SCALE encoding public keys");
         }
 
         return hostApi.putDataToMemory(baos.toByteArray());
@@ -214,9 +230,9 @@ public class CryptoHostFunctions {
     private int ed25519BatchVerifyV1(int signature, long message, int publicKey) {
         VerifySignature verifySig = internalGetVerifySignature(signature, message, publicKey, Key.ED25519);
 
-        if(batchVerificationStarted){
+        if (batchVerificationStarted) {
             signaturesToVerify.add(verifySig);
-        }else{
+        } else {
             return Ed25519Utils.verifySignature(verifySig) ? 1 : 0;
         }
         return 1;
@@ -226,8 +242,7 @@ public class CryptoHostFunctions {
         final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, 4));
 
         if (keyType == null || (keyType.getKey() != Key.SR25519 && keyType.getKey() != Key.GENERIC)) {
-            //Todo: How to handle exceptions?
-            return -1;
+            throw new RuntimeException("Invalid key type");
         }
 
         byte[] publicKeys = keyStore.getPublicKeysByKeyType(keyType);
@@ -237,8 +252,7 @@ public class CryptoHostFunctions {
         try {
             scaleWriter.writeAsList(publicKeys);
         } catch (IOException e) {
-            //Todo: How to handle exceptions?
-            return -1;
+            throw new RuntimeException("Error while SCALE encoding public keys");
         }
 
         return hostApi.putDataToMemory(baos.toByteArray());
@@ -286,9 +300,9 @@ public class CryptoHostFunctions {
     private int sr25519BatchVerifyV1(int signature, long message, int publicKey) {
         VerifySignature verifiedSignature = internalGetVerifySignature(signature, message, publicKey, Key.SR25519);
 
-        if(batchVerificationStarted){
+        if (batchVerificationStarted) {
             signaturesToVerify.add(verifiedSignature);
-        }else{
+        } else {
             return Sr25519Utils.verifySignature(verifiedSignature) ? 1 : 0;
         }
 
@@ -299,8 +313,7 @@ public class CryptoHostFunctions {
         final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, 4));
 
         if (keyType == null || keyType.getKey() != Key.GENERIC) {
-            //Todo: How to handle exceptions?
-            return -1;
+            throw new RuntimeException("Invalid key type");
         }
 
         byte[] publicKeys = keyStore.getPublicKeysByKeyType(keyType);
@@ -310,8 +323,7 @@ public class CryptoHostFunctions {
         try {
             scaleWriter.writeAsList(publicKeys);
         } catch (IOException e) {
-            //Todo: How to handle exceptions?
-            return -1;
+            throw new RuntimeException("Error while SCALE encoding public keys");
         }
 
         return hostApi.putDataToMemory(baos.toByteArray());
@@ -356,8 +368,7 @@ public class CryptoHostFunctions {
         final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, 4));
 
         if (keyType == null || (keyType.getKey() != Key.ECDSA && keyType.getKey() != Key.GENERIC)) {
-            //Todo: How to handle exceptions?
-            return -1;
+            throw new RuntimeException("Invalid key type");
         }
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -393,9 +404,9 @@ public class CryptoHostFunctions {
         final VerifySignature verifySig = internalGetVerifySignature(signature, message, publicKey, Key.ECDSA);
         verifySig.setMessageData(HashUtils.hashWithBlake2b(verifySig.getMessageData()));
 
-        if(batchVerificationStarted){
+        if (batchVerificationStarted) {
             signaturesToVerify.add(verifySig);
-        }else{
+        } else {
             return EcdsaUtils.verifySignature(verifySig) ? 1 : 0;
         }
         return 1;
@@ -435,30 +446,12 @@ public class CryptoHostFunctions {
         return Secp256k1Kt.unmarshalSecp256k1PublicKey(key.toByteArray());
     }
 
-    private static BigInteger recoverKeyFromSignature(byte[] signatureData, byte[] messageData) {
-        if (signatureData[64] >= 27) {
-            signatureData[64] -= 27;
-        }
-        byte v = signatureData[64];
-        byte[] r = Arrays.copyOfRange(signatureData, 0, 32);
-        byte[] s = Arrays.copyOfRange(signatureData, 32, 64);
-
-        BigInteger key = null;
-        try {
-            key = Sign.signedMessageToKey(messageData, new Sign.SignatureData(v, r, s));
-        } catch (SignatureException e) {
-            //Todo: How to handle exceptions?
-            throw new RuntimeException(e);
-        }
-        return key;
-    }
-
     private void startBatchVerify() {
         batchVerificationStarted = true;
     }
 
     private int finishBatchVerify() {
-        if(!batchVerificationStarted){
+        if (!batchVerificationStarted) {
             throw new RuntimeException("Batch verification not started");
             //TODO: panic?
         }
