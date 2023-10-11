@@ -139,7 +139,7 @@ public class StorageHostFunctions {
         int size = 0;
         if (offset <= value.length) {
             size = value.length - offset;
-            hostApi.putDataToMemoryBuffer(valueOutPointer, Arrays.copyOfRange(value, offset, value.length));
+            hostApi.writeDataToMemory(valueOutPointer, Arrays.copyOfRange(value, offset, value.length));
         }
 
         return hostApi.addDataToMemory(scaleEncodedOption(size));

@@ -86,7 +86,7 @@ class StorageHostFunctionsTest {
 
         RuntimePointerSize result = storageHostFunctions.extStorageReadVersion1(keyPointer, valuePointer, 1);
 
-        verify(hostApi).putDataToMemoryBuffer(valuePointer, Arrays.copyOfRange(valueBytes, 1, 3));
+        verify(hostApi).writeDataToMemory(valuePointer, Arrays.copyOfRange(valueBytes, 1, 3));
         assertEquals(resultPointer, result);
     }
 

@@ -1,6 +1,7 @@
 package com.limechain.runtime.hostapi;
 
 import com.limechain.runtime.Runtime;
+import com.limechain.runtime.allocator.FreeingBumpHeapAllocator;
 import com.limechain.storage.KVRepository;
 import lombok.extern.java.Log;
 import org.wasmer.ImportObject;
@@ -21,7 +22,6 @@ import java.util.logging.Level;
  */
 @Log
 public class HostApi {
-
     protected static final List<Number> EMPTY_LIST_OF_NUMBER = List.of();
     protected static final List<Type> EMPTY_LIST_OF_TYPES = List.of();
 
@@ -29,6 +29,7 @@ public class HostApi {
 
     protected static KVRepository<String, Object> repository;
     protected static Runtime runtime;
+    private final FreeingBumpHeapAllocator allocator = new FreeingBumpHeapAllocator(getHeapBase());
 
     protected static ImportObject getImportObject(final String functionName,
                                                   final UnaryOperator<List<Number>> function,
@@ -74,6 +75,10 @@ public class HostApi {
         return runtime.getInstance().exports.getMemory("memory");
     }
 
+    protected static int getHeapBase() {
+       return runtime.getInstance().exports.getGlobal("heap_base").getIntValue();
+    }
+
     public static void setRuntime(Runtime runtime) {
         HostApi.runtime = runtime;
     }
@@ -97,22 +102,22 @@ public class HostApi {
 
     public byte[] getDataFromMemory(RuntimePointerSize runtimePointerSize) {
         Memory memory = getMemory();
+        ByteBuffer memoryBuffer = memory.buffer();
         byte[] data = new byte[runtimePointerSize.size()];
-        memory.buffer().get(runtimePointerSize.pointer(), data, 0, runtimePointerSize.size());
+        memoryBuffer.position(runtimePointerSize.pointer());
+        memoryBuffer.get(data);
         return data;
     }
 
     public RuntimePointerSize addDataToMemory(byte[] data) {
-        Memory memory = getMemory();
-        ByteBuffer buffer = getByteBuffer(memory);
-        int position = buffer.position();
-        buffer.put(position, data, 0, data.length);
-        buffer.position(position + data.length);
-
-        return new RuntimePointerSize(position, data.length);
+        RuntimePointerSize allocatedPointer = allocator.allocate(data.length, getMemory());
+        writeDataToMemory(allocatedPointer, data);
+        return allocatedPointer;
     }
 
-    public void putDataToMemoryBuffer(RuntimePointerSize runtimePointerSize, byte[] data) {
-        //TODO: implement
+    public void writeDataToMemory(RuntimePointerSize runtimePointerSize, byte[] data) {
+        ByteBuffer memoryBuffer = getMemory().buffer();
+        memoryBuffer.position(runtimePointerSize.pointer());
+        memoryBuffer.put(data, 0, runtimePointerSize.size());
     }
 }
