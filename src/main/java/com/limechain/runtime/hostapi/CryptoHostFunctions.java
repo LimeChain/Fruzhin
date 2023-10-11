@@ -443,6 +443,7 @@ public class CryptoHostFunctions {
         try {
             key = Sign.signedMessageToKey(messageData, new Sign.SignatureData(v, r, s));
         } catch (SignatureException e) {
+            //Todo: How to handle exceptions?
             throw new RuntimeException(e);
         }
 
