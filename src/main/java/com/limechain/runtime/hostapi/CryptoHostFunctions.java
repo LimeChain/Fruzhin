@@ -233,7 +233,7 @@ public class CryptoHostFunctions {
         return 1;
     }
 
-    private Number sr25519PublicKeysV1(int keyTypeId) {
+    private int sr25519PublicKeysV1(int keyTypeId) {
         final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, 4));
 
         if (keyType == null || (keyType.getKey() != Key.SR25519 && keyType.getKey() != Key.GENERIC)) {

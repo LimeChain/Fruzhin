@@ -27,6 +27,7 @@ public class MiscellaneousHostFunctions {
     public static List<ImportObject> getFunctions() {
         return new MiscellaneousHostFunctions().buildFunctions();
     }
+
     public List<ImportObject> buildFunctions() {
         return Arrays.asList(
                 HostApi.getImportObject("ext_misc_print_num_version_1", argv -> {

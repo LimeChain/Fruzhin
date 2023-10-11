@@ -10,11 +10,11 @@ public class ResultWriter implements ScaleWriter<byte[]> {
     public void write(ScaleCodecWriter scaleCodecWriter, byte[] bytes) throws IOException {
         scaleCodecWriter.writeByteArray(bytes);
     }
-
+    
     public void writeResult(ScaleCodecWriter scaleCodecWriter, boolean success) throws IOException {
-        if (success){
+        if (success) {
             scaleCodecWriter.writeByte((byte) 0);
-        }else{
+        } else {
             scaleCodecWriter.writeByte((byte) 1);
         }
     }

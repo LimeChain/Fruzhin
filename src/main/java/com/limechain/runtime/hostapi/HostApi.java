@@ -3,6 +3,8 @@ package com.limechain.runtime.hostapi;
 import com.limechain.runtime.Runtime;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import com.limechain.storage.KVRepository;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import lombok.extern.java.Log;
 import org.wasmer.ImportObject;
 import org.wasmer.Memory;
@@ -21,13 +23,10 @@ import java.util.logging.Level;
  * HostApi functions implementations
  */
 @Log
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class HostApi {
 
     private static final HostApi INSTANCE = new HostApi();
-
-    private HostApi() {
-        //Singleton
-    }
 
     public static HostApi getInstance() {
         return INSTANCE;
