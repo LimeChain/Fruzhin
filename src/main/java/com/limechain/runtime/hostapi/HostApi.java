@@ -29,6 +29,7 @@ public class HostApi {
 
     protected static KVRepository<String, Object> repository;
     protected static Runtime runtime;
+
     private final FreeingBumpHeapAllocator allocator = new FreeingBumpHeapAllocator(getHeapBase());
 
     protected static ImportObject getImportObject(final String functionName,
@@ -110,9 +111,17 @@ public class HostApi {
     }
 
     public RuntimePointerSize addDataToMemory(byte[] data) {
-        RuntimePointerSize allocatedPointer = allocator.allocate(data.length, getMemory());
+        RuntimePointerSize allocatedPointer = allocate(data.length);
         writeDataToMemory(allocatedPointer, data);
         return allocatedPointer;
+    }
+
+    public RuntimePointerSize allocate(int size) {
+       return allocator.allocate(size, getMemory());
+    }
+
+    public void deallocate(int pointer) {
+        allocator.deallocate(pointer, getMemory());
     }
 
     public void writeDataToMemory(RuntimePointerSize runtimePointerSize, byte[] data) {
