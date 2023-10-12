@@ -28,7 +28,9 @@ public class VerifySignature {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         VerifySignature verifySig = (VerifySignature) o;
-        return Arrays.equals(signatureData, verifySig.signatureData) && Arrays.equals(messageData, verifySig.messageData) && Arrays.equals(publicKeyData, verifySig.publicKeyData) && key == verifySig.key;
+        return Arrays.equals(signatureData, verifySig.signatureData) &&
+                Arrays.equals(messageData, verifySig.messageData) &&
+                Arrays.equals(publicKeyData, verifySig.publicKeyData) && key == verifySig.key;
     }
 
     @Override
