@@ -43,7 +43,7 @@ public class TransactionsEngine {
     public void receiveRequest(byte[] message, PeerId peerId, Stream stream) {
         if (message == null) {
             log.log(Level.WARNING,
-                    String.format("Transactions message is null from Peer %s", message[0], peerId));
+                    String.format("Transactions message is null from Peer %s", peerId));
             return;
         }
         log.log(Level.INFO, "Transaction message length:" + message.length);
@@ -101,7 +101,7 @@ public class TransactionsEngine {
         log.log(Level.INFO, "Received " + transactions.length + " transactions from Peer "
                 + peerId);
         //TODO Add transactions to data
-        }
+    }
 
     /**
      * Send our Transactions handshake on a given <b>initiator</b> stream.
