@@ -15,6 +15,7 @@ import com.limechain.utils.Sr25519Utils;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.emeraldpay.polkaj.scale.reader.StringReader;
+import io.emeraldpay.polkaj.scale.writer.ListWriter;
 import io.emeraldpay.polkaj.schnorrkel.Schnorrkel;
 import io.libp2p.core.crypto.PrivKey;
 import io.libp2p.core.crypto.PubKey;
@@ -23,6 +24,7 @@ import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.wasmer.ImportObject;
 import org.wasmer.Type;
+import org.wasmer.Util;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -39,6 +41,8 @@ import java.util.Optional;
  */
 public class CryptoHostFunctions {
 
+    public static final String SCALE_ENCODING_SIGNED_MESSAGE_ERROR = "Error while SCALE encoding signed message";
+    public static final String INVALID_KEY_TYPE = "Invalid key type";
     private final KeyStore keyStore;
     private final HostApi hostApi;
     private final List<VerifySignature> signaturesToVerify;
@@ -139,18 +143,10 @@ public class CryptoHostFunctions {
         final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, 4));
 
         if (keyType == null || (keyType.getKey() != Key.ED25519 && keyType.getKey() != Key.GENERIC)) {
-            throw new RuntimeException("Invalid key type");
+            throw new RuntimeException(INVALID_KEY_TYPE);
         }
 
-        byte[] publicKeys = keyStore.getPublicKeysByKeyType(keyType);
-
-        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
-             ScaleCodecWriter scaleWriter = new ScaleCodecWriter(baos)) {
-            scaleWriter.writeAsList(publicKeys);
-            return hostApi.putDataToMemory(baos.toByteArray());
-        } catch (IOException e) {
-            throw new RuntimeException("Error while SCALE encoding public keys");
-        }
+        return internalPublicKeys(keyType);
     }
 
     private int ed25519GenerateV1(int keyTypeId, long seed) {
@@ -179,7 +175,7 @@ public class CryptoHostFunctions {
             scaleWriter.writeOptional(ScaleCodecWriter::writeByteArray, Optional.ofNullable(signed));
             return hostApi.putDataToMemory(baos.toByteArray());
         } catch (IOException e) {
-            throw new RuntimeException("Error while SCALE encoding signed message");
+            throw new RuntimeException(SCALE_ENCODING_SIGNED_MESSAGE_ERROR);
         }
 
     }
@@ -215,18 +211,10 @@ public class CryptoHostFunctions {
         final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, 4));
 
         if (keyType == null || (keyType.getKey() != Key.SR25519 && keyType.getKey() != Key.GENERIC)) {
-            throw new RuntimeException("Invalid key type");
+            throw new RuntimeException(INVALID_KEY_TYPE);
         }
 
-        byte[] publicKeys = keyStore.getPublicKeysByKeyType(keyType);
-
-        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
-             ScaleCodecWriter scaleWriter = new ScaleCodecWriter(baos)) {
-            scaleWriter.writeAsList(publicKeys);
-            return hostApi.putDataToMemory(baos.toByteArray());
-        } catch (IOException e) {
-            throw new RuntimeException("Error while SCALE encoding public keys");
-        }
+        return internalPublicKeys(keyType);
     }
 
     private int generateSr25519KeyPair(int keyTypeId, long seed) {
@@ -256,7 +244,7 @@ public class CryptoHostFunctions {
             return hostApi.putDataToMemory(baos.toByteArray());
 
         } catch (IOException e) {
-            throw new RuntimeException("Error while SCALE encoding signed message");
+            throw new RuntimeException(SCALE_ENCODING_SIGNED_MESSAGE_ERROR);
         }
 
     }
@@ -283,15 +271,20 @@ public class CryptoHostFunctions {
         final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, 4));
 
         if (keyType == null || keyType.getKey() != Key.GENERIC) {
-            throw new RuntimeException("Invalid key type");
+            throw new RuntimeException(INVALID_KEY_TYPE);
         }
 
-        byte[] publicKeys = keyStore.getPublicKeysByKeyType(keyType);
+        return internalPublicKeys(keyType);
+    }
+
+    private int internalPublicKeys(KeyType keyType) {
+        List<byte[]> publicKeys = keyStore.getPublicKeysByKeyType(keyType);
 
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
              ScaleCodecWriter scaleWriter = new ScaleCodecWriter(baos)) {
 
-            scaleWriter.writeAsList(publicKeys);
+            ListWriter<byte[]> listWriter = new ListWriter<>(ScaleCodecWriter::writeByteArray);
+            listWriter.write(scaleWriter, publicKeys);
             return hostApi.putDataToMemory(baos.toByteArray());
 
         } catch (IOException e) {
@@ -328,16 +321,15 @@ public class CryptoHostFunctions {
             return hostApi.putDataToMemory(baos.toByteArray());
 
         } catch (IOException e) {
-            throw new RuntimeException("Error while SCALE encoding signed message");
+            throw new RuntimeException(SCALE_ENCODING_SIGNED_MESSAGE_ERROR);
         }
-
     }
 
     private Number ecdsaSignPrehashedV1(int keyTypeId, int publicKey, long message) {
         final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, 4));
 
         if (keyType == null || (keyType.getKey() != Key.ECDSA && keyType.getKey() != Key.GENERIC)) {
-            throw new RuntimeException("Invalid key type");
+            throw new RuntimeException(INVALID_KEY_TYPE);
         }
 
         final byte[] publicKeyData = hostApi.getDataFromMemory(publicKey, 33);
@@ -352,7 +344,7 @@ public class CryptoHostFunctions {
             return hostApi.putDataToMemory(baos.toByteArray());
 
         } catch (IOException e) {
-            throw new RuntimeException("Error while SCALE encoding signed message");
+            throw new RuntimeException(SCALE_ENCODING_SIGNED_MESSAGE_ERROR);
         }
     }
 
@@ -399,7 +391,7 @@ public class CryptoHostFunctions {
             return hostApi.putDataToMemory(baos.toByteArray());
 
         } catch (IOException e) {
-            throw new RuntimeException("Error while SCALE encoding signed message");
+            throw new RuntimeException(SCALE_ENCODING_SIGNED_MESSAGE_ERROR);
         }
     }
 
@@ -416,8 +408,8 @@ public class CryptoHostFunctions {
 
     private int finishBatchVerify() {
         if (!batchVerificationStarted) {
+            Util.nativePanic("Batch verification not started");
             throw new RuntimeException("Batch verification not started");
-            //TODO: panic?
         }
         batchVerificationStarted = false;
         boolean allValid = true;
