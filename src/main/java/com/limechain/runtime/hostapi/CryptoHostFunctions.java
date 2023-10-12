@@ -62,82 +62,83 @@ public class CryptoHostFunctions {
     public List<ImportObject> buildFunctions() {
         return Arrays.asList(
                 HostApi.getImportObject("ext_crypto_ed25519_public_keys_version_1", argv ->
-                        ed25519PublicKeysV1((int) argv.get(0)), List.of(Type.I32), Type.I64),
+                        ed25519PublicKeysV1(argv.get(0).intValue()), List.of(Type.I32), Type.I64),
                 HostApi.getImportObject("ext_crypto_ed25519_generate_version_1", argv ->
-                                ed25519GenerateV1((int) argv.get(0), new RuntimePointerSize(argv.get(1))),
+                                ed25519GenerateV1(argv.get(0).intValue(), new RuntimePointerSize(argv.get(1))),
                         List.of(Type.I32, Type.I64), Type.I32),
                 HostApi.getImportObject("ext_crypto_ed25519_sign_version_1", argv ->
-                                ed25519SignV1((int) argv.get(0), (int) argv.get(1),
+                                ed25519SignV1(argv.get(0).intValue(), argv.get(1).intValue(),
                                         new RuntimePointerSize(argv.get(2))),
                         List.of(Type.I32, Type.I32, Type.I64), Type.I64),
                 HostApi.getImportObject("ext_crypto_ed25519_verify_version_1", argv ->
-                                ed25519VerifyV1((int) argv.get(0), new RuntimePointerSize(argv.get(1)),
-                                        (int) argv.get(2)),
+                                ed25519VerifyV1(argv.get(0).intValue(), new RuntimePointerSize(argv.get(1)),
+                                        argv.get(2).intValue()),
                         List.of(Type.I32, Type.I64, Type.I32), Type.I32),
                 HostApi.getImportObject("ext_crypto_ed25519_batch_verify_version_1", argv ->
-                                ed25519BatchVerifyV1((int) argv.get(0), new RuntimePointerSize(argv.get(1)),
-                                        (int) argv.get(2)),
+                                ed25519BatchVerifyV1(argv.get(0).intValue(), new RuntimePointerSize(argv.get(1)),
+                                        argv.get(2).intValue()),
                         List.of(Type.I32, Type.I64, Type.I32), Type.I32),
                 HostApi.getImportObject("ext_crypto_sr25519_public_keys_version_1", argv ->
-                        sr25519PublicKeysV1((int) argv.get(0)), List.of(Type.I32), Type.I64),
+                        sr25519PublicKeysV1(argv.get(0).intValue()), List.of(Type.I32), Type.I64),
                 HostApi.getImportObject("ext_crypto_sr25519_generate_version_1", argv ->
-                                generateSr25519KeyPair((int) argv.get(0), new RuntimePointerSize(argv.get(1))),
+                                generateSr25519KeyPair(argv.get(0).intValue(), new RuntimePointerSize(argv.get(1))),
                         List.of(Type.I32, Type.I64), Type.I32),
                 HostApi.getImportObject("ext_crypto_sr25519_sign_version_1", argv ->
-                                sr25519SignV1((int) argv.get(0), (int) argv.get(1),
+                                sr25519SignV1(argv.get(0).intValue(), argv.get(1).intValue(),
                                         new RuntimePointerSize(argv.get(2))),
                         List.of(Type.I32, Type.I32, Type.I64), (Type.I64)),
                 HostApi.getImportObject("ext_crypto_sr25519_verify_version_1", argv ->
-                                sr25519VerifyV1((int) argv.get(0), new RuntimePointerSize(argv.get(1)),
-                                        (int) argv.get(2)),
+                                sr25519VerifyV1(argv.get(0).intValue(), new RuntimePointerSize(argv.get(1)),
+                                        argv.get(2).intValue()),
                         List.of(Type.I32, Type.I64, Type.I32), Type.I32),
                 HostApi.getImportObject("ext_crypto_sr25519_verify_version_2", argv ->
-                                sr25519VerifyV1((int) argv.get(0), new RuntimePointerSize(argv.get(1)),
-                                        (int) argv.get(2)),
+                                sr25519VerifyV1(argv.get(0).intValue(), new RuntimePointerSize(argv.get(1)),
+                                        argv.get(2).intValue()),
                         List.of(Type.I32, Type.I64, Type.I32), Type.I32),
                 HostApi.getImportObject("ext_crypto_sr25519_batch_verify_version_1", argv ->
-                                sr25519BatchVerifyV1((int) argv.get(0), new RuntimePointerSize(argv.get(1)),
-                                        (int) argv.get(2)),
+                                sr25519BatchVerifyV1(argv.get(0).intValue(), new RuntimePointerSize(argv.get(1)),
+                                        argv.get(2).intValue()),
                         List.of(Type.I32, Type.I64, Type.I32), Type.I32),
                 HostApi.getImportObject("ext_crypto_ecdsa_public_keys_version_1", argv ->
-                        ecdsaPublicKeysV1((int) argv.get(0)), List.of(Type.I64), (Type.I64)),
+                        ecdsaPublicKeysV1(argv.get(0).intValue()), List.of(Type.I64), (Type.I64)),
                 HostApi.getImportObject("ext_crypto_ecdsa_generate_version_1", argv ->
-                                generateEcdsaKeyPair((int) argv.get(0), new RuntimePointerSize(argv.get(1))),
+                                generateEcdsaKeyPair(argv.get(0).intValue(), new RuntimePointerSize(argv.get(1))),
                         List.of(Type.I32, Type.I64), (Type.I64)),
                 HostApi.getImportObject("ext_crypto_ecdsa_sign_version_1", argv ->
-                                ecdsaSignV1((int) argv.get(0), (int) argv.get(1), new RuntimePointerSize(argv.get(2))),
+                                ecdsaSignV1(argv.get(0).intValue(), argv.get(1).intValue(),
+                                        new RuntimePointerSize(argv.get(2))),
                         List.of(Type.I32, Type.I32, Type.I64), (Type.I64)),
                 HostApi.getImportObject("ext_crypto_ecdsa_sign_prehashed_version_1",
-                        argv -> ecdsaSignPrehashedV1((int) argv.get(0), (int) argv.get(1),
+                        argv -> ecdsaSignPrehashedV1(argv.get(0).intValue(), argv.get(1).intValue(),
                                 new RuntimePointerSize(argv.get(2))),
                         List.of(Type.I32, Type.I32, Type.I64), (Type.I64)),
                 HostApi.getImportObject("ext_crypto_ecdsa_verify_version_1", argv ->
-                                ecdsaVerifyV1((int) argv.get(0), new RuntimePointerSize(argv.get(1)),
-                                        (int) argv.get(2)),
+                                ecdsaVerifyV1(argv.get(0).intValue(), new RuntimePointerSize(argv.get(1)),
+                                        argv.get(2).intValue()),
                         List.of(Type.I32, Type.I64, Type.I32), Type.I32),
                 HostApi.getImportObject("ext_crypto_ecdsa_verify_version_2", argv ->
-                                ecdsaVerifyV1((int) argv.get(0), new RuntimePointerSize(argv.get(1)),
-                                        (int) argv.get(2)),
+                                ecdsaVerifyV1(argv.get(0).intValue(), new RuntimePointerSize(argv.get(1)),
+                                        argv.get(2).intValue()),
                         List.of(Type.I32, Type.I64, Type.I32), Type.I32),
                 HostApi.getImportObject("ext_crypto_ecdsa_verify_prehashed_version_1", argv ->
-                                ecdsaVerifyPrehashedV1((int) argv.get(0), new RuntimePointerSize(argv.get(1)),
-                                        (int) argv.get(2)),
+                                ecdsaVerifyPrehashedV1(argv.get(0).intValue(), new RuntimePointerSize(argv.get(1)),
+                                        argv.get(2).intValue()),
                         List.of(Type.I32, Type.I32, Type.I32), Type.I32),
                 HostApi.getImportObject("ext_crypto_ecdsa_batch_verify_version_1", argv ->
-                                ecdsaBatchVerifyV1((int) argv.get(0), new RuntimePointerSize(argv.get(1)),
-                                        (int) argv.get(2)),
+                                ecdsaBatchVerifyV1(argv.get(0).intValue(), new RuntimePointerSize(argv.get(1)),
+                                        argv.get(2).intValue()),
                         List.of(Type.I32, Type.I64, Type.I32), Type.I32),
                 HostApi.getImportObject("ext_crypto_secp256k1_ecdsa_recover_version_1", argv ->
-                                secp256k1EcdsaRecoverV1((int) argv.get(0), (int) argv.get(1)),
+                                secp256k1EcdsaRecoverV1(argv.get(0).intValue(), argv.get(1).intValue()),
                         List.of(Type.I32, Type.I32), (Type.I64)),
                 HostApi.getImportObject("ext_crypto_secp256k1_ecdsa_recover_version_2", argv ->
-                                secp256k1EcdsaRecoverV1((int) argv.get(0), (int) argv.get(1)),
+                                secp256k1EcdsaRecoverV1(argv.get(0).intValue(), argv.get(1).intValue()),
                         List.of(Type.I32, Type.I32), Type.I64),
                 HostApi.getImportObject("ext_crypto_secp256k1_ecdsa_recover_compressed_version_1",
-                        argv -> secp256k1EcdsaRecoverCompressedV1((int) argv.get(0), (int) argv.get(1)),
+                        argv -> secp256k1EcdsaRecoverCompressedV1(argv.get(0).intValue(), argv.get(1).intValue()),
                         List.of(Type.I32, Type.I32), Type.I64),
                 HostApi.getImportObject("ext_crypto_secp256k1_ecdsa_recover_compressed_version_2",
-                        argv -> secp256k1EcdsaRecoverCompressedV1((int) argv.get(0), (int) argv.get(1)),
+                        argv -> secp256k1EcdsaRecoverCompressedV1(argv.get(0).intValue(), argv.get(1).intValue()),
                         List.of(Type.I32, Type.I32), Type.I64),
                 HostApi.getImportObject("ext_crypto_start_batch_verify", argv ->
                         startBatchVerify(), HostApi.EMPTY_LIST_OF_TYPES),
