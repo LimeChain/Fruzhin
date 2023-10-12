@@ -33,7 +33,7 @@ public class TransactionsEngine {
      * <p><b>On responder stream: </b>
      * <p>If message payload contains a valid handshake, adds the stream when the peer is not connected already,
      * ignore otherwise. </p>
-     * <p>On transactions messages {@link SyncedState}. </p>
+     * <p>On transactions messages {@link SyncedState}: </p>
      * <p>Logs and ignores other message types.</p>
      *
      * @param message received message as byre array
