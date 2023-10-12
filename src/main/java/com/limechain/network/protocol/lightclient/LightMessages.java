@@ -9,6 +9,8 @@ import io.libp2p.core.PeerId;
 import lombok.extern.java.Log;
 
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 
 @Log
@@ -42,10 +44,10 @@ public class LightMessages extends StrictProtocolBinding<LightMessagesController
             LightClientMessage.Response resp = controller.remoteReadRequest(
                             StringUtils.remove0xPrefix(blockHash),
                             hexKeys)
-                    .get();
+                    .get(10, TimeUnit.SECONDS);
             log.log(Level.INFO, "Received light client message response with length: " + resp.toByteArray().length);
             return resp;
-        } catch (ExecutionException | InterruptedException e) {
+        } catch (ExecutionException | InterruptedException | TimeoutException e) {
             log.log(Level.SEVERE, "Error while sending remote call request: ", e);
             throw new RuntimeException(e);
         }

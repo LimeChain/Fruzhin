@@ -20,10 +20,12 @@ import java.util.logging.Level;
 
 @Log
 public class BlockAnnounceEngine {
-    private static final int HANDSHAKE_LENGTH = 69;
-    private final ConnectionManager connectionManager = ConnectionManager.getInstance();
+    public static final int HANDSHAKE_LENGTH = 69;
+    protected ConnectionManager connectionManager = ConnectionManager.getInstance();
+    protected SyncedState syncedState = SyncedState.getInstance();
 
-    public void receiveRequest(byte[] msg, PeerId peerId, Stream stream) {
+    public void receiveRequest(byte[] msg, Stream stream) {
+        PeerId peerId = stream.remotePeerId();
         boolean connectedToPeer = connectionManager.isBlockAnnounceConnected(peerId);
         boolean isHandshake = msg.length == HANDSHAKE_LENGTH;
 
@@ -64,6 +66,7 @@ public class BlockAnnounceEngine {
         ScaleCodecReader reader = new ScaleCodecReader(msg);
         BlockAnnounceMessage announce = reader.read(new BlockAnnounceMessageScaleReader());
         connectionManager.updatePeer(peerId, announce);
+        syncedState.syncBlockAnnounce(announce);
         log.log(Level.FINE, "Received block announce for block #" + announce.getHeader().getBlockNumber() +
                 " from " + peerId +
                 " with hash:0x" + HexUtils.toHexString(announce.getHeader().getHash()) +
@@ -75,7 +78,7 @@ public class BlockAnnounceEngine {
     public void writeHandshakeToStream(Stream stream, PeerId peerId) {
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
         try (ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
-            writer.write(new BlockAnnounceHandshakeScaleWriter(), SyncedState.getInstance().getHandshake());
+            writer.write(new BlockAnnounceHandshakeScaleWriter(), syncedState.getHandshake());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

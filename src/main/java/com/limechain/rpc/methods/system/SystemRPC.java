@@ -2,6 +2,7 @@ package com.limechain.rpc.methods.system;
 
 import com.googlecode.jsonrpc4j.JsonRpcMethod;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -39,7 +40,7 @@ public interface SystemRPC {
     String[] systemLocalListenAddress();
 
     @JsonRpcMethod("system_peers")
-    String[] systemSystemPeers();
+    List<Map<String, Object>> systemSystemPeers();
 
     @JsonRpcMethod("system_addReservedPeer")
     void systemAddReservedPeer(String peerId);

@@ -2,6 +2,7 @@ package com.limechain.trie.encoder;
 
 import com.limechain.trie.Node;
 import com.limechain.trie.NodeVariant;
+import com.limechain.utils.HashUtils;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -17,6 +18,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 class TrieEncoderTest {
+    byte[] hashedValue = HashUtils.hashWithBlake2b(new byte[]{3, 4, 5, 6});
+
     @Test
     void testEncodeHeaderBranchWithNoKey() throws IOException {
         var node = new Node() {{
@@ -67,13 +70,13 @@ class TrieEncoderTest {
     @Test
     void testEncodeHeaderBranchWithKeyOfLength63() throws IOException {
         var node = new Node() {{
-            this.setChildren(new Node[Node.CHILDREN_CAPACITY]);
             this.setPartialKey(new byte[63]);
         }};
         OutputStream buffer = mock(OutputStream.class);
 
         TrieEncoder.encodeHeader(node, buffer);
-        verify(buffer, times(1)).write(NodeVariant.BRANCH.bits | 63);
+        verify(buffer, times(1)).write((NodeVariant.LEAF.bits | 63));
+        verify(buffer, times(1)).write(0x00);
     }
 
     @Test
@@ -153,33 +156,33 @@ class TrieEncoderTest {
     @Test
     void testEncodeHeaderLeafWithKeyLengthOver3Bytes() throws IOException {
         var node = new Node() {{
-            this.setPartialKey(new byte[NodeVariant.LEAF.mask + 0b1111_1111 + 0b0000_0001]);
+            this.setPartialKey(new byte[(NodeVariant.LEAF.mask ^ 0xFF) + 0b1111_1111 + 0b0000_0001]);
         }};
         OutputStream buffer = mock(OutputStream.class);
 
         TrieEncoder.encodeHeader(node, buffer);
 
-        verify(buffer, times(1)).write(NodeVariant.LEAF.bits ^ NodeVariant.LEAF.mask);
+        verify(buffer, times(1)).write(NodeVariant.LEAF.bits ^ (NodeVariant.LEAF.mask ^ 0xFF));
         verify(buffer, times(1)).write(0b1111_1111);
-        verify(buffer, times(1)).write(1);
+        verify(buffer, times(1)).write(0b0000_0001);
     }
 
     @Test
     void testEncodeHeaderLeafWithKeyLengthOver3BytesAndLastByte0() throws IOException {
         var node = new Node() {{
-            this.setPartialKey(new byte[NodeVariant.LEAF.mask + 0b1111_1111]);
+            this.setPartialKey(new byte[(NodeVariant.LEAF.mask ^ 0xFF) + 0b1111_1111]);
         }};
         OutputStream buffer = mock(OutputStream.class);
 
         TrieEncoder.encodeHeader(node, buffer);
 
-        verify(buffer, times(1)).write(NodeVariant.LEAF.bits ^ NodeVariant.LEAF.mask);
+        verify(buffer, times(1)).write(NodeVariant.LEAF.bits | (NodeVariant.LEAF.mask ^ 0xFF));
         verify(buffer, times(1)).write(0b1111_1111);
-        verify(buffer, times(1)).write(0);
+        verify(buffer, times(1)).write(0b0000_0000);
     }
 
     @Test
-    public void testEncodeHeaderAtMaximum() {
+    void testEncodeHeaderAtMaximum() {
         int variant = NodeVariant.LEAF.bits;
         final int partialKeyLengthHeaderMask = 0b0011_1111;
         double extraKeyBytesNeeded = Math.ceil((double) (MAX_PARTIAL_KEY_LENGTH - partialKeyLengthHeaderMask) / 255.0);
@@ -207,7 +210,7 @@ class TrieEncoderTest {
     }
 
     @Test
-    public void testEncodeChildrenNode() throws IOException {
+    void testEncodeChildrenNode() throws IOException {
         Node node = new Node() {{
             this.setPartialKey(new byte[]{1, 2, 3});
             this.setStorageValue(new byte[]{100});
@@ -241,7 +244,7 @@ class TrieEncoderTest {
 
     // Should be in a separate test class
     @Test
-    public void testEncodeChildrenNoChildren() throws IOException {
+    void testEncodeChildrenNoChildren() throws IOException {
         ByteArrayOutputStream buffer = mock(ByteArrayOutputStream.class);
 
         TrieEncoder.encodeChildren(new Node[]{}, buffer);
@@ -250,7 +253,7 @@ class TrieEncoderTest {
     }
 
     @Test
-    public void testEncodeChildrenFirstChildNotNull() {
+    void testEncodeChildrenFirstChildNotNull() {
         ByteArrayOutputStream buffer = mock(ByteArrayOutputStream.class);
 
         TrieEncoder.encodeChildren(new Node[]{
@@ -266,7 +269,7 @@ class TrieEncoderTest {
     }
 
     @Test
-    public void testEncodeChildrenLastChildNotNull() {
+    void testEncodeChildrenLastChildNotNull() {
         ByteArrayOutputStream buffer = mock(ByteArrayOutputStream.class);
 
         TrieEncoder.encodeChildren(new Node[]{
@@ -286,7 +289,7 @@ class TrieEncoderTest {
     }
 
     @Test
-    public void testEncodeChildrenFirstTwoChildrenNotNull() {
+    void testEncodeChildrenFirstTwoChildrenNotNull() {
         ByteArrayOutputStream buffer = mock(ByteArrayOutputStream.class);
 
         TrieEncoder.encodeChildren(new Node[]{
@@ -308,7 +311,7 @@ class TrieEncoderTest {
     }
 
     @Test
-    public void testEncodeEmptyBranchChild() {
+    void testEncodeEmptyBranchChild() {
         ByteArrayOutputStream buffer = mock(ByteArrayOutputStream.class);
 
         TrieEncoder.encodeChild(new Node() {{
@@ -321,7 +324,7 @@ class TrieEncoderTest {
     }
 
     @Test
-    public void testEncodeLeafChild() {
+    void testEncodeLeafChild() {
         ByteArrayOutputStream buffer = mock(ByteArrayOutputStream.class);
 
         TrieEncoder.encodeChild(new Node() {{
@@ -335,7 +338,7 @@ class TrieEncoderTest {
     }
 
     @Test
-    public void testEncodeBranchChild() {
+    void testEncodeBranchChild() {
         ByteArrayOutputStream buffer = mock(ByteArrayOutputStream.class);
 
         TrieEncoder.encodeChild(new Node() {{
@@ -355,4 +358,27 @@ class TrieEncoderTest {
         verify(buffer, times(1)).write(
                 new byte[]{(byte) 193, 1, 4, 0, 4, 2, 16, 65, 5, 4, 6}, 0, 11);
     }
+
+    @Test
+    void nullNodeEncode() {
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        TrieEncoder.encode(null, buffer);
+        assertArrayEquals(new byte[]{0}, buffer.toByteArray());
+    }
+
+    @Test
+    void leafWithHashedValueSuccess() throws IOException {
+        Node node = new Node() {{
+            this.setPartialKey(new byte[]{1, 2, 3});
+            this.setStorageValue(hashedValue);
+            this.setValueHashed(true);
+        }};
+        OutputStream buffer = mock(OutputStream.class);
+
+        TrieEncoder.encode(node, buffer);
+        verify(buffer, times(1)).write(NodeVariant.LEAF_WITH_HASHED_VALUE.bits | 3);
+        verify(buffer, times(1)).write(new byte[]{0x01, 0x23});
+        verify(buffer, times(1)).write(hashedValue);
+    }
+
 }

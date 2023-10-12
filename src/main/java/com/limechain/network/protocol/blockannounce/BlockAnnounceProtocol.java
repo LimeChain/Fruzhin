@@ -9,6 +9,8 @@ import io.libp2p.protocol.ProtocolMessageHandler;
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.bytes.ByteArrayEncoder;
 import lombok.extern.java.Log;
+import org.jetbrains.annotations.NotNull;
+
 import java.util.logging.Level;
 
 import java.util.concurrent.CompletableFuture;
@@ -17,69 +19,65 @@ import java.util.concurrent.CompletableFuture;
 public class BlockAnnounceProtocol extends ProtocolHandler<BlockAnnounceController> {
     public static final int MAX_HANDSHAKE_SIZE = 1024 * 1024;
     public static final int MAX_NOTIFICATION_SIZE = 1024 * 1024;
-    private final BlockAnnounceEngine engine;
 
     public BlockAnnounceProtocol() {
         super(MAX_HANDSHAKE_SIZE, MAX_NOTIFICATION_SIZE);
-        this.engine = new BlockAnnounceEngine();
     }
 
+    @NotNull
     @Override
     protected CompletableFuture<BlockAnnounceController> onStartInitiator(Stream stream) {
         stream.pushHandler(new Leb128LengthFrameDecoder());
         stream.pushHandler(new Leb128LengthFrameEncoder());
 
         stream.pushHandler(new ByteArrayEncoder());
-        NotificationHandler handler = new NotificationHandler(engine, stream);
+        NotificationHandler handler = new NotificationHandler(stream);
         stream.pushHandler(handler);
         return CompletableFuture.completedFuture(handler);
     }
 
+    @NotNull
     @Override
     protected CompletableFuture<BlockAnnounceController> onStartResponder(Stream stream) {
         stream.pushHandler(new Leb128LengthFrameDecoder());
         stream.pushHandler(new Leb128LengthFrameEncoder());
 
         stream.pushHandler(new ByteArrayEncoder());
-        NotificationHandler handler = new NotificationHandler(engine, stream);
+        NotificationHandler handler = new NotificationHandler(stream);
         stream.pushHandler(handler);
         return CompletableFuture.completedFuture(handler);
     }
 
-    static class NotificationHandler implements ProtocolMessageHandler<ByteBuf>, BlockAnnounceController {
-        private final BlockAnnounceEngine engine;
-        private final Stream stream;
-
-        public NotificationHandler(BlockAnnounceEngine engine, Stream stream) {
-            this.engine = engine;
-            this.stream = stream;
+    static class NotificationHandler extends BlockAnnounceController implements ProtocolMessageHandler<ByteBuf> {
+        ConnectionManager connectionManager = ConnectionManager.getInstance();
+        public NotificationHandler(Stream stream) {
+            super(stream);
         }
 
         @Override
-        public void onMessage(Stream stream, ByteBuf msg) {
+        public void onMessage(@NotNull Stream stream, ByteBuf msg) {
             byte[] messageBytes = new byte[msg.readableBytes()];
             msg.readBytes(messageBytes);
-            engine.receiveRequest(messageBytes, stream.remotePeerId(), stream);
+            engine.receiveRequest(messageBytes, stream);
         }
 
         @Override
-        public void onClosed(Stream stream) {
+        public void onClosed(@NotNull Stream stream) {
+            connectionManager.closeBlockAnnounceStream(stream);
             log.log(Level.INFO, "Block announce stream closed for peer " + stream.remotePeerId());
-            ConnectionManager.getInstance().closeBlockAnnounceStream(stream);
             ProtocolMessageHandler.super.onClosed(stream);
         }
 
         @Override
         public void onException(Throwable cause) {
-            log.log(Level.WARNING, "Block Announce Exception: " + cause.getMessage());
-            ConnectionManager.getInstance().closeBlockAnnounceStream(stream);
-            cause.printStackTrace();
+            connectionManager.closeBlockAnnounceStream(stream);
+            if (cause != null) {
+                log.log(Level.WARNING, "Block Announce Exception: " + cause.getMessage());
+                cause.printStackTrace();
+            } else {
+                log.log(Level.WARNING, "Block Announce Exception with unknown cause");
+            }
             ProtocolMessageHandler.super.onException(cause);
-        }
-
-        @Override
-        public void sendHandshake() {
-            engine.writeHandshakeToStream(stream, stream.remotePeerId());
         }
     }
 }

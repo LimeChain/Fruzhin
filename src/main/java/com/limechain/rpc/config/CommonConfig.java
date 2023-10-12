@@ -13,11 +13,13 @@ import com.limechain.sync.warpsync.WarpSyncMachine;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
  * Spring configuration class used to instantiate beans.
  */
 @Configuration
+@EnableScheduling
 public class CommonConfig {
     @Bean
     public static AutoJsonRpcServiceImplExporter autoJsonRpcServiceImplExporter() {

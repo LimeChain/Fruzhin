@@ -14,10 +14,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class TrieProofLoaderTest {
+class TrieProofLoaderTest {
 
     @Test
-    public void loadLeafNodeTest() {
+    void loadLeafNodeTest() {
         Node node = new Node() {{
             this.setPartialKey(new byte[]{1});
             this.setStorageValue(new byte[]{2});
@@ -32,7 +32,7 @@ public class TrieProofLoaderTest {
     }
 
     @Test
-    public void loadBranchChildWithNoHashTest() {
+    void loadBranchChildWithNoHashTest() {
         Node node = new Node() {{
             this.setPartialKey(new byte[]{1});
             this.setStorageValue(new byte[]{2});
@@ -58,7 +58,7 @@ public class TrieProofLoaderTest {
     }
 
     @Test
-    public void loadBranchNodeWithHashTest() {
+    void loadBranchNodeWithHashTest() {
         Node node = new Node() {{
             this.setPartialKey(new byte[]{1});
             this.setStorageValue(new byte[]{2});
@@ -99,7 +99,7 @@ public class TrieProofLoaderTest {
     }
 
     @Test
-    public void loadBranchOneChildWithHashAndOneWithoutHashTest() {
+    void loadBranchOneChildWithHashAndOneWithoutHashTest() {
         Node node = new Node() {{
             this.setPartialKey(new byte[]{1});
             this.setStorageValue(new byte[]{2});
@@ -143,7 +143,7 @@ public class TrieProofLoaderTest {
     }
 
     @Test
-    public void loadBranchNodeWithBranchChildHash() {
+    void loadBranchNodeWithBranchChildHash() {
         Node node = new Node() {{
             this.setPartialKey(new byte[]{1});
             this.setStorageValue(new byte[]{2});
@@ -198,30 +198,28 @@ public class TrieProofLoaderTest {
     }
 
     @Test
-    public void loadChildExceptionTest() {
-        Exception e = assertThrows(TrieDecoderException.class, () -> {
-            Node node = new Node() {{
-                this.setPartialKey(new byte[]{1});
-                this.setStorageValue(new byte[]{2});
-                this.setDescendants(1);
-                this.setDirty(true);
-                this.setChildren(Helper.padRightChildren(new Node[]{
-                        new Node() {{
-                            this.setMerkleValue(new byte[]{2});
-                        }}
-                }));
-            }};
-            Map<String, byte[]> digestToEncoding = new HashMap<>() {{
-                put(HexUtils.toHexString(new byte[]{2}), Helper.getBadNodeEncoding());
-            }};
+    void loadChildExceptionTest() {
+        Node node = new Node() {{
+            this.setPartialKey(new byte[]{1});
+            this.setStorageValue(new byte[]{2});
+            this.setDescendants(1);
+            this.setDirty(true);
+            this.setChildren(Helper.padRightChildren(new Node[]{
+                    new Node() {{
+                        this.setMerkleValue(new byte[]{2});
+                    }}
+            }));
+        }};
+        Map<String, byte[]> digestToEncoding = new HashMap<>() {{
+            put(HexUtils.toHexString(new byte[]{2}), Helper.getBadNodeEncoding());
+        }};
 
-            TrieProofLoader.loadProof(digestToEncoding, node);
-        });
-        assertTrue(e.getMessage().contains("Node variant is unknown for header byte 00000001"));
+        Exception e = assertThrows(TrieDecoderException.class, () -> TrieProofLoader.loadProof(digestToEncoding, node));
+        assertTrue(e.getMessage().contains("Unknown variant: COMPACT_ENCODING"));
     }
 
     @Test
-    public void loadGrandChild() {
+    void loadGrandChild() {
         Node node = new Node() {{
             this.setPartialKey(new byte[]{1});
             this.setStorageValue(new byte[]{1});
@@ -278,40 +276,38 @@ public class TrieProofLoaderTest {
     }
 
     @Test
-    public void loadGrandChildExceptionTest() {
-        Exception e = assertThrows(TrieDecoderException.class, () -> {
+    void loadGrandChildExceptionTest() {
+        Node node = new Node() {{
+            this.setPartialKey(new byte[]{1});
+            this.setStorageValue(new byte[]{1});
+            this.setDescendants(1);
+            this.setDirty(true);
+            this.setChildren(Helper.padRightChildren(new Node[]{
+                    new Node() {{
+                        this.setMerkleValue(new byte[]{2});
+                    }}
+            }));
+        }};
+        ByteArrayOutputStream encodedNode = new ByteArrayOutputStream();
+        ByteArrayOutputStream encodedLeaf = new ByteArrayOutputStream();
+        Node nodeToEncode = new Node() {{
+            this.setPartialKey(new byte[]{2});
+            this.setStorageValue(new byte[]{2});
+            this.setDescendants(1);
+            this.setDirty(true);
+            this.setChildren(Helper.padRightChildren(new Node[]{
+                    Helper.leafBLarge
+            }));
+        }};
+        TrieEncoder.encode(nodeToEncode, encodedNode);
+        TrieEncoder.encode(Helper.leafBLarge, encodedLeaf);
+        String encodedLeafKey = HexUtils.toHexString(HashUtils.hashWithBlake2b(encodedLeaf.toByteArray()));
+        Map<String, byte[]> digestToEncoding = new HashMap<>() {{
+            put(HexUtils.toHexString(new byte[]{2}), encodedNode.toByteArray());
+            put(encodedLeafKey, Helper.getBadNodeEncoding());
+        }};
 
-            Node node = new Node() {{
-                this.setPartialKey(new byte[]{1});
-                this.setStorageValue(new byte[]{1});
-                this.setDescendants(1);
-                this.setDirty(true);
-                this.setChildren(Helper.padRightChildren(new Node[]{
-                        new Node() {{
-                            this.setMerkleValue(new byte[]{2});
-                        }}
-                }));
-            }};
-            ByteArrayOutputStream encodedNode = new ByteArrayOutputStream();
-            ByteArrayOutputStream encodedLeaf = new ByteArrayOutputStream();
-            Node nodeToEncode = new Node() {{
-                this.setPartialKey(new byte[]{2});
-                this.setStorageValue(new byte[]{2});
-                this.setDescendants(1);
-                this.setDirty(true);
-                this.setChildren(Helper.padRightChildren(new Node[]{
-                        Helper.leafBLarge
-                }));
-            }};
-            TrieEncoder.encode(nodeToEncode, encodedNode);
-            TrieEncoder.encode(Helper.leafBLarge, encodedLeaf);
-            String encodedLeafKey = HexUtils.toHexString(HashUtils.hashWithBlake2b(encodedLeaf.toByteArray()));
-            Map<String, byte[]> digestToEncoding = new HashMap<>() {{
-                put(HexUtils.toHexString(new byte[]{2}), encodedNode.toByteArray());
-                put(encodedLeafKey, Helper.getBadNodeEncoding());
-            }};
-            TrieProofLoader.loadProof(digestToEncoding, node);
-        });
-        assertTrue(e.getMessage().contains("Node variant is unknown for header byte 00000001"));
+        Exception e = assertThrows(TrieDecoderException.class, () -> TrieProofLoader.loadProof(digestToEncoding, node));
+        assertTrue(e.getMessage().contains("Unknown variant: COMPACT_ENCODING"));
     }
 }

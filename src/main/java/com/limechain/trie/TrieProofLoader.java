@@ -2,10 +2,17 @@ package com.limechain.trie;
 
 import com.limechain.trie.decoder.TrieDecoder;
 import com.limechain.trie.decoder.TrieDecoderException;
+import lombok.experimental.UtilityClass;
 import org.apache.tomcat.util.buf.HexUtils;
 
 import java.util.Map;
 
+/**
+ * This class is used to load a state trie from a map containing hashed node digest as keys
+ * <p>
+ * Inspired by Gossamer’s implementation approach
+ */
+@UtilityClass
 public class TrieProofLoader {
     /**
      * loadProof is a recursive function that will create all the trie paths based
