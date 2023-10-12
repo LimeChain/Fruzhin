@@ -5,74 +5,92 @@ import io.libp2p.core.crypto.PrivKey;
 import io.libp2p.core.crypto.PubKey;
 import io.libp2p.crypto.keys.Secp256k1Kt;
 import kotlin.Pair;
+import org.bouncycastle.math.ec.ECPoint;
+import org.web3j.crypto.Bip32ECKeyPair;
+import org.web3j.crypto.ECDSASignature;
+import org.web3j.crypto.ECKeyPair;
 import org.web3j.crypto.MnemonicUtils;
+import org.web3j.crypto.Sign;
 
 import java.math.BigInteger;
 import java.util.Arrays;
-
-import static org.web3j.crypto.Hash.hmacSha512;
 
 public class EcdsaUtils {
 
     public static Pair<PrivKey, PubKey> generateKeyPair() {
         Pair<PrivKey, PubKey> keyPair = Secp256k1Kt.generateSecp256k1KeyPair();
-        return keyPair;
+        return new Pair<>(keyPair.getFirst(), keyPair.getSecond());
     }
 
     public static Pair<PrivKey, PubKey> generateKeyPair(String mnemonic) {
         byte[] seed = MnemonicUtils.generateSeed(mnemonic, "");
-        byte[] i = hmacSha512("Bitcoin seed".getBytes(), seed);
-        byte[] il = Arrays.copyOfRange(i, 0, 32);
-        Arrays.fill(i, (byte) 0);
+        Bip32ECKeyPair keyPair = Bip32ECKeyPair.generateKeyPair(seed);
 
-        PrivKey privKey = Secp256k1Kt.unmarshalSecp256k1PrivateKey(il);
-        Arrays.fill(il, (byte) 0);
+        PrivKey privKey = Secp256k1Kt.unmarshalSecp256k1PrivateKey(keyPair.getPrivateKey().toByteArray());
+        PubKey pubKey = privKey.publicKey();
 
-        return new Pair<>(privKey, privKey.publicKey());
+        return new Pair<>(privKey, pubKey);
     }
 
     public static byte[] signMessage(final byte[] privateKey, final byte[] message) {
         if (privateKey == null) return null;
-        PrivKey privKey = Secp256k1Kt.unmarshalSecp256k1PrivateKey(privateKey);
-        return privKey.sign(message);
+        ECKeyPair keyPair = Bip32ECKeyPair.create(privateKey);
+
+        Sign.SignatureData signature = Sign.signMessage(message, keyPair, false);
+
+        byte[] signatureBytes = new byte[65];
+        System.arraycopy(signature.getR(), 0, signatureBytes, 0, 32);
+        System.arraycopy(signature.getS(), 0, signatureBytes, 32, 32);
+        System.arraycopy(signature.getV(), 0, signatureBytes, 64, 1);
+
+        return signatureBytes;
     }
 
-    public static boolean verifySignature(final VerifySignature signature) {
-        if (signature.getPublicKeyData() == null) return false;
-        PubKey pubKey = Secp256k1Kt.unmarshalSecp256k1PublicKey(signature.getPublicKeyData());
-        return pubKey.verify(signature.getMessageData(), signature.getSignatureData());
+    public static boolean verifySignature(final VerifySignature sig) {
+        if (sig.getPublicKeyData() == null) return false;
+        byte[] publicKey = recoverPublicKeyFromSignature(sig.getSignatureData(), sig.getMessageData(), true);
+
+        return Arrays.equals(publicKey, sig.getPublicKeyData());
     }
 
-    public static byte[] decompressSecp256k1(PubKey pubKey) {
-        byte[] compressedKey = pubKey.raw();
-        // Ensure the compressed key is 33 bytes
-        if (compressedKey.length != 33) {
-            throw new IllegalArgumentException("Invalid compressed key length");
+    public static byte[] recoverPublicKeyFromSignature(byte[] signatureData, byte[] messageData, boolean compressed) {
+        if (signatureData[64] >= 27) {
+            signatureData[64] -= 27;
         }
 
-        // Retrieve the x-coordinate
-        byte[] xcoordBytes = new byte[32];
-        System.arraycopy(compressedKey, 1, xcoordBytes, 0, 32);
-        BigInteger x = new BigInteger(1, xcoordBytes);
+        byte[] r = Arrays.copyOfRange(signatureData, 0, 32);
+        byte[] s = Arrays.copyOfRange(signatureData, 32, 64);
+        byte recId = signatureData[64];
 
-        // Define the secp256k1 curve parameters
-        BigInteger q = new BigInteger("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F", 16);
-        // finite field order
+        ECDSASignature sig =
+                new ECDSASignature(new BigInteger(1, r), new BigInteger(1, s));
 
-        // Calculate the y-coordinate
-        BigInteger ycoordBytes = x.pow(3).add(BigInteger.valueOf(7)).mod(q);
-        BigInteger y = ycoordBytes.modPow(q.add(BigInteger.ONE).divide(BigInteger.valueOf(4)), q);
+        byte[] fullPubKey = recoverFullPubKey(recId, sig, messageData);
 
-        // Choose the correct y-coordinate
-        if (y.testBit(0) != (compressedKey[0] == 0x03)) {
-            y = q.subtract(y);
+        if (compressed) {
+            return compressPublicKey(fullPubKey);
+        } else {
+            return fullPubKey;
         }
+    }
 
-        // Concatenate to form the uncompressed key
-        byte[] uncompressedKey = new byte[64];
-        System.arraycopy(xcoordBytes, 0, uncompressedKey, 0, 31);
-        System.arraycopy(y.toByteArray(), 0, uncompressedKey, 32, 31);
+    private static byte[] recoverFullPubKey(int recId, ECDSASignature sig, byte[] messageData) {
+        byte[] trimmedKey = Sign.recoverFromSignature(recId, sig, messageData).toByteArray();
+        if (trimmedKey.length == 64) {
+            byte[] key = new byte[65];
+            key[0] = 4;
+            System.arraycopy(trimmedKey, 0, key, 1, 64);
 
-        return uncompressedKey;
+            return key;
+        } else {
+            trimmedKey[0] = 4;
+            return trimmedKey;
+        }
+    }
+
+    private static byte[] compressPublicKey(byte[] publicKey) {
+        ECPoint point = Sign.CURVE_PARAMS.getCurve().decodePoint(publicKey);
+
+        return point.getEncoded(true);
     }
 }

@@ -19,17 +19,13 @@ import io.emeraldpay.polkaj.schnorrkel.Schnorrkel;
 import io.libp2p.core.crypto.PrivKey;
 import io.libp2p.core.crypto.PubKey;
 import io.libp2p.crypto.keys.Ed25519PrivateKey;
-import io.libp2p.crypto.keys.Secp256k1Kt;
 import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.wasmer.ImportObject;
 import org.wasmer.Type;
-import org.web3j.crypto.Sign;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.math.BigInteger;
-import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -56,24 +52,6 @@ public class CryptoHostFunctions {
 
     public static List<ImportObject> getFunctions() {
         return new CryptoHostFunctions().buildFunctions();
-    }
-
-    private static BigInteger recoverKeyFromSignature(byte[] signatureData, byte[] messageData) {
-        if (signatureData[64] >= 27) {
-            signatureData[64] -= 27;
-        }
-        byte v = signatureData[64];
-        byte[] r = Arrays.copyOfRange(signatureData, 0, 32);
-        byte[] s = Arrays.copyOfRange(signatureData, 32, 64);
-
-        BigInteger key = null;
-        try {
-            key = Sign.signedMessageToKey(messageData, new Sign.SignatureData(v, r, s));
-        } catch (SignatureException e) {
-            //Todo: How to handle exceptions?
-            throw new RuntimeException(e);
-        }
-        return key;
     }
 
     public List<ImportObject> buildFunctions() {
@@ -402,14 +380,12 @@ public class CryptoHostFunctions {
     }
 
     private int secp256k1EcdsaRecoverV1(int signature, int message) {
-        PubKey ecdsaPublicKey = internalSecp256k1RecoverKey(signature, message);
-        byte[] uncompressedBytes = EcdsaUtils.decompressSecp256k1(ecdsaPublicKey);
-        return secp2561kScaleKeyResult(uncompressedBytes);
+        byte[] ecdsaPublicKey = internalSecp256k1RecoverKey(signature, message, false);
+        return secp2561kScaleKeyResult(ecdsaPublicKey);
     }
 
     private int secp256k1EcdsaRecoverCompressedV1(int signature, int message) {
-        PubKey ecdsaPublicKey = internalSecp256k1RecoverKey(signature, message);
-        byte[] rawBytes = ecdsaPublicKey.raw();
+        byte[] rawBytes = internalSecp256k1RecoverKey(signature, message, true);
         return secp2561kScaleKeyResult(rawBytes);
     }
 
@@ -427,13 +403,11 @@ public class CryptoHostFunctions {
         }
     }
 
-    private PubKey internalSecp256k1RecoverKey(int signature, int message) {
+    private byte[] internalSecp256k1RecoverKey(int signature, int message, boolean compressed) {
         final byte[] messageData = hostApi.getDataFromMemory(message, 32);
         final byte[] signatureData = hostApi.getDataFromMemory(signature, 65);
 
-        BigInteger key = recoverKeyFromSignature(signatureData, messageData);
-
-        return Secp256k1Kt.unmarshalSecp256k1PublicKey(key.toByteArray());
+        return EcdsaUtils.recoverPublicKeyFromSignature(signatureData, messageData, compressed);
     }
 
     private void startBatchVerify() {
