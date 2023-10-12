@@ -49,7 +49,10 @@ import java.util.logging.Level;
 @Log
 public class SyncedState {
     private static final SyncedState INSTANCE = new SyncedState();
-    protected SyncedState() {}
+
+    protected SyncedState() {
+    }
+
     public static SyncedState getInstance() {
         return INSTANCE;
     }
@@ -104,7 +107,7 @@ public class SyncedState {
                 this.lastFinalizedBlockNumber,
                 lastFinalizedBlockHash,
                 genesisBlockHash
-                );
+        );
     }
 
     /**
@@ -126,7 +129,7 @@ public class SyncedState {
      * Synchronized to avoid race condition between checking and updating latest block
      *
      * @param commitMessage received commit message
-     * @param peerId sender of the message
+     * @param peerId        sender of the message
      */
     public synchronized void syncCommit(CommitMessage commitMessage, PeerId peerId) {
         if (commitMessage.getVote().getBlockNumber().compareTo(lastFinalizedBlockNumber) <= 0) {
@@ -169,7 +172,7 @@ public class SyncedState {
      * Synchronized to avoid race condition between checking and updating set id
      *
      * @param neighbourMessage received neighbour message
-     * @param peerId sender of message
+     * @param peerId           sender of message
      */
     public synchronized void syncNeighbourMessage(NeighbourMessage neighbourMessage, PeerId peerId) {
         if (warpSyncFinished && neighbourMessage.getSetId().compareTo(setId) > 0) {
@@ -228,7 +231,7 @@ public class SyncedState {
      * Handles authority changes coming from a block header digest and schedules them.
      *
      * @param headerDigests digest of the block header
-     * @param blockNumber block that contains the digest
+     * @param blockNumber   block that contains the digest
      */
     public void handleAuthorityChanges(HeaderDigest[] headerDigests, BigInteger blockNumber) {
         // Update authority set and set id
@@ -327,6 +330,7 @@ public class SyncedState {
 
     /**
      * Saves the merkle proof and root hash of the state trie
+     *
      * @param proof array of proof byte arrays
      */
     public void saveProofState(byte[][] proof) {
@@ -336,6 +340,7 @@ public class SyncedState {
 
     /**
      * Loads the saved state trie merkle proof
+     *
      * @return array of proof byte arrays
      */
 
@@ -345,6 +350,7 @@ public class SyncedState {
 
     /**
      * Loads the saved state trie root hash
+     *
      * @return root hash
      */
 

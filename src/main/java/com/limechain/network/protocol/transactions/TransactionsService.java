@@ -31,8 +31,7 @@ public class TransactionsService extends NetworkService<Transactions> {
     }
 
     private void sendTransactions(Stream stream) {
-        TransactionsController controller = new TransactionsController(stream);
-        //controller.sendTransactionsMessage();
+        //TODO Send transaction messages
     }
 
     private void sendHandshake(Host us, PeerId peerId) {
