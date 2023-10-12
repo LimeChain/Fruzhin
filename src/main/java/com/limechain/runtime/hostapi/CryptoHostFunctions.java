@@ -28,11 +28,11 @@ import org.wasmer.Util;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Implementations of the Crypto HostAPI functions
@@ -46,13 +46,13 @@ public class CryptoHostFunctions {
     public static final int KEY_TYPE_LEN = 4;
     private final KeyStore keyStore;
     private final HostApi hostApi;
-    private final List<VerifySignature> signaturesToVerify;
+    private final Set<VerifySignature> signaturesToVerify;
     private boolean batchVerificationStarted = false;
 
     public CryptoHostFunctions() {
         this.keyStore = AppBean.getBean(KeyStore.class);
         this.hostApi = HostApi.getInstance();
-        this.signaturesToVerify = new ArrayList<>();
+        this.signaturesToVerify = new HashSet<>();
     }
 
     public static List<ImportObject> getFunctions() {
@@ -446,18 +446,28 @@ public class CryptoHostFunctions {
             throw new RuntimeException("Batch verification not started");
         }
         batchVerificationStarted = false;
-        boolean allValid = true;
-        for (Iterator<VerifySignature> iterator = signaturesToVerify.iterator(); iterator.hasNext(); ) {
-            VerifySignature verifySignature = iterator.next();
-            switch (verifySignature.getKey()) {
-                case ECDSA -> allValid &= EcdsaUtils.verifySignature(verifySignature);
-                case ED25519 -> allValid &= Ed25519Utils.verifySignature(verifySignature);
-                case SR25519 -> allValid &= Sr25519Utils.verifySignature(verifySignature);
-                case GENERIC -> allValid = false;
+        HashSet<VerifySignature> signatures = new HashSet<>(signaturesToVerify);
+        signaturesToVerify.clear();
+
+        boolean allValid = signatures.stream().allMatch(signature -> {
+            switch (signature.getKey()) {
+                case ECDSA -> {
+                    return EcdsaUtils.verifySignature(signature);
+                }
+                case ED25519 -> {
+                    return Ed25519Utils.verifySignature(signature);
+                }
+                case SR25519 -> {
+                    return Sr25519Utils.verifySignature(signature);
+                }
+                case GENERIC -> {
+                    return false;
+                }
             }
-            iterator.remove();
-        }
-        return allValid ? 0 : 1;
+            return false;
+        });
+
+        return allValid ? 1 : 0;
     }
 
 }
