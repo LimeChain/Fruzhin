@@ -77,7 +77,7 @@ public class Cli {
         Option dbClean = new Option("dbc", DB_RECREATE, false, "Clean the DB");
         Option nodeKey = new Option(null, NODE_KEY, true, "HEX for secret Ed25519 key");
         Option nodeMode = new Option("mode", NODE_MODE, true, "Node mode (light/full). " +
-                "Default is full node.");
+                "By default is full.");
 
         networkOption.setRequired(false);
         dbPathOption.setRequired(false);
