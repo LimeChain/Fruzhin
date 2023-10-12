@@ -9,7 +9,7 @@ import org.web3j.crypto.MnemonicUtils;
 @UtilityClass
 public class Sr25519Utils {
 
-    public static Schnorrkel.KeyPair generateKeyPair(){
+    public static Schnorrkel.KeyPair generateKeyPair() {
         final Schnorrkel.KeyPair keyPair;
         try {
             keyPair = Schnorrkel.getInstance().generateKeyPair();
@@ -35,7 +35,7 @@ public class Sr25519Utils {
     }
 
     public static byte[] signMessage(final byte[] publicKey, final byte[] privateKey, final byte[] message) {
-        if(privateKey == null) return null;
+        if (privateKey == null) return null;
         Schnorrkel.KeyPair keyPair = new Schnorrkel.KeyPair(publicKey, privateKey);
         try {
             return Schnorrkel.getInstance().sign(message, keyPair);
