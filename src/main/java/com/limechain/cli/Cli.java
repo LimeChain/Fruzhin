@@ -54,7 +54,7 @@ public class Cli {
             String dbPath = cmd.getOptionValue(DB_PATH, DBInitializer.DEFAULT_DIRECTORY);
             boolean dbRecreate = cmd.hasOption(DB_RECREATE);
             String nodeKey = cmd.getOptionValue(NODE_KEY);
-            String nodeMode = cmd.getOptionValue(NODE_MODE);
+            String nodeMode = cmd.getOptionValue(NODE_MODE, "full");
 
             return new CliArguments(network, dbPath, dbRecreate, nodeKey, nodeMode);
         } catch (ParseException e) {
