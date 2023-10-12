@@ -27,7 +27,7 @@ public class DBRepository implements KVRepository<String, Object> {
     /**
      * Main DB folder
      */
-    private final static String FOLDER_NAME = "db";
+    private static final  String FOLDER_NAME = "db";
 
     /**
      * Connection to the DB
@@ -108,11 +108,10 @@ public class DBRepository implements KVRepository<String, Object> {
 
     @Override
     public synchronized List<byte[]> findKeysByPrefix(String prefixSeek, int limit) {
-        List<byte[]> list = findByPrefix(prefixSeek, (long) limit)
+        return findByPrefix(prefixSeek, (long) limit)
                 .stream()
                 .map(this::removePrefixFromKey)
                 .toList();
-        return list;
     }
 
     @Override
@@ -155,7 +154,7 @@ public class DBRepository implements KVRepository<String, Object> {
         rocksIterator.seek(prefixedKey.getBytes());
         while (rocksIterator.isValid() && (limit == null || values.size() < limit)) {
             byte[] key = rocksIterator.key();
-            if(ByteArrayUtils.hasPrefix(key, prefixedKey.getBytes())){
+            if (ByteArrayUtils.hasPrefix(key, prefixedKey.getBytes())) {
                 values.add(rocksIterator.key());
             }
             rocksIterator.next();
