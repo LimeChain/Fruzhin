@@ -205,10 +205,10 @@ public class CryptoHostFunctions {
 
         if (batchVerificationStarted) {
             signaturesToVerify.add(verifySig);
+            return 1;
         } else {
             return Ed25519Utils.verifySignature(verifySig) ? 1 : 0;
         }
-        return 1;
     }
 
     private int sr25519PublicKeysV1(int keyTypeId) {
