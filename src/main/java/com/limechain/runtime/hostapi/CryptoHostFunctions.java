@@ -43,6 +43,7 @@ public class CryptoHostFunctions {
 
     public static final String SCALE_ENCODING_SIGNED_MESSAGE_ERROR = "Error while SCALE encoding signed message";
     public static final String INVALID_KEY_TYPE = "Invalid key type";
+    public static final int KEY_TYPE_LEN = 4;
     private final KeyStore keyStore;
     private final HostApi hostApi;
     private final List<VerifySignature> signaturesToVerify;
@@ -63,56 +64,68 @@ public class CryptoHostFunctions {
                 HostApi.getImportObject("ext_crypto_ed25519_public_keys_version_1", argv ->
                         ed25519PublicKeysV1((int) argv.get(0)), List.of(Type.I32), Type.I64),
                 HostApi.getImportObject("ext_crypto_ed25519_generate_version_1", argv ->
-                                ed25519GenerateV1((int) argv.get(0), (long) argv.get(1)),
+                                ed25519GenerateV1((int) argv.get(0), new RuntimePointerSize(argv.get(1))),
                         List.of(Type.I32, Type.I64), Type.I32),
                 HostApi.getImportObject("ext_crypto_ed25519_sign_version_1", argv ->
-                                ed25519SignV1((int) argv.get(0), (int) argv.get(1), (long) argv.get(2)),
+                                ed25519SignV1((int) argv.get(0), (int) argv.get(1),
+                                        new RuntimePointerSize(argv.get(2))),
                         List.of(Type.I32, Type.I32, Type.I64), Type.I64),
                 HostApi.getImportObject("ext_crypto_ed25519_verify_version_1", argv ->
-                                ed25519VerifyV1((int) argv.get(0), (long) argv.get(1), (int) argv.get(2)),
+                                ed25519VerifyV1((int) argv.get(0), new RuntimePointerSize(argv.get(1)),
+                                        (int) argv.get(2)),
                         List.of(Type.I32, Type.I64, Type.I32), Type.I32),
                 HostApi.getImportObject("ext_crypto_ed25519_batch_verify_version_1", argv ->
-                                ed25519BatchVerifyV1((int) argv.get(0), (long) argv.get(1), (int) argv.get(2)),
+                                ed25519BatchVerifyV1((int) argv.get(0), new RuntimePointerSize(argv.get(1)),
+                                        (int) argv.get(2)),
                         List.of(Type.I32, Type.I64, Type.I32), Type.I32),
                 HostApi.getImportObject("ext_crypto_sr25519_public_keys_version_1", argv ->
                         sr25519PublicKeysV1((int) argv.get(0)), List.of(Type.I32), Type.I64),
                 HostApi.getImportObject("ext_crypto_sr25519_generate_version_1", argv ->
-                                generateSr25519KeyPair((int) argv.get(0), (long) argv.get(1)),
+                                generateSr25519KeyPair((int) argv.get(0), new RuntimePointerSize(argv.get(1))),
                         List.of(Type.I32, Type.I64), Type.I32),
                 HostApi.getImportObject("ext_crypto_sr25519_sign_version_1", argv ->
-                                sr25519SignV1((int) argv.get(0), (int) argv.get(1), (long) argv.get(2)),
+                                sr25519SignV1((int) argv.get(0), (int) argv.get(1),
+                                        new RuntimePointerSize(argv.get(2))),
                         List.of(Type.I32, Type.I32, Type.I64), (Type.I64)),
                 HostApi.getImportObject("ext_crypto_sr25519_verify_version_1", argv ->
-                                sr25519VerifyV1((int) argv.get(0), (long) argv.get(1), (int) argv.get(2)),
+                                sr25519VerifyV1((int) argv.get(0), new RuntimePointerSize(argv.get(1)),
+                                        (int) argv.get(2)),
                         List.of(Type.I32, Type.I64, Type.I32), Type.I32),
                 HostApi.getImportObject("ext_crypto_sr25519_verify_version_2", argv ->
-                                sr25519VerifyV1((int) argv.get(0), (long) argv.get(1), (int) argv.get(2)),
+                                sr25519VerifyV1((int) argv.get(0), new RuntimePointerSize(argv.get(1)),
+                                        (int) argv.get(2)),
                         List.of(Type.I32, Type.I64, Type.I32), Type.I32),
                 HostApi.getImportObject("ext_crypto_sr25519_batch_verify_version_1", argv ->
-                                sr25519BatchVerifyV1((int) argv.get(0), (long) argv.get(1), (int) argv.get(2)),
+                                sr25519BatchVerifyV1((int) argv.get(0), new RuntimePointerSize(argv.get(1)),
+                                        (int) argv.get(2)),
                         List.of(Type.I32, Type.I64, Type.I32), Type.I32),
                 HostApi.getImportObject("ext_crypto_ecdsa_public_keys_version_1", argv ->
                         ecdsaPublicKeysV1((int) argv.get(0)), List.of(Type.I64), (Type.I64)),
                 HostApi.getImportObject("ext_crypto_ecdsa_generate_version_1", argv ->
-                                generateEcdsaKeyPair((int) argv.get(0), (long) argv.get(1)),
+                                generateEcdsaKeyPair((int) argv.get(0), new RuntimePointerSize(argv.get(1))),
                         List.of(Type.I32, Type.I64), (Type.I64)),
                 HostApi.getImportObject("ext_crypto_ecdsa_sign_version_1", argv ->
-                                ecdsaSignV1((int) argv.get(0), (int) argv.get(1), (long) argv.get(2)),
+                                ecdsaSignV1((int) argv.get(0), (int) argv.get(1), new RuntimePointerSize(argv.get(2))),
                         List.of(Type.I32, Type.I32, Type.I64), (Type.I64)),
                 HostApi.getImportObject("ext_crypto_ecdsa_sign_prehashed_version_1",
-                        argv -> ecdsaSignPrehashedV1((int) argv.get(0), (int) argv.get(1), (long) argv.get(2)),
+                        argv -> ecdsaSignPrehashedV1((int) argv.get(0), (int) argv.get(1),
+                                new RuntimePointerSize(argv.get(2))),
                         List.of(Type.I32, Type.I32, Type.I64), (Type.I64)),
                 HostApi.getImportObject("ext_crypto_ecdsa_verify_version_1", argv ->
-                                ecdsaVerifyV1((int) argv.get(0), (long) argv.get(1), (int) argv.get(2)),
+                                ecdsaVerifyV1((int) argv.get(0), new RuntimePointerSize(argv.get(1)),
+                                        (int) argv.get(2)),
                         List.of(Type.I32, Type.I64, Type.I32), Type.I32),
                 HostApi.getImportObject("ext_crypto_ecdsa_verify_version_2", argv ->
-                                ecdsaVerifyV1((int) argv.get(0), (long) argv.get(1), (int) argv.get(2)),
+                                ecdsaVerifyV1((int) argv.get(0), new RuntimePointerSize(argv.get(1)),
+                                        (int) argv.get(2)),
                         List.of(Type.I32, Type.I64, Type.I32), Type.I32),
                 HostApi.getImportObject("ext_crypto_ecdsa_verify_prehashed_version_1", argv ->
-                                ecdsaVerifyPrehashedV1((int) argv.get(0), (long) argv.get(1), (int) argv.get(2)),
+                                ecdsaVerifyPrehashedV1((int) argv.get(0), new RuntimePointerSize(argv.get(1)),
+                                        (int) argv.get(2)),
                         List.of(Type.I32, Type.I32, Type.I32), Type.I32),
                 HostApi.getImportObject("ext_crypto_ecdsa_batch_verify_version_1", argv ->
-                                ecdsaBatchVerifyV1((int) argv.get(0), (long) argv.get(1), (int) argv.get(2)),
+                                ecdsaBatchVerifyV1((int) argv.get(0), new RuntimePointerSize(argv.get(1)),
+                                        (int) argv.get(2)),
                         List.of(Type.I32, Type.I64, Type.I32), Type.I32),
                 HostApi.getImportObject("ext_crypto_secp256k1_ecdsa_recover_version_1", argv ->
                                 secp256k1EcdsaRecoverV1((int) argv.get(0), (int) argv.get(1)),
@@ -132,15 +145,16 @@ public class CryptoHostFunctions {
                         finishBatchVerify(), HostApi.EMPTY_LIST_OF_TYPES, Type.I32));
     }
 
-    private VerifySignature internalGetVerifySignature(int signature, long message, int publicKey, Key key) {
+    private VerifySignature internalGetVerifySignature(int signature, RuntimePointerSize message,
+                                                       int publicKey, Key key) {
         final byte[] signatureData = hostApi.getDataFromMemory(signature, 64);
-        final byte[] messageData = hostApi.getDataFromMemory(new RuntimePointerSize(message));
+        final byte[] messageData = hostApi.getDataFromMemory(message);
         final byte[] publicKeyData = hostApi.getDataFromMemory(publicKey, 32);
         return new VerifySignature(signatureData, messageData, publicKeyData, key);
     }
 
     private int ed25519PublicKeysV1(int keyTypeId) {
-        final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, 4));
+        final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, KEY_TYPE_LEN));
 
         if (keyType == null || (keyType.getKey() != Key.ED25519 && keyType.getKey() != Key.GENERIC)) {
             throw new RuntimeException(INVALID_KEY_TYPE);
@@ -149,9 +163,9 @@ public class CryptoHostFunctions {
         return internalPublicKeys(keyType);
     }
 
-    private int ed25519GenerateV1(int keyTypeId, long seed) {
-        final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, 4));
-        final byte[] seedData = hostApi.getDataFromMemory(new RuntimePointerSize(seed));
+    private int ed25519GenerateV1(int keyTypeId, RuntimePointerSize seed) {
+        final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, KEY_TYPE_LEN));
+        final byte[] seedData = hostApi.getDataFromMemory(seed);
         Optional<String> seedString = new ScaleCodecReader(seedData).readOptional(new StringReader());
 
         final Ed25519PrivateKey ed25519PrivateKey;
@@ -166,7 +180,7 @@ public class CryptoHostFunctions {
         return hostApi.putDataToMemory(pubKey.raw());
     }
 
-    private long ed25519SignV1(int keyTypeId, int publicKey, long message) {
+    private long ed25519SignV1(int keyTypeId, int publicKey, RuntimePointerSize message) {
         final Signature sig = internalGetSignData(keyTypeId, publicKey, message);
 
         byte[] signed = Ed25519Utils.signMessage(sig.getPrivateKey(), sig.getMessageData());
@@ -181,22 +195,22 @@ public class CryptoHostFunctions {
     }
 
     @NotNull
-    private Signature internalGetSignData(int keyTypeId, int publicKey, long message) {
-        final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, 4));
+    private Signature internalGetSignData(int keyTypeId, int publicKey, RuntimePointerSize message) {
+        final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, KEY_TYPE_LEN));
 
         final byte[] publicKeyData = hostApi.getDataFromMemory(publicKey, 32);
-        final byte[] messageData = hostApi.getDataFromMemory(new RuntimePointerSize(message));
+        final byte[] messageData = hostApi.getDataFromMemory(message);
 
         byte[] privateKey = keyStore.get(keyType, publicKeyData);
         return new Signature(publicKeyData, messageData, privateKey);
     }
 
-    private int ed25519VerifyV1(int signature, long message, int publicKey) {
+    private int ed25519VerifyV1(int signature, RuntimePointerSize message, int publicKey) {
         VerifySignature verifySig = internalGetVerifySignature(signature, message, publicKey, Key.ED25519);
         return Ed25519Utils.verifySignature(verifySig) ? 1 : 0;
     }
 
-    private int ed25519BatchVerifyV1(int signature, long message, int publicKey) {
+    private int ed25519BatchVerifyV1(int signature, RuntimePointerSize message, int publicKey) {
         VerifySignature verifySig = internalGetVerifySignature(signature, message, publicKey, Key.ED25519);
 
         if (batchVerificationStarted) {
@@ -208,7 +222,7 @@ public class CryptoHostFunctions {
     }
 
     private int sr25519PublicKeysV1(int keyTypeId) {
-        final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, 4));
+        final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, KEY_TYPE_LEN));
 
         if (keyType == null || (keyType.getKey() != Key.SR25519 && keyType.getKey() != Key.GENERIC)) {
             throw new RuntimeException(INVALID_KEY_TYPE);
@@ -217,9 +231,9 @@ public class CryptoHostFunctions {
         return internalPublicKeys(keyType);
     }
 
-    private int generateSr25519KeyPair(int keyTypeId, long seed) {
-        final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, 4));
-        final byte[] seedData = hostApi.getDataFromMemory(new RuntimePointerSize(seed));
+    private int generateSr25519KeyPair(int keyTypeId, RuntimePointerSize seed) {
+        final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, KEY_TYPE_LEN));
+        final byte[] seedData = hostApi.getDataFromMemory(seed);
         Optional<String> seedString = new ScaleCodecReader(seedData).readOptional(ScaleCodecReader::readString);
         final Schnorrkel.KeyPair keyPair;
 
@@ -233,7 +247,7 @@ public class CryptoHostFunctions {
         return hostApi.putDataToMemory(keyPair.getPublicKey());
     }
 
-    private Number sr25519SignV1(int keyTypeId, int publicKey, long message) {
+    private Number sr25519SignV1(int keyTypeId, int publicKey, RuntimePointerSize message) {
         Signature sig = internalGetSignData(keyTypeId, publicKey, message);
         byte[] signed = Sr25519Utils.signMessage(sig.getPublicKeyData(), sig.getPrivateKey(), sig.getMessageData());
 
@@ -249,13 +263,13 @@ public class CryptoHostFunctions {
 
     }
 
-    private Number sr25519VerifyV1(int signature, long message, int publicKey) {
+    private Number sr25519VerifyV1(int signature, RuntimePointerSize message, int publicKey) {
         VerifySignature verifiedSignature = internalGetVerifySignature(signature, message, publicKey, Key.SR25519);
 
         return Sr25519Utils.verifySignature(verifiedSignature) ? 1 : 0;
     }
 
-    private int sr25519BatchVerifyV1(int signature, long message, int publicKey) {
+    private int sr25519BatchVerifyV1(int signature, RuntimePointerSize message, int publicKey) {
         VerifySignature verifiedSignature = internalGetVerifySignature(signature, message, publicKey, Key.SR25519);
 
         if (batchVerificationStarted) {
@@ -268,7 +282,7 @@ public class CryptoHostFunctions {
     }
 
     private Number ecdsaPublicKeysV1(int keyTypeId) {
-        final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, 4));
+        final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, KEY_TYPE_LEN));
 
         if (keyType == null || keyType.getKey() != Key.GENERIC) {
             throw new RuntimeException(INVALID_KEY_TYPE);
@@ -292,9 +306,9 @@ public class CryptoHostFunctions {
         }
     }
 
-    public int generateEcdsaKeyPair(int keyTypeId, long seed) {
-        final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, 4));
-        final byte[] seedData = hostApi.getDataFromMemory(new RuntimePointerSize(seed));
+    public int generateEcdsaKeyPair(int keyTypeId, RuntimePointerSize seed) {
+        final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, KEY_TYPE_LEN));
+        final byte[] seedData = hostApi.getDataFromMemory(seed);
         Optional<String> seedString = new ScaleCodecReader(seedData).readOptional(new StringReader());
 
         final Pair<PrivKey, PubKey> keyPair = seedString
@@ -305,11 +319,11 @@ public class CryptoHostFunctions {
         return hostApi.putDataToMemory(keyPair.getSecond().raw());
     }
 
-    private Number ecdsaSignV1(int keyTypeId, int publicKey, long message) {
-        final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, 4));
+    private Number ecdsaSignV1(int keyTypeId, int publicKey, RuntimePointerSize message) {
+        final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, KEY_TYPE_LEN));
 
         final byte[] publicKeyData = hostApi.getDataFromMemory(publicKey, 33);
-        byte[] messageData = hostApi.getDataFromMemory(new RuntimePointerSize(message));
+        byte[] messageData = hostApi.getDataFromMemory(message);
         byte[] hashedMessage = HashUtils.hashWithBlake2b(messageData);
 
         byte[] privateKey = keyStore.get(keyType, publicKeyData);
@@ -325,15 +339,15 @@ public class CryptoHostFunctions {
         }
     }
 
-    private Number ecdsaSignPrehashedV1(int keyTypeId, int publicKey, long message) {
-        final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, 4));
+    private Number ecdsaSignPrehashedV1(int keyTypeId, int publicKey, RuntimePointerSize message) {
+        final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, KEY_TYPE_LEN));
 
         if (keyType == null || (keyType.getKey() != Key.ECDSA && keyType.getKey() != Key.GENERIC)) {
             throw new RuntimeException(INVALID_KEY_TYPE);
         }
 
         final byte[] publicKeyData = hostApi.getDataFromMemory(publicKey, 33);
-        byte[] messageData = hostApi.getDataFromMemory(new RuntimePointerSize(message));
+        byte[] messageData = hostApi.getDataFromMemory(message);
 
         byte[] privateKey = keyStore.get(keyType, publicKeyData);
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -348,18 +362,18 @@ public class CryptoHostFunctions {
         }
     }
 
-    private Number ecdsaVerifyV1(int signature, long message, int publicKey) {
+    private Number ecdsaVerifyV1(int signature, RuntimePointerSize message, int publicKey) {
         final VerifySignature verifySig = internalGetVerifySignature(signature, message, publicKey, Key.ECDSA);
         verifySig.setMessageData(HashUtils.hashWithBlake2b(verifySig.getMessageData()));
         return EcdsaUtils.verifySignature(verifySig) ? 1 : 0;
     }
 
-    private int ecdsaVerifyPrehashedV1(int signature, long message, int publicKey) {
+    private int ecdsaVerifyPrehashedV1(int signature, RuntimePointerSize message, int publicKey) {
         final VerifySignature verifySig = internalGetVerifySignature(signature, message, publicKey, Key.ECDSA);
         return EcdsaUtils.verifySignature(verifySig) ? 1 : 0;
     }
 
-    private int ecdsaBatchVerifyV1(int signature, long message, int publicKey) {
+    private int ecdsaBatchVerifyV1(int signature, RuntimePointerSize message, int publicKey) {
         final VerifySignature verifySig = internalGetVerifySignature(signature, message, publicKey, Key.ECDSA);
         verifySig.setMessageData(HashUtils.hashWithBlake2b(verifySig.getMessageData()));
 
