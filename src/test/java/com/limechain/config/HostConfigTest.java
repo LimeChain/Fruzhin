@@ -2,6 +2,7 @@ package com.limechain.config;
 
 import com.limechain.chain.Chain;
 import com.limechain.cli.CliArguments;
+import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.storage.DBInitializer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,6 +28,7 @@ public class HostConfigTest {
     @Test
     public void HostConfig_Succeeds_PassedCliArguments() {
         when(cliArguments.network()).thenReturn(Chain.WESTEND.getValue());
+        when(cliArguments.nodeRole()).thenReturn("full");
         when(cliArguments.dbPath()).thenReturn(DBInitializer.DEFAULT_DIRECTORY);
 
         HostConfig hostConfig = new HostConfig(cliArguments);
@@ -40,6 +42,7 @@ public class HostConfigTest {
     @Test
     public void HostConfig_throwsException_whenNetworkInvalid() {
         when(cliArguments.network()).thenReturn("invalidNetwork");
+        when(cliArguments.nodeRole()).thenReturn("full");
         when(cliArguments.dbPath()).thenReturn(DBInitializer.DEFAULT_DIRECTORY);
         Exception exception = assertThrows(RuntimeException.class, () -> {
             new HostConfig(cliArguments);
@@ -55,6 +58,7 @@ public class HostConfigTest {
     public void GetGenesisPath_returnsCorrectPath_whenPassedChain() {
         // Westend
         when(cliArguments.network()).thenReturn(Chain.WESTEND.getValue());
+        when(cliArguments.nodeRole()).thenReturn("full");
         when(cliArguments.dbPath()).thenReturn(DBInitializer.DEFAULT_DIRECTORY);
         HostConfig hostConfig = new HostConfig(cliArguments);
         setField(hostConfig, "westendGenesisPath", westendGenesisPath);
