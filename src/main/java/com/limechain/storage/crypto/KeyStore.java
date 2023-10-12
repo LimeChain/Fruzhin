@@ -38,7 +38,6 @@ public class KeyStore {
     }
 
     private String getKey(KeyType keyType, byte[] key) {
-        String concat = new String(keyType.getBytes()).concat(new String(key));
-        return concat;
+        return new String(keyType.getBytes()).concat(new String(key));
     }
 }
