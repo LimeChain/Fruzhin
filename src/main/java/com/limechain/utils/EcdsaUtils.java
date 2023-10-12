@@ -5,6 +5,7 @@ import io.libp2p.core.crypto.PrivKey;
 import io.libp2p.core.crypto.PubKey;
 import io.libp2p.crypto.keys.Secp256k1Kt;
 import kotlin.Pair;
+import lombok.experimental.UtilityClass;
 import org.bouncycastle.math.ec.ECPoint;
 import org.web3j.crypto.Bip32ECKeyPair;
 import org.web3j.crypto.ECDSASignature;
@@ -15,6 +16,7 @@ import org.web3j.crypto.Sign;
 import java.math.BigInteger;
 import java.util.Arrays;
 
+@UtilityClass
 public class EcdsaUtils {
 
     public static Pair<PrivKey, PubKey> generateKeyPair() {

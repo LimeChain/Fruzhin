@@ -3,8 +3,10 @@ package com.limechain.utils;
 import com.limechain.runtime.hostapi.dto.VerifySignature;
 import io.emeraldpay.polkaj.schnorrkel.Schnorrkel;
 import io.emeraldpay.polkaj.schnorrkel.SchnorrkelException;
+import lombok.experimental.UtilityClass;
 import org.web3j.crypto.MnemonicUtils;
 
+@UtilityClass
 public class Sr25519Utils {
 
     public static Schnorrkel.KeyPair generateKeyPair(){
