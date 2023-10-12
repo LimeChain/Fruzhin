@@ -58,7 +58,7 @@ public class HostConfigTest {
     public void GetGenesisPath_returnsCorrectPath_whenPassedChain() {
         // Westend
         when(cliArguments.network()).thenReturn(Chain.WESTEND.getValue());
-        when(cliArguments.nodeRole()).thenReturn("full");
+        when(cliArguments.nodeRole()).thenReturn(NodeRole.FULL.toString().toLowerCase());
         when(cliArguments.dbPath()).thenReturn(DBInitializer.DEFAULT_DIRECTORY);
         HostConfig hostConfig = new HostConfig(cliArguments);
         setField(hostConfig, "westendGenesisPath", westendGenesisPath);

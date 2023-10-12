@@ -53,8 +53,8 @@ public class HostConfig {
             throw new RuntimeException("Unsupported or unknown network");
         }
         dbRecreate = cliArguments.dbRecreate();
-        String nodeRoleString = cliArguments.nodeRole();
-        setNodeRoleFromCliString(nodeRoleString);
+        nodeRole = NodeRole.fromString(cliArguments.nodeRole());
+        if(nodeRole == null) throw new RuntimeException("Invalid node role in cli arguments");
         log.log(Level.INFO, String.format("✅️Loaded app config for chain %s%n", chain));
         switch (this.getChain()) {
             case POLKADOT, LOCAL -> {
@@ -92,22 +92,6 @@ public class HostConfig {
             }
             default -> {
                 throw new RuntimeException("Invalid Chain in host configuration");
-            }
-        }
-    }
-
-    public void setNodeRoleFromCliString(String nodeRoleString) {
-        if (nodeRoleString == null)
-            nodeRole = NodeRole.FULL;
-        switch (nodeRoleString) {
-            case "light" -> {
-                nodeRole = NodeRole.LIGHT;
-            }
-            case "full" -> {
-                nodeRole = NodeRole.FULL;
-            }
-            default -> {
-                throw new RuntimeException("Invalid node role in cli arguments.");
             }
         }
     }

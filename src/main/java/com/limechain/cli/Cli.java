@@ -1,6 +1,7 @@
 package com.limechain.cli;
 
 import com.limechain.chain.Chain;
+import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.storage.DBInitializer;
 import lombok.Getter;
 import lombok.extern.java.Log;
@@ -54,7 +55,7 @@ public class Cli {
             String dbPath = cmd.getOptionValue(DB_PATH, DBInitializer.DEFAULT_DIRECTORY);
             boolean dbRecreate = cmd.hasOption(DB_RECREATE);
             String nodeKey = cmd.getOptionValue(NODE_KEY);
-            String nodeMode = cmd.getOptionValue(NODE_MODE, "full");
+            String nodeMode = cmd.getOptionValue(NODE_MODE, NodeRole.FULL.toString());
 
             return new CliArguments(network, dbPath, dbRecreate, nodeKey, nodeMode);
         } catch (ParseException e) {
@@ -75,7 +76,8 @@ public class Cli {
         Option dbPathOption = new Option(null, DB_PATH, true, "RocksDB path");
         Option dbClean = new Option("dbc", DB_RECREATE, false, "Clean the DB");
         Option nodeKey = new Option(null, NODE_KEY, true, "HEX for secret Ed25519 key");
-        Option nodeMode = new Option("mode", NODE_MODE, true, "Node mode (light/full)");
+        Option nodeMode = new Option("mode", NODE_MODE, true, "Node mode (light/full). " +
+                "Default is full node.");
 
         networkOption.setRequired(false);
         dbPathOption.setRequired(false);

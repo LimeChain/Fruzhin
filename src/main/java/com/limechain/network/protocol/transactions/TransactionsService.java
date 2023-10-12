@@ -15,7 +15,7 @@ public class TransactionsService extends NetworkService<Transactions> {
     }
 
     /**
-     * Sends a neighbour message to a peer. If there is no initiator stream opened with the peer,
+     * Sends a transactions message to a peer. If there is no initiator stream opened with the peer,
      * sends a handshake instead.
      *
      * @param us our host object

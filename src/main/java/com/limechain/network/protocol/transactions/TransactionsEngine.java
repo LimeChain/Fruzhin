@@ -41,12 +41,12 @@ public class TransactionsEngine {
      * @param stream  stream, where the request was received
      */
     public void receiveRequest(byte[] message, PeerId peerId, Stream stream) {
-        System.out.println("Transaction message length:" + message.length);
         if (message == null) {
             log.log(Level.WARNING,
                     String.format("Transactions message is null from Peer %s", message[0], peerId));
             return;
         }
+        log.log(Level.INFO, "Transaction message length:" + message.length);
 
         if (stream.isInitiator()) {
             handleInitiatorStreamMessage(message, stream);
@@ -56,7 +56,6 @@ public class TransactionsEngine {
     }
 
     private void handleInitiatorStreamMessage(byte[] message, Stream stream) {
-        System.out.println("On Initiator transaction");
         PeerId peerId = stream.remotePeerId();
         if (!isHandshake(message)) {
             stream.close();
@@ -69,7 +68,6 @@ public class TransactionsEngine {
     }
 
     private void handleResponderStreamMessage(byte[] message, Stream stream) {
-        System.out.println("On Responder");
         PeerId peerId = stream.remotePeerId();
         boolean connectedToPeer = connectionManager.isTransactionsConnected(peerId);
 
@@ -136,7 +134,7 @@ public class TransactionsEngine {
         //TODO Send our transaction message
     }
 
-    public boolean isHandshake(byte[] message) {
+    private boolean isHandshake(byte[] message) {
         return message.length == HANDSHAKE_LENGTH;
     }
 }
