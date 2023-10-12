@@ -3,6 +3,7 @@ package com.limechain.config;
 import com.limechain.chain.Chain;
 import com.limechain.cli.CliArguments;
 import com.limechain.constants.RpcConstants;
+import com.limechain.network.protocol.blockannounce.NodeRole;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.java.Log;
@@ -28,6 +29,7 @@ public class HostConfig {
      * Chain the Host is running on
      */
     private Chain chain;
+    private NodeRole nodeRole;
     private String rpcNodeAddress;
     @Value("${genesis.path.polkadot}")
     private String polkadotGenesisPath;
@@ -51,6 +53,8 @@ public class HostConfig {
             throw new RuntimeException("Unsupported or unknown network");
         }
         dbRecreate = cliArguments.dbRecreate();
+        String nodeRoleString = cliArguments.nodeRole();
+        setNodeRoleFromCliString(nodeRoleString);
         log.log(Level.INFO, String.format("✅️Loaded app config for chain %s%n", chain));
         switch (this.getChain()) {
             case POLKADOT, LOCAL -> {
@@ -88,6 +92,22 @@ public class HostConfig {
             }
             default -> {
                 throw new RuntimeException("Invalid Chain in host configuration");
+            }
+        }
+    }
+
+    public void setNodeRoleFromCliString(String nodeRoleString) {
+        if (nodeRoleString == null)
+            nodeRole = NodeRole.FULL;
+        switch (nodeRoleString) {
+            case "light" -> {
+                nodeRole = NodeRole.LIGHT;
+            }
+            case "full" -> {
+                nodeRole = NodeRole.FULL;
+            }
+            default -> {
+                throw new RuntimeException("Invalid node role in cli arguments.");
             }
         }
     }

@@ -3,7 +3,6 @@ package com.limechain.sync.warpsync;
 import com.limechain.chain.lightsyncstate.Authority;
 import com.limechain.constants.GenesisBlockHash;
 import com.limechain.network.Network;
-import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshake;
 import com.limechain.network.protocol.grandpa.messages.commit.CommitMessage;
 import com.limechain.network.protocol.grandpa.messages.neighbour.NeighbourMessage;
@@ -101,11 +100,11 @@ public class SyncedState {
                 ? genesisBlockHash
                 : this.lastFinalizedBlockHash;
         return new BlockAnnounceHandshake(
-                NodeRole.LIGHT.getValue(),
+                network.getNodeRole().getValue(),
                 this.lastFinalizedBlockNumber,
                 lastFinalizedBlockHash,
                 genesisBlockHash
-        );
+                );
     }
 
     /**

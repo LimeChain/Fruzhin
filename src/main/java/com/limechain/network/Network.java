@@ -6,6 +6,7 @@ import com.limechain.cli.CliArguments;
 import com.limechain.config.HostConfig;
 import com.limechain.network.kad.KademliaService;
 import com.limechain.network.protocol.blockannounce.BlockAnnounceService;
+import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.network.protocol.grandpa.GrandpaService;
 import com.limechain.network.protocol.lightclient.LightMessagesService;
 import com.limechain.network.protocol.lightclient.pb.LightClientMessage;
@@ -56,6 +57,8 @@ public class Network {
     private static Network network;
     @Getter
     public final Chain chain;
+    @Getter
+    private NodeRole nodeRole;
     private final String[] bootNodes;
     private final ConnectionManager connectionManager = ConnectionManager.getInstance();
     public SyncService syncService;
@@ -84,9 +87,10 @@ public class Network {
      */
     public Network(ChainService chainService, HostConfig hostConfig, KVRepository<String, Object> repository,
                    CliArguments cliArgs) {
-        this.initializeProtocols(chainService, hostConfig, repository, cliArgs);
         this.bootNodes = chainService.getGenesis().getBootNodes();
         this.chain = hostConfig.getChain();
+        this.nodeRole = hostConfig.getNodeRole();
+        this.initializeProtocols(chainService, hostConfig, repository, cliArgs);
     }
 
     private void initializeProtocols(ChainService chainService, HostConfig hostConfig,
@@ -130,10 +134,17 @@ public class Network {
                         warpSyncService.getProtocol(),
                         syncService.getProtocol(),
                         blockAnnounceService.getProtocol(),
-                        grandpaService.getProtocol(),
-                        transactionsService.getProtocol()
+                        grandpaService.getProtocol()
                 )
         );
+
+        if (nodeRole == NodeRole.FULL) {
+            hostBuilder.addProtocols(
+                    List.of(
+                            transactionsService.getProtocol()
+                    )
+            );
+        }
 
         this.host = hostBuilder.build();
         IdentifyBuilder.addIdentifyProtocol(this.host);

@@ -80,13 +80,13 @@ public class TransactionsEngine {
         }
 
         if (isHandshake(message)) {
-            handleHandshake(message, peerId, stream);
+            handleHandshake(peerId, stream);
         } else {
             handleTransactionMessage(message, peerId);
         }
     }
 
-    private void handleHandshake(byte[] message, PeerId peerId, Stream stream) {
+    private void handleHandshake(PeerId peerId, Stream stream) {
         if (connectionManager.isTransactionsConnected(peerId)) {
             log.log(Level.INFO, "Received existing transactions handshake from " + peerId);
             stream.close();
@@ -100,11 +100,10 @@ public class TransactionsEngine {
     private void handleTransactionMessage(byte[] message, PeerId peerId) {
         ScaleCodecReader reader = new ScaleCodecReader(message);
         byte[][] transactions = reader.read(new TransactionsReader());
-        log.log(Level.INFO, "Received " + transactions.length + "transactions from Peer "
+        log.log(Level.INFO, "Received " + transactions.length + " transactions from Peer "
                 + peerId);
         //TODO Add transactions to data
-        //new Thread(() -> syncedState.syncNeighbourMessage(neighbourMessage, peerId)).start();
-    }
+        }
 
     /**
      * Send our Transactions handshake on a given <b>initiator</b> stream.
@@ -134,7 +133,7 @@ public class TransactionsEngine {
         }
 
         log.log(Level.INFO, "Sending transaction message to peer " + peerId);
-        //stream.writeAndFlush(buf.toByteArray());
+        //TODO Send our transaction message
     }
 
     public boolean isHandshake(byte[] message) {

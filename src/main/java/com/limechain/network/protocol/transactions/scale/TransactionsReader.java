@@ -11,6 +11,6 @@ public class TransactionsReader implements ScaleReader<byte[][]> {
         for(int i=0;i<size;i++){
             transactions[i]=reader.readByteArray();
         }
-        return new byte[][]{};
+        return transactions;
     }
 }

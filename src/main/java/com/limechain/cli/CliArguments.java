@@ -8,5 +8,5 @@ package com.limechain.cli;
  * @param dbRecreate flag for recreating the database for current network
  * @param nodeKey HEX for secret Ed25519 key
  */
-public record CliArguments(String network, String dbPath, boolean dbRecreate, String nodeKey) {
+public record CliArguments(String network, String dbPath, boolean dbRecreate, String nodeKey, String nodeRole) {
 }

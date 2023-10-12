@@ -25,6 +25,7 @@ public class Cli {
     public static final String DB_PATH = "db-path";
     public static final String NODE_KEY = "node-key";
     private static final String DB_RECREATE = "db-recreate";
+    private static final String NODE_MODE = "node-mode";
 
     /**
      * Holds CLI options
@@ -53,8 +54,9 @@ public class Cli {
             String dbPath = cmd.getOptionValue(DB_PATH, DBInitializer.DEFAULT_DIRECTORY);
             boolean dbRecreate = cmd.hasOption(DB_RECREATE);
             String nodeKey = cmd.getOptionValue(NODE_KEY);
+            String nodeMode = cmd.getOptionValue(NODE_MODE);
 
-            return new CliArguments(network, dbPath, dbRecreate, nodeKey);
+            return new CliArguments(network, dbPath, dbRecreate, nodeKey, nodeMode);
         } catch (ParseException e) {
             log.log(Level.SEVERE, "Failed to parse cli arguments", e);
             formatter.printHelp("Specify the network name - " + String.join(", ", validChains), options);
@@ -73,16 +75,19 @@ public class Cli {
         Option dbPathOption = new Option(null, DB_PATH, true, "RocksDB path");
         Option dbClean = new Option("dbc", DB_RECREATE, false, "Clean the DB");
         Option nodeKey = new Option(null, NODE_KEY, true, "HEX for secret Ed25519 key");
+        Option nodeMode = new Option("mode", NODE_MODE, true, "Node mode (light/full)");
 
         networkOption.setRequired(false);
         dbPathOption.setRequired(false);
         dbClean.setRequired(false);
         nodeKey.setRequired(false);
+        nodeMode.setRequired(false);
 
         options.addOption(networkOption);
         options.addOption(dbPathOption);
         options.addOption(dbClean);
         options.addOption(nodeKey);
+        options.addOption(nodeMode);
         return options;
     }
 
