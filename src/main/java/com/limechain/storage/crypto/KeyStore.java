@@ -30,14 +30,15 @@ public class KeyStore {
                 .findKeysByPrefix(getKey(keyType, "".getBytes()), 90000)
                 .stream()
                 .map(this::removeKeyTypeFromKey)
-                .collect(Collectors.toList());
+                .toList();
     }
 
-    private byte[] removeKeyTypeFromKey(String key) {
-        return key.substring(4).getBytes();
+    private byte[] removeKeyTypeFromKey(byte[] key) {
+        return Arrays.copyOfRange(key, 4, key.length);
     }
 
     private String getKey(KeyType keyType, byte[] key) {
-        return new String(keyType.getBytes()).concat(new String(key));
+        String concat = new String(keyType.getBytes()).concat(new String(key));
+        return concat;
     }
 }

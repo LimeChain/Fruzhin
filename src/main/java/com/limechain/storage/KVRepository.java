@@ -37,7 +37,14 @@ public interface KVRepository<K, V> {
      */
     boolean delete(K key);
 
-    List<String> findKeysByPrefix(String prefixSeek, int limit);
+    /**
+     * Finds all keys sharing a common prefix up to a given limit.
+     *
+     * @param prefixSeek prefix of the key to look for
+     * @param limit maximum keys to return
+     * @return whether the delete operation was successful
+     */
+    List<byte[]> findKeysByPrefix(String prefixSeek, int limit);
 
     /**
      * Deletes key-value pairs from the DB where key starts with prefix, up to a given limit.
