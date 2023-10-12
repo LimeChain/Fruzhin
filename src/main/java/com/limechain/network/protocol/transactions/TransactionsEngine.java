@@ -28,7 +28,7 @@ public class TransactionsEngine {
      * Handles an incoming request as follows:
      *
      * <p><b>On streams we initiated:</b>  adds streams, where we receive a handshake message,
-     * to initiator streams in peer's {@link com.limechain.network.dto.PeerInfo} , ignores all other message types.
+     * to initiator streams in peer's {@link com.limechain.network.dto.PeerInfo}, ignores all other message types.
      *
      * <p><b>On responder stream: </b>
      * <p>If message payload contains a valid handshake, adds the stream when the peer is not connected already,
