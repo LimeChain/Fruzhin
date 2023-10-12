@@ -18,8 +18,7 @@ import java.util.Arrays;
 public class EcdsaUtils {
 
     public static Pair<PrivKey, PubKey> generateKeyPair() {
-        Pair<PrivKey, PubKey> keyPair = Secp256k1Kt.generateSecp256k1KeyPair();
-        return new Pair<>(keyPair.getFirst(), keyPair.getSecond());
+        return Secp256k1Kt.generateSecp256k1KeyPair();
     }
 
     public static Pair<PrivKey, PubKey> generateKeyPair(String mnemonic) {
