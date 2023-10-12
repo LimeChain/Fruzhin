@@ -34,7 +34,7 @@ public class TransactionsEngine {
      * <p>If message payload contains a valid handshake, adds the stream when the peer is not connected already,
      * ignore otherwise. </p>
      * <p>On transactions messages {@link SyncedState}. </p>
-     * <p>Logs and ignores other message types. </p>
+     * <p>Logs and ignores other message types.</p>
      *
      * @param message received message as byre array
      * @param peerId  peer id of sender
