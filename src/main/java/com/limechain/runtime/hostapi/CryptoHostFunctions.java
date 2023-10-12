@@ -169,12 +169,10 @@ public class CryptoHostFunctions {
         final byte[] seedData = hostApi.getDataFromMemory(seed);
         Optional<String> seedString = new ScaleCodecReader(seedData).readOptional(new StringReader());
 
-        final Ed25519PrivateKey ed25519PrivateKey;
-        if (seedString.isPresent()) {
-            ed25519PrivateKey = Ed25519Utils.generateKeyPair(seedString.get());
-        } else {
-            ed25519PrivateKey = Ed25519Utils.generateKeyPair();
-        }
+        final Ed25519PrivateKey ed25519PrivateKey = seedString
+                .map(Ed25519Utils::generateKeyPair)
+                .orElseGet(Ed25519Utils::generateKeyPair);
+        
         final PubKey pubKey = ed25519PrivateKey.publicKey();
 
         keyStore.put(keyType, pubKey.raw(), ed25519PrivateKey.raw());
