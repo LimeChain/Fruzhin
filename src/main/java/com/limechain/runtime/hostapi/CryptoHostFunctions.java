@@ -172,7 +172,7 @@ public class CryptoHostFunctions {
         final Ed25519PrivateKey ed25519PrivateKey = seedString
                 .map(Ed25519Utils::generateKeyPair)
                 .orElseGet(Ed25519Utils::generateKeyPair);
-        
+
         final PubKey pubKey = ed25519PrivateKey.publicKey();
 
         keyStore.put(keyType, pubKey.raw(), ed25519PrivateKey.raw());
@@ -182,9 +182,15 @@ public class CryptoHostFunctions {
     private long ed25519SignV1(int keyTypeId, int publicKey, RuntimePointerSize message) {
         final Signature sig = internalGetSignData(keyTypeId, publicKey, message);
 
-        byte[] signed = Ed25519Utils.signMessage(sig.getPrivateKey(), sig.getMessageData());
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
              ScaleCodecWriter scaleWriter = new ScaleCodecWriter(baos)) {
+
+            if (sig.getPrivateKey() == null) {
+                scaleWriter.writeOptional(ScaleCodecWriter::writeByteArray, Optional.empty());
+                return hostApi.putDataToMemory(baos.toByteArray());
+            }
+
+            byte[] signed = Ed25519Utils.signMessage(sig.getPrivateKey(), sig.getMessageData());
             scaleWriter.writeOptional(ScaleCodecWriter::writeByteArray, Optional.ofNullable(signed));
             return hostApi.putDataToMemory(baos.toByteArray());
         } catch (IOException e) {
@@ -248,11 +254,16 @@ public class CryptoHostFunctions {
 
     private Number sr25519SignV1(int keyTypeId, int publicKey, RuntimePointerSize message) {
         Signature sig = internalGetSignData(keyTypeId, publicKey, message);
-        byte[] signed = Sr25519Utils.signMessage(sig.getPublicKeyData(), sig.getPrivateKey(), sig.getMessageData());
 
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
              ScaleCodecWriter scaleWriter = new ScaleCodecWriter(baos)) {
 
+            if (sig.getPrivateKey() == null) {
+                scaleWriter.writeOptional(ScaleCodecWriter::writeByteArray, Optional.empty());
+                return hostApi.putDataToMemory(baos.toByteArray());
+            }
+
+            byte[] signed = Sr25519Utils.signMessage(sig.getPublicKeyData(), sig.getPrivateKey(), sig.getMessageData());
             scaleWriter.writeOptional(ScaleCodecWriter::writeByteArray, Optional.of(signed));
             return hostApi.putDataToMemory(baos.toByteArray());
 
@@ -329,6 +340,11 @@ public class CryptoHostFunctions {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
              ScaleCodecWriter scaleWriter = new ScaleCodecWriter(baos)) {
 
+            if (privateKey == null) {
+                scaleWriter.writeOptional(ScaleCodecWriter::writeByteArray, Optional.empty());
+                return hostApi.putDataToMemory(baos.toByteArray());
+            }
+
             byte[] signed = EcdsaUtils.signMessage(privateKey, hashedMessage);
             scaleWriter.writeOptional(ScaleCodecWriter::writeByteArray, Optional.of(signed));
             return hostApi.putDataToMemory(baos.toByteArray());
@@ -351,6 +367,11 @@ public class CryptoHostFunctions {
         byte[] privateKey = keyStore.get(keyType, publicKeyData);
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
              ScaleCodecWriter scaleWriter = new ScaleCodecWriter(baos)) {
+
+            if (privateKey == null) {
+                scaleWriter.writeOptional(ScaleCodecWriter::writeByteArray, Optional.empty());
+                return hostApi.putDataToMemory(baos.toByteArray());
+            }
 
             byte[] signed = EcdsaUtils.signMessage(privateKey, messageData);
             scaleWriter.writeOptional(ScaleCodecWriter::writeByteArray, Optional.of(signed));

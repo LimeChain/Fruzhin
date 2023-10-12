@@ -4,8 +4,8 @@ import com.limechain.storage.KVRepository;
 import lombok.extern.java.Log;
 import org.springframework.stereotype.Component;
 
+import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Component
 @Log
@@ -22,7 +22,7 @@ public class KeyStore {
     }
 
     public byte[] get(KeyType keyType, byte[] publicKey) {
-        return (byte[]) repository.find(getKey(keyType, publicKey)).get();
+        return (byte[]) repository.find(getKey(keyType, publicKey)).orElse(null);
     }
 
     public List<byte[]> getPublicKeysByKeyType(KeyType keyType) {
