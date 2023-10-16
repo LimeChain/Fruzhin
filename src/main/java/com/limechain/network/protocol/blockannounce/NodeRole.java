@@ -15,4 +15,18 @@ public enum NodeRole {
         this.value = value;
     }
 
+    /**
+     * Matches a string to an enum name by comparing in case-insensitive values
+     *
+     * @param nodeRole string of
+     * @return
+     */
+    public static NodeRole fromString(String nodeRole) {
+        for (NodeRole type : values()) {
+            if (type.toString().toLowerCase().equals(nodeRole.toLowerCase())) {
+                return type;
+            }
+        }
+        return null;
+    }
 }
