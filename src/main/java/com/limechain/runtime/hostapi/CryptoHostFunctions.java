@@ -626,8 +626,11 @@ public class CryptoHostFunctions {
     }
 
     /**
-     * Finish verifying the batch of signatures since the last call to this function. Blocks until all the signatures are verified.
-     * @return an i32 integer value equal to 1 if all the signatures are valid or a value equal to 0 if one or more of the signatures are invalid.
+     * Finish verifying the batch of signatures since the last call to this function. Blocks until all the signatures
+     * are verified.
+     *
+     * @return an i32 integer value equal to 1 if all the signatures are valid or a value equal to 0 if one or more of
+     * the signatures are invalid.
      */
     private int finishBatchVerify() {
         if (!batchVerificationStarted) {
