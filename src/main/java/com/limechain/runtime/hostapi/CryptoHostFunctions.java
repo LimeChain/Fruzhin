@@ -71,7 +71,7 @@ public class CryptoHostFunctions {
                                 ed25519SignV1(argv.get(0).intValue(), argv.get(1).intValue(),
                                         new RuntimePointerSize(argv.get(2))),
                         List.of(Type.I32, Type.I32, Type.I64), Type.I64),
-                HostApi.getImportObject("c", argv ->
+                HostApi.getImportObject("ext_crypto_ed25519_verify_version_1", argv ->
                                 ed25519VerifyV1(argv.get(0).intValue(), new RuntimePointerSize(argv.get(1)),
                                         argv.get(2).intValue()),
                         List.of(Type.I32, Type.I64, Type.I32), Type.I32),
@@ -151,7 +151,7 @@ public class CryptoHostFunctions {
                                                        int publicKey, Key key) {
         final byte[] signatureData = hostApi.getDataFromMemory(signature, 64);
         final byte[] messageData = hostApi.getDataFromMemory(message);
-        final byte[] publicKeyData = hostApi.getDataFromMemory(publicKey, 32);
+        final byte[] publicKeyData = hostApi.getDataFromMemory(publicKey, key == Key.ECDSA ? 33 : 32);
         return new VerifySignature(signatureData, messageData, publicKeyData, key);
     }
 
@@ -218,7 +218,7 @@ public class CryptoHostFunctions {
      * This function returns if the public key cannot be found in the key store.
      */
     private long ed25519SignV1(int keyTypeId, int publicKey, RuntimePointerSize message) {
-        final Signature sig = internalGetSignData(keyTypeId, publicKey, message);
+        final Signature sig = internalGetSignData(keyTypeId, publicKey, message, Key.ED25519);
 
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
              ScaleCodecWriter scaleWriter = new ScaleCodecWriter(baos)) {
@@ -238,10 +238,10 @@ public class CryptoHostFunctions {
     }
 
     @NotNull
-    private Signature internalGetSignData(int keyTypeId, int publicKey, RuntimePointerSize message) {
+    private Signature internalGetSignData(int keyTypeId, int publicKey, RuntimePointerSize message, Key key) {
         final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, KEY_TYPE_LEN));
 
-        final byte[] publicKeyData = hostApi.getDataFromMemory(publicKey, 32);
+        final byte[] publicKeyData = hostApi.getDataFromMemory(publicKey, key == Key.ECDSA ? 33 : 32);
         final byte[] messageData = hostApi.getDataFromMemory(message);
 
         byte[] privateKey = keyStore.get(keyType, publicKeyData);
@@ -333,7 +333,7 @@ public class CryptoHostFunctions {
     }
 
     private Number sr25519SignV1(int keyTypeId, int publicKey, RuntimePointerSize message) {
-        Signature sig = internalGetSignData(keyTypeId, publicKey, message);
+        final Signature sig = internalGetSignData(keyTypeId, publicKey, message, Key.SR25519);
 
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
              ScaleCodecWriter scaleWriter = new ScaleCodecWriter(baos)) {
@@ -426,7 +426,7 @@ public class CryptoHostFunctions {
      * @param keyTypeId a pointer to the key type identifier.
      * @param seed      a pointer-size to the SCALE encoded Option value containing the BIP-39 seed which must be valid
      *                  UTF8.
-     * @return a pointer to the buffer containing the 33-bytw public key.
+     * @return a pointer to the buffer containing the 33-byte public key.
      * @throws RuntimeException Panics if the key cannot be generated, such as when an invalid key type or invalid seed
      *                          was provided.
      */
@@ -466,22 +466,18 @@ public class CryptoHostFunctions {
      * represent the recovery ID. This function returns if the public key cannot be found in the key store.
      */
     private Number ecdsaSignV1(int keyTypeId, int publicKey, RuntimePointerSize message) {
-        final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, KEY_TYPE_LEN));
+        final Signature sig = internalGetSignData(keyTypeId, publicKey, message, Key.ECDSA);
+        sig.setMessageData(HashUtils.hashWithBlake2b(sig.getMessageData()));
 
-        final byte[] publicKeyData = hostApi.getDataFromMemory(publicKey, 33);
-        byte[] messageData = hostApi.getDataFromMemory(message);
-        byte[] hashedMessage = HashUtils.hashWithBlake2b(messageData);
-
-        byte[] privateKey = keyStore.get(keyType, publicKeyData);
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
              ScaleCodecWriter scaleWriter = new ScaleCodecWriter(baos)) {
 
-            if (privateKey == null) {
+            if (sig.getPrivateKey() == null) {
                 scaleWriter.writeOptional(ScaleCodecWriter::writeByteArray, Optional.empty());
                 return hostApi.putDataToMemory(baos.toByteArray());
             }
 
-            byte[] signed = EcdsaUtils.signMessage(privateKey, hashedMessage);
+            byte[] signed = EcdsaUtils.signMessage(sig.getPrivateKey(), sig.getMessageData());
             scaleWriter.writeOptional(ScaleCodecWriter::writeByteArray, Optional.of(signed));
             return hostApi.putDataToMemory(baos.toByteArray());
 
@@ -502,25 +498,17 @@ public class CryptoHostFunctions {
      * represent the recovery ID. This function returns if the public key cannot be found in the key store.
      */
     private Number ecdsaSignPrehashedV1(int keyTypeId, int publicKey, RuntimePointerSize message) {
-        final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, KEY_TYPE_LEN));
+        final Signature sig = internalGetSignData(keyTypeId, publicKey, message, Key.ECDSA);
 
-        if (keyType == null || (keyType.getKey() != Key.ECDSA && keyType.getKey() != Key.GENERIC)) {
-            throw new RuntimeException(INVALID_KEY_TYPE);
-        }
-
-        final byte[] publicKeyData = hostApi.getDataFromMemory(publicKey, 33);
-        byte[] messageData = hostApi.getDataFromMemory(message);
-
-        byte[] privateKey = keyStore.get(keyType, publicKeyData);
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
              ScaleCodecWriter scaleWriter = new ScaleCodecWriter(baos)) {
 
-            if (privateKey == null) {
+            if (sig.getPrivateKey() == null) {
                 scaleWriter.writeOptional(ScaleCodecWriter::writeByteArray, Optional.empty());
                 return hostApi.putDataToMemory(baos.toByteArray());
             }
 
-            byte[] signed = EcdsaUtils.signMessage(privateKey, messageData);
+            byte[] signed = EcdsaUtils.signMessage(sig.getPrivateKey(), sig.getMessageData());
             scaleWriter.writeOptional(ScaleCodecWriter::writeByteArray, Optional.of(signed));
             return hostApi.putDataToMemory(baos.toByteArray());
 
@@ -556,7 +544,7 @@ public class CryptoHostFunctions {
     private int ecdsaVerifyPrehashedV1(int signature, int message, int publicKey) {
         final byte[] signatureData = hostApi.getDataFromMemory(signature, 64);
         final byte[] messageData = hostApi.getDataFromMemory(message, 32);
-        final byte[] publicKeyData = hostApi.getDataFromMemory(publicKey, 32);
+        final byte[] publicKeyData = hostApi.getDataFromMemory(publicKey, 33);
 
         VerifySignature verifySig = new VerifySignature(signatureData, messageData, publicKeyData, Key.ECDSA);
         return EcdsaUtils.verifySignature(verifySig) ? 1 : 0;
@@ -584,11 +572,29 @@ public class CryptoHostFunctions {
         return 1;
     }
 
+    /**
+     * Verify and recover a secp256k1 ECDSA signature.
+     *
+     * @param signature a pointer to the buffer containing the 65-byte signature in RSV format. V should be either
+     *                  0/1 or 27/28.
+     * @param message   a pointer to the buffer containing the 256-bit Blake2 hash of the message.
+     * @return a pointer-size to the SCALE encoded Result. On success it contains the 64-byte recovered public key or
+     * an error type on failure.
+     */
     private int secp256k1EcdsaRecoverV1(int signature, int message) {
         byte[] ecdsaPublicKey = internalSecp256k1RecoverKey(signature, message, false);
         return secp2561kScaleKeyResult(ecdsaPublicKey);
     }
 
+    /**
+     * Verify and recover a secp256k1 ECDSA signature.
+     *
+     * @param signature a pointer to the buffer containing the 65-byte signature in RSV format. V should be either
+     *                  0/1 or 27/28.
+     * @param message   a pointer to the buffer containing the 256-bit Blake2 hash of the message.
+     * @return a pointer-size (Definition 201) to the SCALE encoded Result value. On success it contains the 33-byte
+     * recovered public key in compressed form on success or an error type on failure.
+     */
     private int secp256k1EcdsaRecoverCompressedV1(int signature, int message) {
         byte[] rawBytes = internalSecp256k1RecoverKey(signature, message, true);
         return secp2561kScaleKeyResult(rawBytes);

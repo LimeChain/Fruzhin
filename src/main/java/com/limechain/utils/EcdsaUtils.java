@@ -66,31 +66,27 @@ public class EcdsaUtils {
         ECDSASignature sig =
                 new ECDSASignature(new BigInteger(1, r), new BigInteger(1, s));
 
-        byte[] fullPubKey = recoverFullPubKey(recId, sig, messageData);
+        byte[] fullPubKey = Sign.recoverFromSignature(recId, sig, messageData).toByteArray();
 
         if (compressed) {
             return compressPublicKey(fullPubKey);
         } else {
+            if(fullPubKey.length == 65){
+                return Arrays.copyOfRange(fullPubKey, 1, fullPubKey.length);
+            }
             return fullPubKey;
         }
     }
 
-    private static byte[] recoverFullPubKey(int recId, ECDSASignature sig, byte[] messageData) {
-        byte[] trimmedKey = Sign.recoverFromSignature(recId, sig, messageData).toByteArray();
-        if (trimmedKey.length == 64) {
-            byte[] key = new byte[65];
-            key[0] = 4;
-            System.arraycopy(trimmedKey, 0, key, 1, 64);
-
-            return key;
-        } else {
-            trimmedKey[0] = 4;
-            return trimmedKey;
-        }
-    }
-
     private static byte[] compressPublicKey(byte[] publicKey) {
-        ECPoint point = Sign.CURVE_PARAMS.getCurve().decodePoint(publicKey);
+        byte[] key = new byte[65];
+        if (publicKey.length == 64) {
+            System.arraycopy(publicKey, 0, key, 1, 64);
+        } else {
+            key = publicKey;
+        }
+        key[0] = 4;
+        ECPoint point = Sign.CURVE_PARAMS.getCurve().decodePoint(key);
 
         return point.getEncoded(true);
     }
