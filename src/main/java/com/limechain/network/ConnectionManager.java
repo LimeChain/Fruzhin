@@ -62,6 +62,10 @@ public class ConnectionManager {
         addStream(stream, ProtocolStreamType.GRANDPA);
     }
 
+    public void addTransactionsStream(Stream stream) {
+        addStream(stream, ProtocolStreamType.TRANSACTIONS);
+    }
+
     private void addStream(Stream stream, ProtocolStreamType type) {
         PeerId peerId = stream.remotePeerId();
         PeerInfo peerInfo = Optional.ofNullable(peers.get(peerId)).orElseGet(() -> addNewPeer(peerId));
@@ -96,6 +100,15 @@ public class ConnectionManager {
      */
     public void closeGrandpaStream(Stream stream) {
         closeStream(stream, ProtocolStreamType.GRANDPA);
+    }
+
+    /**
+     * Removes a Transactions stream from the peer info. Peer id is retrieved from the stream.
+     *
+     * @param stream stream to be closed
+     */
+    public void closeTransactionsStream(Stream stream) {
+        closeStream(stream, ProtocolStreamType.TRANSACTIONS);
     }
 
     /**
@@ -173,6 +186,16 @@ public class ConnectionManager {
      */
     public boolean isGrandpaConnected(PeerId peerId) {
         return peers.containsKey(peerId) && peers.get(peerId).getGrandpaStreams().getResponder() != null;
+    }
+
+    /**
+     * Checks if we have an open Transactions responder stream with a peer.
+     *
+     * @param peerId peer to check
+     * @return do peer info and Transaction responder stream exist
+     */
+    public boolean isTransactionsConnected(PeerId peerId) {
+        return peers.containsKey(peerId) && peers.get(peerId).getTransactionsStreams().getResponder() != null;
     }
 
     /**
