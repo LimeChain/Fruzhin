@@ -64,7 +64,7 @@ public class TransactionsEngine {
         }
         connectionManager.addTransactionsStream(stream);
         log.log(Level.INFO, "Received transactions handshake from " + peerId);
-        //writeTransactionsMessage(stream, peerId);
+        //TODO Send valid transactions to the peer we received a handshake from
     }
 
     private void handleResponderStreamMessage(byte[] message, Stream stream) {

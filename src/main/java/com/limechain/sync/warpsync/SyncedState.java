@@ -33,8 +33,7 @@ import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import com.limechain.sync.warpsync.dto.StateDto;
 import io.emeraldpay.polkaj.types.Hash256;
 import io.libp2p.core.PeerId;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import lombok.extern.java.Log;
 import org.javatuples.Pair;
 
@@ -51,14 +50,12 @@ import java.util.logging.Level;
 /**
  * Singleton class, holds and handles the synced state of the Host.
  */
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
 @Setter
 @Log
 public class SyncedState {
     private static final SyncedState INSTANCE = new SyncedState();
-
-    protected SyncedState() {
-    }
 
     public static SyncedState getInstance() {
         return INSTANCE;

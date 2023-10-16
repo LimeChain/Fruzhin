@@ -8,8 +8,8 @@ public class TransactionsReader implements ScaleReader<byte[][]> {
     public byte[][] read(ScaleCodecReader reader) {
         int size = reader.readCompactInt();
         byte[][] transactions = new byte[size][];
-        for(int i=0;i<size;i++){
-            transactions[i]=reader.readByteArray();
+        for (int i = 0; i < size; i++) {
+            transactions[i] = reader.readByteArray();
         }
         return transactions;
     }

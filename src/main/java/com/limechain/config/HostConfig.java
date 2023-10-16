@@ -54,7 +54,7 @@ public class HostConfig {
         }
         dbRecreate = cliArguments.dbRecreate();
         nodeRole = NodeRole.fromString(cliArguments.nodeRole());
-        if(nodeRole == null) throw new RuntimeException("Invalid node role in cli arguments");
+        if (nodeRole == null) throw new RuntimeException("Invalid node role in cli arguments");
         log.log(Level.INFO, String.format("✅️Loaded app config for chain %s%n", chain));
         switch (this.getChain()) {
             case POLKADOT, LOCAL -> {
