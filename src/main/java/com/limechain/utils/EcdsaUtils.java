@@ -19,10 +19,20 @@ import java.util.Arrays;
 @UtilityClass
 public class EcdsaUtils {
 
+    /**
+     * Generates Secp256k1 key pair using the Secp256k1 library from libp2p
+     * @return Secp256k1 Private key (32 bytes) and Public key (33 or 65 bytes)
+     */
     public static Pair<PrivKey, PubKey> generateKeyPair() {
         return Secp256k1Kt.generateSecp256k1KeyPair();
     }
 
+    /**
+     * Generates Secp256k1 key pair from mnemonic phrase using the Bip32ECKeyPair library from web3j and then
+     * converting it to Secp256k1 key pair using the Secp256k1 library from libp2p to get the KeyPair
+     * @param mnemonic BIP-39 12 or 24 word mnemonic phrase
+     * @return Secp256k1 Private key (32 bytes) and Public key (33 or 65 bytes)
+     */
     public static Pair<PrivKey, PubKey> generateKeyPair(String mnemonic) {
         byte[] seed = MnemonicUtils.generateSeed(mnemonic, "");
         Bip32ECKeyPair keyPair = Bip32ECKeyPair.generateKeyPair(seed);
@@ -33,6 +43,13 @@ public class EcdsaUtils {
         return new Pair<>(privKey, pubKey);
     }
 
+    /**
+     * Signs message with Secp256k1 private key using the Bip32ECKeyPair library from web3j and splitting the signature
+     * data to R S and V
+     * @param privateKey 32 bytes Secp256k1 private key
+     * @param message message to be signed
+     * @return 65 bytes Secp256k1 signature {R (32 bytes), S (32 bytes), V (1 byte)}
+     */
     public static byte[] signMessage(final byte[] privateKey, final byte[] message) {
         if (privateKey == null) return null;
         ECKeyPair keyPair = Bip32ECKeyPair.create(privateKey);
@@ -47,6 +64,12 @@ public class EcdsaUtils {
         return signatureBytes;
     }
 
+    /**
+     * Verifies Secp256k1 signature using the Bip32ECKeyPair library from web3j to recover public key from signature
+     * and then comparing it to the public key from the verify signature object
+     * @param sig signature to be verified
+     * @return true if the signature is valid, false otherwise
+     */
     public static boolean verifySignature(final VerifySignature sig) {
         if (sig.getPublicKeyData() == null) return false;
         byte[] publicKey = recoverPublicKeyFromSignature(sig.getSignatureData(), sig.getMessageData(), true);
@@ -54,6 +77,13 @@ public class EcdsaUtils {
         return Arrays.equals(publicKey, sig.getPublicKeyData());
     }
 
+    /**
+     * Recovers public key from signature
+     * @param signatureData 65 bytes Secp256k1 signature {R (32 bytes), S (32 bytes), V (1 byte)}
+     * @param messageData signed message
+     * @param compressed true if the public key should be compressed, false otherwise
+     * @return 33 or 65 bytes Secp256k1 public key
+     */
     public static byte[] recoverPublicKeyFromSignature(byte[] signatureData, byte[] messageData, boolean compressed) {
         if (signatureData[64] >= 27) {
             signatureData[64] -= 27;
@@ -78,6 +108,12 @@ public class EcdsaUtils {
         }
     }
 
+    /**
+     * Compresses public key
+     * @param publicKey 64 or 65 bytes Secp256k1 public key (web3j generates 64 public key because it is always 4 and
+     *                  not needed, but Secp256k1 requires 65 bytes public key to be able to compress it)
+     * @return 33 bytes Secp256k1 public key
+     */
     private static byte[] compressPublicKey(byte[] publicKey) {
         byte[] key = new byte[65];
         if (publicKey.length == 64) {

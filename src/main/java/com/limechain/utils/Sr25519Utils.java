@@ -9,6 +9,10 @@ import org.web3j.crypto.MnemonicUtils;
 @UtilityClass
 public class Sr25519Utils {
 
+    /**
+     * Generates Sr25519 key pair
+     * @return KeyPair containing Sr25519 Private key (32 bytes) and Public key (32 bytes)
+     */
     public static Schnorrkel.KeyPair generateKeyPair() {
         final Schnorrkel.KeyPair keyPair;
         try {
@@ -20,6 +24,11 @@ public class Sr25519Utils {
         return keyPair;
     }
 
+    /**
+     * Generates Sr25519 key pair from mnemonic phrase
+     * @param mnemonic BIP-39 12 or 24 word mnemonic phrase
+     * @return KeyPair containing Sr25519 Private key (32 bytes) and Public key (32 bytes)
+     */
     public static Schnorrkel.KeyPair generateKeyPair(final String mnemonic) {
         byte[] seed = MnemonicUtils.generateSeed(mnemonic, "");
         byte[] secret = new byte[32];
@@ -34,6 +43,13 @@ public class Sr25519Utils {
         return rootKey;
     }
 
+    /**
+     * Loads Sr25519 keypair from byte array
+     * @param publicKey 32 bytes Sr25519 public key
+     * @param privateKey 32 bytes Sr25519 private key
+     * @param message message to be signed
+     * @return 64 bytes Sr25519 signature
+     */
     public static byte[] signMessage(final byte[] publicKey, final byte[] privateKey, final byte[] message) {
         if (privateKey == null) return null;
         Schnorrkel.KeyPair keyPair = new Schnorrkel.KeyPair(publicKey, privateKey);
@@ -44,6 +60,11 @@ public class Sr25519Utils {
         }
     }
 
+    /**
+     * Verifies Sr25519 signature
+     * @param signature signature to be verified
+     * @return true if signature is valid, false otherwise
+     */
     public static boolean verifySignature(final VerifySignature signature) {
         try {
             Schnorrkel schnorrkel = Schnorrkel.getInstance();
