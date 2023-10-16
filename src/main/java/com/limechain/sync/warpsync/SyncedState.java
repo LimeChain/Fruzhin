@@ -33,7 +33,10 @@ import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import com.limechain.sync.warpsync.dto.StateDto;
 import io.emeraldpay.polkaj.types.Hash256;
 import io.libp2p.core.PeerId;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.NoArgsConstructor;
 import lombok.extern.java.Log;
 import org.javatuples.Pair;
 
