@@ -187,6 +187,13 @@ public class ConnectionManager {
     public boolean isGrandpaConnected(PeerId peerId) {
         return peers.containsKey(peerId) && peers.get(peerId).getGrandpaStreams().getResponder() != null;
     }
+
+    /**
+     * Checks if we have an open Transactions responder stream with a peer.
+     *
+     * @param peerId peer to check
+     * @return do peer info and Transaction responder stream exist
+     */
     public boolean isTransactionsConnected(PeerId peerId) {
         return peers.containsKey(peerId) && peers.get(peerId).getTransactionsStreams().getResponder() != null;
     }
