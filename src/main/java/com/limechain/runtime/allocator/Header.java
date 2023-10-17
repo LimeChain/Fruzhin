@@ -72,9 +72,9 @@ public class Header {
      */
     public long raw() {
         if (occupied) {
-            return (long) nextFreeHeaderPointer | OCCUPIED_HEADER_MASK;
+            return (long) order | OCCUPIED_HEADER_MASK;
         } else {
-            return (long) order | FREE_HEADER_MASK;
+            return (long) nextFreeHeaderPointer | FREE_HEADER_MASK;
         }
     }
 }
