@@ -6,12 +6,14 @@ import com.limechain.cli.CliArguments;
 import com.limechain.config.HostConfig;
 import com.limechain.network.kad.KademliaService;
 import com.limechain.network.protocol.blockannounce.BlockAnnounceService;
+import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.network.protocol.grandpa.GrandpaService;
 import com.limechain.network.protocol.lightclient.LightMessagesService;
 import com.limechain.network.protocol.lightclient.pb.LightClientMessage;
 import com.limechain.network.protocol.ping.Ping;
 import com.limechain.network.protocol.sync.SyncService;
 import com.limechain.network.protocol.sync.pb.SyncMessage.BlockResponse;
+import com.limechain.network.protocol.transactions.TransactionsService;
 import com.limechain.network.protocol.warp.WarpSyncService;
 import com.limechain.network.protocol.warp.dto.WarpSyncResponse;
 import com.limechain.storage.DBConstants;
@@ -55,6 +57,8 @@ public class Network {
     private static Network network;
     @Getter
     public final Chain chain;
+    @Getter
+    private NodeRole nodeRole;
     private final String[] bootNodes;
     private final ConnectionManager connectionManager = ConnectionManager.getInstance();
     public SyncService syncService;
@@ -62,6 +66,7 @@ public class Network {
     public KademliaService kademliaService;
     public BlockAnnounceService blockAnnounceService;
     public GrandpaService grandpaService;
+    public TransactionsService transactionsService;
     public Ping ping;
     public PeerId currentSelectedPeer;
     @Getter
@@ -84,9 +89,10 @@ public class Network {
      */
     public Network(ChainService chainService, HostConfig hostConfig, KVRepository<String, Object> repository,
                    CliArguments cliArgs) {
-        this.initializeProtocols(chainService, hostConfig, repository, cliArgs);
         this.bootNodes = chainService.getGenesis().getBootNodes();
         this.chain = hostConfig.getChain();
+        this.nodeRole = hostConfig.getNodeRole();
+        this.initializeProtocols(chainService, hostConfig, repository, cliArgs);
     }
 
     private void initializeProtocols(ChainService chainService, HostConfig hostConfig,
@@ -111,6 +117,7 @@ public class Network {
         String legacySyncProtocolId = ProtocolUtils.getLegacySyncProtocol(chainId);
         String legacyBlockAnnounceProtocolId = ProtocolUtils.getLegacyBlockAnnounceProtocol(chainId);
         String grandpaProtocolId = ProtocolUtils.getGrandpaLegacyProtocol();
+        String transactionsProtocolId = ProtocolUtils.getTransactionsProtocol(chainId);
 
         kademliaService = new KademliaService(legacyKadProtocolId, hostId, isLocalEnabled, clientMode);
         lightMessagesService = new LightMessagesService(legacyLightProtocolId);
@@ -119,6 +126,7 @@ public class Network {
         blockAnnounceService = new BlockAnnounceService(legacyBlockAnnounceProtocolId);
         grandpaService = new GrandpaService(grandpaProtocolId);
         ping = new Ping(pingProtocol, new PingProtocol());
+        transactionsService = new TransactionsService(transactionsProtocolId);
 
         hostBuilder.addProtocols(
                 List.of(
@@ -131,6 +139,14 @@ public class Network {
                         grandpaService.getProtocol()
                 )
         );
+
+        if (nodeRole == NodeRole.FULL) {
+            hostBuilder.addProtocols(
+                    List.of(
+                            transactionsService.getProtocol()
+                    )
+            );
+        }
 
         this.host = hostBuilder.build();
         IdentifyBuilder.addIdentifyProtocol(this.host);
@@ -320,5 +336,7 @@ public class Network {
             return;
         }
         connectionManager.getPeerIds().forEach(peerId -> grandpaService.sendNeighbourMessage(this.host, peerId));
+        connectionManager.getPeerIds().forEach(peerId ->
+                transactionsService.sendTransactionsMessage(this.host, peerId));
     }
 }

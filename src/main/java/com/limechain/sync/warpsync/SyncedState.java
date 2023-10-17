@@ -3,7 +3,6 @@ package com.limechain.sync.warpsync;
 import com.limechain.chain.lightsyncstate.Authority;
 import com.limechain.constants.GenesisBlockHash;
 import com.limechain.network.Network;
-import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshake;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceMessage;
 import com.limechain.network.protocol.grandpa.messages.commit.CommitMessage;
@@ -34,8 +33,10 @@ import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import com.limechain.sync.warpsync.dto.StateDto;
 import io.emeraldpay.polkaj.types.Hash256;
 import io.libp2p.core.PeerId;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.NoArgsConstructor;
 import lombok.extern.java.Log;
 import org.javatuples.Pair;
 
@@ -52,12 +53,13 @@ import java.util.logging.Level;
 /**
  * Singleton class, holds and handles the synced state of the Host.
  */
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
 @Setter
 @Log
 public class SyncedState {
     private static final SyncedState INSTANCE = new SyncedState();
-    protected SyncedState() {}
+
     public static SyncedState getInstance() {
         return INSTANCE;
     }
@@ -112,7 +114,7 @@ public class SyncedState {
                 ? genesisBlockHash
                 : this.lastFinalizedBlockHash;
         return new BlockAnnounceHandshake(
-                NodeRole.LIGHT.getValue(),
+                network.getNodeRole().getValue(),
                 this.lastFinalizedBlockNumber,
                 lastFinalizedBlockHash,
                 genesisBlockHash
@@ -154,7 +156,7 @@ public class SyncedState {
      * Scheduled runtime updates for synchronized blocks are executed.
      *
      * @param commitMessage received commit message
-     * @param peerId sender of the message
+     * @param peerId        sender of the message
      */
     public synchronized void syncCommit(CommitMessage commitMessage, PeerId peerId) {
         if (commitMessage.getVote().getBlockNumber().compareTo(lastFinalizedBlockNumber) <= 0) {
@@ -272,7 +274,7 @@ public class SyncedState {
      * Synchronized to avoid race condition between checking and updating set id
      *
      * @param neighbourMessage received neighbour message
-     * @param peerId sender of message
+     * @param peerId           sender of message
      */
     public synchronized void syncNeighbourMessage(NeighbourMessage neighbourMessage, PeerId peerId) {
         if (warpSyncFinished && neighbourMessage.getSetId().compareTo(setId) > 0) {
@@ -331,7 +333,7 @@ public class SyncedState {
      * Handles authority changes coming from a block header digest and schedules them.
      *
      * @param headerDigests digest of the block header
-     * @param blockNumber block that contains the digest
+     * @param blockNumber   block that contains the digest
      */
     public void handleAuthorityChanges(HeaderDigest[] headerDigests, BigInteger blockNumber) {
         // Update authority set and set id
