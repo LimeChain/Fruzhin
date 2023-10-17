@@ -95,6 +95,10 @@ public class HostApi {
         return buffer != null ? buffer : memory.buffer();
     }
 
+    public static HostApi getInstance() {
+        return new HostApi();
+    }
+
     public byte[] getDataFromMemory(RuntimePointerSize runtimePointerSize) {
         Memory memory = getMemory();
         byte[] data = new byte[runtimePointerSize.size()];
