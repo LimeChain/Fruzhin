@@ -10,4 +10,15 @@ public class AllocationStats {
     private int bytesAllocatedPeak;
     private BigInteger bytesAllocatedSum;
     private int addressSpaceUsed;
+
+    public void allocated(int allocatedSize, int addressSpaceUsed) {
+        bytesAllocated += allocatedSize;
+        bytesAllocatedSum = bytesAllocatedSum.add(BigInteger.valueOf(allocatedSize));
+        bytesAllocatedPeak = Math.max(bytesAllocatedPeak, bytesAllocated);
+        this.addressSpaceUsed = addressSpaceUsed;
+    }
+
+    public void deallocated(int deallocateSize) {
+        bytesAllocated -= deallocateSize;
+    }
 }

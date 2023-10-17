@@ -19,7 +19,7 @@ public class AllocatorHostFunctions {
     private final HostApi hostApi;
 
     public AllocatorHostFunctions() {
-        this.hostApi = new HostApi();
+        this.hostApi = HostApi.getInstance();
     }
 
     public static List<ImportObject> getFunctions() {

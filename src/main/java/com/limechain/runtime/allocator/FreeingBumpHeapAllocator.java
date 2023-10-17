@@ -1,9 +1,11 @@
 package com.limechain.runtime.allocator;
 
 import com.limechain.runtime.hostapi.RuntimePointerSize;
+import lombok.AllArgsConstructor;
 import org.wasmer.Memory;
 
-import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.limechain.runtime.allocator.Order.MAX_POSSIBLE_ALLOCATION;
 import static com.limechain.runtime.allocator.Order.MIN_POSSIBLE_ALLOCATION;
@@ -61,6 +63,7 @@ import static com.limechain.runtime.allocator.Order.NUMBER_OF_ORDERS;
  * </li>
  * </ul>
  */
+@AllArgsConstructor
 public class FreeingBumpHeapAllocator {
     private static final int ALIGNMENT = 8;
     private static final int HEADER_SIZE = 8;
@@ -68,8 +71,7 @@ public class FreeingBumpHeapAllocator {
     private static final int MAX_WASM_PAGES = (int) (4L * 1024 * 1024 * 1024 / PAGE_SIZE); // 4GB
 
     private final int originalHeapBase;
-    private final Order[] orders;
-
+    private final List<Order> orders;
     private final AllocationStats stats;
     private int lastObservedMemorySize;
     private int bumper;
@@ -79,12 +81,12 @@ public class FreeingBumpHeapAllocator {
 
         this.originalHeapBase = alignedHeapBase;
         this.bumper = alignedHeapBase;
-        this.orders = new Order[NUMBER_OF_ORDERS];
+        this.orders = new ArrayList<>(NUMBER_OF_ORDERS);
         this.lastObservedMemorySize = 0;
         this.stats = new AllocationStats();
 
         for (int i = 0; i < NUMBER_OF_ORDERS; i++) {
-            this.orders[i] = new Order(i);
+            orders.add(new Order(i));
         }
     }
 
@@ -105,7 +107,7 @@ public class FreeingBumpHeapAllocator {
         Order order = getOrderForSize(size);
         int headerPointer = nextFreeHeaderPointer(order, memory);
         writeOccupiedHeader(headerPointer, order.getValue(), memory);
-        updateStats(size + HEADER_SIZE);
+        stats.allocated(order.getBlockSize() + HEADER_SIZE, bumper - originalHeapBase);
         return new RuntimePointerSize(headerPointer + HEADER_SIZE, size);
     }
 
@@ -114,11 +116,11 @@ public class FreeingBumpHeapAllocator {
             throw new AllocationError("Requested allocation size is too large");
         }
         if (size <= MIN_POSSIBLE_ALLOCATION) {
-            return orders[0];
+            return orders.get(0);
         }
 
         int order = nextPowerOfTwo(size) - nextPowerOfTwo(MIN_POSSIBLE_ALLOCATION);
-        return orders[order];
+        return orders.get(order);
     }
 
     private int nextPowerOfTwo(int value) {
@@ -176,13 +178,6 @@ public class FreeingBumpHeapAllocator {
         memory.buffer().putLong(pointer, header.raw());
     }
 
-    private void updateStats(int allocatedSize) {
-        stats.setBytesAllocated(stats.getBytesAllocated() + allocatedSize);
-        stats.setBytesAllocatedSum(stats.getBytesAllocatedSum().add(BigInteger.valueOf(allocatedSize)));
-        stats.setBytesAllocatedPeak(Math.max(stats.getBytesAllocatedPeak(), stats.getBytesAllocated()));
-        stats.setAddressSpaceUsed(bumper - originalHeapBase);
-    }
-
     /**
      * Deallocate a block of memory.
      * <br> The header of the deallocated block is set to free with a pointer to the current
@@ -199,7 +194,7 @@ public class FreeingBumpHeapAllocator {
         Order order = getOrderFromHeader(headerPointer, memory);
         writeFreeHeader(headerPointer, order.getFreeHeaderPointer(), memory);
         order.setFreeHeaderPointer(headerPointer);
-        stats.setBytesAllocated(stats.getBytesAllocated() - order.getBlockSize());
+        stats.deallocated(order.getBlockSize());
     }
 
     private Order getOrderFromHeader(int headerPointer, Memory memory) {
@@ -211,7 +206,7 @@ public class FreeingBumpHeapAllocator {
             throw new AllocationError("No occupied header found at address");
         }
 
-        return orders[header.getOrder()];
+        return orders.get(header.getOrder());
     }
 
     private void verifyMemorySize(Memory memory) throws AllocationError {
