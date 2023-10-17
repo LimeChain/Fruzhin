@@ -13,6 +13,9 @@ import java.util.Arrays;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -59,7 +62,7 @@ class StorageHostFunctionsTest {
     void extStorageGetVersion1() {
         when(hostApi.getDataFromMemory(keyPointer)).thenReturn(keyBytes);
         when(repository.find(key)).thenReturn(Optional.of(valueBytes));
-        when(hostApi.addDataToMemory(toOption(valueBytes))).thenReturn(resultPointer);
+        when(hostApi.writeDataToMemory(toOption(valueBytes))).thenReturn(resultPointer);
 
         RuntimePointerSize result = storageHostFunctions.extStorageGetVersion1(keyPointer);
 
@@ -70,7 +73,7 @@ class StorageHostFunctionsTest {
     void extStorageGetVersion1ShouldReturnNoneOptionWhenNoValue() {
         when(hostApi.getDataFromMemory(keyPointer)).thenReturn(keyBytes);
         when(repository.find(key)).thenReturn(Optional.empty());
-        when(hostApi.addDataToMemory(emptyOption)).thenReturn(resultPointer);
+        when(hostApi.writeDataToMemory(emptyOption)).thenReturn(resultPointer);
 
         RuntimePointerSize result = storageHostFunctions.extStorageGetVersion1(keyPointer);
 
@@ -82,11 +85,12 @@ class StorageHostFunctionsTest {
         byte[] scaleEncodedOptionSize = new byte[] { 1, 2, 0, 0, 0 }; // Option with value 2
         when(hostApi.getDataFromMemory(keyPointer)).thenReturn(keyBytes);
         when(repository.find(key)).thenReturn(Optional.of(valueBytes));
-        when(hostApi.addDataToMemory(scaleEncodedOptionSize)).thenReturn(resultPointer);
+        when(hostApi.writeDataToMemory(scaleEncodedOptionSize)).thenReturn(resultPointer);
+        doNothing().when(hostApi).writeDataToMemory(any(), any());
 
         RuntimePointerSize result = storageHostFunctions.extStorageReadVersion1(keyPointer, valuePointer, 1);
 
-        verify(hostApi).writeDataToMemory(valuePointer, Arrays.copyOfRange(valueBytes, 1, 3));
+        verify(hostApi).writeDataToMemory(Arrays.copyOfRange(valueBytes, 1, 3), valuePointer);
         assertEquals(resultPointer, result);
     }
 
@@ -94,7 +98,7 @@ class StorageHostFunctionsTest {
     void extStorageReadVersion1ShouldReturnNoneWhenNoValue() {
         when(hostApi.getDataFromMemory(keyPointer)).thenReturn(keyBytes);
         when(repository.find(key)).thenReturn(Optional.empty());
-        when(hostApi.addDataToMemory(emptyOption)).thenReturn(resultPointer);
+        when(hostApi.writeDataToMemory(emptyOption)).thenReturn(resultPointer);
 
         RuntimePointerSize result = storageHostFunctions.extStorageReadVersion1(keyPointer, valuePointer, 1);
 
@@ -107,7 +111,7 @@ class StorageHostFunctionsTest {
         byte[] scaleEncodedOptionSize = new byte[] { 1, 0, 0, 0, 0 }; // Option with value 0
         when(hostApi.getDataFromMemory(keyPointer)).thenReturn(keyBytes);
         when(repository.find(key)).thenReturn(Optional.of(valueBytes));
-        when(hostApi.addDataToMemory(scaleEncodedOptionSize)).thenReturn(resultPointer);
+        when(hostApi.writeDataToMemory(scaleEncodedOptionSize)).thenReturn(resultPointer);
 
         RuntimePointerSize result = storageHostFunctions.extStorageReadVersion1(keyPointer, valuePointer, 10);
 
@@ -161,7 +165,7 @@ class StorageHostFunctionsTest {
         when(hostApi.getDataFromMemory(keyPointer)).thenReturn(keyBytes);
         when(hostApi.getDataFromMemory(limitPointer)).thenReturn(encodedLimit);
         when(repository.deleteByPrefix(key, 2L)).thenReturn(new DeleteByPrefixResult(2, false));
-        when(hostApi.addDataToMemory(encodedResult)).thenReturn(resultPointer);
+        when(hostApi.writeDataToMemory(encodedResult)).thenReturn(resultPointer);
 
         RuntimePointerSize result = storageHostFunctions.extStorageClearPrefixVersion2(keyPointer, limitPointer);
 
@@ -176,7 +180,7 @@ class StorageHostFunctionsTest {
         when(hostApi.getDataFromMemory(keyPointer)).thenReturn(keyBytes);
         when(hostApi.getDataFromMemory(limitPointer)).thenReturn(encodedLimit);
         when(repository.deleteByPrefix(key, 4L)).thenReturn(new DeleteByPrefixResult(3, true));
-        when(hostApi.addDataToMemory(encodedResult)).thenReturn(resultPointer);
+        when(hostApi.writeDataToMemory(encodedResult)).thenReturn(resultPointer);
 
         RuntimePointerSize result = storageHostFunctions.extStorageClearPrefixVersion2(keyPointer, limitPointer);
 
@@ -209,7 +213,7 @@ class StorageHostFunctionsTest {
 
     @Test
     void extStorageChangesRootVersion1ShouldReturnPointerToEmptyOption() {
-        when(hostApi.addDataToMemory(emptyOption)).thenReturn(resultPointer);
+        when(hostApi.writeDataToMemory(emptyOption)).thenReturn(resultPointer);
 
         RuntimePointerSize result = storageHostFunctions.extStorageChangesRootVersion1(keyPointer);
 
@@ -221,7 +225,7 @@ class StorageHostFunctionsTest {
         String nextKey = "next key";
         when(hostApi.getDataFromMemory(keyPointer)).thenReturn(keyBytes);
         when(repository.getNextKey(key)).thenReturn(Optional.of(nextKey));
-        when(hostApi.addDataToMemory(toOption(nextKey.getBytes()))).thenReturn(resultPointer);
+        when(hostApi.writeDataToMemory(toOption(nextKey.getBytes()))).thenReturn(resultPointer);
 
         RuntimePointerSize result = storageHostFunctions.extStorageNextKeyVersion1(keyPointer);
 
@@ -232,7 +236,7 @@ class StorageHostFunctionsTest {
     void extStorageNextKeyVersion1WhenNextKeyDoesNotExistsShouldReturnEmptyOption() {
         when(hostApi.getDataFromMemory(keyPointer)).thenReturn(keyBytes);
         when(repository.getNextKey(key)).thenReturn(Optional.empty());
-        when(hostApi.addDataToMemory(emptyOption)).thenReturn(resultPointer);
+        when(hostApi.writeDataToMemory(emptyOption)).thenReturn(resultPointer);
 
         RuntimePointerSize result = storageHostFunctions.extStorageNextKeyVersion1(keyPointer);
 
