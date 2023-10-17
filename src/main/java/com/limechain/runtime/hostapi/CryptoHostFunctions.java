@@ -45,15 +45,20 @@ public class CryptoHostFunctions {
     public static final String INVALID_KEY_TYPE = "Invalid key type";
     public static final int KEY_TYPE_LEN = 4;
     public static final String SEED_IS_INVALID = "Seed is invalid";
+    public static final String BATCH_VERIFICATION_NOT_STARTED = "Batch verification not started";
     private final KeyStore keyStore;
     private final HostApi hostApi;
     private final Set<VerifySignature> signaturesToVerify;
-    private boolean batchVerificationStarted = false;
+    protected boolean batchVerificationStarted = false;
 
     public CryptoHostFunctions() {
-        this.keyStore = AppBean.getBean(KeyStore.class);
-        this.hostApi = HostApi.getInstance();
-        this.signaturesToVerify = new HashSet<>();
+        this(AppBean.getBean(KeyStore.class), HostApi.getInstance(), new HashSet<>());
+    }
+
+    public CryptoHostFunctions(final KeyStore keyStore, final HostApi hostApi, Set<VerifySignature> signatures) {
+        this.keyStore = keyStore;
+        this.hostApi = hostApi;
+        this.signaturesToVerify = signatures;
     }
 
     public static List<ImportObject> getFunctions() {
@@ -161,7 +166,7 @@ public class CryptoHostFunctions {
      * @param keyTypeId a pointer to the key type identifier.
      * @return a pointer-size to the SCALE encoded array of 256bit public keys.
      */
-    private RuntimePointerSize ed25519PublicKeysV1(int keyTypeId) {
+    public RuntimePointerSize ed25519PublicKeysV1(int keyTypeId) {
         final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, KEY_TYPE_LEN));
 
         if (keyType == null || (keyType.getKey() != Key.ED25519 && keyType.getKey() != Key.GENERIC)) {
@@ -181,7 +186,7 @@ public class CryptoHostFunctions {
      * @throws RuntimeException Panics if the key cannot be generated, such as when an invalid key type or invalid seed
      *                          was provided.
      */
-    private int ed25519GenerateV1(int keyTypeId, RuntimePointerSize seed) {
+    public int ed25519GenerateV1(int keyTypeId, RuntimePointerSize seed) {
         final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, KEY_TYPE_LEN));
         if (keyType == null) {
             Util.nativePanic(INVALID_KEY_TYPE);
@@ -217,7 +222,7 @@ public class CryptoHostFunctions {
      * @return a pointer-size to the SCALE encoded Option value containing the 64-byte signature.
      * This function returns if the public key cannot be found in the key store.
      */
-    private long ed25519SignV1(int keyTypeId, int publicKey, RuntimePointerSize message) {
+    public long ed25519SignV1(int keyTypeId, int publicKey, RuntimePointerSize message) {
         final Signature sig = internalGetSignData(keyTypeId, publicKey, message, Key.ED25519);
 
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -256,7 +261,7 @@ public class CryptoHostFunctions {
      * @param publicKey a pointer to the buffer containing the 256-bit public key.
      * @return a i32 integer value equal to 1 if the signature is valid or a value equal to 0 if otherwise.
      */
-    private int ed25519VerifyV1(int signature, RuntimePointerSize message, int publicKey) {
+    public int ed25519VerifyV1(int signature, RuntimePointerSize message, int publicKey) {
         VerifySignature verifySig = internalGetVerifySignature(signature, message, publicKey, Key.ED25519);
         return Ed25519Utils.verifySignature(verifySig) ? 1 : 0;
     }
@@ -271,7 +276,7 @@ public class CryptoHostFunctions {
      * @param publicKey a pointer to the buffer containing the 256-bit public key.
      * @return an i32 integer value equal to 1 if the signature is valid or batched or a value equal 0 to if otherwise.
      */
-    private int ed25519BatchVerifyV1(int signature, RuntimePointerSize message, int publicKey) {
+    public int ed25519BatchVerifyV1(int signature, RuntimePointerSize message, int publicKey) {
         VerifySignature verifySig = internalGetVerifySignature(signature, message, publicKey, Key.ED25519);
 
         if (batchVerificationStarted) {
@@ -288,7 +293,7 @@ public class CryptoHostFunctions {
      * @param keyTypeId a pointer to the key type identifier.
      * @return a pointer-size to the SCALE encoded array of 256bit public keys.
      */
-    private RuntimePointerSize sr25519PublicKeysV1(int keyTypeId) {
+    public RuntimePointerSize sr25519PublicKeysV1(int keyTypeId) {
         final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, KEY_TYPE_LEN));
 
         if (keyType == null || (keyType.getKey() != Key.SR25519 && keyType.getKey() != Key.GENERIC)) {
@@ -308,7 +313,7 @@ public class CryptoHostFunctions {
      * @throws RuntimeException Panics if the key cannot be generated, such as when an invalid key type or invalid seed
      *                          was provided.
      */
-    private int sr25519GenerateV1(int keyTypeId, RuntimePointerSize seed) {
+    public int sr25519GenerateV1(int keyTypeId, RuntimePointerSize seed) {
         final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, KEY_TYPE_LEN));
         if (keyType == null) {
             Util.nativePanic(INVALID_KEY_TYPE);
@@ -332,7 +337,17 @@ public class CryptoHostFunctions {
         return hostApi.putDataToMemory(keyPair.getPublicKey());
     }
 
-    private Number sr25519SignV1(int keyTypeId, int publicKey, RuntimePointerSize message) {
+    /**
+     * Signs the given message with the sr25519 key that corresponds to the given public key and key type in the
+     * keystore.
+     *
+     * @param keyTypeId a pointer to the key type identifier.
+     * @param publicKey a pointer to the buffer containing the 256 bit public key.
+     * @param message   a pointer-size to the message that is to be signed.
+     * @return a pointer-size to the SCALE encoded Option value containing the 64-byte signature.
+     * This function returns if the public key cannot be found in the key store.
+     */
+    public Number sr25519SignV1(int keyTypeId, int publicKey, RuntimePointerSize message) {
         final Signature sig = internalGetSignData(keyTypeId, publicKey, message, Key.SR25519);
 
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -344,7 +359,7 @@ public class CryptoHostFunctions {
             }
 
             byte[] signed = Sr25519Utils.signMessage(sig.getPublicKeyData(), sig.getPrivateKey(), sig.getMessageData());
-            scaleWriter.writeOptional(ScaleCodecWriter::writeByteArray, Optional.of(signed));
+            scaleWriter.writeOptional(ScaleCodecWriter::writeByteArray, Optional.ofNullable(signed));
             return hostApi.putDataToMemory(baos.toByteArray());
 
         } catch (IOException e) {
@@ -361,7 +376,7 @@ public class CryptoHostFunctions {
      * @param publicKey a pointer to the buffer containing the 256-bit public key.
      * @return a i32 integer value equal to 1 if the signature is valid or a value equal to 0 if otherwise.
      */
-    private Number sr25519VerifyV1(int signature, RuntimePointerSize message, int publicKey) {
+    public int sr25519VerifyV1(int signature, RuntimePointerSize message, int publicKey) {
         VerifySignature verifiedSignature = internalGetVerifySignature(signature, message, publicKey, Key.SR25519);
 
         return Sr25519Utils.verifySignature(verifiedSignature) ? 1 : 0;
@@ -377,7 +392,7 @@ public class CryptoHostFunctions {
      * @param publicKey a pointer to the buffer containing the 256-bit public key.
      * @return an i32 integer value equal to 1 if the signature is valid or batched or a value equal 0 to if otherwise.
      */
-    private int sr25519BatchVerifyV1(int signature, RuntimePointerSize message, int publicKey) {
+    public int sr25519BatchVerifyV1(int signature, RuntimePointerSize message, int publicKey) {
         VerifySignature verifiedSignature = internalGetVerifySignature(signature, message, publicKey, Key.SR25519);
 
         if (batchVerificationStarted) {
@@ -395,7 +410,7 @@ public class CryptoHostFunctions {
      * @param keyTypeId a pointer to the key type identifier.
      * @return a pointer-size to the SCALE encoded array of 33byte compressed public keys.
      */
-    private RuntimePointerSize ecdsaPublicKeysV1(int keyTypeId) {
+    public RuntimePointerSize ecdsaPublicKeysV1(int keyTypeId) {
         final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, KEY_TYPE_LEN));
 
         if (keyType == null || keyType.getKey() != Key.GENERIC) {
@@ -465,7 +480,7 @@ public class CryptoHostFunctions {
      * The signature is 65-bytes in size, where the first 512-bits represent the signature and the other 8 bits
      * represent the recovery ID. This function returns if the public key cannot be found in the key store.
      */
-    private Number ecdsaSignV1(int keyTypeId, int publicKey, RuntimePointerSize message) {
+    public Number ecdsaSignV1(int keyTypeId, int publicKey, RuntimePointerSize message) {
         final Signature sig = internalGetSignData(keyTypeId, publicKey, message, Key.ECDSA);
         sig.setMessageData(HashUtils.hashWithBlake2b(sig.getMessageData()));
 
@@ -478,7 +493,7 @@ public class CryptoHostFunctions {
             }
 
             byte[] signed = EcdsaUtils.signMessage(sig.getPrivateKey(), sig.getMessageData());
-            scaleWriter.writeOptional(ScaleCodecWriter::writeByteArray, Optional.of(signed));
+            scaleWriter.writeOptional(ScaleCodecWriter::writeByteArray, Optional.ofNullable(signed));
             return hostApi.putDataToMemory(baos.toByteArray());
 
         } catch (IOException e) {
@@ -497,7 +512,7 @@ public class CryptoHostFunctions {
      * The signature is 65-bytes in size, where the first 512-bits represent the signature and the other 8 bits
      * represent the recovery ID. This function returns if the public key cannot be found in the key store.
      */
-    private Number ecdsaSignPrehashedV1(int keyTypeId, int publicKey, RuntimePointerSize message) {
+    public Number ecdsaSignPrehashedV1(int keyTypeId, int publicKey, RuntimePointerSize message) {
         final Signature sig = internalGetSignData(keyTypeId, publicKey, message, Key.ECDSA);
 
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -509,7 +524,7 @@ public class CryptoHostFunctions {
             }
 
             byte[] signed = EcdsaUtils.signMessage(sig.getPrivateKey(), sig.getMessageData());
-            scaleWriter.writeOptional(ScaleCodecWriter::writeByteArray, Optional.of(signed));
+            scaleWriter.writeOptional(ScaleCodecWriter::writeByteArray, Optional.ofNullable(signed));
             return hostApi.putDataToMemory(baos.toByteArray());
 
         } catch (IOException e) {
@@ -526,7 +541,7 @@ public class CryptoHostFunctions {
      * @param publicKey a pointer to the buffer containing the 33-byte compressed public key.
      * @return a i32 integer value equal 1 to if the signature is valid or a value equal to 0 if otherwise.
      */
-    private Number ecdsaVerifyV1(int signature, RuntimePointerSize message, int publicKey) {
+    public int ecdsaVerifyV1(int signature, RuntimePointerSize message, int publicKey) {
         final VerifySignature verifySig = internalGetVerifySignature(signature, message, publicKey, Key.ECDSA);
         verifySig.setMessageData(HashUtils.hashWithBlake2b(verifySig.getMessageData()));
         return EcdsaUtils.verifySignature(verifySig) ? 1 : 0;
@@ -541,7 +556,7 @@ public class CryptoHostFunctions {
      * @param publicKey a pointer to the buffer containing the 33-byte compressed public key.
      * @return a i32 integer value equal 1 to if the signature is valid or a value equal to 0 if otherwise.
      */
-    private int ecdsaVerifyPrehashedV1(int signature, int message, int publicKey) {
+    public int ecdsaVerifyPrehashedV1(int signature, int message, int publicKey) {
         final byte[] signatureData = hostApi.getDataFromMemory(signature, 64);
         final byte[] messageData = hostApi.getDataFromMemory(message, 32);
         final byte[] publicKeyData = hostApi.getDataFromMemory(publicKey, 33);
@@ -560,7 +575,7 @@ public class CryptoHostFunctions {
      * @param publicKey a pointer to the buffer containing the 256-bit public key.
      * @return an i32 integer value equal to 1 if the signature is valid or batched or a value equal 0 to if otherwise.
      */
-    private int ecdsaBatchVerifyV1(int signature, RuntimePointerSize message, int publicKey) {
+    public int ecdsaBatchVerifyV1(int signature, RuntimePointerSize message, int publicKey) {
         final VerifySignature verifySig = internalGetVerifySignature(signature, message, publicKey, Key.ECDSA);
         verifySig.setMessageData(HashUtils.hashWithBlake2b(verifySig.getMessageData()));
 
@@ -581,7 +596,7 @@ public class CryptoHostFunctions {
      * @return a pointer-size to the SCALE encoded Result. On success it contains the 64-byte recovered public key or
      * an error type on failure.
      */
-    private int secp256k1EcdsaRecoverV1(int signature, int message) {
+    public int secp256k1EcdsaRecoverV1(int signature, int message) {
         byte[] ecdsaPublicKey = internalSecp256k1RecoverKey(signature, message, false);
         return secp2561kScaleKeyResult(ecdsaPublicKey);
     }
@@ -595,7 +610,7 @@ public class CryptoHostFunctions {
      * @return a pointer-size (Definition 201) to the SCALE encoded Result value. On success it contains the 33-byte
      * recovered public key in compressed form on success or an error type on failure.
      */
-    private int secp256k1EcdsaRecoverCompressedV1(int signature, int message) {
+    public int secp256k1EcdsaRecoverCompressedV1(int signature, int message) {
         byte[] rawBytes = internalSecp256k1RecoverKey(signature, message, true);
         return secp2561kScaleKeyResult(rawBytes);
     }
@@ -608,7 +623,6 @@ public class CryptoHostFunctions {
             resultWriter.writeResult(scaleCodecWriter, true);
             resultWriter.write(scaleCodecWriter, rawBytes);
             return hostApi.putDataToMemory(baos.toByteArray());
-
         } catch (IOException e) {
             throw new RuntimeException(SCALE_ENCODING_SIGNED_MESSAGE_ERROR);
         }
@@ -627,7 +641,7 @@ public class CryptoHostFunctions {
      * or ext_crypto_ecdsa_batch_verify. Verification will start immediately and the Runtime can retrieve the result
      * when calling ext_crypto_finish_batch_verify.
      */
-    private void startBatchVerify() {
+    public void startBatchVerify() {
         batchVerificationStarted = true;
     }
 
@@ -638,10 +652,10 @@ public class CryptoHostFunctions {
      * @return an i32 integer value equal to 1 if all the signatures are valid or a value equal to 0 if one or more of
      * the signatures are invalid.
      */
-    private int finishBatchVerify() {
+    public int finishBatchVerify() {
         if (!batchVerificationStarted) {
-            Util.nativePanic("Batch verification not started");
-            throw new RuntimeException("Batch verification not started");
+            Util.nativePanic(BATCH_VERIFICATION_NOT_STARTED);
+            throw new RuntimeException(BATCH_VERIFICATION_NOT_STARTED);
         }
         batchVerificationStarted = false;
         HashSet<VerifySignature> signatures = new HashSet<>(signaturesToVerify);
