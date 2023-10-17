@@ -75,7 +75,6 @@ public class Network {
     private boolean started = false;
     private int bootPeerIndex = 0;
 
-
     /**
      * Initializes a host for the peer connection,
      * Initializes the Kademlia service
