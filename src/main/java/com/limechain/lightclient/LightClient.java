@@ -40,8 +40,8 @@ public class LightClient {
         this.network.start();
 
         while (true) {
-            if (!connectionManager.getPeerIds().isEmpty()) {
-                if (this.network.currentSelectedPeer != null) {
+            if (network.kademliaService.getBootNodePeerIds().size()>0) {
+                if (this.network.kademliaService.getSuccessfulBootNodes() > 0) {
                     log.log(Level.INFO, "Node successfully connected to a peer! Sync can start!");
                     this.warpSyncMachine = AppBean.getBean(WarpSyncMachine.class);
                     this.warpSyncMachine.start();

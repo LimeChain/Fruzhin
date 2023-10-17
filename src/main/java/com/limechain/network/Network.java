@@ -68,6 +68,8 @@ public class Network {
     private Host host;
     private WarpSyncService warpSyncService;
     private boolean started = false;
+    private int bootPeerIndex = 0;
+
 
     /**
      * Initializes a host for the peer connection,
@@ -81,7 +83,7 @@ public class Network {
      * @param cliArgs
      */
     public Network(ChainService chainService, HostConfig hostConfig, KVRepository<String, Object> repository,
-                    CliArguments cliArgs) {
+                   CliArguments cliArgs) {
         this.initializeProtocols(chainService, hostConfig, repository, cliArgs);
         this.bootNodes = chainService.getGenesis().getBootNodes();
         this.chain = hostConfig.getChain();
@@ -167,12 +169,28 @@ public class Network {
         log.log(Level.INFO, "Started network module!");
     }
 
-    public void stop(){
+    public void stop() {
         log.log(Level.INFO, "Stopping network module...");
         started = false;
         connectionManager.removeAllPeers();
         host.stop();
         log.log(Level.INFO, "Stopped network module!");
+    }
+
+    public boolean updateCurrentSelectedPeerWithNextBootnode() {
+        this.currentSelectedPeer = this.kademliaService.getBootNodePeerIds().get(bootPeerIndex);
+        if (bootPeerIndex > kademliaService.getBootNodePeerIds().size())
+            return false;
+        else bootPeerIndex++;
+        return true;
+    }
+
+    public boolean updateCurrentSelectedPeerWithBootnode(int index) {
+        if (index >= 0 && index < this.kademliaService.getBootNodePeerIds().size()) {
+            this.currentSelectedPeer = this.kademliaService.getBootNodePeerIds().get(index);
+            return true;
+        }
+        return false;
     }
 
     public String getPeerId() {

@@ -27,8 +27,6 @@ public class RequestFragmentsState implements WarpSyncState {
         if (this.error != null) {
             //Retry with a different source
             try {
-                log.log(Level.SEVERE, "Failed to download fragments. Retry from a different source");
-                sync.getNetworkService().updateCurrentSelectedPeer();
                 // Wait a bit before retrying. The peer might've just connected and still not in address book
                 Thread.sleep(1000);
                 sync.setWarpSyncState(new RequestFragmentsState(blockHash));
@@ -47,15 +45,26 @@ public class RequestFragmentsState implements WarpSyncState {
 
     @Override
     public void handle(WarpSyncMachine sync) {
+        WarpSyncResponse resp = null;
+        for (int i = 0; i < sync.getNetworkService().kademliaService.getBootNodePeerIds().size(); i++) {
+            try {
+                Thread.sleep(1000);
+                resp = sync.getNetworkService().makeWarpSyncRequest(blockHash.toString());
+                break;
+            } catch (Exception e) {
+                if (!sync.getNetworkService().updateCurrentSelectedPeerWithBootnode(i)) {
+                    this.error = new RuntimeException("Could not update current selected peer");
+                    return;
+                }
+            }
+        }
         try {
-            log.log(Level.INFO, "Requesting fragments from peer "
-                    + sync.getNetworkService().currentSelectedPeer + "...");
-            WarpSyncResponse resp = sync.getNetworkService().makeWarpSyncRequest(blockHash.toString());
-
             if (resp == null) {
                 throw new Exception("No response received.");
             }
 
+            log.log(Level.INFO, "Successfully received fragments from peer "
+                    + sync.getNetworkService().currentSelectedPeer);
             if (resp.getFragments().length == 0) {
                 log.log(Level.WARNING, "No fragments received.");
                 return;
