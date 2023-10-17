@@ -178,10 +178,10 @@ public class Network {
     }
 
     public boolean updateCurrentSelectedPeerWithNextBootnode() {
-        this.currentSelectedPeer = this.kademliaService.getBootNodePeerIds().get(bootPeerIndex);
         if (bootPeerIndex > kademliaService.getBootNodePeerIds().size())
             return false;
-        else bootPeerIndex++;
+        this.currentSelectedPeer = this.kademliaService.getBootNodePeerIds().get(bootPeerIndex);
+        bootPeerIndex++;
         return true;
     }
 
