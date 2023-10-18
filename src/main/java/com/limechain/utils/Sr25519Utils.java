@@ -71,7 +71,6 @@ public class Sr25519Utils {
             Schnorrkel.PublicKey publicKey = new Schnorrkel.PublicKey(signature.getPublicKeyData());
             return schnorrkel.verify(signature.getSignatureData(), signature.getMessageData(), publicKey);
         } catch (SchnorrkelException e) {
-            //Todo: How to handle exceptions
             return false;
         }
     }
