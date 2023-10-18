@@ -28,4 +28,8 @@ public final class ProtocolUtils {
     public static String getGrandpaLegacyProtocol() {
         return "/paritytech/grandpa/1";
     }
+
+    public static String getTransactionsProtocol(String chainId) {
+        return String.format("/%s/transactions/1", chainId);
+    }
 }
