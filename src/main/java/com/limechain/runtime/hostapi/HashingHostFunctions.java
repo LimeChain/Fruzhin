@@ -1,13 +1,10 @@
 package com.limechain.runtime.hostapi;
 
 import com.limechain.utils.HashUtils;
-import net.openhft.hashing.LongHashFunction;
-import org.bouncycastle.jcajce.provider.digest.SHA256;
+import lombok.AllArgsConstructor;
 import org.wasmer.ImportObject;
 import org.wasmer.Type;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.List;
 
@@ -16,6 +13,7 @@ import java.util.List;
  * For more info check
  * {<a href="https://spec.polkadot.network/chap-host-api#sect-hashing-api">Hashing API</a>}
  */
+@AllArgsConstructor
 public class HashingHostFunctions {
 
     private final HostApi hostApi;
@@ -51,10 +49,10 @@ public class HashingHostFunctions {
     /**
      * Conducts a 256-bit Keccak hash.
      *
-     * @param data a pointer-size (Definition 201) to the data to be hashed.
-     * @return a pointer (Definition 200) to the buffer containing the 256-bit hash result.
+     * @param data a pointer-size to the data to be hashed.
+     * @return a pointer to the buffer containing the 256-bit hash result.
      */
-    private int keccak256V1(RuntimePointerSize data) {
+    public int keccak256V1(RuntimePointerSize data) {
         byte[] dataToHash = hostApi.getDataFromMemory(data);
 
         byte[] hash = HashUtils.hashWithKeccak256(dataToHash);
@@ -65,10 +63,10 @@ public class HashingHostFunctions {
     /**
      * Conducts a 512-bit Keccak hash.
      *
-     * @param data a pointer-size (Definition 201) to the data to be hashed.
-     * @return a pointer (Definition 200) to the buffer containing the 512-bit hash result.
+     * @param data a pointer-size to the data to be hashed.
+     * @return a pointer to the buffer containing the 512-bit hash result.
      */
-    private int keccak512V1(RuntimePointerSize data) {
+    public int keccak512V1(RuntimePointerSize data) {
         byte[] dataToHash = hostApi.getDataFromMemory(data);
 
         byte[] hash = HashUtils.hashWithKeccak512(dataToHash);
@@ -79,14 +77,13 @@ public class HashingHostFunctions {
     /**
      * Conducts a 256-bit SHA2 hash.
      *
-     * @param data a pointer-size (Definition 201) to the data to be hashed.
-     * @return a pointer (Definition 200) to the buffer containing the 256-bit hash result.
+     * @param data a pointer-size to the data to be hashed.
+     * @return a pointer to the buffer containing the 256-bit hash result.
      */
-    private int sha2256V1(RuntimePointerSize data) {
+    public int sha2256V1(RuntimePointerSize data) {
         byte[] dataToHash = hostApi.getDataFromMemory(data);
 
-        SHA256.Digest digest = new SHA256.Digest();
-        byte[] hash = digest.digest(dataToHash);
+        byte[] hash = HashUtils.hashWithSha256(dataToHash);
 
         return hostApi.addDataToMemory(hash).pointer();
     }
@@ -94,8 +91,8 @@ public class HashingHostFunctions {
     /**
      * Conducts a 128-bit Blake2 hash.
      *
-     * @param data a pointer-size (Definition 201) to the data to be hashed.
-     * @return a pointer (Definition 200) to the buffer containing the 128-bit hash result.
+     * @param data a pointer-size to the data to be hashed.
+     * @return a pointer to the buffer containing the 128-bit hash result.
      */
     public int blake2128V1(RuntimePointerSize data) {
         byte[] dataToHash = hostApi.getDataFromMemory(data);
@@ -108,8 +105,8 @@ public class HashingHostFunctions {
     /**
      * Conducts a 256-bit Blake2 hash.
      *
-     * @param data a pointer-size (Definition 201) to the data to be hashed.
-     * @return a pointer (Definition 200) to the buffer containing the 256-bit hash result.
+     * @param data a pointer-size to the data to be hashed.
+     * @return a pointer to the buffer containing the 256-bit hash result.
      */
     public int blake2256V1(RuntimePointerSize data) {
         byte[] dataToHash = hostApi.getDataFromMemory(data);
@@ -122,71 +119,43 @@ public class HashingHostFunctions {
     /**
      * Conducts a 64-bit xxHash hash.
      *
-     * @param data a pointer-size (Definition 201) to the data to be hashed.
-     * @return a pointer (Definition 200) to the buffer containing the 64-bit hash result.
+     * @param data a pointer-size to the data to be hashed.
+     * @return a pointer to the buffer containing the 64-bit hash result.
      */
-    private int twox64V1(final RuntimePointerSize data) {
+    public int twox64V1(final RuntimePointerSize data) {
         byte[] dataToHash = hostApi.getDataFromMemory(data);
-        byte[] hash0 = hash64(0, dataToHash);
 
-        return hostApi.addDataToMemory(hash0).pointer();
+        byte[] hash = HashUtils.hashXx64(0, dataToHash);
+
+        return hostApi.addDataToMemory(hash).pointer();
     }
 
     /**
      * Conducts a 128-bit xxHash hash.
      *
-     * @param data a pointer-size (Definition 201) to the data to be hashed.
-     * @return a pointer (Definition 200) to the buffer containing the 128-bit hash result.
+     * @param data a pointer-size to the data to be hashed.
+     * @return a pointer to the buffer containing the 128-bit hash result.
      */
     public int twox128V1(final RuntimePointerSize data) {
         byte[] dataToHash = hostApi.getDataFromMemory(data);
 
-        byte[] hash0 = hash64(0, dataToHash);
-        byte[] hash1 = hash64(1, dataToHash);
+        byte[] hash = HashUtils.hashXx128(0, dataToHash);
 
-        ByteBuffer buffer = ByteBuffer.allocate(16);
-        buffer.put(hash0);
-        buffer.put(hash1);
-
-        byte[] byteArray = buffer.array();
-        return hostApi.addDataToMemory(byteArray).pointer();
+        return hostApi.addDataToMemory(hash).pointer();
     }
 
     /**
      * Conducts a 256-bit xxHash hash.
      *
-     * @param data a pointer-size (Definition 201) to the data to be hashed.
-     * @return a pointer (Definition 200) to the buffer containing the 256-bit hash result.
+     * @param data a pointer-size to the data to be hashed.
+     * @return a pointer to the buffer containing the 256-bit hash result.
      */
     public int twox256V1(final RuntimePointerSize data) {
         byte[] dataToHash = hostApi.getDataFromMemory(data);
 
-        byte[] hash0 = hash64(0, dataToHash);
-        byte[] hash1 = hash64(1, dataToHash);
-        byte[] hash2 = hash64(2, dataToHash);
-        byte[] hash3 = hash64(3, dataToHash);
+        byte[] hash = HashUtils.hashXx256(0, dataToHash);
 
-        ByteBuffer buffer = ByteBuffer.allocate(32);
-        buffer.put(hash0);
-        buffer.put(hash1);
-        buffer.put(hash2);
-        buffer.put(hash3);
-
-        byte[] byteArray = buffer.array();
-        return hostApi.addDataToMemory(byteArray).pointer();
-    }
-
-    public byte[] hash64(int seed, byte[] dataToHash) {
-        final long res3 = LongHashFunction
-                .xx(seed)
-                .hashBytes(dataToHash);
-
-        final ByteBuffer buffer = ByteBuffer
-                .allocate(8)
-                .order(ByteOrder.LITTLE_ENDIAN)
-                .putLong(res3);
-
-        return buffer.array();
+        return hostApi.addDataToMemory(hash).pointer();
     }
 
 }
