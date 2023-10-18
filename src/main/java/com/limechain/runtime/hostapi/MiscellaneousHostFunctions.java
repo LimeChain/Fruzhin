@@ -144,7 +144,7 @@ public class MiscellaneousHostFunctions {
      *                   was executed.
      * @param messagePtr a pointer-size to the UTF-8 encoded log message.
      */
-    private void logV1(int level, RuntimePointerSize targetPtr, RuntimePointerSize messagePtr) {
+    public void logV1(int level, RuntimePointerSize targetPtr, RuntimePointerSize messagePtr) {
         byte[] target = hostApi.getDataFromMemory(targetPtr);
         byte[] message = hostApi.getDataFromMemory(messagePtr);
 
