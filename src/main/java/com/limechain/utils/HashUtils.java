@@ -14,6 +14,8 @@ import java.nio.ByteOrder;
 @UtilityClass
 public class HashUtils {
     public static final int HASH256_HASH_LENGTH = Hash256.SIZE_BYTES * Byte.SIZE;
+    public static final int HASH_128_SIZE_BYTES = 16;
+    public static final int HASH_64_SIZE_BYTES = 8;
 
     /**
      * Conducts a 256-bit Blake2b hash.
@@ -35,7 +37,7 @@ public class HashUtils {
      * @return byte array containing the 128-bit hash result.
      */
     public static byte[] hashWithBlake2b128(byte[] input) {
-        return hashWithBlake2bToLength(input, 16);
+        return hashWithBlake2bToLength(input, HASH_128_SIZE_BYTES);
     }
 
     /**
@@ -95,7 +97,7 @@ public class HashUtils {
                 .hashBytes(dataToHash);
 
         final ByteBuffer buffer = ByteBuffer
-                .allocate(8)
+                .allocate(HASH_64_SIZE_BYTES)
                 .order(ByteOrder.LITTLE_ENDIAN)
                 .putLong(xxHash);
 
@@ -112,7 +114,7 @@ public class HashUtils {
         byte[] hash0 = hashXx64(seed, dataToHash);
         byte[] hash1 = hashXx64(seed + 1, dataToHash);
 
-        ByteBuffer buffer = ByteBuffer.allocate(16);
+        ByteBuffer buffer = ByteBuffer.allocate(HASH_128_SIZE_BYTES);
         buffer.put(hash0);
         buffer.put(hash1);
 
@@ -131,7 +133,7 @@ public class HashUtils {
         byte[] hash2 = hashXx64(seed + 2, dataToHash);
         byte[] hash3 = hashXx64(seed + 3, dataToHash);
 
-        ByteBuffer buffer = ByteBuffer.allocate(32);
+        ByteBuffer buffer = ByteBuffer.allocate(Hash256.SIZE_BYTES);
         buffer.put(hash0);
         buffer.put(hash1);
         buffer.put(hash2);
