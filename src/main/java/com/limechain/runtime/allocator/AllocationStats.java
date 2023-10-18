@@ -8,7 +8,7 @@ import java.math.BigInteger;
 public class AllocationStats {
     private int bytesAllocated;
     private int bytesAllocatedPeak;
-    private BigInteger bytesAllocatedSum;
+    private BigInteger bytesAllocatedSum = BigInteger.ZERO;
     private int addressSpaceUsed;
 
     public void allocated(int allocatedSize, int addressSpaceUsed) {
