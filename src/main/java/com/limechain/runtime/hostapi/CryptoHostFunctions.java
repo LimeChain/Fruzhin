@@ -43,7 +43,6 @@ public class CryptoHostFunctions {
 
     public static final String SCALE_ENCODING_SIGNED_MESSAGE_ERROR = "Error while SCALE encoding signed message";
     public static final String INVALID_KEY_TYPE = "Invalid key type";
-    public static final int KEY_TYPE_LEN = 4;
     public static final String SEED_IS_INVALID = "Seed is invalid";
     public static final String BATCH_VERIFICATION_NOT_STARTED = "Batch verification not started";
     private final KeyStore keyStore;
@@ -167,7 +166,7 @@ public class CryptoHostFunctions {
      * @return a pointer-size to the SCALE encoded array of 256bit public keys.
      */
     public RuntimePointerSize ed25519PublicKeysV1(int keyTypeId) {
-        final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, KEY_TYPE_LEN));
+        final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, KeyType.KEY_TYPE_LEN));
 
         if (keyType == null || (keyType.getKey() != Key.ED25519 && keyType.getKey() != Key.GENERIC)) {
             throw new RuntimeException(INVALID_KEY_TYPE);
@@ -187,7 +186,7 @@ public class CryptoHostFunctions {
      *                          was provided.
      */
     public int ed25519GenerateV1(int keyTypeId, RuntimePointerSize seed) {
-        final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, KEY_TYPE_LEN));
+        final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, KeyType.KEY_TYPE_LEN));
         if (keyType == null) {
             Util.nativePanic(INVALID_KEY_TYPE);
             throw new RuntimeException(INVALID_KEY_TYPE);
@@ -244,7 +243,7 @@ public class CryptoHostFunctions {
 
     @NotNull
     private Signature internalGetSignData(int keyTypeId, int publicKey, RuntimePointerSize message, Key key) {
-        final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, KEY_TYPE_LEN));
+        final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, KeyType.KEY_TYPE_LEN));
 
         final byte[] publicKeyData = hostApi.getDataFromMemory(publicKey, key == Key.ECDSA ? 33 : 32);
         final byte[] messageData = hostApi.getDataFromMemory(message);
@@ -294,7 +293,7 @@ public class CryptoHostFunctions {
      * @return a pointer-size to the SCALE encoded array of 256bit public keys.
      */
     public RuntimePointerSize sr25519PublicKeysV1(int keyTypeId) {
-        final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, KEY_TYPE_LEN));
+        final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, KeyType.KEY_TYPE_LEN));
 
         if (keyType == null || (keyType.getKey() != Key.SR25519 && keyType.getKey() != Key.GENERIC)) {
             throw new RuntimeException(INVALID_KEY_TYPE);
@@ -314,7 +313,7 @@ public class CryptoHostFunctions {
      *                          was provided.
      */
     public int sr25519GenerateV1(int keyTypeId, RuntimePointerSize seed) {
-        final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, KEY_TYPE_LEN));
+        final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, KeyType.KEY_TYPE_LEN));
         if (keyType == null) {
             Util.nativePanic(INVALID_KEY_TYPE);
             throw new RuntimeException(INVALID_KEY_TYPE);
@@ -411,7 +410,7 @@ public class CryptoHostFunctions {
      * @return a pointer-size to the SCALE encoded array of 33byte compressed public keys.
      */
     public RuntimePointerSize ecdsaPublicKeysV1(int keyTypeId) {
-        final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, KEY_TYPE_LEN));
+        final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, KeyType.KEY_TYPE_LEN));
 
         if (keyType == null || keyType.getKey() != Key.GENERIC) {
             throw new RuntimeException(INVALID_KEY_TYPE);
@@ -446,7 +445,7 @@ public class CryptoHostFunctions {
      *                          was provided.
      */
     public int ecdsaGenerateV1(int keyTypeId, RuntimePointerSize seed) {
-        final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, KEY_TYPE_LEN));
+        final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, KeyType.KEY_TYPE_LEN));
         if (keyType == null) {
             Util.nativePanic(INVALID_KEY_TYPE);
             throw new RuntimeException(INVALID_KEY_TYPE);

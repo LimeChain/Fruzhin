@@ -39,6 +39,8 @@ public enum KeyType {
      */
     PARACHAIN_ASSIGNMENT_KEY("asgn".getBytes(), Key.SR25519);
 
+    public static final int KEY_TYPE_LEN = 4;
+
     private final byte[] bytes;
     private final Key key;
 

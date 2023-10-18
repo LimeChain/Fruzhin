@@ -34,7 +34,7 @@ public class KeyStore {
     }
 
     private byte[] removeKeyTypeFromKey(byte[] key) {
-        return Arrays.copyOfRange(key, 4, key.length);
+        return Arrays.copyOfRange(key, KeyType.KEY_TYPE_LEN, key.length);
     }
 
     private String getKey(KeyType keyType, byte[] key) {
