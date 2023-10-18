@@ -347,7 +347,7 @@ public class CryptoHostFunctions {
      * @return a pointer-size to the SCALE encoded Option value containing the 64-byte signature.
      * This function returns if the public key cannot be found in the key store.
      */
-    public Number sr25519SignV1(int keyTypeId, int publicKey, RuntimePointerSize message) {
+    public int sr25519SignV1(int keyTypeId, int publicKey, RuntimePointerSize message) {
         final Signature sig = internalGetSignData(keyTypeId, publicKey, message, Key.SR25519);
 
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -480,7 +480,7 @@ public class CryptoHostFunctions {
      * The signature is 65-bytes in size, where the first 512-bits represent the signature and the other 8 bits
      * represent the recovery ID. This function returns if the public key cannot be found in the key store.
      */
-    public Number ecdsaSignV1(int keyTypeId, int publicKey, RuntimePointerSize message) {
+    public int ecdsaSignV1(int keyTypeId, int publicKey, RuntimePointerSize message) {
         final Signature sig = internalGetSignData(keyTypeId, publicKey, message, Key.ECDSA);
         sig.setMessageData(HashUtils.hashWithBlake2b(sig.getMessageData()));
 
@@ -512,7 +512,7 @@ public class CryptoHostFunctions {
      * The signature is 65-bytes in size, where the first 512-bits represent the signature and the other 8 bits
      * represent the recovery ID. This function returns if the public key cannot be found in the key store.
      */
-    public Number ecdsaSignPrehashedV1(int keyTypeId, int publicKey, RuntimePointerSize message) {
+    public int ecdsaSignPrehashedV1(int keyTypeId, int publicKey, RuntimePointerSize message) {
         final Signature sig = internalGetSignData(keyTypeId, publicKey, message, Key.ECDSA);
 
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();

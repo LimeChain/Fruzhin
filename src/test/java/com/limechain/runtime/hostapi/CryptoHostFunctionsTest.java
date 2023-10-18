@@ -51,6 +51,7 @@ class CryptoHostFunctionsTest {
     int keyPosition = 123;
     int publicKeyPosition = 456;
     int signaturePosition = 789;
+    int returnPosition = 999;
     @InjectMocks
     private CryptoHostFunctions cryptoHostFunctions;
     @Spy
@@ -61,6 +62,8 @@ class CryptoHostFunctionsTest {
     private RuntimePointerSize seedPointer;
     @Mock
     private RuntimePointerSize messagePointer;
+    @Mock
+    private RuntimePointerSize returnPointer;
     @Mock
     private KeyStore keyStore;
 
@@ -74,23 +77,27 @@ class CryptoHostFunctionsTest {
     @Test
     void ed25519PublicKeysV1() {
         when(hostApi.getDataFromMemory(keyPosition, 4)).thenReturn(KeyType.GRANDPA.getBytes());
+        when(hostApi.addDataToMemory(any())).thenReturn(returnPointer);
 
-        cryptoHostFunctions.ed25519PublicKeysV1(keyPosition);
+        RuntimePointerSize result = cryptoHostFunctions.ed25519PublicKeysV1(keyPosition);
 
         verify(keyStore).getPublicKeysByKeyType(KeyType.GRANDPA);
+        assertEquals(returnPointer, result);
     }
 
     @Test
     void ed25519GenerateV1_no_seed() {
         when(hostApi.getDataFromMemory(keyPosition, 4)).thenReturn(KeyType.GRANDPA.getBytes());
         when(hostApi.getDataFromMemory(seedPointer)).thenReturn(missingSeed);
+        when(hostApi.putDataToMemory(any())).thenReturn(returnPosition);
 
         try (var ed25519Statick = mockStatic(Ed25519Utils.class)) {
             ed25519Statick.when(Ed25519Utils::generateKeyPair).thenReturn(ed25519PrivateKey);
 
-            cryptoHostFunctions.ed25519GenerateV1(keyPosition, seedPointer);
+            int result = cryptoHostFunctions.ed25519GenerateV1(keyPosition, seedPointer);
 
             ed25519Statick.verify(Ed25519Utils::generateKeyPair);
+            assertEquals(returnPosition, result);
         }
     }
 
@@ -98,13 +105,15 @@ class CryptoHostFunctionsTest {
     void ed25519GenerateV1_with_seed() {
         when(hostApi.getDataFromMemory(keyPosition, 4)).thenReturn(KeyType.GRANDPA.getBytes());
         when(hostApi.getDataFromMemory(seedPointer)).thenReturn(existingSeed);
+        when(hostApi.putDataToMemory(any())).thenReturn(returnPosition);
 
         try (var ed25519Statick = mockStatic(Ed25519Utils.class)) {
             ed25519Statick.when(() -> Ed25519Utils.generateKeyPair(seed)).thenReturn(ed25519PrivateKey);
 
-            cryptoHostFunctions.ed25519GenerateV1(keyPosition, seedPointer);
+            int result = cryptoHostFunctions.ed25519GenerateV1(keyPosition, seedPointer);
 
             ed25519Statick.verify(() -> Ed25519Utils.generateKeyPair(seed));
+            assertEquals(returnPosition, result);
         }
     }
 
@@ -114,10 +123,13 @@ class CryptoHostFunctionsTest {
         when(hostApi.getDataFromMemory(publicKeyPosition, 32)).thenReturn(ed25519PrivateKey.publicKey().raw());
         when(hostApi.getDataFromMemory(messagePointer)).thenReturn(message);
         when(keyStore.get(KeyType.GRANDPA, ed25519PrivateKey.publicKey().raw())).thenReturn(ed25519PrivateKey.raw());
+        when(hostApi.putDataToMemory(any())).thenReturn(returnPosition);
 
         try (var ed25519Statick = mockStatic(Ed25519Utils.class)) {
-            cryptoHostFunctions.ed25519SignV1(keyPosition, publicKeyPosition, messagePointer);
+            long result = cryptoHostFunctions.ed25519SignV1(keyPosition, publicKeyPosition, messagePointer);
+
             ed25519Statick.verify(() -> Ed25519Utils.signMessage(ed25519PrivateKey.raw(), message));
+            assertEquals(returnPosition, result);
         }
     }
 
@@ -163,23 +175,27 @@ class CryptoHostFunctionsTest {
     @Test
     void sr25519PublicKeysV1() {
         when(hostApi.getDataFromMemory(keyPosition, 4)).thenReturn(KeyType.BABE.getBytes());
+        when(hostApi.addDataToMemory(any())).thenReturn(returnPointer);
 
-        cryptoHostFunctions.sr25519PublicKeysV1(keyPosition);
+        RuntimePointerSize result = cryptoHostFunctions.sr25519PublicKeysV1(keyPosition);
 
         verify(keyStore).getPublicKeysByKeyType(KeyType.BABE);
+        assertEquals(returnPointer, result);
     }
 
     @Test
     void sr25519GenerateV1_no_seed() {
         when(hostApi.getDataFromMemory(keyPosition, 4)).thenReturn(KeyType.BABE.getBytes());
         when(hostApi.getDataFromMemory(seedPointer)).thenReturn(missingSeed);
+        when(hostApi.putDataToMemory(any())).thenReturn(returnPosition);
 
         try (var sr25519Statick = mockStatic(Sr25519Utils.class)) {
             sr25519Statick.when(Sr25519Utils::generateKeyPair).thenReturn(sr25519KeyPair);
 
-            cryptoHostFunctions.sr25519GenerateV1(keyPosition, seedPointer);
+            int result = cryptoHostFunctions.sr25519GenerateV1(keyPosition, seedPointer);
 
             sr25519Statick.verify(Sr25519Utils::generateKeyPair);
+            assertEquals(returnPosition, result);
         }
     }
 
@@ -187,13 +203,15 @@ class CryptoHostFunctionsTest {
     void sr25519GenerateV1_with_seed() {
         when(hostApi.getDataFromMemory(keyPosition, 4)).thenReturn(KeyType.BABE.getBytes());
         when(hostApi.getDataFromMemory(seedPointer)).thenReturn(existingSeed);
+        when(hostApi.putDataToMemory(any())).thenReturn(returnPosition);
 
         try (var sr25519Statick = mockStatic(Sr25519Utils.class)) {
             sr25519Statick.when(() -> Sr25519Utils.generateKeyPair(seed)).thenReturn(sr25519KeyPair);
 
-            cryptoHostFunctions.sr25519GenerateV1(keyPosition, seedPointer);
+            int result = cryptoHostFunctions.sr25519GenerateV1(keyPosition, seedPointer);
 
             sr25519Statick.verify(() -> Sr25519Utils.generateKeyPair(seed));
+            assertEquals(returnPosition, result);
         }
     }
 
@@ -203,11 +221,13 @@ class CryptoHostFunctionsTest {
         when(hostApi.getDataFromMemory(publicKeyPosition, 32)).thenReturn(sr25519KeyPair.getPublicKey());
         when(hostApi.getDataFromMemory(messagePointer)).thenReturn(message);
         when(keyStore.get(KeyType.BABE, sr25519KeyPair.getPublicKey())).thenReturn(sr25519KeyPair.getSecretKey());
+        when(hostApi.putDataToMemory(any())).thenReturn(returnPosition);
 
         try (var sr25519Statick = mockStatic(Sr25519Utils.class)) {
-            cryptoHostFunctions.sr25519SignV1(keyPosition, publicKeyPosition, messagePointer);
+            int result = cryptoHostFunctions.sr25519SignV1(keyPosition, publicKeyPosition, messagePointer);
             sr25519Statick.verify(() ->
                     Sr25519Utils.signMessage(sr25519KeyPair.getPublicKey(), sr25519KeyPair.getSecretKey(), message));
+            assertEquals(returnPosition, result);
         }
     }
 
@@ -256,23 +276,27 @@ class CryptoHostFunctionsTest {
     @Test
     void ecdsaPublicKeysV1() {
         when(hostApi.getDataFromMemory(keyPosition, 4)).thenReturn(KeyType.CONTROLLING_ACCOUNTS.getBytes());
+        when(hostApi.addDataToMemory(any())).thenReturn(returnPointer);
 
-        cryptoHostFunctions.sr25519PublicKeysV1(keyPosition);
+        RuntimePointerSize result = cryptoHostFunctions.sr25519PublicKeysV1(keyPosition);
 
         verify(keyStore).getPublicKeysByKeyType(KeyType.CONTROLLING_ACCOUNTS);
+        assertEquals(returnPointer, result);
     }
 
     @Test
     void ecdsaGenerateV1_no_seed() {
         when(hostApi.getDataFromMemory(keyPosition, 4)).thenReturn(KeyType.CONTROLLING_ACCOUNTS.getBytes());
         when(hostApi.getDataFromMemory(seedPointer)).thenReturn(missingSeed);
+        when(hostApi.putDataToMemory(any())).thenReturn(returnPosition);
 
         try (var ecdsaUtil = mockStatic(EcdsaUtils.class)) {
             ecdsaUtil.when(EcdsaUtils::generateKeyPair).thenReturn(ecdsaKeyPair);
 
-            cryptoHostFunctions.ecdsaGenerateV1(keyPosition, seedPointer);
+            int result = cryptoHostFunctions.ecdsaGenerateV1(keyPosition, seedPointer);
 
             ecdsaUtil.verify(EcdsaUtils::generateKeyPair);
+            assertEquals(returnPosition, result);
         }
     }
 
@@ -280,13 +304,15 @@ class CryptoHostFunctionsTest {
     void ecdsaGenerateV1_use_seed() {
         when(hostApi.getDataFromMemory(keyPosition, 4)).thenReturn(KeyType.CONTROLLING_ACCOUNTS.getBytes());
         when(hostApi.getDataFromMemory(seedPointer)).thenReturn(existingSeed);
+        when(hostApi.putDataToMemory(any())).thenReturn(returnPosition);
 
         try (var ecdsaUtil = mockStatic(EcdsaUtils.class)) {
             ecdsaUtil.when(() -> EcdsaUtils.generateKeyPair(seed)).thenReturn(ecdsaKeyPair);
 
-            cryptoHostFunctions.ecdsaGenerateV1(keyPosition, seedPointer);
+            int result = cryptoHostFunctions.ecdsaGenerateV1(keyPosition, seedPointer);
 
             ecdsaUtil.verify(() -> EcdsaUtils.generateKeyPair(seed));
+            assertEquals(returnPosition, result);
         }
     }
 
@@ -297,11 +323,14 @@ class CryptoHostFunctionsTest {
         when(hostApi.getDataFromMemory(messagePointer)).thenReturn(message);
         when(keyStore.get(KeyType.CONTROLLING_ACCOUNTS, ecdsaKeyPair.getSecond().raw()))
                 .thenReturn(ecdsaKeyPair.getFirst().raw());
+        when(hostApi.putDataToMemory(any())).thenReturn(returnPosition);
 
         try (var ecdsaStatic = mockStatic(EcdsaUtils.class)) {
-            cryptoHostFunctions.ecdsaSignV1(keyPosition, publicKeyPosition, messagePointer);
+            int result = cryptoHostFunctions.ecdsaSignV1(keyPosition, publicKeyPosition, messagePointer);
+
             ecdsaStatic.verify(() ->
                     EcdsaUtils.signMessage(ecdsaKeyPair.getFirst().raw(), hashedMessage));
+            assertEquals(returnPosition, result);
         }
     }
 
@@ -312,11 +341,14 @@ class CryptoHostFunctionsTest {
         when(hostApi.getDataFromMemory(messagePointer)).thenReturn(message);
         when(keyStore.get(KeyType.CONTROLLING_ACCOUNTS, ecdsaKeyPair.getSecond().raw()))
                 .thenReturn(ecdsaKeyPair.getFirst().raw());
+        when(hostApi.putDataToMemory(any())).thenReturn(returnPosition);
 
         try (var ecdsaStatic = mockStatic(EcdsaUtils.class)) {
-            cryptoHostFunctions.ecdsaSignPrehashedV1(keyPosition, publicKeyPosition, messagePointer);
+            int result = cryptoHostFunctions.ecdsaSignPrehashedV1(keyPosition, publicKeyPosition, messagePointer);
+
             ecdsaStatic.verify(() ->
                     EcdsaUtils.signMessage(ecdsaKeyPair.getFirst().raw(), message));
+            assertEquals(returnPosition, result);
         }
     }
 
@@ -378,14 +410,18 @@ class CryptoHostFunctionsTest {
         byte[] sig = EcdsaUtils.signMessage(ecdsaKeyPair.getFirst().raw(), hashedMessage);
         when(hostApi.getDataFromMemory(signaturePosition, 65)).thenReturn(sig);
         when(hostApi.getDataFromMemory(keyPosition, 32)).thenReturn(hashedMessage);
+        when(hostApi.putDataToMemory(any())).thenReturn(returnPosition);
 
         try (var ecdsaStatic = mockStatic(EcdsaUtils.class)) {
             ecdsaStatic.when(() ->
                             EcdsaUtils.recoverPublicKeyFromSignature(sig, hashedMessage, false))
                     .thenReturn(ecdsaKeyPair.getSecond().raw());
-            cryptoHostFunctions.secp256k1EcdsaRecoverV1(signaturePosition, keyPosition);
+
+            int result = cryptoHostFunctions.secp256k1EcdsaRecoverV1(signaturePosition, keyPosition);
+
             ecdsaStatic.verify(() ->
                     EcdsaUtils.recoverPublicKeyFromSignature(sig, hashedMessage, false));
+            assertEquals(returnPosition, result);
         }
     }
 
@@ -394,14 +430,18 @@ class CryptoHostFunctionsTest {
         byte[] sig = EcdsaUtils.signMessage(ecdsaKeyPair.getFirst().raw(), hashedMessage);
         when(hostApi.getDataFromMemory(signaturePosition, 65)).thenReturn(sig);
         when(hostApi.getDataFromMemory(keyPosition, 32)).thenReturn(hashedMessage);
+        when(hostApi.putDataToMemory(any())).thenReturn(returnPosition);
 
         try (var ecdsaStatic = mockStatic(EcdsaUtils.class)) {
             ecdsaStatic.when(() ->
                             EcdsaUtils.recoverPublicKeyFromSignature(sig, hashedMessage, true))
                     .thenReturn(ecdsaKeyPair.getSecond().raw());
-            cryptoHostFunctions.secp256k1EcdsaRecoverCompressedV1(signaturePosition, keyPosition);
+
+            int result = cryptoHostFunctions.secp256k1EcdsaRecoverCompressedV1(signaturePosition, keyPosition);
+
             ecdsaStatic.verify(() ->
                     EcdsaUtils.recoverPublicKeyFromSignature(sig, hashedMessage, true));
+            assertEquals(returnPosition, result);
         }
     }
 
