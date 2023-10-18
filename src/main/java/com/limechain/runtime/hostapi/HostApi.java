@@ -26,9 +26,13 @@ public class HostApi {
     protected static final List<Type> EMPTY_LIST_OF_TYPES = List.of();
 
     protected static final String KEY_TO_IGNORE = ":child_storage:default:";
-
+    private static final HostApi INSTANCE = new HostApi();
     protected static KVRepository<String, Object> repository;
     protected static Runtime runtime;
+
+    public static HostApi getInstance() {
+        return INSTANCE;
+    }
 
     protected static ImportObject getImportObject(final String functionName,
                                                   final UnaryOperator<List<Number>> function,
@@ -93,10 +97,6 @@ public class HostApi {
             buffer = null;
         }
         return buffer != null ? buffer : memory.buffer();
-    }
-
-    public static HostApi getInstance() {
-        return new HostApi();
     }
 
     public byte[] getDataFromMemory(RuntimePointerSize runtimePointerSize) {
