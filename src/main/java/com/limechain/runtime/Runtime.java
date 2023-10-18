@@ -21,7 +21,7 @@ public class Runtime {
         this.instance = module.instantiate(getImports(module));
     }
 
-    public Object callNoParams(String functionName) {
+    public Object[] callNoParams(String functionName) {
         log.log(Level.INFO, "Making a runtime call: " + functionName);
         return instance.exports.getFunction(functionName).apply();
     }

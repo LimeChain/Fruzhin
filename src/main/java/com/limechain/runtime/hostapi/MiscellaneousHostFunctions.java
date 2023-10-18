@@ -1,14 +1,22 @@
 package com.limechain.runtime.hostapi;
 
+import com.limechain.runtime.Runtime;
+import com.limechain.runtime.RuntimeBuilder;
+import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import lombok.AllArgsConstructor;
 import lombok.extern.java.Log;
 import org.apache.tomcat.util.buf.HexUtils;
 import org.wasmer.ImportObject;
+import org.wasmer.Memory;
+import org.wasmer.Module;
 import org.wasmer.Type;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.logging.Level;
 
 /**
@@ -20,6 +28,7 @@ import java.util.logging.Level;
 @AllArgsConstructor
 public class MiscellaneousHostFunctions {
 
+    public static final String CORE_VERSION_CALL_FAILED = "Core_version call failed";
     private final HostApi hostApi;
 
     public MiscellaneousHostFunctions() {
@@ -98,9 +107,32 @@ public class MiscellaneousHostFunctions {
      * @return a pointer-size to the SCALE encoded Option value containing the Runtime version of the given Wasm blob
      * which is encoded as a byte array.
      */
-    public int runtimeVersionV1(RuntimePointerSize data) {
-        //TODO: Implement
-        return -1;
+    public long runtimeVersionV1(RuntimePointerSize data) {
+        byte[] wasmBlob = hostApi.getDataFromMemory(data);
+
+        Module module = new Module(wasmBlob);
+        Runtime runtime = new Runtime(module, RuntimeBuilder.DEFAULT_HEAP_PAGES);
+        Memory memory = runtime.getInstance().exports.getMemory("memory");
+
+        Object[] response = runtime.callNoParams("Core_version");
+
+        if (response == null || response[0] == null) {
+            throw new RuntimeException(CORE_VERSION_CALL_FAILED);
+        }
+
+        final RuntimePointerSize responsePointer = new RuntimePointerSize((long) response[0]);
+        byte[] runtimeVersionData = new byte[responsePointer.size()];
+        memory.buffer().get(responsePointer.pointer(), runtimeVersionData, 0, responsePointer.size());
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ScaleCodecWriter writer = new ScaleCodecWriter(baos);
+        try {
+            writer.writeOptional(ScaleCodecWriter::writeByteArray, Optional.ofNullable(runtimeVersionData));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        return hostApi.addDataToMemory(baos.toByteArray()).pointerSize();
     }
 
     /**
