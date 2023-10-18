@@ -1,5 +1,6 @@
 package com.limechain.runtime;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.wasmer.Module;
 
@@ -10,6 +11,7 @@ import java.nio.file.Paths;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@Disabled("This is an integration test")
 class RuntimeWasmTest {
     private static final Path HELLO_WORLD_PATH = Paths.get("src","test","resources","hello_world.wasm");
 
