@@ -50,7 +50,8 @@ public class MiscellaneousHostFunctions {
                 HostApi.getImportObject("ext_misc_print_hex_version_1", argv ->
                         printHexV1(new RuntimePointerSize(argv.get(0))), List.of(Type.I64)),
                 HostApi.getImportObject("ext_misc_runtime_version_version_1", argv ->
-                        List.of(runtimeVersionV1(new RuntimePointerSize(argv.get(0)))), List.of(Type.I64), Type.I64),
+                                List.of(runtimeVersionV1(new RuntimePointerSize(argv.get(0))).pointerSize()),
+                        List.of(Type.I64), Type.I64),
                 HostApi.getImportObject("ext_logging_log_version_1", argv ->
                         logV1(argv.get(0).intValue(), new RuntimePointerSize(argv.get(1)),
                                 new RuntimePointerSize(argv.get(1))), Arrays.asList(Type.I32, Type.I64, Type.I64)),
@@ -107,14 +108,14 @@ public class MiscellaneousHostFunctions {
      * @return a pointer-size to the SCALE encoded Option value containing the Runtime version of the given Wasm blob
      * which is encoded as a byte array.
      */
-    public long runtimeVersionV1(RuntimePointerSize data) {
+    public RuntimePointerSize runtimeVersionV1(RuntimePointerSize data) {
         byte[] wasmBlob = hostApi.getDataFromMemory(data);
 
         Module module = new Module(wasmBlob);
         Runtime runtime = new Runtime(module, RuntimeBuilder.DEFAULT_HEAP_PAGES);
         Memory memory = runtime.getInstance().exports.getMemory("memory");
 
-        Object[] response = runtime.callNoParams("Core_version");
+        Object[] response = runtime.call("Core_version");
 
         if (response == null || response[0] == null) {
             throw new RuntimeException(CORE_VERSION_CALL_FAILED);
@@ -132,7 +133,7 @@ public class MiscellaneousHostFunctions {
             throw new RuntimeException(e);
         }
 
-        return hostApi.addDataToMemory(baos.toByteArray()).pointerSize();
+        return hostApi.addDataToMemory(baos.toByteArray());
     }
 
     /**

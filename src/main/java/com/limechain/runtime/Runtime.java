@@ -26,10 +26,10 @@ public class Runtime {
         return instance.exports.getFunction(functionName).apply();
     }
 
-    public Object call(String functionName) {
+    public Object[] call(String functionName) {
         log.log(Level.INFO, "Making a runtime call: " + functionName);
         //TODO Call adequate params
-        return instance.exports.getFunction(functionName).apply(1, 1);
+        return instance.exports.getFunction(functionName).apply(0, 0);
     }
 
     public void setVersion(RuntimeVersion runtimeVersion) {

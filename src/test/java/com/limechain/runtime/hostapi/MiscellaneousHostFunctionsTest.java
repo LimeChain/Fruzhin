@@ -1,6 +1,7 @@
 package com.limechain.runtime.hostapi;
 
 import org.apache.tomcat.util.buf.HexUtils;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -8,7 +9,10 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.verify;
@@ -73,8 +77,18 @@ class MiscellaneousHostFunctionsTest {
     }
 
     @Test
-    void runtimeVersionV1() {
-        //todo: test
+    @Disabled("needs working allocator api")
+    void runtimeVersionV1() throws IOException {
+        byte[] wasmRuntime = Files.readAllBytes(Path.of("./src/test/resources/runtime.wasm"));
+        byte[] runtimeData = Files.readAllBytes(Path.of("./src/test/resources/runtime.data"));
+        when(hostApi.getDataFromMemory(valuePointer)).thenReturn(wasmRuntime);
+        when(hostApi.addDataToMemory(runtimeData)).thenReturn(targetPointer);
+
+        RuntimePointerSize result = miscellaneousHostFunctions.runtimeVersionV1(valuePointer);
+
+        assertEquals(targetPointer, result);
+        verify(hostApi).getDataFromMemory(valuePointer);
+        verify(hostApi).addDataToMemory(runtimeData);
     }
 
     @Test
