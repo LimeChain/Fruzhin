@@ -55,24 +55,12 @@ public class HostApi {
 
     @Deprecated(forRemoval = true)
     public static byte[] getDataFromMemory(long pointer) {
-        int ptr = (int) pointer;
-        int ptrLength = (int) (pointer >> 32);
-        byte[] data = new byte[ptrLength];
-
-        Memory memory = HostApi.getInstance().runtime.getMemory();
-        memory.buffer().get(ptr, data, 0, ptrLength);
-        return data;
+        return HostApi.getInstance().getDataFromMemory(new RuntimePointerSize(pointer));
     }
 
     @Deprecated(forRemoval = true)
     public static int putDataToMemory(byte[] data) {
-        Memory memory = HostApi.getInstance().runtime.getMemory();
-        ByteBuffer buffer = memory.buffer();
-        int position = buffer.position();
-        buffer.put(position, data, 0, data.length);
-        buffer.position(position + data.length);
-
-        return position;
+        return HostApi.getInstance().writeDataToMemory(data).pointer();
     }
 
     public void setRuntime(Runtime runtime) {
