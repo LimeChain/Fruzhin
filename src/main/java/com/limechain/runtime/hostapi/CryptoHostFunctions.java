@@ -45,6 +45,8 @@ public class CryptoHostFunctions {
     public static final String INVALID_KEY_TYPE = "Invalid key type";
     public static final String SEED_IS_INVALID = "Seed is invalid";
     public static final String BATCH_VERIFICATION_NOT_STARTED = "Batch verification not started";
+    public static final int PUBLIC_KEY_LEN = 32;
+    public static final int SIGNATURE_LEN = 64;
     private final KeyStore keyStore;
     private final HostApi hostApi;
     private final Set<VerifySignature> signaturesToVerify;
@@ -153,9 +155,10 @@ public class CryptoHostFunctions {
 
     private VerifySignature internalGetVerifySignature(int signature, RuntimePointerSize message,
                                                        int publicKey, Key key) {
-        final byte[] signatureData = hostApi.getDataFromMemory(signature, 64);
+        final byte[] signatureData = hostApi.getDataFromMemory(signature, SIGNATURE_LEN);
         final byte[] messageData = hostApi.getDataFromMemory(message);
-        final byte[] publicKeyData = hostApi.getDataFromMemory(publicKey, key == Key.ECDSA ? 33 : 32);
+        final byte[] publicKeyData = hostApi.getDataFromMemory(publicKey, key == Key.ECDSA ?
+                EcdsaUtils.PUBLIC_KEY_COMPRESSED_LEN : PUBLIC_KEY_LEN);
         return new VerifySignature(signatureData, messageData, publicKeyData, key);
     }
 
@@ -245,7 +248,8 @@ public class CryptoHostFunctions {
     private Signature internalGetSignData(int keyTypeId, int publicKey, RuntimePointerSize message, Key key) {
         final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, KeyType.KEY_TYPE_LEN));
 
-        final byte[] publicKeyData = hostApi.getDataFromMemory(publicKey, key == Key.ECDSA ? 33 : 32);
+        final byte[] publicKeyData = hostApi.getDataFromMemory(publicKey, key == Key.ECDSA ?
+                EcdsaUtils.PUBLIC_KEY_COMPRESSED_LEN : PUBLIC_KEY_LEN);
         final byte[] messageData = hostApi.getDataFromMemory(message);
 
         byte[] privateKey = keyStore.get(keyType, publicKeyData);
@@ -556,9 +560,9 @@ public class CryptoHostFunctions {
      * @return a i32 integer value equal 1 to if the signature is valid or a value equal to 0 if otherwise.
      */
     public int ecdsaVerifyPrehashedV1(int signature, int message, int publicKey) {
-        final byte[] signatureData = hostApi.getDataFromMemory(signature, 64);
-        final byte[] messageData = hostApi.getDataFromMemory(message, 32);
-        final byte[] publicKeyData = hostApi.getDataFromMemory(publicKey, 33);
+        final byte[] signatureData = hostApi.getDataFromMemory(signature, SIGNATURE_LEN);
+        final byte[] messageData = hostApi.getDataFromMemory(message, EcdsaUtils.HASHED_MESSAGE_LEN);
+        final byte[] publicKeyData = hostApi.getDataFromMemory(publicKey, EcdsaUtils.PUBLIC_KEY_COMPRESSED_LEN);
 
         VerifySignature verifySig = new VerifySignature(signatureData, messageData, publicKeyData, Key.ECDSA);
         return EcdsaUtils.verifySignature(verifySig) ? 1 : 0;
@@ -628,8 +632,8 @@ public class CryptoHostFunctions {
     }
 
     private byte[] internalSecp256k1RecoverKey(int signature, int message, boolean compressed) {
-        final byte[] messageData = hostApi.getDataFromMemory(message, 32);
-        final byte[] signatureData = hostApi.getDataFromMemory(signature, 65);
+        final byte[] messageData = hostApi.getDataFromMemory(message, EcdsaUtils.HASHED_MESSAGE_LEN);
+        final byte[] signatureData = hostApi.getDataFromMemory(signature, EcdsaUtils.SIGNATURE_LEN);
 
         return EcdsaUtils.recoverPublicKeyFromSignature(signatureData, messageData, compressed);
     }

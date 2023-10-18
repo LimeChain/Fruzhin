@@ -19,6 +19,12 @@ import java.util.Arrays;
 @UtilityClass
 public class EcdsaUtils {
 
+    public static final int SIGNATURE_LEN = 65;
+    public static final int PUBLIC_KEY_PURE_LEN = 65;
+    public static final int PUBLIC_KEY_TRIM_LEN = 64;
+    public static final int PUBLIC_KEY_COMPRESSED_LEN = 33;
+    public static final int HASHED_MESSAGE_LEN = 32;
+
     /**
      * Generates Secp256k1 key pair using the Secp256k1 library from libp2p
      * @return Secp256k1 Private key (32 bytes) and Public key (33 or 65 bytes)
@@ -56,7 +62,7 @@ public class EcdsaUtils {
 
         Sign.SignatureData signature = Sign.signMessage(message, keyPair, false);
 
-        byte[] signatureBytes = new byte[65];
+        byte[] signatureBytes = new byte[SIGNATURE_LEN];
         System.arraycopy(signature.getR(), 0, signatureBytes, 0, 32);
         System.arraycopy(signature.getS(), 0, signatureBytes, 32, 32);
         System.arraycopy(signature.getV(), 0, signatureBytes, 64, 1);
@@ -101,7 +107,7 @@ public class EcdsaUtils {
         if (compressed) {
             return compressPublicKey(fullPubKey);
         } else {
-            if(fullPubKey.length == 65){
+            if(fullPubKey.length == PUBLIC_KEY_PURE_LEN){
                 return Arrays.copyOfRange(fullPubKey, 1, fullPubKey.length);
             }
             return fullPubKey;
@@ -115,8 +121,8 @@ public class EcdsaUtils {
      * @return 33 bytes Secp256k1 public key
      */
     private static byte[] compressPublicKey(byte[] publicKey) {
-        byte[] key = new byte[65];
-        if (publicKey.length == 64) {
+        byte[] key = new byte[PUBLIC_KEY_PURE_LEN];
+        if (publicKey.length == PUBLIC_KEY_TRIM_LEN) {
             System.arraycopy(publicKey, 0, key, 1, 64);
         } else {
             key = publicKey;
