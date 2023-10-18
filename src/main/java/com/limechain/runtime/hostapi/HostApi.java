@@ -6,6 +6,7 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.java.Log;
 import org.wasmer.ImportObject;
+import org.wasmer.Memory;
 import org.wasmer.Type;
 
 import java.nio.ByteBuffer;
@@ -23,7 +24,6 @@ import java.util.function.UnaryOperator;
 public class HostApi {
     protected static final List<Number> EMPTY_LIST_OF_NUMBER = List.of();
     protected static final List<Type> EMPTY_LIST_OF_TYPES = List.of();
-    protected static final String KEY_TO_IGNORE = ":child_storage:default:";
     private static final HostApi INSTANCE = new HostApi();
 
     private Runtime runtime;
@@ -55,12 +55,24 @@ public class HostApi {
 
     @Deprecated(forRemoval = true)
     public static byte[] getDataFromMemory(long pointer) {
-        return null;
+        int ptr = (int) pointer;
+        int ptrLength = (int) (pointer >> 32);
+        byte[] data = new byte[ptrLength];
+
+        Memory memory = HostApi.getInstance().runtime.getMemory();
+        memory.buffer().get(ptr, data, 0, ptrLength);
+        return data;
     }
 
     @Deprecated(forRemoval = true)
     public static int putDataToMemory(byte[] data) {
-        return -1;
+        Memory memory = HostApi.getInstance().runtime.getMemory();
+        ByteBuffer buffer = memory.buffer();
+        int position = buffer.position();
+        buffer.put(position, data, 0, data.length);
+        buffer.position(position + data.length);
+
+        return position;
     }
 
     public void setRuntime(Runtime runtime) {
