@@ -20,9 +20,11 @@ import java.util.Optional;
 import java.util.logging.Level;
 
 /**
- * Implementations of the Miscellaneous HostAPI functions
+ * Implementations of the Miscellaneous, Logging and Abort Handler HostAPI functions
  * For more info check
  * {<a href="https://spec.polkadot.network/chap-host-api#sect-misc-api">Miscellaneous API</a>}
+ * {<a href="https://spec.polkadot.network/chap-host-api#sect-logging-api">Logging API</a>}
+ * {<a href="https://spec.polkadot.network/chap-host-api#id-abort-handler">Abort Handler API</a>}
  */
 @Log
 @AllArgsConstructor
@@ -47,18 +49,16 @@ public class MiscellaneousHostFunctions {
                         printUtf8V1(new RuntimePointerSize(argv.get(0))), List.of(Type.I64)),
                 HostApi.getImportObject("ext_misc_print_hex_version_1", argv ->
                         printHexV1(new RuntimePointerSize(argv.get(0))), List.of(Type.I64)),
-                HostApi.getImportObject("ext_misc_runtime_version_version_1", argv -> {
-                    return List.of(runtimeVersionV1(new RuntimePointerSize(argv.get(0))));
-                }, List.of(Type.I64), Type.I64),
+                HostApi.getImportObject("ext_misc_runtime_version_version_1", argv ->
+                        List.of(runtimeVersionV1(new RuntimePointerSize(argv.get(0)))), List.of(Type.I64), Type.I64),
                 HostApi.getImportObject("ext_logging_log_version_1", argv ->
                         logV1(argv.get(0).intValue(), new RuntimePointerSize(argv.get(1)),
                                 new RuntimePointerSize(argv.get(1))), Arrays.asList(Type.I32, Type.I64, Type.I64)),
-                HostApi.getImportObject("ext_logging_max_level_version_1", argv -> {
-                    return List.of(maxLevelV1());
-                }, List.of(), Type.I32),
-                HostApi.getImportObject("ext_panic_handler_abort_on_panic_version_1", argv -> {
-                    extPanicHandlerAbortOnPanicVersion1(new RuntimePointerSize(argv.get(0)));
-                }, List.of(Type.I64)));
+                HostApi.getImportObject("ext_logging_max_level_version_1", argv ->
+                        List.of(maxLevelV1()), List.of(), Type.I32),
+                HostApi.getImportObject("ext_panic_handler_abort_on_panic_version_1", argv ->
+                        extPanicHandlerAbortOnPanicVersion1(new RuntimePointerSize(argv.get(0))), List.of(Type.I64))
+        );
     }
 
     /**
@@ -68,7 +68,7 @@ public class MiscellaneousHostFunctions {
      */
     public void printNumV1(Number number) {
         log.info("Printing number from runtime: ");
-        log.info(String.valueOf(number));
+        System.out.println(number);
     }
 
     /**
@@ -80,7 +80,7 @@ public class MiscellaneousHostFunctions {
         byte[] data = hostApi.getDataFromMemory(strPointer);
 
         log.info("Printing utf8 from runtime: ");
-        log.info(new String(data, StandardCharsets.UTF_8));
+        System.out.println(new String(data, StandardCharsets.UTF_8));
     }
 
     /**
@@ -92,7 +92,7 @@ public class MiscellaneousHostFunctions {
         byte[] data = hostApi.getDataFromMemory(pointer);
 
         log.info("Printing hex from runtime: ");
-        log.info(HexUtils.toHexString(data));
+        System.out.println(HexUtils.toHexString(data));
     }
 
     /**
@@ -195,6 +195,7 @@ public class MiscellaneousHostFunctions {
 
     /**
      * Aborts the execution of the runtime with a given message.
+     *
      * @param messagePtr a pointer-size to the UTF-8 encoded message.
      */
     public void extPanicHandlerAbortOnPanicVersion1(RuntimePointerSize messagePtr) {
