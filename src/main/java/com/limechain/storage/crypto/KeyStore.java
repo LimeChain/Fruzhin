@@ -27,7 +27,7 @@ public class KeyStore {
 
     public List<byte[]> getPublicKeysByKeyType(KeyType keyType) {
         return repository
-                .findKeysByPrefix(getKey(keyType, "".getBytes()), 90000)
+                .findKeysByPrefix(new String(keyType.getBytes()), 90000)
                 .stream()
                 .map(this::removeKeyTypeFromKey)
                 .toList();
