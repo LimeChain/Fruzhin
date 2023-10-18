@@ -35,7 +35,7 @@ public class Ed25519Utils {
     public static Ed25519PrivateKey generateKeyPair(String mnemonic) {
         byte[] seed = MnemonicUtils.generateSeed(mnemonic, "");
         byte[] i = hmacSha512("ed25519 seed".getBytes(), seed);
-        byte[] il = Arrays.copyOfRange(i, 0, 32);
+        byte[] il = Arrays.copyOfRange(i, 0, i.length / 2);
         Arrays.fill(i, (byte) 0);
 
         final Ed25519PrivateKeyParameters privateKeyParameters = new Ed25519PrivateKeyParameters(il, 0);
