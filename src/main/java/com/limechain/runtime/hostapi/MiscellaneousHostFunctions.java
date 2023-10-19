@@ -20,11 +20,10 @@ import java.util.List;
 import java.util.logging.Level;
 
 /**
- * Implementations of the Miscellaneous, Logging and Abort Handler HostAPI functions
+ * Implementations of the Miscellaneous and Logging HostAPI functions
  * For more info check
  * {<a href="https://spec.polkadot.network/chap-host-api#sect-misc-api">Miscellaneous API</a>}
  * {<a href="https://spec.polkadot.network/chap-host-api#sect-logging-api">Logging API</a>}
- * {<a href="https://spec.polkadot.network/chap-host-api#id-abort-handler">Abort Handler API</a>}
  */
 @Log
 @AllArgsConstructor
@@ -55,9 +54,7 @@ public class MiscellaneousHostFunctions {
                         logV1(argv.get(0).intValue(), new RuntimePointerSize(argv.get(1)),
                                 new RuntimePointerSize(argv.get(1))), Arrays.asList(Type.I32, Type.I64, Type.I64)),
                 HostApi.getImportObject("ext_logging_max_level_version_1", argv ->
-                        List.of(maxLevelV1()), List.of(), Type.I32),
-                HostApi.getImportObject("ext_panic_handler_abort_on_panic_version_1", argv ->
-                        extPanicHandlerAbortOnPanicVersion1(new RuntimePointerSize(argv.get(0))), List.of(Type.I64))
+                        List.of(maxLevelV1()), List.of(), Type.I32)
         );
     }
 
@@ -183,19 +180,6 @@ public class MiscellaneousHostFunctions {
      */
     public int maxLevelV1() {
         return 4;
-    }
-
-    /**
-     * Aborts the execution of the runtime with a given message.
-     *
-     * @param messagePtr a pointer-size to the UTF-8 encoded message.
-     */
-    public void extPanicHandlerAbortOnPanicVersion1(RuntimePointerSize messagePtr) {
-        byte[] data = hostApi.getDataFromMemory(messagePtr);
-
-        final String messageToPrint = new String(data, StandardCharsets.UTF_8);
-
-        log.severe(String.format("Aborting runtime panicked with message: %s", messageToPrint));
     }
 
     private byte[] scaleEncodedOption(@Nullable byte[] data) {

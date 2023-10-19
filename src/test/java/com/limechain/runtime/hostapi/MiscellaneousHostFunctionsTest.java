@@ -108,13 +108,4 @@ class MiscellaneousHostFunctionsTest {
         assertEquals(4, miscellaneousHostFunctions.maxLevelV1());
     }
 
-    @Test
-    void extPanicHandlerAbortOnPanicVersion1() {
-        when(hostApi.getDataFromMemory(valuePointer)).thenReturn(value.getBytes());
-
-        miscellaneousHostFunctions.extPanicHandlerAbortOnPanicVersion1(valuePointer);
-
-        verify(hostApi).getDataFromMemory(valuePointer);
-        verifyNoMoreInteractions(hostApi);
-    }
 }
