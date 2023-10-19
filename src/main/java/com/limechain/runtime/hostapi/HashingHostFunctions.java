@@ -57,7 +57,7 @@ public class HashingHostFunctions {
 
         byte[] hash = HashUtils.hashWithKeccak256(dataToHash);
 
-        return hostApi.addDataToMemory(hash).pointer();
+        return hostApi.writeDataToMemory(hash).pointer();
     }
 
     /**
@@ -71,7 +71,7 @@ public class HashingHostFunctions {
 
         byte[] hash = HashUtils.hashWithKeccak512(dataToHash);
 
-        return hostApi.addDataToMemory(hash).pointer();
+        return hostApi.writeDataToMemory(hash).pointer();
     }
 
     /**
@@ -85,7 +85,7 @@ public class HashingHostFunctions {
 
         byte[] hash = HashUtils.hashWithSha256(dataToHash);
 
-        return hostApi.addDataToMemory(hash).pointer();
+        return hostApi.writeDataToMemory(hash).pointer();
     }
 
     /**
@@ -99,7 +99,7 @@ public class HashingHostFunctions {
 
         byte[] hash = HashUtils.hashWithBlake2b128(dataToHash);
 
-        return hostApi.addDataToMemory(hash).pointer();
+        return hostApi.writeDataToMemory(hash).pointer();
     }
 
     /**
@@ -113,7 +113,7 @@ public class HashingHostFunctions {
 
         byte[] hash = HashUtils.hashWithBlake2b(dataToHash);
 
-        return hostApi.addDataToMemory(hash).pointer();
+        return hostApi.writeDataToMemory(hash).pointer();
     }
 
     /**
@@ -127,7 +127,7 @@ public class HashingHostFunctions {
 
         byte[] hash = HashUtils.hashXx64(0, dataToHash);
 
-        return hostApi.addDataToMemory(hash).pointer();
+        return hostApi.writeDataToMemory(hash).pointer();
     }
 
     /**
@@ -141,7 +141,7 @@ public class HashingHostFunctions {
 
         byte[] hash = HashUtils.hashXx128(0, dataToHash);
 
-        return hostApi.addDataToMemory(hash).pointer();
+        return hostApi.writeDataToMemory(hash).pointer();
     }
 
     /**
@@ -155,7 +155,7 @@ public class HashingHostFunctions {
 
         byte[] hash = HashUtils.hashXx256(0, dataToHash);
 
-        return hostApi.addDataToMemory(hash).pointer();
+        return hostApi.writeDataToMemory(hash).pointer();
     }
 
 }
