@@ -47,7 +47,7 @@ public class RuntimeBuilder {
         Runtime runtime = new Runtime(module, DEFAULT_HEAP_PAGES);
         RuntimeVersion runtimeVersion = getRuntimeVersion(wasmBinary);
         runtime.setVersion(runtimeVersion);
-        HostApi.setRuntime(runtime);
+        HostApi.getInstance().setRuntime(runtime);
         return runtime;
     }
 

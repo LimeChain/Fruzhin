@@ -1,8 +1,10 @@
 package com.limechain.runtime;
 
+import com.limechain.runtime.hostapi.WasmExports;
 import lombok.Getter;
 import lombok.extern.java.Log;
 import org.wasmer.Instance;
+import org.wasmer.Memory;
 import org.wasmer.Module;
 
 import java.util.logging.Level;
@@ -34,5 +36,17 @@ public class Runtime {
 
     public void setVersion(RuntimeVersion runtimeVersion) {
         this.version = runtimeVersion;
+    }
+
+    public Memory getMemory() {
+        return instance.exports.getMemory(WasmExports.MEMORY.getValue());
+    }
+
+    public int getHeapBase() {
+        return instance.exports.getGlobal(WasmExports.HEAP_BASE.getValue()).getIntValue();
+    }
+
+    public int getDataEnd() {
+        return instance.exports.getGlobal(WasmExports.DATA_END.getValue()).getIntValue();
     }
 }
