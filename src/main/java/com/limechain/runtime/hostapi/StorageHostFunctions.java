@@ -112,7 +112,7 @@ public class StorageHostFunctions {
         byte[] key = hostApi.getDataFromMemory(keyPointer);
         byte[] value = (byte[]) repository.find(new String(key)).orElse(null);
 
-        return hostApi.addDataToMemory(scaleEncodedOption(value));
+        return hostApi.writeDataToMemory(scaleEncodedOption(value));
     }
 
     /**
@@ -133,16 +133,16 @@ public class StorageHostFunctions {
         byte[] value = (byte[]) repository.find(new String(key)).orElse(null);
 
         if (value == null) {
-            return hostApi.addDataToMemory(scaleEncodedOption(null));
+            return hostApi.writeDataToMemory(scaleEncodedOption(null));
         }
 
         int size = 0;
         if (offset <= value.length) {
             size = value.length - offset;
-            hostApi.putDataToMemoryBuffer(valueOutPointer, Arrays.copyOfRange(value, offset, value.length));
+            hostApi.writeDataToMemory(Arrays.copyOfRange(value, offset, value.length), valueOutPointer);
         }
 
-        return hostApi.addDataToMemory(scaleEncodedOption(size));
+        return hostApi.writeDataToMemory(scaleEncodedOption(size));
     }
 
     /**
@@ -196,7 +196,7 @@ public class StorageHostFunctions {
 
         DeleteByPrefixResult result = repository.deleteByPrefix(prefix, limit);
 
-        return hostApi.addDataToMemory(result.scaleEncoded());
+        return hostApi.writeDataToMemory(result.scaleEncoded());
     }
 
     /**
@@ -251,7 +251,7 @@ public class StorageHostFunctions {
         //TODO: compute from Trie
         byte[] rootHash = (byte[]) repository.find(DBConstants.STATE_TRIE_ROOT_HASH).orElseThrow();
 
-        return hostApi.addDataToMemory(rootHash);
+        return hostApi.writeDataToMemory(rootHash);
     }
 
     /**
@@ -272,7 +272,7 @@ public class StorageHostFunctions {
      * @return a pointer-size to an Option type (Definition 185) that’s always None.
      */
     public RuntimePointerSize extStorageChangesRootVersion1(RuntimePointerSize parentHashPointer) {
-        return hostApi.addDataToMemory(scaleEncodedOption(null));
+        return hostApi.writeDataToMemory(scaleEncodedOption(null));
     }
 
     /**
@@ -286,7 +286,7 @@ public class StorageHostFunctions {
         byte[] key = hostApi.getDataFromMemory(keyPointer);
         byte[] nextKey = repository.getNextKey(new String(key)).map(String::getBytes).orElse(null);
 
-        return hostApi.addDataToMemory(scaleEncodedOption(nextKey));
+        return hostApi.writeDataToMemory(scaleEncodedOption(nextKey));
     }
 
     /**

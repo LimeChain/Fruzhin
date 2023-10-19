@@ -51,7 +51,7 @@ public class WarpSyncMachine {
         this.chainService = chainService;
 
         this.syncedState.setRepository(repository);
-        HostApi.getInstance().setRepository(repository);
+
         this.stateLoaded = this.syncedState.loadState();
     }
 
