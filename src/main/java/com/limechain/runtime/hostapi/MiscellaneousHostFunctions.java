@@ -6,6 +6,7 @@ import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import lombok.AllArgsConstructor;
 import lombok.extern.java.Log;
 import org.apache.tomcat.util.buf.HexUtils;
+import org.springframework.lang.Nullable;
 import org.wasmer.ImportObject;
 import org.wasmer.Memory;
 import org.wasmer.Module;
@@ -16,7 +17,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import java.util.logging.Level;
 
 /**
@@ -117,23 +117,15 @@ public class MiscellaneousHostFunctions {
 
         Object[] response = runtime.call("Core_version");
 
-        if (response == null || response[0] == null) {
-            throw new RuntimeException(CORE_VERSION_CALL_FAILED);
+        byte[] runtimeVersionData = null;
+        if (response != null && response[0] != null) {
+            final RuntimePointerSize responsePointer = new RuntimePointerSize((long) response[0]);
+            runtimeVersionData = new byte[responsePointer.size()];
+            memory.buffer().get(responsePointer.pointer(), runtimeVersionData, 0, responsePointer.size());
         }
 
-        final RuntimePointerSize responsePointer = new RuntimePointerSize((long) response[0]);
-        byte[] runtimeVersionData = new byte[responsePointer.size()];
-        memory.buffer().get(responsePointer.pointer(), runtimeVersionData, 0, responsePointer.size());
-
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ScaleCodecWriter writer = new ScaleCodecWriter(baos);
-        try {
-            writer.writeOptional(ScaleCodecWriter::writeByteArray, Optional.ofNullable(runtimeVersionData));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        return hostApi.addDataToMemory(baos.toByteArray());
+        byte[] versionOption = scaleEncodedOption(runtimeVersionData);
+        return hostApi.addDataToMemory(versionOption);
     }
 
     /**
@@ -205,5 +197,15 @@ public class MiscellaneousHostFunctions {
         final String messageToPrint = new String(data, StandardCharsets.UTF_8);
 
         log.severe(String.format("Aborting runtime panicked with message: %s", messageToPrint));
+    }
+
+    private byte[] scaleEncodedOption(@Nullable byte[] data) {
+        ByteArrayOutputStream buf = new ByteArrayOutputStream();
+        try (ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
+            writer.writeOptional(ScaleCodecWriter::writeByteArray, data);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return buf.toByteArray();
     }
 }
