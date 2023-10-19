@@ -30,7 +30,6 @@ import java.util.logging.Level;
 @AllArgsConstructor
 public class MiscellaneousHostFunctions {
 
-    public static final String CORE_VERSION_CALL_FAILED = "Core_version call failed";
     private final HostApi hostApi;
 
     public MiscellaneousHostFunctions() {
@@ -125,7 +124,7 @@ public class MiscellaneousHostFunctions {
         }
 
         byte[] versionOption = scaleEncodedOption(runtimeVersionData);
-        return hostApi.addDataToMemory(versionOption);
+        return hostApi.writeDataToMemory(versionOption);
     }
 
     /**

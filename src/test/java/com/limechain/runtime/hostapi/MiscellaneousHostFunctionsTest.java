@@ -82,13 +82,13 @@ class MiscellaneousHostFunctionsTest {
         byte[] wasmRuntime = Files.readAllBytes(Path.of("./src/test/resources/runtime.wasm"));
         byte[] runtimeData = Files.readAllBytes(Path.of("./src/test/resources/runtime.data"));
         when(hostApi.getDataFromMemory(valuePointer)).thenReturn(wasmRuntime);
-        when(hostApi.addDataToMemory(runtimeData)).thenReturn(targetPointer);
+        when(hostApi.writeDataToMemory(runtimeData)).thenReturn(targetPointer);
 
         RuntimePointerSize result = miscellaneousHostFunctions.runtimeVersionV1(valuePointer);
 
         assertEquals(targetPointer, result);
         verify(hostApi).getDataFromMemory(valuePointer);
-        verify(hostApi).addDataToMemory(runtimeData);
+        verify(hostApi).writeDataToMemory(runtimeData);
     }
 
     @Test
