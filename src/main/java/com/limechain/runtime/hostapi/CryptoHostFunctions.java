@@ -154,10 +154,10 @@ public class CryptoHostFunctions {
 
     private VerifySignature internalGetVerifySignature(int signature, RuntimePointerSize message,
                                                        int publicKey, Key key) {
-        final byte[] signatureData = hostApi.getDataFromMemory(signature, SIGNATURE_LEN);
+        final byte[] signatureData = hostApi.getDataFromMemory(new RuntimePointerSize(signature, SIGNATURE_LEN));
         final byte[] messageData = hostApi.getDataFromMemory(message);
-        final byte[] publicKeyData = hostApi.getDataFromMemory(publicKey, key == Key.ECDSA ?
-                EcdsaUtils.PUBLIC_KEY_COMPRESSED_LEN : PUBLIC_KEY_LEN);
+        final byte[] publicKeyData = hostApi.getDataFromMemory(new RuntimePointerSize(publicKey, key == Key.ECDSA ?
+                EcdsaUtils.PUBLIC_KEY_COMPRESSED_LEN : PUBLIC_KEY_LEN));
         return new VerifySignature(signatureData, messageData, publicKeyData, key);
     }
 
@@ -168,7 +168,8 @@ public class CryptoHostFunctions {
      * @return a pointer-size to the SCALE encoded array of 256bit public keys.
      */
     public RuntimePointerSize ed25519PublicKeysV1(int keyTypeId) {
-        final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, KeyType.KEY_TYPE_LEN));
+        byte[] keyTypeBytes = hostApi.getDataFromMemory(new RuntimePointerSize(keyTypeId, KeyType.KEY_TYPE_LEN));
+        final KeyType keyType = KeyType.getByBytes(keyTypeBytes);
 
         if (keyType == null || (keyType.getKey() != Key.ED25519 && keyType.getKey() != Key.GENERIC)) {
             throw new RuntimeException(INVALID_KEY_TYPE);
@@ -188,7 +189,8 @@ public class CryptoHostFunctions {
      *                          was provided.
      */
     public int ed25519GenerateV1(int keyTypeId, RuntimePointerSize seed) {
-        final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, KeyType.KEY_TYPE_LEN));
+        byte[] keyTypeBytes = hostApi.getDataFromMemory(new RuntimePointerSize(keyTypeId, KeyType.KEY_TYPE_LEN));
+        final KeyType keyType = KeyType.getByBytes(keyTypeBytes);
         if (keyType == null) {
             Util.nativePanic(INVALID_KEY_TYPE);
             throw new RuntimeException(INVALID_KEY_TYPE);
@@ -210,7 +212,7 @@ public class CryptoHostFunctions {
         final PubKey pubKey = ed25519PrivateKey.publicKey();
 
         keyStore.put(keyType, pubKey.raw(), ed25519PrivateKey.raw());
-        return hostApi.putDataToMemory(pubKey.raw());
+        return hostApi.writeDataToMemory(pubKey.raw()).pointer();
     }
 
     /**
@@ -231,15 +233,16 @@ public class CryptoHostFunctions {
             signed = Ed25519Utils.signMessage(sig.getPrivateKey(), sig.getMessageData());
         }
 
-        return hostApi.putDataToMemory(scaleEncodedOption(signed));
+        return hostApi.writeDataToMemory(scaleEncodedOption(signed)).pointer();
     }
 
     @NotNull
     private Signature internalGetSignData(int keyTypeId, int publicKey, RuntimePointerSize message, Key key) {
-        final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, KeyType.KEY_TYPE_LEN));
+        byte[] keyTypeBytes = hostApi.getDataFromMemory(new RuntimePointerSize(keyTypeId, KeyType.KEY_TYPE_LEN));
+        final KeyType keyType = KeyType.getByBytes(keyTypeBytes);
 
-        final byte[] publicKeyData = hostApi.getDataFromMemory(publicKey, key == Key.ECDSA ?
-                EcdsaUtils.PUBLIC_KEY_COMPRESSED_LEN : PUBLIC_KEY_LEN);
+        final byte[] publicKeyData = hostApi.getDataFromMemory(new RuntimePointerSize(publicKey, key == Key.ECDSA ?
+                EcdsaUtils.PUBLIC_KEY_COMPRESSED_LEN : PUBLIC_KEY_LEN));
         final byte[] messageData = hostApi.getDataFromMemory(message);
 
         byte[] privateKey = keyStore.get(keyType, publicKeyData);
@@ -287,7 +290,8 @@ public class CryptoHostFunctions {
      * @return a pointer-size to the SCALE encoded array of 256bit public keys.
      */
     public RuntimePointerSize sr25519PublicKeysV1(int keyTypeId) {
-        final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, KeyType.KEY_TYPE_LEN));
+        byte[] keyTypeBytes = hostApi.getDataFromMemory(new RuntimePointerSize(keyTypeId, KeyType.KEY_TYPE_LEN));
+        final KeyType keyType = KeyType.getByBytes(keyTypeBytes);
 
         if (keyType == null || (keyType.getKey() != Key.SR25519 && keyType.getKey() != Key.GENERIC)) {
             throw new RuntimeException(INVALID_KEY_TYPE);
@@ -307,7 +311,8 @@ public class CryptoHostFunctions {
      *                          was provided.
      */
     public int sr25519GenerateV1(int keyTypeId, RuntimePointerSize seed) {
-        final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, KeyType.KEY_TYPE_LEN));
+        byte[] keyTypeBytes = hostApi.getDataFromMemory(new RuntimePointerSize(keyTypeId, KeyType.KEY_TYPE_LEN));
+        final KeyType keyType = KeyType.getByBytes(keyTypeBytes);
         if (keyType == null) {
             Util.nativePanic(INVALID_KEY_TYPE);
             throw new RuntimeException(INVALID_KEY_TYPE);
@@ -327,7 +332,7 @@ public class CryptoHostFunctions {
         }
 
         keyStore.put(keyType, keyPair.getPublicKey(), keyPair.getSecretKey());
-        return hostApi.putDataToMemory(keyPair.getPublicKey());
+        return hostApi.writeDataToMemory(keyPair.getPublicKey()).pointer();
     }
 
     /**
@@ -348,7 +353,7 @@ public class CryptoHostFunctions {
             signed = Sr25519Utils.signMessage(sig.getPublicKeyData(), sig.getPrivateKey(), sig.getMessageData());
         }
 
-        return hostApi.putDataToMemory(scaleEncodedOption(signed));
+        return hostApi.writeDataToMemory(scaleEncodedOption(signed)).pointer();
     }
 
     /**
@@ -394,7 +399,8 @@ public class CryptoHostFunctions {
      * @return a pointer-size to the SCALE encoded array of 33byte compressed public keys.
      */
     public RuntimePointerSize ecdsaPublicKeysV1(int keyTypeId) {
-        final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, KeyType.KEY_TYPE_LEN));
+        byte[] keyTypeBytes = hostApi.getDataFromMemory(new RuntimePointerSize(keyTypeId, KeyType.KEY_TYPE_LEN));
+        final KeyType keyType = KeyType.getByBytes(keyTypeBytes);
 
         if (keyType == null || keyType.getKey() != Key.GENERIC) {
             throw new RuntimeException(INVALID_KEY_TYPE);
@@ -411,7 +417,7 @@ public class CryptoHostFunctions {
 
             ListWriter<byte[]> listWriter = new ListWriter<>(ScaleCodecWriter::writeByteArray);
             listWriter.write(scaleWriter, publicKeys);
-            return hostApi.addDataToMemory(baos.toByteArray());
+            return hostApi.writeDataToMemory(baos.toByteArray());
 
         } catch (IOException e) {
             throw new RuntimeException("Error while SCALE encoding public keys");
@@ -429,7 +435,8 @@ public class CryptoHostFunctions {
      *                          was provided.
      */
     public int ecdsaGenerateV1(int keyTypeId, RuntimePointerSize seed) {
-        final KeyType keyType = KeyType.getByBytes(hostApi.getDataFromMemory(keyTypeId, KeyType.KEY_TYPE_LEN));
+        byte[] keyTypeBytes = hostApi.getDataFromMemory(new RuntimePointerSize(keyTypeId, KeyType.KEY_TYPE_LEN));
+        final KeyType keyType = KeyType.getByBytes(keyTypeBytes);
         if (keyType == null) {
             Util.nativePanic(INVALID_KEY_TYPE);
             throw new RuntimeException(INVALID_KEY_TYPE);
@@ -449,7 +456,7 @@ public class CryptoHostFunctions {
         }
 
         keyStore.put(keyType, keyPair.getSecond().raw(), keyPair.getFirst().raw());
-        return hostApi.putDataToMemory(keyPair.getSecond().raw());
+        return hostApi.writeDataToMemory(keyPair.getSecond().raw()).pointer();
     }
 
     /**
@@ -472,7 +479,7 @@ public class CryptoHostFunctions {
             signed = EcdsaUtils.signMessage(sig.getPrivateKey(), sig.getMessageData());
         }
 
-        return hostApi.putDataToMemory(scaleEncodedOption(signed));
+        return hostApi.writeDataToMemory(scaleEncodedOption(signed)).pointer();
     }
 
     /**
@@ -494,7 +501,7 @@ public class CryptoHostFunctions {
             signed = EcdsaUtils.signMessage(sig.getPrivateKey(), sig.getMessageData());
         }
 
-        return hostApi.putDataToMemory(scaleEncodedOption(signed));
+        return hostApi.writeDataToMemory(scaleEncodedOption(signed)).pointer();
     }
 
     /**
@@ -522,9 +529,11 @@ public class CryptoHostFunctions {
      * @return a i32 integer value equal 1 to if the signature is valid or a value equal to 0 if otherwise.
      */
     public int ecdsaVerifyPrehashedV1(int signature, int message, int publicKey) {
-        final byte[] signatureData = hostApi.getDataFromMemory(signature, SIGNATURE_LEN);
-        final byte[] messageData = hostApi.getDataFromMemory(message, EcdsaUtils.HASHED_MESSAGE_LEN);
-        final byte[] publicKeyData = hostApi.getDataFromMemory(publicKey, EcdsaUtils.PUBLIC_KEY_COMPRESSED_LEN);
+        final byte[] signatureData = hostApi.getDataFromMemory(new RuntimePointerSize(signature, SIGNATURE_LEN));
+        final byte[] messageData = hostApi.getDataFromMemory(
+                new RuntimePointerSize(message, EcdsaUtils.HASHED_MESSAGE_LEN));
+        final byte[] publicKeyData = hostApi.getDataFromMemory(
+                new RuntimePointerSize(publicKey, EcdsaUtils.PUBLIC_KEY_COMPRESSED_LEN));
 
         VerifySignature verifySig = new VerifySignature(signatureData, messageData, publicKeyData, Key.ECDSA);
         return EcdsaUtils.verifySignature(verifySig) ? 1 : 0;
@@ -587,15 +596,17 @@ public class CryptoHostFunctions {
 
             resultWriter.writeResult(scaleCodecWriter, true);
             resultWriter.write(scaleCodecWriter, rawBytes);
-            return hostApi.putDataToMemory(baos.toByteArray());
+            return hostApi.writeDataToMemory(baos.toByteArray()).pointer();
         } catch (IOException e) {
             throw new RuntimeException(SCALE_ENCODING_SIGNED_MESSAGE_ERROR);
         }
     }
 
     private byte[] internalSecp256k1RecoverKey(int signature, int message, boolean compressed) {
-        final byte[] messageData = hostApi.getDataFromMemory(message, EcdsaUtils.HASHED_MESSAGE_LEN);
-        final byte[] signatureData = hostApi.getDataFromMemory(signature, EcdsaUtils.SIGNATURE_LEN);
+        final byte[] messageData = hostApi.getDataFromMemory(
+                new RuntimePointerSize(message, EcdsaUtils.HASHED_MESSAGE_LEN));
+        final byte[] signatureData = hostApi.getDataFromMemory(
+                new RuntimePointerSize(signature, EcdsaUtils.SIGNATURE_LEN));
 
         return EcdsaUtils.recoverPublicKeyFromSignature(signatureData, messageData, compressed);
     }

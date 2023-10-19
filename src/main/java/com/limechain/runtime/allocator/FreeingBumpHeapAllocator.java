@@ -1,6 +1,6 @@
 package com.limechain.runtime.allocator;
 
-import com.limechain.runtime.hostapi.RuntimePointerSize;
+import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import lombok.AllArgsConstructor;
 import org.wasmer.Memory;
 
