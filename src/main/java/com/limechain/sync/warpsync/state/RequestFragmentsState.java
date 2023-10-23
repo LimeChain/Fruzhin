@@ -48,7 +48,6 @@ public class RequestFragmentsState implements WarpSyncState {
         WarpSyncResponse resp = null;
         for (int i = 0; i < sync.getNetworkService().kademliaService.getBootNodePeerIds().size(); i++) {
             try {
-                Thread.sleep(1000);
                 resp = sync.getNetworkService().makeWarpSyncRequest(blockHash.toString());
                 break;
             } catch (Exception e) {
