@@ -9,13 +9,13 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class HashingHostFunctionsTest {
-    byte[] data = "00000000".getBytes();
+    byte[] data = {1, 2, 3};
+    byte[] hashedData = {4, 5, 6};
     @InjectMocks
     private HashingHostFunctions hashingHostFunctions;
     @Mock
@@ -28,12 +28,12 @@ class HashingHostFunctionsTest {
     @Test
     void keccak256V1() {
         when(hostApi.getDataFromMemory(dataPointer)).thenReturn(data);
-        when(hostApi.writeDataToMemory(any())).thenReturn(runtimePointerSize);
+        when(hostApi.writeDataToMemory(hashedData)).thenReturn(runtimePointerSize);
 
-        try(var utils = mockStatic(HashUtils.class)){
+        try (var utils = mockStatic(HashUtils.class)) {
+            utils.when(() -> HashUtils.hashWithKeccak256(data)).thenReturn(hashedData);
             int result = hashingHostFunctions.keccak256V1(dataPointer);
 
-            utils.verify(() -> HashUtils.hashWithKeccak256(data));
             assertEquals(runtimePointerSize.pointer(), result);
         }
     }
@@ -41,12 +41,12 @@ class HashingHostFunctionsTest {
     @Test
     void keccak512V1() {
         when(hostApi.getDataFromMemory(dataPointer)).thenReturn(data);
-        when(hostApi.writeDataToMemory(any())).thenReturn(runtimePointerSize);
+        when(hostApi.writeDataToMemory(hashedData)).thenReturn(runtimePointerSize);
 
-        try(var utils = mockStatic(HashUtils.class)){
+        try (var utils = mockStatic(HashUtils.class)) {
+            utils.when(() -> HashUtils.hashWithKeccak512(data)).thenReturn(hashedData);
             int result = hashingHostFunctions.keccak512V1(dataPointer);
 
-            utils.verify(() -> HashUtils.hashWithKeccak512(data));
             assertEquals(runtimePointerSize.pointer(), result);
         }
     }
@@ -54,12 +54,12 @@ class HashingHostFunctionsTest {
     @Test
     void sha2256V1() {
         when(hostApi.getDataFromMemory(dataPointer)).thenReturn(data);
-        when(hostApi.writeDataToMemory(any())).thenReturn(runtimePointerSize);
+        when(hostApi.writeDataToMemory(hashedData)).thenReturn(runtimePointerSize);
 
-        try(var utils = mockStatic(HashUtils.class)){
+        try (var utils = mockStatic(HashUtils.class)) {
+            utils.when(() -> HashUtils.hashWithSha256(data)).thenReturn(hashedData);
             int result = hashingHostFunctions.sha2256V1(dataPointer);
 
-            utils.verify(() -> HashUtils.hashWithSha256(data));
             assertEquals(runtimePointerSize.pointer(), result);
         }
     }
@@ -67,12 +67,12 @@ class HashingHostFunctionsTest {
     @Test
     void blake2128V1() {
         when(hostApi.getDataFromMemory(dataPointer)).thenReturn(data);
-        when(hostApi.writeDataToMemory(any())).thenReturn(runtimePointerSize);
+        when(hostApi.writeDataToMemory(hashedData)).thenReturn(runtimePointerSize);
 
-        try(var utils = mockStatic(HashUtils.class)){
+        try (var utils = mockStatic(HashUtils.class)) {
+            utils.when(() -> HashUtils.hashWithBlake2b128(data)).thenReturn(hashedData);
             int result = hashingHostFunctions.blake2128V1(dataPointer);
 
-            utils.verify(() -> HashUtils.hashWithBlake2b128(data));
             assertEquals(runtimePointerSize.pointer(), result);
         }
     }
@@ -80,12 +80,12 @@ class HashingHostFunctionsTest {
     @Test
     void blake2256V1() {
         when(hostApi.getDataFromMemory(dataPointer)).thenReturn(data);
-        when(hostApi.writeDataToMemory(any())).thenReturn(runtimePointerSize);
+        when(hostApi.writeDataToMemory(hashedData)).thenReturn(runtimePointerSize);
 
-        try(var utils = mockStatic(HashUtils.class)){
+        try (var utils = mockStatic(HashUtils.class)) {
+            utils.when(() -> HashUtils.hashWithBlake2b(data)).thenReturn(hashedData);
             int result = hashingHostFunctions.blake2256V1(dataPointer);
 
-            utils.verify(() -> HashUtils.hashWithBlake2b(data));
             assertEquals(runtimePointerSize.pointer(), result);
         }
     }
@@ -93,12 +93,12 @@ class HashingHostFunctionsTest {
     @Test
     void twox64V1() {
         when(hostApi.getDataFromMemory(dataPointer)).thenReturn(data);
-        when(hostApi.writeDataToMemory(any())).thenReturn(runtimePointerSize);
+        when(hostApi.writeDataToMemory(hashedData)).thenReturn(runtimePointerSize);
 
-        try(var utils = mockStatic(HashUtils.class)){
+        try (var utils = mockStatic(HashUtils.class)) {
+            utils.when(() -> HashUtils.hashXx64(0, data)).thenReturn(hashedData);
             int result = hashingHostFunctions.twox64V1(dataPointer);
 
-            utils.verify(() -> HashUtils.hashXx64(0, data));
             assertEquals(runtimePointerSize.pointer(), result);
         }
     }
@@ -106,12 +106,12 @@ class HashingHostFunctionsTest {
     @Test
     void twox128V1() {
         when(hostApi.getDataFromMemory(dataPointer)).thenReturn(data);
-        when(hostApi.writeDataToMemory(any())).thenReturn(runtimePointerSize);
+        when(hostApi.writeDataToMemory(hashedData)).thenReturn(runtimePointerSize);
 
-        try(var utils = mockStatic(HashUtils.class)){
+        try (var utils = mockStatic(HashUtils.class)) {
+            utils.when(() -> HashUtils.hashXx128(0, data)).thenReturn(hashedData);
             int result = hashingHostFunctions.twox128V1(dataPointer);
 
-            utils.verify(() -> HashUtils.hashXx128(0, data));
             assertEquals(runtimePointerSize.pointer(), result);
         }
     }
@@ -119,12 +119,12 @@ class HashingHostFunctionsTest {
     @Test
     void twox256V1() {
         when(hostApi.getDataFromMemory(dataPointer)).thenReturn(data);
-        when(hostApi.writeDataToMemory(any())).thenReturn(runtimePointerSize);
+        when(hostApi.writeDataToMemory(hashedData)).thenReturn(runtimePointerSize);
 
-        try(var utils = mockStatic(HashUtils.class)){
+        try (var utils = mockStatic(HashUtils.class)) {
+            utils.when(() -> HashUtils.hashXx256(0, data)).thenReturn(hashedData);
             int result = hashingHostFunctions.twox256V1(dataPointer);
 
-            utils.verify(() -> HashUtils.hashXx256(0, data));
             assertEquals(runtimePointerSize.pointer(), result);
         }
     }
