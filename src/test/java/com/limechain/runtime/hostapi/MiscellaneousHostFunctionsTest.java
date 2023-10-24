@@ -1,5 +1,6 @@
 package com.limechain.runtime.hostapi;
 
+import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import org.apache.tomcat.util.buf.HexUtils;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;

@@ -49,13 +49,13 @@ public class MiscellaneousHostFunctions {
                 HostApi.getImportObject("ext_misc_print_hex_version_1", argv ->
                         printHexV1(new RuntimePointerSize(argv.get(0))), List.of(Type.I64)),
                 HostApi.getImportObject("ext_misc_runtime_version_version_1", argv ->
-                                List.of(runtimeVersionV1(new RuntimePointerSize(argv.get(0))).pointerSize()),
+                                runtimeVersionV1(new RuntimePointerSize(argv.get(0))).pointerSize(),
                         List.of(Type.I64), Type.I64),
                 HostApi.getImportObject("ext_logging_log_version_1", argv ->
                         logV1(argv.get(0).intValue(), new RuntimePointerSize(argv.get(1)),
                                 new RuntimePointerSize(argv.get(1))), Arrays.asList(Type.I32, Type.I64, Type.I64)),
                 HostApi.getImportObject("ext_logging_max_level_version_1", argv ->
-                        List.of(maxLevelV1()), List.of(), Type.I32)
+                        maxLevelV1(), List.of(), Type.I32)
         );
     }
 
