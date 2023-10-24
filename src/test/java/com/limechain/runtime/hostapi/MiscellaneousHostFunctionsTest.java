@@ -1,7 +1,6 @@
 package com.limechain.runtime.hostapi;
 
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
-import org.apache.tomcat.util.buf.HexUtils;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -11,7 +10,6 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.IOException;
-import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -37,44 +35,30 @@ class MiscellaneousHostFunctionsTest {
 
     @Test
     void printNumV1() {
-        PrintStream mockedPrintStream = Mockito.mock(PrintStream.class);
-        PrintStream old = System.out;
-        System.setOut(mockedPrintStream);
 
         miscellaneousHostFunctions.printNumV1(number);
+        verifyNoMoreInteractions(hostApi);
 
-        Mockito.verify(mockedPrintStream).println(number);
-        System.setOut(old);
     }
 
     @Test
     void printUtf8V1() {
         when(hostApi.getDataFromMemory(valuePointer)).thenReturn(value.getBytes());
 
-        PrintStream mockedPrintStream = Mockito.mock(PrintStream.class);
-        PrintStream old = System.out;
-        System.setOut(mockedPrintStream);
-
         miscellaneousHostFunctions.printUtf8V1(valuePointer);
 
         Mockito.verify(hostApi).getDataFromMemory(valuePointer);
-        Mockito.verify(mockedPrintStream).println(value);
-        System.setOut(old);
+        verifyNoMoreInteractions(hostApi);
     }
 
     @Test
     void printHexV1() {
         when(hostApi.getDataFromMemory(valuePointer)).thenReturn(value.getBytes());
 
-        PrintStream mockedPrintStream = Mockito.mock(PrintStream.class);
-        PrintStream old = System.out;
-        System.setOut(mockedPrintStream);
-
         miscellaneousHostFunctions.printHexV1(valuePointer);
 
         Mockito.verify(hostApi).getDataFromMemory(valuePointer);
-        Mockito.verify(mockedPrintStream).println(HexUtils.toHexString(value.getBytes()));
-        System.setOut(old);
+        verifyNoMoreInteractions(hostApi);
     }
 
     @Test
@@ -90,6 +74,7 @@ class MiscellaneousHostFunctionsTest {
         assertEquals(targetPointer, result);
         verify(hostApi).getDataFromMemory(valuePointer);
         verify(hostApi).writeDataToMemory(runtimeData);
+        verifyNoMoreInteractions(hostApi);
     }
 
     @Test
@@ -107,6 +92,7 @@ class MiscellaneousHostFunctionsTest {
     @Test
     void maxLevelV1() {
         assertEquals(4, miscellaneousHostFunctions.maxLevelV1());
+        verifyNoMoreInteractions(hostApi);
     }
 
 }
