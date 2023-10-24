@@ -1,6 +1,6 @@
 package com.limechain.runtime.allocator;
 
-import com.limechain.runtime.hostapi.RuntimePointerSize;
+import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

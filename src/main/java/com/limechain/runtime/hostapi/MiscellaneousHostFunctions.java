@@ -12,6 +12,7 @@ import org.wasmer.Memory;
 import org.wasmer.Module;
 import org.wasmer.Type;
 
+import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
