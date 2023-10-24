@@ -30,6 +30,7 @@ dependencies {
     implementation("org.rocksdb:rocksdbjni:7.8.3")
     compileOnly("org.projectlombok:lombok:1.18.8")
     implementation("org.projectlombok:lombok:1.18.22")
+    implementation("org.web3j:crypto:5.0.0")
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.1")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.8.1")

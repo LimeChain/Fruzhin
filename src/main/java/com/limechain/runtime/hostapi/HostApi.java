@@ -2,18 +2,18 @@ package com.limechain.runtime.hostapi;
 
 import com.limechain.runtime.Runtime;
 import com.limechain.runtime.allocator.FreeingBumpHeapAllocator;
+import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.java.Log;
 import org.wasmer.ImportObject;
-import org.wasmer.Memory;
 import org.wasmer.Type;
 
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.function.UnaryOperator;
+import java.util.function.Function;
 
 /**
  * Holds common methods and services used by the different
@@ -34,12 +34,12 @@ public class HostApi {
     }
 
     protected static ImportObject getImportObject(final String functionName,
-                                                  final UnaryOperator<List<Number>> function,
+                                                  final Function<List<Number>, Number> function,
                                                   final List<Type> args,
                                                   final Type retType) {
         return new ImportObject.FuncImport("env", functionName, argv -> {
             System.out.printf("Message printed in the body of '%s%n'", functionName);
-            return function.apply(argv);
+            return Collections.singletonList(function.apply(argv));
         }, args, Collections.singletonList(retType));
     }
 

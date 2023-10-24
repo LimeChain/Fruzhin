@@ -2,6 +2,7 @@ package com.limechain.storage;
 
 import org.springframework.lang.Nullable;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -35,6 +36,15 @@ public interface KVRepository<K, V> {
      * @return whether the delete operation was successful
      */
     boolean delete(K key);
+
+    /**
+     * Finds all keys sharing a common prefix up to a given limit.
+     *
+     * @param prefixSeek prefix of the key to look for
+     * @param limit maximum keys to return
+     * @return whether the delete operation was successful
+     */
+    List<byte[]> findKeysByPrefix(String prefixSeek, int limit);
 
     /**
      * Deletes key-value pairs from the DB where key starts with prefix, up to a given limit.
