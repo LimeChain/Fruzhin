@@ -1,5 +1,6 @@
 package com.limechain.storage;
 
+import com.limechain.utils.ByteArrayUtils;
 import lombok.extern.java.Log;
 import org.apache.commons.io.FileUtils;
 import org.rocksdb.Options;
@@ -13,6 +14,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
@@ -25,7 +27,7 @@ public class DBRepository implements KVRepository<String, Object> {
     /**
      * Main DB folder
      */
-    private final static String FOLDER_NAME = "db";
+    private static final  String FOLDER_NAME = "db";
 
     /**
      * Connection to the DB
@@ -105,6 +107,14 @@ public class DBRepository implements KVRepository<String, Object> {
     }
 
     @Override
+    public synchronized List<byte[]> findKeysByPrefix(String prefixSeek, int limit) {
+        return findByPrefix(prefixSeek, (long) limit)
+                .stream()
+                .map(this::removePrefixFromKey)
+                .toList();
+    }
+
+    @Override
     public synchronized boolean delete(String key) {
         log.log(Level.INFO, String.format("deleting key '%s'", key));
         try {
@@ -142,10 +152,12 @@ public class DBRepository implements KVRepository<String, Object> {
         List<byte[]> values = new ArrayList<>();
         RocksIterator rocksIterator = db.newIterator();
         rocksIterator.seek(prefixedKey.getBytes());
-        while (rocksIterator.isValid() && (limit == null || limit < values.size())) {
-            values.add(rocksIterator.key());
+        while (rocksIterator.isValid() && (limit == null || values.size() < limit)) {
+            byte[] key = rocksIterator.key();
+            if (ByteArrayUtils.hasPrefix(key, prefixedKey.getBytes())) {
+                values.add(rocksIterator.key());
+            }
             rocksIterator.next();
-            rocksIterator.seek(prefixedKey.getBytes());
         }
         rocksIterator.close();
 
@@ -179,6 +191,9 @@ public class DBRepository implements KVRepository<String, Object> {
 
     private byte[] getPrefixedKey(String key) {
         return chainPrefix.concat(key).getBytes();
+    }
+    public byte[] removePrefixFromKey(byte[] key) {
+        return Arrays.copyOfRange(key, chainPrefix.length(), key.length);
     }
 
     public synchronized void closeConnection() {

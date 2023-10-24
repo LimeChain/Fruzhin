@@ -1,5 +1,6 @@
 package com.limechain.runtime.hostapi;
 
+import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import com.limechain.utils.HashUtils;
 import lombok.AllArgsConstructor;
 import org.wasmer.ImportObject;
@@ -29,21 +30,21 @@ public class HashingHostFunctions {
     public List<ImportObject> buildFunctions() {
         return Arrays.asList(
                 HostApi.getImportObject("ext_hashing_keccak_256_version_1", argv ->
-                        List.of(keccak256V1(new RuntimePointerSize(argv.get(0)))), List.of(Type.I64), Type.I32),
+                        keccak256V1(new RuntimePointerSize(argv.get(0))), List.of(Type.I64), Type.I32),
                 HostApi.getImportObject("ext_hashing_keccak_512_version_1", argv ->
-                        List.of(keccak512V1(new RuntimePointerSize(argv.get(0)))), List.of(Type.I64), Type.I32),
+                        keccak512V1(new RuntimePointerSize(argv.get(0))), List.of(Type.I64), Type.I32),
                 HostApi.getImportObject("ext_hashing_sha2_256_version_1", argv ->
-                        List.of(sha2256V1(new RuntimePointerSize(argv.get(0)))), List.of(Type.I64), Type.I32),
+                        sha2256V1(new RuntimePointerSize(argv.get(0))), List.of(Type.I64), Type.I32),
                 HostApi.getImportObject("ext_hashing_blake2_128_version_1", argv ->
-                        List.of(blake2128V1(new RuntimePointerSize(argv.get(0)))), List.of(Type.I64), Type.I32),
+                        blake2128V1(new RuntimePointerSize(argv.get(0))), List.of(Type.I64), Type.I32),
                 HostApi.getImportObject("ext_hashing_blake2_256_version_1", argv ->
-                        List.of(blake2256V1(new RuntimePointerSize(argv.get(0)))), List.of(Type.I64), Type.I32),
+                        blake2256V1(new RuntimePointerSize(argv.get(0))), List.of(Type.I64), Type.I32),
                 HostApi.getImportObject("ext_hashing_twox_64_version_1", argv ->
-                        List.of(twox64V1(new RuntimePointerSize(argv.get(0)))), List.of(Type.I64), Type.I32),
+                        twox64V1(new RuntimePointerSize(argv.get(0))), List.of(Type.I64), Type.I32),
                 HostApi.getImportObject("ext_hashing_twox_128_version_1", argv ->
-                        List.of(twox128V1(new RuntimePointerSize(argv.get(0)))), List.of(Type.I64), Type.I32),
+                        twox128V1(new RuntimePointerSize(argv.get(0))), List.of(Type.I64), Type.I32),
                 HostApi.getImportObject("ext_hashing_twox_256_version_1", argv ->
-                        List.of(twox256V1(new RuntimePointerSize(argv.get(0)))), List.of(Type.I64), Type.I32));
+                        twox256V1(new RuntimePointerSize(argv.get(0))), List.of(Type.I64), Type.I32));
     }
 
     /**
