@@ -52,7 +52,7 @@ public class RequestFragmentsState implements WarpSyncState {
                 break;
             } catch (Exception e) {
                 if (!sync.getNetworkService().updateCurrentSelectedPeerWithBootnode(i)) {
-                    this.error = new RuntimeException("Could not update current selected peer");
+                    this.error = e;
                     return;
                 }
             }
