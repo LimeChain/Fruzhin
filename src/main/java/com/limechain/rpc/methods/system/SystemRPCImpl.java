@@ -134,7 +134,7 @@ public class SystemRPCImpl {
      * @param multiaddr Multiaddr to be added
      */
     public void systemAddReservedPeer(String multiaddr) {
-        if(multiaddr == null || multiaddr.trim().equalsIgnoreCase("")) {
+        if (multiaddr == null || multiaddr.trim().equalsIgnoreCase("")) {
             throw new RuntimeException("PeerId cannot be empty");
         }
 
@@ -152,7 +152,7 @@ public class SystemRPCImpl {
      * @param peerIdStr peerId to be removed
      */
     public void systemRemoveReservedPeer(String peerIdStr) {
-        if(peerIdStr == null || peerIdStr.trim().equalsIgnoreCase("")) {
+        if (peerIdStr == null || peerIdStr.trim().equalsIgnoreCase("")) {
             throw new RuntimeException("PeerId cannot be empty");
         }
         PeerId peerId = PeerId.fromBase58(peerIdStr);

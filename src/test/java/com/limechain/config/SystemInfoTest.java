@@ -11,10 +11,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class SystemInfoTest {
+class SystemInfoTest {
 
     @Test
-    public void SystemInfo_SetsRole_NoCliOption() {
+    void SystemInfo_SetsRole_NoCliOption() {
         HostConfig hostConfig = mock(HostConfig.class);
         when(hostConfig.getChain()).thenReturn(Chain.POLKADOT);
         when(hostConfig.getRocksDbPath()).thenReturn("./test/db");

@@ -58,9 +58,9 @@ public class KademliaService extends NetworkService<Kademlia> {
                 protocol.dial(host, addrWithPeer.getPeerId(), addrWithPeer).getStream();
 
         Stream stream = peerStream.get();
-        if(stream == null){
+        if (stream == null) {
             log.log(Level.WARNING, "Failed to connect to reserved peer");
-        }else{
+        } else {
             ConnectionManager.getInstance().addNewPeer(addrWithPeer.getPeerId());
             log.log(Level.INFO, "Successfully connected to reserved peer");
         }
@@ -102,7 +102,7 @@ public class KademliaService extends NetworkService<Kademlia> {
         });
     }
 
-    private Multihash randomPeerId(){
+    private Multihash randomPeerId() {
         byte[] hash = new byte[32];
         new Random().nextBytes(hash);
         return new Multihash(Multihash.Type.sha2_256, hash);
