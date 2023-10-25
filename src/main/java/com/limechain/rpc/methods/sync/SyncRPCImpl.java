@@ -23,6 +23,12 @@ public class SyncRPCImpl{
      * @return The chain spec of the current sync state.
      */
     public ChainSpec syncStateGetSyncSpec(boolean raw) {
+        //Currently we are not taking the raw boolean in consideration, because in the specificaiton
+        //it is not defined what should be returned if raw is true or false
+        //The Parity Polkadot implementation returns the raw genesis nevertheless if raw is true or false and does not
+        //take it into consideration at all. The boolean is reserved for future updates in the specification
+        //Gossamer has decided to return the raw genesis if raw is true and the decoded one if raw is false - we might
+        //do that as well in the future when we have working Trie and dynamic genesis sync spec
         //TODO: Consider should we send non raw genesis if raw is false
         //TODO: Local genesis should be updated with the Trie and saved
         return chainService.getGenesis();
