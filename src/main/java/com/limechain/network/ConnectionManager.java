@@ -86,7 +86,7 @@ public class ConnectionManager {
         }
     }
 
-    private PeerInfo addNewPeer(PeerId peerId) {
+    public PeerInfo addNewPeer(PeerId peerId) {
         PeerInfo peerInfo = new PeerInfo();
         peerInfo.setPeerId(peerId);
         peers.put(peerId, peerInfo);
@@ -217,12 +217,30 @@ public class ConnectionManager {
     public Set<PeerId> getPeerIds(){
         return peers.keySet();
     }
+
+    /**
+     * Closes conneciton to all the connected peers and removes them from the peersList.
+     *
+     */
     public void removeAllPeers(){
         peers.forEach((peerId, peerInfo) -> {
             closeProtocolStream(peerInfo.getBlockAnnounceStreams());
             closeProtocolStream(peerInfo.getGrandpaStreams());
         });
         peers.clear();
+    }
+
+    /**
+     * Closes conneciton to a peer and removes it from the peersList.
+     * @param peerId peerId of the peer to be removed
+     */
+    public void removePeer(PeerId peerId){
+        if(peers.containsKey(peerId)){
+            PeerInfo peerInfo = peers.get(peerId);
+            closeProtocolStream(peerInfo.getBlockAnnounceStreams());
+            closeProtocolStream(peerInfo.getGrandpaStreams());
+            peers.remove(peerId);
+        }
     }
 
     private void closeProtocolStream(final ProtocolStreams streams){

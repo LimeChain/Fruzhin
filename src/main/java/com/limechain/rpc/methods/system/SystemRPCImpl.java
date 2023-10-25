@@ -7,12 +7,14 @@ import com.limechain.network.Network;
 import com.limechain.network.dto.PeerInfo;
 import com.limechain.sync.warpsync.SyncedState;
 import com.limechain.sync.warpsync.WarpSyncMachine;
+import io.libp2p.core.PeerId;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 import static java.util.Map.entry;
 
@@ -129,20 +131,33 @@ public class SystemRPCImpl {
     /**
      * Adds a reserved peer. The string parameter should encode a p2p multiaddr.
      *
-     * @param peerId peerId to add
+     * @param multiaddr Multiaddr to be added
      */
-    // TODO: Implement in Mx.
-    public void systemAddReservedPeer(String peerId) {
+    public void systemAddReservedPeer(String multiaddr) {
+        if(multiaddr == null || multiaddr.trim().equalsIgnoreCase("")) {
+            throw new RuntimeException("PeerId cannot be empty");
+        }
+
+        try {
+            this.network.kademliaService.addReservedPeer(multiaddr);
+        } catch (ExecutionException | InterruptedException e) {
+            throw new RuntimeException("Error while adding reserved peer: " + e.getMessage());
+        }
     }
 
     /**
      * Remove a reserved peer. The string should encode only the PeerId
      * e.g. QmSk5HQbn6LhUwDiNMseVUjuRYhEtYj4aUZ6WfWoGURpdV.
      *
-     * @param peerId peerId to remove
+     * @param peerIdStr peerId to be removed
      */
-    // TODO: Implement in M2.
-    public void systemRemoveReservedPeer(String peerId) {
+    public void systemRemoveReservedPeer(String peerIdStr) {
+        if(peerIdStr == null || peerIdStr.trim().equalsIgnoreCase("")) {
+            throw new RuntimeException("PeerId cannot be empty");
+        }
+        PeerId peerId = PeerId.fromBase58(peerIdStr);
+
+        this.connectionManager.removePeer(peerId);
     }
 
     /**
@@ -173,9 +188,9 @@ public class SystemRPCImpl {
      *
      * @param accountAddress the address of the account
      */
-    // TODO: Implement in Mx.
     public String systemAccountNextIndex(String accountAddress) {
-        return null;
+        //TODO: Transcation pool and Trie needs to be implemented first.
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     /**
@@ -184,9 +199,10 @@ public class SystemRPCImpl {
      * @param extrinsic the raw, SCALE encoded extrinsic
      * @param blockHash the block hash indicating the state. Null implies the current state
      */
-    // TODO: Implement in Mx.
+    // Currently not implemented in any of the other host nodes
+    @Deprecated //maybe?
     public String systemDryRun(String extrinsic, String blockHash) {
-        return null;
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
 }
