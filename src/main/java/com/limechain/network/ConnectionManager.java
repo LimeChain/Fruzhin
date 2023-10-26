@@ -9,6 +9,8 @@ import com.limechain.network.protocol.warp.dto.BlockHeader;
 import io.emeraldpay.polkaj.types.Hash256;
 import io.libp2p.core.PeerId;
 import io.libp2p.core.Stream;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import lombok.extern.java.Log;
 
 import java.util.HashMap;
@@ -21,12 +23,10 @@ import java.util.logging.Level;
  * Singleton class that controls connected peer info and streams.
  */
 @Log
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ConnectionManager {
     private static ConnectionManager INSTANCE;
     protected final Map<PeerId, PeerInfo> peers = new HashMap<>();
-
-    protected ConnectionManager() {
-    }
 
     public static ConnectionManager getInstance() {
         if (INSTANCE == null) {
