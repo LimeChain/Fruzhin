@@ -1,12 +1,16 @@
 package com.limechain.network.protocol.transaction.state;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
 
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class ValidTransaction implements Comparable<ValidTransaction> {
     @Getter
-    private byte[] extrinsic;
+    @EqualsAndHashCode.Include
+    private final byte[] extrinsic;
     @Getter
     private Validity validity;
 
@@ -19,7 +23,7 @@ public class ValidTransaction implements Comparable<ValidTransaction> {
         this.validity = validity;
     }
 
-    public int compareTo(ValidTransaction transaction) {
+    public int compareTo(@NotNull ValidTransaction transaction) {
         return new ValidTransactionComparator().compare(this, transaction);
     }
 
@@ -28,17 +32,6 @@ public class ValidTransaction implements Comparable<ValidTransaction> {
             return validTransaction.getValidity().getPriority()
                     .compareTo(otherValidTransaction.getValidity().getPriority());
         }
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        ValidTransaction other = (ValidTransaction) o;
-
-        if (!extrinsic.equals(other.getExtrinsic())) return false;
-        return true;
     }
 
 }
