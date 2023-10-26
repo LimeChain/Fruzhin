@@ -1,4 +1,4 @@
-package com.limechain.network.protocol.transactions.scale;
+package com.limechain.network.protocol.transaction.scale;
 
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleReader;

@@ -1,4 +1,4 @@
-package com.limechain.network.protocol.transactions;
+package com.limechain.network.protocol.transaction;
 
 import com.limechain.network.ConnectionManager;
 import com.limechain.network.encoding.Leb128LengthFrameDecoder;

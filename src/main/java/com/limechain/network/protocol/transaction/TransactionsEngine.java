@@ -1,8 +1,8 @@
-package com.limechain.network.protocol.transactions;
+package com.limechain.network.protocol.transaction;
 
 import com.limechain.network.ConnectionManager;
-import com.limechain.network.protocol.transactions.scale.TransactionsReader;
-import com.limechain.network.protocol.transactions.scale.TransactionsWriter;
+import com.limechain.network.protocol.transaction.scale.TransactionsReader;
+import com.limechain.network.protocol.transaction.scale.TransactionsWriter;
 import com.limechain.sync.warpsync.SyncedState;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;

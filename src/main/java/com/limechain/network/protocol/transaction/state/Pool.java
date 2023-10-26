@@ -1,4 +1,4 @@
-package com.limechain.network.protocol.transactions.transactionState;
+package com.limechain.network.protocol.transaction.state;
 
 import com.limechain.utils.HashUtils;
 import lombok.NoArgsConstructor;
