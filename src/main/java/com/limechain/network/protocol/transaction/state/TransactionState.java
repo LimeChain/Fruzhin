@@ -1,5 +1,6 @@
 package com.limechain.network.protocol.transaction.state;
 
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -13,7 +14,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 
-@NoArgsConstructor(access = lombok.AccessLevel.PRIVATE)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class TransactionState {
     private static final TransactionState INSTANCE = new TransactionState();
     private final Pool transactionPool = new Pool();
@@ -68,7 +69,6 @@ public class TransactionState {
     }
 
     public ValidTransaction peek() {
-        //return s.queue.Peek()
         return transactionQueue.peek();
     }
 

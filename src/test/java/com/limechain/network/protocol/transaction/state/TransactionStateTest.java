@@ -9,9 +9,9 @@ import java.util.Comparator;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
-public class TransactionStateTest {
+class TransactionStateTest {
     @Test
-    public void testTransactionState() {
+    void testTransactionState() {
         TransactionState transactionState = new TransactionState();
         ValidTransaction[] validTransactions = new ValidTransaction[]{
                 new ValidTransaction(new byte[]{'a'}, new Validity(BigInteger.ONE)),
