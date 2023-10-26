@@ -26,8 +26,7 @@ public class SystemInfo {
     private String hostVersion;
 
     public SystemInfo(HostConfig hostConfig, Network network) {
-        // TODO: In the future this will be set depending on CLI params
-        this.role = "LightClient";
+        this.role = network.getNodeRole().name();
         this.chain = hostConfig.getChain();
         this.dbPath = hostConfig.getRocksDbPath();
         this.hostIdentity = network.getHost().getPeerId().toString();
