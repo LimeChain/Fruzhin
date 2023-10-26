@@ -4,7 +4,7 @@ import lombok.Getter;
 
 import java.util.Comparator;
 
-public class ValidTransaction {
+public class ValidTransaction implements Comparable<ValidTransaction> {
     @Getter
     private byte[] extrinsic;
     @Getter
@@ -17,6 +17,10 @@ public class ValidTransaction {
     public ValidTransaction(byte[] extrinsic, Validity validity){
         this.extrinsic = extrinsic;
         this.validity = validity;
+    }
+
+    public int compareTo(ValidTransaction transaction) {
+        return new ValidTransactionComparator().compare(this, transaction);
     }
 
     static class ValidTransactionComparator implements Comparator<ValidTransaction> {

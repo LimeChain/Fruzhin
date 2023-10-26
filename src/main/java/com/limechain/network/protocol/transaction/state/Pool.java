@@ -8,18 +8,16 @@ import java.util.Map;
 
 @NoArgsConstructor
 public class Pool {
-    Map<byte[], ValidTransaction> transactions = new HashMap<>();
+    final Map<byte[], ValidTransaction> transactions = new HashMap<>();
 
     public ValidTransaction get(byte[] extrinisics) {
         byte[] key = HashUtils.hashWithBlake2b(extrinisics);
+
         return transactions.get(key);
     }
 
     public ValidTransaction[] transactions() {
-        return transactions.values()
-                .stream()
-                .filter(value -> value instanceof ValidTransaction)
-                .toArray(ValidTransaction[]::new);
+        return transactions.values().toArray(ValidTransaction[]::new);
     }
 
     public byte[] insert(ValidTransaction validTransaction){
