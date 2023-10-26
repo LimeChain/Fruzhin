@@ -2,6 +2,7 @@ package com.limechain.rpc.methods;
 
 import com.googlecode.jsonrpc4j.JsonRpcMethod;
 import com.googlecode.jsonrpc4j.JsonRpcService;
+import com.limechain.rpc.methods.sync.SyncRPC;
 import com.limechain.rpc.methods.system.SystemRPC;
 
 /**
@@ -12,7 +13,7 @@ import com.limechain.rpc.methods.system.SystemRPC;
  * Therefore, as a workaround, we have to combine them into a single interface 🤷
  */
 @JsonRpcService("/")
-public interface RPCMethods extends SystemRPC {
+public interface RPCMethods extends SystemRPC, SyncRPC {
     @JsonRpcMethod("rpc_methods")
     String[] rpcMethods();
 
