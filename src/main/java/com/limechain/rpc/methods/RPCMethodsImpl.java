@@ -2,6 +2,8 @@ package com.limechain.rpc.methods;
 
 import com.googlecode.jsonrpc4j.JsonRpcMethod;
 import com.googlecode.jsonrpc4j.spring.AutoJsonRpcServiceImpl;
+import com.limechain.chain.ChainSpec;
+import com.limechain.rpc.methods.sync.SyncRPCImpl;
 import com.limechain.rpc.methods.system.SystemRPC;
 import com.limechain.rpc.methods.system.SystemRPCImpl;
 import lombok.AllArgsConstructor;
@@ -24,9 +26,14 @@ import java.util.Map;
 public class RPCMethodsImpl implements RPCMethods {
     
     /**
-     * References to rpc method implementation classes
+     * References to system rpc method implementation classes
      */
     private final SystemRPCImpl systemRPC;
+
+    /**
+     * References to sync rpc method implementation classes
+     */
+    private final SyncRPCImpl syncRPC;
 
     @Override
     public String systemName() {
@@ -112,4 +119,10 @@ public class RPCMethodsImpl implements RPCMethods {
 
         return methods.stream().map(m -> m.getAnnotation(JsonRpcMethod.class).value()).toArray(String[]::new);
     }
+
+    @Override
+    public ChainSpec syncStateGenSyncSpec(boolean raw) {
+        return syncRPC.syncStateGetSyncSpec(raw);
+    }
+
 }

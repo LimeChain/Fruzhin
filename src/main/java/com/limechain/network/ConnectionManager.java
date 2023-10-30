@@ -9,6 +9,8 @@ import com.limechain.network.protocol.warp.dto.BlockHeader;
 import io.emeraldpay.polkaj.types.Hash256;
 import io.libp2p.core.PeerId;
 import io.libp2p.core.Stream;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import lombok.extern.java.Log;
 
 import java.util.HashMap;
@@ -21,11 +23,10 @@ import java.util.logging.Level;
  * Singleton class that controls connected peer info and streams.
  */
 @Log
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ConnectionManager {
     private static ConnectionManager INSTANCE;
     protected final Map<PeerId, PeerInfo> peers = new HashMap<>();
-
-    protected ConnectionManager() {}
 
     public static ConnectionManager getInstance() {
         if (INSTANCE == null) {
@@ -41,7 +42,7 @@ public class ConnectionManager {
      * @return known peer state and connected streams
      */
     public PeerInfo getPeerInfo(PeerId peerId) {
-       return peers.get(peerId);
+        return peers.get(peerId);
     }
 
     /**
@@ -86,7 +87,7 @@ public class ConnectionManager {
         }
     }
 
-    private PeerInfo addNewPeer(PeerId peerId) {
+    public PeerInfo addNewPeer(PeerId peerId) {
         PeerInfo peerInfo = new PeerInfo();
         peerInfo.setPeerId(peerId);
         peers.put(peerId, peerInfo);
@@ -140,7 +141,7 @@ public class ConnectionManager {
      * Updates peer info (node role, genesis block hash, best block number and best block hash)
      * based on a Block Announce Handshake.
      *
-     * @param peerId peer to be updated
+     * @param peerId                 peer to be updated
      * @param blockAnnounceHandshake handshake
      */
     public void updatePeer(PeerId peerId, BlockAnnounceHandshake blockAnnounceHandshake) {
@@ -158,7 +159,7 @@ public class ConnectionManager {
     /**
      * Updates peer info (latest block, best block number and  best block hash) based on a Block Announce Message.
      *
-     * @param peerId peer to be updated
+     * @param peerId               peer to be updated
      * @param blockAnnounceMessage message
      */
     public void updatePeer(PeerId peerId, BlockAnnounceMessage blockAnnounceMessage) {
@@ -214,10 +215,14 @@ public class ConnectionManager {
      *
      * @return set of connected peer ids
      */
-    public Set<PeerId> getPeerIds(){
+    public Set<PeerId> getPeerIds() {
         return peers.keySet();
     }
-    public void removeAllPeers(){
+
+    /**
+     * Closes conneciton to all the connected peers and removes them from the peersList.
+     */
+    public void removeAllPeers() {
         peers.forEach((peerId, peerInfo) -> {
             closeProtocolStream(peerInfo.getBlockAnnounceStreams());
             closeProtocolStream(peerInfo.getGrandpaStreams());
@@ -225,7 +230,21 @@ public class ConnectionManager {
         peers.clear();
     }
 
-    private void closeProtocolStream(final ProtocolStreams streams){
+    /**
+     * Closes conneciton to a peer and removes it from the peersList.
+     *
+     * @param peerId peerId of the peer to be removed
+     */
+    public void removePeer(PeerId peerId) {
+        if (peers.containsKey(peerId)) {
+            PeerInfo peerInfo = peers.get(peerId);
+            closeProtocolStream(peerInfo.getBlockAnnounceStreams());
+            closeProtocolStream(peerInfo.getGrandpaStreams());
+            peers.remove(peerId);
+        }
+    }
+
+    private void closeProtocolStream(final ProtocolStreams streams) {
         if (streams == null) return;
         if (streams.getInitiator() != null) {
             streams.getInitiator().close();

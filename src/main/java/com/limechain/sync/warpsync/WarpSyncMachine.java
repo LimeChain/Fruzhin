@@ -53,7 +53,6 @@ public class WarpSyncMachine {
         syncedState.setNetwork(network);
 
         this.syncedState.setRepository(repository);
-        HostApi.setRepository(repository);
 
         this.stateLoaded = this.syncedState.loadState();
     }

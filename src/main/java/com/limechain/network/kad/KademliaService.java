@@ -1,10 +1,13 @@
 package com.limechain.network.kad;
 
+import com.limechain.network.ConnectionManager;
 import com.limechain.network.protocol.NetworkService;
 import io.ipfs.multiaddr.MultiAddress;
 import io.ipfs.multihash.Multihash;
 import io.libp2p.core.Host;
 import io.libp2p.core.PeerId;
+import io.libp2p.core.Stream;
+import io.libp2p.core.multiformats.Multiaddr;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.java.Log;
@@ -16,9 +19,11 @@ import org.peergos.protocol.dht.RamRecordStore;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Arrays;
 import java.util.Random;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
-import java.util.stream.Stream;
 
 /**
  * Service used for operating the Kademlia distributed hash table.
@@ -53,6 +58,21 @@ public class KademliaService extends NetworkService<Kademlia> {
                 protocolId, REPLICATION, ALPHA, localEnabled, clientMode);
     }
 
+    public void addReservedPeer(String multiaddr) throws ExecutionException, InterruptedException {
+        final Multiaddr addrWithPeer = Multiaddr.fromString(multiaddr);
+
+        CompletableFuture<Stream> peerStream =
+                protocol.dial(host, addrWithPeer.getPeerId(), addrWithPeer).getStream();
+
+        Stream stream = peerStream.get();
+        if (stream == null) {
+            log.log(Level.WARNING, "Failed to connect to reserved peer");
+        } else {
+            ConnectionManager.getInstance().addNewPeer(addrWithPeer.getPeerId());
+            log.log(Level.INFO, "Successfully connected to reserved peer");
+        }
+    }
+
     /**
      * Connects to boot nodes to the Kademlia dht
      *
@@ -60,7 +80,7 @@ public class KademliaService extends NetworkService<Kademlia> {
      * @return the number of successfully connected nodes
      */
     public int connectBootNodes(String[] bootNodes) {
-        var bootstrapMultiAddress = Stream.of(bootNodes)
+        var bootstrapMultiAddress = Arrays.stream(bootNodes)
                 .map(DnsUtils::dnsNodeToIp4)
                 .map(MultiAddress::new)
                 .toList();
