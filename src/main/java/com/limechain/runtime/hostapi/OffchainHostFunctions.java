@@ -20,7 +20,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -45,22 +44,22 @@ public class OffchainHostFunctions {
     public List<ImportObject> buildFunctions() {
         return Arrays.asList(
                 HostApi.getImportObject("ext_offchain_is_validator_version_1", argv ->
-                        Collections.singletonList(extOffchainIsValidator()),
+                        extOffchainIsValidator(),
                         HostApi.EMPTY_LIST_OF_TYPES, Type.I32),
                 HostApi.getImportObject("ext_offchain_submit_transaction_version_1", argv ->
-                        List.of(extOffchainSubmitTransaction(new RuntimePointerSize(argv.get(0))).pointerSize()),
+                        extOffchainSubmitTransaction(new RuntimePointerSize(argv.get(0))).pointerSize(),
                                 List.of(Type.I64), Type.I64),
                 HostApi.getImportObject("ext_offchain_network_state_version_1", argv ->
-                        Collections.singletonList(extOffchainNetworkState().pointerSize())
+                        extOffchainNetworkState().pointerSize()
                         , HostApi.EMPTY_LIST_OF_TYPES, Type.I64),
                 HostApi.getImportObject("ext_offchain_timestamp_version_1", argv ->
-                        Collections.singletonList(extOffchainTimestamp()),
+                        extOffchainTimestamp(),
                         HostApi.EMPTY_LIST_OF_TYPES, Type.I64),
                 HostApi.getImportObject("ext_offchain_sleep_until_version_1", argv ->
                         extOffchainSleepUntil(argv.get(0).longValue()),
                         List.of(Type.I64)),
                 HostApi.getImportObject("ext_offchain_random_seed_version_1", argv ->
-                        Collections.singletonList(extOffchainRandomSeed()),
+                        extOffchainRandomSeed(),
                         HostApi.EMPTY_LIST_OF_TYPES, Type.I32),
                 HostApi.getImportObject("ext_offchain_local_storage_set_version_1", argv -> {
 
@@ -69,28 +68,28 @@ public class OffchainHostFunctions {
 
                 }, List.of(Type.I32, Type.I64)),
                 HostApi.getImportObject("ext_offchain_local_storage_compare_and_set_version_1", argv -> {
-                    return argv;
+                    return 0;
                 }, List.of(Type.I32, Type.I64, Type.I64, Type.I64), Type.I32),
                 HostApi.getImportObject("ext_offchain_local_storage_get_version_1", argv -> {
-                    return argv;
+                    return 0;
                 }, List.of(Type.I32, Type.I64), Type.I64),
                 HostApi.getImportObject("ext_offchain_http_request_start_version_1", argv -> {
-                    return argv;
+                    return 0;
                 }, List.of(Type.I64, Type.I64, Type.I64), Type.I64),
                 HostApi.getImportObject("ext_offchain_http_request_add_header_version_1", argv -> {
-                    return argv;
+                    return 0;
                 }, List.of(Type.I32, Type.I64, Type.I64), Type.I64),
                 HostApi.getImportObject("ext_offchain_http_request_write_body_version_1", argv -> {
-                    return argv;
+                    return 0;
                 }, List.of(Type.I32, Type.I64, Type.I64), Type.I64),
                 HostApi.getImportObject("ext_offchain_http_response_wait_version_1", argv -> {
-                    return argv;
+                    return 0;
                 }, List.of(Type.I64, Type.I64), Type.I64),
                 HostApi.getImportObject("ext_offchain_http_response_headers_version_1", argv -> {
-                    return argv;
+                    return 0;
                 }, List.of(Type.I32), Type.I64),
                 HostApi.getImportObject("ext_offchain_http_response_read_body_version_1", argv -> {
-                    return argv;
+                    return 0;
                 }, List.of(Type.I32, Type.I64, Type.I64), Type.I64),
                 HostApi.getImportObject("ext_offchain_index_set_version_1", argv -> {
 

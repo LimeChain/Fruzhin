@@ -73,6 +73,7 @@ public class Network {
     private Host host;
     private WarpSyncService warpSyncService;
     private boolean started = false;
+    private int bootPeerIndex = 0;
 
     /**
      * Initializes a host for the peer connection,
@@ -169,7 +170,7 @@ public class Network {
             privateKey = Ed25519Utils.loadPrivateKey((byte[]) peerIdKeyBytes.get());
             log.log(Level.INFO, "PeerId loaded from database!");
         } else {
-            privateKey = Ed25519Utils.generatePrivateKey();
+            privateKey = Ed25519Utils.generateKeyPair();
             repository.save(DBConstants.PEER_ID, privateKey.raw());
             log.log(Level.INFO, "Generated new peerId!");
         }
@@ -189,6 +190,22 @@ public class Network {
         connectionManager.removeAllPeers();
         host.stop();
         log.log(Level.INFO, "Stopped network module!");
+    }
+
+    public boolean updateCurrentSelectedPeerWithNextBootnode() {
+        if (bootPeerIndex > kademliaService.getBootNodePeerIds().size())
+            return false;
+        this.currentSelectedPeer = this.kademliaService.getBootNodePeerIds().get(bootPeerIndex);
+        bootPeerIndex++;
+        return true;
+    }
+
+    public boolean updateCurrentSelectedPeerWithBootnode(int index) {
+        if (index >= 0 && index < this.kademliaService.getBootNodePeerIds().size()) {
+            this.currentSelectedPeer = this.kademliaService.getBootNodePeerIds().get(index);
+            return true;
+        }
+        return false;
     }
 
     public String getPeerId() {

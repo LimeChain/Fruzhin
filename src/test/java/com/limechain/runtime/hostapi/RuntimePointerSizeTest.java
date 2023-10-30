@@ -1,5 +1,6 @@
 package com.limechain.runtime.hostapi;
 
+import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigInteger;

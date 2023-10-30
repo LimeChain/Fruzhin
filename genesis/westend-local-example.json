@@ -8,7 +8,7 @@
       0
     ]
   ],
-  "protocolId": "wnd2",
+  "protocolId": "dot",
   "properties": {
     "ss58Format": 42,
     "tokenDecimals": 12,
