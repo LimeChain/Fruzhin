@@ -2,6 +2,7 @@ package com.limechain.runtime.hostapi;
 
 import com.limechain.runtime.Runtime;
 import com.limechain.runtime.allocator.FreeingBumpHeapAllocator;
+import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.java.Log;

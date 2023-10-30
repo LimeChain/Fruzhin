@@ -4,6 +4,7 @@ import com.limechain.config.HostConfig;
 import com.limechain.network.Network;
 import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.rpc.server.AppBean;
+import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.emeraldpay.polkaj.scaletypes.Result;
 import io.emeraldpay.polkaj.scaletypes.ResultWriter;
@@ -128,7 +129,8 @@ public class OffchainHostFunctions {
     }
 
     private byte[] scaleEncodedEmptyResult(boolean success) {
-        return new byte[] { (success ? Result.ResultMode.OK : Result.ResultMode.ERR).getValue() };
+        Result.ResultMode resultMode = success ? Result.ResultMode.OK : Result.ResultMode.ERR;
+        return new byte[] { resultMode.getValue() };
     }
 
     /**
