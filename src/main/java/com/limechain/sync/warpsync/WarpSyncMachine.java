@@ -23,6 +23,7 @@ import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.logging.Level;
 
 @Log
 public class WarpSyncMachine {
@@ -49,6 +50,7 @@ public class WarpSyncMachine {
     public WarpSyncMachine(Network network, ChainService chainService, KVRepository<String, Object> repository) {
         this.networkService = network;
         this.chainService = chainService;
+        syncedState.setNetwork(network);
 
         this.syncedState.setRepository(repository);
 
@@ -82,6 +84,8 @@ public class WarpSyncMachine {
         }
 
         // Always start with requesting fragments
+        log.log(Level.INFO, "Requesting fragments...");
+        this.networkService.updateCurrentSelectedPeerWithNextBootnode();
         this.warpSyncState = new RequestFragmentsState(initStateHash);
 
         executor.submit(() -> {

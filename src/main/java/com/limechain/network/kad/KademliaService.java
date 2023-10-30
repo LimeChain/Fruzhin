@@ -5,6 +5,7 @@ import com.limechain.network.protocol.NetworkService;
 import io.ipfs.multiaddr.MultiAddress;
 import io.ipfs.multihash.Multihash;
 import io.libp2p.core.Host;
+import io.libp2p.core.PeerId;
 import io.libp2p.core.Stream;
 import io.libp2p.core.multiformats.Multiaddr;
 import lombok.Getter;
@@ -16,6 +17,8 @@ import org.peergos.protocol.dht.KademliaEngine;
 import org.peergos.protocol.dht.RamProviderStore;
 import org.peergos.protocol.dht.RamRecordStore;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Arrays;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
@@ -33,6 +36,10 @@ public class KademliaService extends NetworkService<Kademlia> {
     @Setter
     @Getter
     private Host host;
+    @Getter
+    private List<PeerId> bootNodePeerIds;
+    @Getter
+    private int successfulBootNodes;
 
     public KademliaService(String protocolId, Multihash hostId, boolean localDht, boolean clientMode) {
         this.initialize(protocolId, hostId, localDht, clientMode);
@@ -77,7 +84,8 @@ public class KademliaService extends NetworkService<Kademlia> {
                 .map(DnsUtils::dnsNodeToIp4)
                 .map(MultiAddress::new)
                 .toList();
-        int successfulBootNodes = protocol.bootstrapRoutingTable(host, bootstrapMultiAddress,
+        this.setBootNodePeerIds(bootNodes);
+        successfulBootNodes = protocol.bootstrapRoutingTable(host, bootstrapMultiAddress,
                 addr -> !addr.contains("wss") && !addr.contains("ws"));
         if (successfulBootNodes > 0)
             log.log(Level.INFO, "Successfully connected to " + successfulBootNodes + " boot nodes");
@@ -106,5 +114,14 @@ public class KademliaService extends NetworkService<Kademlia> {
         byte[] hash = new byte[32];
         new Random().nextBytes(hash);
         return new Multihash(Multihash.Type.sha2_256, hash);
+    }
+
+    private void setBootNodePeerIds(String[] bootNodes) {
+        ArrayList<PeerId> bootNodePeerIds = new ArrayList<>();
+        for (String bootNode : bootNodes) {
+            String peerId = bootNode.substring(bootNode.lastIndexOf('/') + 1, bootNode.length());
+            bootNodePeerIds.add(PeerId.fromBase58(peerId));
+        }
+        this.bootNodePeerIds = bootNodePeerIds;
     }
 }
