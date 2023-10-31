@@ -2,6 +2,7 @@ package com.limechain.runtime.hostapi;
 
 import com.limechain.config.HostConfig;
 import com.limechain.network.protocol.blockannounce.NodeRole;
+import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -14,6 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.Instant;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
@@ -27,6 +29,8 @@ class OffchainHostFunctionsTest {
     private HostApi hostApi;
     @Mock
     private HostConfig config;
+    @Mock
+    private RuntimePointerSize runtimePointerSize;
 
     @Test
     void extOffchainIsValidatorWhenNodeRoleIsAuthoringShouldReturnOne() {
@@ -60,5 +64,16 @@ class OffchainHostFunctionsTest {
 
             assertEquals(time, result);
         }
+    }
+
+    @Test
+    void extOffchainRandomSeedReturnsAPointerToA32BitNumber() {
+        int pointer = 123;
+        when(hostApi.writeDataToMemory(argThat(argument -> argument.length == 32))).thenReturn(runtimePointerSize);
+        when(runtimePointerSize.pointer()).thenReturn(pointer);
+
+        int result = offchainHostFunctions.extOffchainRandomSeed();
+
+        assertEquals(pointer, result);
     }
 }

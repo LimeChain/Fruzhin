@@ -146,6 +146,7 @@ public class OffchainHostFunctions {
         Network network = Network.getNetwork();
         PeerId peerId = network.getHost().getPeerId();
         List<Multiaddr> multiAddresses = network.getHost().listenAddresses();
+
         return hostApi.writeDataToMemory(scaleEncodedOpaqueNetwork(peerId, multiAddresses));
     }
 
@@ -161,7 +162,7 @@ public class OffchainHostFunctions {
                     .writeResult(writer, ScaleCodecWriter::writeByteArray, null, result);
             return buf.toByteArray();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            return scaleEncodedEmptyResult(false);
         }
     }
 
@@ -182,7 +183,7 @@ public class OffchainHostFunctions {
     public void extOffchainSleepUntil(long deadline) {
         long timeToSleep = extOffchainTimestamp() - deadline;
         try {
-            if(timeToSleep > 0) {
+            if (timeToSleep > 0) {
                 Thread.sleep(timeToSleep);
             }
         } catch (InterruptedException e) {
