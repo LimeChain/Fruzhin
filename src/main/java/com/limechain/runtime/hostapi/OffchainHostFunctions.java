@@ -187,6 +187,7 @@ public class OffchainHostFunctions {
                 Thread.sleep(timeToSleep);
             }
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new RuntimeException(e);
         }
     }
