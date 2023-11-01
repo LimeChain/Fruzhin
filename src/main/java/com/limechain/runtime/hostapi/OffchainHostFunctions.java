@@ -11,6 +11,7 @@ import io.emeraldpay.polkaj.scaletypes.ResultWriter;
 import io.libp2p.core.PeerId;
 import io.libp2p.core.multiformats.Multiaddr;
 import lombok.AllArgsConstructor;
+import lombok.extern.java.Log;
 import org.wasmer.ImportObject;
 import org.wasmer.Type;
 
@@ -22,6 +23,7 @@ import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Level;
 
 /**
  * Implementations of the Offchain and Offchain index HostAPI functions
@@ -29,6 +31,7 @@ import java.util.List;
  * {<a href="https://spec.polkadot.network/chap-host-api#sect-offchain-api">Offchain API</a>}
  * {<a href="https://spec.polkadot.network/chap-host-api#sect-offchainindex-api">Offchain index API</a>}
  */
+@Log
 @AllArgsConstructor
 public class OffchainHostFunctions {
     private final HostApi hostApi;
@@ -38,6 +41,7 @@ public class OffchainHostFunctions {
         hostApi = HostApi.getInstance();
         config = AppBean.getBean(HostConfig.class);
     }
+
     public static List<ImportObject> getFunctions() {
         return new OffchainHostFunctions().buildFunctions();
     }
@@ -162,6 +166,8 @@ public class OffchainHostFunctions {
                     .writeResult(writer, ScaleCodecWriter::writeByteArray, null, result);
             return buf.toByteArray();
         } catch (IOException e) {
+            log.log(Level.WARNING, "Could not encode network state.");
+            log.log(Level.WARNING, e.getMessage(), e.getStackTrace());
             return scaleEncodedEmptyResult(false);
         }
     }
