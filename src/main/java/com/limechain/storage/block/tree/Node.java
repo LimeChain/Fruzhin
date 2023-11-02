@@ -1,4 +1,4 @@
-package com.limechain.storage.block;
+package com.limechain.storage.block.tree;
 
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.AllArgsConstructor;
