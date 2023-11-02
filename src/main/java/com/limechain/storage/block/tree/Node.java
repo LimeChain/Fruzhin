@@ -1,6 +1,5 @@
 package com.limechain.storage.block.tree;
 
-import io.emeraldpay.polkaj.types.Hash256;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -10,13 +9,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Node represents a element in the block tree
+ * Node represents element in the block tree
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class Node {
-    private Hash256 hash; // Block hash
+    private byte[] hash; // Block hash
     private Node parent; // Parent node
     private List<Node> children = new ArrayList<>(); // Nodes of children blocks
     private long number; // block number
@@ -46,7 +45,7 @@ public class Node {
      * @param hash hash of the node
      * @return node with the given hash
      */
-    public Node getNode(final Hash256 hash) {
+    public Node getNode(final byte[] hash) {
         if (this.hash.equals(hash)) {
             return this;
         }
@@ -64,8 +63,8 @@ public class Node {
      * @param number number of the block5
      * @return list of nodes with the given number
      */
-    public List<Hash256> getNodesWithNumber(final int number) {
-        List<Hash256> hashes = new ArrayList<>();
+    public List<byte[]> getNodesWithNumber(final long number) {
+        List<byte[]> hashes = new ArrayList<>();
         for (Node child : children) {
             if (child.number == number) {
                 hashes.add(child.hash);
@@ -124,8 +123,8 @@ public class Node {
      * Recursively searches for all descendants of the node
      * @return list of the hash of all descendants
      */
-    public List<Hash256> getAllDescendants() {
-        List<Hash256> desc = new ArrayList<>();
+    public List<byte[]> getAllDescendants() {
+        List<byte[]> desc = new ArrayList<>();
         desc.add(this.hash);
         for (Node child : children) {
             desc.addAll(child.getAllDescendants());
@@ -151,8 +150,8 @@ public class Node {
      * @param finalised finalised node to be pruned
      * @return list of hashes of the pruned nodes
      */
-    public List<Hash256> prune(Node finalised) {
-        List<Hash256> pruned = new ArrayList<>();
+    public List<byte[]> prune(Node finalised) {
+        List<byte[]> pruned = new ArrayList<>();
         if (finalised == null) {
             return pruned;
         }

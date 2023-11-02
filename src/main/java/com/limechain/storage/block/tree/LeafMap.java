@@ -1,10 +1,10 @@
 package com.limechain.storage.block.tree;
 
-import io.emeraldpay.polkaj.types.Hash256;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,7 +16,7 @@ import java.util.Map;
 @NoArgsConstructor
 public class LeafMap {
 
-    private final Map<Hash256, Node> syncMap = new HashMap<>();
+    private final Map<byte[], Node> syncMap = new HashMap<>();
 
     /**
      * Creates a new LeafMap from a node.
@@ -33,7 +33,7 @@ public class LeafMap {
      * @param key hash of the leaf
      * @param value the leaf
      */
-    public void store(Hash256 key, Node value) {
+    public void store(byte[] key, Node value) {
         syncMap.put(key, value);
     }
 
@@ -43,7 +43,7 @@ public class LeafMap {
      * @return the leaf
      * @throws RuntimeException if the leaf is not found
      */
-    public Node load(Hash256 key) {
+    public Node load(byte[] key) {
         Node node = syncMap.get(key);
         if (node == null) {
             throw new RuntimeException("Key not found: " + key);
@@ -80,7 +80,7 @@ public class LeafMap {
                     // there are two leaf nodes with the same number *and* arrival time, just pick the one
                     // with the lower hash in lexicographical order.
                     // practically, this is very unlikely to happen.
-                    if (node.getHash().compareTo(deepest.getHash()) < 0){
+                    if (Arrays.compare(node.getHash(), deepest.getHash()) < 0){
                         deepest = node;
                     }
                 }
