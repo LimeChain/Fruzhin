@@ -38,8 +38,6 @@ public class Node {
         return String.format("{hash: %s, number: %d, arrivalTime: %s}", hash.toString(), number, arrivalTime);
     }
 
-    //Todo: create tree
-
     /**
      * Recursively searches for a node with a given hash
      * @param hash hash of the node
@@ -60,7 +58,7 @@ public class Node {
 
     /**
      * Recursively searches for all nodes with a given number
-     * @param number number of the block5
+     * @param number number of the block
      * @return list of nodes with the given number
      */
     public List<byte[]> getNodesWithNumber(final long number) {
@@ -146,35 +144,35 @@ public class Node {
     }
 
     /**
-     * Prune the tree by removing all nodes that are not descendants of the finalised node
-     * @param finalised finalised node to be pruned
+     * Prune the tree by removing all nodes that are not descendants of the finalized node
+     * @param finalized finalized node to be pruned
      * @return list of hashes of the pruned nodes
      */
-    public List<byte[]> prune(Node finalised) {
+    public List<byte[]> prune(Node finalized) {
         List<byte[]> pruned = new ArrayList<>();
-        if (finalised == null) {
+        if (finalized == null) {
             return pruned;
         }
 
-        // if this is a descedent of the finalised block, keep it
-        // all descendents of this block will also be descendents of the finalised block,
+        // if this is a descedent of the finalized block, keep it
+        // all descendents of this block will also be descendents of the finalized block,
         // so don't need to check any of those
-        if (this.isDescendantOf(finalised)) {
+        if (this.isDescendantOf(finalized)) {
             return pruned;
         }
 
-        // if it's not an ancestor of the finalised block, prune it
-        if (!finalised.isDescendantOf(this)) {
+        // if it's not an ancestor of the finalized block, prune it
+        if (!finalized.isDescendantOf(this)) {
             pruned.add(this.hash);
             if (this.parent != null) {
                 this.parent.deleteChild(this);
             }
         }
 
-        // if this is an ancestor of the finalised block, keep it,
+        // if this is an ancestor of the finalized block, keep it,
         // and check its children
         for (Node child : new ArrayList<>(children)) {
-            pruned.addAll(child.prune(finalised));
+            pruned.addAll(child.prune(finalized));
         }
 
         return pruned;

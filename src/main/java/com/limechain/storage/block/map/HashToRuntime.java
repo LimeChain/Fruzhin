@@ -1,4 +1,4 @@
-package com.limechain.storage.block.tree;
+package com.limechain.storage.block.map;
 
 import com.limechain.runtime.Runtime;
 import lombok.NoArgsConstructor;
@@ -44,8 +44,8 @@ public class HashToRuntime {
     /**
      * Handles pruning and recording on block finalisation
      *
-     * @param newCanonicalBlockHashes the block hashes of the blocks newly finalised
-     *                                The last element is the finalised block hash
+     * @param newCanonicalBlockHashes the block hashes of the blocks newly finalized
+     *                                The last element is the finalized block hash
      */
     public void onFinalisation(List<byte[]> newCanonicalBlockHashes) {
         if (mapping.isEmpty()) {
@@ -53,13 +53,13 @@ public class HashToRuntime {
             return;
         }
 
-        final byte[] finalisedHash = newCanonicalBlockHashes.get(newCanonicalBlockHashes.size() - 1);
+        final byte[] finalizedHash = newCanonicalBlockHashes.get(newCanonicalBlockHashes.size() - 1);
 
         // If there's only one runtime in the mapping, update its key.
         if (mapping.size() == 1) {
             Runtime uniqueAvailableInstance = mapping.values().iterator().next();
             mapping.clear();
-            mapping.put(finalisedHash, uniqueAvailableInstance);
+            mapping.put(finalizedHash, uniqueAvailableInstance);
             return;
         }
 
@@ -82,7 +82,7 @@ public class HashToRuntime {
                 }
 
                 mapping.clear();
-                mapping.put(finalisedHash, inMemoryRuntime);
+                mapping.put(finalizedHash, inMemoryRuntime);
                 break;
             }
         }

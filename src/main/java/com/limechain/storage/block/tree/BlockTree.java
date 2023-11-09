@@ -2,6 +2,8 @@ package com.limechain.storage.block.tree;
 
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.runtime.Runtime;
+import com.limechain.storage.block.exception.LowerThanRootException;
+import com.limechain.storage.block.map.HashToRuntime;
 import io.emeraldpay.polkaj.types.Hash256;
 
 import java.time.Instant;
@@ -210,26 +212,26 @@ public class BlockTree {
      * Sets the given hash as the new blocktree root, removing all nodes that are not the new root node or
      * its descendant. It returns an array of hashes that have been pruned.
      *
-     * @param finalised Hash to prune to
+     * @param finalized Hash to prune to
      * @return List of hashes that were pruned
      */
-    public List<byte[]> prune(byte[] finalised) {
-        if (Arrays.equals(finalised, root.getHash())) {
+    public List<byte[]> prune(byte[] finalized) {
+        if (Arrays.equals(finalized, root.getHash())) {
             return new ArrayList<>();
         }
 
-        Node finalisedNode = getNode(finalised);
-        if (finalisedNode == null) {
+        Node finalizedNode = getNode(finalized);
+        if (finalizedNode == null) {
             return new ArrayList<>();
         }
 
-        Node previousFinalisedBlock = root;
-        long newCanonicalChainBlocksCount = finalisedNode.getNumber() - previousFinalisedBlock.getNumber();
-        if (previousFinalisedBlock.getNumber() == 0) {
+        Node previousfinalizedBlock = root;
+        long newCanonicalChainBlocksCount = finalizedNode.getNumber() - previousfinalizedBlock.getNumber();
+        if (previousfinalizedBlock.getNumber() == 0) {
             newCanonicalChainBlocksCount++;
         }
 
-        Node canonicalChainBlock = finalisedNode;
+        Node canonicalChainBlock = finalizedNode;
         List<byte[]> newCanonicalChainBlockHashes = new ArrayList<>();
         for (int i = 0; i < newCanonicalChainBlocksCount; i++) {
             newCanonicalChainBlockHashes.add(canonicalChainBlock.getHash());
@@ -238,11 +240,11 @@ public class BlockTree {
 
         runtimes.onFinalisation(newCanonicalChainBlockHashes);
 
-        List<byte[]> pruned = root.prune(finalisedNode);
-        root = finalisedNode;
+        List<byte[]> pruned = root.prune(finalizedNode);
+        root = finalizedNode;
         root.setParent(null);
 
-        List<Node> leaves = finalisedNode.getLeaves();
+        List<Node> leaves = finalizedNode.getLeaves();
         this.leaves = new LeafMap();
         for (Node leaf : leaves) {
             this.leaves.store(leaf.getHash(), leaf);
@@ -406,7 +408,7 @@ public class BlockTree {
         }
 
         if (root.getNumber() > num) {
-            throw new IllegalArgumentException("Number lower than root");
+            throw new LowerThanRootException("Number lower than root");
         }
 
         if (root.getNumber() == num) {
