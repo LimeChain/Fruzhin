@@ -4,8 +4,15 @@ import com.limechain.config.HostConfig;
 import com.limechain.network.Network;
 import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.rpc.server.AppBean;
+import com.limechain.runtime.hostapi.dto.HttpErrorType;
+import com.limechain.runtime.hostapi.dto.InvalidRequestId;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
+import com.limechain.storage.KVRepository;
+import com.limechain.storage.offchain.OffchainStore;
+import com.limechain.sync.warpsync.SyncedState;
+import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
+import io.emeraldpay.polkaj.scale.reader.UInt64Reader;
 import io.emeraldpay.polkaj.scaletypes.Result;
 import io.emeraldpay.polkaj.scaletypes.ResultWriter;
 import io.libp2p.core.PeerId;
@@ -17,6 +24,8 @@ import org.wasmer.Type;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.math.BigInteger;
+import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -36,10 +45,17 @@ import java.util.logging.Level;
 public class OffchainHostFunctions {
     private final HostApi hostApi;
     private final HostConfig config;
+    private final OffchainHttpRequests requests;
+    private final KVRepository<String, Object> offchainDb;
+    private final OffchainStore offchainStore;
+
 
     public OffchainHostFunctions() {
         hostApi = HostApi.getInstance();
         config = AppBean.getBean(HostConfig.class);
+        requests = OffchainHttpRequests.getInstance();
+        offchainDb = SyncedState.getInstance().getRepository();
+        offchainStore = new OffchainStore(offchainDb);
     }
 
     public static List<ImportObject> getFunctions() {
@@ -78,15 +94,21 @@ public class OffchainHostFunctions {
                 HostApi.getImportObject("ext_offchain_local_storage_get_version_1", argv -> {
                     return 0;
                 }, List.of(Type.I32, Type.I64), Type.I64),
-                HostApi.getImportObject("ext_offchain_http_request_start_version_1", argv -> {
-                    return 0;
-                }, List.of(Type.I64, Type.I64, Type.I64), Type.I64),
-                HostApi.getImportObject("ext_offchain_http_request_add_header_version_1", argv -> {
-                    return 0;
-                }, List.of(Type.I32, Type.I64, Type.I64), Type.I64),
-                HostApi.getImportObject("ext_offchain_http_request_write_body_version_1", argv -> {
-                    return 0;
-                }, List.of(Type.I32, Type.I64, Type.I64), Type.I64),
+                HostApi.getImportObject("ext_offchain_http_request_start_version_1", argv ->
+                        extOffchainHttpRequestStart(new RuntimePointerSize(argv.get(0)),
+                                new RuntimePointerSize(argv.get(1)), new byte[0]).pointerSize(),
+                        List.of(Type.I64, Type.I64, Type.I64), Type.I64),
+                HostApi.getImportObject("ext_offchain_http_request_add_header_version_1", argv ->
+                        extOffchainHttpRequestAddHeader(argv.get(0).intValue(), new RuntimePointerSize(argv.get(1)),
+                                new RuntimePointerSize(argv.get(2))).pointerSize(),
+                        List.of(Type.I32, Type.I64, Type.I64), Type.I64),
+                HostApi.getImportObject("ext_offchain_http_request_write_body_version_1", argv ->
+                        extOffchainHttpRequestWriteBody(
+                                argv.get(0).intValue(),
+                                new RuntimePointerSize(argv.get(1)),
+                                new RuntimePointerSize(argv.get(2))
+                        ).pointerSize()
+                        , List.of(Type.I32, Type.I64, Type.I64), Type.I64),
                 HostApi.getImportObject("ext_offchain_http_response_wait_version_1", argv -> {
                     return 0;
                 }, List.of(Type.I64, Type.I64), Type.I64),
@@ -130,11 +152,6 @@ public class OffchainHostFunctions {
         boolean success = true;
 
         return hostApi.writeDataToMemory(scaleEncodedEmptyResult(success));
-    }
-
-    private byte[] scaleEncodedEmptyResult(boolean success) {
-        Result.ResultMode resultMode = success ? Result.ResultMode.OK : Result.ResultMode.ERR;
-        return new byte[] { resultMode.getValue() };
     }
 
     /**
@@ -211,5 +228,111 @@ public class OffchainHostFunctions {
             seed = SecureRandom.getSeed(32);
         }
         return hostApi.writeDataToMemory(seed).pointer();
+    }
+
+    /**
+     * Initiates a HTTP request given by the HTTP method and the URL. Returns the Id of a newly started request.
+     *
+     * @param methodPointer a pointer-size to the HTTP method. Possible values are “GET” and “POST”.
+     * @param uriPointer a pointer-size to the URI.
+     * @param meta a future-reserved field containing additional, SCALE encoded parameters.
+     *             Currently, an empty array should be passed.
+     * @return a pointer-size to the SCALE encoded Result value containing the i16 ID of the newly started request.
+     *         On failure no additionally data is provided. The cause of failure is implementation specific.
+     */
+    public RuntimePointerSize extOffchainHttpRequestStart(RuntimePointerSize methodPointer,
+                                                          RuntimePointerSize uriPointer,
+                                                          byte[] meta) {
+        String method = new ScaleCodecReader(hostApi.getDataFromMemory(methodPointer)).readString();
+        String uri = new ScaleCodecReader(hostApi.getDataFromMemory(uriPointer)).readString();
+
+        if (!method.equals("GET") && !method.equals("POST")) {
+            log.log(Level.WARNING, "Method not allowed: " + method);
+            return hostApi.writeDataToMemory(scaleEncodedEmptyResult(false));
+        }
+
+        try (ByteArrayOutputStream buf = new ByteArrayOutputStream();
+             ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
+            int createdId = requests.addRequest(method, uri);
+
+            Result<Integer, Exception> result = new Result<>(Result.ResultMode.OK, createdId, null);
+            new ResultWriter<Integer, Exception>()
+                    .writeResult(writer, ScaleCodecWriter::writeUint16, null, result);
+
+            return hostApi.writeDataToMemory(buf.toByteArray());
+        } catch (IOException e) {
+            log.log(Level.SEVERE, e.getMessage(), e.getStackTrace());
+            return hostApi.writeDataToMemory(scaleEncodedEmptyResult(false));
+        }
+    }
+
+    /**
+     * Append header to the request. Returns an error if the request identifier is invalid, http_response_wait has
+     * already been called on the specified request identifier, the deadline is reached or an I/O error has happened
+     * (e.g. the remote has closed the connection).
+     *
+     * @param requestId an i32 integer indicating the ID of the started request.
+     * @param namePointer a pointer-size to the HTTP header name.
+     * @param valuePointer a pointer-size to the HTTP header value.
+     * @return a pointer-size to the SCALE encoded Result value. Neither on success or failure is there any additional
+     * data provided. The cause of failure is implementation specific.
+     */
+    public RuntimePointerSize extOffchainHttpRequestAddHeader(int requestId,
+                                                              RuntimePointerSize namePointer,
+                                                              RuntimePointerSize valuePointer) {
+        String name = new String(hostApi.getDataFromMemory(namePointer));
+        String value = new String(hostApi.getDataFromMemory(valuePointer));
+        try {
+            requests.addHeader(requestId, name, value);
+            return hostApi.writeDataToMemory(scaleEncodedEmptyResult(true));
+        } catch (InvalidRequestId e) {
+            log.log(Level.WARNING, "Invalid request id: " + requestId);
+            return hostApi.writeDataToMemory(scaleEncodedEmptyResult(false));
+        }
+    }
+
+    /**
+     * Writes a chunk of the request body. Returns a non-zero value in case the deadline is reached
+     * or the chunk could not be written.
+     *
+     * @param requestId         the ID of the started request.
+     * @param chunksPointer     a pointer-size to the chunk of bytes. Writing an empty chunk finalizes the request.
+     * @param deadlinePointer   a pointer-size to the SCALE encoded Option value containing the UNIX timestamp.
+     *                          Passing None blocks indefinitely.
+     * @return a pointer-size to the SCALE encoded Result value. On success, no additional data is provided.
+     * On error, it contains the HTTP error type.
+     */
+    public RuntimePointerSize extOffchainHttpRequestWriteBody(int requestId,
+                                                              RuntimePointerSize chunksPointer,
+                                                              RuntimePointerSize deadlinePointer) {
+        byte[] chunks = hostApi.getDataFromMemory(chunksPointer);
+        //TODO: finalize on empty chunk
+        try {
+            requests.addRequestBodyChunk(requestId, chunks, timeoutFromDeadline(deadlinePointer));
+            return hostApi.writeDataToMemory(scaleEncodedEmptyResult(true));
+        } catch (InvalidRequestId e) {
+            return hostApi.writeDataToMemory(HttpErrorType.INVALID_ID.scaleEncodedResult());
+        } catch (SocketTimeoutException e) {
+            log.log(Level.WARNING, e.getMessage(), e.getStackTrace());
+            return hostApi.writeDataToMemory(HttpErrorType.DEADLINE_REACHED.scaleEncodedResult());
+        } catch (IOException e) {
+            log.log(Level.WARNING, e.getMessage(), e.getStackTrace());
+            return hostApi.writeDataToMemory(HttpErrorType.IO_ERROR.scaleEncodedResult());
+        }
+    }
+
+    private int timeoutFromDeadline(RuntimePointerSize deadlinePointer) {
+        byte[] deadlineBytes = hostApi.getDataFromMemory(deadlinePointer);
+        long currentTimestamp = Instant.now().toEpochMilli();
+        return new ScaleCodecReader(deadlineBytes)
+                .readOptional(new UInt64Reader())
+                .map(deadline -> deadline.longValue() - currentTimestamp)
+                .map(Long::intValue)
+                .orElse(0);
+    }
+
+    private byte[] scaleEncodedEmptyResult(boolean success) {
+        Result.ResultMode resultMode = success ? Result.ResultMode.OK : Result.ResultMode.ERR;
+        return new byte[] { resultMode.getValue() };
     }
 }
