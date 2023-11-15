@@ -1,5 +1,6 @@
 package com.limechain.storage.block.tree;
 
+import io.emeraldpay.polkaj.types.Hash256;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -43,7 +44,7 @@ public class Node {
      */
     @Override
     public String toString() {
-        return String.format("{hash: %s, number: %d, arrivalTime: %s}", hash.toString(), number, arrivalTime);
+        return String.format("{hash: %s, number: %d, arrivalTime: %s}", new Hash256(hash), number, arrivalTime);
     }
 
     /**
@@ -93,7 +94,7 @@ public class Node {
             return false;
         }
 
-        if (this.hash.equals(parent.hash)) {
+        if (Arrays.equals(this.hash, parent.hash)) {
             return true;
         }
 
@@ -191,7 +192,7 @@ public class Node {
      * @param toDelete child to be deleted
      */
     public void deleteChild(Node toDelete) {
-        children.removeIf(child -> child.hash.equals(toDelete.hash));
+        children.removeIf(child -> Arrays.equals(child.hash, toDelete.hash));
     }
 
     /**

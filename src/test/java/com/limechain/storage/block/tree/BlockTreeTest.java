@@ -246,7 +246,7 @@ class BlockTreeTest {
     }
 
     @Test
-    public void testPruneFork() {
+    void testPruneFork() {
         BlockHeader rootHeader = createHeader(getHash("01").getBytes(), 0);
         BlockTree blockTree = new BlockTree(rootHeader);
         Node rootNode = blockTree.getRoot();
@@ -276,8 +276,7 @@ class BlockTreeTest {
         assertArrayEquals(getHash("03").getBytes(), pruned.get(0));
 
         // Asserting the runtime mapping
-//        assertEquals(rootRuntime, blockTree.getBlockRuntime(getHash("02").getBytes()),
-//                "Runtime mapping should match the expected");
+//        assertEquals(rootRuntime, blockTree.getBlockRuntime(getHash("02").getBytes()));
         //TODO: currently broken
     }
 
