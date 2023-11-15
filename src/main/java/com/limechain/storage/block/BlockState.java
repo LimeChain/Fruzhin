@@ -219,7 +219,6 @@ public class BlockState {
      * @return the block
      */
     public Block getBlockByHash(byte[] hash) {
-        // Assuming unfinalizedBlocks is a map or similar structure with a getBlock method
         Block block = unfinalizedBlocks.get(hash);
         if (block != null) {
             return block;
@@ -263,7 +262,6 @@ public class BlockState {
      * @return the block body
      */
     public BlockBody getBlockBody(byte[] hash) {
-        // Assuming unfinalizedBlocks is a map or similar structure with a getBlockBody method
         Block block = unfinalizedBlocks.get(hash);
         if (block != null && block.getBody() != null) {
             return block.getBody();

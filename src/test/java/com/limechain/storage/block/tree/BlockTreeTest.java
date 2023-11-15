@@ -104,7 +104,6 @@ class BlockTreeTest {
 
     @Test
     void testBlockTreeGetNode() {
-        // Assuming createTestBlockTree returns a Pair of BlockTree and a list of Node
         Pair<BlockTree, List<Node>> result = createTestBlockTree(testHeader, 16);
         BlockTree bt = result.getValue0();
         List<Node> branches = result.getValue1();
@@ -287,7 +286,7 @@ class BlockTreeTest {
     }
 
     private Pair<BlockTree, List<Node>> createTestBlockTree(BlockHeader header, int number) {
-        BlockTree bt = new BlockTree(header);  // Assuming a constructor taking a BlockHeader
+        BlockTree bt = new BlockTree(header);
         byte[] previousHash = header.getHash();
 
         List<Node> branches = new ArrayList<>();
