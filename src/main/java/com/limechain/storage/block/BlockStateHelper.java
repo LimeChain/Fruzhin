@@ -8,7 +8,6 @@ import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.emeraldpay.polkaj.scale.reader.UInt64Reader;
 import io.emeraldpay.polkaj.scale.writer.UInt64Writer;
-import lombok.NoArgsConstructor;
 import org.javatuples.Pair;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,7 +17,6 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-@NoArgsConstructor
 public final class BlockStateHelper {
     private final UInt64Writer uint64Writer = new UInt64Writer();
     private final UInt64Reader uint64Reader = new UInt64Reader();

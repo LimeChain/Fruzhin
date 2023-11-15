@@ -37,14 +37,19 @@ public class BlockState {
     @Getter
     private final byte[] genesisHash;
     @Getter
-    private byte[] lastfinalized;
+    private byte[] lastFinalized;
 
+    /**
+     * Creates a new BlockState instance from genesis
+     * @param repository the kvrepository used to store the block state
+     * @param header the genesis block header
+     */
     public BlockState(KVRepository<String, Object> repository, BlockHeader header) {
         this.blockTree = new BlockTree(header);
         this.db = repository;
         this.unfinalizedBlocks = new HashMap<>();
         this.genesisHash = header.getHash();
-        this.lastfinalized = header.getHash();
+        this.lastFinalized = header.getHash();
 
         setArrivalTime(header.getHash(), Instant.now());
         setHeader(header);
@@ -52,7 +57,7 @@ public class BlockState {
         setBlockBody(header.getHash(), new BlockBody(new ArrayList<>()));
 
         //set the latest finalized head to the genesis header
-        setfinalizedHash(genesisHash, BigInteger.ZERO, BigInteger.ZERO);
+        setFinalizedHash(genesisHash, BigInteger.ZERO, BigInteger.ZERO);
     }
 
     /**
@@ -690,13 +695,12 @@ public class BlockState {
     }
 
     /* Block finalization */
-
-    public void setfinalizedHash(byte[] hash, BigInteger round, BigInteger setId) {
+    public void setFinalizedHash(byte[] hash, BigInteger round, BigInteger setId) {
         if (!hasHeader(hash)) {
             throw new RuntimeException("Cannot finalise unknown block " + new Hash256(hash));
         }
 
-        handlefinalizedBlock(hash);
+        handleFinalizedBlock(hash);
         db.save(helper.finalizedHashKey(round, setId), hash);
         setHighestRoundAndSetID(round, setId);
 
@@ -714,17 +718,17 @@ public class BlockState {
 
         // if nothing was previously finalized, set the first slot of the network to the
         // slot number of block 1, which is now being set as final
-        if (Arrays.equals(this.lastfinalized, this.genesisHash) && Arrays.equals(hash, this.genesisHash)) {
+        if (Arrays.equals(this.lastFinalized, this.genesisHash) && Arrays.equals(hash, this.genesisHash)) {
 //            setFirstSlotOnFinalisation();
             //TODO: Implement when BABE is implemented
         }
 
-        if (this.lastfinalized != hash) {
+        if (this.lastFinalized != hash) {
             //Delete from trie last finalized
             //TODO: implement when the Trie is ready
         }
 
-        this.lastfinalized = hash;
+        this.lastFinalized = hash;
     }
 
     public void setHighestRoundAndSetID(BigInteger round, BigInteger setId) {
@@ -749,12 +753,12 @@ public class BlockState {
         return helper.bytesToRoundAndSetId(data);
     }
 
-    public void handlefinalizedBlock(byte[] currentFinalizedHash) {
-        if (currentFinalizedHash == this.lastfinalized) {
+    public void handleFinalizedBlock(byte[] currentFinalizedHash) {
+        if (currentFinalizedHash == this.lastFinalized) {
             return;
         }
 
-        List<byte[]> subchain = rangeInMemory(lastfinalized, currentFinalizedHash);
+        List<byte[]> subchain = rangeInMemory(lastFinalized, currentFinalizedHash);
 
         List<byte[]> subchainExcludingLatestFinalized = subchain.subList(1, subchain.size());
 
@@ -785,7 +789,7 @@ public class BlockState {
 
             // prune all the subchain hashes state tries from memory
             // but keep the state trie from the current finalized block
-            if (!currentFinalizedHash.equals(subchainHash)) {
+            if (!Arrays.equals(currentFinalizedHash, subchainHash)) {
                 //TODO: tries.delete(tempBlock.getHeader().getStateRoot());
             }
         }

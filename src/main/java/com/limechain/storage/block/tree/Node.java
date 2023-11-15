@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -21,6 +22,13 @@ public class Node {
     private long number; // block number
     private Instant arrivalTime; // Time of arrival of the block
     private boolean isPrimary; // whether the block was authored in a primary slot or not
+
+    public Node(byte[] hash, Node parent, long number) {
+        this.hash = hash;
+        this.parent = parent;
+        this.number = number;
+        arrivalTime = Instant.now();
+    }
 
     /**
      * Adds a child to the node
@@ -44,7 +52,7 @@ public class Node {
      * @return node with the given hash
      */
     public Node getNode(final byte[] hash) {
-        if (this.hash.equals(hash)) {
+        if (Arrays.equals(this.hash, hash)) {
             return this;
         }
         for (Node child : this.children) {

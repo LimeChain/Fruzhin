@@ -44,11 +44,7 @@ public class LeafMap {
      * @throws RuntimeException if the leaf is not found
      */
     public Node load(byte[] key) {
-        Node node = syncMap.get(key);
-        if (node == null) {
-            throw new RuntimeException("Key not found: " + key);
-        }
-        return node;
+        return syncMap.get(key);
     }
 
     /**

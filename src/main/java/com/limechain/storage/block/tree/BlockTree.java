@@ -5,6 +5,7 @@ import com.limechain.runtime.Runtime;
 import com.limechain.storage.block.exception.LowerThanRootException;
 import com.limechain.storage.block.map.HashToRuntime;
 import io.emeraldpay.polkaj.types.Hash256;
+import lombok.Getter;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -21,7 +22,9 @@ import java.util.Map;
 public class BlockTree {
 
     private final HashToRuntime runtimes;
+    @Getter
     private Node root;
+    @Getter
     private LeafMap leaves;
 
     /**
@@ -159,7 +162,7 @@ public class BlockTree {
         return accumulateHashesInDescendingOrder(endNode, startNode);
     }
 
-    private List<byte[]> accumulateHashesInDescendingOrder(Node endNode, Node startNode) {
+    public List<byte[]> accumulateHashesInDescendingOrder(Node endNode, Node startNode) {
         if (startNode.getNumber() > endNode.getNumber()) {
             throw new RuntimeException("Start is greater than end");
         }
@@ -187,7 +190,7 @@ public class BlockTree {
      * @param hash Hash of the node to find
      * @return Node with the given hash
      */
-    private Node getNode(byte[] hash) {
+    public Node getNode(byte[] hash) {
         if (Arrays.equals(root.getHash(), hash)) {
             return root;
         }
@@ -342,7 +345,7 @@ public class BlockTree {
      * @param nodeB Node of block b to check
      * @return the hash of the lowest common ancestor
      */
-    private byte[] lowestCommonAncestor(Node nodeA, Node nodeB) {
+    public byte[] lowestCommonAncestor(Node nodeA, Node nodeB) {
         Node higherNode = nodeB;
         Node lowerNode = nodeA;
         if (nodeA.getNumber() > nodeB.getNumber()) {
