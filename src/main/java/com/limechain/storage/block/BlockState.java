@@ -746,8 +746,7 @@ public class BlockState {
         // if nothing was previously finalized, set the first slot of the network to the
         // slot number of block 1, which is now being set as final
         if (Arrays.equals(this.lastFinalized, this.genesisHash) && Arrays.equals(hash, this.genesisHash)) {
-        //    setFirstSlotOnFinalisation();
-            //TODO: Implement when BABE is implemented
+            //TODO: Implement when BABE is implemented - setFirstSlotOnFinalisation
         }
 
         if (this.lastFinalized != hash) {

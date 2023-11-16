@@ -41,25 +41,6 @@ class BlockTreeTest {
     }
 
     @Test
-    void testNewBlockTreeFromNode() {
-        BlockTree bt;
-        List<BlockNode> branches;
-
-        do {
-            Pair<BlockTree, List<BlockNode>> result = createTestBlockTree(testHeader, 5);
-            bt = result.getValue0();
-            branches = result.getValue1();
-
-        } while (branches.isEmpty() || bt.getNode(branches.get(0).getHash()).getChildren().isEmpty());
-
-        BlockNode testBlockNode = bt.getNode(branches.get(0).getHash()).getChildren().get(0);
-        List<BlockNode> leaves = testBlockNode.getLeaves();
-
-//        BlockTree newBt = new BlockTree(testNode);
-//        assertEquals(new HashSet<>(leaves), new HashSet<>(newBt.getLeaves().nodes()));
-    }
-
-    @Test
     void testBlockTreeGetBlock() {
         Pair<BlockTree, List<byte[]>> result = createFlatTree(2);
         BlockTree bt = result.getValue0();
@@ -192,7 +173,7 @@ class BlockTreeTest {
     }
 
     @Test
-    public void testPruneWhenFinalisedHashIsRootHash() {
+    void testPruneWhenFinalisedHashIsRootHash() {
         Pair<BlockTree, List<byte[]>> flatTreePair = createFlatTree(1);
         BlockTree bt = flatTreePair.getValue0();
 

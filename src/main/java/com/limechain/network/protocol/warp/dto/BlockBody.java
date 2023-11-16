@@ -15,11 +15,11 @@ import java.util.List;
 @AllArgsConstructor
 public class BlockBody {
 
-    private List<Extrinsic> extrinsics;
+    private List<Extrinsics> extrinsics;
 
     public byte[][] getExtrinsicsAsByteArray() {
         return extrinsics.stream()
-                .map(Extrinsic::getExtrinsic)
+                .map(Extrinsics::getExtrinsic)
                 .toArray(byte[][]::new);
     }
 
@@ -28,8 +28,8 @@ public class BlockBody {
         try (ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
 
             writer.writeCompact(extrinsics.size());
-            for (Extrinsic extrinsic : extrinsics) {
-                writer.writeAsList(extrinsic.getExtrinsic());
+            for (Extrinsics extrinsics : this.extrinsics) {
+                writer.writeAsList(extrinsics.getExtrinsic());
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -41,12 +41,12 @@ public class BlockBody {
     public static BlockBody fromEncoded(byte[] encoded) {
         ScaleCodecReader reader = new ScaleCodecReader(encoded);
 
-        ArrayList<Extrinsic> extrinsics = new ArrayList<>();
+        ArrayList<Extrinsics> extrinsics = new ArrayList<>();
 
         int extrinsicsCount = reader.readCompactInt();
         for (int i = 0; i < extrinsicsCount; i++) {
             byte[] extrinsic = reader.readByteArray();
-            extrinsics.add(new Extrinsic(extrinsic));
+            extrinsics.add(new Extrinsics(extrinsic));
         }
 
         return new BlockBody(extrinsics);

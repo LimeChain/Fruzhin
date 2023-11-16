@@ -76,13 +76,10 @@ public class LeafMap {
             } else if (blockNode.getNumber() == max && deepest != null) {
                 if (blockNode.getArrivalTime().isBefore(deepest.getArrivalTime())) {
                     deepest = blockNode;
-                } else if (blockNode.getArrivalTime().equals(deepest.getArrivalTime())) {
-                    // there are two leaf nodes with the same number *and* arrival time, just pick the one
-                    // with the lower hash in lexicographical order.
-                    // practically, this is very unlikely to happen.
-                    if (Arrays.compare(blockNode.getHash(), deepest.getHash()) < 0) {
-                        deepest = blockNode;
-                    }
+                } else if (blockNode.getArrivalTime().equals(deepest.getArrivalTime()) &&
+                        (Arrays.compare(blockNode.getHash(), deepest.getHash()) < 0)) {
+                    deepest = blockNode;
+
                 }
             }
         }
@@ -114,7 +111,8 @@ public class LeafMap {
                 highest = count;
             }
 
-            counts.computeIfAbsent(count, ArrayList::new).add(blockNode);
+            counts.computeIfAbsent(count, initialCapacity ->  /*explicitly use initialCapacity*/
+                    new ArrayList<>(initialCapacity)).add(blockNode);
         }
 
         //If there is only one block with the highest count, return it

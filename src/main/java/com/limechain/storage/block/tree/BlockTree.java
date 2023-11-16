@@ -269,9 +269,9 @@ public class BlockTree {
         root = finalizedBlockNode;
         root.setParent(null);
 
-        List<BlockNode> leaves = finalizedBlockNode.getLeaves();
+        List<BlockNode> finalizedLeaves = finalizedBlockNode.getLeaves();
         this.leaves = new LeafMap();
-        for (BlockNode leaf : leaves) {
+        for (BlockNode leaf : finalizedLeaves) {
             this.leaves.store(leaf.getHash(), leaf);
         }
 

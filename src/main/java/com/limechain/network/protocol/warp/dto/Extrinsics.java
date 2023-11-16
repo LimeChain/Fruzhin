@@ -9,7 +9,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 @Data
-public class Extrinsic {
+public class Extrinsics {
 
     private final byte[] extrinsic;
 
