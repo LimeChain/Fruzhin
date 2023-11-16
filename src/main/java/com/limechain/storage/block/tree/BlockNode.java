@@ -16,15 +16,15 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Node {
+public class BlockNode {
     private byte[] hash; // Block hash
-    private Node parent; // Parent node
-    private List<Node> children = new ArrayList<>(); // Nodes of children blocks
+    private BlockNode parent; // Parent node
+    private List<BlockNode> children = new ArrayList<>(); // Nodes of children blocks
     private long number; // block number
     private Instant arrivalTime; // Time of arrival of the block
     private boolean isPrimary; // whether the block was authored in a primary slot or not
 
-    public Node(byte[] hash, Node parent, long number) {
+    public BlockNode(byte[] hash, BlockNode parent, long number) {
         this.hash = hash;
         this.parent = parent;
         this.number = number;
@@ -33,10 +33,10 @@ public class Node {
 
     /**
      * Adds a child to the node
-     * @param node child to be added node
+     * @param blockNode child to be added node
      */
-    public void addChild(final Node node) {
-        this.children.add(node);
+    public void addChild(final BlockNode blockNode) {
+        this.children.add(blockNode);
     }
 
     /**
@@ -52,14 +52,14 @@ public class Node {
      * @param hash hash of the node
      * @return node with the given hash
      */
-    public Node getNode(final byte[] hash) {
+    public BlockNode getNode(final byte[] hash) {
         if (Arrays.equals(this.hash, hash)) {
             return this;
         }
-        for (Node child : this.children) {
-            Node node = child.getNode(hash);
-            if (node != null) {
-                return node;
+        for (BlockNode child : this.children) {
+            BlockNode blockNode = child.getNode(hash);
+            if (blockNode != null) {
+                return blockNode;
             }
         }
         return null;
@@ -72,7 +72,7 @@ public class Node {
      */
     public List<byte[]> getNodesWithNumber(final long number) {
         List<byte[]> hashes = new ArrayList<>();
-        for (Node child : children) {
+        for (BlockNode child : children) {
             if (child.number == number) {
                 hashes.add(child.hash);
             }
@@ -89,7 +89,7 @@ public class Node {
      * @param parent parent node to be traversed
      * @return true if the node is a descendant of the parent
      */
-    public boolean isDescendantOf(final Node parent) {
+    public boolean isDescendantOf(final BlockNode parent) {
         if (parent == null) {
             return false;
         }
@@ -102,7 +102,7 @@ public class Node {
             return false;
         }
 
-        for (Node child : parent.children) {
+        for (BlockNode child : parent.children) {
             if (this.isDescendantOf(child)) {
                 return true;
             }
@@ -115,12 +115,12 @@ public class Node {
      * Recursively searches for all leaves of the tree
      * @return list of leaves
      */
-    public List<Node> getLeaves() {
-        List<Node> leaves = new ArrayList<>();
+    public List<BlockNode> getLeaves() {
+        List<BlockNode> leaves = new ArrayList<>();
         if (this.children.isEmpty()) {
             leaves.add(this);
         }
-        for (Node child : children) {
+        for (BlockNode child : children) {
             leaves.addAll(child.getLeaves());
         }
         return leaves;
@@ -133,7 +133,7 @@ public class Node {
     public List<byte[]> getAllDescendants() {
         List<byte[]> desc = new ArrayList<>();
         desc.add(this.hash);
-        for (Node child : children) {
+        for (BlockNode child : children) {
             desc.addAll(child.getAllDescendants());
         }
         return desc;
@@ -144,9 +144,9 @@ public class Node {
      * @param parent parent of the node
      * @return deep copy of the node
      */
-    public Node deepCopy(Node parent) {
-        Node copy = new Node(this.hash, parent, new ArrayList<>(), this.number, this.arrivalTime, this.isPrimary);
-        for (Node child : children) {
+    public BlockNode deepCopy(BlockNode parent) {
+        BlockNode copy = new BlockNode(this.hash, parent, new ArrayList<>(), this.number, this.arrivalTime, this.isPrimary);
+        for (BlockNode child : children) {
             copy.children.add(child.deepCopy(copy));
         }
         return copy;
@@ -157,7 +157,7 @@ public class Node {
      * @param finalized finalized node to be pruned
      * @return list of hashes of the pruned nodes
      */
-    public List<byte[]> prune(Node finalized) {
+    public List<byte[]> prune(BlockNode finalized) {
         List<byte[]> pruned = new ArrayList<>();
         if (finalized == null) {
             return pruned;
@@ -180,7 +180,7 @@ public class Node {
 
         // if this is an ancestor of the finalized block, keep it,
         // and check its children
-        for (Node child : new ArrayList<>(children)) {
+        for (BlockNode child : new ArrayList<>(children)) {
             pruned.addAll(child.prune(finalized));
         }
 
@@ -191,7 +191,7 @@ public class Node {
      * Deletes a child from the node
      * @param toDelete child to be deleted
      */
-    public void deleteChild(Node toDelete) {
+    public void deleteChild(BlockNode toDelete) {
         children.removeIf(child -> Arrays.equals(child.hash, toDelete.hash));
     }
 

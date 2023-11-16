@@ -43,17 +43,17 @@ class BlockTreeTest {
     @Test
     void testNewBlockTreeFromNode() {
         BlockTree bt;
-        List<Node> branches;
+        List<BlockNode> branches;
 
         do {
-            Pair<BlockTree, List<Node>> result = createTestBlockTree(testHeader, 5);
+            Pair<BlockTree, List<BlockNode>> result = createTestBlockTree(testHeader, 5);
             bt = result.getValue0();
             branches = result.getValue1();
 
         } while (branches.isEmpty() || bt.getNode(branches.get(0).getHash()).getChildren().isEmpty());
 
-        Node testNode = bt.getNode(branches.get(0).getHash()).getChildren().get(0);
-        List<Node> leaves = testNode.getLeaves();
+        BlockNode testBlockNode = bt.getNode(branches.get(0).getHash()).getChildren().get(0);
+        List<BlockNode> leaves = testBlockNode.getLeaves();
 
 //        BlockTree newBt = new BlockTree(testNode);
 //        assertEquals(new HashSet<>(leaves), new HashSet<>(newBt.getLeaves().nodes()));
@@ -65,9 +65,9 @@ class BlockTreeTest {
         BlockTree bt = result.getValue0();
         List<byte[]> hashes = result.getValue1();
 
-        Node node = bt.getNode(hashes.get(2));
-        assertNotNull(node, "node is null");
-        assertArrayEquals(hashes.get(2), node.getHash());
+        BlockNode blockNode = bt.getNode(hashes.get(2));
+        assertNotNull(blockNode, "node is null");
+        assertArrayEquals(hashes.get(2), blockNode.getHash());
     }
 
     @Test
@@ -80,14 +80,14 @@ class BlockTreeTest {
         byte[] hash = header.getHash();
         bt.addBlock(header, Instant.ofEpochSecond(0));
 
-        Node node = bt.getNode(hash);
-        Node leafNode = bt.getLeaves().load(node.getHash());
+        BlockNode blockNode = bt.getNode(hash);
+        BlockNode leafBlockNode = bt.getLeaves().load(blockNode.getHash());
 
-        assertNotNull(leafNode);
+        assertNotNull(leafBlockNode);
 
         byte[] oldHash = new byte[]{0x01};
-        leafNode = bt.getLeaves().load(oldHash);
-        assertNull(leafNode);
+        leafBlockNode = bt.getLeaves().load(oldHash);
+        assertNull(leafBlockNode);
     }
 
     @Test
@@ -96,7 +96,7 @@ class BlockTreeTest {
         BlockTree bt = result.getValue0();
         List<byte[]> hashes = result.getValue1();
 
-        Node leaf = bt.getNode(hashes.get(3));
+        BlockNode leaf = bt.getNode(hashes.get(3));
         assertTrue(leaf.isDescendantOf(bt.getRoot()));
 
         assertFalse(bt.getRoot().isDescendantOf(leaf));
@@ -104,16 +104,16 @@ class BlockTreeTest {
 
     @Test
     void testBlockTreeGetNode() {
-        Pair<BlockTree, List<Node>> result = createTestBlockTree(testHeader, 16);
+        Pair<BlockTree, List<BlockNode>> result = createTestBlockTree(testHeader, 16);
         BlockTree bt = result.getValue0();
-        List<Node> branches = result.getValue1();
+        List<BlockNode> branches = result.getValue1();
 
-        for (Node branch : branches) {
+        for (BlockNode branch : branches) {
             BlockHeader header = createHeader(branch.getHash(), branch.getNumber() + 1, getHash("02"));
             bt.addBlock(header, Instant.ofEpochSecond(0));
         }
 
-        Node block = bt.getNode(branches.get(0).getHash());
+        BlockNode block = bt.getNode(branches.get(0).getHash());
         assertNotNull(block, "Block should not be null");
     }
 
@@ -145,10 +145,10 @@ class BlockTreeTest {
     void testBlockTreeLowestCommonAncestor() {
         BlockTree bt;
         List<byte[]> leaves;
-        List<Node> branches;
+        List<BlockNode> branches;
 
         while (true) {
-            Pair<BlockTree, List<Node>> result = createTestBlockTree(testHeader, 8);
+            Pair<BlockTree, List<BlockNode>> result = createTestBlockTree(testHeader, 8);
             bt = result.getValue0();
             branches = result.getValue1();
             leaves = bt.leaves();
@@ -168,7 +168,7 @@ class BlockTreeTest {
 
     @Test
     void testBlockTreeLowestCommonAncestorSameNode() {
-        Pair<BlockTree, List<Node>> result = createTestBlockTree(testHeader, 8);
+        Pair<BlockTree, List<BlockNode>> result = createTestBlockTree(testHeader, 8);
         BlockTree bt = result.getValue0();
         List<byte[]> leaves = bt.leaves();
 
@@ -180,7 +180,7 @@ class BlockTreeTest {
 
     @Test
     void testBlockTreeLowestCommonAncestorSameChain() {
-        Pair<BlockTree, List<Node>> result = createTestBlockTree(testHeader, 8);
+        Pair<BlockTree, List<BlockNode>> result = createTestBlockTree(testHeader, 8);
         BlockTree bt = result.getValue0();
         List<byte[]> leaves = bt.leaves();
 
@@ -213,11 +213,11 @@ class BlockTreeTest {
     void testPruneNothingToPrune() {
         BlockHeader rootHeader = createHeader(getHash("01").getBytes(), 0);
         BlockTree blockTree = new BlockTree(rootHeader);
-        Node rootNode = blockTree.getRoot();
+        BlockNode rootBlockNode = blockTree.getRoot();
 
-        Node childNode = new Node(getHash("02").getBytes(), rootNode, new ArrayList<>(), 1, null, false);
-        rootNode.addChild(childNode);
-        blockTree.getLeaves().replace(rootNode, childNode);
+        BlockNode childBlockNode = new BlockNode(getHash("02").getBytes(), rootBlockNode, new ArrayList<>(), 1, null, false);
+        rootBlockNode.addChild(childBlockNode);
+        blockTree.getLeaves().replace(rootBlockNode, childBlockNode);
 
         List<byte[]> pruned = blockTree.prune(getHash("02").getBytes());
         assertTrue(pruned.isEmpty(), "Pruned list should be empty when there's nothing to prune");
@@ -228,14 +228,14 @@ class BlockTreeTest {
         BlockHeader rootHeader = createHeader(getHash("01").getBytes(), 0);
 
         BlockTree blockTree = new BlockTree(rootHeader);
-        Node rootNode = blockTree.getRoot();
+        BlockNode rootBlockNode = blockTree.getRoot();
 
         Runtime rootRuntime = mock(Runtime.class);
         blockTree.storeRuntime(getHash("01").getBytes(), rootRuntime);
 
-        Node childNode = new Node(getHash("02").getBytes(), rootNode, new ArrayList<>(), 1, null, false);
-        rootNode.addChild(childNode);
-        blockTree.getLeaves().replace(rootNode, childNode);
+        BlockNode childBlockNode = new BlockNode(getHash("02").getBytes(), rootBlockNode, new ArrayList<>(), 1, null, false);
+        rootBlockNode.addChild(childBlockNode);
+        blockTree.getLeaves().replace(rootBlockNode, childBlockNode);
 
         Runtime leafRuntime = mock(Runtime.class);
         blockTree.storeRuntime(getHash("02").getBytes(), leafRuntime);
@@ -248,21 +248,21 @@ class BlockTreeTest {
     void testPruneFork() {
         BlockHeader rootHeader = createHeader(getHash("01").getBytes(), 0);
         BlockTree blockTree = new BlockTree(rootHeader);
-        Node rootNode = blockTree.getRoot();
+        BlockNode rootBlockNode = blockTree.getRoot();
 
         // Set runtime for root
         Runtime rootRuntime = Mockito.mock(Runtime.class);
         blockTree.storeRuntime(getHash("01").getBytes(), rootRuntime);
 
         // Add child node {1} -> {2}
-        Node childNode2 = new Node(getHash("02").getBytes(), rootNode, 1);
-        rootNode.addChild(childNode2);
-        blockTree.getLeaves().replace(rootNode, childNode2);
+        BlockNode childBlockNode2 = new BlockNode(getHash("02").getBytes(), rootBlockNode, 1);
+        rootBlockNode.addChild(childBlockNode2);
+        blockTree.getLeaves().replace(rootBlockNode, childBlockNode2);
 
         // Add another child node {1} -> {3}
-        Node childNode3 = new Node(getHash("03").getBytes(), rootNode, 1);
-        rootNode.addChild(childNode3);
-        blockTree.getLeaves().replace(rootNode, childNode3);
+        BlockNode childBlockNode3 = new BlockNode(getHash("03").getBytes(), rootBlockNode, 1);
+        rootBlockNode.addChild(childBlockNode3);
+        blockTree.getLeaves().replace(rootBlockNode, childBlockNode3);
 
         // Set runtime to be pruned
         Runtime runtimeToBePruned = Mockito.mock(Runtime.class);
@@ -285,11 +285,11 @@ class BlockTreeTest {
         return new Hash256(bytes);
     }
 
-    private Pair<BlockTree, List<Node>> createTestBlockTree(BlockHeader header, int number) {
+    private Pair<BlockTree, List<BlockNode>> createTestBlockTree(BlockHeader header, int number) {
         BlockTree bt = new BlockTree(header);
         byte[] previousHash = header.getHash();
 
-        List<Node> branches = new ArrayList<>();
+        List<BlockNode> branches = new ArrayList<>();
         Random r = new Random();
 
         long at = 0;
@@ -307,14 +307,14 @@ class BlockTreeTest {
             previousHash = hash;
             boolean isBranch = r.nextBoolean();
             if (isBranch) {
-                branches.add(new Node(hash, null, new ArrayList<>(), bt.getNode(hash).getNumber(),
+                branches.add(new BlockNode(hash, null, new ArrayList<>(), bt.getNode(hash).getNumber(),
                         Instant.ofEpochSecond(0, at), false));
             }
 
             at += r.nextInt(8);
         }
 
-        for (Node branch : branches) {
+        for (BlockNode branch : branches) {
             at = branch.getArrivalTime().getEpochSecond();
             previousHash = branch.getHash();
 

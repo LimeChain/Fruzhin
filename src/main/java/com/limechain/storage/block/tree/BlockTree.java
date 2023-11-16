@@ -23,7 +23,7 @@ public class BlockTree {
 
     private final HashToRuntime runtimes;
     @Getter
-    private Node root;
+    private BlockNode root;
     @Getter
     private LeafMap leaves;
 
@@ -42,7 +42,7 @@ public class BlockTree {
      * @param root BlockHeader to be set as root node
      */
     public BlockTree(BlockHeader root) {
-        final Node n = new Node(
+        final BlockNode n = new BlockNode(
                 root.getHash(),
                 null,
                 new ArrayList<>(),
@@ -62,7 +62,7 @@ public class BlockTree {
      * @param arrivalTime Arrival time of the block
      */
     public void addBlock(BlockHeader header, Instant arrivalTime) {
-        Node parent = getNode(header.getParentHash().getBytes());
+        BlockNode parent = getNode(header.getParentHash().getBytes());
         if (parent == null) {
             throw new RuntimeException("Parent does not exist in tree");
         }
@@ -80,9 +80,10 @@ public class BlockTree {
             //TODO: Check if primary
         }
 
-        Node newNode = new Node(header.getHash(), parent, new ArrayList<>(), number, arrivalTime, isPrimary);
-        parent.addChild(newNode);
-        leaves.replace(parent, newNode);
+        BlockNode
+                newBlockNode = new BlockNode(header.getHash(), parent, new ArrayList<>(), number, arrivalTime, isPrimary);
+        parent.addChild(newBlockNode);
+        leaves.replace(parent, newBlockNode);
     }
 
     /**
@@ -93,12 +94,12 @@ public class BlockTree {
      * @return List of block hashes with the number of the given hash plus one
      */
     public List<byte[]> getAllBlocksAtNumber(byte[] hash) {
-        Node node = getNode(hash);
-        if (node == null) {
+        BlockNode blockNode = getNode(hash);
+        if (blockNode == null) {
             return new ArrayList<>();
         }
 
-        long number = node.getNumber() + 1;
+        long number = blockNode.getNumber() + 1;
         if (root.getNumber() == number) {
             return Collections.singletonList(root.getHash());
         }
@@ -117,8 +118,8 @@ public class BlockTree {
      * @return List of block hashes between the start and end hash inclusive
      */
     public List<byte[]> range(byte[] startHash, byte[] endHash) {
-        Node endNode = getNode(endHash);
-        if (endNode == null) {
+        BlockNode endBlockNode = getNode(endHash);
+        if (endBlockNode == null) {
             throw new RuntimeException("End node not found");
         }
 
@@ -126,12 +127,12 @@ public class BlockTree {
         // that means it should be in the database, so we retrieve
         // as many nodes as we can, in other words we get all the
         // blocks from the end hash till the root inclusive
-        Node startNode = getNode(startHash);
-        if (startNode == null) {
-            startNode = root;
+        BlockNode startBlockNode = getNode(startHash);
+        if (startBlockNode == null) {
+            startBlockNode = root;
         }
 
-        return accumulateHashesInDescendingOrder(endNode, startNode);
+        return accumulateHashesInDescendingOrder(endBlockNode, startBlockNode);
     }
 
     /**
@@ -145,38 +146,38 @@ public class BlockTree {
      * @return List of block hashes between the start and end hash inclusive
      */
     public List<byte[]> rangeInMemory(byte[] startHash, byte[] endHash) {
-        Node endNode = getNode(endHash);
-        if (endNode == null) {
+        BlockNode endBlockNode = getNode(endHash);
+        if (endBlockNode == null) {
             throw new RuntimeException("End node not found");
         }
 
-        Node startNode = getNode(startHash);
-        if (startNode == null) {
+        BlockNode startBlockNode = getNode(startHash);
+        if (startBlockNode == null) {
             throw new RuntimeException("Start node not found");
         }
 
-        if (startNode.getNumber() > endNode.getNumber()) {
+        if (startBlockNode.getNumber() > endBlockNode.getNumber()) {
             throw new RuntimeException("Start is greater than end");
         }
 
-        return accumulateHashesInDescendingOrder(endNode, startNode);
+        return accumulateHashesInDescendingOrder(endBlockNode, startBlockNode);
     }
 
-    public List<byte[]> accumulateHashesInDescendingOrder(Node endNode, Node startNode) {
-        if (startNode.getNumber() > endNode.getNumber()) {
+    public List<byte[]> accumulateHashesInDescendingOrder(BlockNode endBlockNode, BlockNode startBlockNode) {
+        if (startBlockNode.getNumber() > endBlockNode.getNumber()) {
             throw new RuntimeException("Start is greater than end");
         }
 
         // blocksInRange is the difference between the end number to start number
         // but the difference don't include the start item that is why we add 1
-        int blocksInRange = (int) (endNode.getNumber() - startNode.getNumber() + 1);
+        int blocksInRange = (int) (endBlockNode.getNumber() - startBlockNode.getNumber() + 1);
         List<byte[]> hashes = new ArrayList<>(blocksInRange);
 
         for (int position = blocksInRange - 1; position >= 0; position--) {
-            hashes.add(endNode.getHash());
-            endNode = endNode.getParent();
+            hashes.add(endBlockNode.getHash());
+            endBlockNode = endBlockNode.getParent();
 
-            if (endNode == null) {
+            if (endBlockNode == null) {
                 throw new RuntimeException("End node is null");
             }
         }
@@ -190,19 +191,19 @@ public class BlockTree {
      * @param hash Hash of the node to find
      * @return Node with the given hash
      */
-    public Node getNode(byte[] hash) {
+    public BlockNode getNode(byte[] hash) {
         if (Arrays.equals(root.getHash(), hash)) {
             return root;
         }
 
-        for (Node leaf : leaves.nodes()) {
+        for (BlockNode leaf : leaves.nodes()) {
             if (Arrays.equals(leaf.getHash(), hash)) {
                 return leaf;
             }
         }
 
-        for (Node child : root.getChildren()) {
-            Node n = child.getNode(hash);
+        for (BlockNode child : root.getChildren()) {
+            BlockNode n = child.getNode(hash);
             if (n != null) {
                 return n;
             }
@@ -223,18 +224,18 @@ public class BlockTree {
             return new ArrayList<>();
         }
 
-        Node finalizedNode = getNode(finalized);
-        if (finalizedNode == null) {
+        BlockNode finalizedBlockNode = getNode(finalized);
+        if (finalizedBlockNode == null) {
             return new ArrayList<>();
         }
 
-        Node previousFinalizedBlock = root;
-        long newCanonicalChainBlocksCount = finalizedNode.getNumber() - previousFinalizedBlock.getNumber();
+        BlockNode previousFinalizedBlock = root;
+        long newCanonicalChainBlocksCount = finalizedBlockNode.getNumber() - previousFinalizedBlock.getNumber();
         if (previousFinalizedBlock.getNumber() == 0) {
             newCanonicalChainBlocksCount++;
         }
 
-        Node canonicalChainBlock = finalizedNode;
+        BlockNode canonicalChainBlock = finalizedBlockNode;
         List<byte[]> newCanonicalChainBlockHashes = new ArrayList<>();
         for (int i = 0; i < newCanonicalChainBlocksCount; i++) {
             newCanonicalChainBlockHashes.add(canonicalChainBlock.getHash());
@@ -243,13 +244,13 @@ public class BlockTree {
 
         runtimes.onFinalisation(newCanonicalChainBlockHashes);
 
-        List<byte[]> pruned = root.prune(finalizedNode);
-        root = finalizedNode;
+        List<byte[]> pruned = root.prune(finalizedBlockNode);
+        root = finalizedBlockNode;
         root.setParent(null);
 
-        List<Node> leaves = finalizedNode.getLeaves();
+        List<BlockNode> leaves = finalizedBlockNode.getLeaves();
         this.leaves = new LeafMap();
-        for (Node leaf : leaves) {
+        for (BlockNode leaf : leaves) {
             this.leaves.store(leaf.getHash(), leaf);
         }
 
@@ -261,7 +262,7 @@ public class BlockTree {
      *
      * @return Best block in the block tree
      */
-    public Node best() {
+    public BlockNode best() {
         return leaves.bestBlock();
     }
 
@@ -295,17 +296,17 @@ public class BlockTree {
             return true;
         }
 
-        Node parentNode = getNode(parent);
-        if (parentNode == null) {
+        BlockNode parentBlockNode = getNode(parent);
+        if (parentBlockNode == null) {
             throw new IllegalArgumentException("Start node not found: " + new Hash256(parent));
         }
 
-        Node childNode = getNode(child);
-        if (childNode == null) {
+        BlockNode childBlockNode = getNode(child);
+        if (childBlockNode == null) {
             throw new IllegalArgumentException("End node not found: " + new Hash256(child));
         }
 
-        return childNode.isDescendantOf(parentNode);
+        return childBlockNode.isDescendantOf(parentBlockNode);
     }
 
     /**
@@ -325,53 +326,53 @@ public class BlockTree {
      * @return the hash of the lowest common ancestor
      */
     public byte[] lowestCommonAncestor(byte[] a, byte[] b) {
-        Node nodeA = getNode(a);
-        if (nodeA == null) {
+        BlockNode blockNodeA = getNode(a);
+        if (blockNodeA == null) {
             throw new IllegalArgumentException("Node not found: " + new Hash256(a));
         }
 
-        Node nodeB = getNode(b);
-        if (nodeB == null) {
+        BlockNode blockNodeB = getNode(b);
+        if (blockNodeB == null) {
             throw new IllegalArgumentException("Node not found: " + new Hash256(b));
         }
 
-        return lowestCommonAncestor(nodeA, nodeB);
+        return lowestCommonAncestor(blockNodeA, blockNodeB);
     }
 
     /**
      * Find the hash of the lowest common ancestor between node a and b
      *
-     * @param nodeA Node of block a to check
-     * @param nodeB Node of block b to check
+     * @param blockNodeA Node of block a to check
+     * @param blockNodeB Node of block b to check
      * @return the hash of the lowest common ancestor
      */
-    public byte[] lowestCommonAncestor(Node nodeA, Node nodeB) {
-        Node higherNode = nodeB;
-        Node lowerNode = nodeA;
-        if (nodeA.getNumber() > nodeB.getNumber()) {
-            higherNode = nodeA;
-            lowerNode = nodeB;
+    public byte[] lowestCommonAncestor(BlockNode blockNodeA, BlockNode blockNodeB) {
+        BlockNode higherBlockNode = blockNodeB;
+        BlockNode lowerBlockNode = blockNodeA;
+        if (blockNodeA.getNumber() > blockNodeB.getNumber()) {
+            higherBlockNode = blockNodeA;
+            lowerBlockNode = blockNodeB;
         }
 
-        long higherNum = higherNode.getNumber();
-        long lowerNum = lowerNode.getNumber();
+        long higherNum = higherBlockNode.getNumber();
+        long lowerNum = lowerBlockNode.getNumber();
         long diff = higherNum - lowerNum;
         while (diff > 0) {
-            if (higherNode.getParent() == null) {
+            if (higherBlockNode.getParent() == null) {
                 throw new IllegalStateException("Out of bounds ancestor check for block number " + higherNum);
             }
-            higherNode = higherNode.getParent();
+            higherBlockNode = higherBlockNode.getParent();
             diff--;
         }
 
         while (true) {
-            if (Arrays.equals(higherNode.getHash(), lowerNode.getHash())) {
-                return higherNode.getHash();
-            } else if (higherNode.getParent() == null || lowerNode.getParent() == null) {
+            if (Arrays.equals(higherBlockNode.getHash(), lowerBlockNode.getHash())) {
+                return higherBlockNode.getHash();
+            } else if (higherBlockNode.getParent() == null || lowerBlockNode.getParent() == null) {
                 throw new IllegalStateException("Out of bounds ancestor check for block number " + higherNum);
             }
-            higherNode = higherNode.getParent();
-            lowerNode = lowerNode.getParent();
+            higherBlockNode = higherBlockNode.getParent();
+            lowerBlockNode = lowerBlockNode.getParent();
         }
     }
 
@@ -387,12 +388,12 @@ public class BlockTree {
      * @return List of all block hashes that are descendants of the given block hash (including itself).
      */
     public List<byte[]> getAllDescendants(byte[] hash) {
-        Node node = getNode(hash);
-        if (node == null) {
+        BlockNode blockNode = getNode(hash);
+        if (blockNode == null) {
             throw new IllegalArgumentException("Node not found for block hash " + new Hash256(hash));
         }
 
-        return node.getAllDescendants();
+        return blockNode.getAllDescendants();
     }
 
     /**
@@ -401,7 +402,7 @@ public class BlockTree {
      * If the number is lower or higher than the numbers in the blocktree, an error is returned.
      */
     public byte[] getHashByNumber(long num) {
-        Node best = leaves.bestBlock();
+        BlockNode best = leaves.bestBlock();
         if (best.getNumber() < num) {
             throw new IllegalArgumentException("Number greater than highest");
         }
@@ -418,7 +419,7 @@ public class BlockTree {
             return root.getHash();
         }
 
-        Node curr = best.getParent();
+        BlockNode curr = best.getParent();
         while (true) {
             if (curr == null) {
                 throw new IllegalArgumentException("Node not found");
@@ -439,7 +440,7 @@ public class BlockTree {
      * @return Arrival time of the block
      */
     public Instant getArrivalTime(byte[] hash) {
-        Node n = getNode(hash);
+        BlockNode n = getNode(hash);
         if (n == null) {
             throw new IllegalArgumentException("Node not found");
         }
@@ -463,8 +464,8 @@ public class BlockTree {
 
         if (leaves != null) {
             blockTreeCopy.leaves = new LeafMap();
-            Map<byte[], Node> leafMap = leaves.getSyncMap();
-            for (Map.Entry<byte[], Node> entry : leafMap.entrySet()) {
+            Map<byte[], BlockNode> leafMap = leaves.getSyncMap();
+            for (Map.Entry<byte[], BlockNode> entry : leafMap.entrySet()) {
                 blockTreeCopy.leaves.store(entry.getKey(), blockTreeCopy.getNode(entry.getValue().getHash()));
             }
         }
@@ -494,19 +495,19 @@ public class BlockTree {
             return runtimeInstance;
         }
 
-        Node currentNode = getNode(hash);
-        if (currentNode == null) {
+        BlockNode currentBlockNode = getNode(hash);
+        if (currentBlockNode == null) {
             throw new IllegalArgumentException("Node not found for block hash " + hash);
         }
 
-        currentNode = currentNode.getParent();
-        while (currentNode != null) {
-            runtimeInstance = runtimes.get(currentNode.getHash());
+        currentBlockNode = currentBlockNode.getParent();
+        while (currentBlockNode != null) {
+            runtimeInstance = runtimes.get(currentBlockNode.getHash());
             if (runtimeInstance != null) {
                 return runtimeInstance;
             }
 
-            currentNode = currentNode.getParent();
+            currentBlockNode = currentBlockNode.getParent();
         }
 
         return null;

@@ -16,15 +16,15 @@ import java.util.Map;
 @NoArgsConstructor
 public class LeafMap {
 
-    private final Map<byte[], Node> syncMap = new HashMap<>();
+    private final Map<byte[], BlockNode> syncMap = new HashMap<>();
 
     /**
      * Creates a new LeafMap from a node.
      *
-     * @param node the node to be converted to a map
+     * @param blockNode the node to be converted to a map
      */
-    public LeafMap(final Node node) {
-        for (final Node leaf : node.getLeaves()) {
+    public LeafMap(final BlockNode blockNode) {
+        for (final BlockNode leaf : blockNode.getLeaves()) {
             syncMap.put(leaf.getHash(), leaf);
         }
     }
@@ -35,7 +35,7 @@ public class LeafMap {
      * @param key   hash of the leaf
      * @param value the leaf
      */
-    public void store(byte[] key, Node value) {
+    public void store(byte[] key, BlockNode value) {
         syncMap.put(key, value);
     }
 
@@ -46,19 +46,19 @@ public class LeafMap {
      * @return the leaf
      * @throws RuntimeException if the leaf is not found
      */
-    public Node load(byte[] key) {
+    public BlockNode load(byte[] key) {
         return syncMap.get(key);
     }
 
     /**
      * Deletes the old node from the map and inserts the new one.
      *
-     * @param oldNode the leaf to be removed
-     * @param newNode the leaf to be added
+     * @param oldBlockNode the leaf to be removed
+     * @param newBlockNode the leaf to be added
      */
-    public void replace(Node oldNode, Node newNode) {
-        syncMap.remove(oldNode.getHash());
-        store(newNode.getHash(), newNode);
+    public void replace(BlockNode oldBlockNode, BlockNode newBlockNode) {
+        syncMap.remove(oldBlockNode.getHash());
+        store(newBlockNode.getHash(), newBlockNode);
     }
 
     /**
@@ -67,22 +67,22 @@ public class LeafMap {
      *
      * @return the leaf with the greatest number
      */
-    public Node highestLeaf() {
-        Node deepest = null;
+    public BlockNode highestLeaf() {
+        BlockNode deepest = null;
         long max = 0;
-        for (Node node : syncMap.values()) {
-            if (node.getNumber() > max) {
-                max = node.getNumber();
-                deepest = node;
-            } else if (node.getNumber() == max && deepest != null) {
-                if (node.getArrivalTime().isBefore(deepest.getArrivalTime())) {
-                    deepest = node;
-                } else if (node.getArrivalTime().equals(deepest.getArrivalTime())) {
+        for (BlockNode blockNode : syncMap.values()) {
+            if (blockNode.getNumber() > max) {
+                max = blockNode.getNumber();
+                deepest = blockNode;
+            } else if (blockNode.getNumber() == max && deepest != null) {
+                if (blockNode.getArrivalTime().isBefore(deepest.getArrivalTime())) {
+                    deepest = blockNode;
+                } else if (blockNode.getArrivalTime().equals(deepest.getArrivalTime())) {
                     // there are two leaf nodes with the same number *and* arrival time, just pick the one
                     // with the lower hash in lexicographical order.
                     // practically, this is very unlikely to happen.
-                    if (Arrays.compare(node.getHash(), deepest.getHash()) < 0) {
-                        deepest = node;
+                    if (Arrays.compare(blockNode.getHash(), deepest.getHash()) < 0) {
+                        deepest = blockNode;
                     }
                 }
             }
@@ -95,7 +95,7 @@ public class LeafMap {
      *
      * @return list of all nodes
      */
-    public List<Node> nodes() {
+    public List<BlockNode> nodes() {
         return new ArrayList<>(syncMap.values());
     }
 
@@ -104,18 +104,18 @@ public class LeafMap {
      *
      * @return the best block
      */
-    public Node bestBlock() {
-        Map<Integer, List<Node>> counts = new HashMap<>();
+    public BlockNode bestBlock() {
+        Map<Integer, List<BlockNode>> counts = new HashMap<>();
         int highest = 0;
 
         //Find the block with the highest ancestors count
-        for (Node node : syncMap.values()) {
-            int count = node.primaryAncestorCount();
+        for (BlockNode blockNode : syncMap.values()) {
+            int count = blockNode.primaryAncestorCount();
             if (count > highest) {
                 highest = count;
             }
 
-            counts.computeIfAbsent(count, ArrayList::new).add(node);
+            counts.computeIfAbsent(count, ArrayList::new).add(blockNode);
         }
 
         //If there is only one block with the highest count, return it
@@ -125,8 +125,8 @@ public class LeafMap {
 
         //If there are multiple blocks with the highest count, return the one with the highest leaf count
         LeafMap lm2 = new LeafMap();
-        for (Node node : counts.get(highest)) {
-            lm2.store(node.getHash(), node);
+        for (BlockNode blockNode : counts.get(highest)) {
+            lm2.store(blockNode.getHash(), blockNode);
         }
 
         return lm2.highestLeaf();
