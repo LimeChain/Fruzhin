@@ -8,7 +8,7 @@ import lombok.Data;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 @Data
@@ -41,7 +41,7 @@ public class BlockBody {
     public static BlockBody fromEncoded(byte[] encoded) {
         ScaleCodecReader reader = new ScaleCodecReader(encoded);
 
-        List<Extrinsics> extrinsics = new ArrayList<>();
+        List<Extrinsics> extrinsics = new LinkedList<>();
 
         int extrinsicsCount = reader.readCompactInt();
         for (int i = 0; i < extrinsicsCount; i++) {
