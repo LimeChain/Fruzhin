@@ -9,6 +9,7 @@ import com.limechain.sync.warpsync.SyncedState;
 import io.emeraldpay.polkaj.scale.CompactMode;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import org.springframework.lang.Nullable;
 import org.wasmer.ImportObject;
@@ -24,18 +25,18 @@ import java.util.List;
  * For more info check
  * {<a href="https://spec.polkadot.network/chap-host-api#sect-storage-api">Storage API</a>}
  */
-@AllArgsConstructor
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class StorageHostFunctions {
     private final HostApi hostApi;
     private final KVRepository<String, Object> repository;
 
-    public StorageHostFunctions() {
-        this.hostApi = HostApi.getInstance();
+    private StorageHostFunctions(final HostApi hostApi) {
+        this.hostApi = hostApi;
         this.repository = SyncedState.getInstance().getRepository();
     }
 
-    public static List<ImportObject> getFunctions() {
-        return new StorageHostFunctions().buildFunctions();
+    public static List<ImportObject> getFunctions(final HostApi hostApi) {
+        return new StorageHostFunctions(hostApi).buildFunctions();
     }
 
     public List<ImportObject> buildFunctions() {

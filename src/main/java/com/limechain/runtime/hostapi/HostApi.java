@@ -3,8 +3,6 @@ package com.limechain.runtime.hostapi;
 import com.limechain.runtime.Runtime;
 import com.limechain.runtime.allocator.FreeingBumpHeapAllocator;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
 import lombok.extern.java.Log;
 import org.wasmer.ImportObject;
 import org.wasmer.Type;
@@ -20,17 +18,15 @@ import java.util.function.Function;
  * HostApi functions implementations
  */
 @Log
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class HostApi {
     protected static final List<Number> EMPTY_LIST_OF_NUMBER = List.of();
     protected static final List<Type> EMPTY_LIST_OF_TYPES = List.of();
-    private static final HostApi INSTANCE = new HostApi();
+    private final Runtime runtime;
+    private final FreeingBumpHeapAllocator allocator;
 
-    private Runtime runtime;
-    private FreeingBumpHeapAllocator allocator;
-
-    public static HostApi getInstance() {
-        return INSTANCE;
+    public HostApi(final Runtime runtime) {
+        this.runtime = runtime;
+        this.allocator = new FreeingBumpHeapAllocator(runtime.getHeapBase());
     }
 
     protected static ImportObject getImportObject(final String functionName,
@@ -51,21 +47,6 @@ public class HostApi {
             function.accept(argv);
             return EMPTY_LIST_OF_NUMBER;
         }, args, EMPTY_LIST_OF_TYPES);
-    }
-
-    @Deprecated(forRemoval = true)
-    public static byte[] getDataFromMemory(long pointer) {
-        return HostApi.getInstance().getDataFromMemory(new RuntimePointerSize(pointer));
-    }
-
-    @Deprecated(forRemoval = true)
-    public static int putDataToMemory(byte[] data) {
-        return HostApi.getInstance().writeDataToMemory(data).pointer();
-    }
-
-    public void setRuntime(Runtime runtime) {
-        this.runtime = runtime;
-        this.allocator = new FreeingBumpHeapAllocator(runtime.getHeapBase());
     }
 
     /**
@@ -99,7 +80,7 @@ public class HostApi {
      * <br>Data will be written at the given {@link RuntimePointerSize#pointer() pointer}.
      * <br>Only the first bytes up to the given {@link RuntimePointerSize#size() size} will be written.
      *
-     * @param data data to be written to memory
+     * @param data               data to be written to memory
      * @param runtimePointerSize pointer to memory and size of data to be stored.
      */
     public void writeDataToMemory(byte[] data, RuntimePointerSize runtimePointerSize) {
@@ -115,7 +96,7 @@ public class HostApi {
      * @return a pointer-size to the allocated space in memory
      */
     public RuntimePointerSize allocate(int numberOfBytes) {
-       return allocator.allocate(numberOfBytes, runtime.getMemory());
+        return allocator.allocate(numberOfBytes, runtime.getMemory());
     }
 
     /**

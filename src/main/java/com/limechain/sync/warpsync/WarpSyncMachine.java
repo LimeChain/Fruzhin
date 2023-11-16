@@ -6,8 +6,6 @@ import com.limechain.chain.lightsyncstate.LightSyncState;
 import com.limechain.constants.GenesisBlockHash;
 import com.limechain.network.Network;
 import com.limechain.network.protocol.warp.dto.WarpSyncFragment;
-import com.limechain.runtime.hostapi.HostApi;
-import com.limechain.storage.KVRepository;
 import com.limechain.sync.warpsync.state.FinishedState;
 import com.limechain.sync.warpsync.state.RequestFragmentsState;
 import com.limechain.sync.warpsync.state.WarpSyncState;
@@ -46,11 +44,9 @@ public class WarpSyncMachine {
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final boolean stateLoaded;
 
-    public WarpSyncMachine(Network network, ChainService chainService, KVRepository<String, Object> repository) {
+    public WarpSyncMachine(Network network, ChainService chainService) {
         this.networkService = network;
         this.chainService = chainService;
-
-        this.syncedState.setRepository(repository);
 
         this.stateLoaded = this.syncedState.loadState();
     }
