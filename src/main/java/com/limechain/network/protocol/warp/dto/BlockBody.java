@@ -24,24 +24,24 @@ public class BlockBody {
     }
 
     public byte[] getEncoded(){
-        ByteArrayOutputStream buf = new ByteArrayOutputStream();
-        try (ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
+        try (ByteArrayOutputStream buf = new ByteArrayOutputStream();
+             ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
 
             writer.writeCompact(extrinsics.size());
             for (Extrinsics extrinsics : this.extrinsics) {
                 writer.writeAsList(extrinsics.getExtrinsic());
             }
+
+            return HashUtils.hashWithBlake2b(buf.toByteArray());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
-        return HashUtils.hashWithBlake2b(buf.toByteArray());
     }
 
     public static BlockBody fromEncoded(byte[] encoded) {
         ScaleCodecReader reader = new ScaleCodecReader(encoded);
 
-        ArrayList<Extrinsics> extrinsics = new ArrayList<>();
+        List<Extrinsics> extrinsics = new ArrayList<>();
 
         int extrinsicsCount = reader.readCompactInt();
         for (int i = 0; i < extrinsicsCount; i++) {

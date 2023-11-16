@@ -14,19 +14,18 @@ public class Extrinsics {
     private final byte[] extrinsic;
 
     @Override
-    public String toString(){
+    public String toString() {
         return HexUtils.toHexString(extrinsic);
     }
 
-    public byte[] getHash(){
-        ByteArrayOutputStream buf = new ByteArrayOutputStream();
-        try (ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
+    public byte[] getHash() {
+        try (ByteArrayOutputStream buf = new ByteArrayOutputStream();
+             ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
             writer.writeAsList(extrinsic);
+            return HashUtils.hashWithBlake2b(buf.toByteArray());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
-        return HashUtils.hashWithBlake2b(buf.toByteArray());
     }
 
 }
