@@ -50,7 +50,7 @@ public class RuntimeBuilder {
         return runtime;
     }
 
-    private RuntimeVersion getRuntimeVersion(byte[] wasmBinary) {
+    public RuntimeVersion getRuntimeVersion(byte[] wasmBinary) {
         // byte value of \0asm concatenated with 0x1, 0x0, 0x0, 0x0 from smoldot runtime_version.rs#97
         byte[] searchKey = new byte[]{0x00, 0x61, 0x73, 0x6D, 0x1, 0x0, 0x0, 0x0};
 
