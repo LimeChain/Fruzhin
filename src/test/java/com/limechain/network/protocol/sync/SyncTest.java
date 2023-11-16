@@ -76,7 +76,6 @@ public class SyncTest {
         assertEquals(expected, response.getBlocks(0).getHash());
     }
 
-
     @Disabled("This is integration test!")
     @Test
     public void remoteBlockRequest_returnCorrectBlock_ifGivenBlockNumber() {
