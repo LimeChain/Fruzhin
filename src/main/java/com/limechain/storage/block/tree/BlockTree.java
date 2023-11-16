@@ -164,6 +164,13 @@ public class BlockTree {
         return accumulateHashesInDescendingOrder(endBlockNode, startBlockNode);
     }
 
+    /**
+     * Accumulates the hashes of block nodes in descending order from the end block node to the start block node.
+     *
+     * @param endBlockNode   The block node from which to start accumulating hashes.
+     * @param startBlockNode The block node at which to stop accumulating hashes.
+     * @return A list of byte arrays representing the hashes of the block nodes, in descending order from end to start.
+     */
     public List<byte[]> accumulateHashesInDescendingOrder(BlockNode endBlockNode, BlockNode startBlockNode) {
         if (startBlockNode.getNumber() > endBlockNode.getNumber()) {
             throw new RuntimeException("Start is greater than end");
