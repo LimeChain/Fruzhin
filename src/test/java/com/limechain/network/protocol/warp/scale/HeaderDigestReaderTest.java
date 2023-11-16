@@ -4,6 +4,7 @@ import com.google.protobuf.ByteString;
 import com.limechain.network.protocol.warp.dto.ConsensusEngine;
 import com.limechain.network.protocol.warp.dto.DigestType;
 import com.limechain.network.protocol.warp.dto.HeaderDigest;
+import com.limechain.network.protocol.warp.scale.reader.HeaderDigestReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import org.junit.jupiter.api.Test;
 

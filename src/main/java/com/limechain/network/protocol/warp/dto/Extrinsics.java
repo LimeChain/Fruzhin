@@ -1,5 +1,6 @@
 package com.limechain.network.protocol.warp.dto;
 
+import com.limechain.network.protocol.warp.exception.ScaleEncodingException;
 import com.limechain.utils.HashUtils;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import lombok.Data;
@@ -24,7 +25,7 @@ public class Extrinsics {
             writer.writeAsList(extrinsic);
             return HashUtils.hashWithBlake2b(buf.toByteArray());
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new ScaleEncodingException(e);
         }
     }
 

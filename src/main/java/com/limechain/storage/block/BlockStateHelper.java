@@ -2,7 +2,8 @@ package com.limechain.storage.block;
 
 import com.limechain.network.protocol.blockannounce.scale.BlockHeaderScaleWriter;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
-import com.limechain.network.protocol.warp.scale.BlockHeaderReader;
+import com.limechain.network.protocol.warp.exception.ScaleEncodingException;
+import com.limechain.network.protocol.warp.scale.reader.BlockHeaderReader;
 import com.limechain.storage.DBConstants;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
@@ -84,12 +85,11 @@ public final class BlockStateHelper {
     byte[] writeHeader(BlockHeader header) {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
              ScaleCodecWriter scaleCodecWriter = new ScaleCodecWriter(baos);) {
-            BlockHeaderScaleWriter blockHeaderScaleWriter = new BlockHeaderScaleWriter();
-            blockHeaderScaleWriter.write(scaleCodecWriter, header);
+            BlockHeaderScaleWriter.getInstance().write(scaleCodecWriter, header);
 
             return baos.toByteArray();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new ScaleEncodingException(e);
         }
     }
 

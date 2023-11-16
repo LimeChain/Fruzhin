@@ -1,6 +1,7 @@
 package com.limechain.network.protocol.warp.scale;
 
 import com.limechain.network.protocol.warp.dto.BlockHeader;
+import com.limechain.network.protocol.warp.scale.reader.BlockHeaderReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ArrayUtils;

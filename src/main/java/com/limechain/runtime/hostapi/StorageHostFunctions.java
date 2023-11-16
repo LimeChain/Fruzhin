@@ -1,5 +1,6 @@
 package com.limechain.runtime.hostapi;
 
+import com.limechain.network.protocol.warp.exception.ScaleEncodingException;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import com.limechain.storage.DBConstants;
 import com.limechain.storage.DeleteByPrefixResult;
@@ -237,7 +238,7 @@ public class StorageHostFunctions {
             writer.writeByteArray(Arrays.copyOfRange(sequence, numberOfScaleLengthBytes, sequence.length));
             writer.writeByteArray(valueToAppend);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new ScaleEncodingException(e);
         }
         repository.save(key, buf.toByteArray());
     }
@@ -321,7 +322,7 @@ public class StorageHostFunctions {
         try (ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
             writer.writeOptional(ScaleCodecWriter::writeUint32, data);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new ScaleEncodingException(e);
         }
         return buf.toByteArray();
     }
@@ -331,7 +332,7 @@ public class StorageHostFunctions {
         try (ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
             writer.writeOptional(ScaleCodecWriter::writeByteArray, data);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new ScaleEncodingException(e);
         }
         return buf.toByteArray();
     }

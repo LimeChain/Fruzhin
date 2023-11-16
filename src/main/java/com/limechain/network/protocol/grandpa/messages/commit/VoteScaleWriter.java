@@ -1,6 +1,6 @@
 package com.limechain.network.protocol.grandpa.messages.commit;
 
-import com.limechain.network.protocol.warp.scale.VarUint64Writer;
+import com.limechain.network.protocol.warp.scale.writer.VarUint64Writer;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.emeraldpay.polkaj.scale.ScaleWriter;
 

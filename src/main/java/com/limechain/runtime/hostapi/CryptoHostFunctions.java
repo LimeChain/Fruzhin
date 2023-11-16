@@ -1,5 +1,6 @@
 package com.limechain.runtime.hostapi;
 
+import com.limechain.network.protocol.warp.exception.ScaleEncodingException;
 import com.limechain.rpc.server.AppBean;
 import com.limechain.runtime.hostapi.dto.Key;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
@@ -420,7 +421,7 @@ public class CryptoHostFunctions {
             return hostApi.writeDataToMemory(baos.toByteArray());
 
         } catch (IOException e) {
-            throw new RuntimeException("Error while SCALE encoding public keys");
+            throw new ScaleEncodingException("Error while SCALE encoding public keys");
         }
     }
 
@@ -598,7 +599,7 @@ public class CryptoHostFunctions {
             resultWriter.write(scaleCodecWriter, rawBytes);
             return hostApi.writeDataToMemory(baos.toByteArray()).pointer();
         } catch (IOException e) {
-            throw new RuntimeException(SCALE_ENCODING_SIGNED_MESSAGE_ERROR);
+            throw new ScaleEncodingException(SCALE_ENCODING_SIGNED_MESSAGE_ERROR);
         }
     }
 
@@ -664,7 +665,7 @@ public class CryptoHostFunctions {
             writer.writeOptional(ScaleCodecWriter::writeByteArray, data);
             return buf.toByteArray();
         } catch (IOException e) {
-            throw new RuntimeException(SCALE_ENCODING_SIGNED_MESSAGE_ERROR);
+            throw new ScaleEncodingException(SCALE_ENCODING_SIGNED_MESSAGE_ERROR);
         }
     }
 
