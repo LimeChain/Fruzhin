@@ -215,7 +215,8 @@ class BlockTreeTest {
         BlockTree blockTree = new BlockTree(rootHeader);
         BlockNode rootBlockNode = blockTree.getRoot();
 
-        BlockNode childBlockNode = new BlockNode(getHash("02").getBytes(), rootBlockNode, new ArrayList<>(), 1, null, false);
+        BlockNode childBlockNode = new BlockNode(getHash("02").getBytes(), rootBlockNode, new ArrayList<>(),
+                1, null, false);
         rootBlockNode.addChild(childBlockNode);
         blockTree.getLeaves().replace(rootBlockNode, childBlockNode);
 
@@ -233,7 +234,8 @@ class BlockTreeTest {
         Runtime rootRuntime = mock(Runtime.class);
         blockTree.storeRuntime(getHash("01").getBytes(), rootRuntime);
 
-        BlockNode childBlockNode = new BlockNode(getHash("02").getBytes(), rootBlockNode, new ArrayList<>(), 1, null, false);
+        BlockNode childBlockNode = new BlockNode(getHash("02").getBytes(), rootBlockNode, new ArrayList<>(),
+                1, null, false);
         rootBlockNode.addChild(childBlockNode);
         blockTree.getLeaves().replace(rootBlockNode, childBlockNode);
 

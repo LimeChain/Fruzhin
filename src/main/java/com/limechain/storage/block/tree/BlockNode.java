@@ -145,7 +145,8 @@ public class BlockNode {
      * @return deep copy of the node
      */
     public BlockNode deepCopy(BlockNode parent) {
-        BlockNode copy = new BlockNode(this.hash, parent, new ArrayList<>(), this.number, this.arrivalTime, this.isPrimary);
+        BlockNode copy = new BlockNode(this.hash, parent, new ArrayList<>(),
+                this.number, this.arrivalTime, this.isPrimary);
         for (BlockNode child : children) {
             copy.children.add(child.deepCopy(copy));
         }

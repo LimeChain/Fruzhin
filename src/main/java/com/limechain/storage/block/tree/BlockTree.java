@@ -81,7 +81,8 @@ public class BlockTree {
         }
 
         BlockNode
-                newBlockNode = new BlockNode(header.getHash(), parent, new ArrayList<>(), number, arrivalTime, isPrimary);
+                newBlockNode = new BlockNode(header.getHash(), parent, new ArrayList<>(),
+                number, arrivalTime, isPrimary);
         parent.addChild(newBlockNode);
         leaves.replace(parent, newBlockNode);
     }
