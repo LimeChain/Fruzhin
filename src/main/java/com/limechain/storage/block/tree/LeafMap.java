@@ -44,7 +44,6 @@ public class LeafMap {
      *
      * @param key hash of the leaf
      * @return the leaf
-     * @throws RuntimeException if the leaf is not found
      */
     public BlockNode load(byte[] key) {
         return syncMap.get(key);

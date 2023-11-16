@@ -6,7 +6,12 @@ import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.runtime.Runtime;
 import com.limechain.storage.DBConstants;
 import com.limechain.storage.KVRepository;
+import com.limechain.storage.block.exception.BlockNodeNotFoundException;
+import com.limechain.storage.block.exception.BlockNotFoundException;
+import com.limechain.storage.block.exception.BlockStorageGenericException;
+import com.limechain.storage.block.exception.HeaderNotFoundException;
 import com.limechain.storage.block.exception.LowerThanRootException;
+import com.limechain.storage.block.exception.NotFoundException;
 import com.limechain.storage.block.tree.BlockTree;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.Getter;
@@ -106,6 +111,8 @@ public class BlockState {
      *
      * @param blockNum the block number
      * @return the block hash as byte array
+     * @throws LowerThanRootException if the block number is lower than the root of the blocktree.
+     * @throws BlockNotFoundException if the block is not found in the blocktree or the database.
      */
     public byte[] getHashByNumber(BigInteger blockNum) {
         try {
@@ -113,12 +120,12 @@ public class BlockState {
             return blockTree.getHashByNumber(blockNum.longValue());
         } catch (LowerThanRootException lowerThanRootException) {
             throw lowerThanRootException;
-        } catch (RuntimeException e) {
+        } catch (BlockStorageGenericException e) {
             // If error is LowerThanRootException, number has already been finalized, so check db
             byte[] hash = (byte[]) db.find(helper.headerHashKey(blockNum)).orElse(null);
 
             if (hash == null) {
-                throw new RuntimeException("Block " + blockNum + " not found");
+                throw new BlockNotFoundException("Block " + blockNum + " not found");
             }
 
             return hash;
@@ -130,13 +137,14 @@ public class BlockState {
      *
      * @param blockNumber the block number
      * @return List of block hashes as byte array
+     * @throws BlockNotFoundException if there is an issue in getting the block by number.
      */
     public List<byte[]> getHashesByNumber(BigInteger blockNumber) {
         Block block;
         try {
             block = getBlockByNumber(blockNumber);
         } catch (Exception e) {
-            throw new RuntimeException("Getting block by number: " + e.getMessage(), e);
+            throw new BlockNotFoundException("Getting block by number: " + e.getMessage(), e);
         }
 
         List<byte[]> blockHashes = blockTree.getAllBlocksAtNumber(block.getHeader().getParentHash().getBytes());
@@ -155,31 +163,32 @@ public class BlockState {
      *
      * @param hash the hash of the block header as byte array
      * @return List of block hashes as byte array
+     * @throws BlockNodeNotFoundException if the block node is not found in the block tree.
      */
     public List<byte[]> getAllDescendants(byte[] hash) {
-        List<byte[]> allDescendants;
         try {
             return blockTree.getAllDescendants(hash);
-        } catch (IllegalArgumentException illegalArgumentException) {
-            throw illegalArgumentException;
-        } catch (Exception e) {
-            // If the node is not found in the block tree, start the manual process
-            allDescendants = new ArrayList<>();
-            allDescendants.add(hash);
+        } catch (BlockNodeNotFoundException blockNotFound) {
+            throw blockNotFound;
+        }
+        catch (Exception ignored) {
+            log.info("Failed to get all descendants from block tree, trying database");
         }
 
-        BlockHeader header = getHeader(hash);
+        final List<byte[]> allDescendants = new ArrayList<>();
+        allDescendants.add(hash);
+        final BlockHeader header = getHeader(hash);
 
-        List<byte[]> nextBlockHashes = getHashesByNumber(header.getBlockNumber().add(BigInteger.ONE));
+        final List<byte[]> nextBlockHashes = getHashesByNumber(header.getBlockNumber().add(BigInteger.ONE));
 
-        for (byte[] nextBlockHash : nextBlockHashes) {
-            BlockHeader nextHeader = getHeader(nextBlockHash);
+        for (final byte[] nextBlockHash : nextBlockHashes) {
+            final BlockHeader nextHeader = getHeader(nextBlockHash);
 
             if (!Arrays.equals(nextHeader.getParentHash().getBytes(), hash)) {
                 continue;
             }
 
-            List<byte[]> nextDescendants = getAllDescendants(nextBlockHash);
+            final List<byte[]> nextDescendants = getAllDescendants(nextBlockHash);
             allDescendants.addAll(nextDescendants);
         }
 
@@ -193,7 +202,7 @@ public class BlockState {
      * @return the block header
      */
     public BlockHeader getHeaderByNumber(BigInteger num) {
-        byte[] hash = getHashByNumber(num);
+        final byte[] hash = getHashByNumber(num);
         return getHeader(hash);
     }
 
@@ -204,8 +213,7 @@ public class BlockState {
      * @return the block
      */
     public Block getBlockByNumber(BigInteger num) {
-        byte[] hash = getHashByNumber(num);
-
+        final byte[] hash = getHashByNumber(num);
         return getBlockByHash(hash);
     }
 
@@ -257,6 +265,7 @@ public class BlockState {
      *
      * @param hash the block hash
      * @return the block body
+     * @throws BlockNotFoundException if the block body cannot be retrieved.
      */
     public BlockBody getBlockBody(byte[] hash) {
         Block block = unfinalizedBlocks.get(hash);
@@ -266,7 +275,7 @@ public class BlockState {
 
         byte[] data = (byte[]) db.find(helper.blockBodyKey(hash)).orElse(null);
         if (data == null) {
-            throw new RuntimeException("Failed to get block body from database");
+            throw new BlockNotFoundException("Failed to get block body from database");
         }
 
         return BlockBody.fromEncoded(data);
@@ -296,10 +305,11 @@ public class BlockState {
      *
      * @param block       the block to be added
      * @param arrivalTime the arrival time of the block
+     * @throws IllegalArgumentException if the block body is null.
      */
     public void addBlockWithArrivalTime(Block block, Instant arrivalTime) {
         if (block.getBody() == null) {
-            throw new RuntimeException("Block body cannot be null");
+            throw new IllegalArgumentException("Block body cannot be null");
         }
 
         // Add block to blocktree
@@ -314,12 +324,13 @@ public class BlockState {
      *
      * @param blockNum the block number
      * @return List of hashes of blocks
+     * @throws HeaderNotFoundException if no header is found for the given block number.
      */
     public List<byte[]> getAllBlocksAtNumber(final BigInteger blockNum) {
         BlockHeader header = getHeaderByNumber(blockNum);
 
         if (header == null) {
-            throw new RuntimeException("Header not found for block number: " + blockNum);
+            throw new HeaderNotFoundException("Header not found for block number: " + blockNum);
         }
 
         return getAllBlocksAtDepth(header.getParentHash().getBytes());
@@ -340,11 +351,12 @@ public class BlockState {
      *
      * @param header the block header
      * @return true if the block is on our current chain, false otherwise
+     * @throws HeaderNotFoundException if the best block header cannot be retrieved.
      */
     public boolean isBlockOnCurrentChain(BlockHeader header) {
         BlockHeader bestBlock = bestBlockHeader();
         if (bestBlock == null) {
-            throw new RuntimeException("Best block header cannot be retrieved");
+            throw new HeaderNotFoundException("Best block header cannot be retrieved");
         }
 
         // If the new block's number is greater than our best block's number, then it is on our current chain.
@@ -397,11 +409,12 @@ public class BlockState {
      * Gets the current non finalized best block's number
      *
      * @return the best block's number
+     * @throws HeaderNotFoundException if the best block header cannot be retrieved.
      */
     public BigInteger bestBlockNumber() {
         BlockHeader header = bestBlockHeader();
         if (header == null) {
-            throw new RuntimeException("Failed to get best block header");
+            throw new HeaderNotFoundException("Failed to get best block header");
         }
         return header.getBlockNumber();
     }
@@ -420,12 +433,13 @@ public class BlockState {
      *
      * @param hash the block hash
      * @return the block header
+     * @throws HeaderNotFoundException if the header is not found in the database.
      */
     public BlockHeader loadHeaderFromDatabase(byte[] hash) {
         Optional<Object> foundHeader = db.find(helper.headerKey(hash));
 
         if (foundHeader.isEmpty()) {
-            throw new RuntimeException("Header not found in database");
+            throw new HeaderNotFoundException("Header not found in database");
         }
 
         return helper.readHeader((byte[]) foundHeader.get());
@@ -439,18 +453,18 @@ public class BlockState {
      * @return the list of block hashes
      */
     public List<byte[]> range(byte[] startHash, byte[] endHash) {
-        List<byte[]> hashes = new ArrayList<>();
+        final List<byte[]> hashes = new ArrayList<>();
 
         if (Arrays.equals(startHash, endHash)) {
             hashes.add(startHash);
             return hashes;
         }
 
-        BlockHeader endHeader;
+        final BlockHeader endHeader;
         try {
             endHeader = loadHeaderFromDatabase(endHash);
-        } catch (RuntimeException e) {
-            // end hash is not in the database so we should lookup the
+        } catch (HeaderNotFoundException e) {
+            // end hash is not in the database, so we should lookup the
             // block that could be in memory and in the database as well
             return retrieveRange(startHash, endHash);
         }
@@ -497,11 +511,13 @@ public class BlockState {
      * @param startHash the hash of the block to start with
      * @param endHeader the header of the block to end with
      * @return the list of block hashes
+     * @throws IllegalArgumentException if the start block number is greater than the end block number.
+     * @throws BlockStorageGenericException if there is a start hash mismatch.
      */
     public List<byte[]> retrieveRangeFromDatabase(byte[] startHash, BlockHeader endHeader) {
         BlockHeader startHeader = loadHeaderFromDatabase(startHash);
         if (startHeader.getBlockNumber().compareTo(endHeader.getBlockNumber()) > 0) {
-            throw new RuntimeException("Start block number is greater than end block number");
+            throw new IllegalArgumentException("Start block number is greater than end block number");
         }
 
         BigInteger blocksInRange = endHeader.getBlockNumber()
@@ -523,7 +539,8 @@ public class BlockState {
 
         // Verify that we ended up with the start hash
         if (!Arrays.equals(inLoopHash, startHash)) {
-            throw new RuntimeException("Start hash mismatch: expected " + startHash + ", found: " + inLoopHash);
+            throw new BlockStorageGenericException("Start hash mismatch: expected " + new Hash256(startHash) +
+                    ", found: " + new Hash256(inLoopHash));
         }
 
         return hashes;
@@ -535,10 +552,11 @@ public class BlockState {
      * @param startHash the hash of the block to start with
      * @param endHash   the hash of the block to end with
      * @return the list of block hashes
+     * @throws BlockStorageGenericException if the block tree is not initialized.
      */
     public List<byte[]> rangeInMemory(byte[] startHash, byte[] endHash) {
         if (blockTree == null) {
-            throw new RuntimeException("Block tree is not initialized");
+            throw new BlockStorageGenericException("Block tree is not initialized");
         }
 
         return blockTree.rangeInMemory(startHash, endHash);
@@ -550,15 +568,16 @@ public class BlockState {
      * @param ancestor   parent block to verify for
      * @param descendant child block to verify for
      * @return true if the child block is a descendant of the parent block, false otherwise
+     * @throws BlockStorageGenericException if the block tree is not initialized.
      */
     public boolean isDescendantOf(byte[] ancestor, byte[] descendant) {
         if (blockTree == null) {
-            throw new RuntimeException("Block tree is not initialized");
+            throw new BlockStorageGenericException("Block tree is not initialized");
         }
 
         try {
             return blockTree.isDescendantOf(ancestor, descendant);
-        } catch (Exception e) {
+        } catch (BlockStorageGenericException e) {
             BlockHeader descendantHeader = getHeader(descendant);
             BlockHeader ancestorHeader = getHeader(ancestor);
 
@@ -610,12 +629,13 @@ public class BlockState {
      *
      * @param hash the hash of the block
      * @return the arrival time of the block
+     * @throws NotFoundException if the arrival time is not found in the database.
      */
     public Instant getArrivalTime(byte[] hash) {
         Optional<Object> object = db.find(helper.arrivalTimeKey(hash));
 
         if (object.isEmpty()) {
-            throw new RuntimeException("Arrival time not found");
+            throw new NotFoundException("Arrival time not found");
         }
         Object obj = object.get();
 
@@ -631,12 +651,13 @@ public class BlockState {
      *
      * @param blockHash the block hash
      * @return runtime for the block
+     * @throws BlockStorageGenericException if the block node is not found in the block tree.
      */
     public Runtime getRuntime(byte[] blockHash) {
         try {
             return blockTree.getBlockRuntime(blockHash);
-        } catch (IllegalArgumentException e) {
-            throw new RuntimeException("While getting runtime: ", e);
+        } catch (BlockNodeNotFoundException e) {
+            throw new BlockStorageGenericException("While getting runtime: ", e);
         }
     }
 
@@ -695,10 +716,13 @@ public class BlockState {
      * Sets the hash of the latest finalized block
      *
      * @param hash the hash of the block
+     * @param round  The round number of the finalized block.
+     * @param setId  The set ID of the finalized block.
+     * @throws BlockNodeNotFoundException if the block corresponding to the provided hash is not found.
      */
     public void setFinalizedHash(byte[] hash, BigInteger round, BigInteger setId) {
         if (!hasHeader(hash)) {
-            throw new RuntimeException("Cannot finalise unknown block " + new Hash256(hash));
+            throw new BlockNodeNotFoundException("Cannot finalise unknown block " + new Hash256(hash));
         }
 
         handleFinalizedBlock(hash);
@@ -738,14 +762,15 @@ public class BlockState {
      * Stores the highest round and setId to the database
      *
      * @param round the number of the round
-     * @param setId the set id
+     * @param setId the current setId
+     * @throws BlockNodeNotFoundException if the provided setId is less than the highest stored setId.
      */
     public void setHighestRoundAndSetID(BigInteger round, BigInteger setId) {
         final Pair<BigInteger, BigInteger> highestRoundAndSetID = getHighestRoundAndSetID();
         final BigInteger highestSetID = highestRoundAndSetID.getValue1();
 
         if (setId.compareTo(highestSetID) < 0) {
-            throw new RuntimeException("SetID " + setId + " should be greater or equal to " + highestSetID);
+            throw new BlockNodeNotFoundException("SetID " + setId + " should be greater or equal to " + highestSetID);
         }
 
         db.save(DBConstants.HIGHEST_ROUND_AND_SET_ID_KEY, helper.bigIntegersToByteArray(round, setId));
@@ -755,13 +780,14 @@ public class BlockState {
      * Gets the highest saved round and setId from the database
      *
      * @return Pair of round and setId
+     * @throws BlockNodeNotFoundException if there is a failure in retrieving the highest round and setID.
      */
     public Pair<BigInteger, BigInteger> getHighestRoundAndSetID() {
         Optional<Object> roundAndSetId = db.find(DBConstants.HIGHEST_ROUND_AND_SET_ID_KEY);
         byte[] data = (byte[]) roundAndSetId.orElse(null);
 
         if (data == null || data.length < 16) {
-            throw new RuntimeException("Failed to get highest round and setID");
+            throw new BlockNodeNotFoundException("Failed to get highest round and setID");
         }
 
         return helper.bytesToRoundAndSetId(data);
@@ -772,6 +798,7 @@ public class BlockState {
      * and delete them from the unfinalized block map
      *
      * @param currentFinalizedHash the hash of the current finalized block
+     * @throws BlockNotFoundException if a block in the unfinalized block map is not found.
      */
     public void handleFinalizedBlock(byte[] currentFinalizedHash) {
         if (Arrays.equals(currentFinalizedHash, this.lastFinalized)) {
@@ -790,7 +817,8 @@ public class BlockState {
 
             Block block = unfinalizedBlocks.get(subchainHash);
             if (block == null) {
-                throw new RuntimeException("Failed to find block in unfinalized block map, block=" + subchainHash);
+                throw new BlockNotFoundException("Failed to find block in unfinalized block map for hash" +
+                        new Hash256(subchainHash));
             }
 
             setHeader(block.getHeader());

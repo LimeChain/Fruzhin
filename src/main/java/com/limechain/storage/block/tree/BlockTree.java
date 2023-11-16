@@ -2,6 +2,9 @@ package com.limechain.storage.block.tree;
 
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.runtime.Runtime;
+import com.limechain.storage.block.exception.BlockAlreadyExistsException;
+import com.limechain.storage.block.exception.BlockNodeNotFoundException;
+import com.limechain.storage.block.exception.BlockStorageGenericException;
 import com.limechain.storage.block.exception.LowerThanRootException;
 import com.limechain.storage.block.map.HashToRuntime;
 import io.emeraldpay.polkaj.types.Hash256;
@@ -60,19 +63,22 @@ public class BlockTree {
      *
      * @param header      BlockHeader to be added
      * @param arrivalTime Arrival time of the block
+     * @throws BlockNodeNotFoundException   if the parent of the block does not exist in the tree.
+     * @throws BlockAlreadyExistsException  if a block with the same hash already exists in the tree.
+     * @throws BlockStorageGenericException if the block number does not match the expected value (parent number + 1).
      */
     public void addBlock(BlockHeader header, Instant arrivalTime) {
         BlockNode parent = getNode(header.getParentHash().getBytes());
         if (parent == null) {
-            throw new RuntimeException("Parent does not exist in tree");
+            throw new BlockNodeNotFoundException("Parent does not exist in tree");
         }
         if (getNode(header.getHash()) != null) {
-            throw new RuntimeException("Block already exists in tree");
+            throw new BlockAlreadyExistsException("Block already exists in tree");
         }
 
         long number = parent.getNumber() + 1;
         if (number != header.getBlockNumber().longValueExact()) {
-            throw new RuntimeException("Block number does not match parent number + 1");
+            throw new BlockStorageGenericException("Block number does not match parent number + 1");
         }
 
         boolean isPrimary = false;
@@ -117,11 +123,14 @@ public class BlockTree {
      * @param startHash hash to start from
      * @param endHash   hash to end at
      * @return List of block hashes between the start and end hash inclusive
+     * @throws BlockNodeNotFoundException if the end hash does not exist in the blocktree
+     * @throws IllegalArgumentException     if the startHash is greater than the endHash
+     * @throws BlockStorageGenericException if there is no node between start and end node during traversal.
      */
     public List<byte[]> range(byte[] startHash, byte[] endHash) {
         BlockNode endBlockNode = getNode(endHash);
         if (endBlockNode == null) {
-            throw new RuntimeException("End node not found");
+            throw new BlockNodeNotFoundException("End node not found");
         }
 
         // if we don't find the start hash in the blocktree
@@ -145,20 +154,22 @@ public class BlockTree {
      * @param startHash hash to start from
      * @param endHash   hash to end at
      * @return List of block hashes between the start and end hash inclusive
+     * @throws BlockNodeNotFoundException   if either the start or end node is not found in the blocktree.
+     * @throws BlockStorageGenericException if the start node's number is greater than the end node's number.
      */
     public List<byte[]> rangeInMemory(byte[] startHash, byte[] endHash) {
         BlockNode endBlockNode = getNode(endHash);
         if (endBlockNode == null) {
-            throw new RuntimeException("End node not found");
+            throw new BlockNodeNotFoundException("End node not found");
         }
 
         BlockNode startBlockNode = getNode(startHash);
         if (startBlockNode == null) {
-            throw new RuntimeException("Start node not found");
+            throw new BlockNodeNotFoundException("Start node not found");
         }
 
         if (startBlockNode.getNumber() > endBlockNode.getNumber()) {
-            throw new RuntimeException("Start is greater than end");
+            throw new BlockStorageGenericException("Start is greater than end");
         }
 
         return accumulateHashesInDescendingOrder(endBlockNode, startBlockNode);
@@ -170,10 +181,12 @@ public class BlockTree {
      * @param endBlockNode   The block node from which to start accumulating hashes.
      * @param startBlockNode The block node at which to stop accumulating hashes.
      * @return A list of byte arrays representing the hashes of the block nodes, in descending order from end to start.
+     * @throws IllegalArgumentException     if the start node's number is greater than the end node's number
+     * @throws BlockStorageGenericException if there is no node between start and end node during traversal.
      */
     public List<byte[]> accumulateHashesInDescendingOrder(BlockNode endBlockNode, BlockNode startBlockNode) {
         if (startBlockNode.getNumber() > endBlockNode.getNumber()) {
-            throw new RuntimeException("Start is greater than end");
+            throw new IllegalArgumentException("Start is greater than end");
         }
 
         // blocksInRange is the difference between the end number to start number
@@ -186,7 +199,7 @@ public class BlockTree {
             endBlockNode = endBlockNode.getParent();
 
             if (endBlockNode == null) {
-                throw new RuntimeException("End node is null");
+                throw new BlockStorageGenericException("End node is null");
             }
         }
 
@@ -297,7 +310,7 @@ public class BlockTree {
      * @param child  child hash
      * @return true if the child is a descendant of parent, false otherwise
      * If parent and child are the same, we return true
-     * @throws IllegalArgumentException if either the child or parent are not in the blocktree
+     * @throws BlockNodeNotFoundException if either the child or parent are not in the blocktree
      */
     public boolean isDescendantOf(byte[] parent, byte[] child) {
         if (Arrays.equals(parent, child)) {
@@ -306,12 +319,12 @@ public class BlockTree {
 
         BlockNode parentBlockNode = getNode(parent);
         if (parentBlockNode == null) {
-            throw new IllegalArgumentException("Start node not found: " + new Hash256(parent));
+            throw new BlockNodeNotFoundException("Start node not found: " + new Hash256(parent));
         }
 
         BlockNode childBlockNode = getNode(child);
         if (childBlockNode == null) {
-            throw new IllegalArgumentException("End node not found: " + new Hash256(child));
+            throw new BlockNodeNotFoundException("End node not found: " + new Hash256(child));
         }
 
         return childBlockNode.isDescendantOf(parentBlockNode);
@@ -329,9 +342,10 @@ public class BlockTree {
     /**
      * Find the hash of the lowest common ancestor between block a and b
      *
-     * @param a hash of the block a to check
-     * @param b hash of the block b to check
+     * @param a hash of the first block to check
+     * @param b hash of the second block to check
      * @return the hash of the lowest common ancestor
+     * @throws IllegalArgumentException if either node corresponding to hash a or hash b is not found.
      */
     public byte[] lowestCommonAncestor(byte[] a, byte[] b) {
         BlockNode blockNodeA = getNode(a);
@@ -350,9 +364,11 @@ public class BlockTree {
     /**
      * Find the hash of the lowest common ancestor between node a and b
      *
-     * @param blockNodeA Node of block a to check
-     * @param blockNodeB Node of block b to check
+     * @param blockNodeA Node of first block to check
+     * @param blockNodeB Node of second block to check
      * @return the hash of the lowest common ancestor
+     * @throws BlockStorageGenericException if an ancestor check goes out of bounds,
+     * indicating that one of the nodes does not have a parent in the chain.
      */
     public byte[] lowestCommonAncestor(BlockNode blockNodeA, BlockNode blockNodeB) {
         BlockNode higherBlockNode = blockNodeB;
@@ -367,7 +383,7 @@ public class BlockTree {
         long diff = higherNum - lowerNum;
         while (diff > 0) {
             if (higherBlockNode.getParent() == null) {
-                throw new IllegalStateException("Out of bounds ancestor check for block number " + higherNum);
+                throw new BlockStorageGenericException("Out of bounds ancestor check for block number " + higherNum);
             }
             higherBlockNode = higherBlockNode.getParent();
             diff--;
@@ -377,7 +393,7 @@ public class BlockTree {
             if (Arrays.equals(higherBlockNode.getHash(), lowerBlockNode.getHash())) {
                 return higherBlockNode.getHash();
             } else if (higherBlockNode.getParent() == null || lowerBlockNode.getParent() == null) {
-                throw new IllegalStateException("Out of bounds ancestor check for block number " + higherNum);
+                throw new BlockStorageGenericException("Out of bounds ancestor check for block number " + higherNum);
             }
             higherBlockNode = higherBlockNode.getParent();
             lowerBlockNode = lowerBlockNode.getParent();
@@ -394,11 +410,12 @@ public class BlockTree {
     /**
      * @param hash Hash of the block to find the descendants of
      * @return List of all block hashes that are descendants of the given block hash (including itself).
+     * @throws BlockNodeNotFoundException if no node is found for the given block hash.
      */
     public List<byte[]> getAllDescendants(byte[] hash) {
         BlockNode blockNode = getNode(hash);
         if (blockNode == null) {
-            throw new IllegalArgumentException("Node not found for block hash " + new Hash256(hash));
+            throw new BlockNodeNotFoundException("Node not found for block hash " + new Hash256(hash));
         }
 
         return blockNode.getAllDescendants();
@@ -408,11 +425,14 @@ public class BlockTree {
      * @param num Number of the block to get the hash of
      * @return the block hash with the given number that is on the best chain.
      * If the number is lower or higher than the numbers in the blocktree, an error is returned.
+     * @throws BlockStorageGenericException if the block number is greater than the highest number in the blocktree.
+     * @throws LowerThanRootException if the block number is lower than the root of the blocktree.
+     * @throws BlockNodeNotFoundException if no node with the given number is found in the blocktree.
      */
     public byte[] getHashByNumber(long num) {
         BlockNode best = leaves.bestBlock();
         if (best.getNumber() < num) {
-            throw new IllegalArgumentException("Number greater than highest");
+            throw new BlockStorageGenericException("Number greater than highest");
         }
 
         if (best.getNumber() == num) {
@@ -430,7 +450,7 @@ public class BlockTree {
         BlockNode curr = best.getParent();
         while (true) {
             if (curr == null) {
-                throw new IllegalArgumentException("Node not found");
+                throw new BlockNodeNotFoundException("Node not found");
             }
 
             if (curr.getNumber() == num) {
@@ -445,12 +465,13 @@ public class BlockTree {
      * Get the arrival time of a block
      *
      * @param hash Hash of the block to get the arrival time of
+     * @throws BlockNodeNotFoundException if no node is found for the given block hash.
      * @return Arrival time of the block
      */
     public Instant getArrivalTime(byte[] hash) {
         BlockNode n = getNode(hash);
         if (n == null) {
-            throw new IllegalArgumentException("Node not found");
+            throw new BlockNodeNotFoundException("Node not found");
         }
 
         return n.getArrivalTime();
@@ -496,6 +517,7 @@ public class BlockTree {
      *
      * @param hash Block hash
      * @return Runtime instance
+     * @throws BlockNodeNotFoundException if no node is found for the given block hash.
      */
     public Runtime getBlockRuntime(byte[] hash) {
         Runtime runtimeInstance = runtimes.get(hash);
@@ -505,7 +527,7 @@ public class BlockTree {
 
         BlockNode currentBlockNode = getNode(hash);
         if (currentBlockNode == null) {
-            throw new IllegalArgumentException("Node not found for block hash " + hash);
+            throw new BlockNodeNotFoundException("Node not found for block hash " + new Hash256(hash));
         }
 
         currentBlockNode = currentBlockNode.getParent();
