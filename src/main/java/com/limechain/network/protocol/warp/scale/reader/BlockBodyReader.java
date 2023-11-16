@@ -13,7 +13,7 @@ import java.util.List;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class BlockBodyReader implements ScaleReader<BlockBody> {
 
-    private static BlockBodyReader INSTANCE = new BlockBodyReader();
+    private static final BlockBodyReader INSTANCE = new BlockBodyReader();
 
     public static BlockBodyReader getInstance() {
         return INSTANCE;
