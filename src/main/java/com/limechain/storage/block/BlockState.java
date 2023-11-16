@@ -736,8 +736,7 @@ public class BlockState {
         List<byte[]> pruned = blockTree.prune(hash);
 
         for (byte[] prunedHash : pruned) {
-            Block block = unfinalizedBlocks.remove(prunedHash);
-            if (block == null) continue;
+            unfinalizedBlocks.remove(prunedHash);
             //Delete from trie the states of pruned blocks' state root
             //TODO: tries.delete(blockheader.StateRoot)
             //TODO: implement when the Trie is ready
@@ -828,17 +827,12 @@ public class BlockState {
 
             db.save(helper.headerHashKey(block.getHeader().getBlockNumber()), subchainHash);
 
-//          delete from the unfinalizedBlockMap and delete reference to in-memory trie
-            Block tempBlock = unfinalizedBlocks.remove(subchainHash);
-            if (tempBlock == null || tempBlock.getHeader() == null) {
-                continue;
-            }
+            // Delete from the unfinalizedBlockMap and delete reference to in-memory trie
+            unfinalizedBlocks.remove(subchainHash);
 
-            // prune all the subchain hashes state trie from memory
+            // Prune all the subchain hashes state trie from memory
             // but keep the state trie from the current finalized block
-            if (!Arrays.equals(currentFinalizedHash, subchainHash)) {
-                //TODO: delete subchains state trie
-            }
+            //TODO: If currentFinalizedHash is not equal to subchain hash, delete subchain state trie
         }
     }
 

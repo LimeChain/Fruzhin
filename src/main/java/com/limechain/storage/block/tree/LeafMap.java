@@ -73,14 +73,16 @@ public class LeafMap {
             if (blockNode.getNumber() > max) {
                 max = blockNode.getNumber();
                 deepest = blockNode;
-            } else if (blockNode.getNumber() == max && deepest != null) {
-                if (blockNode.getArrivalTime().isBefore(deepest.getArrivalTime())) {
-                    deepest = blockNode;
-                } else if (blockNode.getArrivalTime().equals(deepest.getArrivalTime()) &&
-                        (Arrays.compare(blockNode.getHash(), deepest.getHash()) < 0)) {
-                    deepest = blockNode;
+            } else if (blockNode.getNumber() == max && deepest != null && (
+                    (blockNode.getArrivalTime().isBefore(deepest.getArrivalTime())) ||
+                            // there are two leaf nodes with the same number *and* arrival time, just pick the one
+                            // with the lower hash in lexicographical order.
+                            // practically, this is very unlikely to happen.
+                            (blockNode.getArrivalTime().equals(deepest.getArrivalTime()) &&
+                                    (Arrays.compare(blockNode.getHash(), deepest.getHash()) < 0))
+            )) {
+                deepest = blockNode;
 
-                }
             }
         }
         return deepest;
