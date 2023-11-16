@@ -41,8 +41,9 @@ public class BlockState {
 
     /**
      * Creates a new BlockState instance from genesis
+     *
      * @param repository the kvrepository used to store the block state
-     * @param header the genesis block header
+     * @param header     the genesis block header
      */
     public BlockState(KVRepository<String, Object> repository, BlockHeader header) {
         this.blockTree = new BlockTree(header);
@@ -110,12 +111,9 @@ public class BlockState {
         try {
             // Try to get the hash from the block tree
             return blockTree.getHashByNumber(blockNum.longValue());
+        } catch (LowerThanRootException lowerThanRootException) {
+            throw lowerThanRootException;
         } catch (RuntimeException e) {
-            // If the error is not LowerThanRootException, rethrow it
-            if (!(e instanceof LowerThanRootException)) {
-                throw new RuntimeException("Failed to get hash from blocktree: " + e.getMessage(), e);
-            }
-
             // If error is LowerThanRootException, number has already been finalized, so check db
             byte[] hash = (byte[]) db.find(helper.headerHashKey(blockNum)).orElse(null);
 
@@ -162,10 +160,9 @@ public class BlockState {
         List<byte[]> allDescendants;
         try {
             return blockTree.getAllDescendants(hash);
+        } catch (IllegalArgumentException illegalArgumentException) {
+            throw illegalArgumentException;
         } catch (Exception e) {
-            if (!(e instanceof IllegalArgumentException)) {
-                throw e;
-            }
             // If the node is not found in the block tree, start the manual process
             allDescendants = new ArrayList<>();
             allDescendants.add(hash);

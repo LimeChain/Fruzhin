@@ -228,9 +228,9 @@ public class BlockTree {
             return new ArrayList<>();
         }
 
-        Node previousfinalizedBlock = root;
-        long newCanonicalChainBlocksCount = finalizedNode.getNumber() - previousfinalizedBlock.getNumber();
-        if (previousfinalizedBlock.getNumber() == 0) {
+        Node previousFinalizedBlock = root;
+        long newCanonicalChainBlocksCount = finalizedNode.getNumber() - previousFinalizedBlock.getNumber();
+        if (previousFinalizedBlock.getNumber() == 0) {
             newCanonicalChainBlocksCount++;
         }
 
@@ -434,6 +434,7 @@ public class BlockTree {
 
     /**
      * Get the arrival time of a block
+     *
      * @param hash Hash of the block to get the arrival time of
      * @return Arrival time of the block
      */
@@ -448,6 +449,7 @@ public class BlockTree {
 
     /**
      * Creates a deep copy of the block tree
+     *
      * @return the deep copy of the block tree
      */
     public BlockTree deepCopy() {
@@ -472,7 +474,8 @@ public class BlockTree {
 
     /**
      * Stores the runtime instance for the given block hash
-     * @param hash Block hash
+     *
+     * @param hash     Block hash
      * @param instance Runtime instance
      */
     public void storeRuntime(byte[] hash, Runtime instance) {
@@ -481,6 +484,7 @@ public class BlockTree {
 
     /**
      * Returns the runtime instance for the given block hash
+     *
      * @param hash Block hash
      * @return Runtime instance
      */

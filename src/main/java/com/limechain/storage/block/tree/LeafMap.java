@@ -20,9 +20,10 @@ public class LeafMap {
 
     /**
      * Creates a new LeafMap from a node.
+     *
      * @param node the node to be converted to a map
      */
-    public LeafMap(final Node node){
+    public LeafMap(final Node node) {
         for (final Node leaf : node.getLeaves()) {
             syncMap.put(leaf.getHash(), leaf);
         }
@@ -30,7 +31,8 @@ public class LeafMap {
 
     /**
      * Stores a leaf in the map.
-     * @param key hash of the leaf
+     *
+     * @param key   hash of the leaf
      * @param value the leaf
      */
     public void store(byte[] key, Node value) {
@@ -39,6 +41,7 @@ public class LeafMap {
 
     /**
      * Loads a leaf from the map.
+     *
      * @param key hash of the leaf
      * @return the leaf
      * @throws RuntimeException if the leaf is not found
@@ -49,6 +52,7 @@ public class LeafMap {
 
     /**
      * Deletes the old node from the map and inserts the new one.
+     *
      * @param oldNode the leaf to be removed
      * @param newNode the leaf to be added
      */
@@ -60,6 +64,7 @@ public class LeafMap {
     /**
      * Searches the stored leaves to the find the one with the greatest number.
      * If there are two leaves with the same number, choose the one with the earliest arrival time.
+     *
      * @return the leaf with the greatest number
      */
     public Node highestLeaf() {
@@ -72,11 +77,11 @@ public class LeafMap {
             } else if (node.getNumber() == max && deepest != null) {
                 if (node.getArrivalTime().isBefore(deepest.getArrivalTime())) {
                     deepest = node;
-                }else if (node.getArrivalTime().equals(deepest.getArrivalTime())){
+                } else if (node.getArrivalTime().equals(deepest.getArrivalTime())) {
                     // there are two leaf nodes with the same number *and* arrival time, just pick the one
                     // with the lower hash in lexicographical order.
                     // practically, this is very unlikely to happen.
-                    if (Arrays.compare(node.getHash(), deepest.getHash()) < 0){
+                    if (Arrays.compare(node.getHash(), deepest.getHash()) < 0) {
                         deepest = node;
                     }
                 }
@@ -87,6 +92,7 @@ public class LeafMap {
 
     /**
      * Get list of all nodes in the map.
+     *
      * @return list of all nodes
      */
     public List<Node> nodes() {
@@ -95,6 +101,7 @@ public class LeafMap {
 
     /**
      * Find the best block.
+     *
      * @return the best block
      */
     public Node bestBlock() {
