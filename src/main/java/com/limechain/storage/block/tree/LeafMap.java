@@ -100,7 +100,7 @@ public class LeafMap {
     }
 
     /**
-     * Find the best block.
+     * Find the best non finalized block.
      *
      * @return the best block
      */

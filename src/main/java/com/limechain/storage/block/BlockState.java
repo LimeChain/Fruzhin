@@ -24,7 +24,7 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * contains the historical block data of the blockchain, including block headers and bodies.
+ * Contains the historical block data of the blockchain, including block headers and bodies.
  * It wraps the blocktree (which contains unfinalized blocks) and the database (which contains finalized blocks).
  */
 @Log
@@ -64,7 +64,7 @@ public class BlockState {
     /**
      * Check if the hash is part of the unfinalized blocks in-memory or persisted in the database.
      *
-     * @param hash the hash of the block header in byte array representation
+     * @param hash the hash of the block header as byte array
      * @return true if the block header is found, false otherwise
      */
     public boolean hasHeader(byte[] hash) {
@@ -78,7 +78,7 @@ public class BlockState {
     /**
      * Check if the hash is persisted in the database.
      *
-     * @param hash the hash of the block header in byte array representation
+     * @param hash the hash of the block header as byte array
      * @return true if the block header is found, false otherwise
      */
     public boolean hasHeaderInDatabase(byte[] hash) {
@@ -89,7 +89,7 @@ public class BlockState {
     /**
      * Get the block header for a given hash
      *
-     * @param hash the hash of the block header in byte array representation
+     * @param hash the hash of the block header as byte array
      * @return the block header
      */
     public BlockHeader getHeader(byte[] hash) {
@@ -105,7 +105,7 @@ public class BlockState {
      * Get the block hash on our best chain with the given number
      *
      * @param blockNum the block number
-     * @return the block hash in byte array representation
+     * @return the block hash as byte array
      */
     public byte[] getHashByNumber(BigInteger blockNum) {
         try {
@@ -129,7 +129,7 @@ public class BlockState {
      * Get the block hash on our best chain with the given number
      *
      * @param blockNumber the block number
-     * @return List of block hashes in byte array representation
+     * @return List of block hashes as byte array
      */
     public List<byte[]> getHashesByNumber(BigInteger blockNumber) {
         Block block;
@@ -153,8 +153,8 @@ public class BlockState {
      * Get all the descendants for a given block hash (including itself), by first checking in memory
      * and, if not found, reading from the block state database
      *
-     * @param hash the hash of the block header in byte array representation
-     * @return List of block hashes in byte array representation
+     * @param hash the hash of the block header as byte array
+     * @return List of block hashes as byte array
      */
     public List<byte[]> getAllDescendants(byte[] hash) {
         List<byte[]> allDescendants;
@@ -356,7 +356,7 @@ public class BlockState {
     }
 
     /**
-     * Gets the current beest block's hash
+     * Gets the current non finalized best block's hash
      *
      * @return the best block's hash
      */
@@ -365,7 +365,7 @@ public class BlockState {
     }
 
     /**
-     * Gets the current best block's header
+     * Gets the current non finalized best block's header
      *
      * @return the best block's header
      */
@@ -375,9 +375,9 @@ public class BlockState {
     }
 
     /**
-     * Gets the current best block's state root's hash
+     * Gets the current best block's state root hash
      *
-     * @return the best block's state root's hash in byte array representation
+     * @return the best block's state root hash as byte array
      */
     public byte[] bestBlockStateRoot() {
         return bestBlockHeader().getStateRoot().getBytes();
@@ -387,14 +387,14 @@ public class BlockState {
      * Gets the given block's state root's hash
      *
      * @param blockHash the block hash
-     * @return the given block's state root's hash in byte array representation
+     * @return the given block's state root's hash as byte array
      */
     public byte[] getBlockStateRoot(byte[] blockHash) {
         return getHeader(blockHash).getStateRoot().getBytes();
     }
 
     /**
-     * Gets the current best block's number
+     * Gets the current non finalized best block's number
      *
      * @return the best block's number
      */
@@ -407,7 +407,7 @@ public class BlockState {
     }
 
     /**
-     * Gets the current best block
+     * Gets the current non finalized best block
      *
      * @return the best block
      */
@@ -690,6 +690,12 @@ public class BlockState {
     }
 
     /* Block finalization */
+
+    /**
+     * Sets the hash of the latest finalized block
+     *
+     * @param hash the hash of the block
+     */
     public void setFinalizedHash(byte[] hash, BigInteger round, BigInteger setId) {
         if (!hasHeader(hash)) {
             throw new RuntimeException("Cannot finalise unknown block " + new Hash256(hash));
@@ -708,13 +714,15 @@ public class BlockState {
         for (byte[] prunedHash : pruned) {
             Block block = unfinalizedBlocks.remove(prunedHash);
             if (block == null) continue;
+            //Delete from trie the states of pruned blocks' state root
             //TODO: tries.delete(blockheader.StateRoot)
+            //TODO: implement when the Trie is ready
         }
 
         // if nothing was previously finalized, set the first slot of the network to the
         // slot number of block 1, which is now being set as final
         if (Arrays.equals(this.lastFinalized, this.genesisHash) && Arrays.equals(hash, this.genesisHash)) {
-//            setFirstSlotOnFinalisation();
+        //    setFirstSlotOnFinalisation();
             //TODO: Implement when BABE is implemented
         }
 
@@ -726,6 +734,12 @@ public class BlockState {
         this.lastFinalized = hash;
     }
 
+    /**
+     * Stores the highest round and setId to the database
+     *
+     * @param round the number of the round
+     * @param setId the set id
+     */
     public void setHighestRoundAndSetID(BigInteger round, BigInteger setId) {
         final Pair<BigInteger, BigInteger> highestRoundAndSetID = getHighestRoundAndSetID();
         final BigInteger highestSetID = highestRoundAndSetID.getValue1();
@@ -737,6 +751,11 @@ public class BlockState {
         db.save(DBConstants.HIGHEST_ROUND_AND_SET_ID_KEY, helper.bigIntegersToByteArray(round, setId));
     }
 
+    /**
+     * Gets the highest saved round and setId from the database
+     *
+     * @return Pair of round and setId
+     */
     public Pair<BigInteger, BigInteger> getHighestRoundAndSetID() {
         Optional<Object> roundAndSetId = db.find(DBConstants.HIGHEST_ROUND_AND_SET_ID_KEY);
         byte[] data = (byte[]) roundAndSetId.orElse(null);
@@ -748,8 +767,14 @@ public class BlockState {
         return helper.bytesToRoundAndSetId(data);
     }
 
+    /**
+     * Store all the blocks between last saved finalized and current finalized block in database
+     * and delete them from the unfinalized block map
+     *
+     * @param currentFinalizedHash the hash of the current finalized block
+     */
     public void handleFinalizedBlock(byte[] currentFinalizedHash) {
-        if (currentFinalizedHash == this.lastFinalized) {
+        if (Arrays.equals(currentFinalizedHash, this.lastFinalized)) {
             return;
         }
 
@@ -782,10 +807,10 @@ public class BlockState {
                 continue;
             }
 
-            // prune all the subchain hashes state tries from memory
+            // prune all the subchain hashes state trie from memory
             // but keep the state trie from the current finalized block
             if (!Arrays.equals(currentFinalizedHash, subchainHash)) {
-                //TODO: tries.delete(tempBlock.getHeader().getStateRoot());
+                //TODO: delete subchains state trie
             }
         }
     }
