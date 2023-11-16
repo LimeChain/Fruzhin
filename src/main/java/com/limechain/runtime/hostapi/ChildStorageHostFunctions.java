@@ -258,7 +258,6 @@ public class ChildStorageHostFunctions {
         return hostApi.writeDataToMemory(scaleEncodedOption(nextKey));
     }
 
-
     /**
      * Compute the child storage root.
      *
