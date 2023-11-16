@@ -28,8 +28,8 @@ public class BlockBody {
              ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
 
             writer.writeCompact(extrinsics.size());
-            for (Extrinsics extrinsics : this.extrinsics) {
-                writer.writeAsList(extrinsics.getExtrinsic());
+            for (Extrinsics extrinsic : this.extrinsics) {
+                writer.writeAsList(extrinsic.getExtrinsic());
             }
 
             return HashUtils.hashWithBlake2b(buf.toByteArray());
