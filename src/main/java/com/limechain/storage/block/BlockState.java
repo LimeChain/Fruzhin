@@ -22,10 +22,10 @@ import org.javatuples.Pair;
 import java.math.BigInteger;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -35,14 +35,14 @@ import java.util.Optional;
 @Log
 public class BlockState {
     private final BlockTree blockTree;
-    private final Map<byte[], Block> unfinalizedBlocks;
+    private final Map<Hash256, Block> unfinalizedBlocks;
     private final KVRepository<String, Object> db;
     private final BlockStateHelper helper = new BlockStateHelper();
 
     @Getter
-    private final byte[] genesisHash;
+    private final Hash256 genesisHash;
     @Getter
-    private byte[] lastFinalized;
+    private Hash256 lastFinalized;
 
     /**
      * Creates a new BlockState instance from genesis
@@ -50,17 +50,19 @@ public class BlockState {
      * @param repository the kvrepository used to store the block state
      * @param header     the genesis block header
      */
-    public BlockState(KVRepository<String, Object> repository, BlockHeader header) {
+    public BlockState(final KVRepository<String, Object> repository, final BlockHeader header) {
         this.blockTree = new BlockTree(header);
         this.db = repository;
         this.unfinalizedBlocks = new HashMap<>();
-        this.genesisHash = header.getHash();
-        this.lastFinalized = header.getHash();
 
-        setArrivalTime(header.getHash(), Instant.now());
+        final Hash256 headerHash = header.getHash();
+        this.genesisHash = headerHash;
+        this.lastFinalized = headerHash;
+
+        setArrivalTime(headerHash, Instant.now());
         setHeader(header);
-        db.save(helper.headerHashKey(header.getBlockNumber()), header.getHash());
-        setBlockBody(header.getHash(), new BlockBody(new ArrayList<>()));
+        db.save(helper.headerHashKey(header.getBlockNumber()), headerHash.getBytes());
+        setBlockBody(headerHash, new BlockBody(new ArrayList<>()));
 
         //set the latest finalized head to the genesis header
         setFinalizedHash(genesisHash, BigInteger.ZERO, BigInteger.ZERO);
@@ -72,7 +74,7 @@ public class BlockState {
      * @param hash the hash of the block header as byte array
      * @return true if the block header is found, false otherwise
      */
-    public boolean hasHeader(byte[] hash) {
+    public boolean hasHeader(final Hash256 hash) {
         if (unfinalizedBlocks.containsKey(hash)) {
             return true;
         }
@@ -86,7 +88,7 @@ public class BlockState {
      * @param hash the hash of the block header as byte array
      * @return true if the block header is found, false otherwise
      */
-    public boolean hasHeaderInDatabase(byte[] hash) {
+    public boolean hasHeaderInDatabase(final Hash256 hash) {
         Optional<Object> foundHeader = db.find(helper.headerKey(hash));
         return foundHeader.isPresent();
     }
@@ -97,7 +99,7 @@ public class BlockState {
      * @param hash the hash of the block header as byte array
      * @return the block header
      */
-    public BlockHeader getHeader(byte[] hash) {
+    public BlockHeader getHeader(final Hash256 hash) {
         Block block = unfinalizedBlocks.get(hash);
         if (block != null && block.getHeader() != null) {
             return block.getHeader();
@@ -114,7 +116,7 @@ public class BlockState {
      * @throws LowerThanRootException if the block number is lower than the root of the blocktree.
      * @throws BlockNotFoundException if the block is not found in the blocktree or the database.
      */
-    public byte[] getHashByNumber(BigInteger blockNum) {
+    public Hash256 getHashByNumber(final BigInteger blockNum) {
         try {
             // Try to get the hash from the block tree
             return blockTree.getHashByNumber(blockNum.longValue());
@@ -128,7 +130,7 @@ public class BlockState {
                 throw new BlockNotFoundException("Block " + blockNum + " not found");
             }
 
-            return hash;
+            return new Hash256(hash);
         }
     }
 
@@ -139,7 +141,7 @@ public class BlockState {
      * @return List of block hashes as byte array
      * @throws BlockNotFoundException if there is an issue in getting the block by number.
      */
-    public List<byte[]> getHashesByNumber(BigInteger blockNumber) {
+    public List<Hash256> getHashesByNumber(final BigInteger blockNumber) {
         Block block;
         try {
             block = getBlockByNumber(blockNumber);
@@ -147,9 +149,9 @@ public class BlockState {
             throw new BlockNotFoundException("Getting block by number: " + e.getMessage(), e);
         }
 
-        List<byte[]> blockHashes = blockTree.getAllBlocksAtNumber(block.getHeader().getParentHash().getBytes());
+        List<Hash256> blockHashes = blockTree.getAllBlocksAtNumber(block.getHeader().getParentHash());
 
-        byte[] hash = block.getHeader().getHash();
+        Hash256 hash = block.getHeader().getHash();
         if (!blockHashes.contains(hash)) {
             blockHashes.add(hash);
         }
@@ -165,30 +167,29 @@ public class BlockState {
      * @return List of block hashes as byte array
      * @throws BlockNodeNotFoundException if the block node is not found in the block tree.
      */
-    public List<byte[]> getAllDescendants(byte[] hash) {
+    public List<Hash256> getAllDescendants(final Hash256 hash) {
         try {
             return blockTree.getAllDescendants(hash);
         } catch (BlockNodeNotFoundException blockNotFound) {
             throw blockNotFound;
-        }
-        catch (Exception ignored) {
+        } catch (Exception ignored) {
             log.info("Failed to get all descendants from block tree, trying database");
         }
 
-        final List<byte[]> allDescendants = new ArrayList<>();
+        final List<Hash256> allDescendants = new ArrayList<>();
         allDescendants.add(hash);
         final BlockHeader header = getHeader(hash);
 
-        final List<byte[]> nextBlockHashes = getHashesByNumber(header.getBlockNumber().add(BigInteger.ONE));
+        final List<Hash256> nextBlockHashes = getHashesByNumber(header.getBlockNumber().add(BigInteger.ONE));
 
-        for (final byte[] nextBlockHash : nextBlockHashes) {
+        for (final Hash256 nextBlockHash : nextBlockHashes) {
             final BlockHeader nextHeader = getHeader(nextBlockHash);
 
-            if (!Arrays.equals(nextHeader.getParentHash().getBytes(), hash)) {
+            if (!Objects.equals(nextHeader.getParentHash(), hash)) {
                 continue;
             }
 
-            final List<byte[]> nextDescendants = getAllDescendants(nextBlockHash);
+            final List<Hash256> nextDescendants = getAllDescendants(nextBlockHash);
             allDescendants.addAll(nextDescendants);
         }
 
@@ -201,8 +202,8 @@ public class BlockState {
      * @param num the block number
      * @return the block header
      */
-    public BlockHeader getHeaderByNumber(BigInteger num) {
-        final byte[] hash = getHashByNumber(num);
+    public BlockHeader getHeaderByNumber(final BigInteger num) {
+        final Hash256 hash = getHashByNumber(num);
         return getHeader(hash);
     }
 
@@ -212,8 +213,8 @@ public class BlockState {
      * @param num the block number
      * @return the block
      */
-    public Block getBlockByNumber(BigInteger num) {
-        final byte[] hash = getHashByNumber(num);
+    public Block getBlockByNumber(final BigInteger num) {
+        final Hash256 hash = getHashByNumber(num);
         return getBlockByHash(hash);
     }
 
@@ -223,7 +224,7 @@ public class BlockState {
      * @param hash the block hash
      * @return the block
      */
-    public Block getBlockByHash(byte[] hash) {
+    public Block getBlockByHash(final Hash256 hash) {
         Block block = unfinalizedBlocks.get(hash);
         if (block != null) {
             return block;
@@ -252,7 +253,7 @@ public class BlockState {
      * @param hash the block hash
      * @return true if the block body is in the database, false otherwise
      */
-    public boolean hasBlockBody(byte[] hash) {
+    public boolean hasBlockBody(final Hash256 hash) {
         if (unfinalizedBlocks.containsKey(hash)) {
             return true;
         }
@@ -267,7 +268,7 @@ public class BlockState {
      * @return the block body
      * @throws BlockNotFoundException if the block body cannot be retrieved.
      */
-    public BlockBody getBlockBody(byte[] hash) {
+    public BlockBody getBlockBody(final Hash256 hash) {
         Block block = unfinalizedBlocks.get(hash);
         if (block != null && block.getBody() != null) {
             return block.getBody();
@@ -287,7 +288,7 @@ public class BlockState {
      * @param hash      the block hash
      * @param blockBody the block body to be persisted
      */
-    public void setBlockBody(byte[] hash, BlockBody blockBody) {
+    public void setBlockBody(final Hash256 hash, final BlockBody blockBody) {
         db.save(helper.blockBodyKey(hash), blockBody.getEncoded());
     }
 
@@ -307,7 +308,7 @@ public class BlockState {
      * @param arrivalTime the arrival time of the block
      * @throws IllegalArgumentException if the block body is null.
      */
-    public void addBlockWithArrivalTime(Block block, Instant arrivalTime) {
+    public void addBlockWithArrivalTime(final Block block, final Instant arrivalTime) {
         if (block.getBody() == null) {
             throw new IllegalArgumentException("Block body cannot be null");
         }
@@ -326,14 +327,14 @@ public class BlockState {
      * @return List of hashes of blocks
      * @throws HeaderNotFoundException if no header is found for the given block number.
      */
-    public List<byte[]> getAllBlocksAtNumber(final BigInteger blockNum) {
+    public List<Hash256> getAllBlocksAtNumber(final BigInteger blockNum) {
         BlockHeader header = getHeaderByNumber(blockNum);
 
         if (header == null) {
             throw new HeaderNotFoundException("Header not found for block number: " + blockNum);
         }
 
-        return getAllBlocksAtDepth(header.getParentHash().getBytes());
+        return getAllBlocksAtDepth(header.getParentHash());
     }
 
     /**
@@ -342,7 +343,7 @@ public class BlockState {
      * @param hash the parent hash
      * @return List of hashes of blocks
      */
-    public List<byte[]> getAllBlocksAtDepth(byte[] hash) {
+    public List<Hash256> getAllBlocksAtDepth(final Hash256 hash) {
         return blockTree.getAllBlocksAtNumber(hash);
     }
 
@@ -353,7 +354,7 @@ public class BlockState {
      * @return true if the block is on our current chain, false otherwise
      * @throws HeaderNotFoundException if the best block header cannot be retrieved.
      */
-    public boolean isBlockOnCurrentChain(BlockHeader header) {
+    public boolean isBlockOnCurrentChain(final BlockHeader header) {
         BlockHeader bestBlock = bestBlockHeader();
         if (bestBlock == null) {
             throw new HeaderNotFoundException("Best block header cannot be retrieved");
@@ -372,7 +373,7 @@ public class BlockState {
      *
      * @return the best block's hash
      */
-    public byte[] bestBlockHash() {
+    public Hash256 bestBlockHash() {
         return blockTree.bestBlockHash();
     }
 
@@ -382,7 +383,7 @@ public class BlockState {
      * @return the best block's header
      */
     public BlockHeader bestBlockHeader() {
-        byte[] bestHash = bestBlockHash();
+        Hash256 bestHash = bestBlockHash();
         return getHeader(bestHash);
     }
 
@@ -391,8 +392,8 @@ public class BlockState {
      *
      * @return the best block's state root hash as byte array
      */
-    public byte[] bestBlockStateRoot() {
-        return bestBlockHeader().getStateRoot().getBytes();
+    public Hash256 bestBlockStateRoot() {
+        return bestBlockHeader().getStateRoot();
     }
 
     /**
@@ -401,8 +402,8 @@ public class BlockState {
      * @param blockHash the block hash
      * @return the given block's state root's hash as byte array
      */
-    public byte[] getBlockStateRoot(byte[] blockHash) {
-        return getHeader(blockHash).getStateRoot().getBytes();
+    public Hash256 getBlockStateRoot(final Hash256 blockHash) {
+        return getHeader(blockHash).getStateRoot();
     }
 
     /**
@@ -435,7 +436,7 @@ public class BlockState {
      * @return the block header
      * @throws HeaderNotFoundException if the header is not found in the database.
      */
-    public BlockHeader loadHeaderFromDatabase(byte[] hash) {
+    public BlockHeader loadHeaderFromDatabase(final Hash256 hash) {
         Optional<Object> foundHeader = db.find(helper.headerKey(hash));
 
         if (foundHeader.isEmpty()) {
@@ -452,10 +453,10 @@ public class BlockState {
      * @param endHash   the hash of the block to end with
      * @return the list of block hashes
      */
-    public List<byte[]> range(byte[] startHash, byte[] endHash) {
-        final List<byte[]> hashes = new ArrayList<>();
+    public List<Hash256> range(final Hash256 startHash, final Hash256 endHash) {
+        final List<Hash256> hashes = new ArrayList<>();
 
-        if (Arrays.equals(startHash, endHash)) {
+        if (Objects.equals(startHash, endHash)) {
             hashes.add(startHash);
             return hashes;
         }
@@ -481,13 +482,13 @@ public class BlockState {
      * @param endHash   the hash of the block to end with
      * @return the list of block hashes
      */
-    public List<byte[]> retrieveRange(byte[] startHash, byte[] endHash) {
-        List<byte[]> inMemoryHashes = blockTree.range(startHash, endHash);
-        byte[] firstItem = inMemoryHashes.get(0);
+    public List<Hash256> retrieveRange(final Hash256 startHash, final Hash256 endHash) {
+        List<Hash256> inMemoryHashes = blockTree.range(startHash, endHash);
+        Hash256 firstItem = inMemoryHashes.get(0);
 
         // if the first item is equal to the startHash that means we got the range
         // from the in-memory blocktree
-        if (Arrays.equals(firstItem, startHash)) {
+        if (Objects.equals(firstItem, startHash)) {
             return inMemoryHashes;
         }
 
@@ -496,11 +497,11 @@ public class BlockState {
         // must be the block tree root that is also placed in the database
         // so we will start from its parent since it is already in the array
         BlockHeader blockTreeRootHeader = loadHeaderFromDatabase(firstItem);
-        BlockHeader startingAtParentHeader = loadHeaderFromDatabase(blockTreeRootHeader.getParentHash().getBytes());
+        BlockHeader startingAtParentHeader = loadHeaderFromDatabase(blockTreeRootHeader.getParentHash());
 
-        List<byte[]> inDatabaseHashes = retrieveRangeFromDatabase(startHash, startingAtParentHeader);
+        List<Hash256> inDatabaseHashes = retrieveRangeFromDatabase(startHash, startingAtParentHeader);
 
-        List<byte[]> hashes = new ArrayList<>(inDatabaseHashes);
+        List<Hash256> hashes = new ArrayList<>(inDatabaseHashes);
         hashes.addAll(inMemoryHashes);
         return hashes;
     }
@@ -511,10 +512,10 @@ public class BlockState {
      * @param startHash the hash of the block to start with
      * @param endHeader the header of the block to end with
      * @return the list of block hashes
-     * @throws IllegalArgumentException if the start block number is greater than the end block number.
+     * @throws IllegalArgumentException     if the start block number is greater than the end block number.
      * @throws BlockStorageGenericException if there is a start hash mismatch.
      */
-    public List<byte[]> retrieveRangeFromDatabase(byte[] startHash, BlockHeader endHeader) {
+    public List<Hash256> retrieveRangeFromDatabase(final Hash256 startHash, final BlockHeader endHeader) {
         BlockHeader startHeader = loadHeaderFromDatabase(startHash);
         if (startHeader.getBlockNumber().compareTo(endHeader.getBlockNumber()) > 0) {
             throw new IllegalArgumentException("Start block number is greater than end block number");
@@ -522,25 +523,25 @@ public class BlockState {
 
         BigInteger blocksInRange = endHeader.getBlockNumber()
                 .subtract(startHeader.getBlockNumber()).add(BigInteger.ONE);
-        List<byte[]> hashes = new ArrayList<>(blocksInRange.intValue());
+        List<Hash256> hashes = new ArrayList<>(blocksInRange.intValue());
 
         int lastPosition = blocksInRange.intValue() - 1;
 
         hashes.add(0, startHash);
         hashes.add(lastPosition, endHeader.getHash());
 
-        byte[] inLoopHash = endHeader.getParentHash().getBytes();
+        Hash256 inLoopHash = endHeader.getParentHash();
         for (int currentPosition = lastPosition - 1; currentPosition > 0; currentPosition--) {
             hashes.add(currentPosition, inLoopHash);
 
             BlockHeader inLoopHeader = loadHeaderFromDatabase(inLoopHash);
-            inLoopHash = inLoopHeader.getParentHash().getBytes();
+            inLoopHash = inLoopHeader.getParentHash();
         }
 
         // Verify that we ended up with the start hash
-        if (!Arrays.equals(inLoopHash, startHash)) {
-            throw new BlockStorageGenericException("Start hash mismatch: expected " + new Hash256(startHash) +
-                    ", found: " + new Hash256(inLoopHash));
+        if (!Objects.equals(inLoopHash, startHash)) {
+            throw new BlockStorageGenericException("Start hash mismatch: expected " + startHash +
+                    ", found: " + inLoopHash);
         }
 
         return hashes;
@@ -554,7 +555,7 @@ public class BlockState {
      * @return the list of block hashes
      * @throws BlockStorageGenericException if the block tree is not initialized.
      */
-    public List<byte[]> rangeInMemory(byte[] startHash, byte[] endHash) {
+    public List<Hash256> rangeInMemory(final Hash256 startHash, final Hash256 endHash) {
         if (blockTree == null) {
             throw new BlockStorageGenericException("Block tree is not initialized");
         }
@@ -570,7 +571,7 @@ public class BlockState {
      * @return true if the child block is a descendant of the parent block, false otherwise
      * @throws BlockStorageGenericException if the block tree is not initialized.
      */
-    public boolean isDescendantOf(byte[] ancestor, byte[] descendant) {
+    public boolean isDescendantOf(final Hash256 ancestor, final Hash256 descendant) {
         if (blockTree == null) {
             throw new BlockStorageGenericException("Block tree is not initialized");
         }
@@ -583,10 +584,10 @@ public class BlockState {
 
             BlockHeader current = descendantHeader;
             while (current.getBlockNumber().compareTo(ancestorHeader.getBlockNumber()) > 0) {
-                if (Arrays.equals(current.getParentHash().getBytes(), ancestor)) {
+                if (Objects.equals(current.getParentHash(), ancestor)) {
                     return true;
                 }
-                current = getHeader(current.getParentHash().getBytes());
+                current = getHeader(current.getParentHash());
             }
 
             return false;
@@ -600,7 +601,7 @@ public class BlockState {
      * @param endHash   the hash of the second block
      * @return the lowest common ancestor
      */
-    public byte[] lowestCommonAncestor(byte[] startHash, byte[] endHash) {
+    public Hash256 lowestCommonAncestor(final Hash256 startHash, final Hash256 endHash) {
         return blockTree.lowestCommonAncestor(startHash, endHash);
     }
 
@@ -609,7 +610,7 @@ public class BlockState {
      *
      * @return the leaves of the blocktree as an array of byte arrays
      */
-    public List<byte[]> leaves() {
+    public List<Hash256> leaves() {
         return blockTree.leaves();
     }
 
@@ -619,9 +620,8 @@ public class BlockState {
      * @param hash the hash of the block
      * @param now  the arrival time of the block
      */
-    public void setArrivalTime(byte[] hash, Instant now) {
-        byte[] serialize = SerializationUtils.serialize(now);
-        db.save(helper.arrivalTimeKey(hash), serialize);
+    public void setArrivalTime(final Hash256 hash, final Instant now) {
+        db.save(helper.arrivalTimeKey(hash), now);
     }
 
     /**
@@ -631,7 +631,7 @@ public class BlockState {
      * @return the arrival time of the block
      * @throws NotFoundException if the arrival time is not found in the database.
      */
-    public Instant getArrivalTime(byte[] hash) {
+    public Instant getArrivalTime(final Hash256 hash) {
         Optional<Object> object = db.find(helper.arrivalTimeKey(hash));
 
         if (object.isEmpty()) {
@@ -653,7 +653,7 @@ public class BlockState {
      * @return runtime for the block
      * @throws BlockStorageGenericException if the block node is not found in the block tree.
      */
-    public Runtime getRuntime(byte[] blockHash) {
+    public Runtime getRuntime(final Hash256 blockHash) {
         try {
             return blockTree.getBlockRuntime(blockHash);
         } catch (BlockNodeNotFoundException e) {
@@ -667,7 +667,7 @@ public class BlockState {
      * @param blockHash the block hash
      * @param runtime   the runtime to be stored
      */
-    public void storeRuntime(byte[] blockHash, Runtime runtime) {
+    public void storeRuntime(final Hash256 blockHash, final Runtime runtime) {
         blockTree.storeRuntime(blockHash, runtime);
     }
 
@@ -676,7 +676,7 @@ public class BlockState {
      *
      * @return list of hashes of the non-finalized blocks
      */
-    public List<byte[]> getNonfinalizedBlocks() {
+    public List<Hash256> getNonfinalizedBlocks() {
         return blockTree.getAllBlocks();
     }
 
@@ -686,7 +686,7 @@ public class BlockState {
      * @param hash the hash of the block
      * @return the block
      */
-    public Block getUnfinalizedBlockFromHash(final byte[] hash) {
+    public Block getUnfinalizedBlockFromHash(final Hash256 hash) {
         return unfinalizedBlocks.get(hash);
     }
 
@@ -696,7 +696,7 @@ public class BlockState {
      * @param hash  the hash of the block
      * @param block the block
      */
-    public void addUnfinalizedBlock(final byte[] hash, final Block block) {
+    public void addUnfinalizedBlock(final Hash256 hash, final Block block) {
         this.unfinalizedBlocks.put(hash, block);
     }
 
@@ -706,7 +706,7 @@ public class BlockState {
      * @param blockHash the hash of the block
      * @return the block
      */
-    public Block deleteUnfinalizedBlock(final byte[] blockHash) {
+    public Block deleteUnfinalizedBlock(final Hash256 blockHash) {
         return this.unfinalizedBlocks.remove(blockHash);
     }
 
@@ -715,14 +715,14 @@ public class BlockState {
     /**
      * Sets the hash of the latest finalized block
      *
-     * @param hash the hash of the block
-     * @param round  The round number of the finalized block.
-     * @param setId  The set ID of the finalized block.
+     * @param hash  the hash of the block
+     * @param round The round number of the finalized block.
+     * @param setId The set ID of the finalized block.
      * @throws BlockNodeNotFoundException if the block corresponding to the provided hash is not found.
      */
-    public void setFinalizedHash(byte[] hash, BigInteger round, BigInteger setId) {
+    public void setFinalizedHash(final Hash256 hash, final BigInteger round, final BigInteger setId) {
         if (!hasHeader(hash)) {
-            throw new BlockNodeNotFoundException("Cannot finalise unknown block " + new Hash256(hash));
+            throw new BlockNodeNotFoundException("Cannot finalise unknown block " + hash);
         }
 
         handleFinalizedBlock(hash);
@@ -733,9 +733,9 @@ public class BlockState {
             //Notify that we have finalized a block
         }
 
-        List<byte[]> pruned = blockTree.prune(hash);
+        List<Hash256> pruned = blockTree.prune(hash);
 
-        for (byte[] prunedHash : pruned) {
+        for (Hash256 prunedHash : pruned) {
             unfinalizedBlocks.remove(prunedHash);
             //Delete from trie the states of pruned blocks' state root
             //TODO: tries.delete(blockheader.StateRoot)
@@ -744,7 +744,7 @@ public class BlockState {
 
         // if nothing was previously finalized, set the first slot of the network to the
         // slot number of block 1, which is now being set as final
-        if (Arrays.equals(this.lastFinalized, this.genesisHash) && Arrays.equals(hash, this.genesisHash)) {
+        if (Objects.equals(this.lastFinalized, this.genesisHash) && Objects.equals(hash, this.genesisHash)) {
             //TODO: Implement when BABE is implemented - setFirstSlotOnFinalisation
         }
 
@@ -763,7 +763,7 @@ public class BlockState {
      * @param setId the current setId
      * @throws BlockNodeNotFoundException if the provided setId is less than the highest stored setId.
      */
-    public void setHighestRoundAndSetID(BigInteger round, BigInteger setId) {
+    public void setHighestRoundAndSetID(final BigInteger round, final BigInteger setId) {
         final Pair<BigInteger, BigInteger> highestRoundAndSetID = getHighestRoundAndSetID();
         final BigInteger highestSetID = highestRoundAndSetID.getValue1();
 
@@ -798,25 +798,25 @@ public class BlockState {
      * @param currentFinalizedHash the hash of the current finalized block
      * @throws BlockNotFoundException if a block in the unfinalized block map is not found.
      */
-    public void handleFinalizedBlock(byte[] currentFinalizedHash) {
-        if (Arrays.equals(currentFinalizedHash, this.lastFinalized)) {
+    public void handleFinalizedBlock(final Hash256 currentFinalizedHash) {
+        if (Objects.equals(currentFinalizedHash, this.lastFinalized)) {
             return;
         }
 
-        List<byte[]> subchain = rangeInMemory(lastFinalized, currentFinalizedHash);
+        List<Hash256> subchain = rangeInMemory(lastFinalized, currentFinalizedHash);
 
-        List<byte[]> subchainExcludingLatestFinalized = subchain.subList(1, subchain.size());
+        List<Hash256> subchainExcludingLatestFinalized = subchain.subList(1, subchain.size());
 
         // root of subchain is previously finalized block, which has already been stored in the db
-        for (byte[] subchainHash : subchainExcludingLatestFinalized) {
-            if (Arrays.equals(subchainHash, genesisHash)) {
+        for (Hash256 subchainHash : subchainExcludingLatestFinalized) {
+            if (Objects.equals(subchainHash, genesisHash)) {
                 continue;
             }
 
             Block block = unfinalizedBlocks.get(subchainHash);
             if (block == null) {
                 throw new BlockNotFoundException("Failed to find block in unfinalized block map for hash" +
-                        new Hash256(subchainHash));
+                        subchainHash);
             }
 
             setHeader(block.getHeader());

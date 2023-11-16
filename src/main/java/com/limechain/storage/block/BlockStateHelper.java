@@ -9,6 +9,7 @@ import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.emeraldpay.polkaj.scale.reader.UInt64Reader;
 import io.emeraldpay.polkaj.scale.writer.UInt64Writer;
+import io.emeraldpay.polkaj.types.Hash256;
 import org.javatuples.Pair;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,15 +24,15 @@ public final class BlockStateHelper {
     private final UInt64Reader uint64Reader = new UInt64Reader();
 
     @NotNull
-    String headerKey(byte[] key) {
+    String headerKey(Hash256 key) {
         String headerPrefix = "hdr";
-        return headerPrefix.concat(new String(key));
+        return headerPrefix.concat(key.toString());
     }
 
     @NotNull
-    String blockBodyKey(byte[] key) {
+    String blockBodyKey(Hash256 key) {
         String blockBodyPrefix = "blb";
-        return blockBodyPrefix.concat(new String(key));
+        return blockBodyPrefix.concat(key.toString());
     }
 
     @NotNull
@@ -41,9 +42,9 @@ public final class BlockStateHelper {
     }
 
     @NotNull
-    String arrivalTimeKey(byte[] key) {
+    String arrivalTimeKey(Hash256 key) {
         String arrivalTimePrefix = "arr";
-        return arrivalTimePrefix.concat(new String(key));
+        return arrivalTimePrefix.concat(key.toString());
     }
 
     @NotNull

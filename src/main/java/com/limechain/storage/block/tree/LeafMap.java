@@ -1,5 +1,6 @@
 package com.limechain.storage.block.tree;
 
+import io.emeraldpay.polkaj.types.Hash256;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -16,7 +17,7 @@ import java.util.Map;
 @NoArgsConstructor
 public class LeafMap {
 
-    private final Map<byte[], BlockNode> syncMap = new HashMap<>();
+    private final Map<Hash256, BlockNode> syncMap = new HashMap<>();
 
     /**
      * Creates a new LeafMap from a node.
@@ -25,7 +26,7 @@ public class LeafMap {
      */
     public LeafMap(final BlockNode blockNode) {
         for (final BlockNode leaf : blockNode.getLeaves()) {
-            syncMap.put(leaf.getHash(), leaf);
+            syncMap.put((leaf.getHash()), leaf);
         }
     }
 
@@ -35,7 +36,7 @@ public class LeafMap {
      * @param key   hash of the leaf
      * @param value the leaf
      */
-    public void store(byte[] key, BlockNode value) {
+    public void store(final Hash256 key, final BlockNode value) {
         syncMap.put(key, value);
     }
 
@@ -45,7 +46,7 @@ public class LeafMap {
      * @param key hash of the leaf
      * @return the leaf
      */
-    public BlockNode load(byte[] key) {
+    public BlockNode load(final Hash256 key) {
         return syncMap.get(key);
     }
 
@@ -55,7 +56,7 @@ public class LeafMap {
      * @param oldBlockNode the leaf to be removed
      * @param newBlockNode the leaf to be added
      */
-    public void replace(BlockNode oldBlockNode, BlockNode newBlockNode) {
+    public void replace(final BlockNode oldBlockNode, final BlockNode newBlockNode) {
         syncMap.remove(oldBlockNode.getHash());
         store(newBlockNode.getHash(), newBlockNode);
     }
@@ -79,7 +80,7 @@ public class LeafMap {
                             // with the lower hash in lexicographical order.
                             // practically, this is very unlikely to happen.
                             (blockNode.getArrivalTime().equals(deepest.getArrivalTime()) &&
-                                    (Arrays.compare(blockNode.getHash(), deepest.getHash()) < 0))
+                                    (Arrays.compare(blockNode.getHash().getBytes(), deepest.getHash().getBytes()) < 0))
             )) {
                 deepest = blockNode;
 

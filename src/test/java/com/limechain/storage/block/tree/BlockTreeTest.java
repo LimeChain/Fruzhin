@@ -16,9 +16,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -42,23 +40,23 @@ class BlockTreeTest {
 
     @Test
     void testBlockTreeGetBlock() {
-        Pair<BlockTree, List<byte[]>> result = createFlatTree(2);
+        Pair<BlockTree, List<Hash256>> result = createFlatTree(2);
         BlockTree bt = result.getValue0();
-        List<byte[]> hashes = result.getValue1();
+        List<Hash256> hashes = result.getValue1();
 
         BlockNode blockNode = bt.getNode(hashes.get(2));
         assertNotNull(blockNode, "node is null");
-        assertArrayEquals(hashes.get(2), blockNode.getHash());
+        assertEquals(hashes.get(2), blockNode.getHash());
     }
 
     @Test
     void testBlockTreeAddBlock() {
-        Pair<BlockTree, List<byte[]>> result = createFlatTree(1);
+        Pair<BlockTree, List<Hash256>> result = createFlatTree(1);
         BlockTree bt = result.getValue0();
-        List<byte[]> hashes = result.getValue1();
+        List<Hash256> hashes = result.getValue1();
 
         BlockHeader header = createHeader(hashes.get(1), 2);
-        byte[] hash = header.getHash();
+        Hash256 hash = header.getHash();
         bt.addBlock(header, Instant.ofEpochSecond(0));
 
         BlockNode blockNode = bt.getNode(hash);
@@ -66,16 +64,16 @@ class BlockTreeTest {
 
         assertNotNull(leafBlockNode);
 
-        byte[] oldHash = new byte[]{0x01};
+        Hash256 oldHash = getHash("01");
         leafBlockNode = bt.getLeaves().load(oldHash);
         assertNull(leafBlockNode);
     }
 
     @Test
     void testNodeIsDescendantOf() {
-        Pair<BlockTree, List<byte[]>> result = createFlatTree(4);
+        Pair<BlockTree, List<Hash256>> result = createFlatTree(4);
         BlockTree bt = result.getValue0();
-        List<byte[]> hashes = result.getValue1();
+        List<Hash256> hashes = result.getValue1();
 
         BlockNode leaf = bt.getNode(hashes.get(3));
         assertTrue(leaf.isDescendantOf(bt.getRoot()));
@@ -100,20 +98,19 @@ class BlockTreeTest {
 
     @Test
     void testBlockTreeGetAllDescendants() {
-        Pair<BlockTree, List<byte[]>> result = createFlatTree(4);
+        Pair<BlockTree, List<Hash256>> result = createFlatTree(4);
         BlockTree bt = result.getValue0();
-        List<Hash256> hashes = result.getValue1().stream().map(Hash256::new).collect(Collectors.toList());
-        List<Hash256> descendants = bt.getAllDescendants(bt.getRoot().getHash())
-                .stream().map(Hash256::new).collect(Collectors.toList());
+        List<Hash256> hashes = result.getValue1();
+        List<Hash256> descendants = bt.getAllDescendants(bt.getRoot().getHash());
 
         assertEquals(hashes, descendants);
     }
 
     @Test
     void testBlockTreeIsDescendantOf() {
-        Pair<BlockTree, List<byte[]>> result = createFlatTree(4);
+        Pair<BlockTree, List<Hash256>> result = createFlatTree(4);
         BlockTree bt = result.getValue0();
-        List<byte[]> hashes = result.getValue1();
+        List<Hash256> hashes = result.getValue1();
 
         boolean isDescendant = bt.isDescendantOf(bt.getRoot().getHash(), hashes.get(3));
         assertTrue(isDescendant);
@@ -125,7 +122,7 @@ class BlockTreeTest {
     @Test
     void testBlockTreeLowestCommonAncestor() {
         BlockTree bt;
-        List<byte[]> leaves;
+        List<Hash256> leaves;
         List<BlockNode> branches;
 
         while (true) {
@@ -139,23 +136,23 @@ class BlockTreeTest {
             }
         }
 
-        byte[] expected = branches.get(0).getHash();
-        byte[] a = leaves.get(0);
-        byte[] b = leaves.get(1);
+        Hash256 expected = branches.get(0).getHash();
+        Hash256 a = leaves.get(0);
+        Hash256 b = leaves.get(1);
 
-        byte[] p = bt.lowestCommonAncestor(a, b);
-        assertArrayEquals(expected, p);
+        Hash256 p = bt.lowestCommonAncestor(a, b);
+        assertEquals(expected, p);
     }
 
     @Test
     void testBlockTreeLowestCommonAncestorSameNode() {
         Pair<BlockTree, List<BlockNode>> result = createTestBlockTree(testHeader, 8);
         BlockTree bt = result.getValue0();
-        List<byte[]> leaves = bt.leaves();
+        List<Hash256> leaves = bt.leaves();
 
-        byte[] a = leaves.get(0);
+        Hash256 a = leaves.get(0);
 
-        byte[] p = bt.lowestCommonAncestor(a, a);
+        Hash256 p = bt.lowestCommonAncestor(a, a);
         assertEquals(a, p, "Lowest common ancestor of a node with itself should be itself");
     }
 
@@ -163,114 +160,112 @@ class BlockTreeTest {
     void testBlockTreeLowestCommonAncestorSameChain() {
         Pair<BlockTree, List<BlockNode>> result = createTestBlockTree(testHeader, 8);
         BlockTree bt = result.getValue0();
-        List<byte[]> leaves = bt.leaves();
+        List<Hash256> leaves = bt.leaves();
 
-        byte[] a = leaves.get(0);
-        byte[] b = bt.getNode(a).getParent().getHash();
+        Hash256 a = leaves.get(0);
+        Hash256 b = bt.getNode(a).getParent().getHash();
 
-        byte[] p = bt.lowestCommonAncestor(a, b);
+        Hash256 p = bt.lowestCommonAncestor(a, b);
         assertEquals(b, p, "Lowest common ancestor should be b as it is a's parent");
     }
 
     @Test
     void testPruneWhenFinalisedHashIsRootHash() {
-        Pair<BlockTree, List<byte[]>> flatTreePair = createFlatTree(1);
+        Pair<BlockTree, List<Hash256>> flatTreePair = createFlatTree(1);
         BlockTree bt = flatTreePair.getValue0();
 
-        List<byte[]> pruned = bt.prune(bt.getRoot().getHash());
+        List<Hash256> pruned = bt.prune(bt.getRoot().getHash());
         assertTrue(pruned.isEmpty(), "Pruned list should be empty");
     }
 
     @Test
     void testPruneWhenNodeNotFound() {
-        Pair<BlockTree, List<byte[]>> flatTreePair = createFlatTree(0);
+        Pair<BlockTree, List<Hash256>> flatTreePair = createFlatTree(0);
         BlockTree bt = flatTreePair.getValue0();
 
-        List<byte[]> pruned = bt.prune(getHash("01").getBytes());
+        List<Hash256> pruned = bt.prune(getHash("01"));
         assertTrue(pruned.isEmpty(), "Pruned list should be empty when node is not found");
     }
 
     @Test
     void testPruneNothingToPrune() {
-        BlockHeader rootHeader = createHeader(getHash("01").getBytes(), 0);
+        BlockHeader rootHeader = createHeader(getHash("01"), 0);
         BlockTree blockTree = new BlockTree(rootHeader);
         BlockNode rootBlockNode = blockTree.getRoot();
 
-        BlockNode childBlockNode = new BlockNode(getHash("02").getBytes(), rootBlockNode, new ArrayList<>(),
+        BlockNode childBlockNode = new BlockNode(getHash("02"), rootBlockNode, new ArrayList<>(),
                 1, null, false);
         rootBlockNode.addChild(childBlockNode);
         blockTree.getLeaves().replace(rootBlockNode, childBlockNode);
 
-        List<byte[]> pruned = blockTree.prune(getHash("02").getBytes());
+        List<Hash256> pruned = blockTree.prune(getHash("02"));
         assertTrue(pruned.isEmpty(), "Pruned list should be empty when there's nothing to prune");
     }
 
     @Test
     void testPruneCanonicalRuntimes() {
-        BlockHeader rootHeader = createHeader(getHash("01").getBytes(), 0);
+        BlockHeader rootHeader = createHeader(getHash("01"), 0);
 
         BlockTree blockTree = new BlockTree(rootHeader);
         BlockNode rootBlockNode = blockTree.getRoot();
 
         Runtime rootRuntime = mock(Runtime.class);
-        blockTree.storeRuntime(getHash("01").getBytes(), rootRuntime);
+        blockTree.storeRuntime(getHash("01"), rootRuntime);
 
-        BlockNode childBlockNode = new BlockNode(getHash("02").getBytes(), rootBlockNode, new ArrayList<>(),
+        BlockNode childBlockNode = new BlockNode(getHash("02"), rootBlockNode, new ArrayList<>(),
                 1, null, false);
         rootBlockNode.addChild(childBlockNode);
         blockTree.getLeaves().replace(rootBlockNode, childBlockNode);
 
         Runtime leafRuntime = mock(Runtime.class);
-        blockTree.storeRuntime(getHash("02").getBytes(), leafRuntime);
+        blockTree.storeRuntime(getHash("02"), leafRuntime);
 
-        List<byte[]> pruned = blockTree.prune(getHash("02").getBytes());
+        List<Hash256> pruned = blockTree.prune(getHash("02"));
         assertTrue(pruned.isEmpty());
     }
 
     @Test
     void testPruneFork() {
-        BlockHeader rootHeader = createHeader(getHash("01").getBytes(), 0);
-        BlockTree blockTree = new BlockTree(rootHeader);
-        BlockNode rootBlockNode = blockTree.getRoot();
+        BlockNode rootBlockNode = new BlockNode(getHash("01"), null, 0);
+        BlockTree blockTree = new BlockTree(rootBlockNode);
 
         // Set runtime for root
         Runtime rootRuntime = Mockito.mock(Runtime.class);
-        blockTree.storeRuntime(getHash("01").getBytes(), rootRuntime);
+        blockTree.storeRuntime(getHash("01"), rootRuntime);
 
         // Add child node {1} -> {2}
-        BlockNode childBlockNode2 = new BlockNode(getHash("02").getBytes(), rootBlockNode, 1);
+        BlockNode childBlockNode2 = new BlockNode(getHash("02"), rootBlockNode, 1);
         rootBlockNode.addChild(childBlockNode2);
         blockTree.getLeaves().replace(rootBlockNode, childBlockNode2);
 
         // Add another child node {1} -> {3}
-        BlockNode childBlockNode3 = new BlockNode(getHash("03").getBytes(), rootBlockNode, 1);
+        BlockNode childBlockNode3 = new BlockNode(getHash("03"), rootBlockNode, 1);
         rootBlockNode.addChild(childBlockNode3);
         blockTree.getLeaves().replace(rootBlockNode, childBlockNode3);
 
         // Set runtime to be pruned
         Runtime runtimeToBePruned = Mockito.mock(Runtime.class);
-        blockTree.storeRuntime(getHash("03").getBytes(), runtimeToBePruned);
+        blockTree.storeRuntime(getHash("03"), runtimeToBePruned);
 
         // Perform pruning
-        List<byte[]> pruned = blockTree.prune(getHash("02").getBytes());
+        List<Hash256> pruned = blockTree.prune(getHash("02"));
 
         // Verify that node {3} is pruned
-        assertArrayEquals(getHash("03").getBytes(), pruned.get(0));
+        assertEquals(getHash("03"), pruned.get(0));
 
         // Asserting the runtime mapping
-//        assertEquals(rootRuntime, blockTree.getBlockRuntime(getHash("02").getBytes()));
-        //TODO: currently broken
+        assertEquals(rootRuntime, blockTree.getBlockRuntime(getHash("02")));
     }
 
     /*Helper methods*/
-    private static Hash256 getHash(String hash) {
+    private static Hash256 getHash(final String hash) {
         byte[] bytes = HashUtils.hashWithBlake2b(HexUtils.fromHexString(hash));
         return new Hash256(bytes);
     }
 
-    private Pair<BlockTree, List<BlockNode>> createTestBlockTree(BlockHeader header, int number) {
+    private Pair<BlockTree, List<BlockNode>> createTestBlockTree(final BlockHeader header, final int number) {
         BlockTree bt = new BlockTree(header);
-        byte[] previousHash = header.getHash();
+        Hash256 previousHash = header.getHash();
 
         List<BlockNode> branches = new ArrayList<>();
         Random r = new Random();
@@ -279,7 +274,7 @@ class BlockTreeTest {
 
         for (int i = 1; i <= number; i++) {
             BlockHeader newHeader = createHeader(previousHash, i);
-            byte[] hash = newHeader.getHash();
+            Hash256 hash = newHeader.getHash();
 
             try {
                 bt.addBlock(newHeader, Instant.ofEpochSecond(0, at));
@@ -304,7 +299,7 @@ class BlockTreeTest {
             for (long i = branch.getNumber(); i <= number; i++) {
                 BlockHeader branchHeader = createHeader(previousHash, i + 1);
                 branchHeader.setStateRoot(getHash("01"));
-                byte[] branchHash = branchHeader.getHash();
+                Hash256 branchHash = branchHeader.getHash();
 
                 try {
                     bt.addBlock(branchHeader, Instant.ofEpochSecond(0, at));
@@ -320,25 +315,25 @@ class BlockTreeTest {
         return new Pair<>(bt, branches);
     }
 
-    private Pair<BlockTree, List<byte[]>> createFlatTree(int number) {
-        BlockHeader rootHeader = createHeader(getHash("00").getBytes(), 0, getHash("00"));
+    private Pair<BlockTree, List<Hash256>> createFlatTree(final int number) {
+        BlockHeader rootHeader = createHeader(getHash("00"), 0, getHash("00"));
 
         BlockTree bt = new BlockTree(rootHeader);
 
-        List<byte[]> hashes = new ArrayList<>();
+        List<Hash256> hashes = new ArrayList<>();
         hashes.add(bt.getRoot().getHash());
 
-        byte[] previousHash = bt.getRoot().getHash();
+        Hash256 previousHash = bt.getRoot().getHash();
 
         for (int i = 1; i <= number; i++) {
             BlockHeader header = createHeader(previousHash, i, getHash("00"));
-            header.setParentHash(new Hash256(previousHash));
+            header.setParentHash(previousHash);
             header.setBlockNumber(BigInteger.valueOf(i));
             header.setStateRoot(getHash("00"));
             header.setExtrinsicsRoot(getHash("00"));
             header.setDigest(new HeaderDigest[0]);
 
-            byte[] hash = header.getHash();
+            Hash256 hash = header.getHash();
             hashes.add(hash);
 
             try {
@@ -353,9 +348,9 @@ class BlockTreeTest {
         return new Pair<>(bt, hashes);
     }
 
-    private BlockHeader createHeader(byte[] previousHash, long i, Hash256 hash) {
+    private BlockHeader createHeader(final Hash256 previousHash, final long i, final Hash256 hash) {
         BlockHeader rootHeader = new BlockHeader();
-        rootHeader.setParentHash(new Hash256(previousHash));
+        rootHeader.setParentHash(previousHash);
         rootHeader.setStateRoot(hash);
         rootHeader.setExtrinsicsRoot(hash);
         rootHeader.setDigest(new HeaderDigest[0]);
@@ -363,7 +358,7 @@ class BlockTreeTest {
         return rootHeader;
     }
 
-    private BlockHeader createHeader(byte[] previousHash, long i) {
+    private BlockHeader createHeader(final Hash256 previousHash, final long i) {
         return createHeader(previousHash, i, getHash("00"));
     }
 

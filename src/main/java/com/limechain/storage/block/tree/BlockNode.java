@@ -7,8 +7,8 @@ import lombok.NoArgsConstructor;
 
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Node represents element in the block tree
@@ -17,14 +17,14 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class BlockNode {
-    private byte[] hash; // Block hash
+    private Hash256 hash; // Block hash
     private BlockNode parent; // Parent node
     private List<BlockNode> children = new ArrayList<>(); // Nodes of children blocks
     private long number; // block number
     private Instant arrivalTime; // Time of arrival of the block
     private boolean isPrimary; // whether the block was authored in a primary slot or not
 
-    public BlockNode(byte[] hash, BlockNode parent, long number) {
+    public BlockNode(final Hash256 hash, final BlockNode parent, final long number) {
         this.hash = hash;
         this.parent = parent;
         this.number = number;
@@ -44,7 +44,7 @@ public class BlockNode {
      */
     @Override
     public String toString() {
-        return String.format("{hash: %s, number: %d, arrivalTime: %s}", new Hash256(hash), number, arrivalTime);
+        return String.format("{hash: %s, number: %d, arrivalTime: %s}", hash, number, arrivalTime);
     }
 
     /**
@@ -52,12 +52,12 @@ public class BlockNode {
      * @param hash hash of the node
      * @return node with the given hash
      */
-    public BlockNode getNode(final byte[] hash) {
-        if (Arrays.equals(this.hash, hash)) {
+    public BlockNode getNode(final Hash256 hash) {
+        if (Objects.equals(this.hash, hash)) {
             return this;
         }
         for (BlockNode child : this.children) {
-            BlockNode blockNode = child.getNode(hash);
+            final BlockNode blockNode = child.getNode(hash);
             if (blockNode != null) {
                 return blockNode;
             }
@@ -70,8 +70,8 @@ public class BlockNode {
      * @param number number of the block
      * @return list of nodes with the given number
      */
-    public List<byte[]> getNodesWithNumber(final long number) {
-        List<byte[]> hashes = new ArrayList<>();
+    public List<Hash256> getNodesWithNumber(final long number) {
+        final List<Hash256> hashes = new ArrayList<>();
         for (BlockNode child : children) {
             if (child.number == number) {
                 hashes.add(child.hash);
@@ -94,7 +94,7 @@ public class BlockNode {
             return false;
         }
 
-        if (Arrays.equals(this.hash, parent.hash)) {
+        if (Objects.equals(this.hash, parent.hash)) {
             return true;
         }
 
@@ -116,7 +116,7 @@ public class BlockNode {
      * @return list of leaves
      */
     public List<BlockNode> getLeaves() {
-        List<BlockNode> leaves = new ArrayList<>();
+        final List<BlockNode> leaves = new ArrayList<>();
         if (this.children.isEmpty()) {
             leaves.add(this);
         }
@@ -130,8 +130,8 @@ public class BlockNode {
      * Recursively searches for all descendants of the node
      * @return list of the hash of all descendants
      */
-    public List<byte[]> getAllDescendants() {
-        List<byte[]> desc = new ArrayList<>();
+    public List<Hash256> getAllDescendants() {
+        List<Hash256> desc = new ArrayList<>();
         desc.add(this.hash);
         for (BlockNode child : children) {
             desc.addAll(child.getAllDescendants());
@@ -144,7 +144,7 @@ public class BlockNode {
      * @param parent parent of the node
      * @return deep copy of the node
      */
-    public BlockNode deepCopy(BlockNode parent) {
+    public BlockNode deepCopy(final BlockNode parent) {
         BlockNode copy = new BlockNode(this.hash, parent, new ArrayList<>(),
                 this.number, this.arrivalTime, this.isPrimary);
         for (BlockNode child : children) {
@@ -158,8 +158,8 @@ public class BlockNode {
      * @param finalized finalized node to be pruned
      * @return list of hashes of the pruned nodes
      */
-    public List<byte[]> prune(BlockNode finalized) {
-        List<byte[]> pruned = new ArrayList<>();
+    public List<Hash256> prune(final BlockNode finalized) {
+        List<Hash256> pruned = new ArrayList<>();
         if (finalized == null) {
             return pruned;
         }
@@ -192,8 +192,8 @@ public class BlockNode {
      * Deletes a child from the node
      * @param toDelete child to be deleted
      */
-    public void deleteChild(BlockNode toDelete) {
-        children.removeIf(child -> Arrays.equals(child.hash, toDelete.hash));
+    public void deleteChild(final BlockNode toDelete) {
+        children.removeIf(child -> Objects.equals(child.hash, toDelete.hash));
     }
 
     /**

@@ -33,12 +33,12 @@ public class BlockHeader {
                 '}';
     }
 
-    public byte[] getHash() {
+    public Hash256 getHash() {
         try (ByteArrayOutputStream buf = new ByteArrayOutputStream();
              ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
             BlockHeaderScaleWriter.getInstance().write(writer, this);
 
-            return HashUtils.hashWithBlake2b(buf.toByteArray());
+            return new Hash256(HashUtils.hashWithBlake2b(buf.toByteArray()));
         } catch (IOException e) {
             throw new ScaleEncodingException(e);
         }

@@ -190,7 +190,7 @@ public class SyncedState {
             return;
         }
         final Hash256 blockHash = commitMessage.getVote().getBlockHash();
-        Block block = blockState.deleteUnfinalizedBlock(blockHash.getBytes());
+        Block block = blockState.deleteUnfinalizedBlock(blockHash);
         if (block != null) {
             blockState.setHeader(block.getHeader());
         }
@@ -308,7 +308,7 @@ public class SyncedState {
         if (verified) {
             BlockHeader header = new BlockHeaderReader().read(new ScaleCodecReader(block.getHeader().toByteArray()));
             this.lastFinalizedBlockNumber = header.getBlockNumber();
-            this.lastFinalizedBlockHash = new Hash256(header.getHash());
+            this.lastFinalizedBlockHash = header.getHash();
 
             handleAuthorityChanges(header.getDigest(), setChangeBlock);
             handleScheduledEvents();
