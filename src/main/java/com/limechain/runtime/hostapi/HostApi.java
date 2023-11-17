@@ -22,11 +22,10 @@ public class HostApi {
     protected static final List<Number> EMPTY_LIST_OF_NUMBER = List.of();
     protected static final List<Type> EMPTY_LIST_OF_TYPES = List.of();
     private final Runtime runtime;
-    private final FreeingBumpHeapAllocator allocator;
+    private FreeingBumpHeapAllocator allocator;
 
     public HostApi(final Runtime runtime) {
         this.runtime = runtime;
-        this.allocator = new FreeingBumpHeapAllocator(runtime.getHeapBase());
     }
 
     protected static ImportObject getImportObject(final String functionName,
@@ -34,7 +33,7 @@ public class HostApi {
                                                   final List<Type> args,
                                                   final Type retType) {
         return new ImportObject.FuncImport("env", functionName, argv -> {
-            System.out.printf("Message printed in the body of '%s%n'", functionName);
+            System.out.printf("Message printed in the body of '%s'%n", functionName);
             return Collections.singletonList(function.apply(argv));
         }, args, Collections.singletonList(retType));
     }
@@ -43,10 +42,14 @@ public class HostApi {
                                                   final Consumer<List<Number>> function,
                                                   final List<Type> args) {
         return new ImportObject.FuncImport("env", functionName, argv -> {
-            System.out.printf("Message printed in the body of '%s%n'", functionName);
+            System.out.printf("Message printed in the body of '%s'%%n", functionName);
             function.accept(argv);
             return EMPTY_LIST_OF_NUMBER;
         }, args, EMPTY_LIST_OF_TYPES);
+    }
+
+    public void updateAllocator() {
+        this.allocator = new FreeingBumpHeapAllocator(runtime.getHeapBase());
     }
 
     /**

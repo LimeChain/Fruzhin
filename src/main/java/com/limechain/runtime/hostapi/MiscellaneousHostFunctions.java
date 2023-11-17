@@ -2,7 +2,9 @@ package com.limechain.runtime.hostapi;
 
 import com.limechain.runtime.Runtime;
 import com.limechain.runtime.RuntimeBuilder;
+import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.extern.java.Log;
 import org.apache.tomcat.util.buf.HexUtils;
@@ -12,7 +14,6 @@ import org.wasmer.Memory;
 import org.wasmer.Module;
 import org.wasmer.Type;
 
-import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -27,17 +28,13 @@ import java.util.logging.Level;
  * {<a href="https://spec.polkadot.network/chap-host-api#sect-logging-api">Logging API</a>}
  */
 @Log
-@AllArgsConstructor
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class MiscellaneousHostFunctions {
 
     private final HostApi hostApi;
 
-    public MiscellaneousHostFunctions() {
-        this.hostApi = HostApi.getInstance();
-    }
-
-    public static List<ImportObject> getFunctions() {
-        return new MiscellaneousHostFunctions().buildFunctions();
+    public static List<ImportObject> getFunctions(final HostApi hostApi) {
+        return new MiscellaneousHostFunctions(hostApi).buildFunctions();
     }
 
     public List<ImportObject> buildFunctions() {

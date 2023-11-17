@@ -23,6 +23,7 @@ public class Runtime {
         this.heapPages = heapPages;
         HostApi hostApi = new HostApi(this);
         this.instance = module.instantiate(getImports(module, hostApi));
+        hostApi.updateAllocator();
     }
 
     public Object[] callNoParams(String functionName) {
