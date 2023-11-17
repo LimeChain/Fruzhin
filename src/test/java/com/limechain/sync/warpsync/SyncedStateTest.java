@@ -166,7 +166,7 @@ class SyncedStateTest {
         Runtime runtime = mock(Runtime.class);
         when(runtimeBuilder.buildRuntime(runtimeCode)).thenReturn(runtime);
 
-        syncedState.buildRuntime();
+        syncedState.buildRuntime(mock(Hash256.class));
 
         assertEquals(runtime, syncedState.getRuntime());
     }

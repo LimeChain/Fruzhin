@@ -34,6 +34,7 @@ import java.util.Optional;
  */
 @Log
 public class BlockState {
+    private static BlockState INSTANCE;
     private final BlockTree blockTree;
     private final Map<Hash256, Block> unfinalizedBlocks;
     private final KVRepository<String, Object> db;
@@ -44,6 +45,10 @@ public class BlockState {
     @Getter
     private Hash256 lastFinalized;
 
+    public static BlockState getInstance() {
+        return INSTANCE;
+    }
+
     /**
      * Creates a new BlockState instance from genesis
      *
@@ -51,6 +56,11 @@ public class BlockState {
      * @param header     the genesis block header
      */
     public BlockState(final KVRepository<String, Object> repository, final BlockHeader header) {
+        if(INSTANCE != null) {
+            throw new IllegalStateException("BlockState already initialized");
+        }
+        BlockState.INSTANCE = this;
+
         this.blockTree = new BlockTree(header);
         this.db = repository;
         this.unfinalizedBlocks = new HashMap<>();

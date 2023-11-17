@@ -6,7 +6,10 @@ import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshake
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshakeScaleWriter;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceMessage;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceMessageScaleReader;
+import com.limechain.network.protocol.warp.dto.Block;
+import com.limechain.network.protocol.warp.dto.BlockBody;
 import com.limechain.network.protocol.warp.exception.ScaleEncodingException;
+import com.limechain.storage.block.BlockState;
 import com.limechain.sync.warpsync.SyncedState;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
@@ -16,6 +19,7 @@ import lombok.extern.java.Log;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.logging.Level;
 
 @Log
@@ -72,7 +76,11 @@ public class BlockAnnounceEngine {
                 " with hash:0x" + announce.getHeader().getHash() +
                 " parentHash:" + announce.getHeader().getParentHash() +
                 " stateRoot:" + announce.getHeader().getStateRoot());
-        //TODO: Should update Trie (and merkle proofs?) and save them in db
+
+        if (BlockState.getInstance() != null) {
+            BlockState.getInstance().addUnfinalizedBlock(announce.getHeader().getHash(),
+                    new Block(announce.getHeader(), new BlockBody(new ArrayList<>())));
+        }
     }
 
     public void writeHandshakeToStream(Stream stream, PeerId peerId) {

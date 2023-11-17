@@ -200,15 +200,15 @@ public class SyncedState {
         lastFinalizedBlockNumber = commitMessage.getVote().getBlockNumber();
         log.log(Level.INFO, "Reached block #" + lastFinalizedBlockNumber);
         if (warpSyncFinished && scheduledRuntimeUpdateBlocks.contains(lastFinalizedBlockNumber)) {
-            new Thread(this::updateRuntime).start();
+            new Thread(() -> updateRuntime(blockHash)).start();
         }
         persistState();
     }
 
-    private void updateRuntime() {
+    private void updateRuntime(Hash256 blockHash) {
         try {
             updateRuntimeCode();
-            buildRuntime();
+            buildRuntime(blockHash);
             scheduledRuntimeUpdateBlocks.remove(lastFinalizedBlockNumber);
         } catch (RuntimeCodeException e) {
             throw new RuntimeException(e);
@@ -252,9 +252,10 @@ public class SyncedState {
     /**
      * Build the runtime from the available runtime code.
      */
-    public void buildRuntime() {
+    public void buildRuntime(Hash256 blockHash) {
         try {
             runtime = runtimeBuilder.buildRuntime(runtimeCode);
+            BlockState.getInstance().storeRuntime(blockHash, runtime);
         } catch (UnsatisfiedLinkError e) {
             log.log(Level.SEVERE, "Error loading wasm module");
             log.log(Level.SEVERE, e.getMessage(), e.getStackTrace());
