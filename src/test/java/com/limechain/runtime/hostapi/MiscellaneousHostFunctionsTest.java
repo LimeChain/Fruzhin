@@ -1,11 +1,13 @@
 package com.limechain.runtime.hostapi;
 
+import com.limechain.rpc.server.AppBean;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
-import org.junit.jupiter.api.Disabled;
+import com.limechain.storage.crypto.KeyStore;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -14,6 +16,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -62,19 +66,22 @@ class MiscellaneousHostFunctionsTest {
     }
 
     @Test
-    @Disabled("needs working allocator api")
     void runtimeVersionV1() throws IOException {
         byte[] wasmRuntime = Files.readAllBytes(Path.of("./src/test/resources/runtime.wasm"));
         byte[] runtimeData = Files.readAllBytes(Path.of("./src/test/resources/runtime.data"));
         when(hostApi.getDataFromMemory(valuePointer)).thenReturn(wasmRuntime);
         when(hostApi.writeDataToMemory(runtimeData)).thenReturn(targetPointer);
 
-        RuntimePointerSize result = miscellaneousHostFunctions.runtimeVersionV1(valuePointer);
+        try(MockedStatic<AppBean> appBeanMockedStatic = mockStatic(AppBean.class)){
+            appBeanMockedStatic.when(() -> AppBean.getBean(KeyStore.class)).thenReturn(mock(KeyStore.class));
 
-        assertEquals(targetPointer, result);
-        verify(hostApi).getDataFromMemory(valuePointer);
-        verify(hostApi).writeDataToMemory(runtimeData);
-        verifyNoMoreInteractions(hostApi);
+            RuntimePointerSize result = miscellaneousHostFunctions.runtimeVersionV1(valuePointer);
+
+            assertEquals(targetPointer, result);
+            verify(hostApi).getDataFromMemory(valuePointer);
+            verify(hostApi).writeDataToMemory(runtimeData);
+            verifyNoMoreInteractions(hostApi);
+        }
     }
 
     @Test
