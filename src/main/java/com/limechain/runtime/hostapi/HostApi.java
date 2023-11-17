@@ -33,7 +33,7 @@ public class HostApi {
                                                   final List<Type> args,
                                                   final Type retType) {
         return new ImportObject.FuncImport("env", functionName, argv -> {
-            System.out.printf("Message printed in the body of '%s'%n", functionName);
+            log.fine(String.format("Message printed in the body of '%s'%n", functionName));
             return Collections.singletonList(function.apply(argv));
         }, args, Collections.singletonList(retType));
     }
@@ -42,7 +42,7 @@ public class HostApi {
                                                   final Consumer<List<Number>> function,
                                                   final List<Type> args) {
         return new ImportObject.FuncImport("env", functionName, argv -> {
-            System.out.printf("Message printed in the body of '%s'%%n", functionName);
+            log.fine(String.format("Message printed in the body of '%s'%n", functionName));
             function.accept(argv);
             return EMPTY_LIST_OF_NUMBER;
         }, args, EMPTY_LIST_OF_TYPES);

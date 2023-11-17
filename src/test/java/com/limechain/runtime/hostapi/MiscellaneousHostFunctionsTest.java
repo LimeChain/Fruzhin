@@ -13,7 +13,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
@@ -67,8 +67,8 @@ class MiscellaneousHostFunctionsTest {
 
     @Test
     void runtimeVersionV1() throws IOException {
-        byte[] wasmRuntime = Files.readAllBytes(Path.of("./src/test/resources/runtime.wasm"));
-        byte[] runtimeData = Files.readAllBytes(Path.of("./src/test/resources/runtime.data"));
+        byte[] wasmRuntime = Files.readAllBytes(Paths.get("src","test","resources","runtime.wasm"));
+        byte[] runtimeData = Files.readAllBytes(Paths.get("src","test","resources","runtime.data"));
         when(hostApi.getDataFromMemory(valuePointer)).thenReturn(wasmRuntime);
         when(hostApi.writeDataToMemory(runtimeData)).thenReturn(targetPointer);
 

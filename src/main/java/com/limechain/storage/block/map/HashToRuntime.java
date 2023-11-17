@@ -4,7 +4,6 @@ import com.limechain.runtime.Runtime;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.NoArgsConstructor;
 import lombok.extern.java.Log;
-import org.wasmer.Instance;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -19,6 +18,7 @@ public class HashToRuntime {
 
     /**
      * Gets the runtime instance for a given block hash
+     *
      * @param hash block hash
      * @return runtime instance
      */
@@ -28,7 +28,8 @@ public class HashToRuntime {
 
     /**
      * Stores a runtime instance for a given block hash
-     * @param hash block hash
+     *
+     * @param hash     block hash
      * @param instance runtime instance to store
      */
     public void set(Hash256 hash, Runtime instance) {
@@ -37,6 +38,7 @@ public class HashToRuntime {
 
     /**
      * Deletes a runtime instance for a given block hash
+     *
      * @param hash block hash
      */
     public void delete(Hash256 hash) {
@@ -65,30 +67,27 @@ public class HashToRuntime {
             return;
         }
 
-        // Proceed from the end of newCanonicalBlockHashes since the last element is the finalized one.
-        // The goal is to find a runtime instance closest to the finalized hash.
-        int lastElementIdx = newCanonicalBlockHashes.size() - 1;
-        for (int idx = lastElementIdx; idx >= 0; idx--) {
-            Hash256 currentHash = newCanonicalBlockHashes.get(idx);
-            Runtime inMemoryRuntime = mapping.get(currentHash);
-
-            if (inMemoryRuntime != null) {
-                // Stop all the running instances created by forks, keeping only the closest instance to the finalized
-                // block hash.
-                Set<Runtime> stoppedRuntimes = new HashSet<>();
-                for (Runtime runtimeToPrune : mapping.values()) {
-                    if (!inMemoryRuntime.equals(runtimeToPrune) && !stoppedRuntimes.contains(runtimeToPrune)) {
-                        Instance instance = runtimeToPrune.getInstance();
-                        if(instance != null)
-                            instance.close();
-                            stoppedRuntimes.add(runtimeToPrune);
-                    }
-                }
-
-                mapping.clear();
-                mapping.put(finalizedHash, inMemoryRuntime);
+        Runtime inMemoryRuntime = null;
+        for (Hash256 newCanonicalBlockHash : newCanonicalBlockHashes) {
+            if (mapping.containsKey(newCanonicalBlockHash)) {
+                inMemoryRuntime = mapping.get(newCanonicalBlockHash);
                 break;
             }
         }
+
+        if (inMemoryRuntime == null) return;
+
+        // Stop all the running instances created by forks, keeping only the closest instance to the finalized
+        // block hash.
+        Set<Runtime> stoppedRuntimes = new HashSet<>();
+        for (Runtime runtimeToPrune : mapping.values()) {
+            if (!inMemoryRuntime.equals(runtimeToPrune) && !stoppedRuntimes.contains(runtimeToPrune)) {
+                if (runtimeToPrune.getInstance() != null) runtimeToPrune.getInstance().close();
+                stoppedRuntimes.add(runtimeToPrune);
+            }
+        }
+
+        mapping.clear();
+        mapping.put(finalizedHash, inMemoryRuntime);
     }
 }
