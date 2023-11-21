@@ -3,7 +3,6 @@ package com.limechain.lightclient;
 import com.limechain.network.ConnectionManager;
 import com.limechain.network.Network;
 import com.limechain.rpc.server.AppBean;
-import com.limechain.rpc.server.RpcApp;
 import com.limechain.sync.warpsync.WarpSyncMachine;
 import lombok.SneakyThrows;
 import lombok.extern.java.Log;
@@ -15,17 +14,19 @@ import java.util.logging.Level;
  * the client and hold references to dependencies
  */
 @Log
-public class LightClient {
+public class LightClient implements NodeClient {
     // TODO: Add service dependencies i.e rpc, sync, network, etc.
-    private final String[] cliArgs;
-    private final RpcApp rpcApp;
+    // TODO: Do we need those as fields here...?
     private final ConnectionManager connectionManager = ConnectionManager.getInstance();
-    private Network network;
+    private final Network network;
     private WarpSyncMachine warpSyncMachine;
 
-    public LightClient(String[] cliArgs, RpcApp rpcApp) {
-        this.cliArgs = cliArgs;
-        this.rpcApp = rpcApp;
+    /**
+     * @implNote the RpcApp is assumed to have been started before constructing the client,
+     * as it relies on the application context
+     */
+    public LightClient() {
+        this.network = AppBean.getBean(Network.class);
     }
 
     /**
@@ -33,10 +34,6 @@ public class LightClient {
      */
     @SneakyThrows
     public void start() {
-        // TODO: Add business logic
-        this.rpcApp.start(cliArgs);
-
-        this.network = AppBean.getBean(Network.class);
         this.network.start();
 
         while (true) {
@@ -45,7 +42,6 @@ public class LightClient {
                     log.log(Level.INFO, "Node successfully connected to a peer! Sync can start!");
                     this.warpSyncMachine = AppBean.getBean(WarpSyncMachine.class);
                     this.warpSyncMachine.start();
-                    log.log(Level.INFO, "\uD83D\uDE80Started light client!");
                     break;
                 } else {
                     this.network.updateCurrentSelectedPeer();
@@ -54,21 +50,5 @@ public class LightClient {
             log.log(Level.INFO, "Waiting for peer connection...");
             Thread.sleep(10000);
         }
-    }
-
-    /**
-     * Stops the light client by shutting down all running services
-     */
-    public void stop() {
-        // TODO: Stop running services
-        this.warpSyncMachine.stop();
-        this.network.stop();
-        this.rpcApp.stop();
-        log.log(Level.INFO, "\uD83D\uDED1Stopped light client!");
-        doExit();
-    }
-
-    protected void doExit() {
-        System.exit(0);
     }
 }
