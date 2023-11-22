@@ -1,4 +1,4 @@
-package com.limechain.network.protocol.warp.scale;
+package com.limechain.network.protocol.warp.scale.writer;
 
 import com.limechain.network.protocol.warp.dto.WarpSyncRequest;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;

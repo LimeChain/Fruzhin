@@ -1,6 +1,6 @@
 package com.limechain.network.protocol.grandpa.messages.commit;
 
-import com.limechain.network.protocol.warp.scale.VarUint64Reader;
+import com.limechain.network.protocol.warp.scale.reader.VarUint64Reader;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleReader;
 import io.emeraldpay.polkaj.types.Hash256;

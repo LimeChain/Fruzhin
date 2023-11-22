@@ -251,8 +251,8 @@ class ConnectionManagerTest {
         when(message.getHeader()).thenReturn(header);
         when(header.getBlockNumber()).thenReturn(BigInteger.TEN);
         byte[] hash = new byte[32];
-        Arrays.fill( hash, (byte) 3 );
-        when(header.getHash()).thenReturn(hash);
+        Arrays.fill(hash, (byte) 3 );
+        when(header.getHash()).thenReturn(new Hash256(hash));
 
         connectionManager.updatePeer(peerId, message);
 

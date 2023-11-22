@@ -10,6 +10,7 @@ import io.emeraldpay.polkaj.scaletypes.Result;
 import io.emeraldpay.polkaj.scaletypes.ResultWriter;
 import io.libp2p.core.PeerId;
 import io.libp2p.core.multiformats.Multiaddr;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.extern.java.Log;
 import org.wasmer.ImportObject;
@@ -32,18 +33,18 @@ import java.util.logging.Level;
  * {<a href="https://spec.polkadot.network/chap-host-api#sect-offchainindex-api">Offchain index API</a>}
  */
 @Log
-@AllArgsConstructor
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class OffchainHostFunctions {
     private final HostApi hostApi;
     private final HostConfig config;
 
-    public OffchainHostFunctions() {
-        hostApi = HostApi.getInstance();
-        config = AppBean.getBean(HostConfig.class);
+    private OffchainHostFunctions(final HostApi hostApi) {
+        this.hostApi = hostApi;
+        this.config = AppBean.getBean(HostConfig.class);
     }
 
-    public static List<ImportObject> getFunctions() {
-        return new OffchainHostFunctions().buildFunctions();
+    public static List<ImportObject> getFunctions(final HostApi hostApi) {
+        return new OffchainHostFunctions(hostApi).buildFunctions();
     }
 
     public List<ImportObject> buildFunctions() {

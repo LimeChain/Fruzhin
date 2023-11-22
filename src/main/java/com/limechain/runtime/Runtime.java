@@ -1,5 +1,6 @@
 package com.limechain.runtime;
 
+import com.limechain.runtime.hostapi.HostApi;
 import com.limechain.runtime.hostapi.WasmExports;
 import lombok.Getter;
 import lombok.extern.java.Log;
@@ -20,7 +21,9 @@ public class Runtime {
 
     public Runtime(Module module, int heapPages) {
         this.heapPages = heapPages;
-        this.instance = module.instantiate(getImports(module));
+        HostApi hostApi = new HostApi(this);
+        this.instance = module.instantiate(getImports(module, hostApi));
+        hostApi.updateAllocator();
     }
 
     public Object[] callNoParams(String functionName) {

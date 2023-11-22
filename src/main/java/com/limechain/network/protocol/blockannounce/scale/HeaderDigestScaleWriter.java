@@ -4,6 +4,8 @@ import com.limechain.network.protocol.warp.dto.DigestType;
 import com.limechain.network.protocol.warp.dto.HeaderDigest;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.emeraldpay.polkaj.scale.ScaleWriter;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -14,9 +16,15 @@ import static com.limechain.network.protocol.warp.dto.DigestType.OTHER;
 import static com.limechain.network.protocol.warp.dto.DigestType.PRE_RUNTIME;
 import static com.limechain.network.protocol.warp.dto.DigestType.SEAL;
 
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class HeaderDigestScaleWriter implements ScaleWriter<HeaderDigest> {
     private static final List<DigestType> CONTAINING_MESSAGE =
             Arrays.asList(CONSENSUS_MESSAGE, SEAL, PRE_RUNTIME, OTHER);
+    private static final HeaderDigestScaleWriter INSTANCE = new HeaderDigestScaleWriter();
+
+    public static HeaderDigestScaleWriter getInstance() {
+        return INSTANCE;
+    }
 
     @Override
     public void write(ScaleCodecWriter writer, HeaderDigest headerDigest) throws IOException {

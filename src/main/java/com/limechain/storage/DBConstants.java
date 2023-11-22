@@ -24,4 +24,13 @@ public class DBConstants {
      */
     public static final String STATE_TRIE_ROOT_HASH = "stateTrieRootState";
 
+    /**
+     * Key under which the hash of the latest finalised block header is stored.
+     */
+    public static final String FINALIZED_BLOCK_KEY = "finalised_head";
+
+    /**
+     * Key under which the highest round and set id is stored.
+     */
+    public static final String HIGHEST_ROUND_AND_SET_ID_KEY = "hrs";
 }

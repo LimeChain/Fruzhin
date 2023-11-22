@@ -3,7 +3,7 @@ package com.limechain.chain.lightsyncstate;
 import com.limechain.chain.lightsyncstate.scale.AuthoritySetReader;
 import com.limechain.chain.lightsyncstate.scale.EpochChangesReader;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
-import com.limechain.network.protocol.warp.scale.BlockHeaderReader;
+import com.limechain.network.protocol.warp.scale.reader.BlockHeaderReader;
 import com.limechain.utils.StringUtils;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import lombok.Getter;

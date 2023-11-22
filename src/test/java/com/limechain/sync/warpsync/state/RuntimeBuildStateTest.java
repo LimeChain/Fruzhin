@@ -31,7 +31,7 @@ class RuntimeBuildStateTest {
     void handleCallsSyncStateBuildRuntime() {
         runtimeBuildState.handle(warpSyncMachine);
 
-        verify(syncedState).buildRuntime();
+        verify(syncedState).buildRuntime(null);
     }
 
 }
