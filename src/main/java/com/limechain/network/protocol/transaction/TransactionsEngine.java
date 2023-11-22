@@ -115,7 +115,6 @@ public class TransactionsEngine {
         final Runtime runtime = BlockState.getInstance().getRuntime(header.getHash());
         if (runtime == null) {
             log.log(Level.WARNING, "No runtime found for block header " + header.getHash());
-            return;
         }
         //TODO Validate transaction using runtime and then add to transaction pool
         // (depends on StateStorage and TrieState)
