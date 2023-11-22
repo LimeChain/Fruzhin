@@ -4,6 +4,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.extern.java.Log;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.PriorityQueue;
@@ -15,13 +16,14 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Log
 public class TransactionState {
     private static final TransactionState INSTANCE = new TransactionState();
     private final Pool transactionPool = new Pool();
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
     @Getter
     @Setter
     private Queue<ValidTransaction> transactionQueue = new PriorityQueue<>();
-    private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     public static TransactionState getInstance() {
         return INSTANCE;
@@ -44,6 +46,7 @@ public class TransactionState {
         try {
             return futureTransaction.get(timeout, java.util.concurrent.TimeUnit.MILLISECONDS);
         } catch (InterruptedException | ExecutionException e) {
+            log.severe("Error while waiting for transaction: " + e.getMessage());
             e.printStackTrace();
         } catch (TimeoutException e) {
             futureTransaction.cancel(true);
