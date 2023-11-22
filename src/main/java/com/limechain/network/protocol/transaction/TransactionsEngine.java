@@ -3,7 +3,11 @@ package com.limechain.network.protocol.transaction;
 import com.limechain.network.ConnectionManager;
 import com.limechain.network.protocol.transaction.scale.TransactionsReader;
 import com.limechain.network.protocol.transaction.scale.TransactionsWriter;
+import com.limechain.network.protocol.warp.dto.BlockHeader;
+import com.limechain.network.protocol.warp.dto.Extrinsics;
 import com.limechain.network.protocol.warp.exception.ScaleEncodingException;
+import com.limechain.runtime.Runtime;
+import com.limechain.storage.block.BlockState;
 import com.limechain.sync.warpsync.SyncedState;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
@@ -98,10 +102,23 @@ public class TransactionsEngine {
 
     private void handleTransactionMessage(byte[] message, PeerId peerId) {
         ScaleCodecReader reader = new ScaleCodecReader(message);
-        byte[][] transactions = reader.read(new TransactionsReader());
+        Extrinsics[] transactions = reader.read(new TransactionsReader());
         log.log(Level.INFO, "Received " + transactions.length + " transactions from Peer "
                 + peerId);
-        //TODO Add transactions to data
+
+        final BlockHeader header = BlockState.getInstance().bestBlockHeader();
+        if (header == null) {
+            log.log(Level.WARNING, "No best block header found");
+            return;
+        }
+
+        final Runtime runtime = BlockState.getInstance().getRuntime(header.getHash());
+        if (runtime == null) {
+            log.log(Level.WARNING, "No runtime found for block header " + header.getHash());
+            return;
+        }
+        //TODO Validate transaction using runtime and then add to transaction pool
+        // (depends on StateStorage and TrieState)
     }
 
     /**
@@ -126,7 +143,9 @@ public class TransactionsEngine {
     public void writeTransactionsMessage(Stream stream, PeerId peerId) {
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
         try (ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
-            writer.write(new TransactionsWriter(), new byte[][]{new byte[]{}, new byte[]{}});
+            writer.write(new TransactionsWriter(), new Extrinsics[]{
+                    new Extrinsics(new byte[]{}), new Extrinsics(new byte[]{})
+            });
         } catch (IOException e) {
             throw new ScaleEncodingException(e);
         }
