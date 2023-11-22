@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 class TransactionStateTest {
     @Test
     void testTransactionState() {
-        TransactionState transactionState = new TransactionState();
+        TransactionState transactionState = TransactionState.getInstance();
         ValidTransaction[] validTransactions = new ValidTransaction[]{
                 new ValidTransaction(new byte[]{'a'}, new Validity(BigInteger.ONE)),
                 new ValidTransaction(new byte[]{'b'}, new Validity(BigInteger.valueOf(4))),

@@ -15,8 +15,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Log
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class TransactionState {
     private static final TransactionState INSTANCE = new TransactionState();
     private final Pool transactionPool = new Pool();
