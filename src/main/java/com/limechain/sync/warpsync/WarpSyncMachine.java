@@ -75,6 +75,7 @@ public class WarpSyncMachine {
 
         if (stateLoaded) {
             initStateHash = this.syncedState.getLastFinalizedBlockHash();
+            new BlockState(getSyncedState().getRepository(), getGenesisHeader());
         } else if (this.chainService.getGenesis().getLightSyncState() != null) {
             new BlockState(getSyncedState().getRepository(), getGenesisHeader());
 
