@@ -99,5 +99,5 @@ public class TransactionState {
         return transactionPool.insert(validTransaction);
     }
 
-    //public void notifyStatus
+    //Todo: notifyStatus ?
 }
