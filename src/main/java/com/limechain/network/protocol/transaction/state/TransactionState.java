@@ -47,7 +47,6 @@ public class TransactionState {
             return futureTransaction.get(timeout, java.util.concurrent.TimeUnit.MILLISECONDS);
         } catch (InterruptedException | ExecutionException e) {
             log.severe("Error while waiting for transaction: " + e.getMessage());
-            e.printStackTrace();
         } catch (TimeoutException e) {
             futureTransaction.cancel(true);
         }
