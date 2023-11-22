@@ -13,6 +13,7 @@ import com.limechain.network.protocol.grandpa.messages.neighbour.NeighbourMessag
 import com.limechain.network.protocol.grandpa.messages.neighbour.NeighbourMessageScaleWriter;
 import com.limechain.network.protocol.grandpa.messages.vote.VoteMessage;
 import com.limechain.network.protocol.grandpa.messages.vote.VoteMessageScaleReader;
+import com.limechain.network.protocol.warp.exception.ScaleEncodingException;
 import com.limechain.sync.warpsync.SyncedState;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
@@ -176,7 +177,7 @@ public class GrandpaEngine {
         try (ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
             writer.write(NeighbourMessageScaleWriter.getInstance(), syncedState.getNeighbourMessage());
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new ScaleEncodingException(e);
         }
 
         log.log(Level.INFO, "Sending neighbour message to peer " + peerId);

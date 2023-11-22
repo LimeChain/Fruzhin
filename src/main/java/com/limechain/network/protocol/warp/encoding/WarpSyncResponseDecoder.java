@@ -1,7 +1,7 @@
 package com.limechain.network.protocol.warp.encoding;
 
 import com.limechain.network.protocol.warp.dto.WarpSyncResponse;
-import com.limechain.network.protocol.warp.scale.WarpSyncResponseScaleReader;
+import com.limechain.network.protocol.warp.scale.reader.WarpSyncResponseScaleReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;

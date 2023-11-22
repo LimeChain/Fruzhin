@@ -1,5 +1,6 @@
 package com.limechain.runtime;
 
+import com.limechain.runtime.hostapi.HostApi;
 import com.limechain.runtime.hostapi.WasmExports;
 import lombok.Getter;
 import lombok.extern.java.Log;
@@ -20,18 +21,20 @@ public class Runtime {
 
     public Runtime(Module module, int heapPages) {
         this.heapPages = heapPages;
-        this.instance = module.instantiate(getImports(module));
+        HostApi hostApi = new HostApi(this);
+        this.instance = module.instantiate(getImports(module, hostApi));
+        hostApi.updateAllocator();
     }
 
-    public Object callNoParams(String functionName) {
+    public Object[] callNoParams(String functionName) {
         log.log(Level.INFO, "Making a runtime call: " + functionName);
         return instance.exports.getFunction(functionName).apply();
     }
 
-    public Object call(String functionName) {
+    public Object[] call(String functionName) {
         log.log(Level.INFO, "Making a runtime call: " + functionName);
         //TODO Call adequate params
-        return instance.exports.getFunction(functionName).apply(1, 1);
+        return instance.exports.getFunction(functionName).apply(0, 0);
     }
 
     public void setVersion(RuntimeVersion runtimeVersion) {

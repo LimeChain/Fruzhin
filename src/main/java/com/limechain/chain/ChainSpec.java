@@ -1,5 +1,6 @@
 package com.limechain.chain;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
@@ -15,6 +16,7 @@ import java.util.Map;
  */
 @Getter
 @Setter
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ChainSpec implements Serializable {
     private String name;
     private String id;
@@ -46,6 +48,7 @@ public class ChainSpec implements Serializable {
     }
 
     @Getter
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class Fields implements Serializable {
         public Map<String, Map<String, String>> raw;
         public Map<String, Map<String, Object>> runtime;
