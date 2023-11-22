@@ -55,6 +55,7 @@ public class SyncTest {
         }
     }
 
+    @Disabled("This is an integration test")
     @Test
     public void remoteBlockRequest_returnCorrectBlock_ifGivenBlockHash() {
         var peerId = PeerId.fromBase58(PEER_ID);
@@ -75,6 +76,7 @@ public class SyncTest {
         assertEquals(expected, response.getBlocks(0).getHash());
     }
 
+    @Disabled("This is an integration test")
     @Test
     public void remoteBlockRequest_returnCorrectBlock_ifGivenBlockNumber() {
         var peerId = PeerId.fromBase58(PEER_ID);
