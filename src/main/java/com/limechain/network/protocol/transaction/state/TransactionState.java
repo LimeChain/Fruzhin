@@ -37,7 +37,7 @@ public class TransactionState {
         return transactionQueue.poll();
     }
 
-    public ValidTransaction popTransactionWithTimer(long timeout) {
+    public ValidTransaction popTransactionWithTimer(long timeout) throws InterruptedException {
         ValidTransaction validTransaction = popTransaction();
         if (validTransaction != null) return validTransaction;
 
@@ -45,10 +45,13 @@ public class TransactionState {
 
         try {
             return futureTransaction.get(timeout, java.util.concurrent.TimeUnit.MILLISECONDS);
-        } catch (InterruptedException | ExecutionException e) {
+        } catch (ExecutionException e) {
             log.severe("Error while waiting for transaction: " + e.getMessage());
         } catch (TimeoutException e) {
             futureTransaction.cancel(true);
+        } catch (InterruptedException e) {
+            if (Thread.interrupted())
+                throw new InterruptedException();
         }
 
         return null;
@@ -60,11 +63,7 @@ public class TransactionState {
             ValidTransaction transaction = null;
             while (transaction == null) {
                 transaction = popTransaction();
-                try {
-                    Thread.sleep(50);
-                } catch (InterruptedException e) {
-                    return null;
-                }
+                Thread.sleep(50);
             }
             return transaction;
         });
