@@ -58,7 +58,7 @@ public class SyncTest {
     @Test
     @Disabled("No response is received")
     //TODO: See https://github.com/orgs/LimeChain/projects/16?pane=issue&itemId=40022251
-    public void remoteBlockRequest_returnCorrectBlock_ifGivenBlockHash() {
+    void remoteBlockRequest_returnCorrectBlock_ifGivenBlockHash() {
         var peerId = PeerId.fromBase58(PEER_ID);
         //CHECKSTYLE.OFF
         var receivers = new String[]{"/dns/p2p.4.polkadot.network/tcp/30333/p2p/" + PEER_ID};
@@ -80,7 +80,7 @@ public class SyncTest {
     @Test
     @Disabled("No response is received")
     //TODO: See https://github.com/orgs/LimeChain/projects/16?pane=issue&itemId=40022251
-    public void remoteBlockRequest_returnCorrectBlock_ifGivenBlockNumber() {
+    void remoteBlockRequest_returnCorrectBlock_ifGivenBlockNumber() {
         var peerId = PeerId.fromBase58(PEER_ID);
         //CHECKSTYLE.OFF
         var receivers = new String[]{"/dns/p2p.4.polkadot.network/tcp/30333/p2p/" + PEER_ID};
