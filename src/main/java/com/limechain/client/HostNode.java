@@ -1,4 +1,4 @@
-package com.limechain.lightclient;
+package com.limechain.client;
 
 public interface HostNode {
     /**

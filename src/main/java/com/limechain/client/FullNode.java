@@ -1,4 +1,4 @@
-package com.limechain.lightclient;
+package com.limechain.client;
 
 import com.limechain.network.Network;
 import com.limechain.rpc.server.AppBean;

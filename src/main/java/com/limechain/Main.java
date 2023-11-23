@@ -1,9 +1,9 @@
 package com.limechain;
 
 import com.limechain.config.HostConfig;
-import com.limechain.lightclient.FullNode;
-import com.limechain.lightclient.LightClient;
-import com.limechain.lightclient.HostNode;
+import com.limechain.client.FullNode;
+import com.limechain.client.LightClient;
+import com.limechain.client.HostNode;
 import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.rpc.server.AppBean;
 import com.limechain.rpc.server.RpcApp;

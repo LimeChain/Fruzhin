@@ -1,4 +1,4 @@
-package com.limechain.lightclient;
+package com.limechain.client;
 
 import com.limechain.network.ConnectionManager;
 import com.limechain.network.Network;
