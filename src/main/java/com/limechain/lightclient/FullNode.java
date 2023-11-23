@@ -9,7 +9,7 @@ import lombok.extern.java.Log;
 import java.util.logging.Level;
 
 @Log
-public class FullClient implements NodeClient {
+public class FullNode implements HostNode {
     /**
      * Starts the light client by instantiating all dependencies and services
      *

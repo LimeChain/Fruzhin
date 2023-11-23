@@ -14,7 +14,7 @@ import java.util.logging.Level;
  * the client and hold references to dependencies
  */
 @Log
-public class LightClient implements NodeClient {
+public class LightClient implements HostNode {
     // TODO: Add service dependencies i.e rpc, sync, network, etc.
     // TODO: Do we need those as fields here...?
     private final ConnectionManager connectionManager = ConnectionManager.getInstance();

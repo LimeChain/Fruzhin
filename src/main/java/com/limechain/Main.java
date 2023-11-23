@@ -1,9 +1,9 @@
 package com.limechain;
 
 import com.limechain.config.HostConfig;
-import com.limechain.lightclient.FullClient;
+import com.limechain.lightclient.FullNode;
 import com.limechain.lightclient.LightClient;
-import com.limechain.lightclient.NodeClient;
+import com.limechain.lightclient.HostNode;
 import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.rpc.server.AppBean;
 import com.limechain.rpc.server.RpcApp;
@@ -23,11 +23,11 @@ public class Main {
         // Figure out what client role we want to start
         HostConfig hostConfig = AppBean.getBean(HostConfig.class);
         final NodeRole nodeRole = hostConfig.getNodeRole();
-        NodeClient client;
+        HostNode client;
 
         switch (nodeRole) {
             case FULL -> {
-                client = new FullClient();
+                client = new FullNode();
             }
             case LIGHT -> {
                 client = new LightClient();
