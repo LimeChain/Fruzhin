@@ -16,7 +16,7 @@ import java.util.logging.Level;
 public class Main {
 
     public static void main(String[] args) {
-        // Instantiate and start the spring application, so we get teh global context
+        // Instantiate and start the spring application, so we get the global context
         RpcApp rpcApp = new RpcApp();
         rpcApp.start(args);
 
