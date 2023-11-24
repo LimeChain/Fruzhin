@@ -24,31 +24,31 @@ public final class BlockStateHelper {
     private final UInt64Reader uint64Reader = new UInt64Reader();
 
     @NotNull
-    String headerKey(Hash256 key) {
+    public String headerKey(Hash256 key) {
         String headerPrefix = "hdr";
         return headerPrefix.concat(key.toString());
     }
 
     @NotNull
-    String blockBodyKey(Hash256 key) {
+    public String blockBodyKey(Hash256 key) {
         String blockBodyPrefix = "blb";
         return blockBodyPrefix.concat(key.toString());
     }
 
     @NotNull
-    String headerHashKey(BigInteger block) {
+    public String headerHashKey(BigInteger block) {
         String headerHashPrefix = "hsh";
         return headerHashPrefix.concat(new String(bigIntegersToByteArray(block)));
     }
 
     @NotNull
-    String arrivalTimeKey(Hash256 key) {
+    public String arrivalTimeKey(Hash256 key) {
         String arrivalTimePrefix = "arr";
         return arrivalTimePrefix.concat(key.toString());
     }
 
     @NotNull
-    String finalizedHashKey(BigInteger round, BigInteger setId) {
+    public String finalizedHashKey(BigInteger round, BigInteger setId) {
         return DBConstants
                 .FINALIZED_BLOCK_KEY
                 .concat(new String(bigIntegersToByteArray(round, setId)));
