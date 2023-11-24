@@ -1,5 +1,6 @@
 package com.limechain.utils.scale;
 
+import com.limechain.utils.scale.exceptions.ScaleDecodingException;
 import com.limechain.utils.scale.writers.PairWriter;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
@@ -15,7 +16,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 
-// TODO: This class is currently just a helper utility class,
+// TODO:
+//  This is currently a helper utility class
 //  planned to grow into a unified scale encode/decode util class with whatever methods are useful
 //  WIP
 // Currently trying out different approaches to spare some of the boilerplate around SCALE en/decoding
@@ -28,7 +30,7 @@ public class ScaleUtils {
             try {
                 return new ScaleCodecReader(encodedData).read(reader);
             } catch (RuntimeException e) {
-                throw new RuntimeException("Error while SCALE decoding.", e); // TODO: is this a code smell?
+                throw new ScaleDecodingException("Error while SCALE decoding.", e);
             }
         }
 

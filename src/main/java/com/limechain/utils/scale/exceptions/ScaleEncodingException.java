@@ -1,4 +1,4 @@
-package com.limechain.network.protocol.warp.exception;
+package com.limechain.utils.scale.exceptions;
 
 public class ScaleEncodingException extends RuntimeException{
     public ScaleEncodingException(Throwable cause) {

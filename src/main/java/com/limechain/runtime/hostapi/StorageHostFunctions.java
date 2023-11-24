@@ -1,6 +1,6 @@
 package com.limechain.runtime.hostapi;
 
-import com.limechain.network.protocol.warp.exception.ScaleEncodingException;
+import com.limechain.utils.scale.exceptions.ScaleEncodingException;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import com.limechain.storage.DBConstants;
 import com.limechain.storage.DeleteByPrefixResult;

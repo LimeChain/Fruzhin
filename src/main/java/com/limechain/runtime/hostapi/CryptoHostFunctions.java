@@ -1,6 +1,6 @@
 package com.limechain.runtime.hostapi;
 
-import com.limechain.network.protocol.warp.exception.ScaleEncodingException;
+import com.limechain.utils.scale.exceptions.ScaleEncodingException;
 import com.limechain.rpc.server.AppBean;
 import com.limechain.runtime.hostapi.dto.Key;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
