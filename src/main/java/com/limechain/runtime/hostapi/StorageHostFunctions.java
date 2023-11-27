@@ -318,7 +318,7 @@ public class StorageHostFunctions {
         repository.commitTransaction();
     }
 
-    private byte[] scaleEncodedOption(@Nullable int data) {
+    public static byte[] scaleEncodedOption(@Nullable int data) {
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
         try (ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
             writer.writeOptional(ScaleCodecWriter::writeUint32, data);
@@ -328,7 +328,7 @@ public class StorageHostFunctions {
         return buf.toByteArray();
     }
 
-    private byte[] scaleEncodedOption(@Nullable byte[] data) {
+    public static byte[] scaleEncodedOption(@Nullable byte[] data) {
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
         try (ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
             writer.writeOptional(ScaleCodecWriter::writeByteArray, data);
