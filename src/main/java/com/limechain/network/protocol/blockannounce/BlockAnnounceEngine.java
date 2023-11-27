@@ -6,16 +6,20 @@ import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshake
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshakeScaleWriter;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceMessage;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceMessageScaleReader;
+import com.limechain.network.protocol.warp.dto.Block;
+import com.limechain.network.protocol.warp.dto.BlockBody;
+import com.limechain.utils.scale.exceptions.ScaleEncodingException;
+import com.limechain.storage.block.BlockState;
 import com.limechain.sync.warpsync.SyncedState;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.libp2p.core.PeerId;
 import io.libp2p.core.Stream;
 import lombok.extern.java.Log;
-import org.apache.tomcat.util.buf.HexUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.logging.Level;
 
 @Log
@@ -69,10 +73,14 @@ public class BlockAnnounceEngine {
         syncedState.syncBlockAnnounce(announce);
         log.log(Level.FINE, "Received block announce for block #" + announce.getHeader().getBlockNumber() +
                 " from " + peerId +
-                " with hash:0x" + HexUtils.toHexString(announce.getHeader().getHash()) +
+                " with hash:0x" + announce.getHeader().getHash() +
                 " parentHash:" + announce.getHeader().getParentHash() +
                 " stateRoot:" + announce.getHeader().getStateRoot());
-        //TODO: Should update Trie (and merkle proofs?) and save them in db
+
+        if (BlockState.getInstance() != null) {
+            BlockState.getInstance().addUnfinalizedBlock(announce.getHeader().getHash(),
+                    new Block(announce.getHeader(), new BlockBody(new ArrayList<>())));
+        }
     }
 
     public void writeHandshakeToStream(Stream stream, PeerId peerId) {
@@ -80,7 +88,7 @@ public class BlockAnnounceEngine {
         try (ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
             writer.write(new BlockAnnounceHandshakeScaleWriter(), syncedState.getHandshake());
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new ScaleEncodingException(e);
         }
 
         log.log(Level.INFO, "Sending handshake to " + peerId);

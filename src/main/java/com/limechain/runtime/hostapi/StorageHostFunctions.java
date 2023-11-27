@@ -1,5 +1,6 @@
 package com.limechain.runtime.hostapi;
 
+import com.limechain.utils.scale.exceptions.ScaleEncodingException;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import com.limechain.storage.DBConstants;
 import com.limechain.storage.DeleteByPrefixResult;
@@ -8,6 +9,7 @@ import com.limechain.sync.warpsync.SyncedState;
 import io.emeraldpay.polkaj.scale.CompactMode;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import org.springframework.lang.Nullable;
 import org.wasmer.ImportObject;
@@ -23,18 +25,18 @@ import java.util.List;
  * For more info check
  * {<a href="https://spec.polkadot.network/chap-host-api#sect-storage-api">Storage API</a>}
  */
-@AllArgsConstructor
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class StorageHostFunctions {
     private final HostApi hostApi;
     private final KVRepository<String, Object> repository;
 
-    public StorageHostFunctions() {
-        this.hostApi = HostApi.getInstance();
+    private StorageHostFunctions(final HostApi hostApi) {
+        this.hostApi = hostApi;
         this.repository = SyncedState.getInstance().getRepository();
     }
 
-    public static List<ImportObject> getFunctions() {
-        return new StorageHostFunctions().buildFunctions();
+    public static List<ImportObject> getFunctions(final HostApi hostApi) {
+        return new StorageHostFunctions(hostApi).buildFunctions();
     }
 
     public List<ImportObject> buildFunctions() {
@@ -237,7 +239,7 @@ public class StorageHostFunctions {
             writer.writeByteArray(Arrays.copyOfRange(sequence, numberOfScaleLengthBytes, sequence.length));
             writer.writeByteArray(valueToAppend);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new ScaleEncodingException(e);
         }
         repository.save(key, buf.toByteArray());
     }
@@ -316,22 +318,22 @@ public class StorageHostFunctions {
         repository.commitTransaction();
     }
 
-    private byte[] scaleEncodedOption(@Nullable int data) {
+    public static byte[] scaleEncodedOption(@Nullable int data) {
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
         try (ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
             writer.writeOptional(ScaleCodecWriter::writeUint32, data);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new ScaleEncodingException(e);
         }
         return buf.toByteArray();
     }
 
-    private byte[] scaleEncodedOption(@Nullable byte[] data) {
+    public static byte[] scaleEncodedOption(@Nullable byte[] data) {
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
         try (ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
             writer.writeOptional(ScaleCodecWriter::writeByteArray, data);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new ScaleEncodingException(e);
         }
         return buf.toByteArray();
     }

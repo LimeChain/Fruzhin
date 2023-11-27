@@ -8,7 +8,6 @@ import com.limechain.runtime.hostapi.dto.HttpErrorType;
 import com.limechain.runtime.hostapi.dto.InvalidRequestId;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import com.limechain.storage.KVRepository;
-import com.limechain.storage.offchain.OffchainStore;
 import com.limechain.sync.warpsync.SyncedState;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
@@ -17,6 +16,7 @@ import io.emeraldpay.polkaj.scaletypes.Result;
 import io.emeraldpay.polkaj.scaletypes.ResultWriter;
 import io.libp2p.core.PeerId;
 import io.libp2p.core.multiformats.Multiaddr;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.extern.java.Log;
 import org.wasmer.ImportObject;
@@ -41,25 +41,23 @@ import java.util.logging.Level;
  * {<a href="https://spec.polkadot.network/chap-host-api#sect-offchainindex-api">Offchain index API</a>}
  */
 @Log
-@AllArgsConstructor
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class OffchainHostFunctions {
     private final HostApi hostApi;
     private final HostConfig config;
     private final OffchainHttpRequests requests;
     private final KVRepository<String, Object> offchainDb;
-    private final OffchainStore offchainStore;
 
 
-    public OffchainHostFunctions() {
-        hostApi = HostApi.getInstance();
+    private OffchainHostFunctions(final HostApi hostApi) {
+        this.hostApi = hostApi;
         config = AppBean.getBean(HostConfig.class);
         requests = OffchainHttpRequests.getInstance();
         offchainDb = SyncedState.getInstance().getRepository();
-        offchainStore = new OffchainStore(offchainDb);
     }
 
-    public static List<ImportObject> getFunctions() {
-        return new OffchainHostFunctions().buildFunctions();
+    public static List<ImportObject> getFunctions(final HostApi hostApi) {
+        return new OffchainHostFunctions(hostApi).buildFunctions();
     }
 
     public List<ImportObject> buildFunctions() {

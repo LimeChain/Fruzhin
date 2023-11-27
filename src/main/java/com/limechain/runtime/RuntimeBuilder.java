@@ -47,7 +47,6 @@ public class RuntimeBuilder {
         Runtime runtime = new Runtime(module, DEFAULT_HEAP_PAGES);
         RuntimeVersion runtimeVersion = getRuntimeVersion(wasmBinary);
         runtime.setVersion(runtimeVersion);
-        HostApi.getInstance().setRuntime(runtime);
         return runtime;
     }
 
@@ -64,18 +63,18 @@ public class RuntimeBuilder {
         } else throw new RuntimeException("Could not get Runtime version");
     }
 
-    static Imports getImports(Module module) {
+    static Imports getImports(Module module, HostApi hostApi) {
         ImportObject.MemoryImport memory = new ImportObject.MemoryImport("env", 22, false);
 
         ArrayList<ImportObject> objects = new ArrayList<>();
-        objects.addAll(StorageHostFunctions.getFunctions());
-        objects.addAll(ChildStorageHostFunctions.getFunctions());
-        objects.addAll(CryptoHostFunctions.getFunctions());
-        objects.addAll(HashingHostFunctions.getFunctions());
-        objects.addAll(OffchainHostFunctions.getFunctions());
+        objects.addAll(StorageHostFunctions.getFunctions(hostApi));
+        objects.addAll(ChildStorageHostFunctions.getFunctions(hostApi));
+        objects.addAll(CryptoHostFunctions.getFunctions(hostApi));
+        objects.addAll(HashingHostFunctions.getFunctions(hostApi));
+        objects.addAll(OffchainHostFunctions.getFunctions(hostApi));
         objects.addAll(TrieHostFunctions.getFunctions());
-        objects.addAll(MiscellaneousHostFunctions.getFunctions());
-        objects.addAll(AllocatorHostFunctions.getFunctions());
+        objects.addAll(MiscellaneousHostFunctions.getFunctions(hostApi));
+        objects.addAll(AllocatorHostFunctions.getFunctions(hostApi));
         objects.add(memory);
 
         return Imports.from(objects, module);

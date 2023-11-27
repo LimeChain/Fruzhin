@@ -5,7 +5,8 @@ import com.limechain.network.encoding.Leb128LengthFrameEncoder;
 import com.limechain.network.protocol.warp.dto.WarpSyncRequest;
 import com.limechain.network.protocol.warp.dto.WarpSyncResponse;
 import com.limechain.network.protocol.warp.encoding.WarpSyncResponseDecoder;
-import com.limechain.network.protocol.warp.scale.WarpSyncRequestWriter;
+import com.limechain.utils.scale.exceptions.ScaleEncodingException;
+import com.limechain.network.protocol.warp.scale.writer.WarpSyncRequestWriter;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.libp2p.core.Stream;
 import io.libp2p.protocol.ProtocolHandler;
@@ -61,7 +62,7 @@ public class WarpSyncProtocol extends ProtocolHandler<WarpSyncController> {
             try (ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
                 writer.write(new WarpSyncRequestWriter(), req);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new ScaleEncodingException(e);
             }
             CompletableFuture<WarpSyncResponse> res = new CompletableFuture<>();
             queue.add(res);

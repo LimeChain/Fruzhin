@@ -28,6 +28,6 @@ public class RuntimeBuildState implements WarpSyncState {
 
     @Override
     public void handle(WarpSyncMachine sync) {
-        syncedState.buildRuntime();
+        syncedState.buildRuntime(syncedState.getLastFinalizedBlockHash());
     }
 }

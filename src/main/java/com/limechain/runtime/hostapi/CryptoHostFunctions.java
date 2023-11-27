@@ -1,5 +1,6 @@
 package com.limechain.runtime.hostapi;
 
+import com.limechain.utils.scale.exceptions.ScaleEncodingException;
 import com.limechain.rpc.server.AppBean;
 import com.limechain.runtime.hostapi.dto.Key;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
@@ -20,6 +21,8 @@ import io.libp2p.core.crypto.PrivKey;
 import io.libp2p.core.crypto.PubKey;
 import io.libp2p.crypto.keys.Ed25519PrivateKey;
 import kotlin.Pair;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.wasmer.ImportObject;
 import org.wasmer.Type;
@@ -38,8 +41,8 @@ import java.util.Set;
  * For more info check
  * {<a href="https://spec.polkadot.network/chap-host-api#sect-crypto-api">Crypto API</a>}
  */
+@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public class CryptoHostFunctions {
-
     public static final String SCALE_ENCODING_SIGNED_MESSAGE_ERROR = "Error while SCALE encoding signed message";
     public static final String INVALID_KEY_TYPE = "Invalid key type";
     public static final String SEED_IS_INVALID = "Seed is invalid";
@@ -51,18 +54,12 @@ public class CryptoHostFunctions {
     private final Set<VerifySignature> signaturesToVerify;
     protected boolean batchVerificationStarted = false;
 
-    public CryptoHostFunctions() {
-        this(AppBean.getBean(KeyStore.class), HostApi.getInstance(), new HashSet<>());
+    private CryptoHostFunctions(final HostApi hostApi) {
+        this(AppBean.getBean(KeyStore.class), hostApi, new HashSet<>());
     }
 
-    public CryptoHostFunctions(final KeyStore keyStore, final HostApi hostApi, Set<VerifySignature> signatures) {
-        this.keyStore = keyStore;
-        this.hostApi = hostApi;
-        this.signaturesToVerify = signatures;
-    }
-
-    public static List<ImportObject> getFunctions() {
-        return new CryptoHostFunctions().buildFunctions();
+    public static List<ImportObject> getFunctions(final HostApi hostApi) {
+        return new CryptoHostFunctions(hostApi).buildFunctions();
     }
 
     public List<ImportObject> buildFunctions() {
@@ -420,7 +417,7 @@ public class CryptoHostFunctions {
             return hostApi.writeDataToMemory(baos.toByteArray());
 
         } catch (IOException e) {
-            throw new RuntimeException("Error while SCALE encoding public keys");
+            throw new ScaleEncodingException("Error while SCALE encoding public keys");
         }
     }
 
@@ -598,7 +595,7 @@ public class CryptoHostFunctions {
             resultWriter.write(scaleCodecWriter, rawBytes);
             return hostApi.writeDataToMemory(baos.toByteArray()).pointer();
         } catch (IOException e) {
-            throw new RuntimeException(SCALE_ENCODING_SIGNED_MESSAGE_ERROR);
+            throw new ScaleEncodingException(SCALE_ENCODING_SIGNED_MESSAGE_ERROR);
         }
     }
 
@@ -664,7 +661,7 @@ public class CryptoHostFunctions {
             writer.writeOptional(ScaleCodecWriter::writeByteArray, data);
             return buf.toByteArray();
         } catch (IOException e) {
-            throw new RuntimeException(SCALE_ENCODING_SIGNED_MESSAGE_ERROR);
+            throw new ScaleEncodingException(SCALE_ENCODING_SIGNED_MESSAGE_ERROR);
         }
     }
 

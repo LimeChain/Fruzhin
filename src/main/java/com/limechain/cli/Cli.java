@@ -55,6 +55,8 @@ public class Cli {
             String dbPath = cmd.getOptionValue(DB_PATH, DBInitializer.DEFAULT_DIRECTORY);
             boolean dbRecreate = cmd.hasOption(DB_RECREATE);
             String nodeKey = cmd.getOptionValue(NODE_KEY);
+            // TODO: separation of enums; this NodeRole enum is used for blockannounce
+            //       what does running the node in NodeMode NONE mean?
             String nodeMode = cmd.getOptionValue(NODE_MODE, NodeRole.FULL.toString());
 
             return new CliArguments(network, dbPath, dbRecreate, nodeKey, nodeMode);
