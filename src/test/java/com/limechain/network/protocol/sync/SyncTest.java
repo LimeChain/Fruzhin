@@ -55,7 +55,6 @@ public class SyncTest {
         }
     }
 
-    @Disabled("This is integration test!")
     @Test
     @Disabled("No response is received")
     //TODO: See https://github.com/orgs/LimeChain/projects/16?pane=issue&itemId=40022251
@@ -78,7 +77,6 @@ public class SyncTest {
         assertEquals(expected, response.getBlocks(0).getHash());
     }
 
-    @Disabled("This is integration test!")
     @Test
     @Disabled("No response is received")
     //TODO: See https://github.com/orgs/LimeChain/projects/16?pane=issue&itemId=40022251

@@ -26,13 +26,13 @@ public class ChildStorageHostFunctions {
     private final HostApi hostApi;
     private final KVRepository<String, Object> repository;
 
-    public ChildStorageHostFunctions() {
-        this.hostApi = HostApi.getInstance();
+    public ChildStorageHostFunctions(HostApi hostApi) {
+        this.hostApi = hostApi;
         this.repository = SyncedState.getInstance().getRepository();
     }
 
-    public static List<ImportObject> getFunctions() {
-        return new ChildStorageHostFunctions().buildFunctions();
+    public static List<ImportObject> getFunctions(HostApi hostApi) {
+        return new ChildStorageHostFunctions(hostApi).buildFunctions();
     }
 
     public List<ImportObject> buildFunctions() {

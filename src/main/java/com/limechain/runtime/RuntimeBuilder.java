@@ -68,7 +68,7 @@ public class RuntimeBuilder {
 
         ArrayList<ImportObject> objects = new ArrayList<>();
         objects.addAll(StorageHostFunctions.getFunctions(hostApi));
-        objects.addAll(ChildStorageHostFunctions.getFunctions());
+        objects.addAll(ChildStorageHostFunctions.getFunctions(hostApi));
         objects.addAll(CryptoHostFunctions.getFunctions(hostApi));
         objects.addAll(HashingHostFunctions.getFunctions(hostApi));
         objects.addAll(OffchainHostFunctions.getFunctions(hostApi));
