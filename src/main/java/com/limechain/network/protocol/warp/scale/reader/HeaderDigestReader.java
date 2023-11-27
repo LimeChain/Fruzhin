@@ -1,4 +1,4 @@
-package com.limechain.network.protocol.warp.scale;
+package com.limechain.network.protocol.warp.scale.reader;
 
 import com.limechain.network.protocol.warp.dto.ConsensusEngine;
 import com.limechain.network.protocol.warp.dto.DigestType;

@@ -1,5 +1,6 @@
 package com.limechain.runtime.hostapi;
 
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import org.wasmer.ImportObject;
 import org.wasmer.Type;
@@ -12,16 +13,12 @@ import java.util.List;
  * For more info check
  * {<a href="https://spec.polkadot.network/chap-host-api#sect-allocator-api">Allocator API</a>}
  */
-@AllArgsConstructor
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class AllocatorHostFunctions {
     private final HostApi hostApi;
 
-    public AllocatorHostFunctions() {
-        this.hostApi = HostApi.getInstance();
-    }
-
-    public static List<ImportObject> getFunctions() {
-        return new AllocatorHostFunctions().buildFunctions();
+    public static List<ImportObject> getFunctions(final HostApi hostApi) {
+        return new AllocatorHostFunctions(hostApi).buildFunctions();
     }
 
     public List<ImportObject> buildFunctions() {

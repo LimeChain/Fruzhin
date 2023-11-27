@@ -8,7 +8,9 @@ import com.limechain.config.HostConfig;
 import com.limechain.config.SystemInfo;
 import com.limechain.network.Network;
 import com.limechain.storage.DBInitializer;
+import com.limechain.storage.DBRepository;
 import com.limechain.storage.KVRepository;
+import com.limechain.sync.warpsync.SyncedState;
 import com.limechain.sync.warpsync.WarpSyncMachine;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.context.annotation.Bean;
@@ -42,7 +44,10 @@ public class CommonConfig {
 
     @Bean
     public KVRepository<String, Object> repository(HostConfig hostConfig) {
-        return DBInitializer.initialize(hostConfig.getRocksDbPath(), hostConfig.getChain(), hostConfig.isDbRecreate());
+        DBRepository repository = DBInitializer.initialize(hostConfig.getRocksDbPath(),
+                hostConfig.getChain(), hostConfig.isDbRecreate());
+        SyncedState.getInstance().setRepository(repository);
+        return repository;
     }
 
     @Bean
@@ -63,6 +68,6 @@ public class CommonConfig {
 
     @Bean
     public WarpSyncMachine sync(Network network, ChainService chainService, KVRepository<String, Object> repository) {
-        return new WarpSyncMachine(network, chainService, repository);
+        return new WarpSyncMachine(network, chainService);
     }
 }

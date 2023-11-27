@@ -2,6 +2,7 @@ package com.limechain.runtime.hostapi;
 
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import com.limechain.utils.HashUtils;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import org.wasmer.ImportObject;
 import org.wasmer.Type;
@@ -14,17 +15,13 @@ import java.util.List;
  * For more info check
  * {<a href="https://spec.polkadot.network/chap-host-api#sect-hashing-api">Hashing API</a>}
  */
-@AllArgsConstructor
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class HashingHostFunctions {
 
     private final HostApi hostApi;
 
-    private HashingHostFunctions() {
-        this.hostApi = HostApi.getInstance();
-    }
-
-    public static List<ImportObject> getFunctions() {
-        return new HashingHostFunctions().buildFunctions();
+    public static List<ImportObject> getFunctions(final HostApi hostApi) {
+        return new HashingHostFunctions(hostApi).buildFunctions();
     }
 
     public List<ImportObject> buildFunctions() {

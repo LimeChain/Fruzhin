@@ -3,6 +3,7 @@ package com.limechain.network.protocol.transactions;
 import com.limechain.network.ConnectionManager;
 import com.limechain.network.protocol.transactions.scale.TransactionsReader;
 import com.limechain.network.protocol.transactions.scale.TransactionsWriter;
+import com.limechain.network.protocol.warp.exception.ScaleEncodingException;
 import com.limechain.sync.warpsync.SyncedState;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
@@ -127,7 +128,7 @@ public class TransactionsEngine {
         try (ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
             writer.write(new TransactionsWriter(), new byte[][]{new byte[]{}, new byte[]{}});
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new ScaleEncodingException(e);
         }
 
         log.log(Level.INFO, "Sending transaction message to peer " + peerId);

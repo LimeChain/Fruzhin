@@ -6,7 +6,6 @@ import com.limechain.network.dto.ProtocolStreams;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshake;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceMessage;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
-import io.emeraldpay.polkaj.types.Hash256;
 import io.libp2p.core.PeerId;
 import io.libp2p.core.Stream;
 import lombok.AccessLevel;
@@ -175,7 +174,7 @@ public class ConnectionManager {
         }
         if (blockAnnounceMessage.isBestBlock()) {
             peerInfo.setBestBlock(blockHeader.getBlockNumber());
-            peerInfo.setBestBlockHash(new Hash256(blockHeader.getHash()));
+            peerInfo.setBestBlockHash(blockHeader.getHash());
         }
     }
 

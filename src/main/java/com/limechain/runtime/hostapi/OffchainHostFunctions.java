@@ -15,6 +15,7 @@ import io.emeraldpay.polkaj.scaletypes.Result;
 import io.emeraldpay.polkaj.scaletypes.ResultWriter;
 import io.libp2p.core.PeerId;
 import io.libp2p.core.multiformats.Multiaddr;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.extern.java.Log;
 import org.wasmer.ImportObject;
@@ -44,16 +45,16 @@ public class OffchainHostFunctions {
     private final OffchainStore persistentStorage;
     private final OffchainStore localStorage;
 
-    public OffchainHostFunctions() {
-        hostApi = HostApi.getInstance();
-        config = AppBean.getBean(HostConfig.class);
+    private OffchainHostFunctions(final HostApi hostApi) {
+        this.hostApi = hostApi;
+        this.config = AppBean.getBean(HostConfig.class);
         KVRepository<String, Object> db = SyncedState.getInstance().getRepository();
         persistentStorage = new OffchainStore(db, true);
         localStorage = new OffchainStore(db, false);
     }
 
-    public static List<ImportObject> getFunctions() {
-        return new OffchainHostFunctions().buildFunctions();
+    public static List<ImportObject> getFunctions(final HostApi hostApi) {
+        return new OffchainHostFunctions(hostApi).buildFunctions();
     }
 
     public List<ImportObject> buildFunctions() {

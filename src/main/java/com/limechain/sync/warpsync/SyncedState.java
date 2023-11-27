@@ -15,13 +15,15 @@ import com.limechain.network.protocol.warp.dto.ConsensusEngine;
 import com.limechain.network.protocol.warp.dto.DigestType;
 import com.limechain.network.protocol.warp.dto.HeaderDigest;
 import com.limechain.network.protocol.warp.dto.Justification;
-import com.limechain.network.protocol.warp.scale.BlockHeaderReader;
-import com.limechain.network.protocol.warp.scale.JustificationReader;
+import com.limechain.network.protocol.warp.scale.reader.BlockHeaderReader;
+import com.limechain.network.protocol.warp.scale.reader.JustificationReader;
+import com.limechain.network.protocol.warp.dto.Block;
 import com.limechain.rpc.server.AppBean;
 import com.limechain.runtime.Runtime;
 import com.limechain.runtime.RuntimeBuilder;
 import com.limechain.storage.DBConstants;
 import com.limechain.storage.KVRepository;
+import com.limechain.storage.block.BlockState;
 import com.limechain.sync.JustificationVerifier;
 import com.limechain.sync.warpsync.dto.AuthoritySetChange;
 import com.limechain.sync.warpsync.dto.GrandpaDigestMessageType;
@@ -86,6 +88,7 @@ public class SyncedState {
     private KVRepository<String, Object> repository;
     private Network network;
     private RuntimeBuilder runtimeBuilder = new RuntimeBuilder();
+    private BlockState blockState;
 
     private final PriorityQueue<Pair<BigInteger, Authority[]>> scheduledAuthorityChanges =
             new PriorityQueue<>(Comparator.comparing(Pair::getValue0));
@@ -186,20 +189,26 @@ public class SyncedState {
         if (commitMessage.getVote().getBlockNumber().compareTo(lastFinalizedBlockNumber) < 1) {
             return;
         }
+        final Hash256 blockHash = commitMessage.getVote().getBlockHash();
+        Block block = blockState.deleteUnfinalizedBlock(blockHash);
+        if (block != null) {
+            blockState.setHeader(block.getHeader());
+        }
+
         latestRound = commitMessage.getRoundNumber();
-        lastFinalizedBlockHash = commitMessage.getVote().getBlockHash();
+        lastFinalizedBlockHash = blockHash;
         lastFinalizedBlockNumber = commitMessage.getVote().getBlockNumber();
         log.log(Level.INFO, "Reached block #" + lastFinalizedBlockNumber);
         if (warpSyncFinished && scheduledRuntimeUpdateBlocks.contains(lastFinalizedBlockNumber)) {
-            new Thread(this::updateRuntime).start();
+            new Thread(() -> updateRuntime(blockHash)).start();
         }
         persistState();
     }
 
-    private void updateRuntime() {
+    private void updateRuntime(Hash256 blockHash) {
         try {
             updateRuntimeCode();
-            buildRuntime();
+            buildRuntime(blockHash);
             scheduledRuntimeUpdateBlocks.remove(lastFinalizedBlockNumber);
         } catch (RuntimeCodeException e) {
             throw new RuntimeException(e);
@@ -243,9 +252,10 @@ public class SyncedState {
     /**
      * Build the runtime from the available runtime code.
      */
-    public void buildRuntime() {
+    public void buildRuntime(Hash256 blockHash) {
         try {
             runtime = runtimeBuilder.buildRuntime(runtimeCode);
+            BlockState.getInstance().storeRuntime(blockHash, runtime);
         } catch (UnsatisfiedLinkError e) {
             log.log(Level.SEVERE, "Error loading wasm module");
             log.log(Level.SEVERE, e.getMessage(), e.getStackTrace());
@@ -299,7 +309,7 @@ public class SyncedState {
         if (verified) {
             BlockHeader header = new BlockHeaderReader().read(new ScaleCodecReader(block.getHeader().toByteArray()));
             this.lastFinalizedBlockNumber = header.getBlockNumber();
-            this.lastFinalizedBlockHash = new Hash256(header.getHash());
+            this.lastFinalizedBlockHash = header.getHash();
 
             handleAuthorityChanges(header.getDigest(), setChangeBlock);
             handleScheduledEvents();
@@ -430,4 +440,5 @@ public class SyncedState {
         }
         return false;
     }
+
 }

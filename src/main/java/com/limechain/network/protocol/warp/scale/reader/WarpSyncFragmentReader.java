@@ -1,6 +1,8 @@
-package com.limechain.network.protocol.warp.scale;
+package com.limechain.network.protocol.warp.scale.reader;
 
 import com.limechain.network.protocol.warp.dto.WarpSyncFragment;
+import com.limechain.network.protocol.warp.scale.reader.BlockHeaderReader;
+import com.limechain.network.protocol.warp.scale.reader.JustificationReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleReader;
 
