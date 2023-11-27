@@ -38,6 +38,7 @@ public class RuntimeBuilder {
     public Runtime buildRuntime(byte[] code) {
         byte[] wasmBinary;
         byte[] wasmBinaryPrefix = Arrays.copyOfRange(code, 0, 8);
+        //TODO: ASDF
         if (Arrays.equals(wasmBinaryPrefix, ZSTD_PREFIX)) {
             wasmBinary = Zstd.decompress(Arrays.copyOfRange(
                     code, ZSTD_PREFIX.length, code.length), MAX_ZSTD_DECOMPRESSED_SIZE);
