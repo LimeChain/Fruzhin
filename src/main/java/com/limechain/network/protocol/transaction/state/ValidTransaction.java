@@ -12,11 +12,11 @@ public class ValidTransaction implements Comparable<ValidTransaction> {
     @Getter
     private Validity validity;
 
-    public ValidTransaction(byte[] extrinsic){
+    public ValidTransaction(byte[] extrinsic) {
         this.extrinsic = extrinsic;
     }
 
-    public ValidTransaction(byte[] extrinsic, Validity validity){
+    public ValidTransaction(byte[] extrinsic, Validity validity) {
         this.extrinsic = extrinsic;
         this.validity = validity;
     }
