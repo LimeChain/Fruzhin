@@ -8,7 +8,7 @@ import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceMessage;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceMessageScaleReader;
 import com.limechain.network.protocol.warp.dto.Block;
 import com.limechain.network.protocol.warp.dto.BlockBody;
-import com.limechain.network.protocol.warp.exception.ScaleEncodingException;
+import com.limechain.utils.scale.exceptions.ScaleEncodingException;
 import com.limechain.storage.block.BlockState;
 import com.limechain.sync.warpsync.SyncedState;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;

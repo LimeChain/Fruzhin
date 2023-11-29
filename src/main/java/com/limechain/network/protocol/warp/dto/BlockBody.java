@@ -1,6 +1,6 @@
 package com.limechain.network.protocol.warp.dto;
 
-import com.limechain.network.protocol.warp.exception.ScaleEncodingException;
+import com.limechain.utils.scale.exceptions.ScaleEncodingException;
 import com.limechain.network.protocol.warp.scale.reader.BlockBodyReader;
 import com.limechain.network.protocol.warp.scale.writer.BlockBodyWriter;
 import com.limechain.utils.HashUtils;
