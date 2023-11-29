@@ -1,14 +1,14 @@
 package com.limechain.network.protocol.transaction;
 
 import com.limechain.network.ConnectionManager;
-import com.limechain.network.protocol.transactions.scale.TransactionsReader;
-import com.limechain.network.protocol.transactions.scale.TransactionsWriter;
+import com.limechain.network.protocol.transaction.scale.TransactionsReader;
+import com.limechain.network.protocol.transaction.scale.TransactionsWriter;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.network.protocol.warp.dto.Extrinsics;
-import com.limechain.network.protocol.warp.exception.ScaleEncodingException;
 import com.limechain.runtime.Runtime;
 import com.limechain.storage.block.BlockState;
 import com.limechain.sync.warpsync.SyncedState;
+import com.limechain.utils.scale.exceptions.ScaleEncodingException;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.libp2p.core.PeerId;
