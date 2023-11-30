@@ -43,7 +43,7 @@ public abstract class AbstractSubscriberChannel {
      */
     private final List<Message> pendingMessages = new ArrayList<>();
 
-    public AbstractSubscriberChannel(Topic topic) {
+    protected AbstractSubscriberChannel(Topic topic) {
         this.topic = topic;
     }
 

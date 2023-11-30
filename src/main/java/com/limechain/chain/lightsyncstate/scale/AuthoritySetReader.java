@@ -22,12 +22,11 @@ public class AuthoritySetReader implements ScaleReader<AuthoritySet> {
 
         authoritySet.setSetId(new UInt64Reader().read(reader));
 
-        authoritySet.setPendingStandardChanges(new ForkTree<>() {{
-            setRoots(reader.read(new ListReader<>(
-                    new ForkTreeNodeReader<>(new PendingChangeReader()))
-            ).toArray(ForkTree.ForkTreeNode[]::new));
-            setBestFinalizedNumber(reader.readOptional(new UInt32Reader()));
-        }});
+        var forkTree = new ForkTree<>();
+        forkTree.setRoots(reader.read(new ListReader<>(
+                new ForkTreeNodeReader<>(new PendingChangeReader()))
+        ).toArray(ForkTree.ForkTreeNode[]::new));
+        forkTree.setBestFinalizedNumber(reader.readOptional(new UInt32Reader()));
 
         authoritySet.setPendingForcedChanges(reader.read(
                 new ListReader<>(new PendingChangeReader())).toArray(PendingChange[]::new)

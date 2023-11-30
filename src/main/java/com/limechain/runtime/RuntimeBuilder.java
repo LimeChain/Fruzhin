@@ -1,6 +1,7 @@
 package com.limechain.runtime;
 
 import com.github.luben.zstd.Zstd;
+import com.limechain.exception.WasmRuntimeException;
 import com.limechain.runtime.hostapi.AllocatorHostFunctions;
 import com.limechain.runtime.hostapi.ChildStorageHostFunctions;
 import com.limechain.runtime.hostapi.CryptoHostFunctions;
@@ -29,8 +30,8 @@ import java.util.logging.Level;
 
 @Log
 public class RuntimeBuilder {
-    public static final byte[] ZSTD_PREFIX = new byte[]{82, -68, 83, 118, 70, -37, -114, 5};
-    public static final int MAX_ZSTD_DECOMPRESSED_SIZE = 50 * 1024 * 1024;
+    private static final byte[] ZSTD_PREFIX = new byte[]{82, -68, 83, 118, 70, -37, -114, 5};
+    private static final int MAX_ZSTD_DECOMPRESSED_SIZE = 50 * 1024 * 1024;
     public static final int DEFAULT_HEAP_PAGES = 2048;
     private static final byte[] CODE_KEY_BYTES =
             LittleEndianUtils.convertBytes(StringUtils.hexToBytes(StringUtils.toHex(":code")));
@@ -55,12 +56,12 @@ public class RuntimeBuilder {
         byte[] searchKey = new byte[]{0x00, 0x61, 0x73, 0x6D, 0x1, 0x0, 0x0, 0x0};
 
         int searchedKeyIndex = ByteArrayUtils.indexOf(wasmBinary, searchKey);
-        if (searchedKeyIndex < 0) throw new RuntimeException("Key not found in runtime code");
+        if (searchedKeyIndex < 0) throw new WasmRuntimeException("Key not found in runtime code");
         WasmSections wasmSections = new WasmSections();
         wasmSections.parseCustomSections(wasmBinary);
-        if (wasmSections.getRuntimeVersion() != null && wasmSections.getRuntimeVersion().getRuntimeApis() != null) {
+        if (wasmSections.getRuntimeVersion().getRuntimeApis() != null) {
             return wasmSections.getRuntimeVersion();
-        } else throw new RuntimeException("Could not get Runtime version");
+        } else throw new WasmRuntimeException("Could not get Runtime version");
     }
 
     static Imports getImports(Module module, HostApi hostApi) {

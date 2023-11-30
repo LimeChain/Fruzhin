@@ -25,17 +25,17 @@ public class BabeEpoch {
 
     public enum BabeAllowedSlots {
         /// Only allow primary slot claims.
-        PrimarySlots,
+        PRIMARY_SLOTS,
         /// Allow primary and secondary plain slot claims.
-        PrimaryAndSecondaryPlainSlots,
+        PRIMARY_AND_SECONDARY_PLAIN_SLOTS,
         /// Allow primary and secondary VRF slot claims.
-        PrimaryAndSecondaryVrfSlots;
+        PRIMARY_AND_SECONDARY_VRF_SLOTS;
 
         public static BabeAllowedSlots fromId(int i) {
             return switch (i) {
-                case 0 -> PrimarySlots;
-                case 1 -> PrimaryAndSecondaryPlainSlots;
-                case 2 -> PrimaryAndSecondaryVrfSlots;
+                case 0 -> PRIMARY_SLOTS;
+                case 1 -> PRIMARY_AND_SECONDARY_PLAIN_SLOTS;
+                case 2 -> PRIMARY_AND_SECONDARY_VRF_SLOTS;
                 default -> throw new IllegalArgumentException("Unknown BabeAllowedSlots id " + i);
             };
 

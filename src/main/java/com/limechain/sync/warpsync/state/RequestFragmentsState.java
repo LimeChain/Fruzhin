@@ -1,5 +1,6 @@
 package com.limechain.sync.warpsync.state;
 
+import com.limechain.exception.ThreadInterruptedException;
 import com.limechain.network.protocol.warp.dto.WarpSyncResponse;
 import com.limechain.sync.warpsync.SyncedState;
 import com.limechain.sync.warpsync.WarpSyncMachine;
@@ -32,6 +33,7 @@ public class RequestFragmentsState implements WarpSyncState {
                 sync.setWarpSyncState(new RequestFragmentsState(blockHash));
                 return;
             } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
                 log.log(Level.SEVERE, "Retry warp sync request fragment exception: "
                         + e.getMessage(), e.getStackTrace());
             }
@@ -46,7 +48,7 @@ public class RequestFragmentsState implements WarpSyncState {
     @Override
     public void handle(WarpSyncMachine sync) {
         WarpSyncResponse resp = null;
-        for (int i = 0; i < sync.getNetworkService().kademliaService.getBootNodePeerIds().size(); i++) {
+        for (int i = 0; i < sync.getNetworkService().getKademliaService().getBootNodePeerIds().size(); i++) {
             try {
                 resp = sync.getNetworkService().makeWarpSyncRequest(blockHash.toString());
                 break;
@@ -63,7 +65,7 @@ public class RequestFragmentsState implements WarpSyncState {
             }
 
             log.log(Level.INFO, "Successfully received fragments from peer "
-                    + sync.getNetworkService().currentSelectedPeer);
+                    + sync.getNetworkService().getCurrentSelectedPeer());
             if (resp.getFragments().length == 0) {
                 log.log(Level.WARNING, "No fragments received.");
                 return;

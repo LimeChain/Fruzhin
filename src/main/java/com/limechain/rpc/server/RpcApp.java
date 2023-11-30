@@ -25,7 +25,7 @@ public class RpcApp {
     /**
      * Port the Spring app will run on
      */
-    private final String serverPort = "9922";
+    private static final String SERVER_PORT = "9922";
 
     /**
      * The reference to the underlying SpringApplication
@@ -34,7 +34,7 @@ public class RpcApp {
 
     public RpcApp() {
         this.app = new SpringApplication(RpcApp.class);
-        app.setDefaultProperties(Collections.singletonMap("server.port", serverPort));
+        app.setDefaultProperties(Collections.singletonMap("server.port", SERVER_PORT));
     }
 
     /**

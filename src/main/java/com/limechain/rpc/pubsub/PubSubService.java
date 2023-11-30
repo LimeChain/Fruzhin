@@ -1,5 +1,6 @@
 package com.limechain.rpc.pubsub;
 
+import com.limechain.exception.NotificationFailedException;
 import com.limechain.rpc.pubsub.subscriberchannel.AbstractSubscriberChannel;
 import com.limechain.rpc.pubsub.subscriberchannel.SubscriberChannel;
 import lombok.extern.java.Log;
@@ -24,11 +25,7 @@ public class PubSubService {
     /**
      * Keeps map of subscriber topic wise, using map to prevent duplicates
      */
-    private final Map<Topic, AbstractSubscriberChannel> subscribersTopicMap = new HashMap<>() {{
-        // TODO: Instantiate more subscriber channels in the future
-        put(Topic.UNSTABLE_FOLLOW, new SubscriberChannel(Topic.UNSTABLE_FOLLOW));
-        put(Topic.UNSTABLE_TRANSACTION_WATCH, new SubscriberChannel(Topic.UNSTABLE_TRANSACTION_WATCH));
-    }};
+    private final Map<Topic, AbstractSubscriberChannel> subscribersTopicMap = subscribersTopicMap();
 
     /**
      * Holds messages published by publishers which will be broadcast to each subscriber channel at some point
@@ -117,8 +114,16 @@ public class PubSubService {
             try {
                 set.getValue().notifySubscribers();
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new NotificationFailedException(e);
             }
         }
+    }
+
+    private Map<Topic, AbstractSubscriberChannel> subscribersTopicMap() {
+        // TODO: Instantiate more subscriber channels in the future
+        var map = new HashMap<Topic, AbstractSubscriberChannel>();
+        map.put(Topic.UNSTABLE_FOLLOW, new SubscriberChannel(Topic.UNSTABLE_FOLLOW));
+        map.put(Topic.UNSTABLE_TRANSACTION_WATCH, new SubscriberChannel(Topic.UNSTABLE_TRANSACTION_WATCH));
+        return map;
     }
 }

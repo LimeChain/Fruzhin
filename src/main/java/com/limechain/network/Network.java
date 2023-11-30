@@ -11,6 +11,7 @@ import com.limechain.network.protocol.grandpa.GrandpaService;
 import com.limechain.network.protocol.lightclient.LightMessagesService;
 import com.limechain.network.protocol.lightclient.pb.LightClientMessage;
 import com.limechain.network.protocol.ping.Ping;
+import com.limechain.network.protocol.sync.BlockRequestDto;
 import com.limechain.network.protocol.sync.SyncService;
 import com.limechain.network.protocol.sync.pb.SyncMessage.BlockResponse;
 import com.limechain.network.protocol.transactions.TransactionsService;
@@ -53,22 +54,25 @@ import static com.limechain.network.protocol.sync.pb.SyncMessage.Direction;
 public class Network {
     public static final String LOCAL_IPV4_TCP_ADDRESS = "/ip4/127.0.0.1/tcp/";
     private static final int HOST_PORT = 30333;
+    private static final Random RANDOM = new Random();
     @Getter
     private static Network network;
     @Getter
-    public final Chain chain;
+    private final Chain chain;
     @Getter
-    private NodeRole nodeRole;
+    private final NodeRole nodeRole;
     private final String[] bootNodes;
     private final ConnectionManager connectionManager = ConnectionManager.getInstance();
-    public SyncService syncService;
-    public LightMessagesService lightMessagesService;
-    public KademliaService kademliaService;
-    public BlockAnnounceService blockAnnounceService;
-    public GrandpaService grandpaService;
-    public TransactionsService transactionsService;
-    public Ping ping;
-    public PeerId currentSelectedPeer;
+    private SyncService syncService;
+    private LightMessagesService lightMessagesService;
+    @Getter
+    private KademliaService kademliaService;
+    private BlockAnnounceService blockAnnounceService;
+    private GrandpaService grandpaService;
+    private TransactionsService transactionsService;
+    private Ping ping;
+    @Getter
+    private PeerId currentSelectedPeer;
     @Getter
     private Host host;
     private WarpSyncService warpSyncService;
@@ -107,7 +111,7 @@ public class Network {
         log.info("Current peerId " + hostBuilder.getPeerId().toString());
         Multihash hostId = Multihash.deserialize(hostBuilder.getPeerId().getBytes());
 
-        String pingProtocol = ProtocolUtils.getPingProtocol();
+        String pingProtocol = ProtocolUtils.PING_PROTOCOL;
         //TODO: Add new protocolId format with genesis hash
         String chainId = chainService.getGenesis().getProtocolId();
         String legacyKadProtocolId = ProtocolUtils.getLegacyKadProtocol(chainId);
@@ -115,7 +119,7 @@ public class Network {
         String legacyLightProtocolId = ProtocolUtils.getLegacyLightMessageProtocol(chainId);
         String legacySyncProtocolId = ProtocolUtils.getLegacySyncProtocol(chainId);
         String legacyBlockAnnounceProtocolId = ProtocolUtils.getLegacyBlockAnnounceProtocol(chainId);
-        String grandpaProtocolId = ProtocolUtils.getGrandpaLegacyProtocol();
+        String grandpaProtocolId = ProtocolUtils.LEGACY_GRANDPA_PROTOCOL;
         String transactionsProtocolId = ProtocolUtils.getTransactionsProtocol(chainId);
 
         kademliaService = new KademliaService(legacyKadProtocolId, hostId, isLocalEnabled, clientMode);
@@ -273,10 +277,9 @@ public class Network {
     }
 
     public void updateCurrentSelectedPeer() {
-        Random random = new Random();
         if (connectionManager.getPeerIds().isEmpty()) return;
         this.currentSelectedPeer = connectionManager.getPeerIds().stream()
-                .skip(random.nextInt(connectionManager.getPeerIds().size())).findAny().orElse(null);
+                .skip(RANDOM.nextInt(connectionManager.getPeerIds().size())).findAny().orElse(null);
     }
 
     public BlockResponse syncBlock(PeerId peerId, BigInteger lastBlockNumber) {
@@ -287,11 +290,7 @@ public class Network {
                 this.host,
                 this.host.getAddressBook(),
                 peerId,
-                19,
-                null,
-                lastBlockNumber.intValue(),
-                Direction.Ascending,
-                1);
+                new BlockRequestDto(19, null, lastBlockNumber.intValue(), Direction.Ascending, 1));
     }
 
     public WarpSyncResponse makeWarpSyncRequest(String blockHash) {

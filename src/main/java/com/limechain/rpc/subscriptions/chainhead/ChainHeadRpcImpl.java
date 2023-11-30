@@ -1,5 +1,7 @@
 package com.limechain.rpc.subscriptions.chainhead;
 
+import com.limechain.exception.InvalidURIException;
+import com.limechain.exception.ThreadInterruptedException;
 import com.limechain.rpc.config.SubscriptionName;
 import com.limechain.rpc.pubsub.Topic;
 import com.limechain.rpc.pubsub.publisher.PublisherImpl;
@@ -30,8 +32,11 @@ public class ChainHeadRpcImpl implements ChainHeadRpc {
                     Topic.UNSTABLE_FOLLOW);
             //TODO: Move connect outside constructor
             rpcClient.connectBlocking();
-        } catch (URISyntaxException | InterruptedException e) {
-            throw new RuntimeException(e);
+        } catch (URISyntaxException e) {
+            throw new InvalidURIException(e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new ThreadInterruptedException(e);
         }
     }
 

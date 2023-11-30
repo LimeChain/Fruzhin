@@ -1,9 +1,13 @@
 package com.limechain.network;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class ProtocolUtils {
-    public static String getPingProtocol() {
-        return "/ipfs/ping/1.0.0";
-    }
+    public static final String PING_PROTOCOL = "/ipfs/ping/1.0.0";
+    public static final String LEGACY_GRANDPA_PROTOCOL = "/paritytech/grandpa/1";
+
 
     public static String getLegacyLightMessageProtocol(String chainId) {
         return String.format("/%s/light/2", chainId);
@@ -23,10 +27,6 @@ public final class ProtocolUtils {
 
     public static String getLegacyKadProtocol(String chainId) {
         return String.format("/%s/kad", chainId);
-    }
-
-    public static String getGrandpaLegacyProtocol() {
-        return "/paritytech/grandpa/1";
     }
 
     public static String getTransactionsProtocol(String chainId) {

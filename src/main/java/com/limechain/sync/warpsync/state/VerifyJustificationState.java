@@ -43,8 +43,8 @@ public class VerifyJustificationState implements WarpSyncState {
                 throw new RuntimeException("No such fragment");
             }
             boolean verified = JustificationVerifier.verify(
-                    fragment.getJustification().precommits,
-                    fragment.getJustification().round);
+                    fragment.getJustification().getPrecommits(),
+                    fragment.getJustification().getRound());
             if (!verified) {
                 throw new RuntimeException("Justification could not be verified.");
             }
@@ -52,13 +52,13 @@ public class VerifyJustificationState implements WarpSyncState {
             // Set the latest finalized header and number
             // TODO: Persist header to DB?
             syncedState.setStateRoot(fragment.getHeader().getStateRoot());
-            syncedState.setLastFinalizedBlockHash(fragment.getJustification().targetHash);
-            syncedState.setLastFinalizedBlockNumber(fragment.getJustification().targetBlock);
+            syncedState.setLastFinalizedBlockHash(fragment.getJustification().getTargetHash());
+            syncedState.setLastFinalizedBlockNumber(fragment.getJustification().getTargetBlock());
 
             try {
                 syncedState.handleAuthorityChanges(
                         fragment.getHeader().getDigest(),
-                        fragment.getJustification().targetBlock);
+                        fragment.getJustification().getTargetBlock());
                 log.log(Level.INFO, "Verified justification. Block hash is now at #"
                         + syncedState.getLastFinalizedBlockNumber() + ": "
                         + syncedState.getLastFinalizedBlockHash().toString()

@@ -110,7 +110,7 @@ public class SyncedState {
             case KUSAMA -> genesisBlockHash = GenesisBlockHash.KUSAMA;
             case WESTEND -> genesisBlockHash = GenesisBlockHash.WESTEND;
             case LOCAL -> genesisBlockHash = GenesisBlockHash.LOCAL;
-            default -> throw new IllegalStateException("Unexpected value: " + network.chain);
+            default -> throw new IllegalStateException("Unexpected value: " + network.getChain());
         }
 
         Hash256 lastFinalizedBlockHash = this.lastFinalizedBlockHash == null
@@ -304,7 +304,7 @@ public class SyncedState {
         Justification justification = new JustificationReader().read(
                 new ScaleCodecReader(block.getJustification().toByteArray()));
         boolean verified = justification != null
-                && JustificationVerifier.verify(justification.precommits, justification.round);
+                && JustificationVerifier.verify(justification.getPrecommits(), justification.getRound());
 
         if (verified) {
             BlockHeader header = new BlockHeaderReader().read(new ScaleCodecReader(block.getHeader().toByteArray()));

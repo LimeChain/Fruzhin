@@ -1,6 +1,7 @@
 package com.limechain.chain;
 
 import com.limechain.config.HostConfig;
+import com.limechain.exception.ChainServiceInitializationException;
 import com.limechain.storage.DBConstants;
 import com.limechain.storage.KVRepository;
 import lombok.Getter;
@@ -39,7 +40,7 @@ public class ChainService {
     }
 
     protected void initialize(HostConfig hostConfig) {
-        Optional<Object> genesis = repository.find(DBConstants.GENESIS_KEY);
+        Optional<Object> chainSpec = repository.find(DBConstants.GENESIS_KEY);
         /*
             WORKAROUND
             The inLocalDevelopment variable and its usage below are only to aid in development.
@@ -50,8 +51,8 @@ public class ChainService {
             This might be removed in the future.
          */
         isLocalChain = hostConfig.getChain() == Chain.LOCAL;
-        if (genesis.isPresent() && !isLocalChain) {
-            this.setGenesis((ChainSpec) genesis.get());
+        if (chainSpec.isPresent() && !isLocalChain) {
+            this.setGenesis((ChainSpec) chainSpec.get());
             log.log(Level.INFO, "✅️Loaded chain spec from DB");
             return;
         }
@@ -63,7 +64,7 @@ public class ChainService {
             repository.save(DBConstants.GENESIS_KEY, this.getGenesis());
             log.log(Level.FINE, "Saved chain spec to database");
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new ChainServiceInitializationException(e);
         }
 
     }

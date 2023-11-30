@@ -1,5 +1,8 @@
 package com.limechain.runtime.hostapi;
 
+import com.limechain.exception.BatchVerificationNotStartedException;
+import com.limechain.exception.InvalidKeyTypeException;
+import com.limechain.exception.InvalidSeedException;
 import com.limechain.utils.scale.exceptions.ScaleEncodingException;
 import com.limechain.rpc.server.AppBean;
 import com.limechain.runtime.hostapi.dto.Key;
@@ -169,7 +172,8 @@ public class CryptoHostFunctions {
         final KeyType keyType = KeyType.getByBytes(keyTypeBytes);
 
         if (keyType == null || (keyType.getKey() != Key.ED25519 && keyType.getKey() != Key.GENERIC)) {
-            throw new RuntimeException(INVALID_KEY_TYPE);
+            throw new InvalidKeyTypeException(
+                    String.format("Type received: %s", keyType != null ? keyType.getKey() : null ));
         }
 
         return internalPublicKeys(keyType);
@@ -182,34 +186,38 @@ public class CryptoHostFunctions {
      * @param seed      a pointer-size to the SCALE encoded Option value containing the BIP-39 seed which must be valid
      *                  UTF8.
      * @return a pointer to the buffer containing the 256-bit public key.
-     * @throws RuntimeException Panics if the key cannot be generated, such as when an invalid key type or invalid seed
+     * @throws InvalidSeedException Panics if the key cannot be generated, such as when an invalid key type or invalid seed
      *                          was provided.
      */
     public int ed25519GenerateV1(int keyTypeId, RuntimePointerSize seed) {
-        byte[] keyTypeBytes = hostApi.getDataFromMemory(new RuntimePointerSize(keyTypeId, KeyType.KEY_TYPE_LEN));
-        final KeyType keyType = KeyType.getByBytes(keyTypeBytes);
-        if (keyType == null) {
-            Util.nativePanic(INVALID_KEY_TYPE);
-            throw new RuntimeException(INVALID_KEY_TYPE);
-        }
-        final byte[] seedData = hostApi.getDataFromMemory(seed);
-        String seedStr = new ScaleCodecReader(seedData).readOptional(ScaleCodecReader::readString).orElse(null);
-
+        var pair = getSeedStringAndKeyType(keyTypeId, seed);
         final Ed25519PrivateKey ed25519PrivateKey;
-        if (seedStr != null) {
-            if (!MnemonicUtils.validateMnemonic(seedStr)) {
+        if (pair.getSeed() != null) {
+            if (!MnemonicUtils.validateMnemonic(pair.getSeed())) {
                 Util.nativePanic(SEED_IS_INVALID);
-                throw new RuntimeException(SEED_IS_INVALID);
+                throw new InvalidSeedException();
             }
-            ed25519PrivateKey = Ed25519Utils.generateKeyPair(seedStr);
+            ed25519PrivateKey = Ed25519Utils.generateKeyPair(pair.getSeed());
         } else {
             ed25519PrivateKey = Ed25519Utils.generateKeyPair();
         }
 
         final PubKey pubKey = ed25519PrivateKey.publicKey();
 
-        keyStore.put(keyType, pubKey.raw(), ed25519PrivateKey.raw());
+        keyStore.put(pair.getKeyType(), pubKey.raw(), ed25519PrivateKey.raw());
         return hostApi.writeDataToMemory(pubKey.raw()).pointer();
+    }
+
+    private SeedStringKeyTypePair getSeedStringAndKeyType(int keyTypeId, RuntimePointerSize seed) {
+        byte[] keyTypeBytes = hostApi.getDataFromMemory(new RuntimePointerSize(keyTypeId, KeyType.KEY_TYPE_LEN));
+        final KeyType keyType = KeyType.getByBytes(keyTypeBytes);
+        if (keyType == null) {
+            Util.nativePanic(INVALID_KEY_TYPE);
+            throw new InvalidKeyTypeException("Null is not a valid type");
+        }
+        final byte[] seedData = hostApi.getDataFromMemory(seed);
+        return new SeedStringKeyTypePair(new ScaleCodecReader(seedData).readOptional(ScaleCodecReader::readString)
+                .orElse(null), keyType);
     }
 
     /**
@@ -291,7 +299,8 @@ public class CryptoHostFunctions {
         final KeyType keyType = KeyType.getByBytes(keyTypeBytes);
 
         if (keyType == null || (keyType.getKey() != Key.SR25519 && keyType.getKey() != Key.GENERIC)) {
-            throw new RuntimeException(INVALID_KEY_TYPE);
+            throw new InvalidKeyTypeException(
+                    String.format("Type received: %s", keyType != null ? keyType.getKey() : null ));
         }
 
         return internalPublicKeys(keyType);
@@ -304,31 +313,24 @@ public class CryptoHostFunctions {
      * @param seed      a pointer-size to the SCALE encoded Option value containing the BIP-39 seed which must be valid
      *                  UTF8.
      * @return a pointer to the buffer containing the 256-bit public key.
-     * @throws RuntimeException Panics if the key cannot be generated, such as when an invalid key type or invalid seed
+     * @throws InvalidSeedException Panics if the key cannot be generated, such as when an invalid key type or invalid seed
      *                          was provided.
      */
     public int sr25519GenerateV1(int keyTypeId, RuntimePointerSize seed) {
-        byte[] keyTypeBytes = hostApi.getDataFromMemory(new RuntimePointerSize(keyTypeId, KeyType.KEY_TYPE_LEN));
-        final KeyType keyType = KeyType.getByBytes(keyTypeBytes);
-        if (keyType == null) {
-            Util.nativePanic(INVALID_KEY_TYPE);
-            throw new RuntimeException(INVALID_KEY_TYPE);
-        }
-        final byte[] seedData = hostApi.getDataFromMemory(seed);
-        String seedStr = new ScaleCodecReader(seedData).readOptional(ScaleCodecReader::readString).orElse(null);
+        var pair = getSeedStringAndKeyType(keyTypeId, seed);
         final Schnorrkel.KeyPair keyPair;
 
-        if (seedStr != null) {
-            if (!MnemonicUtils.validateMnemonic(seedStr)) {
+        if (pair.getSeed() != null) {
+            if (!MnemonicUtils.validateMnemonic(pair.getSeed())) {
                 Util.nativePanic(SEED_IS_INVALID);
-                throw new RuntimeException(SEED_IS_INVALID);
+                throw new InvalidSeedException();
             }
-            keyPair = Sr25519Utils.generateKeyPair(seedStr);
+            keyPair = Sr25519Utils.generateKeyPair(pair.getSeed());
         } else {
             keyPair = Sr25519Utils.generateKeyPair();
         }
 
-        keyStore.put(keyType, keyPair.getPublicKey(), keyPair.getSecretKey());
+        keyStore.put(pair.getKeyType(), keyPair.getPublicKey(), keyPair.getSecretKey());
         return hostApi.writeDataToMemory(keyPair.getPublicKey()).pointer();
     }
 
@@ -400,7 +402,8 @@ public class CryptoHostFunctions {
         final KeyType keyType = KeyType.getByBytes(keyTypeBytes);
 
         if (keyType == null || keyType.getKey() != Key.GENERIC) {
-            throw new RuntimeException(INVALID_KEY_TYPE);
+            throw new InvalidKeyTypeException(
+                    String.format("Type received: %s", keyType != null ? keyType.getKey() : null ));
         }
 
         return internalPublicKeys(keyType);
@@ -428,31 +431,24 @@ public class CryptoHostFunctions {
      * @param seed      a pointer-size to the SCALE encoded Option value containing the BIP-39 seed which must be valid
      *                  UTF8.
      * @return a pointer to the buffer containing the 33-byte public key.
-     * @throws RuntimeException Panics if the key cannot be generated, such as when an invalid key type or invalid seed
+     * @throws InvalidSeedException Panics if the key cannot be generated, such as when an invalid key type or invalid seed
      *                          was provided.
      */
     public int ecdsaGenerateV1(int keyTypeId, RuntimePointerSize seed) {
-        byte[] keyTypeBytes = hostApi.getDataFromMemory(new RuntimePointerSize(keyTypeId, KeyType.KEY_TYPE_LEN));
-        final KeyType keyType = KeyType.getByBytes(keyTypeBytes);
-        if (keyType == null) {
-            Util.nativePanic(INVALID_KEY_TYPE);
-            throw new RuntimeException(INVALID_KEY_TYPE);
-        }
-        final byte[] seedData = hostApi.getDataFromMemory(seed);
-        String seedStr = new ScaleCodecReader(seedData).readOptional(ScaleCodecReader::readString).orElse(null);
+        var pair = getSeedStringAndKeyType(keyTypeId, seed);
 
         final Pair<PrivKey, PubKey> keyPair;
-        if (seedStr != null) {
-            if (!MnemonicUtils.validateMnemonic(seedStr)) {
+        if (pair.getSeed() != null) {
+            if (!MnemonicUtils.validateMnemonic(pair.getSeed())) {
                 Util.nativePanic(SEED_IS_INVALID);
-                throw new RuntimeException(SEED_IS_INVALID);
+                throw new InvalidSeedException();
             }
-            keyPair = EcdsaUtils.generateKeyPair(seedStr);
+            keyPair = EcdsaUtils.generateKeyPair(pair.getSeed());
         } else {
             keyPair = EcdsaUtils.generateKeyPair();
         }
 
-        keyStore.put(keyType, keyPair.getSecond().raw(), keyPair.getFirst().raw());
+        keyStore.put(pair.getKeyType(), keyPair.getSecond().raw(), keyPair.getFirst().raw());
         return hostApi.writeDataToMemory(keyPair.getSecond().raw()).pointer();
     }
 
@@ -628,7 +624,7 @@ public class CryptoHostFunctions {
     public int finishBatchVerify() {
         if (!batchVerificationStarted) {
             Util.nativePanic(BATCH_VERIFICATION_NOT_STARTED);
-            throw new RuntimeException(BATCH_VERIFICATION_NOT_STARTED);
+            throw new BatchVerificationNotStartedException();
         }
         batchVerificationStarted = false;
         HashSet<VerifySignature> signatures = new HashSet<>(signaturesToVerify);

@@ -1,5 +1,7 @@
 package com.limechain.rpc.subscriptions.transaction;
 
+import com.limechain.exception.InvalidURIException;
+import com.limechain.exception.ThreadInterruptedException;
 import com.limechain.rpc.config.SubscriptionName;
 import com.limechain.rpc.pubsub.Topic;
 import com.limechain.rpc.pubsub.publisher.PublisherImpl;
@@ -22,8 +24,11 @@ public class TransactionRpcImpl implements TransactionRpc {
                     Topic.UNSTABLE_TRANSACTION_WATCH);
             // TODO: Move connect outside constructor
             rpcClient.connectBlocking();
-        } catch (URISyntaxException | InterruptedException e) {
-            throw new RuntimeException(e);
+        } catch (URISyntaxException e) {
+            throw new InvalidURIException(e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new ThreadInterruptedException(e);
         }
     }
 
@@ -31,7 +36,6 @@ public class TransactionRpcImpl implements TransactionRpc {
     public void transactionUnstableSubmitAndWatch(String transaction) {
         rpcClient.send(SubscriptionName.TRANSACTION_UNSTABLE_SUBMIT_AND_WATCH.getValue(),
                 new String[]{Utils.wrapWithDoubleQuotes(transaction)});
-
     }
 
     @Override
@@ -39,5 +43,4 @@ public class TransactionRpcImpl implements TransactionRpc {
         rpcClient.send(SubscriptionName.TRANSACTION_UNSTABLE_UNWATCH.getValue(),
                 new String[]{Utils.wrapWithDoubleQuotes(subscriptionId)});
     }
-
 }
