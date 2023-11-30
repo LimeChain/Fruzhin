@@ -1,5 +1,8 @@
 package com.limechain.trie.structure.nibble;
 
+import com.limechain.trie.structure.nibble.exceptions.NibbleFromHexDigitException;
+import com.limechain.trie.structure.nibble.exceptions.NibbleFromIntegerException;
+
 public class Nibble {
     public static final Nibble ZERO = Nibble.fromInt(0);
     public static final Nibble MAX = Nibble.fromInt(15);
@@ -26,15 +29,15 @@ public class Nibble {
      * Constructs a nibble from an int representation
      * @param value int representation of the nibble
      * @return the constructed Nibble
-     * @throws Exception.NibbleFromIntegerException if the given integer is < 0 or >= 16, thus an invalid nibble
+     * @throws NibbleFromIntegerException if the given integer is < 0 or >= 16, thus an invalid nibble
      */
     public static Nibble fromInt(int value) {
         if (value < 0) {
-            throw Exception.NibbleFromIntegerException.NEGATIVE_VALUE;
+            throw NibbleFromIntegerException.valueNegative(value);
         }
 
         if (value >= HEX_RADIX) {
-            throw Exception.NibbleFromIntegerException.TOO_LARGE;
+            throw NibbleFromIntegerException.valueTooLarge(value);
         }
 
         return new Nibble((byte) value);
@@ -45,13 +48,13 @@ public class Nibble {
      * Constructs a nibble from a hexadecimal char representation
      * @param c the hexadecimal char representation of the nibble
      * @return the constructed Nibble
-     * @throws Exception.NibbleFromHexDigitException if the given char is not a valid hexadecimal digit (i.e. nibble)
+     * @throws NibbleFromHexDigitException if the given char is not a valid hexadecimal digit (i.e. nibble)
      */
     public static Nibble fromAsciiHexDigit(char c) {
         int value = Character.digit(c, HEX_RADIX);
 
         if (value == -1) {
-            throw Exception.NibbleFromHexDigitException.invalidHexDigit(c);
+            throw NibbleFromHexDigitException.invalidHexDigit(c);
         }
 
         return Nibble.fromInt(value);
@@ -75,33 +78,5 @@ public class Nibble {
         return "Nibble{" +
                "value=" + value +
                '}';
-    }
-
-    public abstract static class Exception {
-        private static final String VALUE_TOO_LARGE_MSG = "Value is too large (>= 16) to fit into a nibble.";
-        private static final String VALUE_NEGATIVE_MSG = "Integer value is negative, can't fit into a nibble.";
-
-        public static class NibbleFromHexDigitException extends RuntimeException {
-            public static NibbleFromHexDigitException invalidHexDigit(char c) {
-                return new NibbleFromHexDigitException(
-                    String.format("Invalid hexadecimal digit character '%c' given to construct a Nibble.", c));
-            }
-
-            public NibbleFromHexDigitException(String message) {
-                super(message);
-            }
-        }
-
-        public static class NibbleFromIntegerException extends RuntimeException {
-            public static final NibbleFromIntegerException NEGATIVE_VALUE =
-                new NibbleFromIntegerException(VALUE_NEGATIVE_MSG);
-
-            public static final NibbleFromIntegerException TOO_LARGE =
-                new NibbleFromIntegerException(VALUE_TOO_LARGE_MSG);
-
-            public NibbleFromIntegerException(String message) {
-                super(message);
-            }
-        }
     }
 }
