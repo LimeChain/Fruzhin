@@ -65,6 +65,19 @@ public class FullNode implements HostNode {
         AppBean.getBean(WarpSyncMachine.class).start();
     }
 
+    /**
+     * Builds a list of {@link InsertTrieNode} objects representing the nodes in a trie structure.
+     * Each trie node is constructed with its storage value, merkle value, children's merkle values,
+     * and partial key nibbles.
+     *
+     * @param trieStructure The trie structure containing the nodes. This structure should be
+     *                      a {@link TrieStructure} with user data of type {@link Pair<Optional<byte[]>, byte[]>},
+     *                      where the first element of the pair is an optional storage value (byte array),
+     *                      and the second element is the merkle value (byte array).
+     * @return A list of {@link InsertTrieNode} objects representing the nodes in the given trie structure.
+     * @throws IllegalStateException if the user data in the trie structure is empty or null, which
+     *                               indicates an invalid state for the trie nodes.
+     */
     public List<InsertTrieNode> buildTrieNodesIterator(
             TrieStructure<Pair<Optional<byte[]>, byte[]>> trieStructure) {
         List<InsertTrieNode> trieNodesIterator = new ArrayList<>();
@@ -76,7 +89,7 @@ public class FullNode implements HostNode {
             }
             NodeHandle<Pair<Optional<byte[]>, byte[]>> nodeHandle = trieStructure.nodeAtIndex(nodeIndex);
 
-            byte[] storageValue = userData.getValue0().orElse(null);
+            byte[] storageValue = userData.getValue0().get();
             byte[] merkleValue = userData.getValue1();
 
             byte[] merkleValueCopy = merkleValue.clone();
