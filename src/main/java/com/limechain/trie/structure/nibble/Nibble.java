@@ -43,7 +43,6 @@ public class Nibble {
         return new Nibble((byte) value);
     }
 
-
     /**
      * Constructs a nibble from a hexadecimal char representation
      * @param c the hexadecimal char representation of the nibble
