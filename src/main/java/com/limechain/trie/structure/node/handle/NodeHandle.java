@@ -2,6 +2,7 @@ package com.limechain.trie.structure.node.handle;
 
 import com.limechain.trie.structure.TrieStructure;
 import com.limechain.trie.structure.nibble.Nibble;
+import com.limechain.trie.structure.node.TrieNodeIndex;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.NotImplementedException;
 
@@ -24,5 +25,9 @@ public abstract sealed class NodeHandle<T> permits StorageNodeHandle, BranchNode
     public List<Nibble> getPartialKey() {
         //TODO: implement
         throw new NotImplementedException("Not yet implemented.");
+    }
+
+    public T getUserData() {
+        return trieStructure.nodeAtIndex(new TrieNodeIndex(nodeIndex)).getUserData();
     }
 }

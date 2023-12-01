@@ -6,11 +6,17 @@ import com.limechain.storage.KVRepository;
 import com.limechain.storage.block.BlockStateHelper;
 import com.limechain.sync.warpsync.WarpSyncMachine;
 import com.limechain.trie.structure.TrieStructure;
+import com.limechain.trie.structure.nibble.Nibble;
+import com.limechain.trie.structure.node.InsertTrieNode;
+import com.limechain.trie.structure.node.TrieNodeIndex;
+import com.limechain.trie.structure.node.handle.NodeHandle;
 import lombok.SneakyThrows;
 import lombok.extern.java.Log;
 import org.javatuples.Pair;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
 
@@ -33,7 +39,8 @@ public class FullNode implements HostNode {
             // do nothing?
         } else {
             // do the initial one-time population of the database with the genesis storage
-            initializeDatabaseStorageTrie();
+            TrieStructure<Pair<Optional<byte[]>, byte[]>> trieStructure = initializeDatabaseStorageTrie();
+            buildTrieNodesIterator(trieStructure);
         }
 
         // Start network
@@ -58,8 +65,49 @@ public class FullNode implements HostNode {
         AppBean.getBean(WarpSyncMachine.class).start();
     }
 
-    void initializeDatabaseStorageTrie() {
-        TrieStructure<Pair<Optional<byte[]>, byte[]>> trieStructure;
+    public List<InsertTrieNode> buildTrieNodesIterator(
+            TrieStructure<Pair<Optional<byte[]>, byte[]>> trieStructure) {
+        List<InsertTrieNode> trieNodesIterator = new ArrayList<>();
+
+        for (TrieNodeIndex nodeIndex : trieStructure) {
+            Pair<Optional<byte[]>, byte[]> userData = trieStructure.getUserDataAtIndex(nodeIndex.value());
+            if (userData.getValue0().isEmpty() || userData.getValue1() == null) {
+                throw new IllegalStateException("Userdata should not be empty!");
+            }
+            NodeHandle<Pair<Optional<byte[]>, byte[]>> nodeHandle = trieStructure.nodeAtIndex(nodeIndex);
+
+            byte[] storageValue = userData.getValue0().orElse(null);
+            byte[] merkleValue = userData.getValue1();
+
+            byte[] merkleValueCopy = merkleValue.clone();
+            List<byte[]> childrenMerkleValues = new ArrayList<>();
+            List<Nibble> partialKeyNibbles = new ArrayList<>(nodeHandle.getPartialKey());
+
+            for (Nibble n = Nibble.fromInt(0); n.toByte() < 16; n = Nibble.fromInt(n.toByte() + 1)) {
+                Optional<NodeHandle<Pair<Optional<byte[]>, byte[]>>> childHandle = nodeHandle.getChild(n);
+                childHandle.ifPresent(handle -> {
+                    Pair<Optional<byte[]>, byte[]> child = handle.getUserData();
+                    if (child != null && child.getValue1() != null) {
+                        childrenMerkleValues.add(child.getValue1().clone());
+                    }
+                });
+            }
+
+            trieNodesIterator.add(new InsertTrieNode(
+                    storageValue,
+                    merkleValueCopy,
+                    childrenMerkleValues,
+                    partialKeyNibbles
+            ));
+        }
+
+        return trieNodesIterator;
+    }
+
+    TrieStructure<Pair<Optional<byte[]>, byte[]>> initializeDatabaseStorageTrie() {
+        TrieStructure<Pair<Optional<byte[]>, byte[]>> trieStructure = null;
         // TODO: Build trie structure from genesis
+
+        return trieStructure;
     }
 }
