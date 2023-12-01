@@ -28,7 +28,8 @@ public class FullNode implements HostNode {
 
         // TODO: Is there a better way to do this?
         var db = AppBean.getBean(KVRepository.class); //presume this works
-        if (db != null && db.find(new BlockStateHelper().headerHashKey(BigInteger.ZERO)).isPresent()) { // database exists and has some persisted storage
+        // if: database exists and has some persisted storage
+        if (db != null && db.find(new BlockStateHelper().headerHashKey(BigInteger.ZERO)).isPresent()) {
             // do nothing?
         } else {
             // do the initial one-time population of the database with the genesis storage
@@ -60,9 +61,5 @@ public class FullNode implements HostNode {
     void initializeDatabaseStorageTrie() {
         TrieStructure<Pair<Optional<byte[]>, byte[]>> trieStructure;
         // TODO: Build trie structure from genesis
-
-
-
-
     }
 }
