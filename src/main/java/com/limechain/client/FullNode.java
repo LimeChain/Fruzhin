@@ -39,7 +39,7 @@ public class FullNode implements HostNode {
             // do nothing?
         } else {
             // do the initial one-time population of the database with the genesis storage
-            TrieStructure<Pair<Optional<byte[]>, byte[]>> trieStructure = initializeDatabaseStorageTrie();
+            TrieStructure<Pair<Optional<byte[]>, Optional<byte[]>>> trieStructure = initializeDatabaseStorageTrie();
             buildTrieNodesIterator(trieStructure);
         }
 
@@ -79,29 +79,29 @@ public class FullNode implements HostNode {
      *                               indicates an invalid state for the trie nodes.
      */
     public List<InsertTrieNode> buildTrieNodesIterator(
-            TrieStructure<Pair<Optional<byte[]>, byte[]>> trieStructure) {
+            TrieStructure<Pair<Optional<byte[]>, Optional<byte[]>>> trieStructure) {
         List<InsertTrieNode> trieNodesIterator = new ArrayList<>();
 
         for (TrieNodeIndex nodeIndex : trieStructure) {
-            Pair<Optional<byte[]>, byte[]> userData = trieStructure.getUserDataAtIndex(nodeIndex.value());
-            if (userData.getValue0().isEmpty() || userData.getValue1() == null) {
-                throw new IllegalStateException("Userdata should not be empty!");
+            Pair<Optional<byte[]>, Optional<byte[]>> userData = trieStructure.getUserDataAtIndex(nodeIndex.value());
+            if (userData.getValue1().isEmpty()) {
+                throw new IllegalStateException("Merkle value should not be empty!");
             }
-            NodeHandle<Pair<Optional<byte[]>, byte[]>> nodeHandle = trieStructure.nodeAtIndex(nodeIndex);
+            NodeHandle<Pair<Optional<byte[]>, Optional<byte[]>>> nodeHandle = trieStructure.nodeAtIndex(nodeIndex);
 
-            byte[] storageValue = userData.getValue0().get();
-            byte[] merkleValue = userData.getValue1();
+            byte[] storageValue = userData.getValue0().orElse(null);
+            byte[] merkleValue = userData.getValue1().get();
 
             byte[] merkleValueCopy = merkleValue.clone();
             List<byte[]> childrenMerkleValues = new ArrayList<>();
             List<Nibble> partialKeyNibbles = new ArrayList<>(nodeHandle.getPartialKey());
 
             for (Nibble n = Nibble.fromInt(0); n.toByte() < 16; n = Nibble.fromInt(n.toByte() + 1)) {
-                Optional<NodeHandle<Pair<Optional<byte[]>, byte[]>>> childHandle = nodeHandle.getChild(n);
+                Optional<NodeHandle<Pair<Optional<byte[]>, Optional<byte[]>>>> childHandle = nodeHandle.getChild(n);
                 childHandle.ifPresent(handle -> {
-                    Pair<Optional<byte[]>, byte[]> child = handle.getUserData();
-                    if (child != null && child.getValue1() != null) {
-                        childrenMerkleValues.add(child.getValue1().clone());
+                    Pair<Optional<byte[]>, Optional<byte[]>> child = handle.getUserData();
+                    if (child != null && child.getValue1().isPresent()) {
+                        childrenMerkleValues.add(child.getValue1().get().clone());
                     }
                 });
             }
@@ -117,8 +117,8 @@ public class FullNode implements HostNode {
         return trieNodesIterator;
     }
 
-    TrieStructure<Pair<Optional<byte[]>, byte[]>> initializeDatabaseStorageTrie() {
-        TrieStructure<Pair<Optional<byte[]>, byte[]>> trieStructure = null;
+    TrieStructure<Pair<Optional<byte[]>, Optional<byte[]>>> initializeDatabaseStorageTrie() {
+        TrieStructure<Pair<Optional<byte[]>, Optional<byte[]>>> trieStructure = null;
         // TODO: Build trie structure from genesis
 
         return trieStructure;
