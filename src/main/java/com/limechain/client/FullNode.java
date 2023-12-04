@@ -83,7 +83,7 @@ public class FullNode implements HostNode {
         List<InsertTrieNode> trieNodesIterator = new ArrayList<>();
 
         for (TrieNodeIndex nodeIndex : trieStructure) {
-            Pair<Optional<byte[]>, Optional<byte[]>> userData = trieStructure.getUserDataAtIndex(nodeIndex.value());
+            Pair<Optional<byte[]>, Optional<byte[]>> userData = trieStructure.getUserDataAtIndex(nodeIndex);
             if (userData.getValue1().isEmpty()) {
                 throw new IllegalStateException("Merkle value should not be empty!");
             }

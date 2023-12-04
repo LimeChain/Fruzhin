@@ -12,7 +12,7 @@ import java.util.Optional;
 @AllArgsConstructor
 public abstract sealed class NodeHandle<T> permits StorageNodeHandle, BranchNodeHandle {
     private TrieStructure<T> trieStructure;
-    private int nodeIndex;
+    private TrieNodeIndex nodeIndex;
 
     //NOTE:
     // Later on, we might switch from optionals to nullable return types
@@ -28,6 +28,6 @@ public abstract sealed class NodeHandle<T> permits StorageNodeHandle, BranchNode
     }
 
     public T getUserData() {
-        return trieStructure.nodeAtIndex(new TrieNodeIndex(nodeIndex)).getUserData();
+        return trieStructure.getUserDataAtIndex(nodeIndex);
     }
 }

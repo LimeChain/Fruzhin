@@ -17,7 +17,7 @@ public class TrieStructure<T> implements Iterable<TrieNodeIndex> {
         throw new NotImplementedException("Not yet implemented.");
     }
 
-    public T getUserDataAtIndex(int i) {
+    public T getUserDataAtIndex(TrieNodeIndex index) {
         //TODO: implement
         throw new NotImplementedException("Not yet implemented.");
     }
