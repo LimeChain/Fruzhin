@@ -1,14 +1,21 @@
 package com.limechain.runtime.hostapi;
 
+import com.limechain.runtime.hostapi.dto.HttpResponseType;
 import com.limechain.runtime.hostapi.dto.InvalidRequestId;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class OffchainHttpRequests {
@@ -48,5 +55,86 @@ public class OffchainHttpRequests {
         }
         request.setConnectTimeout(timeout);
         request.getOutputStream().write(chunk);
+    }
+
+    public void waitRequest(int id, long timeout) throws IOException, InterruptedException {
+        HttpURLConnection request = requests.get(id);
+        if (request == null) {
+            throw new InvalidRequestId();
+        }
+        if (timeout != 0) {
+            request.wait(timeout);
+            return;
+        }
+        request.wait();
+    }
+
+    public Map<String, List<String>> getResponseHeaders(int id) throws IOException {
+        HttpURLConnection request = requests.get(id);
+        if (request.getResponseCode() == HttpURLConnection.HTTP_OK) {
+            return request.getHeaderFields();
+        }
+        return null;
+    }
+
+    public byte[] getResponseBody(int id) throws IOException {
+        HttpURLConnection request = requests.get(id);
+        if (request.getResponseCode() == HttpURLConnection.HTTP_OK) {
+            return request.getResponseMessage().getBytes();
+        }
+        return null;
+    }
+
+    public HttpResponseType[] getRequestsResponses(int[] requestIds, int timeout){
+        HttpResponseType[] requestStatuses = new HttpResponseType[requestIds.length];
+
+        ExecutorService executor = Executors.newFixedThreadPool(requestIds.length);
+        long startTime = System.currentTimeMillis();
+
+        try {
+            Future<?>[] futures = new Future<?>[requestIds.length];
+            for (int i = 0; i < requestIds.length; i++) {
+                final int index = i;
+                futures[i] = executor.submit(() -> {
+                    try {
+                        HttpURLConnection request = requests.get(requestIds[index]);
+                        request.setConnectTimeout(timeout);
+                        request.connect();
+
+                        long timeElapsed = System.currentTimeMillis() - startTime;
+                        long remainingTime = timeout - timeElapsed;
+                        if (remainingTime > 0) {
+                            request.setReadTimeout((int) remainingTime);
+                        } else {
+                            throw new SocketTimeoutException("Timeout while connecting");
+                        }
+                        request.getResponseCode();
+                        requestStatuses[index] = HttpResponseType.FINISHED;
+                    } catch (InvalidRequestId e) {
+                        requestStatuses[index] = HttpResponseType.INVALID_ID;
+                    } catch (SocketTimeoutException e) {
+                        requestStatuses[index] = HttpResponseType.DEADLINE_REACHED;
+                    } catch (IOException e) {
+                        requestStatuses[index] = HttpResponseType.IO_ERROR;
+                    }
+                });
+            }
+
+            executor.shutdown();
+            executor.awaitTermination(timeout, TimeUnit.MILLISECONDS);
+
+            for (Future<?> future : futures) {
+                if (!future.isDone()) {
+                    future.cancel(true);
+                }
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } finally {
+            if (!executor.isTerminated()) {
+                executor.shutdownNow();
+            }
+        }
+        return requestStatuses;
     }
 }
