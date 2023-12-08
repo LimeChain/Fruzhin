@@ -83,7 +83,7 @@ class TrieBranchDecoderTest {
         ScaleCodecReader reader = new ScaleCodecReader(out.toByteArray());
         Node node = TrieBranchDecoder.decode(reader, NodeVariant.BRANCH_WITH_VALUE, 1);
 
-        assertEquals(NodeKind.Branch, node.getKind());
+        assertEquals(NodeKind.BRANCH, node.getKind());
         assertArrayEquals(new byte[]{9}, node.getPartialKey());
         assertArrayEquals(new byte[]{7, 8, 9}, node.getStorageValue());
         assertEquals(1, node.getDescendants());
@@ -125,24 +125,24 @@ class TrieBranchDecoderTest {
         ScaleCodecReader reader = new ScaleCodecReader(out.toByteArray());
         Node node = TrieBranchDecoder.decode(reader, NodeVariant.BRANCH, 1);
 
-        assertEquals(NodeKind.Branch, node.getKind());
+        assertEquals(NodeKind.BRANCH, node.getKind());
         assertArrayEquals(new byte[]{1}, node.getPartialKey());
         assertNull(node.getStorageValue());
         assertEquals(3, node.getDescendants());
 
         Node inlinedLeaf = node.getChild(0);
-        assertEquals(NodeKind.Leaf, inlinedLeaf.getKind());
+        assertEquals(NodeKind.LEAF, inlinedLeaf.getKind());
         assertArrayEquals(new byte[]{2}, inlinedLeaf.getStorageValue());
         assertArrayEquals(new byte[]{2}, inlinedLeaf.getPartialKey());
 
         Node inlinedNodeBranch = node.getChild(1);
-        assertEquals(NodeKind.Branch, inlinedNodeBranch.getKind());
+        assertEquals(NodeKind.BRANCH, inlinedNodeBranch.getKind());
         assertArrayEquals(new byte[]{3}, inlinedNodeBranch.getPartialKey());
         assertArrayEquals(new byte[]{3}, inlinedNodeBranch.getPartialKey());
         assertEquals(1, inlinedNodeBranch.getDescendants());
 
         Node inlinedBranchChild = inlinedNodeBranch.getChild(0);
-        assertEquals(NodeKind.Leaf, inlinedBranchChild.getKind());
+        assertEquals(NodeKind.LEAF, inlinedBranchChild.getKind());
         assertArrayEquals(new byte[]{4}, inlinedBranchChild.getStorageValue());
         assertArrayEquals(new byte[]{4}, inlinedBranchChild.getPartialKey());
     }

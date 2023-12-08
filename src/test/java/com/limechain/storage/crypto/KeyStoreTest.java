@@ -31,6 +31,7 @@ class KeyStoreTest {
 
     @Test
     void saveAndGetKey() {
+        System.out.println(keyStore);
         keyStore.put(KeyType.BABE, key, value);
         keyStore.put(KeyType.GRANDPA, key2, value2);
         keyStore.put(KeyType.BABE, key3, value3);
@@ -60,7 +61,7 @@ class KeyStoreTest {
 
         List<byte[]> publicKeysByKeyType = keyStore.getPublicKeysByKeyType(KeyType.BABE);
 
-        assertEquals(publicKeysByKeyType.size(), 2);
+        assertEquals(2, publicKeysByKeyType.size());
 
         List<byte[]> publicKeysByKeyTypeGrandpa = keyStore.getPublicKeysByKeyType(KeyType.GRANDPA);
         assertEquals(publicKeysByKeyTypeGrandpa.get(0).length, key2.length);

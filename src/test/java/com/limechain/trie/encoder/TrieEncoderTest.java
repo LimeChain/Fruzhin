@@ -69,9 +69,7 @@ class TrieEncoderTest {
 
     @Test
     void testEncodeHeaderBranchWithKeyOfLength63() throws IOException {
-        var node = new Node() {{
-            this.setPartialKey(new byte[63]);
-        }};
+        var node = createNodeWithKeyLength(63);
         OutputStream buffer = mock(OutputStream.class);
 
         TrieEncoder.encodeHeader(node, buffer);
@@ -105,46 +103,24 @@ class TrieEncoderTest {
     }
 
     @Test
-    void testEncodeHeaderLeafWithKeyOfLength30() throws IOException {
-        var node = new Node() {{
-            this.setPartialKey(new byte[30]);
-        }};
+    void testEncodeHeaderLeafWithDifferentKeyLength() throws IOException {
+        var node = createNodeWithKeyLength(30);
+        var node2 = createNodeWithKeyLength(62);
+        var node3 = createNodeWithKeyLength(63);
         OutputStream buffer = mock(OutputStream.class);
 
         TrieEncoder.encodeHeader(node, buffer);
+        TrieEncoder.encodeHeader(node2, buffer);
+        TrieEncoder.encodeHeader(node3, buffer);
 
         verify(buffer, times(1)).write(NodeVariant.LEAF.bits | 30);
-    }
-
-    @Test
-    void testEncodeHeaderLeafWithKeyOfLength62() throws IOException {
-        var node = new Node() {{
-            this.setPartialKey(new byte[62]);
-        }};
-        OutputStream buffer = mock(OutputStream.class);
-
-        TrieEncoder.encodeHeader(node, buffer);
-
         verify(buffer, times(1)).write(NodeVariant.LEAF.bits | 62);
-    }
-
-    @Test
-    void testEncodeHeaderLeafWithKeyOfLength63() throws IOException {
-        var node = new Node() {{
-            this.setPartialKey(new byte[63]);
-        }};
-        OutputStream buffer = mock(OutputStream.class);
-
-        TrieEncoder.encodeHeader(node, buffer);
-
         verify(buffer, times(1)).write(NodeVariant.LEAF.bits | 63);
     }
 
     @Test
     void testEncodeHeaderLeafWithKeyOfLength64() throws IOException {
-        var node = new Node() {{
-            this.setPartialKey(new byte[64]);
-        }};
+        var node = createNodeWithKeyLength(64);
         OutputStream buffer = mock(OutputStream.class);
 
         TrieEncoder.encodeHeader(node, buffer);
@@ -155,9 +131,7 @@ class TrieEncoderTest {
 
     @Test
     void testEncodeHeaderLeafWithKeyLengthOver3Bytes() throws IOException {
-        var node = new Node() {{
-            this.setPartialKey(new byte[(NodeVariant.LEAF.mask ^ 0xFF) + 0b1111_1111 + 0b0000_0001]);
-        }};
+        var node = createNodeWithKeyLength((NodeVariant.LEAF.mask ^ 0xFF) + 0b1111_1111 + 0b0000_0001);
         OutputStream buffer = mock(OutputStream.class);
 
         TrieEncoder.encodeHeader(node, buffer);
@@ -169,9 +143,7 @@ class TrieEncoderTest {
 
     @Test
     void testEncodeHeaderLeafWithKeyLengthOver3BytesAndLastByte0() throws IOException {
-        var node = new Node() {{
-            this.setPartialKey(new byte[(NodeVariant.LEAF.mask ^ 0xFF) + 0b1111_1111]);
-        }};
+        var node = createNodeWithKeyLength((NodeVariant.LEAF.mask ^ 0xFF) + 0b1111_1111);
         OutputStream buffer = mock(OutputStream.class);
 
         TrieEncoder.encodeHeader(node, buffer);
@@ -216,15 +188,9 @@ class TrieEncoderTest {
             this.setStorageValue(new byte[]{100});
             this.setChildren(new Node[]{
                             null, null, null,
-                            new Node() {{
-                                this.setPartialKey(new byte[]{9});
-                                this.setStorageValue(new byte[]{1});
-                            }},
+                            createNodeWithKeyAndStorageValue(9, 1),
                             null, null, null,
-                            new Node() {{
-                                this.setPartialKey(new byte[]{11});
-                                this.setStorageValue(new byte[]{1});
-                            }},
+                            createNodeWithKeyAndStorageValue(11, 1),
                     }
 
             );
@@ -257,10 +223,7 @@ class TrieEncoderTest {
         ByteArrayOutputStream buffer = mock(ByteArrayOutputStream.class);
 
         TrieEncoder.encodeChildren(new Node[]{
-                new Node() {{
-                    this.setPartialKey(new byte[]{1});
-                    this.setStorageValue(new byte[]{2});
-                }},
+                createNodeWithKeyAndStorageValue(1, 2),
         }, buffer);
 
         verify(buffer, times(1)).write(16);
@@ -277,10 +240,7 @@ class TrieEncoderTest {
                 null, null, null, null,
                 null, null, null, null,
                 null, null, null,
-                new Node() {{
-                    this.setPartialKey(new byte[]{1});
-                    this.setStorageValue(new byte[]{2});
-                }},
+                createNodeWithKeyAndStorageValue(1, 2),
         }, buffer);
 
         verify(buffer, times(1)).write(16);
@@ -293,14 +253,8 @@ class TrieEncoderTest {
         ByteArrayOutputStream buffer = mock(ByteArrayOutputStream.class);
 
         TrieEncoder.encodeChildren(new Node[]{
-                new Node() {{
-                    this.setPartialKey(new byte[]{1});
-                    this.setStorageValue(new byte[]{2});
-                }},
-                new Node() {{
-                    this.setPartialKey(new byte[]{3});
-                    this.setStorageValue(new byte[]{4});
-                }},
+                createNodeWithKeyAndStorageValue(1, 2),
+                createNodeWithKeyAndStorageValue(3, 4),
         }, buffer);
 
         verify(buffer, times(2)).write(16);
@@ -327,10 +281,7 @@ class TrieEncoderTest {
     void testEncodeLeafChild() {
         ByteArrayOutputStream buffer = mock(ByteArrayOutputStream.class);
 
-        TrieEncoder.encodeChild(new Node() {{
-            this.setPartialKey(new byte[]{1});
-            this.setStorageValue(new byte[]{2});
-        }}, buffer);
+        TrieEncoder.encodeChild(createNodeWithKeyAndStorageValue(1, 2), buffer);
 
         verify(buffer, times(1)).write(16);
         // SCALE specific invocation... Maybe there's a workaround for this
@@ -346,10 +297,7 @@ class TrieEncoderTest {
             this.setStorageValue(new byte[]{2});
             this.setChildren(new Node[]{
                     null, null,
-                    new Node() {{
-                        this.setPartialKey(new byte[]{5});
-                        this.setStorageValue(new byte[]{6});
-                    }},
+                    createNodeWithKeyAndStorageValue(5, 6),
             });
         }}, buffer);
 
@@ -381,4 +329,16 @@ class TrieEncoderTest {
         verify(buffer, times(1)).write(hashedValue);
     }
 
+    private Node createNodeWithKeyLength(int length) {
+        return new Node() {{
+            this.setPartialKey(new byte[length]);
+        }};
+    }
+
+    private Node createNodeWithKeyAndStorageValue(int keyValue, int storageValue) {
+        return new Node() {{
+            this.setPartialKey(new byte[]{ (byte) keyValue });
+            this.setStorageValue(new byte[]{ (byte) storageValue });
+        }};
+    }
 }

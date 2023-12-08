@@ -31,9 +31,9 @@ public class Node {
      */
     public NodeKind getKind() {
         if (this.getChildren() != null) {
-            return NodeKind.Branch;
+            return NodeKind.BRANCH;
         }
-        return NodeKind.Leaf;
+        return NodeKind.LEAF;
     }
 
     /**

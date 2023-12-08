@@ -8,7 +8,7 @@ import java.util.Random;
 
 @UtilityClass
 public class RandomGenerationUtils {
-    private final Random RANDOM = new Random();
+    private static final Random RANDOM = new Random();
     
     public static byte[] generateBytes(int length) {
         Random generator = new Random(0);

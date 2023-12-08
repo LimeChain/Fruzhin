@@ -8,15 +8,15 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 class TopicTest {
 
     @Test
-    public void Topics_haveCorrectValues() {
-        assertEquals(Topic.UNSTABLE_FOLLOW.getValue(), "unstable_follow");
-        assertEquals(Topic.UNSTABLE_TRANSACTION_WATCH.getValue(), "transaction_watch");
+    void Topics_haveCorrectValues() {
+        assertEquals("unstable_follow", Topic.UNSTABLE_FOLLOW.getValue());
+        assertEquals("transaction_watch", Topic.UNSTABLE_TRANSACTION_WATCH.getValue());
     }
 
     @Test
-    public void FromString_returns_correctValue() {
-        assertEquals(Topic.fromString("unstable_follow"),
-                Topic.UNSTABLE_FOLLOW);
+    void FromString_returns_correctValue() {
+        assertEquals(Topic.UNSTABLE_FOLLOW,
+                Topic.fromString("unstable_follow"));
         assertNull(Topic.fromString("invalid"));
     }
 }

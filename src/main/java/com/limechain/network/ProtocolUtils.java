@@ -8,7 +8,6 @@ public final class ProtocolUtils {
     public static final String PING_PROTOCOL = "/ipfs/ping/1.0.0";
     public static final String LEGACY_GRANDPA_PROTOCOL = "/paritytech/grandpa/1";
 
-
     public static String getLegacyLightMessageProtocol(String chainId) {
         return String.format("/%s/light/2", chainId);
     }

@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class SystemRPCImplTest {
+class SystemRPCImplTest {
     // Class to be tested
     private SystemRPCImpl systemRPC;
 
@@ -33,42 +33,42 @@ public class SystemRPCImplTest {
     }
 
     @Test
-    public void systemName() {
+    void systemName() {
         when(systemInfo.getHostName()).thenReturn("Java Host");
 
-        assertEquals(systemRPC.systemName(), "Java Host");
+        assertEquals("Java Host", systemRPC.systemName());
     }
 
     @Test
-    public void systemVersion() {
+    void systemVersion() {
         when(systemInfo.getHostVersion()).thenReturn("0.1");
 
-        assertEquals(systemRPC.systemVersion(), "0.1");
+        assertEquals("0.1", systemRPC.systemVersion());
     }
 
     @Test
-    public void systemNodeRoles() {
+    void systemNodeRoles() {
         when(systemInfo.getRole()).thenReturn("Light Client");
 
-        assertArrayEquals(systemRPC.systemNodeRoles(), new String[]{"Light Client"});
+        assertArrayEquals(new String[]{"Light Client"}, systemRPC.systemNodeRoles());
     }
 
     @Test
-    public void systemChain() {
+    void systemChain() {
         ChainSpec chainSpec = new ChainSpec();
         chainSpec.setName("Polkadot");
         when(chainService.getGenesis()).thenReturn(chainSpec);
 
-        assertEquals(systemRPC.systemChain(), "Polkadot");
+        assertEquals("Polkadot", systemRPC.systemChain());
     }
 
     @Test
-    public void systemChainType() {
+    void systemChainType() {
         ChainSpec chainSpec = new ChainSpec();
         chainSpec.setChainType("Polkadot - Live");
         when(chainService.getGenesis()).thenReturn(chainSpec);
 
-        assertEquals(systemRPC.systemChainType(), "Polkadot - Live");
+        assertEquals("Polkadot - Live", systemRPC.systemChainType());
     }
 
 }

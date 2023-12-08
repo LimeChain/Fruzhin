@@ -186,8 +186,8 @@ public class CryptoHostFunctions {
      * @param seed      a pointer-size to the SCALE encoded Option value containing the BIP-39 seed which must be valid
      *                  UTF8.
      * @return a pointer to the buffer containing the 256-bit public key.
-     * @throws InvalidSeedException Panics if the key cannot be generated, such as when an invalid key type or invalid seed
-     *                          was provided.
+     * @throws InvalidSeedException Panics if the key cannot be generated, such as when an invalid key type or invalid
+     *         seed was provided.
      */
     public int ed25519GenerateV1(int keyTypeId, RuntimePointerSize seed) {
         var pair = getSeedStringAndKeyType(keyTypeId, seed);
@@ -313,8 +313,8 @@ public class CryptoHostFunctions {
      * @param seed      a pointer-size to the SCALE encoded Option value containing the BIP-39 seed which must be valid
      *                  UTF8.
      * @return a pointer to the buffer containing the 256-bit public key.
-     * @throws InvalidSeedException Panics if the key cannot be generated, such as when an invalid key type or invalid seed
-     *                          was provided.
+     * @throws InvalidSeedException Panics if the key cannot be generated, such as when an invalid key type or invalid
+     *         seed was provided.
      */
     public int sr25519GenerateV1(int keyTypeId, RuntimePointerSize seed) {
         var pair = getSeedStringAndKeyType(keyTypeId, seed);
@@ -431,8 +431,8 @@ public class CryptoHostFunctions {
      * @param seed      a pointer-size to the SCALE encoded Option value containing the BIP-39 seed which must be valid
      *                  UTF8.
      * @return a pointer to the buffer containing the 33-byte public key.
-     * @throws InvalidSeedException Panics if the key cannot be generated, such as when an invalid key type or invalid seed
-     *                          was provided.
+     * @throws InvalidSeedException Panics if the key cannot be generated, such as when an invalid key type or invalid
+     *         seed was provided.
      */
     public int ecdsaGenerateV1(int keyTypeId, RuntimePointerSize seed) {
         var pair = getSeedStringAndKeyType(keyTypeId, seed);

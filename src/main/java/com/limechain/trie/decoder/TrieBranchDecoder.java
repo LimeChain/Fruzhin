@@ -35,27 +35,7 @@ public class TrieBranchDecoder {
             throw new TrieDecoderException("Could not decode children bitmap: " + error.getMessage());
         }
 
-        switch (variant) {
-            case BRANCH_WITH_VALUE -> {
-                try {
-                    node.setStorageValue(reader.readByteArray());
-                } catch (IndexOutOfBoundsException e) {
-                    throw new TrieDecoderException("Could not decode storage value: " + e.getMessage());
-                }
-            }
-            case BRANCH_WITH_HASHED_VALUE -> {
-                try {
-                    byte[] hashedValue = reader.readByteArray(Hash256.SIZE_BYTES);
-                    node.setStorageValue(hashedValue);
-                    node.setValueHashed(true);
-                } catch (IndexOutOfBoundsException e) {
-                    throw new TrieDecoderException("Could not decode hashed storage value: " + e.getMessage());
-                }
-            }
-            default -> {
-                // Do nothing
-            }
-        }
+        handleNodeVariant(variant, node, reader);
 
         // Decode children
         for (int i = 0; i < Node.CHILDREN_CAPACITY; i++) {
@@ -82,5 +62,29 @@ public class TrieBranchDecoder {
         }
 
         return node;
+    }
+
+    private static void handleNodeVariant(NodeVariant variant, Node node, ScaleCodecReader reader) {
+        switch (variant) {
+            case BRANCH_WITH_VALUE -> {
+                try {
+                    node.setStorageValue(reader.readByteArray());
+                } catch (IndexOutOfBoundsException e) {
+                    throw new TrieDecoderException("Could not decode storage value: " + e.getMessage());
+                }
+            }
+            case BRANCH_WITH_HASHED_VALUE -> {
+                try {
+                    byte[] hashedValue = reader.readByteArray(Hash256.SIZE_BYTES);
+                    node.setStorageValue(hashedValue);
+                    node.setValueHashed(true);
+                } catch (IndexOutOfBoundsException e) {
+                    throw new TrieDecoderException("Could not decode hashed storage value: " + e.getMessage());
+                }
+            }
+            default -> {
+                // Do nothing
+            }
+        }
     }
 }

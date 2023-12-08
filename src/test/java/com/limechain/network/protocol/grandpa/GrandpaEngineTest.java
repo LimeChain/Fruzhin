@@ -192,7 +192,6 @@ class GrandpaEngineTest {
         ) {
             grandpaEngine.receiveRequest(message, stream);
 
-            Thread.sleep(100);
             verify(syncedState).syncNeighbourMessage(neighbourMessage, peerId);
         }
     }

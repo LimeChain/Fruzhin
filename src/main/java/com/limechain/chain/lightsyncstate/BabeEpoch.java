@@ -46,9 +46,7 @@ public class BabeEpoch {
     @Setter
     public static class NextBabeConfig {
         // Value of `c` in `BabeEpochConfiguration`.
-        //CHECKSTYLE:OFF
         private Pair<BigInteger, BigInteger> c;
-        //CHECKSTYLE:ON
 
         // Value of `allowed_slots` in `BabeEpochConfiguration`.
         private BabeAllowedSlots allowedSlots;

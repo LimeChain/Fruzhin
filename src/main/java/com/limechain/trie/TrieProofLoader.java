@@ -23,7 +23,7 @@ public class TrieProofLoader {
      * @throws TrieDecoderException when child could not be decoded
      */
     public static void loadProof(Map<String, byte[]> digestToEncoding, Node node) {
-        if (node.getKind() != NodeKind.Branch) {
+        if (node.getKind() != NodeKind.BRANCH) {
             return;
         }
 
@@ -38,22 +38,7 @@ public class TrieProofLoader {
             String merkleValueKey = HexUtils.toHexString(merkleValue);
             boolean keyExists = digestToEncoding.containsKey(merkleValueKey);
             if (!keyExists) {
-                boolean inlinedChild = child.getStorageValueLength() > 0 || child.hasChild();
-                if (inlinedChild) {
-                    // The built proof trie is not used with a database, but just in case
-                    // it becomes used with a database in the future, we set the dirty flag
-                    // to true.
-                    child.setDirty(true);
-                } else {
-                    // hash not found and the child is not inlined,
-                    // so clear the child from the branch.
-                    node.setDescendants(node.getDescendants() - 1 - child.getDescendants());
-                    node.getChildren()[i] = null;
-                    if (!node.hasChild()) {
-                        // Convert branch to a leaf if all its children are null.
-                        node.setChildren(null);
-                    }
-                }
+                handleChildInlining(child, node, i);
                 continue;
             }
 
@@ -74,6 +59,25 @@ public class TrieProofLoader {
             node.setChildren(children);
             node.setDescendants(node.getDescendants() + decodedChild.getDescendants());
             loadProof(digestToEncoding, decodedChild);
+        }
+    }
+
+    private static void handleChildInlining(Node child, Node node, int currentChildIndex) {
+        boolean inlinedChild = child.getStorageValueLength() > 0 || child.hasChild();
+        if (inlinedChild) {
+            // The built proof trie is not used with a database, but just in case
+            // it becomes used with a database in the future, we set the dirty flag
+            // to true.
+            child.setDirty(true);
+        } else {
+            // hash not found and the child is not inlined,
+            // so clear the child from the branch.
+            node.setDescendants(node.getDescendants() - 1 - child.getDescendants());
+            node.getChildren()[currentChildIndex] = null;
+            if (!node.hasChild()) {
+                // Convert branch to a leaf if all its children are null.
+                node.setChildren(null);
+            }
         }
     }
 }

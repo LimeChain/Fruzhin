@@ -70,7 +70,7 @@ public class HostConfig {
      * Gets the genesis file path based on the chain the node is configured
      *
      * @return genesis(chain spec) file path
-     * @throws RuntimeException if chain is invalid.
+     * @throws InvalidChainException if chain is invalid.
      *                          This shouldn't be possible in practice because of preceding validations.
      */
     public String getGenesisPath() {

@@ -113,13 +113,13 @@ public class SyncedState {
             default -> throw new IllegalStateException("Unexpected value: " + network.getChain());
         }
 
-        Hash256 lastFinalizedBlockHash = this.lastFinalizedBlockHash == null
+        Hash256 blockHash = this.lastFinalizedBlockHash == null
                 ? genesisBlockHash
                 : this.lastFinalizedBlockHash;
         return new BlockAnnounceHandshake(
                 network.getNodeRole().getValue(),
                 this.lastFinalizedBlockNumber,
-                lastFinalizedBlockHash,
+                blockHash,
                 genesisBlockHash
         );
     }
@@ -206,13 +206,9 @@ public class SyncedState {
     }
 
     private void updateRuntime(Hash256 blockHash) {
-        try {
-            updateRuntimeCode();
-            buildRuntime(blockHash);
-            scheduledRuntimeUpdateBlocks.remove(lastFinalizedBlockNumber);
-        } catch (RuntimeCodeException e) {
-            throw new RuntimeException(e);
-        }
+        updateRuntimeCode();
+        buildRuntime(blockHash);
+        scheduledRuntimeUpdateBlocks.remove(lastFinalizedBlockNumber);
     }
 
     /**
@@ -271,11 +267,11 @@ public class SyncedState {
     public void loadSavedRuntimeCode() {
         byte[][] merkleProof = (byte[][]) repository.find(DBConstants.STATE_TRIE_MERKLE_PROOF)
                 .orElseThrow(() -> new RuntimeCodeException("No available merkle proof"));
-        Hash256 stateRoot = repository.find(DBConstants.STATE_TRIE_ROOT_HASH)
+        Hash256 stateRootDecoded = repository.find(DBConstants.STATE_TRIE_ROOT_HASH)
                 .map(storedRootState -> Hash256.from(storedRootState.toString()))
                 .orElseThrow(() -> new RuntimeCodeException("No available state root"));
 
-        this.runtimeCode = runtimeBuilder.buildRuntimeCode(merkleProof, stateRoot);
+        this.runtimeCode = runtimeBuilder.buildRuntimeCode(merkleProof, stateRootDecoded);
     }
 
     /**

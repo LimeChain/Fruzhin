@@ -18,7 +18,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-public class ChainServiceTest {
+class ChainServiceTest {
     private ChainService chainService;
     private HostConfig hostConfig;
     private KVRepository<String, Object> repository;
@@ -30,7 +30,7 @@ public class ChainServiceTest {
     }
 
     @Test
-    public void setsChainSpecFromDB_when_chainSpecIsInDB() {
+    void setsChainSpecFromDB_when_chainSpecIsInDB() {
         var chainSpec = new ChainSpec() {{
             this.setName("testName");
         }};
@@ -44,7 +44,7 @@ public class ChainServiceTest {
     }
 
     @Test
-    public void savesChainSpecToDB_when_chainSpecIsNotInDB() {
+    void savesChainSpecToDB_when_chainSpecIsNotInDB() {
         var chainSpec = new ChainSpec() {{
             this.setName("testName");
         }};
@@ -63,7 +63,7 @@ public class ChainServiceTest {
     }
 
     @Test
-    public void throwsRuntimeException_when_saveFails() {
+    void throwsRuntimeException_when_saveFails() {
         Optional<Object> mockGenesis = Optional.ofNullable(null);
 
         doReturn(mockGenesis).when(repository).find(any());

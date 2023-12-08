@@ -2,7 +2,6 @@
 // source: src/main/java/com/limechain/network/protobuf/LightClientMessage.proto
 package com.limechain.network.protocol.lightclient.pb;
 
-//CHECKSTYLE.OFF
 public final class LightClientMessage {
     private static final com.google.protobuf.Descriptors.Descriptor
             internal_static_Pair_descriptor;
@@ -11430,4 +11429,3 @@ public final class LightClientMessage {
 
     // @@protoc_insertion_point(outer_class_scope)
 }
-//CHECKSTYLE.OFF

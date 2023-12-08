@@ -16,11 +16,10 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-//CHECKSTYLE.OFF
-public class LightMessagesTest {
+class LightMessagesTest {
     @Disabled("This is an integration test")
     @Test
-    public void remoteReadRequest_return_response() {
+    void remoteReadRequest_return_response() {
         Host senderNode = null;
         try {
             MultiAddress address = RandomGenerationUtils.generateRandomAddress();
@@ -63,4 +62,3 @@ public class LightMessagesTest {
         }
     }
 }
-//CHECKSTYLE.ON

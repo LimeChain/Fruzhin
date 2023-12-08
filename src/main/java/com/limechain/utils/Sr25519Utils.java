@@ -1,5 +1,6 @@
 package com.limechain.utils;
 
+import com.limechain.exception.Sr25519Exception;
 import com.limechain.runtime.hostapi.dto.VerifySignature;
 import io.emeraldpay.polkaj.schnorrkel.Schnorrkel;
 import io.emeraldpay.polkaj.schnorrkel.SchnorrkelException;
@@ -18,7 +19,7 @@ public class Sr25519Utils {
         try {
             keyPair = Schnorrkel.getInstance().generateKeyPair();
         } catch (SchnorrkelException e) {
-            throw new RuntimeException(e);
+            throw new Sr25519Exception(e);
         }
 
         return keyPair;
@@ -37,7 +38,7 @@ public class Sr25519Utils {
         try {
             rootKey = Schnorrkel.getInstance().generateKeyPairFromSeed(secret);
         } catch (SchnorrkelException e) {
-            throw new RuntimeException(e);
+            throw new Sr25519Exception(e);
         }
 
         return rootKey;

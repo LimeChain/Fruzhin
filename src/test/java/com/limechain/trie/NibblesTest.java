@@ -4,10 +4,10 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
-public class NibblesTest {
+class NibblesTest {
 
     @Test
-    public void testNibblesToKeyLE() {
+    void testNibblesToKeyLE() {
         // Test cases
         byte[][] nibbles = {
                 {},                                       // empty_nibbles
@@ -35,7 +35,7 @@ public class NibblesTest {
     }
 
     @Test
-    public void testKeyLEToNibbles() {
+    void testKeyLEToNibbles() {
         // Test cases
         byte[][] keyLE = {
                 {},                                            // empty_input
@@ -65,7 +65,7 @@ public class NibblesTest {
     }
 
     @Test
-    public void testNibblesKeyLE() {
+    void testNibblesKeyLE() {
         // Test cases
         byte[][] nibblesToEncode = {
                 {},                 // empty_input

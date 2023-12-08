@@ -1,6 +1,6 @@
 package com.limechain.sync.warpsync.state;
 
-import com.limechain.exception.ThreadInterruptedException;
+import com.limechain.exception.MissingObjectException;
 import com.limechain.network.protocol.warp.dto.WarpSyncResponse;
 import com.limechain.sync.warpsync.SyncedState;
 import com.limechain.sync.warpsync.WarpSyncMachine;
@@ -61,7 +61,7 @@ public class RequestFragmentsState implements WarpSyncState {
         }
         try {
             if (resp == null) {
-                throw new Exception("No response received.");
+                throw new MissingObjectException("No response received.");
             }
 
             log.log(Level.INFO, "Successfully received fragments from peer "
