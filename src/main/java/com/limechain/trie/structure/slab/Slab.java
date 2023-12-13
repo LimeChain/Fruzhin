@@ -5,7 +5,12 @@ import org.javatuples.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Queue;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -48,7 +53,7 @@ public class Slab<T> implements Iterable<Pair<Integer, T>> {
         this.storage = new ArrayList<>(initialCapacity);
         this.newIndex = 0;
         this.size = 0;
-        this.freeIndices = new PriorityQueue<>();
+        this.freeIndices = new LinkedList<>();
     }
 
     /**
@@ -60,11 +65,11 @@ public class Slab<T> implements Iterable<Pair<Integer, T>> {
      */
     public int add(@NonNull T element) {
         int index;
-        if(freeIndices.isEmpty()){
+        if (freeIndices.isEmpty()) {
             index = newIndex;
             storage.add(element);
             newIndex++;
-        } else{
+        } else {
             index = freeIndices.poll();
             storage.set(index, element);
         }
@@ -80,9 +85,11 @@ public class Slab<T> implements Iterable<Pair<Integer, T>> {
      */
     public T remove(int index) {
         T value = storage.get(index);
-        storage.set(index, null);
-        freeIndices.add(index);
-        size--;
+        if (value != null) {
+            storage.set(index, null);
+            freeIndices.add(index);
+            size--;
+        }
         return value;
     }
 
