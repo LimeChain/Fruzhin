@@ -2,11 +2,7 @@ package com.limechain.runtime.hostapi;
 
 import com.limechain.config.HostConfig;
 import com.limechain.network.protocol.blockannounce.NodeRole;
-import com.limechain.runtime.hostapi.dto.HttpResponseType;
-import com.limechain.runtime.hostapi.dto.InvalidRequestId;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
-import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
-import io.emeraldpay.polkaj.scale.writer.UInt64Writer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -16,16 +12,18 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.math.BigInteger;
-import java.net.SocketTimeoutException;
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class OffchainHostFunctionsTest {
@@ -46,7 +44,6 @@ class OffchainHostFunctionsTest {
     private RuntimePointerSize deadlinePointer;
     @Mock
     private RuntimePointerSize bufferPointer;
-
 
     final int timeout = 10;
     final byte[] encodedDeadline = new byte[]{1, 127, 127, 127, 127, 127, 127, 127, 127};
