@@ -60,18 +60,6 @@ public class OffchainHttpRequests {
         request.getOutputStream().write(chunk);
     }
 
-    public void waitRequest(int id, long timeout) throws IOException, InterruptedException {
-        HttpURLConnection request = requests.get(id);
-        if (request == null) {
-            throw new InvalidRequestId();
-        }
-        if (timeout != 0) {
-            request.wait(timeout);
-            return;
-        }
-        request.wait();
-    }
-
     public Map<String, List<String>> getResponseHeaders(int id) throws IOException {
         HttpURLConnection request = requests.get(id);
         if (request.getResponseCode() == HttpURLConnection.HTTP_OK) {
