@@ -4,6 +4,7 @@ import com.limechain.runtime.hostapi.dto.HttpResponseType;
 import com.limechain.runtime.hostapi.dto.InvalidRequestId;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import lombok.extern.java.Log;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -16,7 +17,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 
+@Log
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class OffchainHttpRequests {
     private static OffchainHttpRequests INSTANCE;
@@ -129,7 +132,7 @@ public class OffchainHttpRequests {
                 }
             }
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            log.log(Level.SEVERE, "Get request responses is interrupted", e.getMessage());
         } finally {
             if (!executor.isTerminated()) {
                 executor.shutdownNow();
