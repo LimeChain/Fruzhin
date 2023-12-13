@@ -1,5 +1,6 @@
 package com.limechain.sync.warpsync.state;
 
+import com.limechain.exception.JustificationVerificationException;
 import com.limechain.network.protocol.warp.dto.WarpSyncFragment;
 import com.limechain.sync.JustificationVerifier;
 import com.limechain.sync.warpsync.SyncedState;
@@ -40,34 +41,37 @@ public class VerifyJustificationState implements WarpSyncState {
             WarpSyncFragment fragment = sync.getFragmentsQueue().poll();
             log.log(Level.INFO, "Verifying justification...");
             if (fragment == null) {
-                throw new RuntimeException("No such fragment");
+                throw new JustificationVerificationException("No such fragment");
             }
             boolean verified = JustificationVerifier.verify(
-                    fragment.getJustification().precommits,
-                    fragment.getJustification().round);
+                    fragment.getJustification().getPrecommits(),
+                    fragment.getJustification().getRound());
             if (!verified) {
-                throw new RuntimeException("Justification could not be verified.");
+                throw new JustificationVerificationException("Justification could not be verified.");
             }
 
             // Set the latest finalized header and number
             // TODO: Persist header to DB?
             syncedState.setStateRoot(fragment.getHeader().getStateRoot());
-            syncedState.setLastFinalizedBlockHash(fragment.getJustification().targetHash);
-            syncedState.setLastFinalizedBlockNumber(fragment.getJustification().targetBlock);
-
-            try {
-                syncedState.handleAuthorityChanges(
-                        fragment.getHeader().getDigest(),
-                        fragment.getJustification().targetBlock);
-                log.log(Level.INFO, "Verified justification. Block hash is now at #"
-                        + syncedState.getLastFinalizedBlockNumber() + ": "
-                        + syncedState.getLastFinalizedBlockHash().toString()
-                        + " with state root " + syncedState.getStateRoot());
-            } catch (Exception error) {
-                this.error = error;
-            }
+            syncedState.setLastFinalizedBlockHash(fragment.getJustification().getTargetHash());
+            syncedState.setLastFinalizedBlockNumber(fragment.getJustification().getTargetBlock());
+            handleAuthorityChanges(fragment);
         } catch (Exception e) {
             log.log(Level.WARNING, "Error while verifying justification: " + e.getMessage());
+            this.error = e;
+        }
+    }
+
+    private void handleAuthorityChanges(WarpSyncFragment fragment) {
+        try {
+            syncedState.handleAuthorityChanges(
+                    fragment.getHeader().getDigest(),
+                    fragment.getJustification().getTargetBlock());
+            log.log(Level.INFO, "Verified justification. Block hash is now at #"
+                    + syncedState.getLastFinalizedBlockNumber() + ": "
+                    + syncedState.getLastFinalizedBlockHash().toString()
+                    + " with state root " + syncedState.getStateRoot());
+        } catch (Exception e) {
             this.error = e;
         }
     }

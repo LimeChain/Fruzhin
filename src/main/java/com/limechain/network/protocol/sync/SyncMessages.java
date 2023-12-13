@@ -1,5 +1,7 @@
 package com.limechain.network.protocol.sync;
 
+import com.limechain.exception.ExecutionFailedException;
+import com.limechain.exception.ThreadInterruptedException;
 import com.limechain.network.StrictProtocolBinding;
 import com.limechain.network.protocol.sync.pb.SyncMessage;
 import com.limechain.utils.StringUtils;
@@ -20,21 +22,21 @@ public class SyncMessages extends StrictProtocolBinding<SyncController> {
     }
 
     public SyncMessage.BlockResponse remoteBlockRequest(Host us, AddressBook addrs, PeerId peer,
-                                                        Integer fields,
-                                                        String hash,
-                                                        Integer number,
-                                                        SyncMessage.Direction direction,
-                                                        int maxBlocks) {
+                                                        BlockRequestDto blockRequest) {
         SyncController controller = dialPeer(us, peer, addrs);
         try {
             SyncMessage.BlockResponse response = controller
-                    .sendBlockRequest(fields, hash, number, direction, maxBlocks)
+                    .sendBlockRequest(blockRequest.getFields(), blockRequest.getHash(), blockRequest.getNumber(),
+                            blockRequest.getDirection(), blockRequest.getMaxBlocks())
                     .get(2, TimeUnit.SECONDS);
             log.log(Level.INFO, "Received response: " + response.toString());
             return response;
-        } catch (Exception e) {
+        } catch (ExecutionException | TimeoutException e) {
             log.log(Level.SEVERE, "Error while sending remote call request: ", e);
-            throw new RuntimeException(e);
+            throw new ExecutionFailedException(e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new ThreadInterruptedException(e);
         }
     }
 
@@ -45,9 +47,12 @@ public class SyncMessages extends StrictProtocolBinding<SyncController> {
                     .get(10, TimeUnit.SECONDS);
             log.log(Level.INFO, "Received state sync response " + resp.toString());
             return resp;
-        } catch (ExecutionException | InterruptedException | TimeoutException e) {
+        } catch (ExecutionException | TimeoutException e) {
             log.log(Level.SEVERE, "Error while sending remote call request: ", e);
-            throw new RuntimeException(e);
+            throw new ExecutionFailedException(e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new ThreadInterruptedException(e);
         }
     }
 }

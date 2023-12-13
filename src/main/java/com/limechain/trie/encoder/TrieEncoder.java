@@ -40,7 +40,7 @@ public class TrieEncoder {
             byte[] keyLE = Nibbles.nibblesToKeyLE(node.getPartialKey());
             buffer.write(keyLE);
 
-            if (node.getKind() == NodeKind.Branch) {
+            if (node.getKind() == NodeKind.BRANCH) {
                 writeChildrenBitmap(node, buffer);
             }
 
@@ -58,7 +58,7 @@ public class TrieEncoder {
                 }
             }
 
-            if (node.getKind() == NodeKind.Branch) {
+            if (node.getKind() == NodeKind.BRANCH) {
                 encodeChildren(node.getChildren(), buffer);
             }
         } catch (IOException e) {
@@ -102,7 +102,7 @@ public class TrieEncoder {
             }
 
             NodeVariant nodeVariant;
-            if (node.getKind() == NodeKind.Leaf) {
+            if (node.getKind() == NodeKind.LEAF) {
                 if (node.isValueHashed()) {
                     nodeVariant = NodeVariant.LEAF_WITH_HASHED_VALUE;
                 } else {

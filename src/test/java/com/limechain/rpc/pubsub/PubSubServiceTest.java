@@ -57,7 +57,7 @@ class PubSubServiceTest {
     }
 
     @Test
-    public void GetInstance_returns_sameReference() {
+    void GetInstance_returns_sameReference() {
         PubSubService reference1 = PubSubService.getInstance();
         PubSubService reference2 = PubSubService.getInstance();
 
@@ -65,7 +65,7 @@ class PubSubServiceTest {
     }
 
     @Test
-    public void AddMessageToQueue_addsMessage() throws NoSuchFieldException, IllegalAccessException {
+    void AddMessageToQueue_addsMessage() throws NoSuchFieldException, IllegalAccessException {
         Message message = new Message(Topic.UNSTABLE_TRANSACTION_WATCH.getValue(), "test payload");
 
         // How to proceed? Can't verify since messagesQueue is private
@@ -79,7 +79,7 @@ class PubSubServiceTest {
     }
 
     @Test
-    public void AddSubscriber_callsChannelAddSubscriber_whenTopicExists()
+    void AddSubscriber_callsChannelAddSubscriber_whenTopicExists()
             throws NoSuchFieldException, IllegalAccessException {
         SubscriberChannel channel = mock(SubscriberChannel.class);
         WebSocketSession session = mock(WebSocketSession.class);
@@ -96,7 +96,7 @@ class PubSubServiceTest {
     }
 
     @Test
-    public void AddSubscriber_doesNotCallChannelAddSubscriber_whenTopicDoesNotExist()
+    void AddSubscriber_doesNotCallChannelAddSubscriber_whenTopicDoesNotExist()
             throws NoSuchFieldException, IllegalAccessException {
         SubscriberChannel channel = mock(SubscriberChannel.class);
         WebSocketSession session = mock(WebSocketSession.class);
@@ -113,7 +113,7 @@ class PubSubServiceTest {
     }
 
     @Test
-    public void RemoveSubscriber_callsChannelRemoveSubscriber_whenSessionExist()
+    void RemoveSubscriber_callsChannelRemoveSubscriber_whenSessionExist()
             throws NoSuchFieldException, IllegalAccessException {
         SubscriberChannel channel = mock(SubscriberChannel.class);
         WebSocketSession session = mock(WebSocketSession.class);
@@ -135,7 +135,7 @@ class PubSubServiceTest {
     }
 
     @Test
-    public void RemoveSubscriber_doesNotCallChannelRemoveSubscriber_whenSessionDoesNotExist()
+    void RemoveSubscriber_doesNotCallChannelRemoveSubscriber_whenSessionDoesNotExist()
             throws NoSuchFieldException, IllegalAccessException {
         SubscriberChannel channel = mock(SubscriberChannel.class);
         WebSocketSession session = mock(WebSocketSession.class);
@@ -155,7 +155,7 @@ class PubSubServiceTest {
     }
 
     @Test
-    public void RemoveSubscriber_doesNotCallChannelRemoveSubscriber_whenTopicDoesNotExist()
+    void RemoveSubscriber_doesNotCallChannelRemoveSubscriber_whenTopicDoesNotExist()
             throws NoSuchFieldException, IllegalAccessException {
         SubscriberChannel channel = mock(SubscriberChannel.class);
         WebSocketSession session = mock(WebSocketSession.class);
@@ -174,7 +174,7 @@ class PubSubServiceTest {
     }
 
     @Test
-    public void broadcast_emptiesMessageQueue_whenCalled() throws NoSuchFieldException, IllegalAccessException {
+    void broadcast_emptiesMessageQueue_whenCalled() throws NoSuchFieldException, IllegalAccessException {
         Message message1 = new Message(Topic.UNSTABLE_FOLLOW.getValue(), "message1");
         Message message2 = new Message(Topic.UNSTABLE_FOLLOW.getValue(), "message2");
         Message message3 = new Message(Topic.UNSTABLE_TRANSACTION_WATCH.getValue(), "message3");
@@ -193,7 +193,7 @@ class PubSubServiceTest {
     }
 
     @Test
-    public void notifySubscribers_callsNotifySubscribers_forAllChannels()
+    void notifySubscribers_callsNotifySubscribers_forAllChannels()
             throws NoSuchFieldException, IllegalAccessException, IOException {
         SubscriberChannel channel1 = mock(SubscriberChannel.class);
         SubscriberChannel channel2 = mock(SubscriberChannel.class);
@@ -210,7 +210,7 @@ class PubSubServiceTest {
     }
 
     @Test
-    public void notifySubscribers_throwsRuntimeException_whenNotifySubscribersFails()
+    void notifySubscribers_throwsRuntimeException_whenNotifySubscribersFails()
             throws NoSuchFieldException, IllegalAccessException, IOException {
         SubscriberChannel channel1 = mock(SubscriberChannel.class);
         doThrow(new IOException()).when(channel1).notifySubscribers();

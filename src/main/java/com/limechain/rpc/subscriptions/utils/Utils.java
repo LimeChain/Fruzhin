@@ -1,8 +1,12 @@
 package com.limechain.rpc.subscriptions.utils;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+
 /**
  * Stores function that don't belong to any specific class
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class Utils {
 
     /**

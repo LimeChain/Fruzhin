@@ -3,6 +3,7 @@ package com.limechain.runtime.hostapi;
 import com.limechain.runtime.Runtime;
 import com.limechain.runtime.RuntimeBuilder;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
+import com.limechain.utils.scale.exceptions.ScaleEncodingException;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -190,7 +191,7 @@ public class MiscellaneousHostFunctions {
         try (ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
             writer.writeOptional(ScaleCodecWriter::writeByteArray, data);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new ScaleEncodingException(e);
         }
         return buf.toByteArray();
     }

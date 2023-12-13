@@ -17,17 +17,17 @@ public class PendingChange {
     private DelayKind delayKind;
 
     public enum DelayKindEnum {
-        Finalized,
-        Best
+        FINALIZED,
+        BEST
     }
 
     @Getter
     @Setter
     public static class DelayKind {
-        public DelayKindEnum kind;
+        private DelayKindEnum kind;
 
-        // Applies only when `Best` is selected
-        public BigInteger medianLastFinalized;
+        // Applies only when `BEST` is selected
+        private BigInteger medianLastFinalized;
     }
 
 }

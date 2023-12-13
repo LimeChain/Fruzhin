@@ -1,5 +1,6 @@
 package com.limechain.storage.block;
 
+import com.limechain.exception.MissingObjectException;
 import com.limechain.network.protocol.warp.dto.Block;
 import com.limechain.network.protocol.warp.dto.BlockBody;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
@@ -11,7 +12,6 @@ import com.limechain.storage.block.exception.BlockNotFoundException;
 import com.limechain.storage.block.exception.BlockStorageGenericException;
 import com.limechain.storage.block.exception.HeaderNotFoundException;
 import com.limechain.storage.block.exception.LowerThanRootException;
-import com.limechain.storage.block.exception.NotFoundException;
 import com.limechain.storage.block.tree.BlockTree;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.Getter;
@@ -56,7 +56,7 @@ public class BlockState {
      * @param header     the genesis block header
      */
     public BlockState(final KVRepository<String, Object> repository, final BlockHeader header) {
-        if(instance != null) {
+        if (instance != null) {
             throw new IllegalStateException("BlockState already initialized");
         }
         BlockState.instance = this;
@@ -639,13 +639,13 @@ public class BlockState {
      *
      * @param hash the hash of the block
      * @return the arrival time of the block
-     * @throws NotFoundException if the arrival time is not found in the database.
+     * @throws MissingObjectException if the arrival time is not found in the database.
      */
     public Instant getArrivalTime(final Hash256 hash) {
         Optional<Object> object = db.find(helper.arrivalTimeKey(hash));
 
         if (object.isEmpty()) {
-            throw new NotFoundException("Arrival time not found");
+            throw new MissingObjectException("Arrival time not found");
         }
         Object obj = object.get();
 

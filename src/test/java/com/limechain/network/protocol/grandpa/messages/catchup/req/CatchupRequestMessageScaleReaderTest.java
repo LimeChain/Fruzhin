@@ -13,14 +13,11 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class CatchupRequestMessageScaleReaderTest {
-
-    //CHECKSTYLE.OFF
     byte[] expectedByteArr = HexUtils.fromHexString("0314000000000000002800000000000000");
     private final CatchUpReqMessage expectedCatchupReqMsg = new CatchUpReqMessage(
             BigInteger.valueOf(20),
             BigInteger.valueOf(40)
     );
-    //CHECKSTYLE.ON
 
     @Test
     void decodeEqualsTest() {

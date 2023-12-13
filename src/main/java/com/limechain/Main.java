@@ -26,12 +26,8 @@ public class Main {
         HostNode client;
 
         switch (nodeRole) {
-            case FULL -> {
-                client = new FullNode();
-            }
-            case LIGHT -> {
-                client = new LightClient();
-            }
+            case FULL -> client = new FullNode();
+            case LIGHT -> client = new LightClient();
             case NONE -> {
                 // This shouldn't happen.
                 // TODO: don't use this enum for the CLI NodeRole option

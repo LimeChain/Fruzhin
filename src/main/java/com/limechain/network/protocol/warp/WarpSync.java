@@ -1,5 +1,7 @@
 package com.limechain.network.protocol.warp;
 
+import com.limechain.exception.ExecutionFailedException;
+import com.limechain.exception.ThreadInterruptedException;
 import com.limechain.network.StrictProtocolBinding;
 import com.limechain.network.protocol.warp.dto.WarpSyncResponse;
 import io.libp2p.core.AddressBook;
@@ -25,9 +27,12 @@ public class WarpSync extends StrictProtocolBinding<WarpSyncController> {
             WarpSyncResponse resp = controller.warpSyncRequest(blockHash).get(10, TimeUnit.SECONDS);
             log.log(Level.INFO, "Received warp sync response with " + resp.getFragments().length + " fragments");
             return resp;
-        } catch (ExecutionException | InterruptedException | TimeoutException e) {
+        } catch (ExecutionException | TimeoutException e) {
             log.log(Level.SEVERE, "Error while sending remote call request: ", e);
-            throw new RuntimeException(e);
+            throw new ExecutionFailedException(e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new ThreadInterruptedException(e);
         }
     }
 }

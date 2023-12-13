@@ -3,6 +3,8 @@ package com.limechain.config;
 import com.limechain.chain.Chain;
 import com.limechain.cli.CliArguments;
 import com.limechain.constants.RpcConstants;
+import com.limechain.exception.InvalidChainException;
+import com.limechain.exception.InvalidNodeRoleException;
 import com.limechain.network.protocol.blockannounce.NodeRole;
 import lombok.Getter;
 import lombok.Setter;
@@ -50,22 +52,17 @@ public class HostConfig {
         String network = cliArguments.network();
         this.setChain(network.isEmpty() ? WESTEND : fromString(network));
         if (chain == null) {
-            throw new RuntimeException("Unsupported or unknown network");
+            throw new InvalidChainException("Chain cannot be null");
         }
         dbRecreate = cliArguments.dbRecreate();
         nodeRole = NodeRole.fromString(cliArguments.nodeRole());
-        if (nodeRole == null) throw new RuntimeException("Invalid node role in cli arguments");
+        if (nodeRole == null) throw new InvalidNodeRoleException();
         log.log(Level.INFO, String.format("✅️Loaded app config for chain %s%n", chain));
+
         switch (this.getChain()) {
-            case POLKADOT, LOCAL -> {
-                this.setRpcNodeAddress(RpcConstants.POLKADOT_WS_RPC);
-            }
-            case KUSAMA -> {
-                this.setRpcNodeAddress(RpcConstants.KUSAMA_WS_RPC);
-            }
-            case WESTEND -> {
-                this.setRpcNodeAddress(RpcConstants.WESTEND_WS_RPC);
-            }
+            case POLKADOT, LOCAL -> this.setRpcNodeAddress(RpcConstants.POLKADOT_WS_RPC);
+            case KUSAMA -> this.setRpcNodeAddress(RpcConstants.KUSAMA_WS_RPC);
+            case WESTEND -> this.setRpcNodeAddress(RpcConstants.WESTEND_WS_RPC);
         }
     }
 
@@ -73,7 +70,7 @@ public class HostConfig {
      * Gets the genesis file path based on the chain the node is configured
      *
      * @return genesis(chain spec) file path
-     * @throws RuntimeException if chain is invalid.
+     * @throws InvalidChainException if chain is invalid.
      *                          This shouldn't be possible in practice because of preceding validations.
      */
     public String getGenesisPath() {
@@ -90,9 +87,7 @@ public class HostConfig {
             case LOCAL -> {
                 return localGenesisPath;
             }
-            default -> {
-                throw new RuntimeException("Invalid Chain in host configuration");
-            }
+            default -> throw new InvalidChainException(String.format("\"%s\" is not a valid chain", chain.getValue()));
         }
     }
 }

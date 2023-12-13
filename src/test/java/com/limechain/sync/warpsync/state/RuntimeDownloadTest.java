@@ -94,7 +94,6 @@ class RuntimeDownloadTest {
             assertNotNull(code);
 
             //Build runtime
-            System.out.println("Instantiating module");
             new RuntimeBuilder().buildRuntime(code);
 
             log.log(Level.INFO, "Runtime and heap pages downloaded");
