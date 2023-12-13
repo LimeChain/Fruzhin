@@ -52,6 +52,7 @@ public class CryptoHostFunctions {
     public static final String BATCH_VERIFICATION_NOT_STARTED = "Batch verification not started";
     public static final int PUBLIC_KEY_LEN = 32;
     public static final int SIGNATURE_LEN = 64;
+    private static final String TYPE_RECEIVED_STRING = "Type received: %s";
     private final KeyStore keyStore;
     private final HostApi hostApi;
     private final Set<VerifySignature> signaturesToVerify;
@@ -173,7 +174,7 @@ public class CryptoHostFunctions {
 
         if (keyType == null || (keyType.getKey() != Key.ED25519 && keyType.getKey() != Key.GENERIC)) {
             throw new InvalidKeyTypeException(
-                    String.format("Type received: %s", keyType != null ? keyType.getKey() : null ));
+                    String.format(TYPE_RECEIVED_STRING, keyType != null ? keyType.getKey() : null ));
         }
 
         return internalPublicKeys(keyType);
@@ -300,7 +301,7 @@ public class CryptoHostFunctions {
 
         if (keyType == null || (keyType.getKey() != Key.SR25519 && keyType.getKey() != Key.GENERIC)) {
             throw new InvalidKeyTypeException(
-                    String.format("Type received: %s", keyType != null ? keyType.getKey() : null ));
+                    String.format(TYPE_RECEIVED_STRING, keyType != null ? keyType.getKey() : null ));
         }
 
         return internalPublicKeys(keyType);
@@ -403,7 +404,7 @@ public class CryptoHostFunctions {
 
         if (keyType == null || keyType.getKey() != Key.GENERIC) {
             throw new InvalidKeyTypeException(
-                    String.format("Type received: %s", keyType != null ? keyType.getKey() : null ));
+                    String.format(TYPE_RECEIVED_STRING, keyType != null ? keyType.getKey() : null ));
         }
 
         return internalPublicKeys(keyType);

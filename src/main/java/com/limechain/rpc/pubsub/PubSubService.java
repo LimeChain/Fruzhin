@@ -7,6 +7,7 @@ import lombok.extern.java.Log;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -121,7 +122,7 @@ public class PubSubService {
 
     private Map<Topic, AbstractSubscriberChannel> subscribersTopicMap() {
         // TODO: Instantiate more subscriber channels in the future
-        var map = new HashMap<Topic, AbstractSubscriberChannel>();
+        var map = new EnumMap<Topic, AbstractSubscriberChannel>(Topic.class);
         map.put(Topic.UNSTABLE_FOLLOW, new SubscriberChannel(Topic.UNSTABLE_FOLLOW));
         map.put(Topic.UNSTABLE_TRANSACTION_WATCH, new SubscriberChannel(Topic.UNSTABLE_TRANSACTION_WATCH));
         return map;
