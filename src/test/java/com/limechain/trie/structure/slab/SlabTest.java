@@ -19,9 +19,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class SlabTest {
     @Test
     void addAndGetTest() {
+        final int expectedIndex = 0;
         Slab<String> slab = new Slab<>();
         int index = slab.add("test");
-        assertEquals(0, index);
+        assertEquals(expectedIndex, index);
         assertEquals("test", slab.get(index));
     }
 
@@ -52,19 +53,30 @@ class SlabTest {
 
     @Test
     void sizeTest() {
+        final int expectedCapacity = 2;
         Slab<String> slab = new Slab<>();
         slab.add("test1");
         slab.add("test2");
-        assertEquals(2, slab.size());
+        assertEquals(expectedCapacity, slab.size());
+    }
+
+    @Test
+    void initializeWithCapacityTest() {
+        final int capacity = 10;
+        final int expectedSize = 1;
+        Slab<String> slab = new Slab<>(capacity);
+        slab.add("test1");
+        assertEquals(expectedSize, slab.size());
     }
 
     @Test
     void drainTest() {
+        int expectedDrainedSize = 2;
         Slab<String> slab = new Slab<>();
         slab.add("test1");
         slab.add("test2");
         List<Pair<Integer, String>> drained = slab.drain();
-        assertEquals(2, drained.size());
+        assertEquals(expectedDrainedSize, drained.size());
         assertTrue(slab.isEmpty());
     }
 
@@ -98,16 +110,18 @@ class SlabTest {
 
     @Test
     void removeNonExistentElementThrowsErrorTest() {
+        final int outOfBoundsIndex = 5;
+        final int expectedSize = 2;
         Slab<String> slab = new Slab<>();
 
         slab.add("test1");
         slab.add("test2");
 
         assertThrows(IndexOutOfBoundsException.class, () -> {
-            slab.remove(5);
+            slab.remove(outOfBoundsIndex);
         });
 
-        assertEquals(2, slab.size());
+        assertEquals(expectedSize, slab.size());
     }
 
     @Test
