@@ -425,17 +425,13 @@ public class OffchainHostFunctions {
     }
 
     byte[] scaleEncodeHeaders(Map<String, List<String>> headers) throws IOException {
-        List<Pair<String, byte[]>> pairs = new ArrayList<>();
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        ScaleCodecWriter writer = new ScaleCodecWriter(outputStream);
+        List<Pair<String, String>> pairs = new ArrayList<>(headers.size());
         for (String header : headers.keySet()) {
-            List<String> value = headers.get(header);
-            for (String headerValue : value) {
-                writer.writeByteArray(headerValue.getBytes());
-            }
-            pairs.add(new Pair<>(header, outputStream.toByteArray()));
+            // NOTE: Not sure how the Spec expects us to handle repeated AND multi-valued headers, so we just concat the values (a little sus?)
+            String value = String.join("", headers.get(header)); 
+            pairs.add(new Pair<>(header, value));
         }
-        return ScaleUtils.Encode.encode(pairs, String::getBytes, Function.identity());
+        return ScaleUtils.Encode.encode(pairs, String::getBytes, String::getBytes);
     }
 
     int timeoutFromDeadlineAndTimestamp(RuntimePointerSize deadlinePointer, long timestamp) {
