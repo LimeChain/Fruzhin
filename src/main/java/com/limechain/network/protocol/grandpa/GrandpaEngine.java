@@ -121,9 +121,7 @@ public class GrandpaEngine {
         ScaleCodecReader reader = new ScaleCodecReader(message);
         NeighbourMessage neighbourMessage = reader.read(NeighbourMessageScaleReader.getInstance());
         log.log(Level.INFO, "Received neighbour message from Peer " + peerId + "\n" + neighbourMessage);
-        new Thread(() -> {
-            syncedState.syncNeighbourMessage(neighbourMessage, peerId);
-        }).start();
+        new Thread(() -> syncedState.syncNeighbourMessage(neighbourMessage, peerId)).start();
     }
 
     private void handleVoteMessage(byte[] message, PeerId peerId) {
