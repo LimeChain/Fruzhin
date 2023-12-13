@@ -38,7 +38,7 @@ public class DBInitializer {
         }
 
         DBRepository repo = new DBRepository(path, chain.getValue(), dbRecreate);
-
+        System.out.println(INSTANCES);
         INSTANCES.put(path, repo);
         return repo;
     }

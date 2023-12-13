@@ -1,14 +1,15 @@
 package com.limechain.storage;
 
 import com.limechain.chain.Chain;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import sun.misc.Unsafe;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.AbstractMap;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -21,8 +22,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class DBInitializerTest {
-    // Isn't used directly but by making it a mock we guarantee that calls made to the static functions will be
-    // redirected to the mock instead allowing us to test using verify etc.
+    // All calls made using 'DBInitializer' are automatically redirected towards this mock
     private final DBInitializer test = mock(DBInitializer.class);
 
     @AfterEach
@@ -30,8 +30,13 @@ class DBInitializerTest {
         DBInitializer.closeInstances();
     }
 
+    @AfterAll
+    public static void undoReflection() throws NoSuchFieldException, IllegalAccessException {
+        setPrivateField("INSTANCES", new HashMap<>());
+    }
+
     // Setting private fields. Not a good idea in general
-    private void setPrivateField(String fieldName, Object value)
+    private static void setPrivateField(String fieldName, Object value)
             throws NoSuchFieldException, IllegalAccessException {
         Field privateField = DBInitializer.class.getDeclaredField(fieldName);
         privateField.setAccessible(true);
@@ -41,20 +46,9 @@ class DBInitializerTest {
         unsafe.putObject(unsafe.staticFieldBase(privateField), unsafe.staticFieldOffset(privateField), value);
     }
 
-    // Accessing private fields. Not a good idea in general
-    private Object getPrivateField(String fieldName)
-            throws NoSuchFieldException, IllegalAccessException {
-        DBInitializer initializer = mock(DBInitializer.class);
-        Field privateField = DBInitializer.class.getDeclaredField(fieldName);
-        privateField.setAccessible(true);
-
-        return privateField.get(initializer);
-    }
-
     @Test
     void initialize_addsRepository() throws NoSuchFieldException, IllegalAccessException {
         Map<String, DBRepository> instances = mock(Map.class);
-
         setPrivateField("INSTANCES", instances);
         String testPath = "test/path1";
         DBInitializer.initialize(testPath, Chain.WESTEND, false);
@@ -75,8 +69,8 @@ class DBInitializerTest {
         Map<String, DBRepository> instances = mock(Map.class);
         String testPath1 = "test/path1";
         String testPath2 = "test/path2";
-        Map.Entry<String, DBRepository> entrySet1 = new AbstractMap.SimpleEntry(testPath1, mock(DBRepository.class));
-        Map.Entry<String, DBRepository> entrySet2 = new AbstractMap.SimpleEntry(testPath2, mock(DBRepository.class));
+        Map.Entry<String, DBRepository> entrySet1 = new AbstractMap.SimpleEntry<>(testPath1, mock(DBRepository.class));
+        Map.Entry<String, DBRepository> entrySet2 = new AbstractMap.SimpleEntry<>(testPath2, mock(DBRepository.class));
 
         setPrivateField("INSTANCES", instances);
         Set<Map.Entry<String, DBRepository>> set = Set.of(entrySet1, entrySet2);

@@ -35,7 +35,6 @@ class HashUtilsTest {
     void hashWithBlake2bToLength() {
         byte[] bytes = HashUtils.hashWithBlake2bToLength(HexUtils.fromHexString("00000000"), 16);
 
-        System.out.println(HexUtils.toHexString(bytes));
         assertArrayEquals(HexUtils.fromHexString(BLAKE2B128), bytes);
     }
 
