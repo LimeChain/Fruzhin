@@ -212,7 +212,6 @@ class GrandpaEngineTest {
         ) {
             grandpaEngine.receiveRequest(message, stream);
 
-
             verifyNoMoreInteractions(connectionManager);
             verifyNoInteractions(syncedState);
         }
