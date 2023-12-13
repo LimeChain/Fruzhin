@@ -349,11 +349,12 @@ public class OffchainHostFunctions {
         byte[] encodedIds = hostApi.getDataFromMemory(idsPointer);
 
         int[] requestIds = decodeRequestIdArray(encodedIds);
-        try{
+        try {
             HttpResponseType[] requestStatuses = requests.getRequestsResponses(requestIds, timeout);
 
             return hostApi.writeDataToMemory(scaleEncodeArrayOfRequestStatuses(requestStatuses));
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new RuntimeException(e);
         }
     }
@@ -398,7 +399,7 @@ public class OffchainHostFunctions {
                 byte[] resultValue = scaleEncodeIntResult(data.length);
                 return hostApi.writeDataToMemory(resultValue);
             } else {
-                switch (response[0]){
+                switch (response[0]) {
                     case INVALID_ID:
                         return hostApi.writeDataToMemory(HttpResponseType.INVALID_ID.scaleEncodedResult());
                     case DEADLINE_REACHED:
@@ -418,6 +419,7 @@ public class OffchainHostFunctions {
             log.log(Level.WARNING, e.getMessage(), e.getStackTrace());
             return hostApi.writeDataToMemory(HttpResponseType.IO_ERROR.scaleEncodedResult());
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new RuntimeException(e);
         }
     }
