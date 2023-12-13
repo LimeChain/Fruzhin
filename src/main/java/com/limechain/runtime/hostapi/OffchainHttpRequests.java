@@ -76,7 +76,7 @@ public class OffchainHttpRequests {
         return null;
     }
 
-    public HttpResponseType[] getRequestsResponses(int[] requestIds, int timeout){
+    public HttpResponseType[] getRequestsResponses(int[] requestIds, int timeout) throws InterruptedException {
         HttpResponseType[] requestStatuses = new HttpResponseType[requestIds.length];
 
         ExecutorService executor = Executors.newFixedThreadPool(requestIds.length);
@@ -119,8 +119,6 @@ public class OffchainHttpRequests {
                     future.cancel(true);
                 }
             }
-        } catch (InterruptedException e) {
-            log.log(Level.SEVERE, "Get request responses is interrupted", e.getMessage());
         } finally {
             if (!executor.isTerminated()) {
                 executor.shutdownNow();

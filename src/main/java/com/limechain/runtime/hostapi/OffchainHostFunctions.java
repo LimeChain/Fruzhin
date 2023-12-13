@@ -349,9 +349,13 @@ public class OffchainHostFunctions {
         byte[] encodedIds = hostApi.getDataFromMemory(idsPointer);
 
         int[] requestIds = decodeRequestIdArray(encodedIds);
-        HttpResponseType[] requestStatuses = requests.getRequestsResponses(requestIds, timeout);
+        try{
+            HttpResponseType[] requestStatuses = requests.getRequestsResponses(requestIds, timeout);
 
-        return hostApi.writeDataToMemory(scaleEncodeArrayOfRequestStatuses(requestStatuses));
+            return hostApi.writeDataToMemory(scaleEncodeArrayOfRequestStatuses(requestStatuses));
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
@@ -413,6 +417,8 @@ public class OffchainHostFunctions {
         } catch (IOException e) {
             log.log(Level.WARNING, e.getMessage(), e.getStackTrace());
             return hostApi.writeDataToMemory(HttpResponseType.IO_ERROR.scaleEncodedResult());
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
     }
 
