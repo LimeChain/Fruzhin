@@ -103,7 +103,7 @@ public class Slab<T> implements Iterable<Pair<Integer, T>> {
      *                                   This exception wraps the original {@code IndexOutOfBoundsException}
      *                                   when the index is out of bounds.
      */
-    public @Nullable T get(int index) {
+    public @NotNull T get(int index) {
         if (index < 0 || index >= storage.size()) {
             throw new InvalidSlabIndexException("Index " + index + " out of bounds for underlying storage.");
         }
