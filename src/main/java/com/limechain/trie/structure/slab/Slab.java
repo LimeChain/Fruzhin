@@ -29,10 +29,10 @@ public class Slab<T> implements Iterable<Pair<Integer, T>> {
     private int size;
 
     /**
-     * Constructs an empty Slab with default initial capacity of 0.
+     * Constructs an empty Slab with default initial capacity of 10.
      */
     public Slab() {
-        initialize(0);
+        initialize(10);
     }
 
     /**
