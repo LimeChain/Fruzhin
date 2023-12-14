@@ -1,10 +1,8 @@
 package com.limechain.trie.structure.slab;
 
 import com.limechain.trie.structure.slab.exceptions.InvalidSlabIndexException;
-import lombok.NonNull;
 import org.javatuples.Pair;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -64,7 +62,7 @@ public class Slab<T> implements Iterable<Pair<Integer, T>> {
      * @return the index at which the element is stored
      * @throws NullPointerException if the element is null
      */
-    public int add(@NonNull T element) {
+    public int add(@NotNull T element) {
         int index;
         if (freeIndices.isEmpty()) {
             index = newIndex;
