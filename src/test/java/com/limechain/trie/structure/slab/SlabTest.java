@@ -42,7 +42,7 @@ class SlabTest {
         int index = slab.add("test");
         Exception e = assertThrows(InvalidSlabIndexException.class,
                 () -> slab.get(index+1));
-        assertTrue(e.getMessage().contains("Index 1 out of bounds for length 1"));
+        assertTrue(e.getMessage().contains("Index 1 out of bounds for underlying storage."));
     }
 
     @Test

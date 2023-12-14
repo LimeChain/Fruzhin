@@ -100,18 +100,18 @@ public class Slab<T> implements Iterable<Pair<Integer, T>> {
      * @param index The index of the element to be retrieved.
      * @return The element at the specified index.
      * @throws InvalidSlabIndexException If the index is out of bounds or if the value at the index is null.
-     *         This exception wraps the original {@code IndexOutOfBoundsException} when the index is out of bounds.
+     *                                   This exception wraps the original {@code IndexOutOfBoundsException}
+     *                                   when the index is out of bounds.
      */
     public @Nullable T get(int index) {
-        try{
-            T value = storage.get(index);
-            if(value == null){
-                throw new InvalidSlabIndexException("Index " + index + " does not return any value.");
-            }
-            return value;
-        } catch (IndexOutOfBoundsException e){
-            throw new InvalidSlabIndexException(e.getMessage());
+        if (index < 0 || index >= storage.size()) {
+            throw new InvalidSlabIndexException("Index " + index + " out of bounds for underlying storage.");
         }
+        T value = storage.get(index);
+        if (value == null) {
+            throw new InvalidSlabIndexException("Index " + index + " does not return any value.");
+        }
+        return value;
     }
 
     /**
