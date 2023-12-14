@@ -84,7 +84,7 @@ public class Slab<T> implements Iterable<Pair<Integer, T>> {
      * @param index the index of the element to be removed
      * @return the element previously at the specified index
      */
-    public T remove(int index) {
+    public @NotNull T remove(int index) {
         T value = this.get(index);
         storage.set(index, null);
         freeIndices.add(index);
