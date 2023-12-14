@@ -137,10 +137,11 @@ class SlabTest {
         slab.add("test1");
         slab.add("test2");
 
-        assertThrows(IndexOutOfBoundsException.class, () -> {
+        Exception e = assertThrows(InvalidSlabIndexException.class, () -> {
             slab.remove(outOfBoundsIndex);
         });
 
+        assertTrue(e.getMessage().contains("Index 5 out of bounds for underlying storage."));
         assertEquals(expectedSize, slab.size());
     }
 
@@ -148,9 +149,23 @@ class SlabTest {
     void removeNegativeIndexThrowsExceptionTest() {
         Slab<String> slab = new Slab<>();
 
-        assertThrows(IndexOutOfBoundsException.class, () -> {
+        Exception e = assertThrows(InvalidSlabIndexException.class, () -> {
             slab.remove(-1);
         });
+
+        assertTrue(e.getMessage().contains("Index -1 out of bounds for underlying storage."));
+    }
+
+    @Test
+    void removeRemovedIndexThrowsExceptionTest() {
+        Slab<String> slab = new Slab<>();
+        int index = slab.add("test");
+        slab.remove(index);
+        Exception e = assertThrows(InvalidSlabIndexException.class, () -> {
+            slab.remove(index);
+        });
+
+        assertTrue(e.getMessage().contains("Index 0 does not return any value."));
     }
 
     @Test

@@ -85,12 +85,10 @@ public class Slab<T> implements Iterable<Pair<Integer, T>> {
      * @return the element previously at the specified index
      */
     public T remove(int index) {
-        T value = storage.get(index);
-        if (value != null) {
-            storage.set(index, null);
-            freeIndices.add(index);
-            size--;
-        }
+        T value = this.get(index);
+        storage.set(index, null);
+        freeIndices.add(index);
+        size--;
         return value;
     }
 
