@@ -1,5 +1,6 @@
 package com.limechain.trie.structure.slab;
 
+import com.limechain.trie.structure.slab.exceptions.InvalidSlabIndexException;
 import org.javatuples.Pair;
 import org.junit.jupiter.api.Test;
 
@@ -12,7 +13,6 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -27,11 +27,31 @@ class SlabTest {
     }
 
     @Test
+    void getRemovedItemThrowsExceptionTest() {
+        Slab<String> slab = new Slab<>();
+        int index = slab.add("test");
+        slab.remove(index);
+        Exception e = assertThrows(InvalidSlabIndexException.class,
+                () -> slab.get(index));
+        assertTrue(e.getMessage().contains("Index 0 does not return any value."));
+    }
+
+    @Test
+    void getOutOfBoundsIndexThrowsExceptionTest() {
+        Slab<String> slab = new Slab<>();
+        int index = slab.add("test");
+        Exception e = assertThrows(InvalidSlabIndexException.class,
+                () -> slab.get(index+1));
+        assertTrue(e.getMessage().contains("Index 1 out of bounds for length 1"));
+    }
+
+    @Test
     void removeTest() {
         Slab<String> slab = new Slab<>();
         int index = slab.add("test");
-        assertEquals("test", slab.remove(index));
-        assertNull(slab.get(index));
+        assertEquals(1, slab.size());
+        slab.remove(index);
+        assertEquals(0, slab.size());
     }
 
     @Test

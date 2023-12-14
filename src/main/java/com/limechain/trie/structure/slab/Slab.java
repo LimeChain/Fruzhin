@@ -1,5 +1,6 @@
 package com.limechain.trie.structure.slab;
 
+import com.limechain.trie.structure.slab.exceptions.InvalidSlabIndexException;
 import lombok.NonNull;
 import org.javatuples.Pair;
 import org.jetbrains.annotations.NotNull;
@@ -94,13 +95,23 @@ public class Slab<T> implements Iterable<Pair<Integer, T>> {
     }
 
     /**
-     * Retrieves the element at the specified index.
+     * Retrieves an element from the storage at the specified index.
      *
-     * @param index the index of the element to return
-     * @return the element at the specified index, or null if no element is present
+     * @param index The index of the element to be retrieved.
+     * @return The element at the specified index.
+     * @throws InvalidSlabIndexException If the index is out of bounds or if the value at the index is null.
+     *         This exception wraps the original {@code IndexOutOfBoundsException} when the index is out of bounds.
      */
     public @Nullable T get(int index) {
-        return storage.get(index);
+        try{
+            T value = storage.get(index);
+            if(value == null){
+                throw new InvalidSlabIndexException("Index " + index + " does not return any value.");
+            }
+            return value;
+        } catch (IndexOutOfBoundsException e){
+            throw new InvalidSlabIndexException(e.getMessage());
+        }
     }
 
     /**
