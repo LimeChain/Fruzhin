@@ -5,9 +5,13 @@ import com.limechain.runtime.hostapi.dto.VerifySignature;
 import io.emeraldpay.polkaj.schnorrkel.Schnorrkel;
 import io.emeraldpay.polkaj.schnorrkel.SchnorrkelException;
 import lombok.experimental.UtilityClass;
+import lombok.extern.java.Log;
 import org.web3j.crypto.MnemonicUtils;
 
+import java.util.logging.Level;
+
 @UtilityClass
+@Log
 public class Sr25519Utils {
 
     /**
@@ -57,6 +61,7 @@ public class Sr25519Utils {
         try {
             return Schnorrkel.getInstance().sign(message, keyPair);
         } catch (SchnorrkelException e) {
+            log.log(Level.WARNING, e.getMessage(), e);
             return null;
         }
     }
@@ -72,6 +77,7 @@ public class Sr25519Utils {
             Schnorrkel.PublicKey publicKey = new Schnorrkel.PublicKey(signature.getPublicKeyData());
             return schnorrkel.verify(signature.getSignatureData(), signature.getMessageData(), publicKey);
         } catch (SchnorrkelException e) {
+            log.log(Level.WARNING, e.getMessage(), e);
             return false;
         }
     }
