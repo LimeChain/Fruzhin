@@ -35,7 +35,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.logging.Level;
 
 /**
@@ -50,13 +49,11 @@ public class OffchainHostFunctions {
     private final HostApi hostApi;
     private final HostConfig config;
     private final OffchainHttpRequests requests;
-    private final KVRepository<String, Object> offchainDb;
 
     private OffchainHostFunctions(final HostApi hostApi) {
         this.hostApi = hostApi;
         config = AppBean.getBean(HostConfig.class);
         requests = OffchainHttpRequests.getInstance();
-        offchainDb = SyncedState.getInstance().getRepository();
     }
 
     public static List<ImportObject> getFunctions(final HostApi hostApi) {

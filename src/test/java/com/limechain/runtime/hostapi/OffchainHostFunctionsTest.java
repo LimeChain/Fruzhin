@@ -18,7 +18,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.net.SocketTimeoutException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -50,9 +49,7 @@ class OffchainHostFunctionsTest {
     private RuntimePointerSize bufferPointer;
 
     final int timeout = 10;
-    final byte[] encodedDeadline = new byte[]{1, 127, 127, 127, 127, 127, 127, 127, 127};
     final int requestId = 1;
-    final byte[] responseBody = new byte[]{1, 2, 3};
     Map<String, List<String>> responseHeaders = new HashMap<>() {
         {
             put("Test", new ArrayList<>() {

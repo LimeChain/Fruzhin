@@ -26,7 +26,6 @@ class OffchainHttpRequestsTest {
     public void setUp() throws NoSuchFieldException, IllegalAccessException {
         MockitoAnnotations.initMocks(this);
         offchainHttpRequests = OffchainHttpRequests.getInstance();
-        // Assuming YourClass takes requests as a constructor parameter
         Field requestsField = OffchainHttpRequests.class.getDeclaredField("requests");
         requestsField.setAccessible(true);
         requestsField.set(offchainHttpRequests, requests);
