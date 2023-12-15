@@ -7,8 +7,6 @@ import com.limechain.rpc.server.AppBean;
 import com.limechain.runtime.hostapi.dto.HttpResponseType;
 import com.limechain.runtime.hostapi.dto.InvalidRequestId;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
-import com.limechain.storage.KVRepository;
-import com.limechain.sync.warpsync.SyncedState;
 import com.limechain.utils.scale.ScaleUtils;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
@@ -423,11 +421,10 @@ public class OffchainHostFunctions {
 
     byte[] scaleEncodeHeaders(Map<String, List<String>> headers) throws IOException {
         List<Pair<String, String>> pairs = new ArrayList<>(headers.size());
-        for (String header : headers.keySet()) {
-            // NOTE: Not sure how the Spec expects us to handle repeated AND multi-valued headers,
-            // so we just concat the values (a little sus?)
-            String value = String.join("", headers.get(header)); 
-            pairs.add(new Pair<>(header, value));
+        for (Map.Entry<String, List<String>> entry : headers.entrySet()) {
+            // NOTE: Not sure if a comma is the right separator
+            String value = String.join(",", entry.getValue());
+            pairs.add(new Pair<>(entry.getKey(), value));
         }
         return ScaleUtils.Encode.encode(pairs, String::getBytes, String::getBytes);
     }
