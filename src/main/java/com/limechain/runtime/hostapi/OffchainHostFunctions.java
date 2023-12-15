@@ -8,7 +8,9 @@ import com.limechain.rpc.server.AppBean;
 import com.limechain.runtime.hostapi.dto.HttpResponseType;
 import com.limechain.runtime.hostapi.dto.InvalidRequestId;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
+import com.limechain.runtime.hostapi.exceptions.OffchainResponseWaitException;
 import com.limechain.utils.scale.ScaleUtils;
+import com.limechain.utils.scale.exceptions.ScaleEncodingException;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.emeraldpay.polkaj.scale.reader.UInt64Reader;
@@ -351,7 +353,7 @@ public class OffchainHostFunctions {
             return hostApi.writeDataToMemory(scaleEncodeArrayOfRequestStatuses(requestStatuses));
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new RuntimeException(e);
+            throw new ThreadInterruptedException(e);
         }
     }
 
@@ -368,7 +370,7 @@ public class OffchainHostFunctions {
             byte[] scaleEncodedKVPs = scaleEncodeHeaders(headers);
             return hostApi.writeDataToMemory(scaleEncodedKVPs);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new OffchainResponseWaitException(e);
         }
     }
 
@@ -416,7 +418,7 @@ public class OffchainHostFunctions {
             return hostApi.writeDataToMemory(HttpResponseType.IO_ERROR.scaleEncodedResult());
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new RuntimeException(e);
+            throw new ThreadInterruptedException(e);
         }
     }
 
@@ -459,7 +461,7 @@ public class OffchainHostFunctions {
 
             return buf.toByteArray();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new ScaleEncodingException(e);
         }
     }
 
@@ -473,7 +475,7 @@ public class OffchainHostFunctions {
             }
             return buf.toByteArray();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new ScaleEncodingException(e);
         }
     }
 

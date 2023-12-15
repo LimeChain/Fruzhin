@@ -1,5 +1,6 @@
 package com.limechain.runtime.hostapi.dto;
 
+import com.limechain.utils.scale.exceptions.ScaleEncodingException;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.emeraldpay.polkaj.scaletypes.Result;
 import io.emeraldpay.polkaj.scaletypes.ResultWriter;
@@ -40,7 +41,7 @@ public enum HttpResponseType {
             }
             return buf.toByteArray();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new ScaleEncodingException(e);
         }
     }
 }
