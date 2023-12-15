@@ -21,15 +21,15 @@ import java.util.concurrent.TimeUnit;
 @Log
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class OffchainHttpRequests {
-    private static OffchainHttpRequests INSTANCE;
+    private static OffchainHttpRequests instance;
     private short idCounter = 0;
     private final Map<Integer, HttpURLConnection> requests = new HashMap<>();
 
     public static OffchainHttpRequests getInstance() {
-        if (INSTANCE == null) {
-            INSTANCE = new OffchainHttpRequests();
+        if (instance == null) {
+            instance = new OffchainHttpRequests();
         }
-        return INSTANCE;
+        return instance;
     }
 
     public int addRequest(String method, String uri) throws IOException {

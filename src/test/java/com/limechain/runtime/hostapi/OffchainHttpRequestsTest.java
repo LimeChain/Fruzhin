@@ -33,7 +33,7 @@ class OffchainHttpRequestsTest {
     }
 
     @Test
-    public void getRequestsResponsesTest() throws Exception {
+    void getRequestsResponsesTest() throws Exception {
         int[] requestIds = {1, 2};
         int timeout = 5000;
 
