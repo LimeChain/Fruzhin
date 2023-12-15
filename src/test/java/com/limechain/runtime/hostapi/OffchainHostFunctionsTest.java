@@ -18,6 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.net.SocketTimeoutException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,9 +27,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class OffchainHostFunctionsTest {
@@ -124,35 +123,116 @@ class OffchainHostFunctionsTest {
     }
 
     @Test
-    void extOffchainHttpResponseWaitVersion1Test() {
+    void extOffchainHttpResponseWaitVersion1Test() throws IOException, InterruptedException {
         int scaleOptionalTrue = 1;
         byte[] scaleEncodedRequestIds = new byte[]{4, requestId, 0, 0, 0};
 
         Instant instant = Instant.now();
-        try (MockedStatic<Instant> mockedStatic = mockStatic(Instant.class);
-             ByteArrayOutputStream buf = new ByteArrayOutputStream();
-             ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
-            UInt64Writer int64Writer = new UInt64Writer();
-            writer.writeByte(scaleOptionalTrue);
-            int64Writer.write(writer, new BigInteger(String.valueOf(instant.toEpochMilli()))
-                    .add(BigInteger.valueOf(timeout)));
-            mockedStatic.when(Instant::now).thenReturn(instant);
+        MockedStatic<Instant> mockedStatic = mockStatic(Instant.class);
+        ByteArrayOutputStream buf = new ByteArrayOutputStream();
+        ScaleCodecWriter writer = new ScaleCodecWriter(buf);
+        UInt64Writer int64Writer = new UInt64Writer();
+        writer.writeByte(scaleOptionalTrue);
+        int64Writer.write(writer, new BigInteger(String.valueOf(instant.toEpochMilli()))
+                .add(BigInteger.valueOf(timeout)));
+        mockedStatic.when(Instant::now).thenReturn(instant);
 
-            when(hostApi.getDataFromMemory(deadlinePointer)).thenReturn(buf.toByteArray());
-            HttpResponseType[] expectedResponses = new HttpResponseType[]{HttpResponseType.FINISHED};
-            when(requests.getRequestsResponses(new int[]{requestId}, timeout)).thenReturn(expectedResponses);
+        when(hostApi.getDataFromMemory(deadlinePointer)).thenReturn(buf.toByteArray());
+        HttpResponseType[] expectedResponses = new HttpResponseType[]{HttpResponseType.FINISHED};
+        when(requests.getRequestsResponses(new int[]{requestId}, timeout)).thenReturn(expectedResponses);
 
-            when(hostApi.getDataFromMemory(runtimePointerSize)).thenReturn(scaleEncodedRequestIds);
-            when(hostApi.writeDataToMemory(offchainHostFunctions
-                    .scaleEncodeArrayOfRequestStatuses(expectedResponses))).thenReturn(resultPointer);
+        when(hostApi.getDataFromMemory(runtimePointerSize)).thenReturn(scaleEncodedRequestIds);
+        when(hostApi.writeDataToMemory(offchainHostFunctions
+                .scaleEncodeArrayOfRequestStatuses(expectedResponses))).thenReturn(resultPointer);
 
-            RuntimePointerSize result = offchainHostFunctions
-                    .extOffchainHttpResponseWaitVersion1(runtimePointerSize, deadlinePointer);
-            assertEquals(resultPointer, result);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        RuntimePointerSize result = offchainHostFunctions
+                .extOffchainHttpResponseWaitVersion1(runtimePointerSize, deadlinePointer);
+        assertEquals(resultPointer, result);
+        mockedStatic.close();
     }
+
+    @Test
+    void extOffchainHttpResponseBodyVersion1ReturnsDeadlineReachedTest() throws InterruptedException, IOException {
+        int deadlineReachedTimeout = -1;
+        Instant instant = Instant.now();
+        MockedStatic<Instant> mockedStatic = mockStatic(Instant.class);
+        ByteArrayOutputStream buf = new ByteArrayOutputStream();
+        ScaleCodecWriter writer = new ScaleCodecWriter(buf);
+        UInt64Writer int64Writer = new UInt64Writer();
+        int scaleOptionalTrue = 1;
+        writer.writeByte(scaleOptionalTrue);
+        int64Writer.write(writer, new BigInteger(String.valueOf(instant.toEpochMilli()))
+                .add(BigInteger.valueOf(deadlineReachedTimeout)));
+
+        mockedStatic.when(Instant::now).thenReturn(instant);
+        when(hostApi.getDataFromMemory(deadlinePointer)).thenReturn(buf.toByteArray());
+        when(requests.getRequestsResponses(new int[]{requestId}, deadlineReachedTimeout))
+                .thenReturn(new HttpResponseType[]{HttpResponseType.DEADLINE_REACHED});
+        when(hostApi.writeDataToMemory(HttpResponseType.DEADLINE_REACHED.scaleEncodedResult()))
+                .thenReturn(resultPointer);
+
+        RuntimePointerSize result = offchainHostFunctions.extOffchainHttpResponseReadBodyVersion1(requestId,
+                bufferPointer,
+                deadlinePointer);
+        assertEquals(resultPointer, result);
+        mockedStatic.close();
+    }
+
+    @Test
+    void extOffchainHttpResponseBodyVersion1ReturnsIOErrorTest() throws IOException, InterruptedException {
+        Instant instant = Instant.now();
+        MockedStatic<Instant> mockedStatic = mockStatic(Instant.class);
+        ByteArrayOutputStream buf = new ByteArrayOutputStream();
+        ScaleCodecWriter writer = new ScaleCodecWriter(buf);
+        UInt64Writer int64Writer = new UInt64Writer();
+        int scaleOptionalTrue = 1;
+        writer.writeByte(scaleOptionalTrue);
+        int64Writer.write(writer, new BigInteger(String.valueOf(instant.toEpochMilli()))
+                .add(BigInteger.valueOf(timeout)));
+
+        mockedStatic.when(Instant::now).thenReturn(instant);
+
+        when(hostApi.getDataFromMemory(deadlinePointer)).thenReturn(buf.toByteArray());
+        when(requests.getRequestsResponses(new int[]{requestId}, timeout))
+                .thenReturn(new HttpResponseType[]{HttpResponseType.IO_ERROR});
+
+        when(hostApi.writeDataToMemory(HttpResponseType.IO_ERROR.scaleEncodedResult()))
+                .thenReturn(resultPointer);
+
+        RuntimePointerSize result = offchainHostFunctions.extOffchainHttpResponseReadBodyVersion1(requestId,
+                bufferPointer,
+                deadlinePointer);
+        assertEquals(resultPointer, result);
+        mockedStatic.close();
+    }
+
+    @Test
+    void extOffchainHttpResponseBodyVersion1ReturnsInvalidIdTest() throws IOException, InterruptedException {
+        Instant instant = Instant.now();
+
+        MockedStatic<Instant> mockedStatic = mockStatic(Instant.class);
+        ByteArrayOutputStream buf = new ByteArrayOutputStream();
+        ScaleCodecWriter writer = new ScaleCodecWriter(buf);
+        UInt64Writer int64Writer = new UInt64Writer();
+        int scaleOptionalTrue = 1;
+        writer.writeByte(scaleOptionalTrue);
+        int64Writer.write(writer, new BigInteger(String.valueOf(instant.toEpochMilli()))
+                .add(BigInteger.valueOf(timeout)));
+
+        mockedStatic.when(Instant::now).thenReturn(instant);
+
+        when(hostApi.getDataFromMemory(deadlinePointer)).thenReturn(buf.toByteArray());
+        when(requests.getRequestsResponses(new int[]{requestId}, timeout))
+                .thenReturn(new HttpResponseType[]{HttpResponseType.INVALID_ID});
+
+        when(hostApi.writeDataToMemory(HttpResponseType.INVALID_ID.scaleEncodedResult()))
+                .thenReturn(resultPointer);
+
+        RuntimePointerSize result = offchainHostFunctions.extOffchainHttpResponseReadBodyVersion1(requestId,
+                bufferPointer,
+                deadlinePointer);
+        assertEquals(resultPointer, result);
+        mockedStatic.close();
+    }
+
 }
