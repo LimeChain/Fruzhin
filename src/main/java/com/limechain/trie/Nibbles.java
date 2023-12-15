@@ -1,8 +1,12 @@
 package com.limechain.trie;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+
 /**
  * This class is used to convert keys between nibbles and LE(Little-Endian) format.
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class Nibbles {
     /**
      * Converts a key in nibbles format to LE format. The key is assumed to be in nibbles format.

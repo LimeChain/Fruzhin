@@ -1,6 +1,7 @@
 package com.limechain.runtime.hostapi;
 
 import com.limechain.config.HostConfig;
+import com.limechain.exception.ThreadInterruptedException;
 import com.limechain.network.Network;
 import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.rpc.server.AppBean;
@@ -217,7 +218,7 @@ public class OffchainHostFunctions {
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new RuntimeException(e);
+            throw new ThreadInterruptedException(e);
         }
     }
 

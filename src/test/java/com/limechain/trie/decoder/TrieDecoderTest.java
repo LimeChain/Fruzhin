@@ -95,7 +95,7 @@ class TrieDecoderTest {
 
         Node node = TrieDecoder.decode(out.toByteArray());
 
-        Assertions.assertEquals(NodeKind.Branch, node.getKind());
+        Assertions.assertEquals(NodeKind.BRANCH, node.getKind());
         assertArrayEquals(expectedPartialKey, node.getPartialKey());
         assertNull(node.getStorageValue());
     }
@@ -120,7 +120,7 @@ class TrieDecoderTest {
         byte[] data = out.toByteArray();
         Node node = TrieDecoder.decode(data);
 
-        assertEquals(NodeKind.Branch, node.getKind());
+        assertEquals(NodeKind.BRANCH, node.getKind());
         assertArrayEquals(expectedPartialKey, node.getPartialKey());
         assertArrayEquals(expectedStorageValue, node.getStorageValue());
         assertArrayEquals(Trie.getMerkleValueRoot(childHash),
@@ -150,7 +150,7 @@ class TrieDecoderTest {
         TrieEncoder.encode(node, buffer);
 
         Node decodedNode = TrieDecoder.decode(buffer.toByteArray());
-        assertEquals(NodeKind.Branch, decodedNode.getKind());
+        assertEquals(NodeKind.BRANCH, decodedNode.getKind());
         assertArrayEquals(new byte[]{1}, decodedNode.getPartialKey());
         assertArrayEquals(new byte[]{1}, decodedNode.getStorageValue());
         assertArrayEquals(new byte[]{2}, decodedNode.getChildren()[0].getPartialKey());
@@ -172,7 +172,7 @@ class TrieDecoderTest {
         writer.writeByteArray(hashedValue);
 
         Node decodedNode = TrieDecoder.decode(out.toByteArray());
-        assertEquals(NodeKind.Leaf, decodedNode.getKind());
+        assertEquals(NodeKind.LEAF, decodedNode.getKind());
         assertArrayEquals(expectedPartialKey, decodedNode.getPartialKey());
         assertArrayEquals(hashedValue, decodedNode.getStorageValue());
         assertTrue(decodedNode.isValueHashed());
@@ -209,7 +209,7 @@ class TrieDecoderTest {
         writer.writeByteArray(hashedValue);
 
         Node decodedNode = TrieDecoder.decode(out.toByteArray());
-        assertEquals(NodeKind.Branch, decodedNode.getKind());
+        assertEquals(NodeKind.BRANCH, decodedNode.getKind());
         assertArrayEquals(expectedPartialKey, decodedNode.getPartialKey());
         assertArrayEquals(hashedValue, decodedNode.getStorageValue());
         assertTrue(decodedNode.isValueHashed());

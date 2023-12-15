@@ -7,8 +7,7 @@ import java.net.UnknownHostException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-//CHECKSTYLE.OFF
-public class KademliaServiceTest {
+class KademliaServiceTest {
 
     /**
      * Test might throw UnknownHostException and fail if domain is no longer accessible
@@ -16,7 +15,7 @@ public class KademliaServiceTest {
      * @throws UnknownHostException
      */
     @Test
-    public void dnsNodeToIp4_TransformDnsNode() throws UnknownHostException {
+    void dnsNodeToIp4_TransformDnsNode() throws UnknownHostException {
         String bootNode = "/dns/p2p.0.polkadot.network/tcp/30333/p2p/12D3KooWHsvEicXjWWraktbZ4MQBizuyADQtuEGr3NbDvtm5rFA5";
         InetAddress address = InetAddress.getByName("p2p.0.polkadot.network");
         String expected = "/ip4/" + address.getHostAddress() + "/tcp/30333/p2p/12D3KooWHsvEicXjWWraktbZ4MQBizuyADQtuEGr3NbDvtm5rFA5";
@@ -25,17 +24,16 @@ public class KademliaServiceTest {
     }
 
     @Test
-    public void dnsNodeToIp4_UnchangedAddress_ifInvalidDomain() {
+    void dnsNodeToIp4_UnchangedAddress_ifInvalidDomain() {
         String bootNode = "/dns/invalid.domain.limechain/tcp/12345";
 
         assertEquals(bootNode, DnsUtils.dnsNodeToIp4(bootNode));
     }
 
     @Test
-    public void dnsNodeToIp4_UnchangedAddress_IfNotDns() {
+    void dnsNodeToIp4_UnchangedAddress_IfNotDns() {
         String bootNode = "/ip4/192.168.1.1/tcp/12345";
 
         assertEquals(bootNode, DnsUtils.dnsNodeToIp4(bootNode));
     }
 }
-//CHECKSTYLE.ON

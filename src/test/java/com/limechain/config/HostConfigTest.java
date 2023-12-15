@@ -2,6 +2,7 @@ package com.limechain.config;
 
 import com.limechain.chain.Chain;
 import com.limechain.cli.CliArguments;
+import com.limechain.exception.InvalidChainException;
 import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.storage.DBInitializer;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,7 +15,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
-public class HostConfigTest {
+class HostConfigTest {
     private final String westendGenesisPath = "genesis/westend2.json";
     private final String kusamaGenesisPath = "genesis/ksmcc3.json";
     private final String polkadotGenesisPath = "genesis/polkadot.json";
@@ -26,7 +27,7 @@ public class HostConfigTest {
     }
 
     @Test
-    public void HostConfig_Succeeds_PassedCliArguments() {
+    void HostConfig_Succeeds_PassedCliArguments() {
         when(cliArguments.network()).thenReturn(Chain.WESTEND.getValue());
         when(cliArguments.nodeRole()).thenReturn("full");
         when(cliArguments.dbPath()).thenReturn(DBInitializer.DEFAULT_DIRECTORY);
@@ -40,22 +41,20 @@ public class HostConfigTest {
     }
 
     @Test
-    public void HostConfig_throwsException_whenNetworkInvalid() {
+    void HostConfig_throwsException_whenNetworkInvalid() {
         when(cliArguments.network()).thenReturn("invalidNetwork");
         when(cliArguments.nodeRole()).thenReturn("full");
         when(cliArguments.dbPath()).thenReturn(DBInitializer.DEFAULT_DIRECTORY);
-        Exception exception = assertThrows(RuntimeException.class, () -> {
-            new HostConfig(cliArguments);
-        });
+        Exception exception = assertThrows(InvalidChainException.class, () -> new HostConfig(cliArguments));
 
-        String expectedMessage = "Unsupported or unknown network";
+        String expectedMessage = "Chain cannot be null";
         String actualMessage = exception.getMessage();
 
         assertTrue(actualMessage.contains(expectedMessage));
     }
 
     @Test
-    public void GetGenesisPath_returnsCorrectPath_whenPassedChain() {
+    void GetGenesisPath_returnsCorrectPath_whenPassedChain() {
         // Westend
         when(cliArguments.network()).thenReturn(Chain.WESTEND.getValue());
         when(cliArguments.nodeRole()).thenReturn(NodeRole.FULL.toString().toLowerCase());

@@ -23,7 +23,7 @@ public enum NodeRole {
      */
     public static NodeRole fromString(String nodeRole) {
         for (NodeRole type : values()) {
-            if (type.toString().toLowerCase().equals(nodeRole.toLowerCase())) {
+            if (type.toString().equalsIgnoreCase(nodeRole)) {
                 return type;
             }
         }

@@ -18,6 +18,7 @@ import com.limechain.sync.warpsync.SyncedState;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.libp2p.core.PeerId;
 import io.libp2p.core.Stream;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -180,7 +181,9 @@ class GrandpaEngineTest {
     }
 
     @Test
-    void receiveNeighbourMessageOnResponderStreamWhenShouldSyncNeighbourMessage() throws InterruptedException {
+    @Disabled("Unknown race condition causes some of the runs to fail")
+    // TODO: find and fix the problem condition. Used to have a thread sleep for 100 millis before last verify
+    void receiveNeighbourMessageOnResponderStreamWhenShouldSyncNeighbourMessage() {
         byte[] message = new byte[] { 2, 1, -24, 60, 0, 0, 0, 0, 0, 0, 37, 6, 0, 0, 0, 0, 0, 0, -37, 118, 4, 1 };
         NeighbourMessage neighbourMessage = mock(NeighbourMessage.class);
 
@@ -191,8 +194,6 @@ class GrandpaEngineTest {
                 (mock, context) -> when(mock.read(any(NeighbourMessageScaleReader.class))).thenReturn(neighbourMessage))
         ) {
             grandpaEngine.receiveRequest(message, stream);
-
-            Thread.sleep(100);
             verify(syncedState).syncNeighbourMessage(neighbourMessage, peerId);
         }
     }

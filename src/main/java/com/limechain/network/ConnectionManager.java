@@ -24,14 +24,14 @@ import java.util.logging.Level;
 @Log
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ConnectionManager {
-    private static ConnectionManager INSTANCE;
+    private static ConnectionManager instance;
     protected final Map<PeerId, PeerInfo> peers = new HashMap<>();
 
     public static ConnectionManager getInstance() {
-        if (INSTANCE == null) {
-            INSTANCE = new ConnectionManager();
+        if (instance == null) {
+            instance = new ConnectionManager();
         }
-        return INSTANCE;
+        return instance;
     }
 
     /**

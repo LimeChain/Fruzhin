@@ -60,7 +60,7 @@ class KeyStoreTest {
 
         List<byte[]> publicKeysByKeyType = keyStore.getPublicKeysByKeyType(KeyType.BABE);
 
-        assertEquals(publicKeysByKeyType.size(), 2);
+        assertEquals(2, publicKeysByKeyType.size());
 
         List<byte[]> publicKeysByKeyTypeGrandpa = keyStore.getPublicKeysByKeyType(KeyType.GRANDPA);
         assertEquals(publicKeysByKeyTypeGrandpa.get(0).length, key2.length);

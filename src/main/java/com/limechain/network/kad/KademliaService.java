@@ -31,7 +31,8 @@ import java.util.logging.Level;
 @Log
 public class KademliaService extends NetworkService<Kademlia> {
     public static final int REPLICATION = 20;
-    public static final int ALPHA = 3;
+    private static final int ALPHA = 3;
+    private static final Random RANDOM = new Random();
 
     @Setter
     @Getter
@@ -112,16 +113,16 @@ public class KademliaService extends NetworkService<Kademlia> {
 
     private Multihash randomPeerId() {
         byte[] hash = new byte[32];
-        new Random().nextBytes(hash);
+        RANDOM.nextBytes(hash);
         return new Multihash(Multihash.Type.sha2_256, hash);
     }
 
     private void setBootNodePeerIds(String[] bootNodes) {
-        ArrayList<PeerId> bootNodePeerIds = new ArrayList<>();
+        ArrayList<PeerId> ids = new ArrayList<>();
         for (String bootNode : bootNodes) {
             String peerId = bootNode.substring(bootNode.lastIndexOf('/') + 1, bootNode.length());
-            bootNodePeerIds.add(PeerId.fromBase58(peerId));
+            ids.add(PeerId.fromBase58(peerId));
         }
-        this.bootNodePeerIds = bootNodePeerIds;
+        this.bootNodePeerIds = ids;
     }
 }

@@ -57,20 +57,16 @@ public class SyncTest {
 
     @Test
     @Disabled("No response is received")
-    //TODO: See https://github.com/orgs/LimeChain/projects/16?pane=issue&itemId=40022251
+    //TODO: See https://github.com/LimeChain/Fruzhin/issues/193
     void remoteBlockRequest_returnCorrectBlock_ifGivenBlockHash() {
         var peerId = PeerId.fromBase58(PEER_ID);
-        //CHECKSTYLE.OFF
         var receivers = new String[]{"/dns/p2p.4.polkadot.network/tcp/30333/p2p/" + PEER_ID};
-        //CHECKSTYLE.ON
         int connectedNodes = kademliaService.connectBootNodes(receivers);
         int expectedConnectedNodes = 1;
         assertEquals(expectedConnectedNodes, connectedNodes);
 
-        //CHECKSTYLE.OFF
-        var response = syncService.remoteBlockRequest(senderNode, senderNode.getAddressBook(), peerId, 17, "cbd3e72e769652f804568a48889382edff4742074a7201309acfd1069e5de90a", null, SyncMessage.Direction.Ascending, 1);
+        var response = syncService.remoteBlockRequest(senderNode, senderNode.getAddressBook(), peerId, new BlockRequestDto(17, "cbd3e72e769652f804568a48889382edff4742074a7201309acfd1069e5de90a", null, SyncMessage.Direction.Ascending, 1));
         ByteString expected = ByteString.copyFrom(new byte[]{-53, -45, -25, 46, 118, -106, 82, -8, 4, 86, -118, 72, -120, -109, -126, -19, -1, 71, 66, 7, 74, 114, 1, 48, -102, -49, -47, 6, -98, 93, -23, 10});
-        //CHECKSTYLE.ON
         assertNotNull(response);
         assertTrue(response.getBlocksCount() > 0);
 
@@ -79,20 +75,16 @@ public class SyncTest {
 
     @Test
     @Disabled("No response is received")
-    //TODO: See https://github.com/orgs/LimeChain/projects/16?pane=issue&itemId=40022251
+    //TODO: See https://github.com/LimeChain/Fruzhin/issues/193
     void remoteBlockRequest_returnCorrectBlock_ifGivenBlockNumber() {
         var peerId = PeerId.fromBase58(PEER_ID);
-        //CHECKSTYLE.OFF
         var receivers = new String[]{"/dns/p2p.4.polkadot.network/tcp/30333/p2p/" + PEER_ID};
-        //CHECKSTYLE.ON
         int connectedNodes = kademliaService.connectBootNodes(receivers);
         int expectedConnectedNodes = 1;
         assertEquals(expectedConnectedNodes, connectedNodes);
-        //CHECKSTYLE.OFF
-        var response = syncService.remoteBlockRequest(senderNode, senderNode.getAddressBook(), peerId, 19, null,
-                15000000, SyncMessage.Direction.Ascending, 1);
+        var response = syncService.remoteBlockRequest(senderNode, senderNode.getAddressBook(), peerId, new BlockRequestDto(19, null,
+                15000000, SyncMessage.Direction.Ascending, 1));
         ByteString expected = ByteString.copyFrom(new byte[]{-5, -114, 15, -47, 54, 111, 75, -101, 58, 121, -122, 66, -103, -41, -9, 10, -125, -12, 77, 72, -53, -7, -84, 19, 95, 45, -110, -39, 104, 8, 6, -88});
-        //CHECKSTYLE.ON
         assertNotNull(response);
         assertTrue(response.getBlocksCount() > 0);
 
@@ -101,7 +93,7 @@ public class SyncTest {
 
     @Test
     @Disabled("No response is received")
-    //TODO: See https://github.com/orgs/LimeChain/projects/16?pane=issue&itemId=40022251
+    //TODO: See https://github.com/LimeChain/Fruzhin/issues/193
     void remoteFunctions_return_correctData() {
         var peerId = PeerId.fromBase58(PEER_ID);
         var receivers = new String[]{"/dns/p2p.4.polkadot.network/tcp/30333/p2p/" + PEER_ID};

@@ -24,8 +24,8 @@ public class FullNode implements HostNode {
         network.start();
 
         while (true) {
-            if (!network.kademliaService.getBootNodePeerIds().isEmpty()) {
-                if (network.kademliaService.getSuccessfulBootNodes() > 0) {
+            if (!network.getKademliaService().getBootNodePeerIds().isEmpty()) {
+                if (network.getKademliaService().getSuccessfulBootNodes() > 0) {
                     break;
                 }
                 network.updateCurrentSelectedPeer();

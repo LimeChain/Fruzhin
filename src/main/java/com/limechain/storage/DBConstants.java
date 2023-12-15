@@ -1,5 +1,9 @@
 package com.limechain.storage;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class DBConstants {
     /**
     * Key for storing the privateKey for nabu

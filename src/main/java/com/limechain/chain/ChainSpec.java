@@ -50,8 +50,8 @@ public class ChainSpec implements Serializable {
     @Getter
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class Fields implements Serializable {
-        public Map<String, Map<String, String>> raw;
-        public Map<String, Map<String, Object>> runtime;
+        private Map<String, Map<String, String>> raw;
+        private Map<String, Map<String, Object>> runtime;
     }
 }
 

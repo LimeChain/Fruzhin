@@ -25,13 +25,13 @@ class AbstractSubscriberChannelTest {
     }
 
     @Test
-    public void constructor_setsTopic() {
-        assertEquals(new SubscriberChannel(Topic.UNSTABLE_TRANSACTION_WATCH).getTopic(),
-                Topic.UNSTABLE_TRANSACTION_WATCH);
+    void constructor_setsTopic() {
+        assertEquals(Topic.UNSTABLE_TRANSACTION_WATCH,
+                new SubscriberChannel(Topic.UNSTABLE_TRANSACTION_WATCH).getTopic());
     }
 
     @Test
-    public void notifySubscribers_callsSessionSendMessage_forEveryMessage() throws IOException {
+    void notifySubscribers_callsSessionSendMessage_forEveryMessage() throws IOException {
         Message message1 = new Message(topic.getValue(), "message1");
         Message message2 = new Message(topic.getValue(), "message2");
 

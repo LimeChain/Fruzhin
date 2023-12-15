@@ -133,7 +133,7 @@ public class FreeingBumpHeapAllocator {
     }
 
     private int bump(int size, Memory memory) {
-        long requiredSize = bumper + size;
+        long requiredSize = (long) bumper + size;
 
         if (requiredSize > memory.buffer().limit()) {
             growPages(size, memory);
