@@ -1,6 +1,5 @@
 package com.limechain.runtime.hostapi.dto;
 
-import com.limechain.chain.Chain;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.emeraldpay.polkaj.scaletypes.Result;
 import io.emeraldpay.polkaj.scaletypes.ResultWriter;
@@ -27,7 +26,7 @@ public enum HttpResponseType {
                 ScaleCodecWriter writer = new ScaleCodecWriter(buf);
         ) {
             if (value == 3) {
-                Result<Integer, Object>  result = new Result<>(Result.ResultMode.OK, null, value);
+                Result<Integer, Object>  result = new Result<>(Result.ResultMode.OK, value, null);
                 new ResultWriter<Integer, Object>()
                         .writeResult(writer,
                                 ScaleCodecWriter::writeUint32,

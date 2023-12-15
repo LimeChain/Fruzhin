@@ -2,7 +2,10 @@ package com.limechain.runtime.hostapi;
 
 import com.limechain.config.HostConfig;
 import com.limechain.network.protocol.blockannounce.NodeRole;
+import com.limechain.runtime.hostapi.dto.HttpResponseType;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
+import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
+import io.emeraldpay.polkaj.scale.writer.UInt64Writer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -12,7 +15,9 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,9 +26,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class OffchainHostFunctionsTest {
@@ -113,6 +116,39 @@ class OffchainHostFunctionsTest {
 
             RuntimePointerSize result = offchainHostFunctions.extOffchainHttpResponseHeadersVersion1(requestId);
             assertEquals(resultPointer, result);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    void extOffchainHttpResponseWaitVersion1Test() {
+        int scaleOptionalTrue = 1;
+        byte[] scaleEncodedRequestIds = new byte[]{4, requestId, 0, 0, 0};
+
+        Instant instant = Instant.now();
+        try (MockedStatic<Instant> mockedStatic = mockStatic(Instant.class);
+             ByteArrayOutputStream buf = new ByteArrayOutputStream();
+             ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
+            UInt64Writer int64Writer = new UInt64Writer();
+            writer.writeByte(scaleOptionalTrue);
+            int64Writer.write(writer, new BigInteger(String.valueOf(instant.toEpochMilli()))
+                    .add(BigInteger.valueOf(timeout)));
+            mockedStatic.when(Instant::now).thenReturn(instant);
+
+            when(hostApi.getDataFromMemory(deadlinePointer)).thenReturn(buf.toByteArray());
+            HttpResponseType[] expectedResponses = new HttpResponseType[]{HttpResponseType.FINISHED};
+            when(requests.getRequestsResponses(new int[]{requestId}, timeout)).thenReturn(expectedResponses);
+
+            when(hostApi.getDataFromMemory(runtimePointerSize)).thenReturn(scaleEncodedRequestIds);
+            when(hostApi.writeDataToMemory(offchainHostFunctions
+                    .scaleEncodeArrayOfRequestStatuses(expectedResponses))).thenReturn(resultPointer);
+
+            RuntimePointerSize result = offchainHostFunctions
+                    .extOffchainHttpResponseWaitVersion1(runtimePointerSize, deadlinePointer);
+            assertEquals(resultPointer, result);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
