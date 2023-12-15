@@ -64,7 +64,7 @@ public class OffchainHttpRequests {
         if (request.getResponseCode() == HttpURLConnection.HTTP_OK) {
             return request.getHeaderFields();
         }
-        return null;
+        return new HashMap<>();
     }
 
     public byte[] getResponseBody(int id) throws IOException {
@@ -72,7 +72,7 @@ public class OffchainHttpRequests {
         if (request.getResponseCode() == HttpURLConnection.HTTP_OK) {
             return request.getResponseMessage().getBytes();
         }
-        return null;
+        return new byte[]{};
     }
 
     public HttpResponseType[] getRequestsResponses(int[] requestIds, int timeout) throws InterruptedException {
@@ -88,17 +88,7 @@ public class OffchainHttpRequests {
                 futures[i] = executor.submit(() -> {
                     try {
                         HttpURLConnection request = requests.get(requestIds[index]);
-                        request.setConnectTimeout(timeout);
-                        request.connect();
-
-                        long timeElapsed = System.currentTimeMillis() - startTime;
-                        long remainingTime = timeout - timeElapsed;
-                        if (remainingTime > 0) {
-                            request.setReadTimeout((int) remainingTime);
-                        } else {
-                            throw new SocketTimeoutException("Timeout while connecting");
-                        }
-                        request.getResponseCode();
+                        waitRequestResponseWithTimeout(request, timeout, startTime);
                         requestStatuses[index] = HttpResponseType.FINISHED;
                     } catch (InvalidRequestId e) {
                         requestStatuses[index] = HttpResponseType.INVALID_ID;
@@ -124,5 +114,21 @@ public class OffchainHttpRequests {
             }
         }
         return requestStatuses;
+    }
+
+    private int waitRequestResponseWithTimeout(HttpURLConnection request,
+                                               int timeout,
+                                               long startTime) throws IOException {
+        request.setConnectTimeout(timeout);
+        request.connect();
+
+        long timeElapsed = System.currentTimeMillis() - startTime;
+        long remainingTime = timeout - timeElapsed;
+        if (remainingTime > 0) {
+            request.setReadTimeout((int) remainingTime);
+        } else {
+            throw new SocketTimeoutException("Timeout while connecting");
+        }
+        return request.getResponseCode();
     }
 }
