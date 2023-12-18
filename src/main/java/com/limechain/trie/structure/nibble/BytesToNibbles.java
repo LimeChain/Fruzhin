@@ -11,6 +11,10 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 
+// TODO:
+//  Maybe extract into an interface with a single implementor?
+//  Since NibblesToBytes would have different implementations depending on how we pad the nibbles
+//  But the semantics of `BytesToNibbles` is only one possible: split the bytes in the middle and iterate :D
 public class BytesToNibbles implements Iterable<Nibble> {
 
     private final List<Byte> bytes;

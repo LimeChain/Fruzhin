@@ -3,17 +3,11 @@ package com.limechain.trie.structure.nibble;
 import com.limechain.trie.structure.nibble.exceptions.NibbleFromHexDigitException;
 import com.limechain.trie.structure.nibble.exceptions.NibbleFromIntegerException;
 
-public class Nibble {
+public record Nibble(byte value) {
     public static final Nibble ZERO = Nibble.fromInt(0);
     public static final Nibble MAX = Nibble.fromInt(15);
 
     private static final int HEX_RADIX = 16;
-
-    private byte value;
-
-    private Nibble(byte value) {
-        this.value = value;
-    }
 
     /**
      * This is effectively the same constructor as {@link #fromInt(int) fromInt}.
@@ -60,6 +54,10 @@ public class Nibble {
     }
 
     public byte toByte() {
+        return this.value;
+    }
+
+    public int toInt() {
         return this.value;
     }
 

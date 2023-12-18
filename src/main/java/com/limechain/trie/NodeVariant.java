@@ -1,5 +1,7 @@
 package com.limechain.trie;
 
+import java.util.Arrays;
+
 /**
  * Enum containing the different node variant bits and masks specified
  * <a href="https://spec.polkadot.network/#defn-node-header">here</a>
@@ -31,5 +33,17 @@ public enum NodeVariant {
      */
     public int getPartialKeyLengthHeaderMask() {
         return this.mask ^ 0xFF;
+    }
+
+    // NOTE:
+    //  Technically, for NodeVariant.COMPACT_ENCODING this should return `None`, but we still return 0...
+    //  since that's the result of the computation, but it's semantically invalid
+    public int getPartialKeyBitLengthInFirstByte() {
+        for (int i = 0; i < 8; ++i) {
+            if (((mask >> i) & 1) == 1) {
+                return i;
+            }
+        }
+        return 8;
     }
 }

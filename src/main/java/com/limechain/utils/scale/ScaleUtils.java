@@ -1,20 +1,27 @@
 package com.limechain.utils.scale;
 
 import com.limechain.utils.scale.exceptions.ScaleDecodingException;
+import com.limechain.utils.scale.exceptions.ScaleEncodingException;
+import com.limechain.utils.scale.writers.CollectionWriter;
 import com.limechain.utils.scale.writers.PairWriter;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.emeraldpay.polkaj.scale.ScaleReader;
+import io.emeraldpay.polkaj.scale.ScaleWriter;
 import io.emeraldpay.polkaj.scale.reader.ListReader;
 import io.emeraldpay.polkaj.scale.writer.ListWriter;
+import io.emeraldpay.polkaj.scale.writer.UByteWriter;
 import kotlin.Pair;
 import lombok.experimental.UtilityClass;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 // TODO:
 //  This is currently a helper utility class
@@ -52,6 +59,7 @@ public class ScaleUtils {
                     .toList());
         }
 
+        // TODO: Rename all those methods due to Java's type erasure blocking our generic aspirations
         public byte[] encode(List<Pair<byte[], byte[]>> pairs) throws IOException {
             try (ByteArrayOutputStream buffer = new ByteArrayOutputStream();
                  ScaleCodecWriter writer = new ScaleCodecWriter(buffer)) {
@@ -68,6 +76,42 @@ public class ScaleUtils {
                     .write(writer, Arrays.asList(values));
                 return buffer.toByteArray();
             }
+        }
+
+        public <T> byte[] encode(ScaleWriter<T> writer, T value) {
+            try (ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+                 ScaleCodecWriter scaleCodecWriter = new ScaleCodecWriter(buffer)) {
+                writer.write(scaleCodecWriter, value);
+                return buffer.toByteArray();
+            } catch (IOException e) {
+                throw new ScaleEncodingException("Unexpected exception while encoding.");
+            }
+        }
+
+        public <T> byte[] encodeAsList(ScaleWriter<T> writer, Collection<T> values) {
+            return encode(new CollectionWriter<>(writer), values);
+        }
+
+        public byte[] encodeAsListOfBytes(Collection<Byte> bytes) {
+            return encodeAsList(ScaleCodecWriter::directWrite, bytes);
+        }
+
+        public byte[] encodeAsListOfListsOfBytes(Collection<Collection<Byte>> values) {
+            return encodeAsList(new CollectionWriter<>(ScaleCodecWriter::directWrite), values);
+        }
+
+//        public byte[] encodeListOfListsOfBytes(List<List<Byte>> values) {
+//            return encodeAsList(new ListWriter<>(ScaleCodecWriter::directWrite), values);
+//        }
+
+        public byte[] encodeCompactUInt(int value) {
+            var out = new ByteArrayOutputStream();
+            try {
+                new ScaleCodecWriter(out).writeCompact(value);
+            } catch (IOException e) {
+                throw new ScaleEncodingException("Exception occurred while scale encoding compact UInt from int.", e);
+            }
+            return out.toByteArray();
         }
     }
 }
