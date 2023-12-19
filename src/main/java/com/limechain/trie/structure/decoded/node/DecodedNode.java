@@ -1,6 +1,7 @@
 package com.limechain.trie.structure.decoded.node;
 
 import com.limechain.trie.NodeVariant;
+import com.limechain.trie.structure.decoded.node.exceptions.NodeDecodingException;
 import com.limechain.trie.structure.decoded.node.exceptions.NodeEncodingException;
 import com.limechain.trie.structure.nibble.Nibble;
 import com.limechain.trie.structure.nibble.Nibbles;
@@ -49,8 +50,8 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
 
     public int getChildrenBitmap() {
         return IntStream.range(0, CHILDREN_COUNT)
-            .filter(i -> Objects.nonNull(this.children[i]))
-            .reduce(0, (bitmap, i) -> bitmap | (1 << i));
+                .filter(i -> Objects.nonNull(this.children[i]))
+                .reduce(0, (bitmap, i) -> bitmap | (1 << i));
     }
 
     /**
@@ -162,13 +163,13 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
         // But for now, we encode each inidividual children as a separate List<Byte> and simply concat them
         */
         List<Byte> childrenNodeValues =
-            Stream.of(this.children)
-                .filter(Objects::nonNull) //NOTE: Suspected trouble with null objects...
-                .flatMap(childValue -> {
-                    byte[] scaleEncodedChildValue = ScaleUtils.Encode.encodeAsListOfBytes(childValue);
-                    return Stream.of(ArrayUtils.toObject(scaleEncodedChildValue));
-                })
-                .toList();
+                Stream.of(this.children)
+                        .filter(Objects::nonNull) //NOTE: Suspected trouble with null objects...
+                        .flatMap(childValue -> {
+                            byte[] scaleEncodedChildValue = ScaleUtils.Encode.encodeAsListOfBytes(childValue);
+                            return Stream.of(ArrayUtils.toObject(scaleEncodedChildValue));
+                        })
+                        .toList();
         subvalue.addAll(childrenNodeValues);
 
         // Return everything accumulated thus far
@@ -177,33 +178,35 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
 
 
     // TODO: Test exhaustively (fine bit twiddling, must be really sure it's accurate)
+
     /**
-     *    Encodes the components of a node value into the node value itself.
-     *  <br>
-     *     This function returns an iterator of buffers. The actual node value is the concatenation of
-     *     these buffers put together.
-     *  <br>
-     *     > <b>Note</b>:
-     *      The returned iterator might contain a reference to the storage value and children
-     *      values in the [`DecodedNode`]. By returning an iterator of buffers, we avoid copying
-     *      these storage value and children values.
-     *  <br>
-     *     This encoding is independent of the trie version.
+     * Encodes the components of a node value into the node value itself.
+     * <br>
+     * This function returns an iterator of buffers. The actual node value is the concatenation of
+     * these buffers put together.
+     * <br>
+     * > <b>Note</b>:
+     * The returned iterator might contain a reference to the storage value and children
+     * values in the [`DecodedNode`]. By returning an iterator of buffers, we avoid copying
+     * these storage value and children values.
+     * <br>
+     * This encoding is independent of the trie version.
+     *
      * @return The return value is composed of three parts:<br>
-     *          - node header,<br>
-     *          - the partial key,<br>
-     *          - the node subvalue.
+     * - node header,<br>
+     * - the partial key,<br>
+     * - the node subvalue.
      * @throws NodeEncodingException if the node represents invalid state;
-     *                           for now only if it has a partial key, but no children and no storage value
+     *                               for now only if it has a partial key, but no children and no storage value
      */
     // NOTE:
     //  This return type is quite arbitrary (mainly influenced by Smoldot),
     //  feel free to change accordingly if it becomes too messy
     public Stream<List<Byte>> encode() {
         return Stream.of(
-            this.encodeNodeHeader(),
-            this.encodePartialKey(),
-            this.encodeSubvalue()
+                this.encodeNodeHeader(),
+                this.encodePartialKey(),
+                this.encodeSubvalue()
         );
     }
 
@@ -227,5 +230,81 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
         }
 
         return nodeValue;
+    }
+
+    public DecodedNode decode(byte[] encoded) {
+        if (encoded == null || encoded.length == 0) {
+            throw new NodeDecodingException("Invalid node value: it's empty");
+        }
+
+        int firstByte = encoded[0] & 0xFF;
+        boolean hasChildren;
+        Boolean storageValueHashed;
+        int pkLenFirstByteBits;
+
+        switch (firstByte >> 6) {
+            case 0b00:
+                if ((firstByte >> 5) == 0b001) {
+                    hasChildren = false;
+                    storageValueHashed = true;
+                    pkLenFirstByteBits = 5;
+                } else if ((firstByte >> 4) == 0b0001) {
+                    hasChildren = true;
+                    storageValueHashed = true;
+                    pkLenFirstByteBits = 4;
+                } else if (firstByte == 0) {
+                    hasChildren = false;
+                    storageValueHashed = null;
+                    pkLenFirstByteBits = 6;
+                } else {
+                    throw new NodeDecodingException("InvalidHeaderBits");
+                }
+                break;
+            case 0b10:
+                hasChildren = true;
+                storageValueHashed = null;
+                pkLenFirstByteBits = 6;
+                break;
+            case 0b01:
+                hasChildren = false;
+                storageValueHashed = false;
+                pkLenFirstByteBits = 6;
+                break;
+            case 0b11:
+                hasChildren = true;
+                storageValueHashed = false;
+                pkLenFirstByteBits = 6;
+                break;
+            default:
+                throw new NodeDecodingException("Unreachable code");
+        }
+
+
+        int pkLen = encoded[0] & ((1 << pkLenFirstByteBits) - 1);
+        int index = 1;
+
+        boolean continueIter = pkLen == ((1 << pkLenFirstByteBits) - 1);
+
+        while (continueIter) {
+            if (index >= encoded.length) {
+                throw new NodeDecodingException("PartialKeyLenTooShort");
+            }
+
+            continueIter = (encoded[index] & 0xFF) == 255;
+            int addedValue = (encoded[index] & 0xFF);
+
+            if (pkLen > Integer.MAX_VALUE - addedValue) {
+                throw new NodeDecodingException("Partial key length overflow");
+            }
+
+            pkLen += addedValue;
+            index++;
+        }
+
+        if (pkLen != 0 && !hasChildren && storageValueHashed == null){
+            throw new NodeDecodingException("Empty trie with partial key ");
+        }
+
+            return null;
     }
 }
