@@ -26,7 +26,7 @@ public enum HttpResponseType {
                 ByteArrayOutputStream buf = new ByteArrayOutputStream();
                 ScaleCodecWriter writer = new ScaleCodecWriter(buf);
         ) {
-            if (value == 3) {
+            if (value == FINISHED.value) {
                 Result<Integer, Object>  result = new Result<>(Result.ResultMode.OK, value, null);
                 new ResultWriter<Integer, Object>()
                         .writeResult(writer,
