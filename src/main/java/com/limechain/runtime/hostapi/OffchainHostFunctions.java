@@ -94,15 +94,19 @@ public class OffchainHostFunctions {
                     return 0;
                 }, List.of(Type.I32, Type.I64), Type.I64),
                 HostApi.getImportObject("ext_offchain_http_request_start_version_1", argv ->
-                                extOffchainHttpRequestStart(new RuntimePointerSize(argv.get(0)),
-                                        new RuntimePointerSize(argv.get(1)), new byte[0]).pointerSize(),
-                        List.of(Type.I64, Type.I64, Type.I64), Type.I64),
+                                extOffchainHttpRequestStart(
+                                        new RuntimePointerSize(argv.get(0)),
+                                        new RuntimePointerSize(argv.get(1)),
+                                        new byte[0]
+                                ).pointerSize()
+                        , List.of(Type.I64, Type.I64, Type.I64), Type.I64),
                 HostApi.getImportObject("ext_offchain_http_request_add_header_version_1", argv ->
                                 extOffchainHttpRequestAddHeader(
                                         argv.get(0).intValue(),
                                         new RuntimePointerSize(argv.get(1)),
-                                        new RuntimePointerSize(argv.get(2))).pointerSize(),
-                        List.of(Type.I32, Type.I64, Type.I64), Type.I64),
+                                        new RuntimePointerSize(argv.get(2))
+                                ).pointerSize()
+                        , List.of(Type.I32, Type.I64, Type.I64), Type.I64),
                 HostApi.getImportObject("ext_offchain_http_request_write_body_version_1", argv ->
                                 extOffchainHttpRequestWriteBody(
                                         argv.get(0).intValue(),
