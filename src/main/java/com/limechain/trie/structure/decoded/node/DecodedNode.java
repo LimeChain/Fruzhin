@@ -7,6 +7,7 @@ import com.limechain.trie.structure.nibble.Nibble;
 import com.limechain.trie.structure.nibble.Nibbles;
 import com.limechain.trie.structure.nibble.NibblesToBytes;
 import com.limechain.utils.scale.ScaleUtils;
+import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.apache.commons.lang3.ArrayUtils;
@@ -19,6 +20,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -35,7 +37,7 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
     public final static int CHILDREN_COUNT = 16;
 
     //NOTE: This will never be constructed internally, only assigned from outside.
-    private C[] children;
+    private List<C> children;
 
     private I partialKey;
 
@@ -45,12 +47,12 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
 
     public boolean hasChildren() {
         // NOTE: Maybe more inefficient than a for loop, but more readable :)
-        return Arrays.stream(this.children).anyMatch(Objects::nonNull);
+        return Arrays.stream(this.children.toArray()).anyMatch(Objects::nonNull);
     }
 
     public int getChildrenBitmap() {
         return IntStream.range(0, CHILDREN_COUNT)
-                .filter(i -> Objects.nonNull(this.children[i]))
+                .filter(i -> Objects.nonNull(this.children.get(i)))
                 .reduce(0, (bitmap, i) -> bitmap | (1 << i));
     }
 
@@ -59,6 +61,7 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
      * - it has children (i.e. branch / leaf node)
      * - it has a storage value
      * - this storage value (if present) is hashed
+     *
      * @return the NodeVariant of this DecodedNode
      */
     public NodeVariant calculateNodeVariant() {
@@ -160,13 +163,14 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
         // Other implementations are not including the length of children encodings, so I guess we'll skip it, too
         // If needed, this entire block could be shortened to:
         byte[] childrenNodeValues = ScaleUtils.Encode.encodeAsListOfListsOfBytes(Arrays.asList(children));
-        // But for now, we encode each inidividual children as a separate List<Byte> and simply concat them
+        // But for now, we encode each individual children as a separate List<Byte> and simply concat them
         */
         List<Byte> childrenNodeValues =
-                Stream.of(this.children)
+                Stream.of(this.children.toArray())
                         .filter(Objects::nonNull) //NOTE: Suspected trouble with null objects...
                         .flatMap(childValue -> {
-                            byte[] scaleEncodedChildValue = ScaleUtils.Encode.encodeAsListOfBytes(childValue);
+                            byte[] scaleEncodedChildValue =
+                                    ScaleUtils.Encode.encodeAsListOfBytes((Collection<Byte>) childValue);
                             return Stream.of(ArrayUtils.toObject(scaleEncodedChildValue));
                         })
                         .toList();
@@ -233,11 +237,12 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
     }
 
     public DecodedNode decode(byte[] encoded) {
+        ScaleCodecReader reader = new ScaleCodecReader(encoded);
         if (encoded == null || encoded.length == 0) {
             throw new NodeDecodingException("Invalid node value: it's empty");
         }
 
-        int firstByte = encoded[0] & 0xFF;
+        int firstByte = reader.readByte() & 0xFF;
         boolean hasChildren;
         Boolean storageValueHashed;
         int pkLenFirstByteBits;
@@ -257,7 +262,7 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
                     storageValueHashed = null;
                     pkLenFirstByteBits = 6;
                 } else {
-                    throw new NodeDecodingException("InvalidHeaderBits");
+                    throw new NodeDecodingException("Invalid header bits");
                 }
                 break;
             case 0b10:
@@ -276,35 +281,119 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
                 pkLenFirstByteBits = 6;
                 break;
             default:
-                throw new NodeDecodingException("Unreachable code");
+                throw new NodeDecodingException("Unknown variant");
         }
 
 
-        int pkLen = encoded[0] & ((1 << pkLenFirstByteBits) - 1);
-        int index = 1;
+        int pkLen = getPkLen(reader, firstByte, pkLenFirstByteBits);
+
+        if (pkLen != 0 && !hasChildren && storageValueHashed == null) {
+            throw new NodeDecodingException("Empty trie with partial key ");
+        }
+
+        byte[] partialKey = extractPartialKey(reader, pkLen);
+
+        int childrenBitmap = extractChildrenBitmap(reader, hasChildren);
+
+        byte[] storageValue = extractStorageValue(reader, storageValueHashed);
+
+        List<List<Byte>> children = extractChildren(reader, childrenBitmap);
+        byte[] trimmedPartialKey = (partialKey.length % 2 == 1) ?
+                Arrays.copyOfRange(partialKey, 1, partialKey.length) : partialKey;
+        DecodedNode<Nibbles, List<Byte>> decodedNode = new DecodedNode<>(children,
+                new Nibbles(trimmedPartialKey),
+                new StorageValue(storageValue, storageValueHashed));
+        return null;
+    }
+
+    private static int getPkLen(ScaleCodecReader reader, int firstByte, int pkLenFirstByteBits) {
+        int pkLen = firstByte & ((1 << pkLenFirstByteBits) - 1);
 
         boolean continueIter = pkLen == ((1 << pkLenFirstByteBits) - 1);
 
         while (continueIter) {
-            if (index >= encoded.length) {
+            if (!reader.hasNext()) {
                 throw new NodeDecodingException("PartialKeyLenTooShort");
             }
-
-            continueIter = (encoded[index] & 0xFF) == 255;
-            int addedValue = (encoded[index] & 0xFF);
+            byte currentByte = reader.readByte();
+            continueIter = (currentByte & 0xFF) == 255;
+            int addedValue = (currentByte & 0xFF);
 
             if (pkLen > Integer.MAX_VALUE - addedValue) {
                 throw new NodeDecodingException("Partial key length overflow");
             }
 
             pkLen += addedValue;
-            index++;
+        }
+        return pkLen;
+    }
+
+    public static byte[] extractPartialKey(ScaleCodecReader reader, int pkLen) {
+        if (!reader.hasNext()) {
+            throw new NodeDecodingException("Node value cannot be null");
         }
 
-        if (pkLen != 0 && !hasChildren && storageValueHashed == null){
-            throw new NodeDecodingException("Empty trie with partial key ");
+        // Calculate the length of the partial key in bytes
+        int pkLenBytes = pkLen == 0 ? 0 : 1 + ((pkLen - 1) / 2);
+        byte[] partialKey = reader.readByteArray(pkLen);
+
+        if ((pkLen % 2 == 1) && ((partialKey[0] & 0xf0) != 0)) {
+            throw new NodeDecodingException("Invalid Partial key padding");
         }
 
-            return null;
+        return partialKey;
+    }
+
+    public static int extractChildrenBitmap(ScaleCodecReader reader, boolean hasChildren) {
+        if (!reader.hasNext()) {
+            throw new NodeDecodingException("Node value cannot be null");
+        }
+
+        if (!hasChildren) {
+            return 0;
+        }
+        byte[] bitmap;
+        final int BITMAP_DATA_LENGTH = 2;
+        bitmap = reader.readByteArray(BITMAP_DATA_LENGTH);
+        int childrenBitmap = ((bitmap[0] & 0xFF) | (bitmap[1] & 0xFF) << 8);
+
+        if (childrenBitmap == 0) {
+            throw new NodeDecodingException("Zero children bitmap");
+        }
+        return childrenBitmap;
+    }
+
+    public static byte[] extractStorageValue(ScaleCodecReader reader, Boolean storageValueHashed) {
+        if (!reader.hasNext()) {
+            throw new NodeDecodingException("Node value cannot be null");
+        }
+
+        byte[] storageValue;
+
+        if (storageValueHashed == null) {
+            storageValue = null;
+        } else if (!storageValueHashed) {
+            storageValue = reader.readByteArray();
+        } else { // storageValueHashed is true
+            storageValue = reader.readByteArray(32);
+        }
+
+        return storageValue;
+    }
+
+    public List<List<Byte>> extractChildren(ScaleCodecReader reader, int childrenBitmap) {
+        List<List<Byte>> children = new ArrayList<List<Byte>>(16);
+        for (int i = 0; i < CHILDREN_COUNT; i++) {
+            if ((childrenBitmap & (1 << i)) == 0) {
+                children.set(i, null);
+                continue;
+            }
+            byte[] value = reader.readByteArray();
+            if (value.length > 32) {
+                throw new NodeDecodingException("Child too large");
+            }
+            children.set(i, Arrays.asList(ArrayUtils.toObject(value)));
+        }
+        return children;
     }
 }
