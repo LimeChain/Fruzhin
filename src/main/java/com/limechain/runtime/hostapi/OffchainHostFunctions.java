@@ -450,6 +450,10 @@ public class OffchainHostFunctions {
         int length = reader.readCompactInt();
         int[] requestIds = new int[length];
         for (int i = 0; i < length; i++) {
+            /*  Casting to integer here will not be a problem due to substrate using i16 to store requestIds.
+                Therefore, we will not overflow here. Link to the struct below:
+                    https://github.com/paritytech/polkadot-sdk/blob/9f5221cc2f7f10adfd22b293ceed060617468936/substrate/primitives/core/src/offchain/mod.rs#L101C1-L101C1
+             */
             requestIds[i] = (int) reader.readUint32();
         }
         return requestIds;
