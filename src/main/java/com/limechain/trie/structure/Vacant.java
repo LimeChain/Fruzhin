@@ -221,7 +221,6 @@ public final class Vacant<T> extends Entry<T> {
         // Find the common ancestor between `newNodePartialKey` and `existingNodePartialKey`.
         int branchPartialKeyLen;
         branchPartialKeyLenInit: {
-            // TODO: Add descriptive messages to those assertions
             assert !newNodePartialKey.equals(existingNodePartialKey)
                 : "The partial key remaining for the node to be inserted can't match an existing node's partial key, " +
                   "since then this entry must've not been vacant.";
