@@ -232,7 +232,7 @@ public class TrieStructure<T> {
         };
     }
 
-    private ExistingNodeInnerResult existingNodeInner(Nibbles key) {
+    private ExistingNodeInnerResult existingNodeInner(final Nibbles key) {
         if (this.rootIndex == null) {
             return new ExistingNodeInnerResult.NotFound(null);
         }
@@ -262,7 +262,7 @@ public class TrieStructure<T> {
             // NOTE:
             //  For now, the remainingKey argument of `ClosestAncestor` is not used, so if this becomes an efficiency issue
             //  We could omit storing it.
-            var remainingKey = new Nibbles(key);
+            var remainingKey = new Nibbles(keyIter);
             closestAncestor = new ExistingNodeInnerResult.NotFound.ClosestAncestor(currentIndex, remainingKey);
             keyIter = remainingKey.iterator();
 
