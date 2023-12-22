@@ -27,7 +27,7 @@ public class NibblesToBytes {
         for (int i = 0; i < halfLen; ++i) {
             Nibble n1 = nibbles.get(2 * i);
             Nibble n2 = nibbles.get(2 * i + 1);
-            byte b = (byte) ((n1.asByte() << 4) + n2.asByte());
+            byte b = (byte) ((n1.asInt() << 4) + n2.asInt());
             result.add(b);
         }
 
