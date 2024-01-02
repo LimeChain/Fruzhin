@@ -236,7 +236,7 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
         return nodeValue;
     }
 
-    public DecodedNode decode(byte[] encoded) {
+    public static DecodedNode decode(byte[] encoded) {
         ScaleCodecReader reader = new ScaleCodecReader(encoded);
         if (encoded == null || encoded.length == 0) {
             throw new NodeDecodingException("Invalid node value: it's empty");
@@ -303,7 +303,7 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
         DecodedNode<Nibbles, List<Byte>> decodedNode = new DecodedNode<>(children,
                 new Nibbles(trimmedPartialKey),
                 new StorageValue(storageValue, storageValueHashed));
-        return null;
+        return decodedNode;
     }
 
     private static int getPkLen(ScaleCodecReader reader, int firstByte, int pkLenFirstByteBits) {
@@ -335,7 +335,7 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
 
         // Calculate the length of the partial key in bytes
         int pkLenBytes = pkLen == 0 ? 0 : 1 + ((pkLen - 1) / 2);
-        byte[] partialKey = reader.readByteArray(pkLen);
+        byte[] partialKey = reader.readByteArray(pkLenBytes);
 
         if ((pkLen % 2 == 1) && ((partialKey[0] & 0xf0) != 0)) {
             throw new NodeDecodingException("Invalid Partial key padding");
@@ -381,18 +381,18 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
         return storageValue;
     }
 
-    public List<List<Byte>> extractChildren(ScaleCodecReader reader, int childrenBitmap) {
+    public static List<List<Byte>> extractChildren(ScaleCodecReader reader, int childrenBitmap) {
         List<List<Byte>> children = new ArrayList<List<Byte>>(16);
         for (int i = 0; i < CHILDREN_COUNT; i++) {
             if ((childrenBitmap & (1 << i)) == 0) {
-                children.set(i, null);
+                children.add(i, null);
                 continue;
             }
             byte[] value = reader.readByteArray();
             if (value.length > 32) {
                 throw new NodeDecodingException("Child too large");
             }
-            children.set(i, Arrays.asList(ArrayUtils.toObject(value)));
+            children.add(i, Arrays.asList(ArrayUtils.toObject(value)));
         }
         return children;
     }
