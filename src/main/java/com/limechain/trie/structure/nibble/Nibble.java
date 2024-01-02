@@ -3,14 +3,48 @@ package com.limechain.trie.structure.nibble;
 import com.limechain.trie.structure.nibble.exceptions.NibbleFromHexDigitException;
 import com.limechain.trie.structure.nibble.exceptions.NibbleFromIntegerException;
 
-public record Nibble(byte value) {
-    public static final Nibble ZERO = Nibble.fromInt(0);
-    public static final Nibble MAX = Nibble.fromInt(15);
+import java.util.Objects;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
+
+// NOTE:
+//  We could consider turning Nibble into an enum
+//  if wrapping a lot of half-bytes becomes too expensive
+//  in terms of memory usage and referential overcrowding.
+/**
+ * Represents half a byte, i.e. a nibble, i.e. a four-bit sequence.
+ * Immutable by design.
+ */
+public class Nibble {
+    private final byte value;
+    private Nibble(final int value) {
+        this((byte) value);
+    }
+    private Nibble(final byte value) {
+        this.value = value;
+    }
 
     private static final int HEX_RADIX = 16;
 
     /**
-     * This is effectively the same constructor as {@link #fromInt(int) fromInt}.
+     * The minimal possible Nibble, i.e. '0'
+     */
+    public static final Nibble ZERO = Nibble.fromInt(0);
+
+    /**
+     * The maximal possible Nibble, i.e. 'f'
+     */
+    public static final Nibble MAX = Nibble.fromInt(15);
+
+    /**
+     * @return a stream of all nibbles, i.e. [0, f]
+     */
+    public static Stream<Nibble> all() {
+        return IntStream.range(0, HEX_RADIX).mapToObj(Nibble::fromInt);
+    }
+
+    /**
+     * This is effectively the same constructor as {@link Nibble#fromInt(int) fromInt}.
      * Exists just for explicitness's sake, because explicit is better than implicit.
      * @param value byte representation of the nibble
      * @return the constructed Nibble
@@ -34,7 +68,7 @@ public record Nibble(byte value) {
             throw NibbleFromIntegerException.valueTooLarge(value);
         }
 
-        return new Nibble((byte) value);
+        return new Nibble(value);
     }
 
     /**
@@ -53,27 +87,50 @@ public record Nibble(byte value) {
         return Nibble.fromInt(value);
     }
 
-    public byte toByte() {
+    /**
+     * @return the byte representation of the nibble
+     */
+    public byte asByte() {
         return this.value;
     }
 
-    public int toInt() {
+    /**
+     * @return the int representation of the nibble
+     */
+    public int asInt() {
         return this.value;
     }
 
-    public char toLowerHexDigit() {
+    /**
+     * @return the lower hex char representation of the nibble
+     */
+    public char asLowerHexDigit() {
         return Character.forDigit(this.value, HEX_RADIX);
     }
 
-    public char toUpperHexDigit() {
-        return Character.toUpperCase(this.toLowerHexDigit());
+    /**
+     * @return the upper hex char representation of the nibble
+     */
+    public char asUpperHexDigit() {
+        return Character.toUpperCase(this.asLowerHexDigit());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Nibble nibble = (Nibble) o;
+        return value == nibble.value;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(value);
     }
 
     // NOTE: Currently exists for debugging purposes only
     @Override
     public String toString() {
-        return "Nibble{" +
-               "value=" + value +
-               '}';
+        return String.valueOf(this.asLowerHexDigit());
     }
 }

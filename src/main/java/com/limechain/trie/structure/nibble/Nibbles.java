@@ -4,7 +4,6 @@ import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -13,20 +12,37 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Objects;
+import java.util.RandomAccess;
+import java.util.stream.Collector;
+import java.util.stream.Stream;
 
+// TODO:
+//  Should this implement List or just Iterable... or maybe extend List<Nibble>?
+//  This current version contains a huge amount of boilerplate,
+//  but it's what I've reached as a most convenient option to use outside.
+//  Basically a List<Nibble> with additional methods.
+
+// TODO:
+//  As a List<Nibble> implementor, Nibbles is currently mutable, which I severely dislike,
+//  since this mandates the developer to think about where to copy and where passing by reference is sufficient.
 /**
  * Convenience wrapper for any 'sequence of Nibble'-like structure
  */
-//TODO:
-// Should this implement List or just Iterable... or maybe extend List<Nibble>?
-// This current version contains a huge amount of boilerplate,
-// but it's what I've reached as a most convenient option to use outside.
-// Basically a List<Nibble> with additional methods.
-public class Nibbles implements List<Nibble> {
+public class Nibbles implements List<Nibble>, RandomAccess, Comparable<List<Nibble>> {
     public static final Nibbles EMPTY = new Nibbles(new byte[]{});
+
+    /**
+     * Don't mutate! :D
+     */
+    public static final Nibbles ALL = new Nibbles(Nibble.all());
+
+    public static Stream<Nibble> all() {
+        return ALL.stream();
+    }
 
     private final List<Nibble> nibbles;
 
+    // TODO: Maybe convert all those overloaded constructors to static generational methods
     public Nibbles(Nibble nibble) {
         this(List.of(nibble));
     }
@@ -43,6 +59,14 @@ public class Nibbles implements List<Nibble> {
         this(nibbles.iterator());
     }
 
+    public Nibbles(Stream<Nibble> nibbles) {
+        this(nibbles.iterator());
+    }
+
+    public static Nibbles of(int... nibbles) {
+        return new Nibbles(Arrays.stream(nibbles).mapToObj(Nibble::fromInt));
+    }
+
     public Nibbles(Iterator<Nibble> nibbles) {
         // TODO:
         //  Reconsider the internal representation
@@ -52,7 +76,7 @@ public class Nibbles implements List<Nibble> {
         // TODO:
         //  Reconsider whether this class should eagerly copy outer data to gain ownership
         //  or simply trust the caller for `read-only` invariance of the given references...
-        //  For now, we copy everything.
+        //  For now, we simply copy references. Could lead to problems if a Nibble is mutated outside...
         this.nibbles = IteratorUtils.toList(nibbles);
     }
 
@@ -64,7 +88,7 @@ public class Nibbles implements List<Nibble> {
             return false;
         }
 
-        return prefix.equals(this.subList(0, prefixSize));
+        return prefix.nibbles.equals(this.nibbles.subList(0, prefixSize));
     }
 
     @NotNull
@@ -73,17 +97,51 @@ public class Nibbles implements List<Nibble> {
         return nibbles.iterator();
     }
 
+    /**
+     * @return the lower hexadecimal string representation of this Nibbles
+     */
+    public String toLowerHexString() {
+        return toLowerHexString(this.nibbles);
+    }
+
+    // TODO:
+    //  This methods exists simply because to Java, not any `List<Nibble>` is the same as `Nibbles`
+    //  Although that's exactly what I want :D
+    private static String toLowerHexString(List<Nibble> nibbles) {
+        return nibbles.stream()
+            .map(Nibble::asLowerHexDigit)
+            .collect(
+                Collector.of(
+                    StringBuilder::new,
+                    StringBuilder::append,
+                    StringBuilder::append,
+                    StringBuilder::toString
+                )
+            );
+    }
+
+    @Override
+    public String toString() {
+        return this.toLowerHexString();
+    }
+
+    @Override
+    public Stream<Nibble> stream() {
+        return nibbles.stream();
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Nibbles nibbles1 = (Nibbles) o;
-        return Objects.equals(nibbles, nibbles1.nibbles);
+        return Objects.equals(this.nibbles, nibbles1.nibbles);
     }
+
 
     @Override
     public int hashCode() {
-        return Objects.hash(nibbles);
+        return Objects.hash(this.nibbles);
     }
 
     @NotNull
@@ -186,8 +244,7 @@ public class Nibbles implements List<Nibble> {
         return nibbles.subList(fromIndex, toIndex);
     }
 
-    //TODO: Maybe implement Cloneable?
-    public Nibbles clone() {
+    public Nibbles copy() {
         return new Nibbles(this.nibbles);
     }
 
@@ -207,5 +264,18 @@ public class Nibbles implements List<Nibble> {
 
     public List<Nibble> asUnmodifiableList() {
         return Collections.unmodifiableList(this.nibbles);
+    }
+
+    @Override
+    public int compareTo(@NotNull List<Nibble> o) {
+        return this.toLowerHexString().compareTo(toLowerHexString(o));
+    }
+
+    /**
+     * @return Nibbles constructed from a string of hexadecimal characters (nibbles).
+     *         The capitalization of the characters doesn't matter.
+     */
+    public static Nibbles fromHexString(String hex) {
+        return new Nibbles(hex.chars().mapToObj(c -> (char) c).map(Nibble::fromAsciiHexDigit));
     }
 }
