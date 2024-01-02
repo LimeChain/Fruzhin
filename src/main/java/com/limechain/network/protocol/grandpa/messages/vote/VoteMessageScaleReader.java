@@ -1,5 +1,6 @@
 package com.limechain.network.protocol.grandpa.messages.vote;
 
+import com.limechain.exception.WrongMessageTypeException;
 import com.limechain.network.protocol.grandpa.messages.GrandpaMessageType;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleReader;
@@ -24,7 +25,7 @@ public class VoteMessageScaleReader implements ScaleReader<VoteMessage> {
     public VoteMessage read(ScaleCodecReader reader) {
         int messageType = reader.readByte();
         if (messageType != GrandpaMessageType.VOTE.getType()) {
-            throw new RuntimeException(
+            throw new WrongMessageTypeException(
                     String.format("Trying to read message of type %d as a vote message", messageType));
         }
 

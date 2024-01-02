@@ -1,5 +1,6 @@
 package com.limechain.storage;
 
+import com.limechain.exception.DBException;
 import com.limechain.utils.ByteArrayUtils;
 import lombok.extern.java.Log;
 import org.apache.commons.io.FileUtils;
@@ -69,7 +70,7 @@ public class DBRepository implements KVRepository<String, Object> {
                             e.getCause(),
                             e.getMessage()),
                     e);
-            throw new RuntimeException();
+            throw new DBException(e);
         }
     }
 

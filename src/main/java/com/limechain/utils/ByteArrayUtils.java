@@ -6,7 +6,7 @@ import lombok.experimental.UtilityClass;
 public class ByteArrayUtils {
     public static int commonPrefixLength(byte[] a, byte[] b) {
         int minLength = Math.min(a.length, b.length);
-        int length = 0;
+        int length;
         for (length = 0; length < minLength; length++) {
             if (a[length] != b[length]) {
                 break;
@@ -45,14 +45,15 @@ public class ByteArrayUtils {
             return 0;
         }
 
-        outer:
         for (int i = 0; i < array.length - target.length + 1; i++) {
+            boolean shouldReturn = true;
             for (int j = 0; j < target.length; j++) {
                 if (array[i + j] != target[j]) {
-                    continue outer;
+                    shouldReturn = false;
+                    break;
                 }
             }
-            return i;
+            if (shouldReturn) return i;
         }
         return -1;
     }

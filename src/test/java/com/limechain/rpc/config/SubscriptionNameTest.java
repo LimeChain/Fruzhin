@@ -7,22 +7,22 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 
 class SubscriptionNameTest {
     @Test
-    public void SubscriptionNames_haveCorrectValues() {
-        assertEquals(SubscriptionName.CHAIN_HEAD_UNSTABLE_FOLLOW.getValue(), "chainHead_unstable_follow");
-        assertEquals(SubscriptionName.CHAIN_HEAD_UNSTABLE_UNFOLLOW.getValue(), "chainHead_unstable_unfollow");
-        assertEquals(SubscriptionName.CHAIN_HEAD_UNSTABLE_UNPIN.getValue(), "chainHead_unstable_unpin");
-        assertEquals(SubscriptionName.CHAIN_HEAD_UNSTABLE_STORAGE.getValue(), "chainHead_unstable_storage");
-        assertEquals(SubscriptionName.CHAIN_HEAD_UNSTABLE_CALL.getValue(), "chainHead_unstable_call");
-        assertEquals(SubscriptionName.CHAIN_HEAD_UNSTABLE_STOP_CALL.getValue(), "chainHead_unstable_stopCall");
-        assertEquals(SubscriptionName.TRANSACTION_UNSTABLE_SUBMIT_AND_WATCH.getValue(),
-                "transaction_unstable_submitAndWatch");
-        assertEquals(SubscriptionName.TRANSACTION_UNSTABLE_UNWATCH.getValue(), "transaction_unstable_unwatch");
+    void SubscriptionNames_haveCorrectValues() {
+        assertEquals("chainHead_unstable_follow", SubscriptionName.CHAIN_HEAD_UNSTABLE_FOLLOW.getValue());
+        assertEquals("chainHead_unstable_unfollow", SubscriptionName.CHAIN_HEAD_UNSTABLE_UNFOLLOW.getValue());
+        assertEquals("chainHead_unstable_unpin", SubscriptionName.CHAIN_HEAD_UNSTABLE_UNPIN.getValue());
+        assertEquals("chainHead_unstable_storage", SubscriptionName.CHAIN_HEAD_UNSTABLE_STORAGE.getValue());
+        assertEquals("chainHead_unstable_call", SubscriptionName.CHAIN_HEAD_UNSTABLE_CALL.getValue());
+        assertEquals("chainHead_unstable_stopCall", SubscriptionName.CHAIN_HEAD_UNSTABLE_STOP_CALL.getValue());
+        assertEquals("transaction_unstable_submitAndWatch",
+                SubscriptionName.TRANSACTION_UNSTABLE_SUBMIT_AND_WATCH.getValue());
+        assertEquals("transaction_unstable_unwatch", SubscriptionName.TRANSACTION_UNSTABLE_UNWATCH.getValue());
     }
     
     @Test
-    public void FromString_returns_correctValue() {
-        assertEquals(SubscriptionName.fromString("chainHead_unstable_follow"),
-                SubscriptionName.CHAIN_HEAD_UNSTABLE_FOLLOW);
+    void FromString_returns_correctValue() {
+        assertEquals(SubscriptionName.CHAIN_HEAD_UNSTABLE_FOLLOW,
+                SubscriptionName.fromString("chainHead_unstable_follow"));
         assertNull(SubscriptionName.fromString("invalid"));
     }
 }

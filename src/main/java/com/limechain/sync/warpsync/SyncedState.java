@@ -110,16 +110,16 @@ public class SyncedState {
             case KUSAMA -> genesisBlockHash = GenesisBlockHash.KUSAMA;
             case WESTEND -> genesisBlockHash = GenesisBlockHash.WESTEND;
             case LOCAL -> genesisBlockHash = GenesisBlockHash.LOCAL;
-            default -> throw new IllegalStateException("Unexpected value: " + network.chain);
+            default -> throw new IllegalStateException("Unexpected value: " + network.getChain());
         }
 
-        Hash256 lastFinalizedBlockHash = this.lastFinalizedBlockHash == null
+        Hash256 blockHash = this.lastFinalizedBlockHash == null
                 ? genesisBlockHash
                 : this.lastFinalizedBlockHash;
         return new BlockAnnounceHandshake(
                 network.getNodeRole().getValue(),
                 this.lastFinalizedBlockNumber,
-                lastFinalizedBlockHash,
+                blockHash,
                 genesisBlockHash
         );
     }
@@ -206,13 +206,9 @@ public class SyncedState {
     }
 
     private void updateRuntime(Hash256 blockHash) {
-        try {
-            updateRuntimeCode();
-            buildRuntime(blockHash);
-            scheduledRuntimeUpdateBlocks.remove(lastFinalizedBlockNumber);
-        } catch (RuntimeCodeException e) {
-            throw new RuntimeException(e);
-        }
+        updateRuntimeCode();
+        buildRuntime(blockHash);
+        scheduledRuntimeUpdateBlocks.remove(lastFinalizedBlockNumber);
     }
 
     /**
@@ -271,11 +267,11 @@ public class SyncedState {
     public void loadSavedRuntimeCode() {
         byte[][] merkleProof = (byte[][]) repository.find(DBConstants.STATE_TRIE_MERKLE_PROOF)
                 .orElseThrow(() -> new RuntimeCodeException("No available merkle proof"));
-        Hash256 stateRoot = repository.find(DBConstants.STATE_TRIE_ROOT_HASH)
+        Hash256 stateRootDecoded = repository.find(DBConstants.STATE_TRIE_ROOT_HASH)
                 .map(storedRootState -> Hash256.from(storedRootState.toString()))
                 .orElseThrow(() -> new RuntimeCodeException("No available state root"));
 
-        this.runtimeCode = runtimeBuilder.buildRuntimeCode(merkleProof, stateRoot);
+        this.runtimeCode = runtimeBuilder.buildRuntimeCode(merkleProof, stateRootDecoded);
     }
 
     /**
@@ -286,7 +282,7 @@ public class SyncedState {
      * @param neighbourMessage received neighbour message
      * @param peerId           sender of message
      */
-    public synchronized void syncNeighbourMessage(NeighbourMessage neighbourMessage, PeerId peerId) {
+    public void syncNeighbourMessage(NeighbourMessage neighbourMessage, PeerId peerId) {
         if (warpSyncFinished && neighbourMessage.getSetId().compareTo(setId) > 0) {
             updateSetData(neighbourMessage.getLastFinalizedBlock().add(BigInteger.ONE), peerId);
         }
@@ -304,7 +300,7 @@ public class SyncedState {
         Justification justification = new JustificationReader().read(
                 new ScaleCodecReader(block.getJustification().toByteArray()));
         boolean verified = justification != null
-                && JustificationVerifier.verify(justification.precommits, justification.round);
+                && JustificationVerifier.verify(justification.getPrecommits(), justification.getRound());
 
         if (verified) {
             BlockHeader header = new BlockHeaderReader().read(new ScaleCodecReader(block.getHeader().toByteArray()));

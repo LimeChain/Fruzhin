@@ -6,10 +6,10 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
-public class ChainTest {
+class ChainTest {
 
     @Test
-    public void fromStringTest() {
+    void fromStringTest() {
         Chain polkadotChain = Chain.fromString("polkadot");
         assertEquals(Chain.POLKADOT, polkadotChain);
 
@@ -21,9 +21,9 @@ public class ChainTest {
     }
 
     @Test
-    public void FromString_returns_correctValue() {
-        assertEquals(Chain.fromString("polkadot"),
-                Chain.POLKADOT);
+    void FromString_returns_correctValue() {
+        assertEquals(Chain.POLKADOT,
+                Chain.fromString("polkadot"));
         assertNull(SubscriptionName.fromString("invalid"));
     }
 }

@@ -2,6 +2,9 @@ package com.limechain.rpc.methods.system;
 
 import com.limechain.chain.ChainService;
 import com.limechain.config.SystemInfo;
+import com.limechain.exception.ExecutionFailedException;
+import com.limechain.exception.PeerNotFoundException;
+import com.limechain.exception.ThreadInterruptedException;
 import com.limechain.network.ConnectionManager;
 import com.limechain.network.Network;
 import com.limechain.network.dto.PeerInfo;
@@ -134,14 +137,17 @@ public class SystemRPCImpl {
      * @param multiaddr Multiaddr to be added
      */
     public void systemAddReservedPeer(String multiaddr) {
-        if (multiaddr == null || multiaddr.trim().equalsIgnoreCase("")) {
-            throw new RuntimeException("PeerId cannot be empty");
+        if (multiaddr == null || multiaddr.isBlank()) {
+            throw new PeerNotFoundException("PeerId cannot be empty");
         }
 
         try {
-            this.network.kademliaService.addReservedPeer(multiaddr);
-        } catch (ExecutionException | InterruptedException e) {
-            throw new RuntimeException("Error while adding reserved peer: " + e.getMessage());
+            this.network.getKademliaService().addReservedPeer(multiaddr);
+        } catch (ExecutionException e) {
+            throw new ExecutionFailedException("Error while adding reserved peer: " + e.getMessage());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new ThreadInterruptedException(e);
         }
     }
 
@@ -152,8 +158,8 @@ public class SystemRPCImpl {
      * @param peerIdStr peerId to be removed
      */
     public void systemRemoveReservedPeer(String peerIdStr) {
-        if (peerIdStr == null || peerIdStr.trim().equalsIgnoreCase("")) {
-            throw new RuntimeException("PeerId cannot be empty");
+        if (peerIdStr == null || peerIdStr.isBlank()) {
+            throw new PeerNotFoundException("PeerId cannot be empty");
         }
         PeerId peerId = PeerId.fromBase58(peerIdStr);
 

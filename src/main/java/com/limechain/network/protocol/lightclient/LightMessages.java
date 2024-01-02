@@ -1,5 +1,7 @@
 package com.limechain.network.protocol.lightclient;
 
+import com.limechain.exception.ExecutionFailedException;
+import com.limechain.exception.ThreadInterruptedException;
 import com.limechain.network.StrictProtocolBinding;
 import com.limechain.network.protocol.lightclient.pb.LightClientMessage;
 import com.limechain.utils.StringUtils;
@@ -15,6 +17,8 @@ import java.util.logging.Level;
 
 @Log
 public class LightMessages extends StrictProtocolBinding<LightMessagesController> {
+    private static final String GENERIC_REMOTE_CALL_ERROR_MESSAGE = "Error while sending remote call request: ";
+
     public LightMessages(String protocolId, LightMessagesProtocol protocol) {
         super(protocolId, protocol);
     }
@@ -30,9 +34,12 @@ public class LightMessages extends StrictProtocolBinding<LightMessagesController
                     .get();
             log.log(Level.INFO, "Received response with length: " + resp.toByteArray().length);
             return resp;
-        } catch (ExecutionException | InterruptedException e) {
-            log.log(Level.SEVERE, "Error while sending remote call request: ", e);
-            throw new RuntimeException(e);
+        } catch (ExecutionException e) {
+            log.log(Level.SEVERE, GENERIC_REMOTE_CALL_ERROR_MESSAGE, e);
+            throw new ExecutionFailedException(e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new ThreadInterruptedException(e);
         }
     }
 
@@ -47,9 +54,12 @@ public class LightMessages extends StrictProtocolBinding<LightMessagesController
                     .get(10, TimeUnit.SECONDS);
             log.log(Level.INFO, "Received light client message response with length: " + resp.toByteArray().length);
             return resp;
-        } catch (ExecutionException | InterruptedException | TimeoutException e) {
-            log.log(Level.SEVERE, "Error while sending remote call request: ", e);
-            throw new RuntimeException(e);
+        } catch (ExecutionException | TimeoutException e) {
+            log.log(Level.SEVERE, GENERIC_REMOTE_CALL_ERROR_MESSAGE, e);
+            throw new ExecutionFailedException(e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new ThreadInterruptedException(e);
         }
     }
 
@@ -64,9 +74,12 @@ public class LightMessages extends StrictProtocolBinding<LightMessagesController
                     .get();
             log.log(Level.INFO, "Received response: " + resp.toString());
             return resp;
-        } catch (ExecutionException | InterruptedException e) {
-            log.log(Level.SEVERE, "Error while sending remote call request: ", e);
-            throw new RuntimeException(e);
+        } catch (ExecutionException e) {
+            log.log(Level.SEVERE, GENERIC_REMOTE_CALL_ERROR_MESSAGE, e);
+            throw new ExecutionFailedException(e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new ThreadInterruptedException(e);
         }
     }
 }

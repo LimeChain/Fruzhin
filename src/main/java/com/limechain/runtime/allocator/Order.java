@@ -50,8 +50,8 @@ public class Order {
             return Optional.empty();
         }
 
-        int value = freeHeaderPointer;
+        int result = freeHeaderPointer;
         freeHeaderPointer = Header.fromMemory(freeHeaderPointer, memory).getNextFreeHeaderPointer();
-        return Optional.of(value);
+        return Optional.of(result);
     }
 }

@@ -1,7 +1,7 @@
 package com.limechain.network.protocol.warp.dto;
 
 import com.limechain.network.protocol.blockannounce.scale.BlockHeaderScaleWriter;
-import com.limechain.network.protocol.warp.exception.ScaleEncodingException;
+import com.limechain.utils.scale.exceptions.ScaleEncodingException;
 import com.limechain.utils.HashUtils;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.emeraldpay.polkaj.types.Hash256;

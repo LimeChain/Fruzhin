@@ -58,7 +58,7 @@ public class EcdsaUtils {
      */
     public static byte[] signMessage(final byte[] privateKey, final byte[] message) {
         if (privateKey == null) return null;
-        ECKeyPair keyPair = Bip32ECKeyPair.create(privateKey);
+        ECKeyPair keyPair = ECKeyPair.create(privateKey);
 
         Sign.SignatureData signature = Sign.signMessage(message, keyPair, false);
 

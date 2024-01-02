@@ -9,6 +9,8 @@ import io.emeraldpay.polkaj.scaletypes.Extrinsic;
 import io.emeraldpay.polkaj.types.Hash256;
 import io.emeraldpay.polkaj.types.Hash512;
 import io.libp2p.crypto.keys.Ed25519PublicKey;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import lombok.extern.java.Log;
 import org.bouncycastle.crypto.params.Ed25519PublicKeyParameters;
 import org.bouncycastle.crypto.signers.Ed25519Signer;
@@ -24,6 +26,7 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 @Log
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class JustificationVerifier {
     public static boolean verify(Precommit[] precommits, BigInteger round) {
         SyncedState syncedState = SyncedState.getInstance();

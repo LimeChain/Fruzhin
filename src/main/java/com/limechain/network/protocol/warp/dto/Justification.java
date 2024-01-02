@@ -1,6 +1,7 @@
 package com.limechain.network.protocol.warp.dto;
 
 import io.emeraldpay.polkaj.types.Hash256;
+import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.java.Log;
 
@@ -8,13 +9,14 @@ import java.math.BigInteger;
 import java.util.Arrays;
 
 @Setter
+@Getter
 @Log
 public class Justification {
-    public BigInteger round;
-    public Hash256 targetHash;
-    public BigInteger targetBlock;
-    public Precommit[] precommits;
-    public BlockHeader[] ancestryVotes;
+    private BigInteger round;
+    private Hash256 targetHash;
+    private BigInteger targetBlock;
+    private Precommit[] precommits;
+    private BlockHeader[] ancestryVotes;
 
     @Override
     public String toString() {

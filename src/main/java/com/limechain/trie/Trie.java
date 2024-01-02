@@ -51,7 +51,7 @@ public class Trie {
             return new byte[0];
         }
 
-        if (parent.getKind() == NodeKind.Leaf)
+        if (parent.getKind() == NodeKind.LEAF)
             return retrieveFromLeaf(parent, key);
 
         return retrieveFromBranch(parent, key);

@@ -1,6 +1,7 @@
 package com.limechain.cli;
 
 import com.limechain.chain.Chain;
+import com.limechain.exception.CliArgsParseException;
 import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.storage.DBInitializer;
 import lombok.Getter;
@@ -55,13 +56,14 @@ public class Cli {
             String dbPath = cmd.getOptionValue(DB_PATH, DBInitializer.DEFAULT_DIRECTORY);
             boolean dbRecreate = cmd.hasOption(DB_RECREATE);
             String nodeKey = cmd.getOptionValue(NODE_KEY);
+            // TODO: separation of enums; this NodeRole enum is used for blockannounce
+            //       what does running the node in NodeMode NONE mean?
             String nodeMode = cmd.getOptionValue(NODE_MODE, NodeRole.FULL.toString());
 
             return new CliArguments(network, dbPath, dbRecreate, nodeKey, nodeMode);
         } catch (ParseException e) {
-            log.log(Level.SEVERE, "Failed to parse cli arguments", e);
             formatter.printHelp("Specify the network name - " + String.join(", ", validChains), options);
-            throw new RuntimeException();
+            throw new CliArgsParseException("Failed to parse cli arguments", e);
         }
     }
 
@@ -71,7 +73,7 @@ public class Cli {
      * @return configured options
      */
     private Options buildOptions() {
-        Options options = new Options();
+        Options result = new Options();
         Option networkOption = new Option("n", NETWORK, true, "Client network");
         Option dbPathOption = new Option(null, DB_PATH, true, "RocksDB path");
         Option dbClean = new Option("dbc", DB_RECREATE, false, "Clean the DB");
@@ -85,12 +87,12 @@ public class Cli {
         nodeKey.setRequired(false);
         nodeMode.setRequired(false);
 
-        options.addOption(networkOption);
-        options.addOption(dbPathOption);
-        options.addOption(dbClean);
-        options.addOption(nodeKey);
-        options.addOption(nodeMode);
-        return options;
+        result.addOption(networkOption);
+        result.addOption(dbPathOption);
+        result.addOption(dbClean);
+        result.addOption(nodeKey);
+        result.addOption(nodeMode);
+        return result;
     }
 
 }

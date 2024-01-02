@@ -7,7 +7,7 @@ import io.libp2p.core.PeerId;
 import io.libp2p.core.multiformats.Multiaddr;
 
 public abstract class StrictProtocolBinding<T> extends io.libp2p.core.multistream.StrictProtocolBinding<T> {
-    public StrictProtocolBinding(String protocolId, P2PChannelHandler<T> protocol) {
+    protected StrictProtocolBinding(String protocolId, P2PChannelHandler<T> protocol) {
         super(protocolId, protocol);
     }
 

@@ -8,6 +8,8 @@ import java.util.Random;
 
 @UtilityClass
 public class RandomGenerationUtils {
+    private static final Random RANDOM = new Random();
+    
     public static byte[] generateBytes(int length) {
         Random generator = new Random(0);
         byte[] bytes = new byte[length];
@@ -16,7 +18,7 @@ public class RandomGenerationUtils {
     }
 
     private static int generateRandomPort(){
-        return 10000 + new Random().nextInt(50000);
+        return 10000 + RANDOM.nextInt(50000);
     }
 
     public static MultiAddress generateRandomAddress(){

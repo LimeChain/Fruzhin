@@ -14,7 +14,7 @@ import java.util.logging.Level;
 @Log
 public abstract class AbstractRpcClient extends WebSocketClient {
 
-    public AbstractRpcClient(URI serverURI) {
+    protected AbstractRpcClient(URI serverURI) {
         super(serverURI);
     }
 
