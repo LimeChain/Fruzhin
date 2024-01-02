@@ -6,6 +6,7 @@ import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.rpc.server.AppBean;
 import com.limechain.runtime.hostapi.dto.InvalidArgumentException;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
+import com.limechain.runtime.hostapi.dto.ScaleEncodingException;
 import com.limechain.storage.KVRepository;
 import com.limechain.storage.offchain.OffchainStore;
 import com.limechain.sync.warpsync.SyncedState;
@@ -322,7 +323,7 @@ public class OffchainHostFunctions {
             writer.writeOptional(ScaleCodecWriter::writeByteArray, value);
             return buf.toByteArray();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new ScaleEncodingException(e);
         }
     }
 
