@@ -6,9 +6,13 @@ import com.limechain.network.Network;
 import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.rpc.server.AppBean;
 import com.limechain.runtime.hostapi.dto.HttpResponseType;
+import com.limechain.runtime.hostapi.dto.InvalidArgumentException;
 import com.limechain.runtime.hostapi.dto.InvalidRequestId;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import com.limechain.runtime.hostapi.exceptions.OffchainResponseWaitException;
+import com.limechain.storage.KVRepository;
+import com.limechain.storage.offchain.OffchainStore;
+import com.limechain.sync.warpsync.SyncedState;
 import com.limechain.utils.scale.ScaleUtils;
 import com.limechain.utils.scale.exceptions.ScaleEncodingException;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
@@ -19,7 +23,6 @@ import io.emeraldpay.polkaj.scaletypes.ResultWriter;
 import io.libp2p.core.PeerId;
 import io.libp2p.core.multiformats.Multiaddr;
 import kotlin.Pair;
-import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.extern.java.Log;
 import org.wasmer.ImportObject;
@@ -45,16 +48,21 @@ import java.util.logging.Level;
  * {<a href="https://spec.polkadot.network/chap-host-api#sect-offchainindex-api">Offchain index API</a>}
  */
 @Log
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@AllArgsConstructor
 public class OffchainHostFunctions {
     private final HostApi hostApi;
     private final HostConfig config;
     private final OffchainHttpRequests requests;
+    private final OffchainStore persistentStorage;
+    private final OffchainStore localStorage;
 
     private OffchainHostFunctions(final HostApi hostApi) {
         this.hostApi = hostApi;
-        config = AppBean.getBean(HostConfig.class);
+        this.config = AppBean.getBean(HostConfig.class);
         requests = OffchainHttpRequests.getInstance();
+        KVRepository<String, Object> db = SyncedState.getInstance().getRepository();
+        persistentStorage = new OffchainStore(db, true);
+        localStorage = new OffchainStore(db, false);
     }
 
     public static List<ImportObject> getFunctions(final HostApi hostApi) {
@@ -81,18 +89,26 @@ public class OffchainHostFunctions {
                 HostApi.getImportObject("ext_offchain_random_seed_version_1", argv ->
                                 extOffchainRandomSeed(),
                         HostApi.EMPTY_LIST_OF_TYPES, Type.I32),
-                HostApi.getImportObject("ext_offchain_local_storage_set_version_1", argv -> {
-
-                }, List.of(Type.I32, Type.I64, Type.I64)),
-                HostApi.getImportObject("ext_offchain_local_storage_clear_version_1", argv -> {
-
-                }, List.of(Type.I32, Type.I64)),
-                HostApi.getImportObject("ext_offchain_local_storage_compare_and_set_version_1", argv -> {
-                    return 0;
-                }, List.of(Type.I32, Type.I64, Type.I64, Type.I64), Type.I32),
-                HostApi.getImportObject("ext_offchain_local_storage_get_version_1", argv -> {
-                    return 0;
-                }, List.of(Type.I32, Type.I64), Type.I64),
+                HostApi.getImportObject("ext_offchain_local_storage_set_version_1", argv ->
+                        extOffchainLocalStorageSet(
+                                argv.get(0).intValue(),
+                                new RuntimePointerSize(argv.get(1)),
+                                new RuntimePointerSize(argv.get(2))
+                        ), List.of(Type.I32, Type.I64, Type.I64)),
+                HostApi.getImportObject("ext_offchain_local_storage_clear_version_1", argv ->
+                        extOffchainLocalStorageClear(argv.get(0).intValue(), new RuntimePointerSize(argv.get(1))),
+                        List.of(Type.I32, Type.I64)),
+                HostApi.getImportObject("ext_offchain_local_storage_compare_and_set_version_1", argv ->
+                        extOffchainLocalStorageCompareAndSet(
+                                argv.get(0).intValue(),
+                                new RuntimePointerSize(argv.get(1)),
+                                new RuntimePointerSize(argv.get(2)),
+                                new RuntimePointerSize(argv.get(3))
+                        ), List.of(Type.I32, Type.I64, Type.I64, Type.I64), Type.I32),
+                HostApi.getImportObject("ext_offchain_local_storage_get_version_1", argv ->
+                        extOffchainLocalStorageGet(argv.get(0).intValue(), new RuntimePointerSize(argv.get(1)))
+                                .pointerSize(),
+                        List.of(Type.I32, Type.I64), Type.I64),
                 HostApi.getImportObject("ext_offchain_http_request_start_version_1", argv ->
                                 extOffchainHttpRequestStart(
                                         new RuntimePointerSize(argv.get(0)),
@@ -132,12 +148,12 @@ public class OffchainHostFunctions {
                                         new RuntimePointerSize(argv.get(2))
                                 ).pointerSize()
                         , List.of(Type.I32, Type.I64, Type.I64), Type.I64),
-                HostApi.getImportObject("ext_offchain_index_set_version_1", argv -> {
-
-                }, List.of(Type.I64, Type.I64)),
-                HostApi.getImportObject("ext_offchain_index_clear_version_1", argv -> {
-
-                }, List.of(Type.I64))
+                HostApi.getImportObject("ext_offchain_index_set_version_1", argv ->
+                        offchainIndexSet(new RuntimePointerSize(argv.get(0)), new RuntimePointerSize(argv.get(1))),
+                        List.of(Type.I64, Type.I64)),
+                HostApi.getImportObject("ext_offchain_index_clear_version_1", argv ->
+                        offchainIndexClear(new RuntimePointerSize(argv.get(0))),
+                        List.of(Type.I64))
         );
     }
 
@@ -490,5 +506,123 @@ public class OffchainHostFunctions {
     byte[] scaleEncodedEmptyResult(boolean success) {
         Result.ResultMode resultMode = success ? Result.ResultMode.OK : Result.ResultMode.ERR;
         return new byte[]{resultMode.getValue()};
+    }
+
+    /**
+     * Sets a value in the local storage. This storage is not part of the consensus,
+     * it’s only accessible by the offchain worker tasks running on the same machine and is persisted between runs.
+     *
+     * @param kind          an i32 integer indicating the storage kind. A value equal to 1 is used for
+     *                      a persistent storage and a value equal to 2 for local storage
+     * @param keyPointer    a pointer-size to the key.
+     * @param valuePointer  a pointer-size to the value.
+     */
+    public void extOffchainLocalStorageSet(int kind, RuntimePointerSize keyPointer, RuntimePointerSize valuePointer) {
+        OffchainStore store = storageByKind(kind);
+        String key = new String(hostApi.getDataFromMemory(keyPointer));
+        byte[] value = hostApi.getDataFromMemory(valuePointer);
+
+        store.set(key, value);
+    }
+
+    /**
+     * Remove a value from the local storage.
+     *
+     * @param kind          an i32 integer indicating the storage kind. A value equal to 1 is used for
+     *                      a persistent storage and a value equal to 2 for local storage
+     * @param keyPointer    a pointer-size to the key.
+     */
+    public void extOffchainLocalStorageClear(int kind, RuntimePointerSize keyPointer) {
+        OffchainStore store = storageByKind(kind);
+        String key = new String(hostApi.getDataFromMemory(keyPointer));
+
+        store.remove(key);
+    }
+
+    /**
+     * Sets a new value in the local storage if the condition matches the current value.
+     *
+     * @param kind              an i32 integer indicating the storage kind. A value equal to 1 is used for
+     *                          a persistent storage and a value equal to 2 for local storage
+     * @param keyPointer        a pointer-size to the key.
+     * @param oldValuePointer   a pointer-size to the SCALE encoded Option value containing the old key.
+     * @param newValuePointer   a pointer-size to the new value.
+     * @return an i32 integer equal to 1 if the new value has been set or a value equal to 0 if otherwise.
+     */
+    public int extOffchainLocalStorageCompareAndSet(int kind,
+                                                    RuntimePointerSize keyPointer,
+                                                    RuntimePointerSize oldValuePointer,
+                                                    RuntimePointerSize newValuePointer) {
+        OffchainStore store = storageByKind(kind);
+        String key = new String(hostApi.getDataFromMemory(keyPointer));
+        byte[] oldValue = valueFromOption(hostApi.getDataFromMemory(oldValuePointer));
+        byte[] newValue = hostApi.getDataFromMemory(newValuePointer);
+
+        return store.compareAndSet(key, oldValue, newValue) ? 1 : 0;
+    }
+
+    private byte[] valueFromOption(byte[] scaleEncodedOption) {
+        return new ScaleCodecReader(scaleEncodedOption)
+                .readOptional(ScaleCodecReader::readByteArray)
+                .orElse(null);
+    }
+
+    /**
+     * Gets a value from the local storage.
+     *
+     * @param kind              an i32 integer indicating the storage kind. A value equal to 1 is used for
+     *                          a persistent storage and a value equal to 2 for local storage
+     * @param keyPointer        a pointer-size to the key.
+     * @return a pointer-size to the SCALE encoded Option value containing the value or the corresponding key.
+     */
+    public RuntimePointerSize extOffchainLocalStorageGet(int kind, RuntimePointerSize keyPointer) {
+        OffchainStore store = storageByKind(kind);
+        String key = new String(hostApi.getDataFromMemory(keyPointer));
+
+        byte[] value = store.get(key);
+        return hostApi.writeDataToMemory(scaleEncodedOption(value));
+    }
+
+    private OffchainStore storageByKind(int kind) {
+        return switch (kind) {
+            case 1 -> persistentStorage;
+            case 2 -> localStorage;
+            default -> throw new InvalidArgumentException("storage kind", kind);
+        };
+    }
+
+    private byte[] scaleEncodedOption(byte[] value) {
+        try(ByteArrayOutputStream buf = new ByteArrayOutputStream();
+            ScaleCodecWriter writer = new ScaleCodecWriter(buf)
+        ) {
+            writer.writeOptional(ScaleCodecWriter::writeByteArray, value);
+            return buf.toByteArray();
+        } catch (IOException e) {
+            throw new ScaleEncodingException(e);
+        }
+    }
+
+    /**
+     * Write a key-value pair to the Offchain DB in a buffered fashion.
+     *
+     * @param keyPointer    a pointer-size containing the key.
+     * @param valuePointer  a pointer-size containing the value.
+     */
+    public void offchainIndexSet(RuntimePointerSize keyPointer, RuntimePointerSize valuePointer) {
+        byte[] key = hostApi.getDataFromMemory(keyPointer);
+        byte[] value = hostApi.getDataFromMemory(valuePointer);
+
+        persistentStorage.set(new String(key), value);
+    }
+
+    /**
+     * Remove a key and its associated value from the Offchain DB.
+     *
+     * @param keyPointer a pointer-size containing the key.
+     */
+    public void offchainIndexClear(RuntimePointerSize keyPointer) {
+        byte[] key = hostApi.getDataFromMemory(keyPointer);
+
+        persistentStorage.remove(new String(key));
     }
 }
