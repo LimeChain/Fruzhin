@@ -3,6 +3,7 @@ package com.limechain.trie.structure.decoded.node;
 import com.limechain.trie.NodeVariant;
 import com.limechain.trie.structure.decoded.node.exceptions.NodeDecodingException;
 import com.limechain.trie.structure.decoded.node.exceptions.NodeEncodingException;
+import com.limechain.trie.structure.nibble.BytesToNibbles;
 import com.limechain.trie.structure.nibble.Nibble;
 import com.limechain.trie.structure.nibble.Nibbles;
 import com.limechain.trie.structure.nibble.NibblesToBytes;
@@ -313,7 +314,7 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
         byte[] storageValue = extractStorageValue(reader, storageValueHashed);
 
         List<List<Byte>> children = extractChildren(reader, childrenBitmap);
-        Nibbles partialKey = Nibbles.fromLEBytes(partialKeyLEBytes);
+        Nibbles partialKey = new Nibbles(new BytesToNibbles(partialKeyLEBytes));
         if (pkLen % 2 == 1) {
             // This is for situations where the partial key contains a `0` prefix that exists for
             // alignment but doesn't actually represent a nibble.

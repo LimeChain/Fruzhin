@@ -68,15 +68,6 @@ public class Nibbles implements List<Nibble>, RandomAccess, Comparable<List<Nibb
         return new Nibbles(Arrays.stream(nibbles).mapToObj(Nibble::fromInt));
     }
 
-    public static Nibbles fromLEBytes(byte[] bytes) {
-        Nibbles nibbles = new Nibbles(new byte[]{});
-        for (int i = 0; i < bytes.length; i++) {
-            nibbles.add(Nibble.fromInt((bytes[i] >> 4 & 0xf)));
-            nibbles.add(Nibble.fromInt((bytes[i] & 0xf)));
-        }
-        return nibbles;
-    }
-
     public Nibbles(Iterator<Nibble> nibbles) {
         // TODO:
         //  Reconsider the internal representation
