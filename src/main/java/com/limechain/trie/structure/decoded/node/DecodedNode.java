@@ -251,7 +251,7 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
      * @throws NodeDecodingException If the encoded array is null, empty, or invalid.
      * @throws IllegalArgumentException If 'encoded' is null.
      */
-    public static DecodedNode decode(byte[] encoded) {
+    public static DecodedNode<Nibbles, List<Byte>> decode(byte[] encoded) {
         ScaleCodecReader reader = new ScaleCodecReader(encoded);
         if (encoded == null || encoded.length == 0) {
             throw new NodeDecodingException("Invalid node value: it's empty");
