@@ -366,7 +366,7 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
      * @return byte[] The byte array containing the partial key.
      * @throws NodeDecodingException If there are no more bytes to read, or if the partial key has invalid padding.
      */
-    public static byte[] extractPartialKey(ScaleCodecReader reader, int pkLen) {
+    private static byte[] extractPartialKey(ScaleCodecReader reader, int pkLen) {
         if (!reader.hasNext()) {
             throw new NodeDecodingException("Node value cannot be null");
         }
@@ -390,7 +390,7 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
      * @return int The children bitmap as an integer. If the node has no children, returns 0.
      * @throws NodeDecodingException If there are no more bytes to read, or if the children bitmap is zero.
      */
-    public static int extractChildrenBitmap(ScaleCodecReader reader, boolean hasChildren) {
+    private static int extractChildrenBitmap(ScaleCodecReader reader, boolean hasChildren) {
         if (!reader.hasNext()) {
             throw new NodeDecodingException("Node value cannot be null");
         }
@@ -417,7 +417,7 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
      * @return byte[] The storage value as a byte array, or null if there is no storage value.
      * @throws NodeDecodingException If there are no more bytes to read from the reader.
      */
-    public static byte[] extractStorageValue(ScaleCodecReader reader, Boolean storageValueHashed) {
+    private static byte[] extractStorageValue(ScaleCodecReader reader, Boolean storageValueHashed) {
         if (!reader.hasNext()) {
             throw new NodeDecodingException("Node value cannot be null");
         }
@@ -443,7 +443,7 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
      * @return List<List < Byte>> A list of children, where each child is represented as a list of bytes.
      * @throws NodeDecodingException If the length of any child's data exceeds the maximum allowed size.
      */
-    public static List<List<Byte>> extractChildren(ScaleCodecReader reader, int childrenBitmap) {
+    private static List<List<Byte>> extractChildren(ScaleCodecReader reader, int childrenBitmap) {
         List<List<Byte>> children = new ArrayList<List<Byte>>(CHILDREN_COUNT);
         for (int i = 0; i < CHILDREN_COUNT; i++) {
             if ((childrenBitmap & (1 << i)) == 0) {
