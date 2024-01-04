@@ -364,7 +364,7 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
      */
     private static byte[] extractPartialKey(ScaleCodecReader reader, int pkLen) {
         if (!reader.hasNext()) {
-            throw new NodeDecodingException("Node value cannot be null");
+            throw new NodeDecodingException("Node value cannot be null for partial key");
         }
 
         // Calculate the length of the partial key in bytes
@@ -388,7 +388,7 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
      */
     private static int extractChildrenBitmap(ScaleCodecReader reader, boolean hasChildren) {
         if (!reader.hasNext()) {
-            throw new NodeDecodingException("Node value cannot be null");
+            throw new NodeDecodingException("Node value cannot be null for children bitmap");
         }
 
         if (!hasChildren) {
@@ -415,7 +415,7 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
      */
     private static byte[] extractStorageValue(ScaleCodecReader reader, Boolean storageValueHashed) {
         if (!reader.hasNext()) {
-            throw new NodeDecodingException("Node value cannot be null");
+            throw new NodeDecodingException("Node value cannot be null for storage value");
         }
 
         byte[] storageValue;
