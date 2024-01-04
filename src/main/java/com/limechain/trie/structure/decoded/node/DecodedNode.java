@@ -246,7 +246,7 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
      * This can decode nodes no matter their version or hash algorithm.
      *
      * @param encoded The byte array representing the encoded node.
-     * @return DecodedNode<Nibbles, List < Byte>> The decoded node with its partial key, children, and storage value.
+     * @return {@code DecodedNode<Nibbles, List <Byte>>} The decoded node...
      * @throws NodeDecodingException If the encoded array is null, empty, or invalid.
      * @throws IllegalArgumentException If 'encoded' is null.
      */
