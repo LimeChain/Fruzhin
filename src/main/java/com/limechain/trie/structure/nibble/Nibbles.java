@@ -25,6 +25,7 @@ import java.util.stream.Stream;
 // TODO:
 //  As a List<Nibble> implementor, Nibbles is currently mutable, which I severely dislike,
 //  since this mandates the developer to think about where to copy and where passing by reference is sufficient.
+
 /**
  * Convenience wrapper for any 'sequence of Nibble'-like structure
  */
@@ -65,6 +66,15 @@ public class Nibbles implements List<Nibble>, RandomAccess, Comparable<List<Nibb
 
     public static Nibbles of(int... nibbles) {
         return new Nibbles(Arrays.stream(nibbles).mapToObj(Nibble::fromInt));
+    }
+
+    public static Nibbles fromLEBytes(byte[] bytes) {
+        Nibbles nibbles = new Nibbles(new byte[]{});
+        for (int i = 0; i < bytes.length; i++) {
+            nibbles.add(Nibble.fromInt((bytes[i] >> 4 & 0xf)));
+            nibbles.add(Nibble.fromInt((bytes[i] & 0xf)));
+        }
+        return nibbles;
     }
 
     public Nibbles(Iterator<Nibble> nibbles) {
@@ -109,15 +119,15 @@ public class Nibbles implements List<Nibble>, RandomAccess, Comparable<List<Nibb
     //  Although that's exactly what I want :D
     private static String toLowerHexString(List<Nibble> nibbles) {
         return nibbles.stream()
-            .map(Nibble::asLowerHexDigit)
-            .collect(
-                Collector.of(
-                    StringBuilder::new,
-                    StringBuilder::append,
-                    StringBuilder::append,
-                    StringBuilder::toString
-                )
-            );
+                .map(Nibble::asLowerHexDigit)
+                .collect(
+                        Collector.of(
+                                StringBuilder::new,
+                                StringBuilder::append,
+                                StringBuilder::append,
+                                StringBuilder::toString
+                        )
+                );
     }
 
     @Override
@@ -135,7 +145,7 @@ public class Nibbles implements List<Nibble>, RandomAccess, Comparable<List<Nibb
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Nibbles nibbles1 = (Nibbles) o;
-        return Objects.equals(this.nibbles, nibbles1.nibbles);
+        return this.nibbles.equals(nibbles1.nibbles);
     }
 
 
@@ -273,7 +283,7 @@ public class Nibbles implements List<Nibble>, RandomAccess, Comparable<List<Nibb
 
     /**
      * @return Nibbles constructed from a string of hexadecimal characters (nibbles).
-     *         The capitalization of the characters doesn't matter.
+     * The capitalization of the characters doesn't matter.
      */
     public static Nibbles fromHexString(String hex) {
         return new Nibbles(hex.chars().mapToObj(c -> (char) c).map(Nibble::fromAsciiHexDigit));

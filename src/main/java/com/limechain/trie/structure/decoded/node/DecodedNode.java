@@ -37,8 +37,10 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
     public final static int CHILDREN_COUNT = 16;
 
     //NOTE: This will never be constructed internally, only assigned from outside.
+    @Getter
     private List<C> children;
 
+    @Getter
     private I partialKey;
 
     @Getter
@@ -301,7 +303,7 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
         byte[] trimmedPartialKey = (partialKey.length % 2 == 1) ?
                 Arrays.copyOfRange(partialKey, 1, partialKey.length) : partialKey;
         DecodedNode<Nibbles, List<Byte>> decodedNode = new DecodedNode<>(children,
-                new Nibbles(trimmedPartialKey),
+                Nibbles.fromLEBytes(partialKey),
                 new StorageValue(storageValue, storageValueHashed));
         return decodedNode;
     }
