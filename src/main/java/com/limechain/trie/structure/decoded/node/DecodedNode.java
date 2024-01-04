@@ -315,8 +315,8 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
         List<List<Byte>> children = extractChildren(reader, childrenBitmap);
         Nibbles partialKey = Nibbles.fromLEBytes(partialKeyLEBytes);
         if (pkLen % 2 == 1) {
-            /// This is for situations where the partial key contains a `0` prefix that exists for
-            /// alignment but doesn't actually represent a nibble.
+            // This is for situations where the partial key contains a `0` prefix that exists for
+            // alignment but doesn't actually represent a nibble.
             partialKey.remove(0);
         }
         DecodedNode<Nibbles, List<Byte>> decodedNode = new DecodedNode<>(children,
