@@ -36,6 +36,9 @@ import java.util.stream.Stream;
 public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte>> {
     public final static int CHILDREN_COUNT = 16;
 
+    private static final int HASHED_STORAGE_VALUE_LENGTH = 32;
+    private static final int CHILD_BYTES_SIZE_LIMIT = 32;
+
     //NOTE: This will never be constructed internally, only assigned from outside.
     @Getter
     private List<C> children;
@@ -238,6 +241,15 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
         return nodeValue;
     }
 
+    /***
+     * Decodes a node value found in a proof into its components.
+     * This can decode nodes no matter their version or hash algorithm.
+     *
+     * @param encoded The byte array representing the encoded node.
+     * @return DecodedNode<Nibbles, List < Byte>> The decoded node with its partial key, children, and storage value.
+     * @throws NodeDecodingException If the encoded array is null, empty, or invalid.
+     * @throws IllegalArgumentException If 'encoded' is null.
+     */
     public static DecodedNode decode(byte[] encoded) {
         ScaleCodecReader reader = new ScaleCodecReader(encoded);
         if (encoded == null || encoded.length == 0) {
@@ -249,6 +261,7 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
         Boolean storageValueHashed;
         int pkLenFirstByteBits;
 
+        //https://spec.polkadot.network/#defn-node-header
         switch (firstByte >> 6) {
             case 0b00:
                 if ((firstByte >> 5) == 0b001) {
@@ -293,21 +306,35 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
             throw new NodeDecodingException("Empty trie with partial key ");
         }
 
-        byte[] partialKey = extractPartialKey(reader, pkLen);
+        byte[] partialKeyLEBytes = extractPartialKey(reader, pkLen);
 
         int childrenBitmap = extractChildrenBitmap(reader, hasChildren);
 
         byte[] storageValue = extractStorageValue(reader, storageValueHashed);
 
         List<List<Byte>> children = extractChildren(reader, childrenBitmap);
-        byte[] trimmedPartialKey = (partialKey.length % 2 == 1) ?
-                Arrays.copyOfRange(partialKey, 1, partialKey.length) : partialKey;
+        Nibbles partialKey = Nibbles.fromLEBytes(partialKeyLEBytes);
+        if (pkLen % 2 == 1) {
+            /// This is for situations where the partial key contains a `0` prefix that exists for
+            /// alignment but doesn't actually represent a nibble.
+            partialKey.remove(0);
+        }
         DecodedNode<Nibbles, List<Byte>> decodedNode = new DecodedNode<>(children,
-                Nibbles.fromLEBytes(partialKey),
+                partialKey,
                 new StorageValue(storageValue, storageValueHashed));
         return decodedNode;
     }
 
+    /**
+     * Calculates the length of the partial key in nibbles
+     *
+     * @param reader             ScaleCodecReader used to read the encoded node data.
+     * @param firstByte          The first byte of the encoded node data.
+     * @param pkLenFirstByteBits The number of bits in the first byte dedicated to encoding the partial key length.
+     * @return int The length of the partial key.
+     * @throws NodeDecodingException If there's an error in decoding, such as if the partial key length is too short,
+     *                               or if there's an overflow in calculating the partial key length.
+     */
     private static int getPkLen(ScaleCodecReader reader, int firstByte, int pkLenFirstByteBits) {
         int pkLen = firstByte & ((1 << pkLenFirstByteBits) - 1);
 
@@ -330,6 +357,14 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
         return pkLen;
     }
 
+    /**
+     * Extracts the partial key from a node in a trie structure using a ScaleCodecReader.
+     *
+     * @param reader The ScaleCodecReader used to read the encoded node data.
+     * @param pkLen  The length of the partial key in nibbles.
+     * @return byte[] The byte array containing the partial key.
+     * @throws NodeDecodingException If there are no more bytes to read, or if the partial key has invalid padding.
+     */
     public static byte[] extractPartialKey(ScaleCodecReader reader, int pkLen) {
         if (!reader.hasNext()) {
             throw new NodeDecodingException("Node value cannot be null");
@@ -346,6 +381,14 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
         return partialKey;
     }
 
+    /**
+     * Extracts the children bitmap from a node in a trie structure.
+     *
+     * @param reader      The ScaleCodecReader used to read the encoded node data.
+     * @param hasChildren A boolean indicating whether the node has children.
+     * @return int The children bitmap as an integer. If the node has no children, returns 0.
+     * @throws NodeDecodingException If there are no more bytes to read, or if the children bitmap is zero.
+     */
     public static int extractChildrenBitmap(ScaleCodecReader reader, boolean hasChildren) {
         if (!reader.hasNext()) {
             throw new NodeDecodingException("Node value cannot be null");
@@ -365,6 +408,14 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
         return childrenBitmap;
     }
 
+    /**
+     * Extracts the storage value from a node in a trie structure.
+     *
+     * @param reader             The ScaleCodecReader used to read the encoded node data.
+     * @param storageValueHashed A Boolean indicating whether the storage value is hashed. Can be null, true, or false.
+     * @return byte[] The storage value as a byte array, or null if there is no storage value.
+     * @throws NodeDecodingException If there are no more bytes to read from the reader.
+     */
     public static byte[] extractStorageValue(ScaleCodecReader reader, Boolean storageValueHashed) {
         if (!reader.hasNext()) {
             throw new NodeDecodingException("Node value cannot be null");
@@ -377,21 +428,29 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
         } else if (!storageValueHashed) {
             storageValue = reader.readByteArray();
         } else { // storageValueHashed is true
-            storageValue = reader.readByteArray(32);
+            storageValue = reader.readByteArray(HASHED_STORAGE_VALUE_LENGTH);
         }
 
         return storageValue;
     }
 
+    /**
+     * Extracts the children of a node in a trie structure.
+     *
+     * @param reader         The ScaleCodecReader used to read the encoded node data.
+     * @param childrenBitmap An integer bitmap representing the presence of children. Each bit corresponds to a child.
+     * @return List<List < Byte>> A list of children, where each child is represented as a list of bytes.
+     * @throws NodeDecodingException If the length of any child's data exceeds the maximum allowed size.
+     */
     public static List<List<Byte>> extractChildren(ScaleCodecReader reader, int childrenBitmap) {
-        List<List<Byte>> children = new ArrayList<List<Byte>>(16);
+        List<List<Byte>> children = new ArrayList<List<Byte>>(CHILDREN_COUNT);
         for (int i = 0; i < CHILDREN_COUNT; i++) {
             if ((childrenBitmap & (1 << i)) == 0) {
                 children.add(i, null);
                 continue;
             }
             byte[] value = reader.readByteArray();
-            if (value.length > 32) {
+            if (value.length > CHILD_BYTES_SIZE_LIMIT) {
                 throw new NodeDecodingException("Child too large");
             }
             children.add(i, Arrays.asList(ArrayUtils.toObject(value)));
