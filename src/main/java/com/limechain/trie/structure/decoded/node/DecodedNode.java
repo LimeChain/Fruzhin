@@ -261,7 +261,7 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
         Boolean storageValueHashed;
         int pkLenFirstByteBits;
 
-        //https://spec.polkadot.network/#defn-node-header
+        // https://spec.polkadot.network/#defn-node-header
         switch (firstByte >> 6) {
             case 0b00:
                 if ((firstByte >> 5) == 0b001) {
