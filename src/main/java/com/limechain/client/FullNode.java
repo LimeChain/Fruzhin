@@ -223,7 +223,7 @@ public class FullNode implements HostNode {
                     // TODO:
                     //  All of this ugly boilerplate for a simple List<Optional<byte[]>> to List<Byte>[] conversion...
                     //  figure out a better representation
-                        List.of(children.stream().map(p -> p.map(ba -> new ArrayList<>(List.of(ArrayUtils.toObject(ba)))).orElse(null)).toArray(ArrayList[]::new)),
+children.stream().map(p -> p.map(ba -> new ArrayList<>(List.of(ArrayUtils.toObject(ba)))).orElse(null)).toList()
                     partialKey,
                     storageValue
                 );
