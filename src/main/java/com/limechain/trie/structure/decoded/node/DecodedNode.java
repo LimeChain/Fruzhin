@@ -103,7 +103,6 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
 
         // Calculate the first byte
         NodeVariant variant = decoded.calculateNodeVariant();
-        int variantBits = variant.bits;
         int variantPartialKeyLenBitsFirstByte = variant.getPartialKeyBitLengthInFirstByte();
         int maxRepresentableInFirstByte = (1 << variantPartialKeyLenBitsFirstByte) - 1;
         byte firstByte = (byte) (variant.bits | Math.min(decoded.partialKey.size(), maxRepresentableInFirstByte)); // a byte cast effectively trims to the last 8 bits, exactly what we want
@@ -320,10 +319,7 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
             // alignment but doesn't actually represent a nibble.
             partialKey.remove(0);
         }
-        DecodedNode<Nibbles, List<Byte>> decodedNode = new DecodedNode<>(children,
-                partialKey,
-                new StorageValue(storageValue, storageValueHashed));
-        return decodedNode;
+        return new DecodedNode<>(children, partialKey, new StorageValue(storageValue, storageValueHashed));
     }
 
     /**
