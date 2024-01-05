@@ -435,7 +435,7 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
      *
      * @param reader         The ScaleCodecReader used to read the encoded node data.
      * @param childrenBitmap An integer bitmap representing the presence of children. Each bit corresponds to a child.
-     * @return List<List < Byte>> A list of children, where each child is represented as a list of bytes.
+     * @return {@code List<List <Byte>>} A list of children, where each child is represented as a list of bytes.
      * @throws NodeDecodingException If the length of any child's data exceeds the maximum allowed size.
      */
     private static List<List<Byte>> decodeChildren(ScaleCodecReader reader, int childrenBitmap) {
