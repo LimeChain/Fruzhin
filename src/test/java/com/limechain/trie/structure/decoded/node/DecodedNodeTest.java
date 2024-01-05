@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -36,7 +37,7 @@ class DecodedNodeTest {
         List<Byte> boxedExpectedChild1 = Arrays.asList(ArrayUtils.toObject(expectedChild1));
         List<Byte> boxedExpectedChild2 = Arrays.asList(ArrayUtils.toObject(expectedChild2));
         StorageValue expectedStorageValue = new StorageValue(new byte[]{}, false);
-        int expectedNotNullChildren = 2;
+        int expectedNotNullChildrenCount = 2;
         Nibbles expectedPartialKey = Nibbles.fromHexString("63");
 
         DecodedNode<Nibbles, List<Byte>> decoded = DecodedNode.decode(expectedEncoded);
