@@ -51,10 +51,8 @@ Nibbles expectedPartialKey = Nibbles.fromHexString("63");
         assertEquals(expectedStorageValue, storageValue);
 
         List<List<Byte>> children = decoded.getChildren();
-        List<List<Byte>> notNullChildren = children.stream()
-                .filter(element -> element != null)
-                .collect(Collectors.toList());
-        assertEquals(expectedNotNullChildren, notNullChildren.size());
+        int notNullChildrenCount = children.stream().filter(Objects::nonNull).toList().size();
+        assertEquals(expectedNotNullChildrenCount, notNullChildrenCount);
 
         assertEquals(boxedExpectedChild1, children.get(6));
         assertEquals(boxedExpectedChild2, children.get(7));
