@@ -13,6 +13,7 @@ public class IterableWriter<T> implements ScaleWriter<Iterable<T>> {
     public IterableWriter(ScaleWriter<T> scaleWriter) {
         this.scaleWriter = scaleWriter;
     }
+
     @Override
     public void write(ScaleCodecWriter scaleCodecWriter, Iterable<T> values) throws IOException {
         scaleCodecWriter.writeCompact(IterableUtils.size(values));
