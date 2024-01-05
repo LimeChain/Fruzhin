@@ -445,20 +445,22 @@ public class TrieStructure<T> {
                 return false;
             }
 
-            // Check if the parents match
+
+            // Check if parents match.
+            // We want to return false in all cases except:
+            //   - both parents are null;
+            //   - both parents are not null and the two nodes' child indices within them are the same
             {
                 var thisNodeParent = thisNode.parent;
                 var otherNodeParent = otherNode.parent;
 
-                //NOTE: this is awful, so a quick explainer:
-                //  We want to return false in all cases except:
-                //    - both parents are null;
-                //    - both parents are not null and the two nodes' child indices within them are the same
-                //  Reference: https://github.com/smol-dot/smoldot/blob/200214a571af30b5fa3997aea988451adc235ed0/lib/src/trie/trie_structure.rs#L615
-                if ((thisNodeParent != null || otherNodeParent != null)
-                    && (thisNodeParent == null
-                        || otherNodeParent == null
-                        || !thisNodeParent.childIndexWithinParent().equals(otherNodeParent.childIndexWithinParent()))) {
+                boolean bothParentsNull = thisNodeParent == null || otherNodeParent == null;
+                boolean bothParentsNotNullAndSameChildIndices =
+                    thisNodeParent != null
+                    && otherNodeParent != null
+                    && thisNodeParent.childIndexWithinParent().equals(otherNodeParent.childIndexWithinParent());
+
+                if (!(bothParentsNull || bothParentsNotNullAndSameChildIndices)) {
                     return false;
                 }
             }
