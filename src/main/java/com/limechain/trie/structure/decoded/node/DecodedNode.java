@@ -412,7 +412,7 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
      * @return byte[] The storage value as a byte array, or null if there is no storage value.
      * @throws NodeDecodingException If there are no more bytes to read from the reader.
      */
-    private static byte[] decodeStorageValue(ScaleCodecReader reader, @Nullable Boolean storageValueHashed)
+    private static byte[] decodeStorageValue(ScaleCodecReader reader, @Nullable Boolean storageValueHashed) {
         if (!reader.hasNext()) {
             throw new NodeDecodingException("Node value cannot be null for storage value");
         }
