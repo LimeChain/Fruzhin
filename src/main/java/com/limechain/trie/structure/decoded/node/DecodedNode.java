@@ -257,6 +257,7 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
 
         int firstByte = reader.readByte() & 0xFF;
         boolean hasChildren;
+        // A null value for storageValueHashed implies that there is no storage value for the decoded node
         Boolean storageValueHashed;
         int pkLenFirstByteBits;
 
