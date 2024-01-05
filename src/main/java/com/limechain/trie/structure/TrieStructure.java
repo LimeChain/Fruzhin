@@ -261,10 +261,9 @@ public class TrieStructure<T> {
             // At this point, the tree traversal cursor (the already consumed part of the `key` iterator)
             // exactly matches `current`.
 
-            // TODO: clone the `key` iterator more sanely... we're currently copying the whole underlying data source
             // NOTE:
             //  For now, the remainingKey argument of `ClosestAncestor` is not used, so if this becomes an efficiency issue
-            //  We could omit storing it.
+            //  We could omit storing it. Also, this is the only reason we're reassigning the iterator.
             var remainingKey = new Nibbles(keyIter);
             closestAncestor = new ExistingNodeInnerResult.NotFound.ClosestAncestor(currentIndex, remainingKey);
             keyIter = remainingKey.iterator();
