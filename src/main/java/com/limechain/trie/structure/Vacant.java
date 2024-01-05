@@ -289,7 +289,8 @@ public final class Vacant<T> extends Entry<T> {
         private static final class One<T> extends PrepareInsert<T> {
             /**
              * Value of {@link TrieNode#parent} for the newly-created node.
-             * If null, we're setting the root of the trie to the new node. //NOTE: what does that mean?
+             * If null, we're setting the root of the trie to the new node when inserting
+             * (see {@link One#insert(Object)} for more info on the insertion logic)
              */
             @Nullable
             private final TrieNode.Parent parent;
