@@ -43,8 +43,8 @@ class DecodedNodeTest {
         DecodedNode<Nibbles, List<Byte>> decoded = DecodedNode.decode(expectedEncoded);
         assertNotNull(decoded);
 
-        assertArrayEquals(boxedExpectedEncoded.toArray(), decoded.encode()
-                .flatMap(Collection::stream).collect(Collectors.toList()).toArray());
+        List<Byte> actualEncoded = decoded.encode().flatMap(Collection::stream).toList();
+        assertEquals(boxedExpectedEncoded, actualEncoded);
 
         assertEquals(expectedPartialKey, decoded.getPartialKey());
 
