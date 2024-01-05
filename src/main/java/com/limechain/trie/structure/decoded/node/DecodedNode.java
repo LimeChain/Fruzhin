@@ -300,7 +300,7 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
         }
 
 
-        int pkLen = getPkLen(reader, firstByte, pkLenFirstByteBits);
+        int pkLen = decodePkLen(reader, firstByte, pkLenFirstByteBits);
 
         if (pkLen != 0 && !hasChildren && storageValueHashed == null) {
             throw new NodeDecodingException("Empty trie with partial key ");
@@ -332,7 +332,7 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
      * @throws NodeDecodingException If there's an error in decoding, such as if the partial key length is too short,
      *                               or if there's an overflow in calculating the partial key length.
      */
-    private static int getPkLen(ScaleCodecReader reader, int firstByte, int pkLenFirstByteBits) {
+    private static int decodePkLen(ScaleCodecReader reader, int firstByte, int pkLenFirstByteBits) {
         int pkLen = firstByte & ((1 << pkLenFirstByteBits) - 1);
 
         boolean continueIter = pkLen == ((1 << pkLenFirstByteBits) - 1);
