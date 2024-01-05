@@ -469,6 +469,7 @@ public class TrieStructure<T> {
         }
     }
 
+    // TODO: Figure out how to sensibly deprecate this or whether it should be equivalent to structurallyEquals
     /**
      * @deprecated
      * This method does nothing more than {@link Object#equals}, i.e. referential equality.
