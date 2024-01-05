@@ -37,9 +37,7 @@ class DecodedNodeTest {
         List<Byte> boxedExpectedChild2 = Arrays.asList(ArrayUtils.toObject(expectedChild2));
         StorageValue expectedStorageValue = new StorageValue(new byte[]{}, false);
         int expectedNotNullChildren = 2;
-        Nibbles expectedNibbles = Nibbles.EMPTY;
-        expectedNibbles.add(Nibble.fromByte((byte) 0x6));
-        expectedNibbles.add(Nibble.fromByte((byte) 0x3));
+Nibbles expectedPartialKey = Nibbles.fromHexString("63");
 
         DecodedNode<Nibbles, List<Byte>> decoded = DecodedNode.decode(expectedEncoded);
         assertNotNull(decoded);
