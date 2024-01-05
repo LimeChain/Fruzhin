@@ -1,5 +1,6 @@
 package com.limechain.trie.structure.decoded.node;
 
+import com.limechain.trie.structure.decoded.node.exceptions.NodeEncodingException;
 import com.limechain.trie.structure.nibble.Nibble;
 import com.limechain.trie.structure.nibble.Nibbles;
 import org.apache.commons.lang3.ArrayUtils;
@@ -11,9 +12,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 class DecodedNodeTest {
 
@@ -57,6 +56,25 @@ class DecodedNodeTest {
 
         assertEquals(boxedExpectedChild1, children.get(6));
         assertEquals(boxedExpectedChild2, children.get(7));
+    }
 
+    @Test
+    void emptyNodeEncodesSuccessfully() {
+        var decodedNode = new DecodedNode<>(
+                List.of(),
+                List.of(),
+                null
+        );
+        assertDoesNotThrow(decodedNode::encode);
+    }
+
+    @Test
+    void nodeOnlyWithPartialKeyThrowsException() {
+        var decodedNode = new DecodedNode<>(
+                List.of(),
+                List.of(Nibble.fromInt(2)),
+                null
+        );
+        assertThrows(NodeEncodingException.class, decodedNode::encode);
     }
 }
