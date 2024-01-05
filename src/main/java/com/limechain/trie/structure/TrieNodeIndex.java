@@ -1,8 +1,6 @@
 package com.limechain.trie.structure;
 
-import lombok.AccessLevel;
 import lombok.Data;
-import lombok.Setter;
 
 //TODO:
 // Consider making this data class an inner class of TrieStructure to guarantee
@@ -15,8 +13,7 @@ import lombok.Setter;
  */
 @Data
 public final class TrieNodeIndex {
-    @Setter(AccessLevel.NONE)
-    private int value;
+    private final int value;
 
     TrieNodeIndex(int value) {
         this.value = value;
