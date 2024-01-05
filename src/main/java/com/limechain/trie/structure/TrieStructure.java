@@ -148,7 +148,10 @@ public class TrieStructure<T> {
     }
 
 
-    // TODO: Implement more beautifully
+    /**
+     * @return a stream of all {@link TrieNode}s in lexicographic order,
+     *         indexed by their respective integer indices.
+     */
     Stream<Integer> allNodesInLexicographicOrder() {
         return Stream.iterate(
             this.rootIndex,
