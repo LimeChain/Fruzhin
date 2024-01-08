@@ -89,9 +89,6 @@ public class TrieStructure<T> {
             }
         };
     }
-    // NOTE:
-    //  Those (six) iteration methods could be reduced, or at least live outside this class,
-    //  but I find them all reasonably useful and couldn't decide for anything particularly cleaner.
 
     /**
      * @return an iterator of all {@link TrieNode}s in no specific order,
