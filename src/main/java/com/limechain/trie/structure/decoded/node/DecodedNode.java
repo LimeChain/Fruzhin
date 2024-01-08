@@ -136,23 +136,22 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
         }
 
         // Then, encode the storage value
-        List<Byte> storageValue;
-        if (this.storageValue == null) {
-            storageValue = List.of();
-        } else {
+        if (this.storageValue != null) {
             // If the storage value is not hashed, we must also include its byte length in the scale encoding
             // NOTE:
             //  Why do we only add length to the encoding if the value is not hashed?
             //  I presume, because if it's hashed, we know it's 32 bytes only and don't need the length information?
             //  And we know whether it's hashed from the header.
             if (!this.storageValue.isHashed()) {
-                byte[] encodedSubvalueLength = ScaleUtils.Encode.encodeCompactUInt(this.storageValue.value().length);
-                subvalue.addAll(List.of(ArrayUtils.toObject(encodedSubvalueLength)));
+                for (byte b : ScaleUtils.Encode.encodeCompactUInt(this.storageValue.value().length)) {
+                    subvalue.add(b);
+                }
             }
 
-            storageValue = List.of(ArrayUtils.toObject(this.storageValue.value()));
+            for (byte b : this.storageValue.value()) {
+                subvalue.add(b);
+            }
         }
-        subvalue.addAll(storageValue);
 
         // And finally, the children node values
         List<Byte> childrenNodeValues =
