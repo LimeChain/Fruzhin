@@ -446,7 +446,7 @@ public final class Vacant<T> extends Entry<T> {
                     branchUserData
                 ));
 
-                // Insert the actual storage node as its only child
+                // Insert the actual storage node
                 int newStorageNodeIndex = this.trieStructure.nodes.add(new TrieNode<>(
                     new TrieNode.Parent(newBranchNodeIndex, this.storageChildIndex),
                     this.storagePartialKey,
@@ -455,7 +455,7 @@ public final class Vacant<T> extends Entry<T> {
                     storageUserData
                 ));
 
-                // Set the freshly obtained storage node's `childIndex` in the child array of the branch node
+                // Set the freshly obtained storage node's index in the child array of the branch node
                 this.trieStructure
                     .getNodeAtIndexInner(newBranchNodeIndex)
                     .childrenIndices[this.storageChildIndex.asInt()] = newStorageNodeIndex;
