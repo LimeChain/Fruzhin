@@ -9,12 +9,12 @@ import org.javatuples.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
+import java.util.Deque;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Queue;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -360,7 +360,7 @@ public class TrieStructure<T> {
 
     @NotNull
     Nibbles nodeFullKeyAtIndexInner(int targetNodeIndex) {
-        List<Integer> nodePath = this.nodePath(targetNodeIndex); // path without target itself
+        Queue<Integer> nodePath = this.nodePath(targetNodeIndex); // path without target itself
         nodePath.add(targetNodeIndex); // add target to the end
 
         Stream<Nibble> nibblesStream = nodePath
@@ -384,33 +384,21 @@ public class TrieStructure<T> {
 
     /**
      * @param targetNodeIndex index of the target node
-     * @return the indices to traverse to reach `target` from root, not including `target` itself.
-     *         So if target is root, returns an empty list.
+     * @return the indices to traverse to reach {@code target} from root, not including {@code target} itself.
+     *         So if {@code target} is root, returns an empty deque.
      * @throws NullPointerException if targetNodeIndex is not a valid index
      */
-    List<Integer> nodePath(int targetNodeIndex) {
-        List<Integer> path = new LinkedList<>();
+    Deque<Integer> nodePath(int targetNodeIndex) {
+        Deque<Integer> path = new LinkedList<>();
         var current = this.getNodeAtIndexInner(targetNodeIndex).parent;
 
         while (current != null) {
             int nodeIndex = current.parentNodeIndex();
-            path.add(nodeIndex);
+            path.addFirst(nodeIndex);
             current = this.getNodeAtIndexInner(nodeIndex).parent;
         }
 
-        Collections.reverse(path);
-
         return path;
-
-//        // Alternatively (and more functionally :D):
-//        return Stream.iterate(this.getNodeAtIndexInner(targetNodeIndex).parentIndex,
-//                Objects::nonNull,
-//                index -> this.getNodeAtIndexInner(index.getValue0()).parentIndex)
-//            .map(Pair::getValue0)
-//            .collect(Collectors.collectingAndThen(Collectors.toList(), list -> {
-//                Collections.reverse(list);
-//                return list;
-//            }));
     }
 
     /**
