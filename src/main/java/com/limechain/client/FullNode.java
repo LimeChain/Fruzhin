@@ -219,13 +219,15 @@ public class FullNode implements HostNode {
                     }
                 }
 
-                DecodedNode<Nibbles, List<Byte>> decoded = new DecodedNode<Nibbles, List<Byte>>(
-                    // TODO:
-                    //  All of this ugly boilerplate for a simple List<Optional<byte[]>> to List<Byte>[] conversion...
-                    //  figure out a better representation
-                    children.stream().map(p -> p.map(ba -> new ArrayList<>(List.of(ArrayUtils.toObject(ba)))).orElse(null)).toArray(ArrayList[]::new),
-                    partialKey,
-                    storageValue
+                DecodedNode<Nibbles, List<Byte>> decoded = new DecodedNode<>(
+                        // TODO:
+                        //  All of this ugly boilerplate for a simple List<Optional<byte[]>> to List<Byte>[] conversion...
+                        //  figure out a better representation
+                        List.of(children.stream().map(p -> p
+                                .map(ba -> new ArrayList<>(List.of(ArrayUtils.toObject(ba))))
+                                .orElse(null)).toArray(ArrayList[]::new)),
+                        partialKey,
+                        storageValue
                 );
 
                 byte[] merkleValue = decoded.calculateMerkleValue(
