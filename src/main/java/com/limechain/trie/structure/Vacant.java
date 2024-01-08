@@ -14,6 +14,11 @@ import java.util.stream.IntStream;
 
 public final class Vacant<T> extends Entry<T> {
     /**
+     * How many children a node has.
+     */
+    private static final int TRIE_NODE_CHILDREN_COUNT = 16;
+
+    /**
      * Full key of the node to insert.
      */
     private final Nibbles key;
@@ -57,7 +62,7 @@ public final class Vacant<T> extends Entry<T> {
                     this.trieStructure,
                     null,
                     key.copy(),
-                    new Integer[16]
+                    new Integer[TRIE_NODE_CHILDREN_COUNT]
                 );
             } else if (this.closestAncestorIndex != null) {
                 int keyLen = this.trieStructure.nodeFullKeyAtIndexInner(closestAncestorIndex).size();
@@ -100,7 +105,7 @@ public final class Vacant<T> extends Entry<T> {
                         this.trieStructure,
                         new TrieNode.Parent(futureParentIndex, newChildNibbleIndex),
                         new Nibbles(this.key.stream().skip(futureParentKeyLen + 1)),
-                        new Integer[16]
+                        new Integer[TRIE_NODE_CHILDREN_COUNT]
                     );
                 } else {
                     existingNodeIndex = existingChildNodeIndex;
@@ -163,7 +168,7 @@ public final class Vacant<T> extends Entry<T> {
             //                   (0 or more existing children)
             //
 
-            var newNodeChildren = new Integer[16];
+            var newNodeChildren = new Integer[TRIE_NODE_CHILDREN_COUNT];
             var existingNodeNewChildIndex = existingNodePartialKey.get(newNodePartialKey.size());
             newNodeChildren[existingNodeNewChildIndex.asInt()] = existingNodeIndex;
 
@@ -242,7 +247,7 @@ public final class Vacant<T> extends Entry<T> {
 
         // Table of children for the new branch node, not including the new storage node.
         // It therefore contains only one entry: `existing_node_index`.
-        Integer[] branchChildren = new Integer[16];
+        Integer[] branchChildren = new Integer[TRIE_NODE_CHILDREN_COUNT];
         branchChildrenInit: {
             Nibble existingNodeNewChildIndex = existingNodePartialKey.get(branchPartialKeyLen);
             assert !existingNodeNewChildIndex.equals(newNodePartialKey.get(branchPartialKeyLen))
@@ -289,7 +294,8 @@ public final class Vacant<T> extends Entry<T> {
         private static final class One<T> extends PrepareInsert<T> {
             /**
              * Value of {@link TrieNode#parent} for the newly-created node.
-             * If null, we're setting the root of the trie to the new node. //NOTE: what does that mean?
+             * If null, we're setting the root of the trie to the new node when inserting
+             * (see {@link One#insert(Object)} for more info on the insertion logic)
              */
             @Nullable
             private final TrieNode.Parent parent;
@@ -331,7 +337,7 @@ public final class Vacant<T> extends Entry<T> {
                 ));
 
                 // Update the children nodes to point to their new parent.
-                for (int childIndex = 0; childIndex < 16; ++childIndex) {
+                for (int childIndex = 0; childIndex < TRIE_NODE_CHILDREN_COUNT; ++childIndex) {
                     if (this.childrenIndices[childIndex] == null) {
                         continue;
                     }
@@ -440,22 +446,22 @@ public final class Vacant<T> extends Entry<T> {
                     branchUserData
                 ));
 
-                // Insert the actual storage node as its only child
+                // Insert the actual storage node
                 int newStorageNodeIndex = this.trieStructure.nodes.add(new TrieNode<>(
                     new TrieNode.Parent(newBranchNodeIndex, this.storageChildIndex),
                     this.storagePartialKey,
-                    new Integer[16],
+                    new Integer[TRIE_NODE_CHILDREN_COUNT],
                     true,
                     storageUserData
                 ));
 
-                // Set the freshly obtained storage node's `childIndex` in the child array of the branch node
+                // Set the freshly obtained storage node's index in the child array of the branch node
                 this.trieStructure
                     .getNodeAtIndexInner(newBranchNodeIndex)
                     .childrenIndices[this.storageChildIndex.asInt()] = newStorageNodeIndex;
 
                 // Update the branch node's children to point to their new parent
-                for (int childIndex = 0; childIndex < 16; ++childIndex) {
+                for (int childIndex = 0; childIndex < TRIE_NODE_CHILDREN_COUNT; ++childIndex) {
                     if (this.branchChildrenIndices[childIndex] == null) {
                         continue;
                     }

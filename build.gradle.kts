@@ -29,7 +29,6 @@ tasks.withType<JavaExec> {
     jvmArgs("--enable-preview")
 }
 
-
 repositories {
     mavenCentral()
 }

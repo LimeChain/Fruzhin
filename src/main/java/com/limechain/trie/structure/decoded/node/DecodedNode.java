@@ -102,8 +102,7 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
 
         // Calculate the first byte
         NodeVariant variant = decoded.calculateNodeVariant();
-        int variantPartialKeyLenBitsFirstByte = variant.getPartialKeyBitLengthInFirstByte();
-        int maxRepresentableInFirstByte = (1 << variantPartialKeyLenBitsFirstByte) - 1;
+        int maxRepresentableInFirstByte = variant.getPartialKeyLengthHeaderMask();
         byte firstByte = (byte) (variant.bits | Math.min(decoded.partialKey.size(), maxRepresentableInFirstByte)); // a byte cast effectively trims to the last 8 bits, exactly what we want
 
         beforeStorageValue.add(firstByte);
