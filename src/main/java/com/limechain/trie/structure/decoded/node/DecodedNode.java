@@ -188,15 +188,14 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
      * @throws NodeEncodingException if the node represents invalid state;
      *                               for now only if it has a partial key, but no children and no storage value
      */
-    // NOTE:
-    //  This return type is quite arbitrary (mainly influenced by Smoldot),
-    //  feel free to change accordingly if it becomes too messy
-    public Stream<List<Byte>> encode() {
+    public List<Byte> encode() {
         return Stream.of(
-            this.encodeNodeHeader(),
-            this.encodePartialKey(),
-            this.encodeSubvalue()
-        );
+                this.encodeNodeHeader(),
+                this.encodePartialKey(),
+                this.encodeSubvalue()
+            )
+            .flatMap(Collection::stream)
+            .toList();
     }
 
     /**
@@ -204,15 +203,16 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
      * Ultimately, almost the same as {@link DecodedNode#encode()}, except that the encoding is then optionally hashed.
      * Hashing is performed if the encoded value is 32 bytes or more, or if isRootNode is true.
      * This is the reason why {@code isRootNode} must be provided.
+     *
      * @param hashFunction the hashing function
-     * @param isRootNode must be true if the encoded node is the root node of the trie.
+     * @param isRootNode   must be true if the encoded node is the root node of the trie.
      * @return the merkle value of the node
      */
     // NOTE:
     //  Passing the hashFunction as a lambda might be insufficient for future use cases, but it's enough for now
     //  Feel free to refactor if needed.
     public byte[] calculateMerkleValue(Function<byte[], byte[]> hashFunction, boolean isRootNode) {
-        byte[] nodeValue = ArrayUtils.toPrimitive(this.encode().flatMap(Collection::stream).toArray(Byte[]::new));
+        byte[] nodeValue = ArrayUtils.toPrimitive(this.encode().toArray(Byte[]::new));
 
         // The node value must be hashed if we're the root or otherwise, if it exceeds 31 bytes of length
         if (isRootNode || nodeValue.length >= 32) {
@@ -228,7 +228,7 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
      *
      * @param encoded The byte array representing the encoded node.
      * @return {@code DecodedNode<Nibbles, List <Byte>>} The decoded node
-     * @throws NodeDecodingException If the encoded array is null, empty, or invalid.
+     * @throws NodeDecodingException    If the encoded array is null, empty, or invalid.
      * @throws IllegalArgumentException If 'encoded' is null.
      */
     public static DecodedNode<Nibbles, List<Byte>> decode(byte[] encoded) {
