@@ -8,4 +8,9 @@ public final class StorageNodeHandle<T> extends NodeHandle<T> {
     StorageNodeHandle(TrieStructure<T> trieStructure, int nodeIndex) {
         super(trieStructure, nodeIndex);
     }
+
+    @Override
+    public boolean hasStorageValue() {
+        return true;
+    }
 }

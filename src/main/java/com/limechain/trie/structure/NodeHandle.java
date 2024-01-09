@@ -90,13 +90,7 @@ public abstract sealed class NodeHandle<T> extends Entry<T> permits StorageNodeH
     /**
      * @return true if the node has a storage value
      */
-    public boolean hasStorageValue() {
-        // NOTE: We could do away with a simple `instanceof` check, but this is more explicit
-        return switch (this) {
-            case StorageNodeHandle<T> ignored -> true;
-            case BranchNodeHandle<T> ignored -> false;
-        };
-    }
+    public abstract boolean hasStorageValue();
 
     /**
      * Return a NodeHandle constructor depending on whether we want
