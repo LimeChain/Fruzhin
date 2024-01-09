@@ -24,14 +24,12 @@ import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-// BIG TODO
-// TODO: implement `decode()` like: https://github.com/smol-dot/smoldot/blob/200214a571af30b5fa3997aea988451adc235ed0/lib/src/trie/trie_node.rs#L317
-
 // NOTE:
 //  Those `extends` restrictions on the generic types are only used for `.size()` methods
 //  These needn't be restrictions on the node itself, but rather only for the `encode` method
 //  Which could alternatively be implemented as a generic static methods only for nodes obeying these constraints
 //  But we don't need that much overcomplicating now.
+@Getter
 @AllArgsConstructor
 public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte>> {
     public final static int CHILDREN_COUNT = 16;
@@ -39,26 +37,21 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
     private static final int HASHED_STORAGE_VALUE_LENGTH = 32;
     private static final int CHILD_BYTES_SIZE_LIMIT = 32;
 
-    //NOTE: This will never be constructed internally, only assigned from outside.
-    @Getter
     private List<C> children;
 
-    @Getter
     private I partialKey;
 
-    @Getter
     @Nullable
     private StorageValue storageValue;
 
     public boolean hasChildren() {
-        // NOTE: Maybe more inefficient than a for loop, but more readable :)
         return Arrays.stream(this.children.toArray()).anyMatch(Objects::nonNull);
     }
 
     public int getChildrenBitmap() {
         return IntStream.range(0, CHILDREN_COUNT)
-                .filter(i -> Objects.nonNull(this.children.get(i)))
-                .reduce(0, (bitmap, i) -> bitmap | (1 << i));
+            .filter(i -> Objects.nonNull(this.children.get(i)))
+            .reduce(0, (bitmap, i) -> bitmap | (1 << i));
     }
 
     /**
@@ -69,7 +62,7 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
      *
      * @return the NodeVariant of this DecodedNode
      */
-    public NodeVariant calculateNodeVariant() {
+    private NodeVariant calculateNodeVariant() {
         boolean hasChildren = this.hasChildren();
         boolean hasStorageValue = this.storageValue != null;
         boolean valueHashed = hasStorageValue && this.storageValue.isHashed();
@@ -97,30 +90,30 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
     }
 
     private List<Byte> encodeNodeHeader() {
-        List<Byte> beforeStorageValue = new ArrayList<>(2 + (this.partialKey.size() / 255));
-        var decoded = this;
+        List<Byte> headerEncoding = new ArrayList<>(2 + (this.partialKey.size() / 255));
 
         // Calculate the first byte
-        NodeVariant variant = decoded.calculateNodeVariant();
+        NodeVariant variant = this.calculateNodeVariant();
         int maxRepresentableInFirstByte = variant.getPartialKeyLengthHeaderMask();
-        byte firstByte = (byte) (variant.bits | Math.min(decoded.partialKey.size(), maxRepresentableInFirstByte)); // a byte cast effectively trims to the last 8 bits, exactly what we want
+        byte firstByte = (byte) (variant.bits | Math.min(this.partialKey.size(),
+            maxRepresentableInFirstByte)); // a byte cast effectively trims to the last 8 bits, exactly what we want
 
-        beforeStorageValue.add(firstByte);
+        headerEncoding.add(firstByte);
 
         // Append as many "private key length" bytes as necessary
-        int pkLen = decoded.partialKey.size();
+        int pkLen = this.partialKey.size();
         if (pkLen > maxRepresentableInFirstByte) {
             int remainingPkLen = pkLen - maxRepresentableInFirstByte;
             int numberOfFullBytes = remainingPkLen / 255;
             int lastByte = remainingPkLen % 255;
 
             for (int __ = 0; __ < numberOfFullBytes; ++__) {
-                beforeStorageValue.add((byte) 255);
+                headerEncoding.add((byte) 255);
             }
-            beforeStorageValue.add((byte) lastByte);
+            headerEncoding.add((byte) lastByte);
         }
 
-        return beforeStorageValue;
+        return headerEncoding;
     }
 
     private List<Byte> encodePartialKey() {
@@ -143,48 +136,37 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
         }
 
         // Then, encode the storage value
-        List<Byte> storageValue;
-        if (this.storageValue == null) {
-            storageValue = List.of();
-        } else {
+        if (this.storageValue != null) {
             // If the storage value is not hashed, we must also include its byte length in the scale encoding
-            // TODO:
-            //  This seems odd, figure out why we encode the length of the storagevalue only if it's not hashed...?
-            //  Perhaps because if its hashed, we know it's 32 bytes only and don't need the length information?
-            //  (we know whether it's hashed from the header, so perhaps that's the idea?)
+            // NOTE:
+            //  Why do we only add length to the encoding if the value is not hashed?
+            //  I presume, because if it's hashed, we know it's 32 bytes only and don't need the length information?
+            //  And we know whether it's hashed from the header.
             if (!this.storageValue.isHashed()) {
-                // TODO: Do this better, this is awful
-                subvalue.addAll(List.of(ArrayUtils.toObject(ScaleUtils.Encode.encodeCompactUInt(this.storageValue.value().length))));
+                for (byte b : ScaleUtils.Encode.encodeCompactUInt(this.storageValue.value().length)) {
+                    subvalue.add(b);
+                }
             }
 
-            storageValue = List.of(ArrayUtils.toObject(this.storageValue.value()));
+            for (byte b : this.storageValue.value()) {
+                subvalue.add(b);
+            }
         }
-        subvalue.addAll(storageValue);
 
         // And finally, the children node values
-        /*
-        // Other implementations are not including the length of children encodings, so I guess we'll skip it, too
-        // If needed, this entire block could be shortened to:
-        byte[] childrenNodeValues = ScaleUtils.Encode.encodeAsListOfListsOfBytes(Arrays.asList(children));
-        // But for now, we encode each individual children as a separate List<Byte> and simply concat them
-        */
         List<Byte> childrenNodeValues =
-                Stream.of(this.children.toArray())
-                        .filter(Objects::nonNull) //NOTE: Suspected trouble with null objects...
-                        .flatMap(childValue -> {
-                            byte[] scaleEncodedChildValue =
-                                    ScaleUtils.Encode.encodeAsListOfBytes((Collection<Byte>) childValue);
-                            return Stream.of(ArrayUtils.toObject(scaleEncodedChildValue));
-                        })
-                        .toList();
+            this.children.stream()
+                .filter(Objects::nonNull)
+                .flatMap(childValue -> {
+                    byte[] scaleEncodedChildValue = ScaleUtils.Encode.encodeAsListOfBytes(childValue);
+                    return Stream.of(ArrayUtils.toObject(scaleEncodedChildValue));
+                })
+                .toList();
         subvalue.addAll(childrenNodeValues);
 
         // Return everything accumulated thus far
         return subvalue;
     }
-
-
-    // TODO: Test exhaustively (fine bit twiddling, must be really sure it's accurate)
 
     /**
      * Encodes the components of a node value into the node value itself.
@@ -206,30 +188,31 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
      * @throws NodeEncodingException if the node represents invalid state;
      *                               for now only if it has a partial key, but no children and no storage value
      */
-    // NOTE:
-    //  This return type is quite arbitrary (mainly influenced by Smoldot),
-    //  feel free to change accordingly if it becomes too messy
-    public Stream<List<Byte>> encode() {
+    public List<Byte> encode() {
         return Stream.of(
                 this.encodeNodeHeader(),
                 this.encodePartialKey(),
                 this.encodeSubvalue()
-        );
+            )
+            .flatMap(Collection::stream)
+            .toList();
     }
-
 
     /**
      * Calculates the Merkle value of the given node.
-     * `isRootNode` must be `true` if the encoded node is the root node of the trie.
-     * Ultimately, almost the same as `encode`, except that the encoding is then optionally hashed.
-     * Hashing is performed if the encoded value is 32 bytes or more, or if `is_root_node` is `true`.
-     * This is the reason why `is_root_node` must be provided.
+     * Ultimately, almost the same as {@link DecodedNode#encode()}, except that the encoding is then optionally hashed.
+     * Hashing is performed if the encoded value is 32 bytes or more, or if isRootNode is true.
+     * This is the reason why {@code isRootNode} must be provided.
+     *
+     * @param hashFunction the hashing function
+     * @param isRootNode   must be true if the encoded node is the root node of the trie.
+     * @return the merkle value of the node
      */
     // NOTE:
     //  Passing the hashFunction as a lambda might be insufficient for future use cases, but it's enough for now
     //  Feel free to refactor if needed.
     public byte[] calculateMerkleValue(Function<byte[], byte[]> hashFunction, boolean isRootNode) {
-        byte[] nodeValue = ArrayUtils.toPrimitive(this.encode().flatMap(Collection::stream).toArray(Byte[]::new));
+        byte[] nodeValue = ArrayUtils.toPrimitive(this.encode().toArray(Byte[]::new));
 
         // The node value must be hashed if we're the root or otherwise, if it exceeds 31 bytes of length
         if (isRootNode || nodeValue.length >= 32) {
@@ -239,13 +222,13 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
         return nodeValue;
     }
 
-    /***
+    /**
      * Decodes a node value found in a proof into its components.
      * This can decode nodes no matter their version or hash algorithm.
      *
      * @param encoded The byte array representing the encoded node.
      * @return {@code DecodedNode<Nibbles, List <Byte>>} The decoded node
-     * @throws NodeDecodingException If the encoded array is null, empty, or invalid.
+     * @throws NodeDecodingException    If the encoded array is null, empty, or invalid.
      * @throws IllegalArgumentException If 'encoded' is null.
      */
     public static DecodedNode<Nibbles, List<Byte>> decode(byte[] encoded) {
@@ -439,7 +422,7 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
      * @throws NodeDecodingException If the length of any child's data exceeds the maximum allowed size.
      */
     private static List<List<Byte>> decodeChildren(ScaleCodecReader reader, int childrenBitmap) {
-        List<List<Byte>> children = new ArrayList<List<Byte>>(CHILDREN_COUNT);
+        List<List<Byte>> children = new ArrayList<>(CHILDREN_COUNT);
         for (int i = 0; i < CHILDREN_COUNT; i++) {
             if ((childrenBitmap & (1 << i)) == 0) {
                 children.add(i, null);
