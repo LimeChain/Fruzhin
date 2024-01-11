@@ -1,7 +1,6 @@
 package com.limechain.trie.structure.decoded.node;
 
 import com.limechain.trie.structure.decoded.node.exceptions.NodeEncodingException;
-import com.limechain.trie.structure.nibble.Nibble;
 import com.limechain.trie.structure.nibble.Nibbles;
 import org.apache.commons.lang3.ArrayUtils;
 import org.junit.jupiter.api.Test;
@@ -43,7 +42,7 @@ class DecodedNodeTest {
         StorageValue expectedStorageValue = new StorageValue(new byte[]{}, false);
         Nibbles expectedPartialKey = Nibbles.fromHexString("63");
 
-        DecodedNode<Nibbles, List<Byte>> decoded = DecodedNode.decode(expectedEncoded);
+        DecodedNode<List<Byte>> decoded = DecodedNode.decode(expectedEncoded);
         assertNotNull(decoded);
 
         assertEquals(boxedExpectedEncoded, decoded.encode());
@@ -62,9 +61,9 @@ class DecodedNodeTest {
     @Test
     void emptyNodeEncodesSuccessfully() {
         var decodedNode = new DecodedNode<>(
-                List.of(),
-                List.of(),
-                null
+            List.of(),
+            Nibbles.EMPTY,
+            null
         );
         assertDoesNotThrow(decodedNode::encode);
     }
@@ -73,7 +72,7 @@ class DecodedNodeTest {
     void nodeOnlyWithPartialKeyThrowsException() {
         var decodedNode = new DecodedNode<>(
                 List.of(),
-                List.of(Nibble.fromInt(2)),
+                Nibbles.fromHexString("2"),
                 null
         );
         assertThrows(NodeEncodingException.class, decodedNode::encode);

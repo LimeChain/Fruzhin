@@ -151,7 +151,7 @@ public class FullNode implements HostNode {
 
             // First, build the trie structure
             for (Map.Entry<String, String> entry : mainStorage.entrySet()) {
-                Nibbles key = new Nibbles(new BytesToNibbles(entry.getKey().getBytes()));
+                Nibbles key = Nibbles.of(new BytesToNibbles(entry.getKey().getBytes()));
                 byte[] value = entry.getValue().getBytes();
 
                 switch (trieStructure.node(key)) {
@@ -219,7 +219,7 @@ public class FullNode implements HostNode {
                     }
                 }
 
-                DecodedNode<Nibbles, List<Byte>> decoded = new DecodedNode<>(
+                DecodedNode<List<Byte>> decoded = new DecodedNode<>(
                         // TODO:
                         //  All of this ugly boilerplate for a simple List<Optional<byte[]>> to List<Byte>[] conversion...
                         //  figure out a better representation

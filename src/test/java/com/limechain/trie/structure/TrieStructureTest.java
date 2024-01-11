@@ -8,13 +8,9 @@ import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
-import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -43,7 +39,7 @@ class TrieStructureTest {
         assertTrue(trie1.structurallyEquals(trie2),
             "Empty tries must be structurally equal.");
 
-        final Nibbles key = new Nibbles(new BytesToNibbles("foo".getBytes()));
+        final Nibbles key = Nibbles.of(new BytesToNibbles("foo".getBytes()));
         trie1
             .node(key)
             .asVacant()
@@ -91,7 +87,7 @@ class TrieStructureTest {
             Stream.of(1, 3, 5)
                 .map(Nibble::fromInt)
                 // NOTE: Intentionally lists of only one nibble, since those are the expected partial keys
-                .map(Nibbles::new)
+                .map(Nibbles::of)
                 .toList();
 
         int i = 0;
@@ -120,7 +116,7 @@ class TrieStructureTest {
             var trie = new TrieStructure<>();
 
             for (var key : keys) {
-                var k = new Nibbles(key.stream().map(Nibble::fromInt));
+                var k = key.stream().map(Nibble::fromInt).collect(NibblesCollector.toNibbles());
                 var handle = trie.node(k);
 
                 handle
@@ -160,7 +156,7 @@ class TrieStructureTest {
                 .insert(null);
         }
 
-        assertFalse(trie.node(Nibbles.of(1, 2, 3)).asNodeHandle().hasStorageValue());
+        assertFalse(trie.node(Nibbles.fromHexString("123")).asNodeHandle().hasStorageValue());
     }
 
     // NOTE: This is illegally beautiful :D

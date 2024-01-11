@@ -34,7 +34,6 @@ public class NibblesCollector implements Collector<Nibble, List<Nibble>, Nibbles
 
     @Override
     public Function<List<Nibble>, Nibbles> finisher() {
-        // TODO: Avoid this unnecessary copying by introducing "lightweight by-reference only" constructors to Nibbles
         return Nibbles::new;
     }
 

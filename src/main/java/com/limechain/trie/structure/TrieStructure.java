@@ -261,7 +261,7 @@ public class TrieStructure<T> {
             // NOTE:
             //  For now, the remainingKey argument of `ClosestAncestor` is not used, so if this becomes an efficiency issue
             //  We could omit storing it. Also, this is the only reason we're reassigning the iterator.
-            var remainingKey = new Nibbles(keyIter);
+            var remainingKey = Nibbles.of(keyIter);
             closestAncestor = new ExistingNodeInnerResult.NotFound.ClosestAncestor(currentIndex, remainingKey);
             keyIter = remainingKey.iterator();
 

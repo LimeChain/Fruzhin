@@ -3,21 +3,45 @@ package com.limechain.trie.structure.nibble;
 import java.util.ArrayList;
 import java.util.List;
 
-// TODO: This could potentially be made similar to BytesToNibbles, consider whether a simple iterator strategy would be better.
 public class NibblesToBytes {
-    private final Nibbles nibbles;
-
     /**
-     * Doesn't clone the given `Nibbles`. Only serves as an iterable to provide a way to look at the existing nibbles in a new way.
+     * Turns a collection of nibbles into an iterator of bytes.
+     * If the number of nibbles is odd, adds a `0` nibble at the beginning.
      */
-    public NibblesToBytes(Nibbles nibbles) {
-        this.nibbles = nibbles;
+    public static List<Byte> paddingPrepend(final Nibbles nibbles) {
+        Nibbles prependedNibbles;
+
+        if (nibbles.size() % 2 == 1) {
+            // NOTE: Inefficient copying, could be bettered
+            prependedNibbles = nibbles.add(0, Nibble.ZERO);
+        } else {
+            prependedNibbles = nibbles;
+        }
+
+        return convert(prependedNibbles);
     }
 
     /**
-     * Actually constructs the new list; the Nibble references have been read from and the new Bytes have been constructed.
+     * Turns a collection of nibbles into an iterator of bytes.
+     * If the number of nibbles is odd, adds a `0` nibble at the end.
      */
-    private List<Byte> convert(List<Nibble> nibbles) {
+    public static List<Byte> paddingAppend(final Nibbles nibbles) {
+        Nibbles prependedNibbles;
+        if (nibbles.size() % 2 == 1) {
+            // NOTE: Inefficient copying, could be bettered
+            prependedNibbles = nibbles.add(Nibble.ZERO);
+        } else {
+            prependedNibbles = nibbles;
+        }
+
+        return convert(prependedNibbles);
+    }
+
+    /**
+     * Actually constructs the new list;
+     * the Nibble references have been read from and the new Bytes have been constructed.
+     */
+    private static List<Byte> convert(Nibbles nibbles) {
         assert nibbles.size() % 2 == 0 : "Only an even number of nibbles can be converted to bytes.";
 
         int halfLen = nibbles.size() / 2;
@@ -32,39 +56,5 @@ public class NibblesToBytes {
         }
 
         return result;
-    }
-
-    /**
-     * Turns an iterator of nibbles into an iterator of bytes.
-     * If the number of nibbles is odd, adds a `0` nibble at the beginning.
-     */
-    public List<Byte> paddingPrepend() {
-        Nibbles prependedNibbles;
-        if (this.nibbles.size() % 2 == 1) {
-            // TODO: Inefficient copying, figure out a better way
-            prependedNibbles = new Nibbles(this.nibbles);
-            prependedNibbles.add(0, Nibble.ZERO);
-        } else {
-            prependedNibbles = this.nibbles;
-        }
-
-        return convert(prependedNibbles);
-    }
-
-    /**
-     * Turns an iterator of nibbles into an iterator of bytes.
-     * If the number of nibbles is odd, adds a `0` nibble at the end.
-     */
-    public List<Byte> paddingAppend() {
-        Nibbles prependedNibbles;
-        if (this.nibbles.size() % 2 == 1) {
-            // TODO: Inefficient copying, figure out a better way
-            prependedNibbles = new Nibbles(this.nibbles);
-            prependedNibbles.add(Nibble.ZERO);
-        } else {
-            prependedNibbles = this.nibbles;
-        }
-
-        return convert(prependedNibbles);
     }
 }
