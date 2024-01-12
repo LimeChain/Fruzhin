@@ -52,7 +52,7 @@ class TrieStructureDotSerializer<T> {
 
     private static final String CHILDREN_INDICES;
     static {
-        String childrenIndices = Nibbles.all().map(childIndex -> String.format("<%1$s>%1$s", childIndex)).collect(
+        String childrenIndices = Nibble.all().map(childIndex -> String.format("<%1$s>%1$s", childIndex)).collect(
             Collectors.joining(" | "));
         CHILDREN_INDICES = String.format("{%s}", childrenIndices);
     }

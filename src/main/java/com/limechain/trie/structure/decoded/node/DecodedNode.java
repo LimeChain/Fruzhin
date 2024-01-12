@@ -6,7 +6,7 @@ import com.limechain.trie.structure.decoded.node.exceptions.NodeEncodingExceptio
 import com.limechain.trie.structure.nibble.BytesToNibbles;
 import com.limechain.trie.structure.nibble.Nibble;
 import com.limechain.trie.structure.nibble.Nibbles;
-import com.limechain.trie.structure.nibble.NibblesToBytes;
+import com.limechain.trie.structure.nibble.NibblesUtils;
 import com.limechain.utils.scale.ScaleUtils;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import lombok.AllArgsConstructor;
@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
@@ -25,13 +26,13 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 // NOTE:
-//  Those `extends` restrictions on the generic types are only used for `.size()` methods
+//  This `extends` restriction on the generic type is only used for `.size()` methods
 //  These needn't be restrictions on the node itself, but rather only for the `encode` method
 //  Which could alternatively be implemented as a generic static methods only for nodes obeying these constraints
 //  But we don't need that much overcomplicating now.
 @Getter
 @AllArgsConstructor
-public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte>> {
+public class DecodedNode<C extends Collection<Byte>> {
     public final static int CHILDREN_COUNT = 16;
 
     private static final int HASHED_STORAGE_VALUE_LENGTH = 32;
@@ -39,7 +40,7 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
 
     private List<C> children;
 
-    private I partialKey;
+    private Nibbles partialKey;
 
     @Nullable
     private StorageValue storageValue;
@@ -117,7 +118,7 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
     }
 
     private List<Byte> encodePartialKey() {
-        return new NibblesToBytes(new Nibbles(this.partialKey)).paddingPrepend();
+        return NibblesUtils.toBytesPrepending(this.partialKey);
     }
 
     // TODO: Optimize, a lot of unnecessary copying is going on.
@@ -231,7 +232,7 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
      * @throws NodeDecodingException    If the encoded array is null, empty, or invalid.
      * @throws IllegalArgumentException If 'encoded' is null.
      */
-    public static DecodedNode<Nibbles, List<Byte>> decode(byte[] encoded) {
+    public static DecodedNode<List<Byte>> decode(byte[] encoded) {
         ScaleCodecReader reader = new ScaleCodecReader(encoded);
         if (encoded == null || encoded.length == 0) {
             throw new NodeDecodingException("Invalid node value: it's empty");
@@ -295,13 +296,20 @@ public class DecodedNode<I extends Collection<Nibble>, C extends Collection<Byte
         byte[] storageValue = decodeStorageValue(reader, storageValueHashed);
 
         List<List<Byte>> children = decodeChildren(reader, childrenBitmap);
-        Nibbles partialKey = new Nibbles(new BytesToNibbles(partialKeyLEBytes));
+
+        Iterator<Nibble> pkNibbles = new BytesToNibbles(partialKeyLEBytes).iterator();
+
+        // This is for situations where the partial key contains a `0` prefix that exists for
+        // alignment but doesn't actually represent a nibble. So we skip it.
         if (pkLen % 2 == 1) {
-            // This is for situations where the partial key contains a `0` prefix that exists for
-            // alignment but doesn't actually represent a nibble.
-            partialKey.remove(0);
+            pkNibbles.next();
         }
-        return new DecodedNode<>(children, partialKey, new StorageValue(storageValue, storageValueHashed));
+
+        return new DecodedNode<>(
+            children,
+            Nibbles.of(pkNibbles),
+            new StorageValue(storageValue, Objects.requireNonNull(storageValueHashed))
+        );
     }
 
     /**

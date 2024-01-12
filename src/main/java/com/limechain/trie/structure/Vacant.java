@@ -2,6 +2,7 @@ package com.limechain.trie.structure;
 
 import com.limechain.trie.structure.nibble.Nibble;
 import com.limechain.trie.structure.nibble.Nibbles;
+import com.limechain.trie.structure.nibble.NibblesCollector;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.ArrayUtils;
 import org.javatuples.Pair;
@@ -104,7 +105,7 @@ public final class Vacant<T> extends Entry<T> {
                     return new PrepareInsert.One<>(
                         this.trieStructure,
                         new TrieNode.Parent(futureParentIndex, newChildNibbleIndex),
-                        new Nibbles(this.key.stream().skip(futureParentKeyLen + 1)),
+                        this.key.drop(futureParentKeyLen + 1),
                         new Integer[TRIE_NODE_CHILDREN_COUNT]
                     );
                 } else {
@@ -120,7 +121,7 @@ public final class Vacant<T> extends Entry<T> {
         // `existingNodeIndex` and the new node are known to either have the same parent and the
         // same child index, or to both have no parent. Now let's compare their partial key.
         Nibbles existingNodePartialKey = this.trieStructure.getNodeAtIndexInner(existingNodeIndex).partialKey;
-        Nibbles newNodePartialKey = new Nibbles(this.key.copy().stream().skip(futureParent == null ? 0 : futureParent.getValue1() + 1));
+        Nibbles newNodePartialKey = this.key.drop(futureParent == null ? 0 : futureParent.getValue1() + 1);
 
         assert !existingNodePartialKey.equals(newNodePartialKey)
             : "The remaining partial key cannot coincide with an existing node's partial key while inserting into a vacant spot.";
@@ -177,7 +178,7 @@ public final class Vacant<T> extends Entry<T> {
                 Optional.ofNullable(futureParent).map(fp ->
                     new TrieNode.Parent(fp.getValue0(), this.key.get(fp.getValue1()))
                 ).orElse(null),
-                new Nibbles(newNodePartialKey),
+                newNodePartialKey.copy(),
                 newNodeChildren
             );
         }
@@ -259,10 +260,10 @@ public final class Vacant<T> extends Entry<T> {
         return new PrepareInsert.Two<>(
             this.trieStructure,
             newNodePartialKey.get(branchPartialKeyLen),
-            new Nibbles(newNodePartialKey.stream().skip(branchPartialKeyLen + 1)),
+            newNodePartialKey.drop(branchPartialKeyLen + 1),
             futureParent == null ? null
                 : new TrieNode.Parent(futureParent.getValue0(), this.key.get(futureParent.getValue1())),
-            new Nibbles(newNodePartialKey.stream().limit(branchPartialKeyLen)),
+            newNodePartialKey.take(branchPartialKeyLen),
             branchChildren
         );
     }
@@ -345,7 +346,7 @@ public final class Vacant<T> extends Entry<T> {
                     TrieNode<T> childNode = this.trieStructure.getNodeAtIndexInner(this.childrenIndices[childIndex]);
                     Nibble childIndexNibble = Nibble.fromInt(childIndex);
                     childNode.parent = new TrieNode.Parent(newNodeIndex, childIndexNibble);
-                    childNode.partialKey = new Nibbles(childNode.partialKey.stream().skip(newNodePartialKeyLen + 1).iterator());
+                    childNode.partialKey = childNode.partialKey.drop(newNodePartialKeyLen + 1);
                 }
 
                 // Update the parent to point to its new child.
@@ -469,7 +470,7 @@ public final class Vacant<T> extends Entry<T> {
                     TrieNode<T> childNode = this.trieStructure.getNodeAtIndexInner(this.branchChildrenIndices[childIndex]);
                     Nibble childIndexNibble = Nibble.fromInt(childIndex);
                     childNode.parent = new TrieNode.Parent(newBranchNodeIndex, childIndexNibble);
-                    childNode.partialKey = new Nibbles(childNode.partialKey.stream().skip(newBranchNodePartialKeyLen + 1));
+                    childNode.partialKey = childNode.partialKey.drop(newBranchNodePartialKeyLen + 1);
                 }
 
                 // Update the branch node's parent to point to its new child.
