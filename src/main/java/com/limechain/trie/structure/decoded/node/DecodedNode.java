@@ -21,7 +21,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Function;
+import java.util.function.UnaryOperator;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -33,7 +33,7 @@ import java.util.stream.Stream;
 @Getter
 @AllArgsConstructor
 public class DecodedNode<C extends Collection<Byte>> {
-    public final static int CHILDREN_COUNT = 16;
+    public static final int CHILDREN_COUNT = 16;
 
     private static final int HASHED_STORAGE_VALUE_LENGTH = 32;
     private static final int CHILD_BYTES_SIZE_LIMIT = 32;
@@ -212,7 +212,7 @@ public class DecodedNode<C extends Collection<Byte>> {
     // NOTE:
     //  Passing the hashFunction as a lambda might be insufficient for future use cases, but it's enough for now
     //  Feel free to refactor if needed.
-    public byte[] calculateMerkleValue(Function<byte[], byte[]> hashFunction, boolean isRootNode) {
+    public byte[] calculateMerkleValue(UnaryOperator<byte[]> hashFunction, boolean isRootNode) {
         byte[] nodeValue = ArrayUtils.toPrimitive(this.encode().toArray(Byte[]::new));
 
         // The node value must be hashed if we're the root or otherwise, if it exceeds 31 bytes of length

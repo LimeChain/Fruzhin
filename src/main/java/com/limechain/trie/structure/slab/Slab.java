@@ -123,7 +123,7 @@ public class Slab<T> implements Iterable<Pair<Integer, T>> {
      * @return a list of pairs, where each pair contains an index and a non-null element
      */
     public List<Pair<Integer, T>> getAllEntries() {
-        return streamAllEntries().collect(Collectors.toList());
+        return streamAllEntries().toList();
     }
 
     /**
