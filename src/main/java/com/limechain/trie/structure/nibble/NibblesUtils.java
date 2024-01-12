@@ -54,7 +54,7 @@ public class NibblesUtils {
     }
 
     private byte nibblesToByte(Nibble first, Nibble second) {
-        return (byte) (first.asByte() << 4 | second.asByte());
+        return (byte) (first.asInt() << 4 | second.asInt());
     }
 
     private enum ConversionStrategy {
