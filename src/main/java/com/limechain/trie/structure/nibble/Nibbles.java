@@ -141,11 +141,17 @@ public class Nibbles implements Iterable<Nibble>, RandomAccess, Comparable<Itera
     }
 
     // NOTE:
-    //  Since Nibbles is immutable, we don't actually need to explicitly copy
-    //  This method could go away, passing by reference could suffice, although going back to mutability
-    //  if later decided would become rather difficult.
+    //  Since Nibbles is immutable, we don't actually need to explicitly copy. Passing by reference suffices.
+    //  This method would've been removed during refactoring to immutability, but we've left it out as a clear marker
+    //  of where ownership changes occur, so that if one day efficiency becomes a problem and we want to refactor again
+    //  in favor of mutability, we won't have to deduce our way back the hard way.
+    /**
+     * Since {@link Nibbles} is immutable, returns {@code this}.
+     * Exists only as a marker for copying in order to trace ownership more explicitly.
+     * @return this
+     */
     public Nibbles copy() {
-        return Nibbles.of(this.nibbles);
+        return this;
     }
 
     /**
@@ -195,6 +201,9 @@ public class Nibbles implements Iterable<Nibble>, RandomAccess, Comparable<Itera
         return Collections.unmodifiableList(this.nibbles);
     }
 
+    /**
+     * @return a stream of the contained nibbles
+     */
     public Stream<Nibble> stream() {
         return nibbles.stream();
     }
