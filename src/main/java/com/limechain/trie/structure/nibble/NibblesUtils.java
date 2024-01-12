@@ -1,17 +1,20 @@
 package com.limechain.trie.structure.nibble;
 
+import lombok.experimental.UtilityClass;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collector;
 import java.util.stream.StreamSupport;
 
+@UtilityClass
 public class NibblesUtils {
     /**
      * Joins a collection of nibbles into a list of bytes by
      * joining each two consecutive nibbles into a single byte.
      * If the number of nibbles is odd, adds a `0` nibble at the beginning.
      */
-    public static List<Byte> toBytesPrepending(final Nibbles nibbles) {
+    public List<Byte> toBytesPrepending(final Nibbles nibbles) {
         Nibbles prependedNibbles;
 
         if (nibbles.size() % 2 == 1) {
@@ -29,7 +32,7 @@ public class NibblesUtils {
      * joining each two consecutive nibbles into a single byte.
      * If the number of nibbles is odd, adds a `0` nibble at the end.
      */
-    public static List<Byte> toBytesAppending(final Nibbles nibbles) {
+    public List<Byte> toBytesAppending(final Nibbles nibbles) {
         Nibbles prependedNibbles;
         if (nibbles.size() % 2 == 1) {
             // NOTE: Inefficient copying, could be bettered
@@ -45,7 +48,7 @@ public class NibblesUtils {
      * Actually constructs the new list;
      * the Nibble references have been read from and the new Bytes have been constructed.
      */
-    private static List<Byte> toBytes(Nibbles nibbles) {
+    private List<Byte> toBytes(Nibbles nibbles) {
         assert nibbles.size() % 2 == 0 : "Only an even number of nibbles can be converted to bytes.";
 
         int halfLen = nibbles.size() / 2;
@@ -62,7 +65,7 @@ public class NibblesUtils {
         return result;
     }
 
-    static String toLowerHexString(Iterable<Nibble> nibbles) {
+    String toLowerHexString(Iterable<Nibble> nibbles) {
         return StreamSupport.stream(nibbles.spliterator(), false)
             .map(Nibble::asLowerHexDigit)
             .collect(
