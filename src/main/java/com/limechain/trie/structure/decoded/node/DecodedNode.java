@@ -6,7 +6,7 @@ import com.limechain.trie.structure.decoded.node.exceptions.NodeEncodingExceptio
 import com.limechain.trie.structure.nibble.BytesToNibbles;
 import com.limechain.trie.structure.nibble.Nibble;
 import com.limechain.trie.structure.nibble.Nibbles;
-import com.limechain.trie.structure.nibble.NibblesToBytes;
+import com.limechain.trie.structure.nibble.NibblesUtils;
 import com.limechain.utils.scale.ScaleUtils;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import lombok.AllArgsConstructor;
@@ -118,7 +118,7 @@ public class DecodedNode<C extends Collection<Byte>> {
     }
 
     private List<Byte> encodePartialKey() {
-        return NibblesToBytes.paddingPrepend(this.partialKey);
+        return NibblesUtils.toBytesPrepending(this.partialKey);
     }
 
     // TODO: Optimize, a lot of unnecessary copying is going on.

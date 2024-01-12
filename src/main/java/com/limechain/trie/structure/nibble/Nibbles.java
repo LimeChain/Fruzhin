@@ -11,9 +11,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.RandomAccess;
-import java.util.stream.Collector;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 /**
  * Convenience wrapper for any 'sequence of Nibble'-like structure.
@@ -88,20 +86,7 @@ public class Nibbles implements Iterable<Nibble>, RandomAccess, Comparable<Itera
      * @return the lower hexadecimal string representation of this Nibbles
      */
     public String toLowerHexString() {
-        return toLowerHexString(this.nibbles);
-    }
-
-    private static String toLowerHexString(Iterable<Nibble> nibbles) {
-        return StreamSupport.stream(nibbles.spliterator(), false)
-            .map(Nibble::asLowerHexDigit)
-            .collect(
-                Collector.of(
-                    StringBuilder::new,
-                    StringBuilder::append,
-                    StringBuilder::append,
-                    StringBuilder::toString
-                )
-            );
+        return NibblesUtils.toLowerHexString(this.nibbles);
     }
 
     /**
@@ -215,7 +200,8 @@ public class Nibbles implements Iterable<Nibble>, RandomAccess, Comparable<Itera
 
     @Override
     public int compareTo(@NotNull Iterable<Nibble> o) {
-        return this.toLowerHexString().compareTo(toLowerHexString(o));
+        // NOTE: Could be made more efficient by avoiding the string serialization, if it ever becomes an issue.
+        return this.toLowerHexString().compareTo(NibblesUtils.toLowerHexString(o));
     }
 
     @Override
