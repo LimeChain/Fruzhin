@@ -156,7 +156,6 @@ public class Nibbles implements Iterable<Nibble>, RandomAccess, Comparable<Itera
      *         ({@code n < 0 || n > size})
      */
     public Nibbles drop(int n) {
-        // NOTE: We might want to not throw, but return an empty Nibbles instead if (n < 0 || n > size).
         return new Nibbles(this.nibbles.subList(n, this.nibbles.size()));
     }
 
@@ -168,7 +167,6 @@ public class Nibbles implements Iterable<Nibble>, RandomAccess, Comparable<Itera
      *         ({@code n < 0 || n > size})
      */
     public Nibbles take(int n) {
-        // NOTE: We might want to not throw, but return the same Nibbles instead if (n > size).
         return new Nibbles(this.nibbles.subList(0, n));
     }
 
