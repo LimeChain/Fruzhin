@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.stream.Collector;
 import java.util.stream.StreamSupport;
 
+// TODO: Add unit tests
 @UtilityClass
 public class NibblesUtils {
     /**
@@ -15,16 +16,7 @@ public class NibblesUtils {
      * If the number of nibbles is odd, adds a `0` nibble at the beginning.
      */
     public List<Byte> toBytesPrepending(final Nibbles nibbles) {
-        Nibbles prependedNibbles;
-
-        if (nibbles.size() % 2 == 1) {
-            // NOTE: Inefficient copying, could be bettered
-            prependedNibbles = nibbles.add(0, Nibble.ZERO);
-        } else {
-            prependedNibbles = nibbles;
-        }
-
-        return toBytes(prependedNibbles);
+        return toBytes(nibbles, ConversionStrategy.PREPEND);
     }
 
     /**
@@ -33,36 +25,40 @@ public class NibblesUtils {
      * If the number of nibbles is odd, adds a `0` nibble at the end.
      */
     public List<Byte> toBytesAppending(final Nibbles nibbles) {
-        Nibbles prependedNibbles;
-        if (nibbles.size() % 2 == 1) {
-            // NOTE: Inefficient copying, could be bettered
-            prependedNibbles = nibbles.add(Nibble.ZERO);
-        } else {
-            prependedNibbles = nibbles;
-        }
-
-        return toBytes(prependedNibbles);
+        return toBytes(nibbles, ConversionStrategy.APPEND);
     }
 
-    /**
-     * Actually constructs the new list;
-     * the Nibble references have been read from and the new Bytes have been constructed.
-     */
-    private List<Byte> toBytes(Nibbles nibbles) {
-        assert nibbles.size() % 2 == 0 : "Only an even number of nibbles can be converted to bytes.";
+    private List<Byte> toBytes(final Nibbles nibbles, ConversionStrategy strategy) {
+        List<Byte> result = new ArrayList<>((nibbles.size() + 1) / 2);
+        int startFrom = 0;
 
-        int halfLen = nibbles.size() / 2;
+        // if we want to PREPEND a zero nibble in the case of an odd number of nibbles
+        if (strategy == ConversionStrategy.PREPEND && nibbles.size() % 2 != 0) {
+            byte prependedNibble = nibblesToByte(Nibble.ZERO, nibbles.get(0));
+            result.add(prependedNibble);
+            startFrom = 1;
+        }
 
-        List<Byte> result = new ArrayList<>(halfLen);
+        for (int i = startFrom; i < nibbles.size() - 1; i += 2) {
+            byte decodedNibble = nibblesToByte(nibbles.get(i), nibbles.get(i+1));
+            result.add(decodedNibble);
+        }
 
-        for (int i = 0; i < halfLen; ++i) {
-            Nibble n1 = nibbles.get(2 * i);
-            Nibble n2 = nibbles.get(2 * i + 1);
-            byte b = (byte) ((n1.asInt() << 4) + n2.asInt());
-            result.add(b);
+        // if, instead, we want to APPEND a zero nibble in the case of an odd number of nibbles
+        if (strategy == ConversionStrategy.APPEND && nibbles.size() % 2 != 0) {
+            byte appendedNibble = nibblesToByte(nibbles.get(nibbles.size() - 1), Nibble.ZERO);
+            result.add(appendedNibble);
         }
 
         return result;
+    }
+
+    private byte nibblesToByte(Nibble first, Nibble second) {
+        return (byte) (first.asByte() << 4 | second.asByte());
+    }
+
+    private enum ConversionStrategy {
+        APPEND, PREPEND
     }
 
     String toLowerHexString(Iterable<Nibble> nibbles) {
