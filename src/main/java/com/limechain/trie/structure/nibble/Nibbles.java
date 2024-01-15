@@ -28,7 +28,7 @@ public class Nibbles implements Iterable<Nibble>, RandomAccess, Comparable<Itera
      */
     public static final Nibbles ALL = Nibble.all().collect(NibblesCollector.toNibbles());
 
-    private final List<Nibble> nibbles;
+    private final List<Nibble> entries;
 
     public static Nibbles of(Nibble nibble) {
         return Nibbles.of(List.of(nibble));
@@ -54,8 +54,8 @@ public class Nibbles implements Iterable<Nibble>, RandomAccess, Comparable<Itera
         return new Nibbles(IteratorUtils.toList(nibbles));
     }
 
-    Nibbles(List<Nibble> nibbles) {
-        this.nibbles = nibbles;
+    Nibbles(List<Nibble> entries) {
+        this.entries = entries;
     }
 
     /**
@@ -79,14 +79,14 @@ public class Nibbles implements Iterable<Nibble>, RandomAccess, Comparable<Itera
             return false;
         }
 
-        return prefix.nibbles.equals(this.nibbles.subList(0, prefixSize));
+        return prefix.entries.equals(this.entries.subList(0, prefixSize));
     }
 
     /**
      * @return the lower hexadecimal string representation of this Nibbles
      */
     public String toLowerHexString() {
-        return NibblesUtils.toLowerHexString(this.nibbles);
+        return NibblesUtils.toLowerHexString(this.entries);
     }
 
     /**
@@ -96,7 +96,7 @@ public class Nibbles implements Iterable<Nibble>, RandomAccess, Comparable<Itera
      * @implNote will create a new modified copy of the nibbles, does not mutate the instance invoked on
      */
     public Nibbles add(Nibble nibble) {
-        List<Nibble> newNibbles = new ArrayList<>(this.nibbles);
+        List<Nibble> newNibbles = new ArrayList<>(this.entries);
         newNibbles.add(nibble);
         return new Nibbles(newNibbles);
     }
@@ -108,7 +108,7 @@ public class Nibbles implements Iterable<Nibble>, RandomAccess, Comparable<Itera
      * @implNote will create a new modified copy of the nibbles, does not mutate the instance invoked on
      */
     public Nibbles add(int index, Nibble nibble) {
-        List<Nibble> newNibbles = new ArrayList<>(this.nibbles);
+        List<Nibble> newNibbles = new ArrayList<>(this.entries);
         newNibbles.add(index, nibble);
         return new Nibbles(newNibbles);
     }
@@ -122,7 +122,7 @@ public class Nibbles implements Iterable<Nibble>, RandomAccess, Comparable<Itera
      *         ({@code index < 0 || index >= size()})
      */
     public Nibble get(int index) {
-        return nibbles.get(index);
+        return entries.get(index);
     }
 
     // NOTE:
@@ -147,7 +147,7 @@ public class Nibbles implements Iterable<Nibble>, RandomAccess, Comparable<Itera
      *         ({@code n < 0 || n > size})
      */
     public Nibbles drop(int n) {
-        return new Nibbles(this.nibbles.subList(n, this.nibbles.size()));
+        return new Nibbles(this.entries.subList(n, this.entries.size()));
     }
 
     /**
@@ -158,7 +158,7 @@ public class Nibbles implements Iterable<Nibble>, RandomAccess, Comparable<Itera
      *         ({@code n < 0 || n > size})
      */
     public Nibbles take(int n) {
-        return new Nibbles(this.nibbles.subList(0, n));
+        return new Nibbles(this.entries.subList(0, n));
     }
 
     /**
@@ -169,33 +169,33 @@ public class Nibbles implements Iterable<Nibble>, RandomAccess, Comparable<Itera
      * @return the number of elements in this Nibbles
      */
     public int size() {
-        return nibbles.size();
+        return entries.size();
     }
 
     /**
      * @return true if this Nibbles contains no elements
      */
     public boolean isEmpty() {
-        return nibbles.isEmpty();
+        return entries.isEmpty();
     }
 
     /**
      * @return an unmodifiable view of the underlying list of nibbles
      */
     public List<Nibble> asUnmodifiableList() {
-        return Collections.unmodifiableList(this.nibbles);
+        return Collections.unmodifiableList(this.entries);
     }
 
     /**
      * @return a stream of the contained nibbles
      */
     public Stream<Nibble> stream() {
-        return nibbles.stream();
+        return entries.stream();
     }
 
     @NotNull
     public Iterator<Nibble> iterator() {
-        return nibbles.iterator();
+        return entries.iterator();
     }
 
     @Override
@@ -214,11 +214,11 @@ public class Nibbles implements Iterable<Nibble>, RandomAccess, Comparable<Itera
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Nibbles nibbles1 = (Nibbles) o;
-        return this.nibbles.equals(nibbles1.nibbles);
+        return this.entries.equals(nibbles1.entries);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(this.nibbles);
+        return Objects.hash(this.entries);
     }
 }
