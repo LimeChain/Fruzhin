@@ -1,7 +1,6 @@
 package com.limechain.trie.structure;
 
 import com.limechain.trie.structure.nibble.Nibble;
-import com.limechain.trie.structure.nibble.Nibbles;
 
 import java.util.stream.Collectors;
 
@@ -38,7 +37,9 @@ class TrieStructureDotSerializer<T> {
             if (node.parent != null) {
                 int parentIndex = node.parent.parentNodeIndex();
                 Nibble childIndexWithinParent = node.parent.childIndexWithinParent();
-                body.append(String.format("    %d:%c -> %d;", parentIndex, childIndexWithinParent.asLowerHexDigit(), nodeIndex));
+                body.append(String.format(
+                    "    %d:%c -> %d;",
+                    parentIndex, childIndexWithinParent.asLowerHexDigit(), nodeIndex));
                 body.append(System.lineSeparator());
             }
             body.append(serializeNode(node, nodeIndex));
@@ -48,7 +49,6 @@ class TrieStructureDotSerializer<T> {
 
         return String.format(TEMPLATE, body);
     }
-
 
     private static final String CHILDREN_INDICES;
     static {
