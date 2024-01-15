@@ -63,31 +63,28 @@ public class DecodedNode<C extends Collection<Byte>> {
      *
      * @return the NodeVariant of this DecodedNode
      */
-    private NodeVariant calculateNodeVariant() {
-        boolean hasChildren = this.hasChildren();
-        boolean hasStorageValue = this.storageValue != null;
-        boolean valueHashed = hasStorageValue && this.storageValue.isHashed();
+    public NodeVariant calculateNodeVariant() {
+        return this.hasChildren() ? calculateBranchNodeVariant() : calculateLeafNodeVariant();
+    }
 
-        NodeVariant result;
-        if (!hasChildren && hasStorageValue && !valueHashed) {
-            result = NodeVariant.LEAF;
-        } else if (hasChildren && !hasStorageValue) {
-            result = NodeVariant.BRANCH;
-        } else if (hasChildren && hasStorageValue && !valueHashed) {
-            result = NodeVariant.BRANCH_WITH_VALUE;
-        } else if (!hasChildren && hasStorageValue && valueHashed) {
-            result = NodeVariant.LEAF_WITH_HASHED_VALUE;
-        } else if (hasChildren && hasStorageValue && valueHashed) {
-            result = NodeVariant.BRANCH_WITH_HASHED_VALUE;
-        } else { // NOTE: if (!hasChildren && !hasStorageValue)
+    private NodeVariant calculateLeafNodeVariant() {
+        if (this.storageValue == null) {
             if (!this.partialKey.isEmpty()) {
                 throw new NodeEncodingException("Trie node has a partial key, but no children and no storage value.");
             }
 
-            result = NodeVariant.EMPTY;
+            return NodeVariant.EMPTY;
         }
 
-        return result;
+        return this.storageValue.isHashed() ? NodeVariant.LEAF_WITH_HASHED_VALUE : NodeVariant.LEAF;
+    }
+
+    private NodeVariant calculateBranchNodeVariant() {
+        if (this.storageValue == null) {
+            return NodeVariant.BRANCH;
+        }
+
+        return this.storageValue.isHashed() ? NodeVariant.BRANCH_WITH_HASHED_VALUE : NodeVariant.BRANCH_WITH_VALUE;
     }
 
     private List<Byte> encodeNodeHeader() {
