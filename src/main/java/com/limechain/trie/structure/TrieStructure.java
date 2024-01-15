@@ -66,14 +66,12 @@ public class TrieStructure<T> {
         return Optional.of(this.nodeHandleAtIndexInner(this.rootIndex));
     }
 
-
-    @NotNull
-    NodeHandle<T> nodeHandleAtIndexInner(int nodeIndex) {
-        TrieNode<T> node = this.getNodeAtIndexInner(nodeIndex);
-        return NodeHandle.<T>getConstructor(node.hasStorageValue).apply(this, nodeIndex);
-    }
-
-    //NOTE: maybe rename to `nodeAtKey` or something similar... to align with `getNodeAtIndex`
+    /**
+     * Queries the trie at the given key.
+     * @param key to look up at
+     * @return the {@link Entry} at the given key
+     */
+    //NOTE: maybe rename to `entryAtKey` or `getEntryAtKey` something similar... to align with `getNodeAtIndex`?
     public Entry<T> node(Nibbles key) {
         return switch (this.existingNodeInner(key)) {
             case ExistingNodeInnerResult.Found found ->
@@ -336,14 +334,30 @@ public class TrieStructure<T> {
         return this.nodes.get(nodeIndex);
     }
 
+    /**
+     * Returns the user data of the node by its index.
+     * @param nodeIndex the index of the existing node
+     * @return the user data of the node with the index provided
+     */
     @Nullable
     public T getUserDataAtIndex(@NotNull TrieNodeIndex nodeIndex) {
         return this.getNodeAtIndexInner(nodeIndex.getValue()).userData;
     }
 
+    /**
+     * Returns a handle for the node at the given index.
+     * @param nodeIndex the index of the existing node
+     * @return a node handle for the node
+     */
     @Nullable
-    public NodeHandle<T> nodeHandleAtIndex(TrieNodeIndex index) {
-        return nodeHandleAtIndexInner(index.getValue());
+    public NodeHandle<T> nodeHandleAtIndex(@NotNull TrieNodeIndex nodeIndex) {
+        return nodeHandleAtIndexInner(nodeIndex.getValue());
+    }
+
+    @NotNull
+    NodeHandle<T> nodeHandleAtIndexInner(int nodeIndex) {
+        TrieNode<T> node = this.getNodeAtIndexInner(nodeIndex);
+        return NodeHandle.<T>getConstructor(node.hasStorageValue).apply(this, nodeIndex);
     }
 
     /**
