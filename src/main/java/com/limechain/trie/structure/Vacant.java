@@ -2,6 +2,7 @@ package com.limechain.trie.structure;
 
 import com.limechain.trie.structure.nibble.Nibble;
 import com.limechain.trie.structure.nibble.Nibbles;
+import com.limechain.trie.structure.nibble.NibblesCollector;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.ArrayUtils;
 import org.javatuples.Pair;
@@ -13,6 +14,11 @@ import java.util.Optional;
 import java.util.stream.IntStream;
 
 public final class Vacant<T> extends Entry<T> {
+    /**
+     * How many children a node has.
+     */
+    private static final int TRIE_NODE_CHILDREN_COUNT = 16;
+
     /**
      * Full key of the node to insert.
      */
@@ -57,7 +63,7 @@ public final class Vacant<T> extends Entry<T> {
                     this.trieStructure,
                     null,
                     key.copy(),
-                    new Integer[16]
+                    new Integer[TRIE_NODE_CHILDREN_COUNT]
                 );
             } else if (this.closestAncestorIndex != null) {
                 int keyLen = this.trieStructure.nodeFullKeyAtIndexInner(closestAncestorIndex).size();
@@ -99,8 +105,8 @@ public final class Vacant<T> extends Entry<T> {
                     return new PrepareInsert.One<>(
                         this.trieStructure,
                         new TrieNode.Parent(futureParentIndex, newChildNibbleIndex),
-                        new Nibbles(this.key.stream().skip(futureParentKeyLen + 1)),
-                        new Integer[16]
+                        this.key.drop(futureParentKeyLen + 1),
+                        new Integer[TRIE_NODE_CHILDREN_COUNT]
                     );
                 } else {
                     existingNodeIndex = existingChildNodeIndex;
@@ -115,7 +121,7 @@ public final class Vacant<T> extends Entry<T> {
         // `existingNodeIndex` and the new node are known to either have the same parent and the
         // same child index, or to both have no parent. Now let's compare their partial key.
         Nibbles existingNodePartialKey = this.trieStructure.getNodeAtIndexInner(existingNodeIndex).partialKey;
-        Nibbles newNodePartialKey = new Nibbles(this.key.copy().stream().skip(futureParent == null ? 0 : futureParent.getValue1() + 1));
+        Nibbles newNodePartialKey = this.key.drop(futureParent == null ? 0 : futureParent.getValue1() + 1);
 
         assert !existingNodePartialKey.equals(newNodePartialKey)
             : "The remaining partial key cannot coincide with an existing node's partial key while inserting into a vacant spot.";
@@ -163,7 +169,7 @@ public final class Vacant<T> extends Entry<T> {
             //                   (0 or more existing children)
             //
 
-            var newNodeChildren = new Integer[16];
+            var newNodeChildren = new Integer[TRIE_NODE_CHILDREN_COUNT];
             var existingNodeNewChildIndex = existingNodePartialKey.get(newNodePartialKey.size());
             newNodeChildren[existingNodeNewChildIndex.asInt()] = existingNodeIndex;
 
@@ -172,7 +178,7 @@ public final class Vacant<T> extends Entry<T> {
                 Optional.ofNullable(futureParent).map(fp ->
                     new TrieNode.Parent(fp.getValue0(), this.key.get(fp.getValue1()))
                 ).orElse(null),
-                new Nibbles(newNodePartialKey),
+                newNodePartialKey.copy(),
                 newNodeChildren
             );
         }
@@ -242,7 +248,7 @@ public final class Vacant<T> extends Entry<T> {
 
         // Table of children for the new branch node, not including the new storage node.
         // It therefore contains only one entry: `existing_node_index`.
-        Integer[] branchChildren = new Integer[16];
+        Integer[] branchChildren = new Integer[TRIE_NODE_CHILDREN_COUNT];
         branchChildrenInit: {
             Nibble existingNodeNewChildIndex = existingNodePartialKey.get(branchPartialKeyLen);
             assert !existingNodeNewChildIndex.equals(newNodePartialKey.get(branchPartialKeyLen))
@@ -254,10 +260,10 @@ public final class Vacant<T> extends Entry<T> {
         return new PrepareInsert.Two<>(
             this.trieStructure,
             newNodePartialKey.get(branchPartialKeyLen),
-            new Nibbles(newNodePartialKey.stream().skip(branchPartialKeyLen + 1)),
+            newNodePartialKey.drop(branchPartialKeyLen + 1),
             futureParent == null ? null
                 : new TrieNode.Parent(futureParent.getValue0(), this.key.get(futureParent.getValue1())),
-            new Nibbles(newNodePartialKey.stream().limit(branchPartialKeyLen)),
+            newNodePartialKey.take(branchPartialKeyLen),
             branchChildren
         );
     }
@@ -289,7 +295,8 @@ public final class Vacant<T> extends Entry<T> {
         private static final class One<T> extends PrepareInsert<T> {
             /**
              * Value of {@link TrieNode#parent} for the newly-created node.
-             * If null, we're setting the root of the trie to the new node. //NOTE: what does that mean?
+             * If null, we're setting the root of the trie to the new node when inserting
+             * (see {@link One#insert(Object)} for more info on the insertion logic)
              */
             @Nullable
             private final TrieNode.Parent parent;
@@ -331,7 +338,7 @@ public final class Vacant<T> extends Entry<T> {
                 ));
 
                 // Update the children nodes to point to their new parent.
-                for (int childIndex = 0; childIndex < 16; ++childIndex) {
+                for (int childIndex = 0; childIndex < TRIE_NODE_CHILDREN_COUNT; ++childIndex) {
                     if (this.childrenIndices[childIndex] == null) {
                         continue;
                     }
@@ -339,7 +346,7 @@ public final class Vacant<T> extends Entry<T> {
                     TrieNode<T> childNode = this.trieStructure.getNodeAtIndexInner(this.childrenIndices[childIndex]);
                     Nibble childIndexNibble = Nibble.fromInt(childIndex);
                     childNode.parent = new TrieNode.Parent(newNodeIndex, childIndexNibble);
-                    childNode.partialKey = new Nibbles(childNode.partialKey.stream().skip(newNodePartialKeyLen + 1).iterator());
+                    childNode.partialKey = childNode.partialKey.drop(newNodePartialKeyLen + 1);
                 }
 
                 // Update the parent to point to its new child.
@@ -440,22 +447,22 @@ public final class Vacant<T> extends Entry<T> {
                     branchUserData
                 ));
 
-                // Insert the actual storage node as its only child
+                // Insert the actual storage node
                 int newStorageNodeIndex = this.trieStructure.nodes.add(new TrieNode<>(
                     new TrieNode.Parent(newBranchNodeIndex, this.storageChildIndex),
                     this.storagePartialKey,
-                    new Integer[16],
+                    new Integer[TRIE_NODE_CHILDREN_COUNT],
                     true,
                     storageUserData
                 ));
 
-                // Set the freshly obtained storage node's `childIndex` in the child array of the branch node
+                // Set the freshly obtained storage node's index in the child array of the branch node
                 this.trieStructure
                     .getNodeAtIndexInner(newBranchNodeIndex)
                     .childrenIndices[this.storageChildIndex.asInt()] = newStorageNodeIndex;
 
                 // Update the branch node's children to point to their new parent
-                for (int childIndex = 0; childIndex < 16; ++childIndex) {
+                for (int childIndex = 0; childIndex < TRIE_NODE_CHILDREN_COUNT; ++childIndex) {
                     if (this.branchChildrenIndices[childIndex] == null) {
                         continue;
                     }
@@ -463,7 +470,7 @@ public final class Vacant<T> extends Entry<T> {
                     TrieNode<T> childNode = this.trieStructure.getNodeAtIndexInner(this.branchChildrenIndices[childIndex]);
                     Nibble childIndexNibble = Nibble.fromInt(childIndex);
                     childNode.parent = new TrieNode.Parent(newBranchNodeIndex, childIndexNibble);
-                    childNode.partialKey = new Nibbles(childNode.partialKey.stream().skip(newBranchNodePartialKeyLen + 1));
+                    childNode.partialKey = childNode.partialKey.drop(newBranchNodePartialKeyLen + 1);
                 }
 
                 // Update the branch node's parent to point to its new child.

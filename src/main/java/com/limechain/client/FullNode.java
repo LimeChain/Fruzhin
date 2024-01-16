@@ -10,6 +10,8 @@ import com.limechain.trie.structure.BranchNodeHandle;
 import com.limechain.trie.structure.NodeHandle;
 import com.limechain.trie.structure.StorageNodeHandle;
 import com.limechain.trie.structure.TrieNodeIndex;
+import com.limechain.trie.structure.BranchNodeHandle;
+import com.limechain.trie.structure.StorageNodeHandle;
 import com.limechain.trie.structure.TrieStructure;
 import com.limechain.trie.structure.Vacant;
 import com.limechain.trie.structure.decoded.node.DecodedNode;
@@ -20,6 +22,9 @@ import com.limechain.trie.structure.nibble.Nibbles;
 import com.limechain.trie.structure.node.InsertTrieNode;
 import com.limechain.trie.structure.node.NodeChildData;
 import com.limechain.trie.structure.node.TrieNodeData;
+import com.limechain.utils.HashUtils;
+import com.limechain.trie.structure.TrieNodeIndex;
+import com.limechain.trie.structure.NodeHandle;
 import com.limechain.utils.HashUtils;
 import lombok.SneakyThrows;
 import lombok.extern.java.Log;
@@ -173,7 +178,7 @@ public class FullNode implements HostNode {
 
             // First, build the trie structure
             for (Map.Entry<String, String> entry : mainStorage.entrySet()) {
-                Nibbles key = new Nibbles(new BytesToNibbles(entry.getKey().getBytes()));
+                Nibbles key = Nibbles.of(new BytesToNibbles(entry.getKey().getBytes()));
                 byte[] value = entry.getValue().getBytes();
 
                 switch (trieStructure.node(key)) {
@@ -241,13 +246,15 @@ public class FullNode implements HostNode {
                     }
                 }
 
-                DecodedNode<Nibbles, List<Byte>> decoded = new DecodedNode<Nibbles, List<Byte>>(
-                    // TODO:
-                    //  All of this ugly boilerplate for a simple List<Optional<byte[]>> to List<Byte>[] conversion...
-                    //  figure out a better representation
-                    children.stream().map(p -> p.map(ba -> new ArrayList<>(List.of(ArrayUtils.toObject(ba)))).orElse(null)).toArray(ArrayList[]::new),
-                    partialKey,
-                    storageValue
+                DecodedNode<List<Byte>> decoded = new DecodedNode<>(
+                        // TODO:
+                        //  All of this ugly boilerplate for a simple List<Optional<byte[]>> to List<Byte>[] conversion...
+                        //  figure out a better representation
+                        List.of(children.stream().map(p -> p
+                                .map(ba -> new ArrayList<>(List.of(ArrayUtils.toObject(ba))))
+                                .orElse(null)).toArray(ArrayList[]::new)),
+                        partialKey,
+                        storageValue
                 );
 
                 byte[] merkleValue = decoded.calculateMerkleValue(

@@ -13,6 +13,7 @@ public class CollectionWriter<T> implements ScaleWriter<Collection<T>> {
     public CollectionWriter(ScaleWriter<T> scaleWriter) {
         this.scaleWriter = scaleWriter;
     }
+
     @Override
     public void write(ScaleCodecWriter scaleCodecWriter, Collection<T> values) throws IOException {
         scaleCodecWriter.writeCompact(values.size());

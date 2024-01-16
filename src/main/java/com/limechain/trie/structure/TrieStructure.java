@@ -9,12 +9,12 @@ import org.javatuples.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
+import java.util.Deque;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Queue;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -66,14 +66,12 @@ public class TrieStructure<T> {
         return Optional.of(this.nodeHandleAtIndexInner(this.rootIndex));
     }
 
-
-    @NotNull
-    NodeHandle<T> nodeHandleAtIndexInner(int nodeIndex) {
-        TrieNode<T> node = this.getNodeAtIndexInner(nodeIndex);
-        return NodeHandle.<T>getConstructor(node.hasStorageValue).apply(this, nodeIndex);
-    }
-
-    //NOTE: maybe rename to `nodeAtKey` or something similar... to align with `getNodeAtIndex`
+    /**
+     * Queries the trie at the given key.
+     * @param key to look up at
+     * @return the {@link Entry} at the given key
+     */
+    //NOTE: maybe rename to `entryAtKey` or `getEntryAtKey` something similar... to align with `getNodeAtIndex`?
     public Entry<T> node(Nibbles key) {
         return switch (this.existingNodeInner(key)) {
             case ExistingNodeInnerResult.Found found ->
@@ -89,9 +87,6 @@ public class TrieStructure<T> {
             }
         };
     }
-    // NOTE:
-    //  Those (six) iteration methods could be reduced, or at least live outside this class,
-    //  but I find them all reasonably useful and couldn't decide for anything particularly cleaner.
 
     /**
      * @return an iterator of all {@link TrieNode}s in no specific order,
@@ -148,7 +143,10 @@ public class TrieStructure<T> {
     }
 
 
-    // TODO: Implement more beautifully
+    /**
+     * @return a stream of all {@link TrieNode}s in lexicographic order,
+     *         indexed by their respective integer indices.
+     */
     Stream<Integer> allNodesInLexicographicOrder() {
         return Stream.iterate(
             this.rootIndex,
@@ -258,11 +256,10 @@ public class TrieStructure<T> {
             // At this point, the tree traversal cursor (the already consumed part of the `key` iterator)
             // exactly matches `current`.
 
-            // TODO: clone the `key` iterator more sanely... we're currently copying the whole underlying data source
             // NOTE:
             //  For now, the remainingKey argument of `ClosestAncestor` is not used, so if this becomes an efficiency issue
-            //  We could omit storing it.
-            var remainingKey = new Nibbles(keyIter);
+            //  We could omit storing it. Also, this is the only reason we're reassigning the iterator.
+            var remainingKey = Nibbles.of(keyIter);
             closestAncestor = new ExistingNodeInnerResult.NotFound.ClosestAncestor(currentIndex, remainingKey);
             keyIter = remainingKey.iterator();
 
@@ -337,14 +334,30 @@ public class TrieStructure<T> {
         return this.nodes.get(nodeIndex);
     }
 
+    /**
+     * Returns the user data of the node by its index.
+     * @param nodeIndex the index of the existing node
+     * @return the user data of the node with the index provided
+     */
     @Nullable
     public T getUserDataAtIndex(@NotNull TrieNodeIndex nodeIndex) {
         return this.getNodeAtIndexInner(nodeIndex.getValue()).userData;
     }
 
+    /**
+     * Returns a handle for the node at the given index.
+     * @param nodeIndex the index of the existing node
+     * @return a node handle for the node
+     */
     @Nullable
-    public NodeHandle<T> nodeHandleAtIndex(TrieNodeIndex index) {
-        return nodeHandleAtIndexInner(index.getValue());
+    public NodeHandle<T> nodeHandleAtIndex(@NotNull TrieNodeIndex nodeIndex) {
+        return nodeHandleAtIndexInner(nodeIndex.getValue());
+    }
+
+    @NotNull
+    NodeHandle<T> nodeHandleAtIndexInner(int nodeIndex) {
+        TrieNode<T> node = this.getNodeAtIndexInner(nodeIndex);
+        return NodeHandle.<T>getConstructor(node.hasStorageValue).apply(this, nodeIndex);
     }
 
     /**
@@ -361,7 +374,7 @@ public class TrieStructure<T> {
 
     @NotNull
     Nibbles nodeFullKeyAtIndexInner(int targetNodeIndex) {
-        List<Integer> nodePath = this.nodePath(targetNodeIndex); // path without target itself
+        Queue<Integer> nodePath = this.nodePath(targetNodeIndex); // path without target itself
         nodePath.add(targetNodeIndex); // add target to the end
 
         Stream<Nibble> nibblesStream = nodePath
@@ -385,33 +398,21 @@ public class TrieStructure<T> {
 
     /**
      * @param targetNodeIndex index of the target node
-     * @return the indices to traverse to reach `target` from root, not including `target` itself.
-     *         So if target is root, returns an empty list.
+     * @return the indices to traverse to reach {@code target} from root, not including {@code target} itself.
+     *         So if {@code target} is root, returns an empty deque.
      * @throws NullPointerException if targetNodeIndex is not a valid index
      */
-    List<Integer> nodePath(int targetNodeIndex) {
-        List<Integer> path = new LinkedList<>();
+    Deque<Integer> nodePath(int targetNodeIndex) {
+        Deque<Integer> path = new LinkedList<>();
         var current = this.getNodeAtIndexInner(targetNodeIndex).parent;
 
         while (current != null) {
             int nodeIndex = current.parentNodeIndex();
-            path.add(nodeIndex);
+            path.addFirst(nodeIndex);
             current = this.getNodeAtIndexInner(nodeIndex).parent;
         }
 
-        Collections.reverse(path);
-
         return path;
-
-//        // Alternatively (and more functionally :D):
-//        return Stream.iterate(this.getNodeAtIndexInner(targetNodeIndex).parentIndex,
-//                Objects::nonNull,
-//                index -> this.getNodeAtIndexInner(index.getValue0()).parentIndex)
-//            .map(Pair::getValue0)
-//            .collect(Collectors.collectingAndThen(Collectors.toList(), list -> {
-//                Collections.reverse(list);
-//                return list;
-//            }));
     }
 
     /**
@@ -443,20 +444,22 @@ public class TrieStructure<T> {
                 return false;
             }
 
-            // Check if the parents match
+
+            // Check if parents match.
+            // We want to return false in all cases except:
+            //   - both parents are null;
+            //   - both parents are not null and the two nodes' child indices within them are the same
             {
                 var thisNodeParent = thisNode.parent;
                 var otherNodeParent = otherNode.parent;
 
-                //NOTE: this is awful, so a quick explainer:
-                //  We want to return false in all cases except:
-                //    - both parents are null;
-                //    - both parents are not null and the two nodes' child indices within them are the same
-                //  Reference: https://github.com/smol-dot/smoldot/blob/200214a571af30b5fa3997aea988451adc235ed0/lib/src/trie/trie_structure.rs#L615
-                if ((thisNodeParent != null || otherNodeParent != null)
-                    && (thisNodeParent == null
-                        || otherNodeParent == null
-                        || !thisNodeParent.childIndexWithinParent().equals(otherNodeParent.childIndexWithinParent()))) {
+                boolean bothParentsNull = thisNodeParent == null || otherNodeParent == null;
+                boolean bothParentsNotNullAndSameChildIndices =
+                    thisNodeParent != null
+                    && otherNodeParent != null
+                    && thisNodeParent.childIndexWithinParent().equals(otherNodeParent.childIndexWithinParent());
+
+                if (!(bothParentsNull || bothParentsNotNullAndSameChildIndices)) {
                     return false;
                 }
             }
@@ -465,16 +468,5 @@ public class TrieStructure<T> {
                 return false;
             }
         }
-    }
-
-    /**
-     * @deprecated
-     * This method does nothing more than {@link Object#equals}, i.e. referential equality.
-     * <p> Use {@link TrieStructure#structurallyEquals(TrieStructure other)} instead.
-     */
-    @Override
-    @Deprecated
-    public boolean equals(Object obj) {
-        return super.equals(obj);
     }
 }

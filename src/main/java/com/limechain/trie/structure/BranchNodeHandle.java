@@ -5,12 +5,16 @@ package com.limechain.trie.structure;
  * i.e. in the purely "structural necessity branch node" sense.
  */
 public final class BranchNodeHandle<T> extends NodeHandle<T> {
-
-    // NOTE: An ugly workaround to simulate the notion of "consuming" this branch node handle
     private boolean consumed;
+
     BranchNodeHandle(TrieStructure<T> trieStructure, int nodeIndex) {
         super(trieStructure, nodeIndex);
         consumed = false;
+    }
+
+    @Override
+    public boolean hasStorageValue() {
+        return false;
     }
 
     /**

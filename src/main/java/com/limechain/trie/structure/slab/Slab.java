@@ -10,7 +10,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Queue;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -123,7 +122,7 @@ public class Slab<T> implements Iterable<Pair<Integer, T>> {
      * @return a list of pairs, where each pair contains an index and a non-null element
      */
     public List<Pair<Integer, T>> getAllEntries() {
-        return streamAllEntries().collect(Collectors.toList());
+        return streamAllEntries().toList();
     }
 
     /**

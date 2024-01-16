@@ -18,7 +18,8 @@ import java.util.Optional;
 @AllArgsConstructor
 class TrieNode<T> {
     /**
-     * Index of the parent node within {@link TrieStructure#nodes}. Null if this is the root.
+     * Index of the parent node within {@link TrieStructure#nodes} plus this node's child index within the parent.
+     * Null if this is the root.
      */
     @Nullable
     Parent parent;

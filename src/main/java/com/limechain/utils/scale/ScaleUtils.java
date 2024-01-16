@@ -10,18 +10,15 @@ import io.emeraldpay.polkaj.scale.ScaleReader;
 import io.emeraldpay.polkaj.scale.ScaleWriter;
 import io.emeraldpay.polkaj.scale.reader.ListReader;
 import io.emeraldpay.polkaj.scale.writer.ListWriter;
-import io.emeraldpay.polkaj.scale.writer.UByteWriter;
 import kotlin.Pair;
 import lombok.experimental.UtilityClass;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
-import java.util.stream.Stream;
 
 // TODO:
 //  This is currently a helper utility class
@@ -99,10 +96,6 @@ public class ScaleUtils {
         public byte[] encodeAsListOfListsOfBytes(Collection<Collection<Byte>> values) {
             return encodeAsList(new CollectionWriter<>(ScaleCodecWriter::directWrite), values);
         }
-
-//        public byte[] encodeListOfListsOfBytes(List<List<Byte>> values) {
-//            return encodeAsList(new ListWriter<>(ScaleCodecWriter::directWrite), values);
-//        }
 
         public byte[] encodeCompactUInt(int value) {
             var out = new ByteArrayOutputStream();
