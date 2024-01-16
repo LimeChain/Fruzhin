@@ -7,7 +7,9 @@ import com.limechain.storage.KVRepository;
 import com.limechain.storage.block.BlockStateHelper;
 import com.limechain.sync.warpsync.WarpSyncMachine;
 import com.limechain.trie.structure.BranchNodeHandle;
+import com.limechain.trie.structure.NodeHandle;
 import com.limechain.trie.structure.StorageNodeHandle;
+import com.limechain.trie.structure.TrieNodeIndex;
 import com.limechain.trie.structure.TrieStructure;
 import com.limechain.trie.structure.Vacant;
 import com.limechain.trie.structure.decoded.node.DecodedNode;
@@ -16,15 +18,20 @@ import com.limechain.trie.structure.nibble.BytesToNibbles;
 import com.limechain.trie.structure.nibble.Nibble;
 import com.limechain.trie.structure.nibble.Nibbles;
 import com.limechain.trie.structure.node.InsertTrieNode;
-import com.limechain.trie.structure.TrieNodeIndex;
-import com.limechain.trie.structure.NodeHandle;
+import com.limechain.trie.structure.node.NodeChildData;
+import com.limechain.trie.structure.node.TrieNodeData;
 import com.limechain.utils.HashUtils;
 import lombok.SneakyThrows;
 import lombok.extern.java.Log;
 import org.apache.commons.lang3.ArrayUtils;
 import org.javatuples.Pair;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.math.BigInteger;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -48,14 +55,15 @@ public class FullNode implements HostNode {
         //Initialize state
 
         // TODO: Is there a better way to do this?
-        var db = AppBean.getBean(KVRepository.class); //presume this works
+        KVRepository<String, Object> db = AppBean.getBean(KVRepository.class); //presume this works
         // if: database exists and has some persisted storage
         if (db != null && db.find(new BlockStateHelper().headerHashKey(BigInteger.ZERO)).isPresent()) {
             // do nothing?
         } else {
             // do the initial one-time population of the database with the genesis storage
             TrieStructure<Pair<Optional<byte[]>, Optional<byte[]>>> trieStructure = initializeDatabaseStorageTrie();
-            buildTrieNodesIterator(trieStructure);
+            List<InsertTrieNode> insertTrieNodes = buildTrieNodesList(trieStructure);
+            insertStorage(db, insertTrieNodes, (byte) 0); //Todo: calculate state versoin
         }
 
         // Start network
@@ -93,7 +101,7 @@ public class FullNode implements HostNode {
      * @throws IllegalStateException if the user data in the trie structure is empty or null, which
      *                               indicates an invalid state for the trie nodes.
      */
-    public List<InsertTrieNode> buildTrieNodesIterator(
+    public List<InsertTrieNode> buildTrieNodesList(
             TrieStructure<Pair<Optional<byte[]>, Optional<byte[]>>> trieStructure
     ) {
         List<InsertTrieNode> trieNodesIterator = new ArrayList<>();
@@ -103,14 +111,28 @@ public class FullNode implements HostNode {
             if (userData.getValue1().isEmpty()) {
                 throw new IllegalStateException("Merkle value should not be empty!");
             }
-            NodeHandle<Pair<Optional<byte[]>, Optional<byte[]>>> nodeHandle = trieStructure.nodeHandleAtIndex(nodeIndex);
+            NodeHandle<Pair<Optional<byte[]>, Optional<byte[]>>> nodeHandle =
+                    trieStructure.nodeHandleAtIndex(nodeIndex);
 
-            byte[] storageValue = userData.getValue0().orElse(null);
+            Optional<byte[]> storageValueOpt = userData.getValue0();
             byte[] merkleValue = userData.getValue1().get();
+            final InsertTrieNode.InsertStorageValue storageValue = new InsertTrieNode.InsertStorageValue(
+                    storageValueOpt.orElse(null),
+                    storageValueOpt.isPresent(),
+                    false);
 
             byte[] merkleValueCopy = merkleValue.clone();
             List<byte[]> childrenMerkleValues = new ArrayList<>();
-            List<Nibble> partialKeyNibbles = new ArrayList<>(nodeHandle.getPartialKey().asUnmodifiableList());
+            Nibbles partialKey = nodeHandle.getPartialKey();
+            byte[] partialKeyNibbles = partialKey.asUnmodifiableList().stream().map(Nibble::asByte)
+                    .collect(ByteArrayOutputStream::new, ByteArrayOutputStream::write, (baos1, baos2) -> {
+                        try {
+                            baos2.writeTo(baos1);
+                        } catch (IOException e) {
+                            throw new UncheckedIOException(e);
+                        }
+                    })
+                    .toByteArray();
 
             for (Nibble n : Nibbles.ALL) {
                 Optional<NodeHandle<Pair<Optional<byte[]>, Optional<byte[]>>>> childHandle = nodeHandle.getChild(n);
@@ -240,4 +262,56 @@ public class FullNode implements HostNode {
 
         return trieStructure;
     }
+
+    /**
+     * Inserts trie nodes into the key-value repository.
+     *
+     * @param db The key-value repository where trie nodes are to be stored.
+     * @param insertTrieNodes The list of trie nodes to be inserted.
+     * @param entriesVersion The version number of the trie entries.
+     */
+    private void insertStorage(KVRepository<String, Object> db, List<InsertTrieNode> insertTrieNodes, byte entriesVersion) {
+        try {
+            for (InsertTrieNode trieNode : insertTrieNodes) {
+                //Insert tn(trie node) to db
+                db.save("tn:" + new String(trieNode.getMerkleValue()), trieNode.getPartialKeyNibbles());
+
+
+
+                // Handle storage value
+                final InsertTrieNode.InsertStorageValue storageValue = trieNode.getStorageValue();
+                final TrieNodeData tnsValue = new TrieNodeData(
+                        storageValue.referencesMerkleValue() ? null : storageValue.value(),
+                        storageValue.referencesMerkleValue() ? storageValue.value() : null,
+                        entriesVersion);
+
+                //Insert tns(trie node storage) to db
+                db.save("tns:" + new String(trieNode.getMerkleValue()), tnsValue);
+
+                // Insert children
+                insertChildren(db, trieNode);
+            }
+
+        } catch (Exception e) {
+            log.log(Level.SEVERE, "Failed to insert trie structure to db storage", e);
+        }
+    }
+
+    /**
+     * Inserts the children of a given trie node into
+     the key-value repository.
+
+     @param db The key-value repository where trie node children are to be stored.
+     @param trieNode The trie node whose children are to be inserted.
+     */
+    private void insertChildren(KVRepository<String, Object> db, InsertTrieNode trieNode)  {
+        for (int childNum = 0; childNum < trieNode.getChildrenMerkleValues().size(); childNum++) {
+            byte[] child = trieNode.getChildrenMerkleValues().get(childNum);
+            NodeChildData nodeChildData = new NodeChildData(childNum, child);
+            //Insert tnc(trie node child) to db
+            db.save("tnc:" + new String(trieNode.getMerkleValue()), nodeChildData);
+        }
+    }
+
+
 }

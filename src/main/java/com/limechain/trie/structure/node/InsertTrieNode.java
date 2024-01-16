@@ -1,6 +1,5 @@
 package com.limechain.trie.structure.node;
 
-import com.limechain.trie.structure.nibble.Nibble;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -13,12 +12,11 @@ import java.util.List;
  */
 @AllArgsConstructor
 @Getter
-
 public class InsertTrieNode {
-    /**
+    /**InsertStorageValue
      * The storage value associated with this trie node.
      */
-    private final byte[] storageValue;
+    private final InsertStorageValue storageValue;
     /**
      * The merkle value of this trie node.
      */
@@ -31,5 +29,8 @@ public class InsertTrieNode {
     /**
      * A list of nibbles representing the partial key associated with this trie node.
      */
-    private final List<Nibble> partialKeyNibbles;
+    private final byte[] partialKeyNibbles;
+
+    public static record InsertStorageValue(byte[] value, boolean hasValue, boolean referencesMerkleValue) {
+    }
 }
