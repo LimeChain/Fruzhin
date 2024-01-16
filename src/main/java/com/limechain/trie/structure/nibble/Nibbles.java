@@ -54,6 +54,10 @@ public class Nibbles implements Iterable<Nibble>, RandomAccess, Comparable<Itera
         return new Nibbles(IteratorUtils.toList(nibbles));
     }
 
+    public static Nibbles of(byte[] bytes) {
+        return Nibbles.of(new BytesToNibbles(bytes).iterator());
+    }
+
     Nibbles(List<Nibble> entries) {
         this.entries = entries;
     }

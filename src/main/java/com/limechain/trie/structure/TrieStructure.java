@@ -89,6 +89,30 @@ public class TrieStructure<T> {
     }
 
     /**
+     * Insert a node at the given key.
+     *
+     * @param key partial key in nibbles
+     * @param nodeData data to insert
+     */
+    public void insertNode(Nibbles key, T nodeData) {
+        switch (node(key)) {
+            case Vacant<T> vacant -> vacant
+                    .prepareInsert()
+                    .insert(nodeData);
+            case BranchNodeHandle<T> handle -> {
+                handle.setUserData(nodeData);
+                handle.convertToStorageNode();
+            }
+            case StorageNodeHandle<T> __ -> {
+                // We have a duplicate entry:
+                // a second value corresponding to an already inserted key from the genesis storage.
+                // NOTE: don't throw?
+                throw new IllegalStateException("Duplicate key in genesis storage (raw.top).");
+            }
+        }
+    }
+
+    /**
      * @return an iterator of all {@link TrieNode}s in no specific order,
      *         indexed by their respective {@link TrieNodeIndex}es.
      */
@@ -141,7 +165,6 @@ public class TrieStructure<T> {
             .allNodesInLexicographicOrder()
             .map(TrieNodeIndex::new);
     }
-
 
     /**
      * @return a stream of all {@link TrieNode}s in lexicographic order,
@@ -443,7 +466,6 @@ public class TrieStructure<T> {
             if (thisNode.hasStorageValue != otherNode.hasStorageValue) {
                 return false;
             }
-
 
             // Check if parents match.
             // We want to return false in all cases except:
