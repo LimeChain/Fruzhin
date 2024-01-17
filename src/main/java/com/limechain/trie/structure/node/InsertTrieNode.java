@@ -1,7 +1,9 @@
 package com.limechain.trie.structure.node;
 
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.ToString;
 
 import java.util.List;
 
@@ -13,7 +15,8 @@ import java.util.List;
 @AllArgsConstructor
 @Getter
 public class InsertTrieNode {
-    /**InsertStorageValue
+    /**
+     * InsertStorageValue
      * The storage value associated with this trie node.
      */
     private final InsertStorageValue storageValue;
@@ -31,6 +34,13 @@ public class InsertTrieNode {
      */
     private final byte[] partialKeyNibbles;
 
-    public static record InsertStorageValue(byte[] value, boolean hasValue, boolean referencesMerkleValue) {
+    @AllArgsConstructor
+    @EqualsAndHashCode
+    @ToString
+    @Getter
+    public static class InsertStorageValue {
+        byte[] value;
+        boolean hasValue;
+        boolean referencesMerkleValue;
     }
 }

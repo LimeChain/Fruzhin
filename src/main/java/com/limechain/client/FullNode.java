@@ -281,8 +281,8 @@ public class FullNode implements HostNode {
                 // Handle storage value
                 final InsertTrieNode.InsertStorageValue storageValue = trieNode.getStorageValue();
                 final TrieNodeData tnsValue = new TrieNodeData(
-                        storageValue.referencesMerkleValue() ? null : storageValue.value(),
-                        storageValue.referencesMerkleValue() ? storageValue.value() : null,
+                        storageValue.isReferencesMerkleValue() ? null : storageValue.getValue(),
+                        storageValue.isReferencesMerkleValue() ? storageValue.getValue() : null,
                         entriesVersion);
 
                 //Insert tns(trie node storage) to db
