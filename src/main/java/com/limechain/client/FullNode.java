@@ -26,6 +26,7 @@ import lombok.extern.java.Log;
 import org.apache.commons.lang3.ArrayUtils;
 import org.javatuples.Pair;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.math.BigInteger;
@@ -263,7 +264,6 @@ public class FullNode implements HostNode {
 
         return trieStructure;
     }
-
 
     /**
      * Inserts trie nodes into the key-value repository.
