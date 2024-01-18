@@ -20,6 +20,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 
 @Log
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -85,10 +86,6 @@ public class OffchainHttpRequests {
         return request.getInputStream().readNBytes(bytes);
     }
 
-    private HttpURLConnection getExistingRequest(int id) throws InvalidRequestId {
-        return Optional.ofNullable(requests.get(id)).orElseThrow(InvalidRequestId::new);
-    }
-
     public HttpStatusCode[] getRequestsResponses(int[] requestIds, int timeout) throws InterruptedException {
         HttpStatusCode[] requestStatuses = new HttpStatusCode[requestIds.length];
 
@@ -120,15 +117,17 @@ public class OffchainHttpRequests {
     }
 
     public HttpStatusCode executeRequest(int requestId, int timeout, long startTime){
-        HttpURLConnection request = requests.get(requestId);
         try {
+            HttpURLConnection request = getExistingRequest(requestId);
             int statusCode = waitRequestResponseWithTimeout(request, timeout, startTime);
             return HttpStatusCode.success(statusCode);
         } catch (InvalidRequestId e) {
             return HttpStatusCode.error(HttpErrorType.INVALID_ID);
         } catch (SocketTimeoutException e) {
+            log.log(Level.WARNING, e.getMessage(), e.getStackTrace());
             return HttpStatusCode.error(HttpErrorType.DEADLINE_REACHED);
         } catch (IOException e) {
+            log.log(Level.WARNING, e.getMessage(), e.getStackTrace());
             return HttpStatusCode.error(HttpErrorType.IO_ERROR);
         }
     }
@@ -147,5 +146,9 @@ public class OffchainHttpRequests {
             throw new SocketTimeoutException("Timeout while connecting");
         }
         return request.getResponseCode();
+    }
+
+    private HttpURLConnection getExistingRequest(int id) throws InvalidRequestId {
+        return Optional.ofNullable(requests.get(id)).orElseThrow(InvalidRequestId::new);
     }
 }

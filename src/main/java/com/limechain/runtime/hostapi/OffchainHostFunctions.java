@@ -263,7 +263,7 @@ public class OffchainHostFunctions {
     }
 
     /**
-     * Initiates a HTTP request given by the HTTP method and the URL. Returns the Id of a newly started request.
+     * Initiates an HTTP request given by the HTTP method and the URL. Returns the ID of a newly started request.
      *
      * @param methodPointer a pointer-size to the HTTP method. Possible values are “GET” and “POST”.
      * @param uriPointer    a pointer-size to the URI.
@@ -306,7 +306,7 @@ public class OffchainHostFunctions {
      * @param requestId    an i32 integer indicating the ID of the started request.
      * @param namePointer  a pointer-size to the HTTP header name.
      * @param valuePointer a pointer-size to the HTTP header value.
-     * @return a pointer-size to the SCALE encoded Result value. Neither on success or failure is there any additional
+     * @return a pointer-size to the SCALE encoded Result value. Neither on success nor failure is there any additional
      * data provided. The cause of failure is implementation specific.
      */
     public RuntimePointerSize extOffchainHttpRequestAddHeader(int requestId,
@@ -409,38 +409,33 @@ public class OffchainHostFunctions {
      *
      * @param requestId       the ID of the started request
      * @param bufferPointer   pointer-size to the buffer where the body gets written to.
-     * @param deadlinePointer a pointer-size to the SCALE encoded Option valud containing the UNIX timestamp.
+     * @param deadlinePointer a pointer-size to the SCALE encoded Option value containing the UNIX timestamp.
      * @return a pointer-size to the SCALE encoded Result value
      */
     public RuntimePointerSize extOffchainHttpResponseReadBodyVersion1(int requestId,
                                                                       RuntimePointerSize bufferPointer,
                                                                       RuntimePointerSize deadlinePointer) {
         int timeout = timeoutFromDeadline(deadlinePointer);
-        try {
-            long startTime = Instant.now().toEpochMilli();
-            HttpStatusCode responseCode = requests.executeRequest(requestId, timeout, startTime);
-            if (responseCode.hasError()) {
-                return hostApi.writeDataToMemory(responseCode.getErrorType().scaleEncodedResult());
-            } else {
-                return writeResponseToMemory(requestId, bufferPointer);
-            }
-        } catch (InvalidRequestId e) {
-            return hostApi.writeDataToMemory(HttpErrorType.INVALID_ID.scaleEncodedResult());
-        } catch (SocketTimeoutException e) {
-            log.log(Level.WARNING, e.getMessage(), e.getStackTrace());
-            return hostApi.writeDataToMemory(HttpErrorType.DEADLINE_REACHED.scaleEncodedResult());
-        } catch (IOException e) {
-            log.log(Level.WARNING, e.getMessage(), e.getStackTrace());
-            return hostApi.writeDataToMemory(HttpErrorType.IO_ERROR.scaleEncodedResult());
+        long startTime = Instant.now().toEpochMilli();
+        HttpStatusCode responseCode = requests.executeRequest(requestId, timeout, startTime);
+        if (responseCode.hasError()) {
+            return hostApi.writeDataToMemory(responseCode.getErrorType().scaleEncodedResult());
+        } else {
+            return writeResponseToMemory(requestId, bufferPointer);
         }
     }
 
-    private RuntimePointerSize writeResponseToMemory(int requestId, RuntimePointerSize bufferPointer) throws IOException {
-        byte[] data = requests.readResponseBody(requestId, bufferPointer.size());
-        hostApi.writeDataToMemory(data, bufferPointer);
+    private RuntimePointerSize writeResponseToMemory(int requestId, RuntimePointerSize bufferPointer) {
+        try {
+            byte[] data = requests.readResponseBody(requestId, bufferPointer.size());
+            hostApi.writeDataToMemory(data, bufferPointer);
 
-        byte[] result = scaleEncodeIntResult(data.length);
-        return hostApi.writeDataToMemory(result);
+            byte[] result = scaleEncodeIntResult(data.length);
+            return hostApi.writeDataToMemory(result);
+        } catch (IOException e) {
+            return hostApi.writeDataToMemory(HttpErrorType.IO_ERROR.scaleEncodedResult());
+        }
+
     }
 
     private int timeoutFromDeadline(RuntimePointerSize deadlinePointer) {
