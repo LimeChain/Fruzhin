@@ -1,6 +1,7 @@
 package com.limechain.runtime.hostapi;
 
-import com.limechain.runtime.hostapi.dto.HttpResponseType;
+import com.limechain.runtime.hostapi.dto.HttpErrorType;
+import com.limechain.runtime.hostapi.dto.HttpStatusCode;
 import com.limechain.runtime.hostapi.dto.InvalidRequestId;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -10,9 +11,11 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.SocketTimeoutException;
 import java.net.URL;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -23,7 +26,7 @@ import java.util.concurrent.TimeUnit;
 public class OffchainHttpRequests {
     private static OffchainHttpRequests instance;
     private short idCounter = 0;
-    private final Map<Integer, HttpURLConnection> requests = new HashMap<>();
+    protected final Map<Integer, HttpURLConnection> requests = new HashMap<>();
 
     public static OffchainHttpRequests getInstance() {
         if (instance == null) {
@@ -43,24 +46,23 @@ public class OffchainHttpRequests {
     }
 
     public void addHeader(int id, String headerName, String headerValue) {
-        HttpURLConnection request = requests.get(id);
-        if (request == null) {
-            throw new InvalidRequestId();
-        }
+        HttpURLConnection request = getExistingRequest(id);
         request.setRequestProperty(headerName, headerValue);
     }
 
     public void addRequestBodyChunk(int id, byte[] chunk, int timeout) throws IOException {
-        HttpURLConnection request = requests.get(id);
-        if (request == null) {
-            throw new InvalidRequestId();
-        }
+        HttpURLConnection request = getExistingRequest(id);
         request.setConnectTimeout(timeout);
-        request.getOutputStream().write(chunk);
+
+        if (chunk.length == 0) {
+            request.connect();
+        } else {
+            request.getOutputStream().write(chunk);
+        }
     }
 
     public Map<String, List<String>> getResponseHeaders(int id) throws IOException {
-        HttpURLConnection request = requests.get(id);
+        HttpURLConnection request = getExistingRequest(id);
         if (request.getResponseCode() == HttpURLConnection.HTTP_OK) {
             return request.getHeaderFields();
         }
@@ -68,35 +70,36 @@ public class OffchainHttpRequests {
     }
 
     public byte[] getResponseBody(int id) throws IOException {
-        HttpURLConnection request = requests.get(id);
+        HttpURLConnection request = getExistingRequest(id);
         if (request.getResponseCode() == HttpURLConnection.HTTP_OK) {
-            return request.getResponseMessage().getBytes();
+            return request.getInputStream().readAllBytes();
         }
         return new byte[]{};
     }
 
-    public HttpResponseType[] getRequestsResponses(int[] requestIds, int timeout) throws InterruptedException {
-        HttpResponseType[] requestStatuses = new HttpResponseType[requestIds.length];
+    public byte[] readResponseBody(int id, int bytes) throws IOException {
+        HttpURLConnection request = getExistingRequest(id);
+        if (request.getResponseCode() != HttpURLConnection.HTTP_OK) {
+            return new byte[]{};
+        }
+        return request.getInputStream().readNBytes(bytes);
+    }
+
+    private HttpURLConnection getExistingRequest(int id) throws InvalidRequestId {
+        return Optional.ofNullable(requests.get(id)).orElseThrow(InvalidRequestId::new);
+    }
+
+    public HttpStatusCode[] getRequestsResponses(int[] requestIds, int timeout) throws InterruptedException {
+        HttpStatusCode[] requestStatuses = new HttpStatusCode[requestIds.length];
 
         ExecutorService executor = Executors.newFixedThreadPool(requestIds.length);
-        long startTime = System.currentTimeMillis();
-
         try {
             Future<?>[] futures = new Future<?>[requestIds.length];
             for (int i = 0; i < requestIds.length; i++) {
                 final int index = i;
                 futures[i] = executor.submit(() -> {
-                    try {
-                        HttpURLConnection request = requests.get(requestIds[index]);
-                        waitRequestResponseWithTimeout(request, timeout, startTime);
-                        requestStatuses[index] = HttpResponseType.FINISHED;
-                    } catch (InvalidRequestId e) {
-                        requestStatuses[index] = HttpResponseType.INVALID_ID;
-                    } catch (SocketTimeoutException e) {
-                        requestStatuses[index] = HttpResponseType.DEADLINE_REACHED;
-                    } catch (IOException e) {
-                        requestStatuses[index] = HttpResponseType.IO_ERROR;
-                    }
+                    long startTime = Instant.now().toEpochMilli();
+                    requestStatuses[index] = executeRequest(requestIds[index], timeout, startTime);
                 });
             }
 
@@ -116,13 +119,27 @@ public class OffchainHttpRequests {
         return requestStatuses;
     }
 
+    public HttpStatusCode executeRequest(int requestId, int timeout, long startTime){
+        HttpURLConnection request = requests.get(requestId);
+        try {
+            int statusCode = waitRequestResponseWithTimeout(request, timeout, startTime);
+            return HttpStatusCode.success(statusCode);
+        } catch (InvalidRequestId e) {
+            return HttpStatusCode.error(HttpErrorType.INVALID_ID);
+        } catch (SocketTimeoutException e) {
+            return HttpStatusCode.error(HttpErrorType.DEADLINE_REACHED);
+        } catch (IOException e) {
+            return HttpStatusCode.error(HttpErrorType.IO_ERROR);
+        }
+    }
+
     private int waitRequestResponseWithTimeout(HttpURLConnection request,
                                                int timeout,
                                                long startTime) throws IOException {
         request.setConnectTimeout(timeout);
         request.connect();
 
-        long timeElapsed = System.currentTimeMillis() - startTime;
+        long timeElapsed = Instant.now().toEpochMilli() - startTime;
         long remainingTime = timeout - timeElapsed;
         if (remainingTime > 0) {
             request.setReadTimeout((int) remainingTime);

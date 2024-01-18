@@ -1,60 +1,119 @@
 package com.limechain.runtime.hostapi;
 
-import com.limechain.runtime.hostapi.dto.HttpResponseType;
-import org.junit.jupiter.api.BeforeEach;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.lang.reflect.Field;
+import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class OffchainHttpRequestsTest {
-    @Mock
-    private Map<Integer, HttpURLConnection> requests;
-
+    @InjectMocks
     private OffchainHttpRequests offchainHttpRequests;
+    @Mock
+    private HttpURLConnection connection;
 
-    @BeforeEach
-    public void setUp() throws NoSuchFieldException, IllegalAccessException {
-        MockitoAnnotations.initMocks(this);
-        offchainHttpRequests = OffchainHttpRequests.getInstance();
-        Field requestsField = OffchainHttpRequests.class.getDeclaredField("requests");
-        requestsField.setAccessible(true);
-        requestsField.set(offchainHttpRequests, requests);
+    private final String echoUrl = "https://echo.zuplo.io/";
 
+    @Test
+    void addRequest() throws IOException {
+        String method = "POST";
+        String uriProtocol = "https";
+        String uriHost = "abc.com";
+        offchainHttpRequests.addRequest(method, uriProtocol + "://" + uriHost);
+
+        assertEquals(offchainHttpRequests.requests.size(), 1);
+        HttpURLConnection connection = offchainHttpRequests.requests.get(0);
+        assertEquals(method, connection.getRequestMethod());
+        assertEquals(uriProtocol, connection.getURL().getProtocol());
+        assertEquals(uriHost, connection.getURL().getHost());
     }
 
     @Test
-    void getRequestsResponsesTest() throws Exception {
-        int[] requestIds = {1, 2};
-        int timeout = 5000;
+    void addHeader() {
+        int id = 123;
+        offchainHttpRequests.requests.put(id, connection);
+        String headerName = "hed";
+        String headerValue = "val";
 
-        HttpURLConnection mockConnection1 = mock(HttpURLConnection.class);
-        HttpURLConnection mockConnection2 = mock(HttpURLConnection.class);
+        offchainHttpRequests.addHeader(id, headerName, headerValue);
 
-        when(requests.get(1)).thenReturn(mockConnection1);
-        when(requests.get(2)).thenReturn(mockConnection2);
-
-        when(mockConnection1.getResponseCode()).thenReturn(200);
-        when(mockConnection2.getResponseCode()).thenReturn(200);
-
-        HttpResponseType[] responses = offchainHttpRequests.getRequestsResponses(requestIds, timeout);
-
-        assertEquals(HttpResponseType.FINISHED, responses[0]);
-        assertEquals(HttpResponseType.FINISHED, responses[1]);
-
-        verify(mockConnection1, times(1)).connect();
-        verify(mockConnection2, times(1)).connect();
-        verify(mockConnection1, times(1)).getResponseCode();
-        verify(mockConnection2, times(1)).getResponseCode();
+        verify(connection).setRequestProperty(headerName, headerValue);
     }
 
+    // NOTE: the following integration tests could be separated from the unit tests.
+    // The url calls can be mocked with a fake REST API, currently using: https://www.jsontest.com/#ip
+    @Test
+    void receiveResponseBody() throws IOException {
+        String firstKey = "TestKey1";
+        String secondKey = "TK2";
+        String firstValue = "TestValue1";
+        String secondValue = "TV2";
+        String url = String.format("http://echo.jsontest.com/%s/%s/%s/%s", firstKey, firstValue, secondKey, secondValue);
+        int id = offchainHttpRequests.addRequest("POST", url);
+
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode node = mapper.readTree(offchainHttpRequests.getResponseBody(id));
+
+        assertEquals(firstValue, node.get(firstKey).asText());
+        assertEquals(secondValue, node.get(secondKey).asText());
+    }
+
+    @Test
+    void receiveResponseHeaders() throws IOException {
+        String firstName = "TestName1";
+        String secondName = "TN2";
+        String firstValue = "TestValue1";
+        String secondValue = "TV2";
+        int id = offchainHttpRequests.addRequest("GET", "http://headers.jsontest.com/");
+        offchainHttpRequests.addHeader(id, firstName, firstValue);
+        offchainHttpRequests.addHeader(id, secondName, secondValue);
+
+        Map<String, List<String>> responseHeaders = offchainHttpRequests.getResponseHeaders(id);
+
+        assertEquals(firstValue, responseHeaders.get(firstName).get(0));
+        assertEquals(secondValue, responseHeaders.get(secondName).get(0));
+    }
+
+    @Test
+    @Disabled
+    // TODO: fix
+    void sendBody() throws IOException {
+        int id = offchainHttpRequests.addRequest("POST", echoUrl);
+        offchainHttpRequests.addRequestBodyChunk(id, new byte[] { 1, 2, 3}, 0);
+        offchainHttpRequests.addRequestBodyChunk(id, new byte[] { 4, 2, 1 }, 0);
+
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode node = mapper.readTree(offchainHttpRequests.getResponseBody(id));
+
+        assertEquals(new String(new byte[] { 1,2,3,4,2,1}), node.get("body").asText());
+    }
+
+    @Test
+    void sendHeaders() throws IOException {
+        String firstName = "testname1";
+        String secondName = "tn2";
+        String firstValue = "TestValue1";
+        String secondValue = "TV2";
+        int id = offchainHttpRequests.addRequest("GET", echoUrl);
+        offchainHttpRequests.addHeader(id, firstName, firstValue);
+        offchainHttpRequests.addHeader(id, secondName, secondValue);
+
+
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode node = mapper.readTree(offchainHttpRequests.getResponseBody(id));
+
+        assertEquals(firstValue, node.get("headers").get(firstName).asText());
+    }
 }

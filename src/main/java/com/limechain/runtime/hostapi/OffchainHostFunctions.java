@@ -5,7 +5,8 @@ import com.limechain.exception.ThreadInterruptedException;
 import com.limechain.network.Network;
 import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.rpc.server.AppBean;
-import com.limechain.runtime.hostapi.dto.HttpResponseType;
+import com.limechain.runtime.hostapi.dto.HttpErrorType;
+import com.limechain.runtime.hostapi.dto.HttpStatusCode;
 import com.limechain.runtime.hostapi.dto.InvalidArgumentException;
 import com.limechain.runtime.hostapi.dto.InvalidRequestId;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
@@ -17,7 +18,9 @@ import com.limechain.utils.scale.ScaleUtils;
 import com.limechain.utils.scale.exceptions.ScaleEncodingException;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
+import io.emeraldpay.polkaj.scale.reader.ListReader;
 import io.emeraldpay.polkaj.scale.reader.UInt64Reader;
+import io.emeraldpay.polkaj.scale.writer.ListWriter;
 import io.emeraldpay.polkaj.scaletypes.Result;
 import io.emeraldpay.polkaj.scaletypes.ResultWriter;
 import io.libp2p.core.PeerId;
@@ -335,19 +338,18 @@ public class OffchainHostFunctions {
                                                               RuntimePointerSize chunksPointer,
                                                               RuntimePointerSize deadlinePointer) {
         byte[] chunks = hostApi.getDataFromMemory(chunksPointer);
-        //TODO: finalize on empty chunk
         try {
-            int timeout = timeoutFromDeadlineAndTimestamp(deadlinePointer, extOffchainTimestamp());
+            int timeout = timeoutFromDeadline(deadlinePointer);
             requests.addRequestBodyChunk(requestId, chunks, timeout);
             return hostApi.writeDataToMemory(scaleEncodedEmptyResult(true));
         } catch (InvalidRequestId e) {
-            return hostApi.writeDataToMemory(HttpResponseType.INVALID_ID.scaleEncodedResult());
+            return hostApi.writeDataToMemory(HttpErrorType.INVALID_ID.scaleEncodedResult());
         } catch (SocketTimeoutException e) {
             log.log(Level.WARNING, e.getMessage(), e.getStackTrace());
-            return hostApi.writeDataToMemory(HttpResponseType.DEADLINE_REACHED.scaleEncodedResult());
+            return hostApi.writeDataToMemory(HttpErrorType.DEADLINE_REACHED.scaleEncodedResult());
         } catch (IOException e) {
             log.log(Level.WARNING, e.getMessage(), e.getStackTrace());
-            return hostApi.writeDataToMemory(HttpResponseType.IO_ERROR.scaleEncodedResult());
+            return hostApi.writeDataToMemory(HttpErrorType.IO_ERROR.scaleEncodedResult());
         }
     }
 
@@ -362,14 +364,12 @@ public class OffchainHostFunctions {
      */
     public RuntimePointerSize extOffchainHttpResponseWaitVersion1(RuntimePointerSize idsPointer,
                                                                   RuntimePointerSize deadlinePointer) {
-        long timestamp = extOffchainTimestamp();
-        int timeout = timeoutFromDeadlineAndTimestamp(deadlinePointer, timestamp);
+        int timeout = timeoutFromDeadline(deadlinePointer);
         byte[] encodedIds = hostApi.getDataFromMemory(idsPointer);
-
         int[] requestIds = decodeRequestIdArray(encodedIds);
-        try {
-            HttpResponseType[] requestStatuses = requests.getRequestsResponses(requestIds, timeout);
 
+        try {
+            HttpStatusCode[] requestStatuses = requests.getRequestsResponses(requestIds, timeout);
             return hostApi.writeDataToMemory(scaleEncodeArrayOfRequestStatuses(requestStatuses));
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -387,11 +387,19 @@ public class OffchainHostFunctions {
     public RuntimePointerSize extOffchainHttpResponseHeadersVersion1(int id) {
         try {
             Map<String, List<String>> headers = requests.getResponseHeaders(id);
-            byte[] scaleEncodedKVPs = scaleEncodeHeaders(headers);
-            return hostApi.writeDataToMemory(scaleEncodedKVPs);
+            return hostApi.writeDataToMemory(scaleEncodeHeaders(headers));
         } catch (IOException e) {
             throw new OffchainResponseWaitException(e);
         }
+    }
+
+    private byte[] scaleEncodeHeaders(Map<String, List<String>> headers) throws IOException {
+        List<Pair<String, String>> pairs = new ArrayList<>(headers.size());
+        headers.forEach((key, values) ->
+                values.forEach(value ->
+                        pairs.add(new Pair<>(key, value))
+                ));
+        return ScaleUtils.Encode.encode(pairs, String::getBytes, String::getBytes);
     }
 
     /**
@@ -407,72 +415,51 @@ public class OffchainHostFunctions {
     public RuntimePointerSize extOffchainHttpResponseReadBodyVersion1(int requestId,
                                                                       RuntimePointerSize bufferPointer,
                                                                       RuntimePointerSize deadlinePointer) {
-        int timeout = timeoutFromDeadlineAndTimestamp(deadlinePointer, extOffchainTimestamp());
+        int timeout = timeoutFromDeadline(deadlinePointer);
         try {
-            HttpResponseType[] response = requests.getRequestsResponses(new int[]{requestId}, timeout);
-            if (response[0] == HttpResponseType.FINISHED) {
-                byte[] data = requests.getResponseBody(requestId);
-                hostApi.writeDataToMemory(data, bufferPointer);
-
-                byte[] resultValue = scaleEncodeIntResult(data.length);
-                return hostApi.writeDataToMemory(resultValue);
+            long startTime = Instant.now().toEpochMilli();
+            HttpStatusCode responseCode = requests.executeRequest(requestId, timeout, startTime);
+            if (responseCode.hasError()) {
+                return hostApi.writeDataToMemory(responseCode.getErrorType().scaleEncodedResult());
             } else {
-                switch (response[0]) {
-                    case INVALID_ID:
-                        return hostApi.writeDataToMemory(HttpResponseType.INVALID_ID.scaleEncodedResult());
-                    case DEADLINE_REACHED:
-                        return hostApi.writeDataToMemory(HttpResponseType.DEADLINE_REACHED.scaleEncodedResult());
-                    case IO_ERROR:
-                        return hostApi.writeDataToMemory(HttpResponseType.IO_ERROR.scaleEncodedResult());
-                    default:
-                        return null;
-                }
+                return writeResponseToMemory(requestId, bufferPointer);
             }
         } catch (InvalidRequestId e) {
-            return hostApi.writeDataToMemory(HttpResponseType.INVALID_ID.scaleEncodedResult());
+            return hostApi.writeDataToMemory(HttpErrorType.INVALID_ID.scaleEncodedResult());
         } catch (SocketTimeoutException e) {
             log.log(Level.WARNING, e.getMessage(), e.getStackTrace());
-            return hostApi.writeDataToMemory(HttpResponseType.DEADLINE_REACHED.scaleEncodedResult());
+            return hostApi.writeDataToMemory(HttpErrorType.DEADLINE_REACHED.scaleEncodedResult());
         } catch (IOException e) {
             log.log(Level.WARNING, e.getMessage(), e.getStackTrace());
-            return hostApi.writeDataToMemory(HttpResponseType.IO_ERROR.scaleEncodedResult());
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new ThreadInterruptedException(e);
+            return hostApi.writeDataToMemory(HttpErrorType.IO_ERROR.scaleEncodedResult());
         }
     }
 
-    byte[] scaleEncodeHeaders(Map<String, List<String>> headers) throws IOException {
-        List<Pair<String, String>> pairs = new ArrayList<>(headers.size());
-        for (Map.Entry<String, List<String>> entry : headers.entrySet()) {
-            // NOTE: Not sure if a comma is the right separator
-            String value = String.join(",", entry.getValue());
-            pairs.add(new Pair<>(entry.getKey(), value));
-        }
-        return ScaleUtils.Encode.encode(pairs, String::getBytes, String::getBytes);
+    private RuntimePointerSize writeResponseToMemory(int requestId, RuntimePointerSize bufferPointer) throws IOException {
+        byte[] data = requests.readResponseBody(requestId, bufferPointer.size());
+        hostApi.writeDataToMemory(data, bufferPointer);
+
+        byte[] result = scaleEncodeIntResult(data.length);
+        return hostApi.writeDataToMemory(result);
     }
 
-    int timeoutFromDeadlineAndTimestamp(RuntimePointerSize deadlinePointer, long timestamp) {
+    private int timeoutFromDeadline(RuntimePointerSize deadlinePointer) {
         byte[] deadlineBytes = hostApi.getDataFromMemory(deadlinePointer);
+
+        long currentTimestamp = Instant.now().toEpochMilli();
         return new ScaleCodecReader(deadlineBytes)
                 .readOptional(new UInt64Reader())
-                .map(deadline -> deadline.longValue() - timestamp)
+                .map(deadline -> deadline.longValue() - currentTimestamp)
                 .map(Long::intValue)
                 .orElse(0);
     }
 
-    int[] decodeRequestIdArray(byte[] encodedRequestIds) {
+    private int[] decodeRequestIdArray(byte[] encodedRequestIds) {
         ScaleCodecReader reader = new ScaleCodecReader(encodedRequestIds);
-        int length = reader.readCompactInt();
-        int[] requestIds = new int[length];
-        for (int i = 0; i < length; i++) {
-            /*  Casting to integer here will not be a problem due to substrate using i16 to store requestIds.
-                Therefore, we will not overflow here. Link to the struct below:
-                    https://github.com/paritytech/polkadot-sdk/blob/9f5221cc2f7f10adfd22b293ceed060617468936/substrate/primitives/core/src/offchain/mod.rs#L101C1-L101C1
-             */
-            requestIds[i] = (int) reader.readUint32();
-        }
-        return requestIds;
+        ListReader<Long> listReader = new ListReader<>(ScaleCodecReader::readUint32);
+        return reader.read(listReader).stream()
+                .mapToInt(Long::intValue)
+                .toArray();
     }
 
     byte[] scaleEncodeIntResult(int value) {
@@ -489,21 +476,21 @@ public class OffchainHostFunctions {
         }
     }
 
-    byte[] scaleEncodeArrayOfRequestStatuses(HttpResponseType[] requestStatuses) {
+    byte[] scaleEncodeArrayOfRequestStatuses(HttpStatusCode[] requestStatuses) {
         try (ByteArrayOutputStream buf = new ByteArrayOutputStream();
              ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
+            List<byte[]> scaleEncodedStatuses = Arrays.stream(requestStatuses)
+                    .map(HttpStatusCode::scaleEncoded)
+                    .toList();
+            new ListWriter<>(ScaleCodecWriter::writeByteArray).write(writer, scaleEncodedStatuses);
 
-            writer.writeCompact(requestStatuses.length);
-            for (int i = 0; i < requestStatuses.length; i++) {
-                writer.writeByteArray(requestStatuses[i].scaleEncodedResult());
-            }
             return buf.toByteArray();
         } catch (IOException e) {
             throw new ScaleEncodingException(e);
         }
     }
 
-    byte[] scaleEncodedEmptyResult(boolean success) {
+    private byte[] scaleEncodedEmptyResult(boolean success) {
         Result.ResultMode resultMode = success ? Result.ResultMode.OK : Result.ResultMode.ERR;
         return new byte[]{resultMode.getValue()};
     }

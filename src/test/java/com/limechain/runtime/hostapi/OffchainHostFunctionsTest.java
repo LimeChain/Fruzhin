@@ -2,12 +2,15 @@ package com.limechain.runtime.hostapi;
 
 import com.limechain.config.HostConfig;
 import com.limechain.network.protocol.blockannounce.NodeRole;
-import com.limechain.runtime.hostapi.dto.HttpResponseType;
+import com.limechain.runtime.hostapi.dto.HttpErrorType;
+import com.limechain.runtime.hostapi.dto.HttpStatusCode;
 import com.limechain.runtime.hostapi.dto.InvalidArgumentException;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import com.limechain.storage.offchain.OffchainStore;
+import com.limechain.utils.scale.ScaleUtils;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.emeraldpay.polkaj.scale.writer.UInt64Writer;
+import kotlin.Pair;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,7 +32,9 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
@@ -73,7 +78,7 @@ class OffchainHostFunctionsTest {
 
     @BeforeEach
     void setup() {
-        offchainHostFunctions = new OffchainHostFunctions(hostApi, config, persistentStorage, localStorage);
+        offchainHostFunctions = new OffchainHostFunctions(hostApi, config, requests, persistentStorage, localStorage);
     }
 
     @Test
@@ -357,7 +362,7 @@ class OffchainHostFunctionsTest {
     void extOffchainHttpResponseHeadersVersion1Test() {
         try {
             when(requests.getResponseHeaders(requestId)).thenReturn(responseHeaders);
-            byte[] scaleEncodedHeaders = offchainHostFunctions.scaleEncodeHeaders(responseHeaders);
+            byte[] scaleEncodedHeaders = scaleEncodeHeaders(responseHeaders);
             when(hostApi.writeDataToMemory(scaleEncodedHeaders)).thenReturn(resultPointer);
 
             RuntimePointerSize result = offchainHostFunctions.extOffchainHttpResponseHeadersVersion1(requestId);
@@ -365,6 +370,15 @@ class OffchainHostFunctionsTest {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private byte[] scaleEncodeHeaders(Map<String, List<String>> headers) throws IOException {
+        List<Pair<String, String>> pairs = new ArrayList<>(headers.size());
+        headers.forEach((key, values) ->
+                values.forEach(value ->
+                        pairs.add(new Pair<>(key, value))
+                ));
+        return ScaleUtils.Encode.encode(pairs, String::getBytes, String::getBytes);
     }
 
     @Test
@@ -383,7 +397,7 @@ class OffchainHostFunctionsTest {
         mockedStatic.when(Instant::now).thenReturn(instant);
 
         when(hostApi.getDataFromMemory(deadlinePointer)).thenReturn(buf.toByteArray());
-        HttpResponseType[] expectedResponses = new HttpResponseType[]{HttpResponseType.FINISHED};
+        HttpStatusCode[] expectedResponses = new HttpStatusCode[]{HttpStatusCode.success(200)};
         when(requests.getRequestsResponses(new int[]{requestId}, timeout)).thenReturn(expectedResponses);
 
         when(hostApi.getDataFromMemory(runtimePointerSize)).thenReturn(scaleEncodedRequestIds);
@@ -397,7 +411,7 @@ class OffchainHostFunctionsTest {
     }
 
     @Test
-    void extOffchainHttpResponseBodyVersion1ReturnsDeadlineReachedTest() throws InterruptedException, IOException {
+    void extOffchainHttpResponseBodyVersion1ReturnsDeadlineReachedTest() throws IOException {
         int deadlineReachedTimeout = -1;
         Instant instant = Instant.now();
         MockedStatic<Instant> mockedStatic = mockStatic(Instant.class);
@@ -411,9 +425,9 @@ class OffchainHostFunctionsTest {
 
         mockedStatic.when(Instant::now).thenReturn(instant);
         when(hostApi.getDataFromMemory(deadlinePointer)).thenReturn(buf.toByteArray());
-        when(requests.getRequestsResponses(new int[]{requestId}, deadlineReachedTimeout))
-                .thenReturn(new HttpResponseType[]{HttpResponseType.DEADLINE_REACHED});
-        when(hostApi.writeDataToMemory(HttpResponseType.DEADLINE_REACHED.scaleEncodedResult()))
+        when(requests.executeRequest(eq(requestId), eq(deadlineReachedTimeout), anyLong()))
+                .thenReturn(HttpStatusCode.error(HttpErrorType.DEADLINE_REACHED));
+        when(hostApi.writeDataToMemory(HttpErrorType.DEADLINE_REACHED.scaleEncodedResult()))
                 .thenReturn(resultPointer);
 
         RuntimePointerSize result = offchainHostFunctions.extOffchainHttpResponseReadBodyVersion1(requestId,
@@ -424,7 +438,7 @@ class OffchainHostFunctionsTest {
     }
 
     @Test
-    void extOffchainHttpResponseBodyVersion1ReturnsIOErrorTest() throws IOException, InterruptedException {
+    void extOffchainHttpResponseBodyVersion1ReturnsIOErrorTest() throws IOException {
         Instant instant = Instant.now();
         MockedStatic<Instant> mockedStatic = mockStatic(Instant.class);
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
@@ -438,10 +452,10 @@ class OffchainHostFunctionsTest {
         mockedStatic.when(Instant::now).thenReturn(instant);
 
         when(hostApi.getDataFromMemory(deadlinePointer)).thenReturn(buf.toByteArray());
-        when(requests.getRequestsResponses(new int[]{requestId}, timeout))
-                .thenReturn(new HttpResponseType[]{HttpResponseType.IO_ERROR});
+        when(requests.executeRequest(eq(requestId), eq(timeout), anyLong()))
+                .thenReturn(HttpStatusCode.error(HttpErrorType.IO_ERROR));
 
-        when(hostApi.writeDataToMemory(HttpResponseType.IO_ERROR.scaleEncodedResult()))
+        when(hostApi.writeDataToMemory(HttpErrorType.IO_ERROR.scaleEncodedResult()))
                 .thenReturn(resultPointer);
 
         RuntimePointerSize result = offchainHostFunctions.extOffchainHttpResponseReadBodyVersion1(requestId,
@@ -452,7 +466,7 @@ class OffchainHostFunctionsTest {
     }
 
     @Test
-    void extOffchainHttpResponseBodyVersion1ReturnsInvalidIdTest() throws IOException, InterruptedException {
+    void extOffchainHttpResponseBodyVersion1ReturnsInvalidIdTest() throws IOException {
         Instant instant = Instant.now();
 
         MockedStatic<Instant> mockedStatic = mockStatic(Instant.class);
@@ -467,10 +481,10 @@ class OffchainHostFunctionsTest {
         mockedStatic.when(Instant::now).thenReturn(instant);
 
         when(hostApi.getDataFromMemory(deadlinePointer)).thenReturn(buf.toByteArray());
-        when(requests.getRequestsResponses(new int[]{requestId}, timeout))
-                .thenReturn(new HttpResponseType[]{HttpResponseType.INVALID_ID});
+        when(requests.executeRequest(eq(requestId), eq(timeout), anyLong()))
+                .thenReturn(HttpStatusCode.error(HttpErrorType.INVALID_ID));
 
-        when(hostApi.writeDataToMemory(HttpResponseType.INVALID_ID.scaleEncodedResult()))
+        when(hostApi.writeDataToMemory(HttpErrorType.INVALID_ID.scaleEncodedResult()))
                 .thenReturn(resultPointer);
 
         RuntimePointerSize result = offchainHostFunctions.extOffchainHttpResponseReadBodyVersion1(requestId,
