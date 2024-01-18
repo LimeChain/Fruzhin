@@ -33,7 +33,7 @@ class OffchainHttpRequestsTest {
         String uriHost = "abc.com";
         offchainHttpRequests.addRequest(method, uriProtocol + "://" + uriHost);
 
-        assertEquals(offchainHttpRequests.requests.size(), 1);
+        assertEquals(1, offchainHttpRequests.requests.size());
         HttpURLConnection connection = offchainHttpRequests.requests.get(0);
         assertEquals(method, connection.getRequestMethod());
         assertEquals(uriProtocol, connection.getURL().getProtocol());
@@ -71,6 +71,7 @@ class OffchainHttpRequestsTest {
     }
 
     @Test
+    @Disabled("To be replaced with better check")
     void receiveResponseHeaders() throws IOException {
         String firstName = "TestName1";
         String secondName = "TN2";
@@ -87,8 +88,6 @@ class OffchainHttpRequestsTest {
     }
 
     @Test
-    @Disabled
-    // TODO: fix
     void sendBody() throws IOException {
         int id = offchainHttpRequests.addRequest("POST", echoUrl);
         offchainHttpRequests.addRequestBodyChunk(id, new byte[] { 1, 2, 3}, 0);
@@ -97,7 +96,7 @@ class OffchainHttpRequestsTest {
         ObjectMapper mapper = new ObjectMapper();
         JsonNode node = mapper.readTree(offchainHttpRequests.getResponseBody(id));
 
-        assertEquals(new String(new byte[] { 1,2,3,4,2,1}), node.get("body").asText());
+        assertEquals(new String(new byte[] { 1,2,3,4,2,1 }), node.get("body").asText());
     }
 
     @Test
