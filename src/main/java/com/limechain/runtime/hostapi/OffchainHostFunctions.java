@@ -293,7 +293,7 @@ public class OffchainHostFunctions {
 
             return hostApi.writeDataToMemory(buf.toByteArray());
         } catch (IOException e) {
-            log.log(Level.SEVERE, e.getMessage(), e.getStackTrace());
+            log.log(Level.WARNING, e.getMessage(), e.getStackTrace());
             return hostApi.writeDataToMemory(scaleEncodedEmptyResult(false));
         }
     }
