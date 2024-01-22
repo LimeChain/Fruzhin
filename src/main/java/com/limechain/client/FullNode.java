@@ -154,7 +154,6 @@ public class FullNode implements HostNode {
         return trieNodesIterator;
     }
 
-
     @SuppressWarnings("unchecked")
     TrieStructure<Pair<Optional<byte[]>, Optional<byte[]>>> initializeDatabaseStorageTrie() {
         final int STATE_VERSION = 1; // TODO: Figure out where we'll fetch this state version from

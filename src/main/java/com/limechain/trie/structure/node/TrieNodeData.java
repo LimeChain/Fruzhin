@@ -11,12 +11,7 @@ import lombok.EqualsAndHashCode;
 @AllArgsConstructor
 @EqualsAndHashCode
 public class TrieNodeData {
-    /** The value stored in the trie node. */
     byte[] value;
-
-    /** A reference to the root of the trie. */
     byte[] trieRootRef;
-
-    /** The version number of the trie entries. */
     byte entriesVersion;
 }
