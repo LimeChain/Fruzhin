@@ -11,8 +11,8 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode
 public class NodeChildData {
     /** The number assigned to the child node, representing its order. */
-    int childNum;
+    private int childNum;
 
     /** The hash of the child node, uniquely identifying it within the trie. */
-    byte[] childHash;
+    private byte[] childHash;
 }

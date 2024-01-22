@@ -11,7 +11,7 @@ import lombok.EqualsAndHashCode;
 @AllArgsConstructor
 @EqualsAndHashCode
 public class TrieNodeData {
-    byte[] value;
-    byte[] trieRootRef;
-    byte entriesVersion;
+    private byte[] value;
+    private byte[] trieRootRef;
+    private byte entriesVersion;
 }

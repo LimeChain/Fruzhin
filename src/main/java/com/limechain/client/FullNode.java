@@ -1,5 +1,6 @@
 package com.limechain.client;
 
+import com.google.common.primitives.Bytes;
 import com.limechain.chain.ChainService;
 import com.limechain.network.Network;
 import com.limechain.rpc.server.AppBean;
@@ -26,9 +27,6 @@ import lombok.extern.java.Log;
 import org.apache.commons.lang3.ArrayUtils;
 import org.javatuples.Pair;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -123,15 +121,7 @@ public class FullNode implements HostNode {
             byte[] merkleValueCopy = merkleValue.clone();
             List<byte[]> childrenMerkleValues = new ArrayList<>();
             Nibbles partialKey = nodeHandle.getPartialKey();
-            byte[] partialKeyNibbles = partialKey.asUnmodifiableList().stream().map(Nibble::asByte)
-                    .collect(ByteArrayOutputStream::new, ByteArrayOutputStream::write, (baos1, baos2) -> {
-                        try {
-                            baos2.writeTo(baos1);
-                        } catch (IOException e) {
-                            throw new UncheckedIOException(e);
-                        }
-                    })
-                    .toByteArray();
+            byte[] partialKeyNibbles = Bytes.toArray(partialKey.asUnmodifiableList().stream().map(Nibble::asByte).toList());
 
             for (Nibble n : Nibbles.ALL) {
                 Optional<NodeHandle<Pair<Optional<byte[]>, Optional<byte[]>>>> childHandle = nodeHandle.getChild(n);
@@ -311,6 +301,5 @@ public class FullNode implements HostNode {
             db.save("tnc:" + new String(trieNode.getMerkleValue()), nodeChildData);
         }
     }
-
 
 }
