@@ -93,6 +93,7 @@ public class TrieStructure<T> {
      *
      * @param key partial key in nibbles
      * @param nodeData data to insert
+     * @throws IllegalStateException on duplicate key
      */
     public void insertNode(Nibbles key, T nodeData) {
         switch (node(key)) {
@@ -280,8 +281,8 @@ public class TrieStructure<T> {
             // exactly matches `current`.
 
             // NOTE:
-            //  For now, the remainingKey argument of `ClosestAncestor` is not used, so if this becomes an efficiency issue
-            //  We could omit storing it. Also, this is the only reason we're reassigning the iterator.
+            //  For now, the remainingKey argument of `ClosestAncestor` is not used, so if this becomes an efficiency
+            //  issue. We could omit storing it. Also, this is the only reason we're reassigning the iterator.
             var remainingKey = Nibbles.of(keyIter);
             closestAncestor = new ExistingNodeInnerResult.NotFound.ClosestAncestor(currentIndex, remainingKey);
             keyIter = remainingKey.iterator();

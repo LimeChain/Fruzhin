@@ -82,7 +82,8 @@ public final class Vacant<T> extends Entry<T> {
                 int futureParentIndex = futureParent.getValue0();
                 int futureParentKeyLen = futureParent.getValue1();
 
-                Nibble newChildNibbleIndex = this.key.get(futureParentKeyLen); // that's the nibble "index" within parent's children
+                // that's the nibble "index" within parent's children
+                Nibble newChildNibbleIndex = this.key.get(futureParentKeyLen);
                 TrieNode<T> futureParentNode = this.trieStructure.getNodeAtIndexInner(futureParentIndex);
 
                 Integer existingChildNodeIndex = futureParentNode.childrenIndices[newChildNibbleIndex.asInt()];
@@ -123,9 +124,11 @@ public final class Vacant<T> extends Entry<T> {
         Nibbles newNodePartialKey = this.key.drop(futureParent == null ? 0 : futureParent.getValue1() + 1);
 
         assert !existingNodePartialKey.equals(newNodePartialKey)
-            : "The remaining partial key cannot coincide with an existing node's partial key while inserting into a vacant spot.";
+            : "The remaining partial key cannot coincide with an existing node's partial key " +
+                "while inserting into a vacant spot.";
         assert !newNodePartialKey.startsWith(existingNodePartialKey)
-            : "New node's partial key cannot begin with another existing node's partial key, because then that existing node would've been it's closest ancestor.";
+            : "New node's partial key cannot begin with another existing node's partial key, " +
+                "because then that existing node would've been it's closest ancestor.";
 
         // If `existingNodePartialKey` starts with `newNodePartialKey`, then the new node
         // will be inserted in-between the parent and the existing node.
@@ -238,9 +241,11 @@ public final class Vacant<T> extends Entry<T> {
                 .count();
 
             assert len < newNodePartialKey.size()
-                : "Common prefix (i.e. new branch node's partial key) length must be less than the new node's partial key";
+                : "Common prefix (i.e. new branch node's partial key) " +
+                    "length must be less than the new node's partial key";
             assert len < existingNodePartialKey.size()
-                : "Common prefix (i.e. new branch node's partial key) length must be less than the existing node's partial key";
+                : "Common prefix (i.e. new branch node's partial key) " +
+                    "length must be less than the existing node's partial key";
 
             branchPartialKeyLen = len;
         }
@@ -428,7 +433,8 @@ public final class Vacant<T> extends Entry<T> {
                 int newBranchNodePartialKeyLen = this.branchPartialKey.size();
 
                 assert 1 == Arrays.stream(this.branchChildrenIndices).filter(Objects::nonNull).count()
-                    : "The branch node we're about to insert must have exactly one child (the node that previously existed before this insertion)";
+                    : "The branch node we're about to insert must have exactly one child " +
+                        "(the node that previously existed before this insertion)";
 
                 // Insert the intermediate branch node
                 int newBranchNodeIndex = this.trieStructure.nodes.add(new TrieNode<>(
