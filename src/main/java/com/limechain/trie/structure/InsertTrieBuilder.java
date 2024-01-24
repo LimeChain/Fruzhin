@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class InsertTrieBuilder {
-    final static int STATE_VERSION = 1; // TODO: Figure out where we'll fetch this state version from
+    public final static int STATE_VERSION = 1; // TODO: Figure out where we'll fetch this state version from
 
     private TrieStructure<NodeData> trieStructure;
 
@@ -119,7 +119,8 @@ public class InsertTrieBuilder {
                 userData.getValue(),
                 userData.getMerkleValue(),
                 childrenMerkleValues(nodeHandle),
-                nodeHandle.getPartialKey().asUnmodifiableList());
+                nodeHandle.getPartialKey().asUnmodifiableList(),
+                false);
     }
 
     private List<byte[]> childrenMerkleValues(NodeHandle<NodeData> nodeHandle) {
