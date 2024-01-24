@@ -14,41 +14,41 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class InsertTrieBuilder {
-    public final static int STATE_VERSION = 1; // TODO: Figure out where we'll fetch this state version from
+    // TODO: Figure out where we'll fetch this state version from
+    public static final int STATE_VERSION = 1;
 
     private TrieStructure<NodeData> trieStructure;
 
     public InsertTrieBuilder initializeTrieStructure(Map<String, String> mainStorage) {
-        TrieStructure<NodeData> trieStructure = buildTrieStructure(mainStorage);
+        TrieStructure<NodeData> trie = buildTrieStructure(mainStorage);
 
-        List<TrieNodeIndex> nodeIndices = trieStructure.streamOrdered().toList();
+        List<TrieNodeIndex> nodeIndices = trie.streamOrdered().toList();
 
-        for(TrieNodeIndex index : Lists.reverse(nodeIndices)) {
-            NodeHandle<NodeData> nodeHandle = trieStructure.nodeHandleAtIndex(index);
+        for (TrieNodeIndex index : Lists.reverse(nodeIndices)) {
+            NodeHandle<NodeData> nodeHandle = trie.nodeHandleAtIndex(index);
             if (nodeHandle == null) {
                 throw new TrieBuildException("Could not initialize trie");
             }
             updateMerkleValue(nodeHandle);
         }
 
-        this.trieStructure = trieStructure;
+        this.trieStructure = trie;
         return this;
     }
 
     private TrieStructure<NodeData> buildTrieStructure(Map<String, String> mainStorage) {
-        TrieStructure<NodeData> trieStructure = new TrieStructure<>();
+        TrieStructure<NodeData> trie = new TrieStructure<>();
 
         for (Map.Entry<String, String> entry : mainStorage.entrySet()) {
             Nibbles key = Nibbles.of(entry.getKey().getBytes());
             byte[] value = entry.getValue().getBytes();
-            trieStructure.insertNode(key, new NodeData(value));
+            trie.insertNode(key, new NodeData(value));
         }
 
-        return trieStructure;
+        return trie;
     }
 
     private void updateMerkleValue(NodeHandle<NodeData> nodeHandle) {
@@ -72,7 +72,7 @@ public class InsertTrieBuilder {
     }
 
     private StorageValue getStorageValue(@NotNull byte[] value) {
-        if (STATE_VERSION == 1 && value != null && value.length >= 33) {
+        if (STATE_VERSION == 1 && value.length >= 33) {
             return new StorageValue(HashUtils.hashWithBlake2b(value), true);
         }
 
@@ -88,7 +88,7 @@ public class InsertTrieBuilder {
                         .map(Bytes::asList)
                         .orElse(Collections.emptyList())
                 )
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
