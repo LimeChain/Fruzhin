@@ -105,7 +105,7 @@ public class DecodedNode<C extends Collection<Byte>> {
             int numberOfFullBytes = remainingPkLen / 255;
             int lastByte = remainingPkLen % 255;
 
-            for (int __ = 0; __ < numberOfFullBytes; ++__) {
+            for (int i = 0; i < numberOfFullBytes; ++i) {
                 headerEncoding.add((byte) 255);
             }
             headerEncoding.add((byte) lastByte);
@@ -278,7 +278,6 @@ public class DecodedNode<C extends Collection<Byte>> {
             default:
                 throw new NodeDecodingException("Unknown variant");
         }
-
 
         int pkLen = decodePkLen(reader, firstByte, pkLenFirstByteBits);
 

@@ -89,6 +89,31 @@ public class TrieStructure<T> {
     }
 
     /**
+     * Insert a node at the given key.
+     *
+     * @param key partial key in nibbles
+     * @param nodeData data to insert
+     * @throws IllegalStateException on duplicate key
+     */
+    public void insertNode(Nibbles key, T nodeData) {
+        switch (node(key)) {
+            case Vacant<T> vacant -> vacant
+                    .prepareInsert()
+                    .insert(nodeData);
+            case BranchNodeHandle<T> handle -> {
+                handle.setUserData(nodeData);
+                handle.convertToStorageNode();
+            }
+            case StorageNodeHandle<T> __ -> {
+                // We have a duplicate entry:
+                // a second value corresponding to an already inserted key from the genesis storage.
+                // NOTE: don't throw?
+                throw new IllegalStateException("Key already exists!");
+            }
+        }
+    }
+
+    /**
      * @return an iterator of all {@link TrieNode}s in no specific order,
      *         indexed by their respective {@link TrieNodeIndex}es.
      */
@@ -141,7 +166,6 @@ public class TrieStructure<T> {
             .allNodesInLexicographicOrder()
             .map(TrieNodeIndex::new);
     }
-
 
     /**
      * @return a stream of all {@link TrieNode}s in lexicographic order,
@@ -257,8 +281,8 @@ public class TrieStructure<T> {
             // exactly matches `current`.
 
             // NOTE:
-            //  For now, the remainingKey argument of `ClosestAncestor` is not used, so if this becomes an efficiency issue
-            //  We could omit storing it. Also, this is the only reason we're reassigning the iterator.
+            //  For now, the remainingKey argument of `ClosestAncestor` is not used, so if this becomes an efficiency
+            //  issue. We could omit storing it. Also, this is the only reason we're reassigning the iterator.
             var remainingKey = Nibbles.of(keyIter);
             closestAncestor = new ExistingNodeInnerResult.NotFound.ClosestAncestor(currentIndex, remainingKey);
             keyIter = remainingKey.iterator();
@@ -308,9 +332,13 @@ public class TrieStructure<T> {
              * @param index               the {@link TrieNodeIndex} of the closest ancestor node.
              * @param remainingKeyNibbles the remaining nibbles of the given key, starting from this closest ancestor.
              *                            <br>
-             *                            Basically, a search has been invoked with full key <b>n<sub>1</sub>...n<sub>k</sub>n<sub>k+1</sub>...n<sub>l</sub></b>, where <b>n<sub>i</sub></b> are the separate nibbles.
-             *                            The closest ancestor node has key <b>n<sub>1</sub>...n<sub>k</sub></b> (the deepest we could reach in the existing trie structure),
-             *                            so the remaining nibbles <b>n<sub>k+1</sub>...n<sub>l</sub></b> are contained in {@code remainingKeyNibbles}.
+             *                            Basically, a search has been invoked with full key
+             *                            <b>n<sub>1</sub>...n<sub>k</sub>n<sub>k+1</sub>...n<sub>l</sub></b>,
+             *                            where <b>n<sub>i</sub></b> are the separate nibbles.
+             *                            The closest ancestor node has key <b>n<sub>1</sub>...n<sub>k</sub></b>
+             *                            (the deepest we could reach in the existing trie structure),
+             *                            so the remaining nibbles <b>n<sub>k+1</sub>...n<sub>l</sub></b>
+             *                            are contained in {@code remainingKeyNibbles}.
              *                            <br>
              *                            This iterator is guaranteed to have at least one element.
              *                            NOTE: Currently unused.
@@ -443,7 +471,6 @@ public class TrieStructure<T> {
             if (thisNode.hasStorageValue != otherNode.hasStorageValue) {
                 return false;
             }
-
 
             // Check if parents match.
             // We want to return false in all cases except:

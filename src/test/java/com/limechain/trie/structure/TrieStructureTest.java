@@ -221,7 +221,7 @@ class TrieStructureTest {
             "Ordered iterator count mismatch. Expected to account for every node.");
 
         List<Nibbles> actualSortedKeys = trie
-            .streamOrdered() // get all TrieNodeIndices, but lexicographically ordered by full key (hex path) to the node
+            .streamOrdered() // get all TrieNodeIndices, lexicographically ordered by full key (hex path) to the node
             .map(trie::nodeFullKeyAtIndex) // get the actual full keys
             .toList();
 

@@ -54,6 +54,16 @@ public class Nibbles implements Iterable<Nibble>, RandomAccess, Comparable<Itera
         return new Nibbles(IteratorUtils.toList(nibbles));
     }
 
+    /**
+     * Creates Nibbles from a given byte array by using the {@link BytesToNibbles} iterator.
+     *
+     * @param bytes arrays of bytes to convert
+     * @return Nibbles representation
+     */
+    public static Nibbles fromBytes(byte[] bytes) {
+        return Nibbles.of(new BytesToNibbles(bytes).iterator());
+    }
+
     Nibbles(List<Nibble> entries) {
         this.entries = entries;
     }

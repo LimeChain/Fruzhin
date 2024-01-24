@@ -82,7 +82,8 @@ public final class Vacant<T> extends Entry<T> {
                 int futureParentIndex = futureParent.getValue0();
                 int futureParentKeyLen = futureParent.getValue1();
 
-                Nibble newChildNibbleIndex = this.key.get(futureParentKeyLen); // that's the nibble "index" within parent's children
+                // that's the nibble "index" within parent's children
+                Nibble newChildNibbleIndex = this.key.get(futureParentKeyLen);
                 TrieNode<T> futureParentNode = this.trieStructure.getNodeAtIndexInner(futureParentIndex);
 
                 Integer existingChildNodeIndex = futureParentNode.childrenIndices[newChildNibbleIndex.asInt()];
@@ -117,16 +118,17 @@ public final class Vacant<T> extends Entry<T> {
             }
         }
 
-
         // `existingNodeIndex` and the new node are known to either have the same parent and the
         // same child index, or to both have no parent. Now let's compare their partial key.
         Nibbles existingNodePartialKey = this.trieStructure.getNodeAtIndexInner(existingNodeIndex).partialKey;
         Nibbles newNodePartialKey = this.key.drop(futureParent == null ? 0 : futureParent.getValue1() + 1);
 
         assert !existingNodePartialKey.equals(newNodePartialKey)
-            : "The remaining partial key cannot coincide with an existing node's partial key while inserting into a vacant spot.";
+            : "The remaining partial key cannot coincide with an existing node's partial key " +
+                "while inserting into a vacant spot.";
         assert !newNodePartialKey.startsWith(existingNodePartialKey)
-            : "New node's partial key cannot begin with another existing node's partial key, because then that existing node would've been it's closest ancestor.";
+            : "New node's partial key cannot begin with another existing node's partial key, " +
+                "because then that existing node would've been it's closest ancestor.";
 
         // If `existingNodePartialKey` starts with `newNodePartialKey`, then the new node
         // will be inserted in-between the parent and the existing node.
@@ -239,9 +241,11 @@ public final class Vacant<T> extends Entry<T> {
                 .count();
 
             assert len < newNodePartialKey.size()
-                : "Common prefix (i.e. new branch node's partial key) length must be less than the new node's partial key";
+                : "Common prefix (i.e. new branch node's partial key) " +
+                    "length must be less than the new node's partial key";
             assert len < existingNodePartialKey.size()
-                : "Common prefix (i.e. new branch node's partial key) length must be less than the existing node's partial key";
+                : "Common prefix (i.e. new branch node's partial key) " +
+                    "length must be less than the existing node's partial key";
 
             branchPartialKeyLen = len;
         }
@@ -282,9 +286,8 @@ public final class Vacant<T> extends Entry<T> {
         public StorageNodeHandle<T> insert(T storageUserData) {
             return switch (this) {
                 case One<T> one -> one.insert(storageUserData);
-                // NOTE:
-                //  If we decide it's needed, we can utilize `Two`'s capability to also insert user data at the branch node
-                //  Not needed for now.
+                // NOTE: If we decide it's needed, we can utilize `Two`'s capability to also insert user data at the
+                //  branch node. Not needed for now.
                 case Two<T> two -> two.insert(storageUserData);
             };
         }
@@ -320,7 +323,6 @@ public final class Vacant<T> extends Entry<T> {
                 this.partialKey = partialKey;
                 this.childrenIndices = childrenIndices;
             }
-
 
             /**
              * Insert the new storage node
@@ -396,7 +398,6 @@ public final class Vacant<T> extends Entry<T> {
              */
             private final Integer[] branchChildrenIndices;
 
-
             private Two(TrieStructure<T> trieStructure,
                         Nibble storageChildIndex,
                         Nibbles storagePartialKey,
@@ -410,7 +411,6 @@ public final class Vacant<T> extends Entry<T> {
                 this.branchPartialKey = branchPartialKey;
                 this.branchChildrenIndices = branchChildrenIndices;
             }
-
 
             /**
              * Insert the new storage node (and the intermediate branch node needed for this case)
@@ -433,7 +433,8 @@ public final class Vacant<T> extends Entry<T> {
                 int newBranchNodePartialKeyLen = this.branchPartialKey.size();
 
                 assert 1 == Arrays.stream(this.branchChildrenIndices).filter(Objects::nonNull).count()
-                    : "The branch node we're about to insert must have exactly one child (the node that previously existed before this insertion)";
+                    : "The branch node we're about to insert must have exactly one child " +
+                        "(the node that previously existed before this insertion)";
 
                 // Insert the intermediate branch node
                 int newBranchNodeIndex = this.trieStructure.nodes.add(new TrieNode<>(
@@ -467,7 +468,8 @@ public final class Vacant<T> extends Entry<T> {
                         continue;
                     }
 
-                    TrieNode<T> childNode = this.trieStructure.getNodeAtIndexInner(this.branchChildrenIndices[childIndex]);
+                    TrieNode<T> childNode =
+                            this.trieStructure.getNodeAtIndexInner(this.branchChildrenIndices[childIndex]);
                     Nibble childIndexNibble = Nibble.fromInt(childIndex);
                     childNode.parent = new TrieNode.Parent(newBranchNodeIndex, childIndexNibble);
                     childNode.partialKey = childNode.partialKey.drop(newBranchNodePartialKeyLen + 1);
