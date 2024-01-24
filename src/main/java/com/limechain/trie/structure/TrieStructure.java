@@ -107,7 +107,7 @@ public class TrieStructure<T> {
                 // We have a duplicate entry:
                 // a second value corresponding to an already inserted key from the genesis storage.
                 // NOTE: don't throw?
-                throw new IllegalStateException("Duplicate key in genesis storage (raw.top).");
+                throw new IllegalStateException("Key already exists!");
             }
         }
     }

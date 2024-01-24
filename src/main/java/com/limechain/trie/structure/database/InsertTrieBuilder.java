@@ -1,7 +1,10 @@
-package com.limechain.trie.structure;
+package com.limechain.trie.structure.database;
 
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Bytes;
+import com.limechain.trie.structure.NodeHandle;
+import com.limechain.trie.structure.TrieNodeIndex;
+import com.limechain.trie.structure.TrieStructure;
 import com.limechain.trie.structure.decoded.node.DecodedNode;
 import com.limechain.trie.structure.decoded.node.StorageValue;
 import com.limechain.trie.structure.nibble.Nibble;
@@ -43,7 +46,7 @@ public class InsertTrieBuilder {
         TrieStructure<NodeData> trie = new TrieStructure<>();
 
         for (Map.Entry<String, String> entry : mainStorage.entrySet()) {
-            Nibbles key = Nibbles.of(entry.getKey().getBytes());
+            Nibbles key = Nibbles.fromBytes(entry.getKey().getBytes());
             byte[] value = entry.getValue().getBytes();
             trie.insertNode(key, new NodeData(value));
         }

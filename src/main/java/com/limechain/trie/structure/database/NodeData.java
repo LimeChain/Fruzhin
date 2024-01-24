@@ -1,4 +1,4 @@
-package com.limechain.trie.structure;
+package com.limechain.trie.structure.database;
 
 import lombok.Data;
 import org.springframework.lang.Nullable;

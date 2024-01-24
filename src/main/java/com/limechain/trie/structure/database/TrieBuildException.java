@@ -1,4 +1,4 @@
-package com.limechain.trie.structure;
+package com.limechain.trie.structure.database;
 
 public class TrieBuildException extends RuntimeException {
     public TrieBuildException(String message) {
