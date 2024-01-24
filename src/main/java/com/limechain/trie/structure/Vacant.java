@@ -117,7 +117,6 @@ public final class Vacant<T> extends Entry<T> {
             }
         }
 
-
         // `existingNodeIndex` and the new node are known to either have the same parent and the
         // same child index, or to both have no parent. Now let's compare their partial key.
         Nibbles existingNodePartialKey = this.trieStructure.getNodeAtIndexInner(existingNodeIndex).partialKey;
@@ -282,9 +281,8 @@ public final class Vacant<T> extends Entry<T> {
         public StorageNodeHandle<T> insert(T storageUserData) {
             return switch (this) {
                 case One<T> one -> one.insert(storageUserData);
-                // NOTE:
-                //  If we decide it's needed, we can utilize `Two`'s capability to also insert user data at the branch node
-                //  Not needed for now.
+                // NOTE: If we decide it's needed, we can utilize `Two`'s capability to also insert user data at the
+                //  branch node. Not needed for now.
                 case Two<T> two -> two.insert(storageUserData);
             };
         }
@@ -320,7 +318,6 @@ public final class Vacant<T> extends Entry<T> {
                 this.partialKey = partialKey;
                 this.childrenIndices = childrenIndices;
             }
-
 
             /**
              * Insert the new storage node
@@ -396,7 +393,6 @@ public final class Vacant<T> extends Entry<T> {
              */
             private final Integer[] branchChildrenIndices;
 
-
             private Two(TrieStructure<T> trieStructure,
                         Nibble storageChildIndex,
                         Nibbles storagePartialKey,
@@ -410,7 +406,6 @@ public final class Vacant<T> extends Entry<T> {
                 this.branchPartialKey = branchPartialKey;
                 this.branchChildrenIndices = branchChildrenIndices;
             }
-
 
             /**
              * Insert the new storage node (and the intermediate branch node needed for this case)
@@ -467,7 +462,8 @@ public final class Vacant<T> extends Entry<T> {
                         continue;
                     }
 
-                    TrieNode<T> childNode = this.trieStructure.getNodeAtIndexInner(this.branchChildrenIndices[childIndex]);
+                    TrieNode<T> childNode =
+                            this.trieStructure.getNodeAtIndexInner(this.branchChildrenIndices[childIndex]);
                     Nibble childIndexNibble = Nibble.fromInt(childIndex);
                     childNode.parent = new TrieNode.Parent(newBranchNodeIndex, childIndexNibble);
                     childNode.partialKey = childNode.partialKey.drop(newBranchNodePartialKeyLen + 1);

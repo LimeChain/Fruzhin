@@ -331,9 +331,13 @@ public class TrieStructure<T> {
              * @param index               the {@link TrieNodeIndex} of the closest ancestor node.
              * @param remainingKeyNibbles the remaining nibbles of the given key, starting from this closest ancestor.
              *                            <br>
-             *                            Basically, a search has been invoked with full key <b>n<sub>1</sub>...n<sub>k</sub>n<sub>k+1</sub>...n<sub>l</sub></b>, where <b>n<sub>i</sub></b> are the separate nibbles.
-             *                            The closest ancestor node has key <b>n<sub>1</sub>...n<sub>k</sub></b> (the deepest we could reach in the existing trie structure),
-             *                            so the remaining nibbles <b>n<sub>k+1</sub>...n<sub>l</sub></b> are contained in {@code remainingKeyNibbles}.
+             *                            Basically, a search has been invoked with full key
+             *                            <b>n<sub>1</sub>...n<sub>k</sub>n<sub>k+1</sub>...n<sub>l</sub></b>,
+             *                            where <b>n<sub>i</sub></b> are the separate nibbles.
+             *                            The closest ancestor node has key <b>n<sub>1</sub>...n<sub>k</sub></b>
+             *                            (the deepest we could reach in the existing trie structure),
+             *                            so the remaining nibbles <b>n<sub>k+1</sub>...n<sub>l</sub></b>
+             *                            are contained in {@code remainingKeyNibbles}.
              *                            <br>
              *                            This iterator is guaranteed to have at least one element.
              *                            NOTE: Currently unused.
