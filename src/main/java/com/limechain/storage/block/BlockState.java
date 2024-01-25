@@ -12,6 +12,7 @@ import com.limechain.storage.block.exception.BlockNotFoundException;
 import com.limechain.storage.block.exception.BlockStorageGenericException;
 import com.limechain.storage.block.exception.HeaderNotFoundException;
 import com.limechain.storage.block.exception.LowerThanRootException;
+import com.limechain.storage.block.exception.NotFoundException;
 import com.limechain.storage.block.tree.BlockTree;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.Getter;

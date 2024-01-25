@@ -1,6 +1,6 @@
 package com.limechain.storage.block.exception;
 
-public class BlockNodeNotFoundException extends BlockStorageGenericException {
+public class BlockNodeNotFoundException extends NotFoundException {
     public BlockNodeNotFoundException(String message) {
         super(message);
     }
