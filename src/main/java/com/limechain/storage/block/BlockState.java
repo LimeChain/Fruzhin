@@ -783,8 +783,9 @@ public class BlockState {
                         "SetID " + setId + " should be greater or equal to " + highestSetID);
             }
         } catch (RoundAndSetIdNotFoundException e) {
-            db.save(DBConstants.HIGHEST_ROUND_AND_SET_ID_KEY, helper.bigIntegersToByteArray(round, setId));
+            // If there is no highest round and setId, then we can safely store the provided values
         }
+        db.save(DBConstants.HIGHEST_ROUND_AND_SET_ID_KEY, helper.bigIntegersToByteArray(round, setId));
 
     }
 
