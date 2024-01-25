@@ -19,7 +19,8 @@ import java.util.Map;
 import java.util.stream.IntStream;
 
 public class InsertTrieBuilder {
-    // TODO: Figure out where we'll fetch this state version from
+    //TODO: Figure out where we'll fetch this state version from
+    //TODO: Separate the responsibilities of the class in separate classes.
     public static final int STATE_VERSION = 1;
 
     @Getter
@@ -56,9 +57,6 @@ public class InsertTrieBuilder {
 
     private void updateMerkleValue(NodeHandle<NodeData> nodeHandle) {
         NodeData userData = nodeHandle.getUserData();
-//        if (userData == null) {
-//            return;
-//        }
 
         if (userData == null) {
             userData = new NodeData(null);
