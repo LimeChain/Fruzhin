@@ -34,20 +34,15 @@ import java.util.Optional;
  */
 @Log
 public class BlockState {
+    private static BlockState instance;
     private final BlockTree blockTree;
     private final Map<Hash256, Block> unfinalizedBlocks;
     private final KVRepository<String, Object> db;
     private final BlockStateHelper helper = new BlockStateHelper();
-
     @Getter
     private final Hash256 genesisHash;
     @Getter
     private Hash256 lastFinalized;
-    private static BlockState instance;
-
-    public static BlockState getInstance() {
-        return instance;
-    }
 
     /**
      * Creates a new BlockState instance from genesis
@@ -76,6 +71,10 @@ public class BlockState {
 
         //set the latest finalized head to the genesis header
         setFinalizedHash(genesisHash, BigInteger.ZERO, BigInteger.ZERO);
+    }
+
+    public static BlockState getInstance() {
+        return instance;
     }
 
     /**
@@ -736,7 +735,7 @@ public class BlockState {
         }
 
         handleFinalizedBlock(hash);
-        db.save(helper.finalizedHashKey(round, setId), hash);
+        db.save(helper.finalizedHashKey(round, setId), hash.getBytes());
         setHighestRoundAndSetID(round, setId);
 
         if (round.compareTo(BigInteger.ZERO) > 0) {
@@ -774,14 +773,18 @@ public class BlockState {
      * @throws BlockNodeNotFoundException if the provided setId is less than the highest stored setId.
      */
     public void setHighestRoundAndSetID(final BigInteger round, final BigInteger setId) {
-        final Pair<BigInteger, BigInteger> highestRoundAndSetID = getHighestRoundAndSetID();
-        final BigInteger highestSetID = highestRoundAndSetID.getValue1();
+        try {
+            final Pair<BigInteger, BigInteger> highestRoundAndSetID = getHighestRoundAndSetID();
+            final BigInteger highestSetID = highestRoundAndSetID.getValue1();
 
-        if (setId.compareTo(highestSetID) < 0) {
-            throw new BlockNodeNotFoundException("SetID " + setId + " should be greater or equal to " + highestSetID);
+            if (setId.compareTo(highestSetID) < 0) {
+                throw new BlockStorageGenericException(
+                        "SetID " + setId + " should be greater or equal to " + highestSetID);
+            }
+        } catch (NotFoundException e) {
+            db.save(DBConstants.HIGHEST_ROUND_AND_SET_ID_KEY, helper.bigIntegersToByteArray(round, setId));
         }
 
-        db.save(DBConstants.HIGHEST_ROUND_AND_SET_ID_KEY, helper.bigIntegersToByteArray(round, setId));
     }
 
     /**
@@ -795,7 +798,7 @@ public class BlockState {
         byte[] data = (byte[]) roundAndSetId.orElse(null);
 
         if (data == null || data.length < 16) {
-            throw new BlockNodeNotFoundException("Failed to get highest round and setID");
+            throw new NotFoundException("Failed to get highest round and setID");
         }
 
         return helper.bytesToRoundAndSetId(data);
@@ -835,7 +838,7 @@ public class BlockState {
             Instant arrivalTime = getArrivalTime(subchainHash);
             setArrivalTime(subchainHash, arrivalTime);
 
-            db.save(helper.headerHashKey(block.getHeader().getBlockNumber()), subchainHash);
+            db.save(helper.headerHashKey(block.getHeader().getBlockNumber()), subchainHash.getBytes());
 
             // Delete from the unfinalizedBlockMap and delete reference to in-memory trie
             unfinalizedBlocks.remove(subchainHash);
