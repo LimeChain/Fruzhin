@@ -9,6 +9,7 @@ import com.limechain.trie.structure.nibble.Nibbles;
 import com.limechain.trie.structure.nibble.NibblesUtils;
 import com.limechain.utils.scale.ScaleUtils;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
+import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.apache.commons.lang3.ArrayUtils;
@@ -141,7 +142,7 @@ public class DecodedNode<C extends Collection<Byte>> {
             //  I presume, because if it's hashed, we know it's 32 bytes only and don't need the length information?
             //  And we know whether it's hashed from the header.
             if (!this.storageValue.isHashed()) {
-                for (byte b : ScaleUtils.Encode.encodeCompactUInt(this.storageValue.value().length)) {
+                for (byte b : ScaleUtils.Encode.encode(ScaleCodecWriter::writeCompact, this.storageValue.value().length)) {
                     subvalue.add(b);
                 }
             }

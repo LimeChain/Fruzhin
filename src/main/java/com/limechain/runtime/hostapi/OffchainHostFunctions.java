@@ -25,9 +25,9 @@ import io.emeraldpay.polkaj.scaletypes.Result;
 import io.emeraldpay.polkaj.scaletypes.ResultWriter;
 import io.libp2p.core.PeerId;
 import io.libp2p.core.multiformats.Multiaddr;
-import kotlin.Pair;
 import lombok.AllArgsConstructor;
 import lombok.extern.java.Log;
+import org.javatuples.Pair;
 import org.wasmer.ImportObject;
 import org.wasmer.Type;
 
@@ -393,13 +393,13 @@ public class OffchainHostFunctions {
         }
     }
 
-    private byte[] scaleEncodeHeaders(Map<String, List<String>> headers) throws IOException {
+    private byte[] scaleEncodeHeaders(Map<String, List<String>> headers) {
         List<Pair<String, String>> pairs = new ArrayList<>(headers.size());
         headers.forEach((key, values) ->
                 values.forEach(value ->
                         pairs.add(new Pair<>(key, value))
                 ));
-        return ScaleUtils.Encode.encode(pairs, String::getBytes, String::getBytes);
+        return ScaleUtils.Encode.encodeListOfPairs(pairs, String::getBytes, String::getBytes);
     }
 
     /**
