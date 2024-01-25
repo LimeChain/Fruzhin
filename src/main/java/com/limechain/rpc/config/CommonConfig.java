@@ -6,6 +6,7 @@ import com.limechain.cli.Cli;
 import com.limechain.cli.CliArguments;
 import com.limechain.config.HostConfig;
 import com.limechain.config.SystemInfo;
+import com.limechain.constants.GenesisBlockHash;
 import com.limechain.network.Network;
 import com.limechain.storage.DBInitializer;
 import com.limechain.storage.DBRepository;
@@ -33,7 +34,7 @@ public class CommonConfig {
     }
 
     @Bean
-    public CliArguments cliArgs(ApplicationArguments arguments){
+    public CliArguments cliArgs(ApplicationArguments arguments) {
         return new Cli().parseArgs(arguments.getSourceArgs());
     }
 
@@ -67,7 +68,12 @@ public class CommonConfig {
     }
 
     @Bean
-    public WarpSyncMachine sync(Network network, ChainService chainService, KVRepository<String, Object> repository) {
+    public WarpSyncMachine sync(Network network, ChainService chainService) {
         return new WarpSyncMachine(network, chainService);
+    }
+
+    @Bean
+    public GenesisBlockHash genesisBlockHash(ChainService chainService) {
+        return new GenesisBlockHash(chainService);
     }
 }

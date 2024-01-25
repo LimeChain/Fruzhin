@@ -101,17 +101,7 @@ public class SyncedState {
      * @return our Block Announce handshake
      */
     public BlockAnnounceHandshake getHandshake() {
-        Hash256 genesisBlockHash;
-        if (network == null)
-            network = AppBean.getBean(Network.class);
-
-        switch (network.getChain()) {
-            case POLKADOT -> genesisBlockHash = GenesisBlockHash.POLKADOT;
-            case KUSAMA -> genesisBlockHash = GenesisBlockHash.KUSAMA;
-            case WESTEND -> genesisBlockHash = GenesisBlockHash.WESTEND;
-            case LOCAL -> genesisBlockHash = GenesisBlockHash.LOCAL;
-            default -> throw new IllegalStateException("Unexpected value: " + network.getChain());
-        }
+        Hash256 genesisBlockHash = AppBean.getBean(GenesisBlockHash.class).getGenesisHash();
 
         Hash256 blockHash = this.lastFinalizedBlockHash == null
                 ? genesisBlockHash

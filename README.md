@@ -96,20 +96,11 @@ java -jar build/libs/fruzhin-0.1.0.jar -n {network}
    Paste the response into the `bootNodes` field of the chain spec.
 
 
-6. Get the genesis hash
-
-   ```bash
-   curl -H 'Content-Type: application/json' -d '{"id": 1, "jsonrpc": "2.0","method": "chain_getBlockHash","params": [0]}' http://localhost:9944/
-   ```
-
-   Paste the response into the `LOCAL` field of `GenesisHash`.
-
-
-7. Build Host
+6. Build Host
    ```
    ./gradlew build
    ```
-8. Run Host
+7. Run Host
    ```
    java -jar build/libs/fruzhin-0.1.0.jar -n local
    ```

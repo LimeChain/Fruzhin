@@ -5,19 +5,16 @@ import com.limechain.chain.lightsyncstate.Authority;
 import com.limechain.chain.lightsyncstate.LightSyncState;
 import com.limechain.constants.GenesisBlockHash;
 import com.limechain.network.Network;
-import com.limechain.network.protocol.warp.dto.BlockHeader;
-import com.limechain.network.protocol.warp.dto.HeaderDigest;
 import com.limechain.network.protocol.warp.dto.WarpSyncFragment;
+import com.limechain.rpc.server.AppBean;
 import com.limechain.storage.block.BlockState;
 import com.limechain.sync.warpsync.state.FinishedState;
 import com.limechain.sync.warpsync.state.RequestFragmentsState;
 import com.limechain.sync.warpsync.state.WarpSyncState;
-import com.limechain.utils.HashUtils;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.java.Log;
-import org.apache.tomcat.util.buf.HexUtils;
 import org.javatuples.Pair;
 
 import java.math.BigInteger;
@@ -71,20 +68,21 @@ public class WarpSyncMachine {
     }
 
     public void start() {
+        GenesisBlockHash genesisBlockHash = AppBean.getBean(GenesisBlockHash.class);
         final Hash256 initStateHash;
 
         if (stateLoaded) {
             initStateHash = this.syncedState.getLastFinalizedBlockHash();
-            new BlockState(getSyncedState().getRepository(), getGenesisHeader());
+            new BlockState(getSyncedState().getRepository(), genesisBlockHash.getGenesisBlockHeader());
         } else if (this.chainService.getGenesis().getLightSyncState() != null) {
-            new BlockState(getSyncedState().getRepository(), getGenesisHeader());
+            new BlockState(getSyncedState().getRepository(), genesisBlockHash.getGenesisBlockHeader());
 
             LightSyncState initState = LightSyncState.decode(this.chainService.getGenesis().getLightSyncState());
             initStateHash = initState.getFinalizedBlockHeader().getParentHash();
             this.syncedState.setAuthoritySet(initState.getGrandpaAuthoritySet().getCurrentAuthorities());
             this.syncedState.setSetId(initState.getGrandpaAuthoritySet().getSetId());
         } else {
-            initStateHash = GenesisBlockHash.LOCAL;
+            initStateHash = genesisBlockHash.getGenesisHash();
         }
 
         // Always start with requesting fragments
@@ -100,19 +98,6 @@ public class WarpSyncMachine {
 
             startFullSync();
         });
-    }
-
-    private BlockHeader getGenesisHeader() {
-        BlockHeader blockHeader = new BlockHeader();
-
-        Hash256 zeroHash = new Hash256(HashUtils.hashWithBlake2b(HexUtils.fromHexString("00")));
-        blockHeader.setStateRoot(zeroHash); //Should be set to the state root of the current trie
-        blockHeader.setParentHash(zeroHash);
-        blockHeader.setExtrinsicsRoot(zeroHash);
-        blockHeader.setBlockNumber(BigInteger.ZERO);
-        blockHeader.setDigest(new HeaderDigest[0]);
-
-        return blockHeader;
     }
 
     public void stop(){
