@@ -12,7 +12,7 @@ import com.limechain.storage.block.exception.BlockNotFoundException;
 import com.limechain.storage.block.exception.BlockStorageGenericException;
 import com.limechain.storage.block.exception.HeaderNotFoundException;
 import com.limechain.storage.block.exception.LowerThanRootException;
-import com.limechain.storage.block.exception.NotFoundException;
+import com.limechain.storage.block.exception.RoundAndSetIdNotFoundException;
 import com.limechain.storage.block.tree.BlockTree;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.Getter;
@@ -782,7 +782,7 @@ public class BlockState {
                 throw new BlockStorageGenericException(
                         "SetID " + setId + " should be greater or equal to " + highestSetID);
             }
-        } catch (NotFoundException e) {
+        } catch (RoundAndSetIdNotFoundException e) {
             db.save(DBConstants.HIGHEST_ROUND_AND_SET_ID_KEY, helper.bigIntegersToByteArray(round, setId));
         }
 
@@ -799,7 +799,7 @@ public class BlockState {
         byte[] data = (byte[]) roundAndSetId.orElse(null);
 
         if (data == null || data.length < 16) {
-            throw new NotFoundException("Failed to get highest round and setID");
+            throw new RoundAndSetIdNotFoundException("Failed to get highest round and setID");
         }
 
         return helper.bytesToRoundAndSetId(data);
