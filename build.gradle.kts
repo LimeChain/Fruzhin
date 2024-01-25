@@ -16,6 +16,14 @@ group = "com.limechain"
 version = "0.1.0"
 java.sourceCompatibility = JavaVersion.VERSION_17
 
+tasks.withType<JavaCompile> {
+    options.compilerArgs.add("--enable-preview")
+}
+
+tasks.withType<JavaExec> {
+    jvmArgs("--enable-preview")
+}
+
 repositories {
     mavenCentral()
 }
@@ -54,4 +62,5 @@ dependencies {
 
 tasks.getByName<Test>("test") {
     useJUnitPlatform()
+    jvmArgs("--enable-preview")
 }
