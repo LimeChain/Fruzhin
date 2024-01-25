@@ -4,6 +4,7 @@ import com.limechain.chain.Chain;
 import com.limechain.chain.ChainService;
 import com.limechain.cli.CliArguments;
 import com.limechain.config.HostConfig;
+import com.limechain.constants.GenesisBlockHash;
 import com.limechain.network.kad.KademliaService;
 import com.limechain.network.protocol.blockannounce.BlockAnnounceService;
 import com.limechain.network.protocol.blockannounce.NodeRole;
@@ -85,20 +86,21 @@ public class Network {
      * Manages if nodes running locally are going to be allowed
      * Connects Kademlia to boot nodes
      *
-     * @param chainService chain specification information containing boot nodes
-     * @param hostConfig   host configuration containing current network
-     * @param repository
-     * @param cliArgs
+     * @param chainService     chain specification information containing boot nodes
+     * @param hostConfig       host configuration containing current network
+     * @param repository       database repository
+     * @param cliArgs          command line arguments
+     * @param genesisBlockHash genesis block hash
      */
     public Network(ChainService chainService, HostConfig hostConfig, KVRepository<String, Object> repository,
-                   CliArguments cliArgs) {
+                   CliArguments cliArgs, GenesisBlockHash genesisBlockHash) {
         this.bootNodes = chainService.getGenesis().getBootNodes();
         this.chain = hostConfig.getChain();
         this.nodeRole = hostConfig.getNodeRole();
-        this.initializeProtocols(chainService, hostConfig, repository, cliArgs);
+        this.initializeProtocols(chainService, genesisBlockHash, hostConfig, repository, cliArgs);
     }
 
-    private void initializeProtocols(ChainService chainService, HostConfig hostConfig,
+    private void initializeProtocols(ChainService chainService, GenesisBlockHash genesisBlockHash, HostConfig hostConfig,
                                      KVRepository<String, Object> repository, CliArguments cliArgs) {
         boolean isLocalEnabled = hostConfig.getChain() == Chain.LOCAL;
         boolean clientMode = true;
@@ -112,15 +114,15 @@ public class Network {
         Multihash hostId = Multihash.deserialize(hostBuilder.getPeerId().getBytes());
 
         String pingProtocol = ProtocolUtils.PING_PROTOCOL;
-        //TODO: Add new protocolId format with genesis hash
+        String genesisHash = genesisBlockHash.getGenesisHash().toString();
         String chainId = chainService.getGenesis().getProtocolId();
         String legacyKadProtocolId = ProtocolUtils.getLegacyKadProtocol(chainId);
-        String legacyWarpProtocolId = ProtocolUtils.getLegacyWarpSyncProtocol(chainId);
-        String legacyLightProtocolId = ProtocolUtils.getLegacyLightMessageProtocol(chainId);
-        String legacySyncProtocolId = ProtocolUtils.getLegacySyncProtocol(chainId);
-        String legacyBlockAnnounceProtocolId = ProtocolUtils.getLegacyBlockAnnounceProtocol(chainId);
-        String grandpaProtocolId = ProtocolUtils.LEGACY_GRANDPA_PROTOCOL;
-        String transactionsProtocolId = ProtocolUtils.getTransactionsProtocol(chainId);
+        String legacyWarpProtocolId = ProtocolUtils.getLegacyWarpSyncProtocol(genesisHash);
+        String legacyLightProtocolId = ProtocolUtils.getLegacyLightMessageProtocol(genesisHash);
+        String legacySyncProtocolId = ProtocolUtils.getLegacySyncProtocol(genesisHash);
+        String legacyBlockAnnounceProtocolId = ProtocolUtils.getLegacyBlockAnnounceProtocol(genesisHash);
+        String grandpaProtocolId = ProtocolUtils.getGrandpaLegacyProtocol(genesisHash);
+        String transactionsProtocolId = ProtocolUtils.getTransactionsProtocol(genesisHash);
 
         kademliaService = new KademliaService(legacyKadProtocolId, hostId, isLocalEnabled, clientMode);
         lightMessagesService = new LightMessagesService(legacyLightProtocolId);

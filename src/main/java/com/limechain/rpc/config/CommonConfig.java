@@ -63,8 +63,8 @@ public class CommonConfig {
 
     @Bean
     public Network network(ChainService chainService, HostConfig hostConfig, KVRepository<String, Object> repository,
-                           CliArguments cliArgs) {
-        return new Network(chainService, hostConfig, repository, cliArgs);
+                           CliArguments cliArgs, GenesisBlockHash genesisBlockHash) {
+        return new Network(chainService, hostConfig, repository, cliArgs, genesisBlockHash);
     }
 
     @Bean
