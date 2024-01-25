@@ -393,7 +393,7 @@ public class OffchainHostFunctions {
         }
     }
 
-    private byte[] scaleEncodeHeaders(Map<String, List<String>> headers) throws IOException {
+    private byte[] scaleEncodeHeaders(Map<String, List<String>> headers) {
         List<Pair<String, String>> pairs = new ArrayList<>(headers.size());
         headers.forEach((key, values) ->
                 values.forEach(value ->
