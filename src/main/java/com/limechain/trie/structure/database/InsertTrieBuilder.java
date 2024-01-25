@@ -11,18 +11,18 @@ import com.limechain.trie.structure.nibble.Nibble;
 import com.limechain.trie.structure.nibble.Nibbles;
 import com.limechain.trie.structure.node.InsertTrieNode;
 import com.limechain.utils.HashUtils;
+import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.IntStream;
 
 public class InsertTrieBuilder {
     // TODO: Figure out where we'll fetch this state version from
     public static final int STATE_VERSION = 1;
 
+    @Getter
     private TrieStructure<NodeData> trieStructure;
 
     public InsertTrieBuilder initializeTrieStructure(Map<String, String> mainStorage) {
@@ -56,22 +56,25 @@ public class InsertTrieBuilder {
 
     private void updateMerkleValue(NodeHandle<NodeData> nodeHandle) {
         NodeData userData = nodeHandle.getUserData();
+//        if (userData == null) {
+//            return;
+//        }
+
         if (userData == null) {
-            return;
+            userData = new NodeData(null);
         }
 
-        Optional.of(userData)
-                .map(NodeData::getValue)
-                .map(this::getStorageValue)
-                .map(storageValue -> new DecodedNode<>(
-                        getChildrenValues(nodeHandle),
-                        nodeHandle.getPartialKey(),
-                        storageValue))
-                .map(decoded -> decoded.calculateMerkleValue(
-                        HashUtils::hashWithBlake2b,
-                        nodeHandle.isRootNode()))
-                .ifPresent(userData::setMerkleValue);
+        StorageValue storageValue = userData.getValue() != null ? getStorageValue(userData.getValue()) : null;
+        DecodedNode<List<Byte>> decoded = new DecodedNode<>(
+                getChildrenValues(nodeHandle),
+                nodeHandle.getPartialKey(),
+                storageValue);
+        byte[] merkleValue = decoded.calculateMerkleValue(
+                HashUtils::hashWithBlake2b,
+                nodeHandle.isRootNode());
 
+        userData.setMerkleValue(merkleValue);
+        nodeHandle.setUserData(userData);
     }
 
     private StorageValue getStorageValue(@NotNull byte[] value) {
@@ -89,7 +92,7 @@ public class InsertTrieBuilder {
                         .map(NodeHandle::getUserData)
                         .map(NodeData::getMerkleValue)
                         .map(Bytes::asList)
-                        .orElse(Collections.emptyList())
+                        .orElse(null)
                 )
                 .toList();
     }
