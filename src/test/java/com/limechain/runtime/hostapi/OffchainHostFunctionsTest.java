@@ -10,7 +10,7 @@ import com.limechain.storage.offchain.OffchainStore;
 import com.limechain.utils.scale.ScaleUtils;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.emeraldpay.polkaj.scale.writer.UInt64Writer;
-import kotlin.Pair;
+import org.javatuples.Pair;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -378,7 +378,7 @@ class OffchainHostFunctionsTest {
                 values.forEach(value ->
                         pairs.add(new Pair<>(key, value))
                 ));
-        return ScaleUtils.Encode.encode(pairs, String::getBytes, String::getBytes);
+        return ScaleUtils.Encode.encodeListOfPairs(pairs, String::getBytes, String::getBytes);
     }
 
     @Test
