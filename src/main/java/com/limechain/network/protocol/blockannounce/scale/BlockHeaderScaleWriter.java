@@ -1,6 +1,7 @@
 package com.limechain.network.protocol.blockannounce.scale;
 
 import com.limechain.network.protocol.warp.dto.BlockHeader;
+import com.limechain.network.protocol.warp.dto.DigestType;
 import com.limechain.network.protocol.warp.dto.HeaderDigest;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.emeraldpay.polkaj.scale.ScaleWriter;
@@ -22,6 +23,14 @@ public class BlockHeaderScaleWriter implements ScaleWriter<BlockHeader> {
 
     @Override
     public void write(ScaleCodecWriter writer, BlockHeader blockHeader) throws IOException {
+        write(writer, blockHeader, true);
+    }
+
+    public void writeUnsealed(ScaleCodecWriter writer, BlockHeader blockHeader) throws IOException {
+        write(writer, blockHeader, false);
+    }
+
+    private void write(ScaleCodecWriter writer, BlockHeader blockHeader, boolean sealed) throws IOException {
         writer.writeUint256(blockHeader.getParentHash().getBytes());
         writer.writeCompact(blockHeader.getBlockNumber().intValue());
         writer.writeUint256(blockHeader.getStateRoot().getBytes());
@@ -30,7 +39,9 @@ public class BlockHeaderScaleWriter implements ScaleWriter<BlockHeader> {
         HeaderDigest[] digests = blockHeader.getDigest();
         writer.writeCompact(digests.length);
         for (HeaderDigest digest : digests) {
-            headerDigestScaleWriter.write(writer, digest);
+            if (sealed || digest.getType() != DigestType.SEAL) {
+                headerDigestScaleWriter.write(writer, digest);
+            }
         }
     }
 }
