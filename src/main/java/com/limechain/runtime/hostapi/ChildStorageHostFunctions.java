@@ -44,10 +44,10 @@ public class ChildStorageHostFunctions {
                                 new RuntimePointerSize(argv.get(2))), List.of(Type.I64, Type.I64, Type.I64)),
                 HostApi.getImportObject(
                         "ext_default_child_storage_get_version_1", argv ->
-                                extDefaultChildStorageSetVersion1(
+                                extDefaultChildStorageGetVersion1(
                                         new RuntimePointerSize(argv.get(0)),
-                                        new RuntimePointerSize(argv.get(1)),
-                                        new RuntimePointerSize(argv.get(2))), List.of(Type.I64, Type.I64, Type.I64)),
+                                        new RuntimePointerSize(argv.get(1))).pointerSize()
+                        , List.of(Type.I64, Type.I64), Type.I64),
                 HostApi.getImportObject("ext_default_child_storage_read_version_1", argv ->
                                 extDefaultChildStorageReadVersion1(
                                         new RuntimePointerSize(argv.get(0)),
