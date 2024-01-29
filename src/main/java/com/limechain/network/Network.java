@@ -114,21 +114,21 @@ public class Network {
         Multihash hostId = Multihash.deserialize(hostBuilder.getPeerId().getBytes());
 
         String pingProtocol = ProtocolUtils.PING_PROTOCOL;
-        String genesisHash = genesisBlockHash.getGenesisHash().toString();
         String chainId = chainService.getGenesis().getProtocolId();
-        String legacyKadProtocolId = ProtocolUtils.getLegacyKadProtocol(chainId);
-        String legacyWarpProtocolId = ProtocolUtils.getLegacyWarpSyncProtocol(genesisHash);
-        String legacyLightProtocolId = ProtocolUtils.getLegacyLightMessageProtocol(genesisHash);
-        String legacySyncProtocolId = ProtocolUtils.getLegacySyncProtocol(genesisHash);
-        String legacyBlockAnnounceProtocolId = ProtocolUtils.getLegacyBlockAnnounceProtocol(genesisHash);
-        String grandpaProtocolId = ProtocolUtils.getGrandpaLegacyProtocol(genesisHash);
-        String transactionsProtocolId = ProtocolUtils.getTransactionsProtocol(genesisHash);
+        String protocolId = cliArgs.noLegacyProtocols() ? genesisBlockHash.getGenesisHash().toString() : chainId;
+        String kadProtocolId = ProtocolUtils.getKadProtocol(chainId);
+        String warpProtocolId = ProtocolUtils.getWarpSyncProtocol(protocolId);
+        String lightProtocolId = ProtocolUtils.getLightMessageProtocol(protocolId);
+        String syncProtocolId = ProtocolUtils.getSyncProtocol(protocolId);
+        String blockAnnounceProtocolId = ProtocolUtils.getBlockAnnounceProtocol(protocolId);
+        String grandpaProtocolId = ProtocolUtils.getGrandpaProtocol(protocolId);
+        String transactionsProtocolId = ProtocolUtils.getTransactionsProtocol(protocolId);
 
-        kademliaService = new KademliaService(legacyKadProtocolId, hostId, isLocalEnabled, clientMode);
-        lightMessagesService = new LightMessagesService(legacyLightProtocolId);
-        warpSyncService = new WarpSyncService(legacyWarpProtocolId);
-        syncService = new SyncService(legacySyncProtocolId);
-        blockAnnounceService = new BlockAnnounceService(legacyBlockAnnounceProtocolId);
+        kademliaService = new KademliaService(kadProtocolId, hostId, isLocalEnabled, clientMode);
+        lightMessagesService = new LightMessagesService(lightProtocolId);
+        warpSyncService = new WarpSyncService(warpProtocolId);
+        syncService = new SyncService(syncProtocolId);
+        blockAnnounceService = new BlockAnnounceService(blockAnnounceProtocolId);
         grandpaService = new GrandpaService(grandpaProtocolId);
         ping = new Ping(pingProtocol, new PingProtocol());
         transactionsService = new TransactionsService(transactionsProtocolId);

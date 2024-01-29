@@ -15,7 +15,6 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 import java.util.List;
-import java.util.logging.Level;
 
 /**
  * Abstraction class around apache.commons.cli used to set arguments rules and parse node arguments
@@ -28,6 +27,7 @@ public class Cli {
     public static final String NODE_KEY = "node-key";
     private static final String DB_RECREATE = "db-recreate";
     private static final String NODE_MODE = "node-mode";
+    private static final String NO_LEGACY_PROTOCOLS = "no-legacy-protocols";
 
     /**
      * Holds CLI options
@@ -59,8 +59,9 @@ public class Cli {
             // TODO: separation of enums; this NodeRole enum is used for blockannounce
             //       what does running the node in NodeMode NONE mean?
             String nodeMode = cmd.getOptionValue(NODE_MODE, NodeRole.FULL.toString());
+            boolean noLgacyProtocols = cmd.hasOption(NO_LEGACY_PROTOCOLS);
 
-            return new CliArguments(network, dbPath, dbRecreate, nodeKey, nodeMode);
+            return new CliArguments(network, dbPath, dbRecreate, nodeKey, nodeMode, noLgacyProtocols);
         } catch (ParseException e) {
             formatter.printHelp("Specify the network name - " + String.join(", ", validChains), options);
             throw new CliArgsParseException("Failed to parse cli arguments", e);
@@ -80,18 +81,22 @@ public class Cli {
         Option nodeKey = new Option(null, NODE_KEY, true, "HEX for secret Ed25519 key");
         Option nodeMode = new Option("mode", NODE_MODE, true, "Node mode (light/full). " +
                 "Full by default.");
+        Option noLegacyProtocols = new Option(null, NO_LEGACY_PROTOCOLS, false,
+                "Doesn't use legacy protocols if set");
 
         networkOption.setRequired(false);
         dbPathOption.setRequired(false);
         dbClean.setRequired(false);
         nodeKey.setRequired(false);
         nodeMode.setRequired(false);
+        noLegacyProtocols.setRequired(false);
 
         result.addOption(networkOption);
         result.addOption(dbPathOption);
         result.addOption(dbClean);
         result.addOption(nodeKey);
         result.addOption(nodeMode);
+        result.addOption(noLegacyProtocols);
         return result;
     }
 
