@@ -28,6 +28,7 @@ public class Cli {
     private static final String DB_RECREATE = "db-recreate";
     private static final String NODE_MODE = "node-mode";
     private static final String NO_LEGACY_PROTOCOLS = "no-legacy-protocols";
+    private static final String SYNC_MODE = "sync-mode";
 
     /**
      * Holds CLI options
@@ -60,8 +61,9 @@ public class Cli {
             //       what does running the node in NodeMode NONE mean?
             String nodeMode = cmd.getOptionValue(NODE_MODE, NodeRole.FULL.toString());
             boolean noLgacyProtocols = cmd.hasOption(NO_LEGACY_PROTOCOLS);
+            String syncMode = cmd.getOptionValue(SYNC_MODE, "full");
 
-            return new CliArguments(network, dbPath, dbRecreate, nodeKey, nodeMode, noLgacyProtocols);
+            return new CliArguments(network, dbPath, dbRecreate, nodeKey, nodeMode, noLgacyProtocols, syncMode);
         } catch (ParseException e) {
             formatter.printHelp("Specify the network name - " + String.join(", ", validChains), options);
             throw new CliArgsParseException("Failed to parse cli arguments", e);
@@ -83,6 +85,8 @@ public class Cli {
                 "Full by default.");
         Option noLegacyProtocols = new Option(null, NO_LEGACY_PROTOCOLS, false,
                 "Doesn't use legacy protocols if set");
+        Option syncMode = new Option(null, SYNC_MODE, true,
+                "Sync mode (warp/full)");
 
         networkOption.setRequired(false);
         dbPathOption.setRequired(false);
@@ -90,6 +94,7 @@ public class Cli {
         nodeKey.setRequired(false);
         nodeMode.setRequired(false);
         noLegacyProtocols.setRequired(false);
+        syncMode.setRequired(false);
 
         result.addOption(networkOption);
         result.addOption(dbPathOption);
@@ -97,6 +102,7 @@ public class Cli {
         result.addOption(nodeKey);
         result.addOption(nodeMode);
         result.addOption(noLegacyProtocols);
+        result.addOption(syncMode);
         return result;
     }
 
