@@ -76,8 +76,7 @@ public class FullNode implements HostNode {
         switch (args.syncMode()){
             case FULL -> AppBean.getBean(FullSyncMachine.class).start();
             case WARP -> AppBean.getBean(WarpSyncMachine.class).start();
-            default -> AppBean.getBean(WarpSyncMachine.class).start(); //This statement should be impossible to reach
-            //but it's here just in case
+            default -> throw new IllegalStateException("Unexpected value: " + args.syncMode());
         }
     }
 
