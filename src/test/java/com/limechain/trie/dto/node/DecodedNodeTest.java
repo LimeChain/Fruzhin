@@ -1,6 +1,6 @@
-package com.limechain.trie.structure.decoded.node;
+package com.limechain.trie.dto.node;
 
-import com.limechain.trie.structure.decoded.node.exceptions.NodeEncodingException;
+import com.limechain.trie.dto.node.exceptions.NodeEncodingException;
 import com.limechain.trie.structure.nibble.Nibbles;
 import org.apache.commons.lang3.ArrayUtils;
 import org.junit.jupiter.api.Test;

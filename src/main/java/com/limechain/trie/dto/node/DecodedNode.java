@@ -39,6 +39,9 @@ public class DecodedNode<C extends Collection<Byte>> {
     private static final int HASHED_STORAGE_VALUE_LENGTH = 32;
     private static final int CHILD_BYTES_SIZE_LIMIT = 32;
 
+    /**
+     * Non-null list of nullable entries (null in the list indicating there's no child).
+     */
     private List<C> children;
 
     private Nibbles partialKey;
