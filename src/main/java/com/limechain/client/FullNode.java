@@ -73,10 +73,11 @@ public class FullNode implements HostNode {
         log.log(Level.INFO, "Node successfully connected to a peer! Sync can start!");
 
         CliArguments args = AppBean.getBean(CliArguments.class);
-        if ("full".equals(args.syncMode().toLowerCase())) {
-            AppBean.getBean(FullSyncMachine.class).start();
-        } else {
-            AppBean.getBean(WarpSyncMachine.class).start();
+        switch (args.syncMode()){
+            case FULL -> AppBean.getBean(FullSyncMachine.class).start();
+            case WARP -> AppBean.getBean(WarpSyncMachine.class).start();
+            default -> AppBean.getBean(WarpSyncMachine.class).start(); //This statement should be impossible to reach
+            //but it's here just in case
         }
     }
 

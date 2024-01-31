@@ -4,6 +4,7 @@ import com.limechain.chain.Chain;
 import com.limechain.exception.CliArgsParseException;
 import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.storage.DBInitializer;
+import com.limechain.sync.SyncMode;
 import lombok.Getter;
 import lombok.extern.java.Log;
 import org.apache.commons.cli.CommandLine;
@@ -13,6 +14,7 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -41,6 +43,15 @@ public class Cli {
         this.options = buildOptions();
     }
 
+    @NotNull
+    private static SyncMode parseSyncMode(CommandLine cmd) throws ParseException {
+        try {
+            return SyncMode.valueOf(cmd.getOptionValue(SYNC_MODE, "warp").toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new ParseException("Invalid sync mode provided, valid values - WARP or FULL");
+        }
+    }
+
     /**
      * Parses node launch arguments.
      *
@@ -61,7 +72,7 @@ public class Cli {
             //       what does running the node in NodeMode NONE mean?
             String nodeMode = cmd.getOptionValue(NODE_MODE, NodeRole.FULL.toString());
             boolean noLgacyProtocols = cmd.hasOption(NO_LEGACY_PROTOCOLS);
-            String syncMode = cmd.getOptionValue(SYNC_MODE, "full");
+            SyncMode syncMode = parseSyncMode(cmd);
 
             return new CliArguments(network, dbPath, dbRecreate, nodeKey, nodeMode, noLgacyProtocols, syncMode);
         } catch (ParseException e) {
@@ -86,7 +97,7 @@ public class Cli {
         Option noLegacyProtocols = new Option(null, NO_LEGACY_PROTOCOLS, false,
                 "Doesn't use legacy protocols if set");
         Option syncMode = new Option(null, SYNC_MODE, true,
-                "Sync mode (warp/full)");
+                "Sync mode (warp/full) - warp by default");
 
         networkOption.setRequired(false);
         dbPathOption.setRequired(false);

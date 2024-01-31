@@ -11,5 +11,5 @@ package com.limechain.cli;
  * @param syncMode          the sync mode
  */
 public record CliArguments(String network, String dbPath, boolean dbRecreate, String nodeKey, String nodeRole,
-                           boolean noLegacyProtocols, String syncMode) {
+                           boolean noLegacyProtocols, com.limechain.sync.SyncMode syncMode) {
 }
