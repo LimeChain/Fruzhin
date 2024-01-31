@@ -2,10 +2,12 @@ package com.limechain.client;
 
 import com.google.common.primitives.Bytes;
 import com.limechain.chain.ChainService;
+import com.limechain.cli.CliArguments;
 import com.limechain.network.Network;
 import com.limechain.rpc.server.AppBean;
 import com.limechain.storage.KVRepository;
 import com.limechain.storage.block.BlockStateHelper;
+import com.limechain.sync.fullsync.FullSyncMachine;
 import com.limechain.sync.warpsync.WarpSyncMachine;
 import com.limechain.trie.structure.database.InsertTrieBuilder;
 import com.limechain.trie.structure.database.TrieBuildException;
@@ -69,7 +71,13 @@ public class FullNode implements HostNode {
 
         // Start syncing
         log.log(Level.INFO, "Node successfully connected to a peer! Sync can start!");
-        AppBean.getBean(WarpSyncMachine.class).start();
+
+        CliArguments args = AppBean.getBean(CliArguments.class);
+        switch (args.syncMode()){
+            case FULL -> AppBean.getBean(FullSyncMachine.class).start();
+            case WARP -> AppBean.getBean(WarpSyncMachine.class).start();
+            default -> throw new IllegalStateException("Unexpected value: " + args.syncMode());
+        }
     }
 
     private Map<String, String> loadGenesisStorage() {
@@ -80,9 +88,9 @@ public class FullNode implements HostNode {
     /**
      * Inserts trie nodes into the key-value repository.
      *
-     * @param db The key-value repository where trie nodes are to be stored.
+     * @param db              The key-value repository where trie nodes are to be stored.
      * @param insertTrieNodes The list of trie nodes to be inserted.
-     * @param entriesVersion The version number of the trie entries.
+     * @param entriesVersion  The version number of the trie entries.
      */
     private void insertStorage(KVRepository<String, Object> db, List<InsertTrieNode> insertTrieNodes,
                                int entriesVersion) {
@@ -124,12 +132,12 @@ public class FullNode implements HostNode {
 
     /**
      * Inserts the children of a given trie node into
-     the key-value repository.
-
-     @param db The key-value repository where trie node children are to be stored.
-     @param trieNode The trie node whose children are to be inserted.
+     * the key-value repository.
+     *
+     * @param db       The key-value repository where trie node children are to be stored.
+     * @param trieNode The trie node whose children are to be inserted.
      */
-    private void insertChildren(KVRepository<String, Object> db, InsertTrieNode trieNode)  {
+    private void insertChildren(KVRepository<String, Object> db, InsertTrieNode trieNode) {
         String key = TRIE_NODE_CHILD_PREFIX + new String(trieNode.merkleValue());
         List<byte[]> childrenMerkleValues = trieNode.childrenMerkleValues();
 

@@ -25,6 +25,12 @@ class CliTest {
         assertTrue(options.hasOption("network"));
         assertTrue(options.hasOption("n"));
         assertTrue(options.hasOption("db-path"));
+        assertTrue(options.hasOption("dbc"));
+        assertTrue(options.hasOption("node-key"));
+        assertTrue(options.hasOption("node-mode"));
+        assertTrue(options.hasOption("mode"));
+        assertTrue(options.hasOption("no-legacy-protocols"));
+        assertTrue(options.hasOption("sync-mode"));
         assertEquals(0, options.getRequiredOptions().size());
     }
 

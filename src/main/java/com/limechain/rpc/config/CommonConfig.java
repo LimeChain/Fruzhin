@@ -11,6 +11,7 @@ import com.limechain.network.Network;
 import com.limechain.storage.DBInitializer;
 import com.limechain.storage.DBRepository;
 import com.limechain.storage.KVRepository;
+import com.limechain.sync.fullsync.FullSyncMachine;
 import com.limechain.sync.warpsync.SyncedState;
 import com.limechain.sync.warpsync.WarpSyncMachine;
 import org.springframework.boot.ApplicationArguments;
@@ -70,6 +71,11 @@ public class CommonConfig {
     @Bean
     public WarpSyncMachine sync(Network network, ChainService chainService) {
         return new WarpSyncMachine(network, chainService);
+    }
+
+    @Bean
+    public FullSyncMachine sync(Network network) {
+        return new FullSyncMachine(network);
     }
 
     @Bean
