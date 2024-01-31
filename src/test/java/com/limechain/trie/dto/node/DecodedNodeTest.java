@@ -77,4 +77,20 @@ class DecodedNodeTest {
         );
         assertThrows(NodeEncodingException.class, decodedNode::encode);
     }
+
+    @Test
+    void exactMultiplePKLenInHeaderAddsZeroByteWhenEncoding() {
+        DecodedNode<List<Byte>> decoded = new DecodedNode<>(
+            // a branch node
+            Nibbles.ALL.stream().map(__ -> (List<Byte>)null).toList(),
+            // with exactly 63 = 2^6 - 1 nibbles (6 bits allocated for the pklen due to the node variant)
+            Nibbles.fromHexString("77e6857fb1d0e409376122fee3ad4f84e7b9012096b41c4eb3aaf947f6ea429"),
+            new StorageValue(new byte[]{0, 0}, false)
+        );
+
+        // Referring to this corner case:
+        // https://github.com/smol-dot/smoldot/blob/21be5a1abaebeaf7270a744485b4551da8636fb1/lib/src/trie/trie_node.rs#L76-L80
+        assertEquals((byte) 0, decoded.encode().get(1),
+            "Zero byte must be added to indicate end of pk len in header.");
+    }
 }

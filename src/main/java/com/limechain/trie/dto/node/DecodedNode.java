@@ -104,7 +104,7 @@ public class DecodedNode<C extends Collection<Byte>> {
 
         // Append as many "private key length" bytes as necessary
         int pkLen = this.partialKey.size();
-        if (pkLen > maxRepresentableInFirstByte) {
+        if (pkLen >= maxRepresentableInFirstByte) {
             int remainingPkLen = pkLen - maxRepresentableInFirstByte;
             int numberOfFullBytes = remainingPkLen / 255;
             int lastByte = remainingPkLen % 255;
