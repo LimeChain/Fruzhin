@@ -44,11 +44,11 @@ public class Cli {
     }
 
     @NotNull
-    private static SyncMode parseSyncMode(CommandLine cmd) throws ParseException {
+    private static SyncMode parseSyncMode(CommandLine cmd) {
         try {
             return SyncMode.valueOf(cmd.getOptionValue(SYNC_MODE, "warp").toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new ParseException("Invalid sync mode provided, valid values - WARP or FULL");
+            throw new CliArgsParseException("Invalid sync mode provided, valid values - WARP or FULL", e);
         }
     }
 

@@ -1,5 +1,7 @@
 package com.limechain.cli;
 
+import com.limechain.sync.SyncMode;
+
 /**
  * Hold successfully parsed cli arguments
  *
@@ -11,5 +13,5 @@ package com.limechain.cli;
  * @param syncMode          the sync mode
  */
 public record CliArguments(String network, String dbPath, boolean dbRecreate, String nodeKey, String nodeRole,
-                           boolean noLegacyProtocols, com.limechain.sync.SyncMode syncMode) {
+                           boolean noLegacyProtocols, SyncMode syncMode) {
 }
