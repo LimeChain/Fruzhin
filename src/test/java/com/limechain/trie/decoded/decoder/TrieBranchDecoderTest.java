@@ -1,8 +1,8 @@
-package com.limechain.trie.decoder;
+package com.limechain.trie.decoded.decoder;
 
-import com.limechain.trie.Node;
-import com.limechain.trie.NodeKind;
-import com.limechain.trie.NodeVariant;
+import com.limechain.trie.decoded.Node;
+import com.limechain.trie.decoded.NodeKind;
+import com.limechain.trie.decoded.NodeVariant;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import org.junit.jupiter.api.Test;
@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
-import static com.limechain.trie.decoder.TrieBranchDecoder.decode;
+import static com.limechain.trie.decoded.decoder.TrieBranchDecoder.decode;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;

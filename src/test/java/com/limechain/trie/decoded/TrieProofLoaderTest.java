@@ -1,7 +1,7 @@
-package com.limechain.trie;
+package com.limechain.trie.decoded;
 
-import com.limechain.trie.decoder.TrieDecoderException;
-import com.limechain.trie.encoder.TrieEncoder;
+import com.limechain.trie.decoded.decoder.TrieDecoderException;
+import com.limechain.trie.decoded.encoder.TrieEncoder;
 import com.limechain.utils.HashUtils;
 import org.apache.tomcat.util.buf.HexUtils;
 import org.junit.jupiter.api.Test;

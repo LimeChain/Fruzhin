@@ -1,13 +1,13 @@
-package com.limechain.trie.decoder;
+package com.limechain.trie.decoded.decoder;
 
-import com.limechain.trie.NodeVariant;
+import com.limechain.trie.decoded.NodeVariant;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import lombok.experimental.UtilityClass;
 
 import java.util.Arrays;
 import java.util.List;
 
-import static com.limechain.trie.TrieVerifier.MAX_PARTIAL_KEY_LENGTH;
+import static com.limechain.trie.decoded.TrieVerifier.MAX_PARTIAL_KEY_LENGTH;
 
 /**
  * This class is used to decode the header of a Trie node from a ScaleCodecReader input stream.

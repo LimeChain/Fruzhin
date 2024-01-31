@@ -1,7 +1,7 @@
-package com.limechain.trie.encoder;
+package com.limechain.trie.decoded.encoder;
 
-import com.limechain.trie.Node;
-import com.limechain.trie.NodeVariant;
+import com.limechain.trie.decoded.Node;
+import com.limechain.trie.decoded.NodeVariant;
 import com.limechain.utils.HashUtils;
 import org.junit.jupiter.api.Test;
 
@@ -9,7 +9,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
-import static com.limechain.trie.TrieVerifier.MAX_PARTIAL_KEY_LENGTH;
+import static com.limechain.trie.decoded.TrieVerifier.MAX_PARTIAL_KEY_LENGTH;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.atLeast;

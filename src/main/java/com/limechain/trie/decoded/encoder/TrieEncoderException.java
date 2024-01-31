@@ -1,4 +1,4 @@
-package com.limechain.trie.encoder;
+package com.limechain.trie.decoded.encoder;
 
 /**
  * Custom exception class that is thrown when an error occurs

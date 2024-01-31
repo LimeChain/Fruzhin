@@ -1,10 +1,10 @@
-package com.limechain.trie.decoder;
+package com.limechain.trie.decoded.decoder;
 
-import com.limechain.trie.Node;
+import com.limechain.trie.decoded.Node;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import lombok.experimental.UtilityClass;
 
-import static com.limechain.trie.decoder.TrieHeaderDecoder.decodeHeader;
+import static com.limechain.trie.decoded.decoder.TrieHeaderDecoder.decodeHeader;
 
 /**
  * This class is used to decode nodes and their children from a byte array.

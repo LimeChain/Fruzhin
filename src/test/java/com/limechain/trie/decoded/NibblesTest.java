@@ -1,4 +1,4 @@
-package com.limechain.trie;
+package com.limechain.trie.decoded;
 
 import org.junit.jupiter.api.Test;
 

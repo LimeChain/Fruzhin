@@ -1,6 +1,6 @@
-package com.limechain.trie;
+package com.limechain.trie.decoded;
 
-import com.limechain.trie.decoder.TrieDecoder;
+import com.limechain.trie.decoded.decoder.TrieDecoder;
 import lombok.experimental.UtilityClass;
 import lombok.extern.java.Log;
 import org.apache.tomcat.util.buf.HexUtils;

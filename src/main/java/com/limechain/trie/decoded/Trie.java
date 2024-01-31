@@ -1,4 +1,4 @@
-package com.limechain.trie;
+package com.limechain.trie.decoded;
 
 import com.limechain.utils.HashUtils;
 import io.emeraldpay.polkaj.types.Hash256;

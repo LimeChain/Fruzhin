@@ -1,6 +1,6 @@
-package com.limechain.trie.decoder;
+package com.limechain.trie.decoded.decoder;
 
-import com.limechain.trie.Nibbles;
+import com.limechain.trie.decoded.Nibbles;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import lombok.experimental.UtilityClass;
 

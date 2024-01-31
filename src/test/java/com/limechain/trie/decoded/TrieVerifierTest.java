@@ -1,20 +1,20 @@
-package com.limechain.trie;
+package com.limechain.trie.decoded;
 
-import com.limechain.trie.decoder.TrieDecoderException;
-import com.limechain.trie.encoder.TrieEncoder;
+import com.limechain.trie.decoded.decoder.TrieDecoderException;
+import com.limechain.trie.decoded.encoder.TrieEncoder;
 import com.limechain.utils.HashUtils;
 import com.limechain.utils.RandomGenerationUtils;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
 
-import static com.limechain.trie.Helper.assertLongEncoding;
-import static com.limechain.trie.Helper.assertShortEncoding;
-import static com.limechain.trie.Helper.getBadNodeEncoding;
-import static com.limechain.trie.Helper.leafAShort;
-import static com.limechain.trie.Helper.leafBLarge;
-import static com.limechain.trie.Helper.leafCLarge;
-import static com.limechain.trie.Helper.padRightChildren;
+import static com.limechain.trie.decoded.Helper.assertLongEncoding;
+import static com.limechain.trie.decoded.Helper.assertShortEncoding;
+import static com.limechain.trie.decoded.Helper.getBadNodeEncoding;
+import static com.limechain.trie.decoded.Helper.leafAShort;
+import static com.limechain.trie.decoded.Helper.leafBLarge;
+import static com.limechain.trie.decoded.Helper.leafCLarge;
+import static com.limechain.trie.decoded.Helper.padRightChildren;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;

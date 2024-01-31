@@ -1,6 +1,6 @@
-package com.limechain.trie.decoder;
+package com.limechain.trie.decoded.decoder;
 
-import com.limechain.trie.NodeVariant;
+import com.limechain.trie.decoded.NodeVariant;
 
 /**
  * This class is used to store the data returned from the TrieHeaderDecoder

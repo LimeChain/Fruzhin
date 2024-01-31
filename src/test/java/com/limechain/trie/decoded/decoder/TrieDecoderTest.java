@@ -1,10 +1,10 @@
-package com.limechain.trie.decoder;
+package com.limechain.trie.decoded.decoder;
 
-import com.limechain.trie.Node;
-import com.limechain.trie.NodeKind;
-import com.limechain.trie.NodeVariant;
-import com.limechain.trie.Trie;
-import com.limechain.trie.encoder.TrieEncoder;
+import com.limechain.trie.decoded.Node;
+import com.limechain.trie.decoded.NodeKind;
+import com.limechain.trie.decoded.NodeVariant;
+import com.limechain.trie.decoded.Trie;
+import com.limechain.trie.decoded.encoder.TrieEncoder;
 import com.limechain.utils.HashUtils;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import org.junit.jupiter.api.Assertions;

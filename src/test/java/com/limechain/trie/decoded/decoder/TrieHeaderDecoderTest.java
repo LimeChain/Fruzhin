@@ -1,6 +1,6 @@
-package com.limechain.trie.decoder;
+package com.limechain.trie.decoded.decoder;
 
-import com.limechain.trie.NodeVariant;
+import com.limechain.trie.decoded.NodeVariant;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import org.junit.jupiter.api.Test;

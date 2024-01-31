@@ -1,4 +1,4 @@
-package com.limechain.trie;
+package com.limechain.trie.decoded;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;

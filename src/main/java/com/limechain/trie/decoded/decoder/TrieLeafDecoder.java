@@ -1,7 +1,7 @@
-package com.limechain.trie.decoder;
+package com.limechain.trie.decoded.decoder;
 
-import com.limechain.trie.Node;
-import com.limechain.trie.NodeVariant;
+import com.limechain.trie.decoded.Node;
+import com.limechain.trie.decoded.NodeVariant;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.experimental.UtilityClass;
