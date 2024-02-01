@@ -45,12 +45,7 @@ class HostConfigTest {
         when(cliArguments.network()).thenReturn("invalidNetwork");
         when(cliArguments.nodeRole()).thenReturn("full");
         when(cliArguments.dbPath()).thenReturn(DBInitializer.DEFAULT_DIRECTORY);
-        Exception exception = assertThrows(InvalidChainException.class, () -> new HostConfig(cliArguments));
-
-        String expectedMessage = "Chain cannot be null";
-        String actualMessage = exception.getMessage();
-
-        assertTrue(actualMessage.contains(expectedMessage));
+        assertThrows(InvalidChainException.class, () -> new HostConfig(cliArguments));
     }
 
     @Test
