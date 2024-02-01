@@ -13,12 +13,14 @@ import com.limechain.trie.dto.node.DecodedNode;
 import com.limechain.trie.dto.node.StorageValue;
 import com.limechain.trie.structure.nibble.Nibbles;
 import com.limechain.utils.HashUtils;
+import lombok.experimental.UtilityClass;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
 
 // TODO: Consider splitting the two steps (building the trie + calculating the merkle values) as part of the public API
+@UtilityClass
 public class TrieStructureFactory {
 
     /**
@@ -27,13 +29,13 @@ public class TrieStructureFactory {
      * @param stateVersion - for now, all entries are presumed to have the same state version
      * @return - a TrieStructure with calculated merkle values
      */
-    public static TrieStructure<NodeData> buildFromKVPs(Map<ByteString, ByteString> entries, StateVersion stateVersion) {
+    public TrieStructure<NodeData> buildFromKVPs(Map<ByteString, ByteString> entries, StateVersion stateVersion) {
         TrieStructure<NodeData> trie = buildTrieStructure(entries);
         calculateMerkleValues(trie, stateVersion);
         return trie;
     }
 
-    private static TrieStructure<NodeData> buildTrieStructure(Map<ByteString, ByteString> mainStorage) {
+    private TrieStructure<NodeData> buildTrieStructure(Map<ByteString, ByteString> mainStorage) {
         TrieStructure<NodeData> trie = new TrieStructure<>();
 
         for (var entry : mainStorage.entrySet()) {
@@ -45,7 +47,7 @@ public class TrieStructureFactory {
         return trie;
     }
 
-    private static void calculateMerkleValues(TrieStructure<NodeData> trie, StateVersion stateVersion) {
+    private void calculateMerkleValues(TrieStructure<NodeData> trie, StateVersion stateVersion) {
         List<TrieNodeIndex> nodeIndices = trie.streamOrdered().toList();
 
         for (TrieNodeIndex index : Lists.reverse(nodeIndices)) {
@@ -57,7 +59,7 @@ public class TrieStructureFactory {
         }
     }
 
-    private static void calculateAndSetMerkleValue(NodeHandle<NodeData> nodeHandle, StateVersion stateVersion) {
+    private void calculateAndSetMerkleValue(NodeHandle<NodeData> nodeHandle, StateVersion stateVersion) {
         NodeData userData = nodeHandle.getUserData();
 
         // Node didn't have any userData set (hence no storage value), but now we want to calculate its merkle value
@@ -79,7 +81,7 @@ public class TrieStructureFactory {
         nodeHandle.setUserData(userData);
     }
 
-    private static StorageValue constructStorageValue(@Nullable byte[] value, StateVersion stateVersion) {
+    private StorageValue constructStorageValue(@Nullable byte[] value, StateVersion stateVersion) {
         if (value == null) {
             return null;
         }
@@ -91,7 +93,7 @@ public class TrieStructureFactory {
         return new StorageValue(value, false);
     }
 
-    private static List<List<Byte>> getChildrenValues(NodeHandle<NodeData> nodeHandle) {
+    private List<List<Byte>> getChildrenValues(NodeHandle<NodeData> nodeHandle) {
         return Nibbles.ALL.stream()
             .map(nodeHandle::getChild)
             .map(child -> child
