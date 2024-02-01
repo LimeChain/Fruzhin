@@ -58,7 +58,8 @@ public abstract sealed class NodeHandle<T> extends Entry<T> permits StorageNodeH
     }
 
     /**
-     * @return the {@link TrieNode#userData} of the underlying node this handle points to.
+     * @return  the {@link TrieNode#userData} of the underlying node this handle points to,
+     *          null if the node has no user data.
      */
     @Nullable
     public T getUserData() {
@@ -71,6 +72,20 @@ public abstract sealed class NodeHandle<T> extends Entry<T> permits StorageNodeH
      */
     public void setUserData(@Nullable T userData) {
         this.trieStructure.getNodeAtIndexInner(this.rawNodeIndex).userData = userData;
+    }
+
+    /**
+     * Returns a handle to the parent node of this node. Null if this is the root.
+     */
+    @Nullable
+    public NodeHandle<T> getParent() {
+        var parentIndex = this.trieStructure.nodes.get(this.rawNodeIndex).parent;
+
+        if (parentIndex == null) {
+            return null;
+        }
+
+        return this.trieStructure.nodeHandleAtIndexInner(parentIndex.parentNodeIndex());
     }
 
     /**

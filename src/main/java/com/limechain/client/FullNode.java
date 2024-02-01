@@ -2,12 +2,17 @@ package com.limechain.client;
 
 import com.google.common.primitives.Bytes;
 import com.limechain.chain.ChainService;
+import com.limechain.chain.spec.Genesis;
 import com.limechain.network.Network;
 import com.limechain.rpc.server.AppBean;
+import com.limechain.runtime.StateVersion;
 import com.limechain.storage.KVRepository;
 import com.limechain.storage.block.BlockStateHelper;
 import com.limechain.sync.warpsync.WarpSyncMachine;
+import com.limechain.trie.TrieStructureFactory;
+import com.limechain.trie.structure.TrieStructure;
 import com.limechain.trie.structure.database.InsertTrieBuilder;
+import com.limechain.trie.structure.database.NodeData;
 import com.limechain.trie.structure.database.TrieBuildException;
 import com.limechain.trie.structure.nibble.Nibble;
 import com.limechain.trie.structure.node.InsertTrieNode;
@@ -18,7 +23,6 @@ import lombok.extern.java.Log;
 
 import java.math.BigInteger;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 
 @Log
@@ -37,17 +41,23 @@ public class FullNode implements HostNode {
     public void start() {
         //Initialize state
 
-        // TODO: Is there a better way to do this?
+        // TODO: Is there a better way to decide whether we've got any database written?
         var db = AppBean.getBean(KVRepository.class); //presume this works
         // if: database exists and has some persisted storage
         if (db != null && db.find(new BlockStateHelper().headerHashKey(BigInteger.ZERO)).isPresent()) {
             // do nothing?
         } else {
-            List<InsertTrieNode> trie = new InsertTrieBuilder()
-                    .initializeTrieStructure(loadGenesisStorage())
-                    .build();
+            Genesis genesisStorage = loadGenesisStorage();
 
-            insertStorage(db, trie, InsertTrieBuilder.STATE_VERSION); //Todo: calculate state version
+            // TODO: Next up, manage to fetch the runtime version
+            StateVersion stateVersion = StateVersion.V0;
+//            StateVersion stateVersion = new RuntimeBuilder().buildRuntime(
+//                genesisStorage.getTopValue(":code".getBytes()).toByteArray()
+//            ).getVersion().getStateVersion();
+
+            TrieStructure<NodeData> trie = TrieStructureFactory.buildFromKVPs(genesisStorage.getTop(), stateVersion);
+            List<InsertTrieNode> dbSerializedTrieNodes = new InsertTrieBuilder(trie).build();
+            insertStorage(db, dbSerializedTrieNodes, InsertTrieBuilder.STATE_VERSION); //Todo: calculate state version
         }
 
         // Start network
@@ -72,9 +82,8 @@ public class FullNode implements HostNode {
         AppBean.getBean(WarpSyncMachine.class).start();
     }
 
-    private Map<String, String> loadGenesisStorage() {
-        var genesisStorageRaw = AppBean.getBean(ChainService.class).getGenesis().getGenesis().getRaw();
-        return genesisStorageRaw.get("top");
+    private static Genesis loadGenesisStorage() {
+        return AppBean.getBean(ChainService.class).getChainSpec().getGenesis();
     }
 
     /**

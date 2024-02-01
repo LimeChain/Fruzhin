@@ -2,7 +2,7 @@ package com.limechain.rpc.methods;
 
 import com.googlecode.jsonrpc4j.JsonRpcMethod;
 import com.googlecode.jsonrpc4j.spring.AutoJsonRpcServiceImpl;
-import com.limechain.chain.ChainSpec;
+import com.limechain.chain.spec.RawChainSpec;
 import com.limechain.rpc.methods.sync.SyncRPCImpl;
 import com.limechain.rpc.methods.system.SystemRPC;
 import com.limechain.rpc.methods.system.SystemRPCImpl;
@@ -121,7 +121,7 @@ public class RPCMethodsImpl implements RPCMethods {
     }
 
     @Override
-    public ChainSpec syncStateGenSyncSpec(boolean raw) {
+    public RawChainSpec syncStateGenSyncSpec(boolean raw) {
         return syncRPC.syncStateGetSyncSpec(raw);
     }
 

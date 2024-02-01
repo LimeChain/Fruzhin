@@ -1,7 +1,7 @@
 package com.limechain.rpc.methods.sync;
 
 import com.googlecode.jsonrpc4j.JsonRpcMethod;
-import com.limechain.chain.ChainSpec;
+import com.limechain.chain.spec.RawChainSpec;
 
 /**
  * Interface which holds all sync rpc methods and their interfaces
@@ -11,6 +11,6 @@ import com.limechain.chain.ChainSpec;
 public interface SyncRPC {
 
     @JsonRpcMethod("sync_state_genSyncSpec")
-    ChainSpec syncStateGenSyncSpec(boolean raw);
+    RawChainSpec syncStateGenSyncSpec(boolean raw);
 
 }

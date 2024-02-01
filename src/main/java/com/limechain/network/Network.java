@@ -94,7 +94,7 @@ public class Network {
      */
     public Network(ChainService chainService, HostConfig hostConfig, KVRepository<String, Object> repository,
                    CliArguments cliArgs, GenesisBlockHash genesisBlockHash) {
-        this.bootNodes = chainService.getGenesis().getBootNodes();
+        this.bootNodes = chainService.getChainSpec().getRawChainSpec().getBootNodes();
         this.chain = hostConfig.getChain();
         this.nodeRole = hostConfig.getNodeRole();
         this.initializeProtocols(chainService, genesisBlockHash, hostConfig, repository, cliArgs);
@@ -114,7 +114,7 @@ public class Network {
         Multihash hostId = Multihash.deserialize(hostBuilder.getPeerId().getBytes());
 
         String pingProtocol = ProtocolUtils.PING_PROTOCOL;
-        String chainId = chainService.getGenesis().getProtocolId();
+        String chainId = chainService.getChainSpec().getRawChainSpec().getProtocolId();
         String protocolId = cliArgs.noLegacyProtocols() ? genesisBlockHash.getGenesisHash().toString() : chainId;
         String kadProtocolId = ProtocolUtils.getKadProtocol(chainId);
         String warpProtocolId = ProtocolUtils.getWarpSyncProtocol(protocolId);

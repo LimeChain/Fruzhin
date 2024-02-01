@@ -1,8 +1,8 @@
-package com.limechain.trie.structure.decoded.node;
+package com.limechain.trie.dto.node;
 
 import com.limechain.trie.decoded.NodeVariant;
-import com.limechain.trie.structure.decoded.node.exceptions.NodeDecodingException;
-import com.limechain.trie.structure.decoded.node.exceptions.NodeEncodingException;
+import com.limechain.trie.dto.node.exceptions.NodeDecodingException;
+import com.limechain.trie.dto.node.exceptions.NodeEncodingException;
 import com.limechain.trie.structure.nibble.BytesToNibbles;
 import com.limechain.trie.structure.nibble.Nibble;
 import com.limechain.trie.structure.nibble.Nibbles;

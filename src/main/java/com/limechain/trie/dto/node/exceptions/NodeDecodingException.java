@@ -1,4 +1,4 @@
-package com.limechain.trie.structure.decoded.node.exceptions;
+package com.limechain.trie.dto.node.exceptions;
 
 public class NodeDecodingException extends RuntimeException {
     public NodeDecodingException(Throwable cause) {

@@ -1,5 +1,7 @@
 package com.limechain.chain;
 
+import com.limechain.chain.spec.ChainSpec;
+import com.limechain.chain.spec.RawChainSpec;
 import com.limechain.config.HostConfig;
 import com.limechain.storage.KVRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,6 +19,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 class ChainServiceTest {
     private ChainService chainService;
@@ -31,46 +34,41 @@ class ChainServiceTest {
 
     @Test
     void setsChainSpecFromDB_when_chainSpecIsInDB() {
-        var chainSpec = new ChainSpec() {{
-            this.setName("testName");
-        }};
-        Optional<Object> mockGenesis = Optional.of(chainSpec);
+        var rawChainSpec = mock(RawChainSpec.class);
+        when(repository.find(any())).thenReturn(Optional.of(rawChainSpec));
 
-        doReturn(mockGenesis).when(repository).find(any());
+        var chainSpec = mock(ChainSpec.class);
 
-        chainService = new ChainService(hostConfig, repository);
+        try (MockedStatic<ChainSpec> chainSpecStatic = Mockito.mockStatic(ChainSpec.class)) {
+            chainSpecStatic.when(() -> ChainSpec.fromRaw(rawChainSpec)).thenReturn(chainSpec);
 
-        assertEquals(chainService.getGenesis(), chainSpec);
+            chainService = new ChainService(hostConfig, repository);
+
+            assertEquals(chainSpec, chainService.getChainSpec());
+        }
     }
 
     @Test
     void savesChainSpecToDB_when_chainSpecIsNotInDB() {
-        var chainSpec = new ChainSpec() {{
-            this.setName("testName");
-        }};
+        var rawChainSpec = new RawChainSpec();
 
-        Optional<Object> mockGenesis = Optional.ofNullable(null);
+        doReturn(Optional.empty()).when(repository).find(any());
 
-        doReturn(mockGenesis).when(repository).find(any());
-
-        try (MockedStatic<ChainSpec> chainSpecStatic = Mockito.mockStatic(ChainSpec.class)) {
-            chainSpecStatic.when(() ->
-                    ChainSpec.newFromJSON(any())).thenReturn(chainSpec);
+        try (MockedStatic<RawChainSpec> rawChainSpecStatic = Mockito.mockStatic(RawChainSpec.class);
+             MockedStatic<ChainSpec> chainSpecStatic = Mockito.mockStatic(ChainSpec.class)) {
+            rawChainSpecStatic
+                .when(() -> RawChainSpec.newFromJSON(any()))
+                .thenReturn(rawChainSpec);
 
             chainService = new ChainService(hostConfig, repository);
-            verify(repository, times(1)).save("genesis", chainSpec);
+            verify(repository, times(1)).save("genesis", rawChainSpec);
         }
     }
 
     @Test
     void throwsRuntimeException_when_saveFails() {
-        Optional<Object> mockGenesis = Optional.ofNullable(null);
-
-        doReturn(mockGenesis).when(repository).find(any());
-
-        try (MockedStatic<ChainSpec> chainSpecStatic = Mockito.mockStatic(ChainSpec.class)) {
-            chainSpecStatic.when(() ->
-                    ChainSpec.newFromJSON(any())).thenThrow(IOException.class);
+        try (MockedStatic<RawChainSpec> chainSpecStatic = Mockito.mockStatic(RawChainSpec.class)) {
+            chainSpecStatic.when(() -> RawChainSpec.newFromJSON(any())).thenThrow(IOException.class);
 
             assertThrows(RuntimeException.class, () -> chainService = new ChainService(hostConfig, repository));
         }

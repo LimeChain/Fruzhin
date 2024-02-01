@@ -1,4 +1,4 @@
-package com.limechain.trie.structure.decoded.node;
+package com.limechain.trie.dto.node;
 
 import org.jetbrains.annotations.NotNull;
 

@@ -1,7 +1,8 @@
 package com.limechain.rpc.methods.system;
 
 import com.limechain.chain.ChainService;
-import com.limechain.chain.ChainSpec;
+import com.limechain.chain.spec.ChainSpec;
+import com.limechain.chain.spec.RawChainSpec;
 import com.limechain.config.SystemInfo;
 import com.limechain.network.Network;
 import com.limechain.sync.warpsync.WarpSyncMachine;
@@ -55,18 +56,24 @@ class SystemRPCImplTest {
 
     @Test
     void systemChain() {
-        ChainSpec chainSpec = new ChainSpec();
-        chainSpec.setName("Polkadot");
-        when(chainService.getGenesis()).thenReturn(chainSpec);
+        RawChainSpec rawChainSpec = mock(RawChainSpec.class);
+        when(rawChainSpec.getName()).thenReturn("Polkadot");
+
+        ChainSpec chainSpec = mock(ChainSpec.class);
+        when(chainSpec.getRawChainSpec()).thenReturn(rawChainSpec);
+
+        when(chainService.getChainSpec()).thenReturn(chainSpec);
 
         assertEquals("Polkadot", systemRPC.systemChain());
     }
 
     @Test
     void systemChainType() {
-        ChainSpec chainSpec = new ChainSpec();
-        chainSpec.setChainType("Polkadot - Live");
-        when(chainService.getGenesis()).thenReturn(chainSpec);
+        RawChainSpec rawChainSpec = mock(RawChainSpec.class);
+        when(rawChainSpec.getChainType()).thenReturn("Polkadot - Live");
+        ChainSpec chainSpec = mock(ChainSpec.class);
+        when(chainSpec.getRawChainSpec()).thenReturn(rawChainSpec);
+        when(chainService.getChainSpec()).thenReturn(chainSpec);
 
         assertEquals("Polkadot - Live", systemRPC.systemChainType());
     }

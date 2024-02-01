@@ -377,7 +377,6 @@ public class TrieStructure<T> {
      * @param nodeIndex the index of the existing node
      * @return a node handle for the node
      */
-    @Nullable
     public NodeHandle<T> nodeHandleAtIndex(@NotNull TrieNodeIndex nodeIndex) {
         return nodeHandleAtIndexInner(nodeIndex.getValue());
     }
