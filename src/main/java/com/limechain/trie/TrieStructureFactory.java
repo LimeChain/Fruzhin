@@ -23,12 +23,12 @@ public class TrieStructureFactory {
 
     /**
      * Build the trie structure from the provided key-value pairs, then calculates the merkle values and sets them.
-     * @param KVPs - the key-value pairs that make up the actual data being stored
+     * @param entries - the key-value pairs that make up the actual data being stored
      * @param stateVersion - for now, all entries are presumed to have the same state version
      * @return - a TrieStructure with calculated merkle values
      */
-    public static TrieStructure<NodeData> buildFromKVPs(Map<ByteString, ByteString> KVPs, StateVersion stateVersion) {
-        TrieStructure<NodeData> trie = buildTrieStructure(KVPs);
+    public static TrieStructure<NodeData> buildFromKVPs(Map<ByteString, ByteString> entries, StateVersion stateVersion) {
+        TrieStructure<NodeData> trie = buildTrieStructure(entries);
         calculateMerkleValues(trie, stateVersion);
         return trie;
     }

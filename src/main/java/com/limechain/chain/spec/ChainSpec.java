@@ -2,8 +2,10 @@ package com.limechain.chain.spec;
 
 import lombok.Getter;
 
-// Serves as a wrapper around the raw JSON parsed chain spec
-// for easier in-memory access to the spec data
+/**
+ * Serves as a wrapper around the raw chain spec data, deserialized from JSON,
+ * parsing parts of it for easier in-memory access to the spec
+ */
 @Getter
 public class ChainSpec {
     // we store the raw chain spec in order to still access it, since this class hasn't got its full API yet

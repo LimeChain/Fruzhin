@@ -10,8 +10,9 @@ import java.util.function.Function;
 
 public class Genesis {
     private final Map<ByteString, ByteString> top;
-    // TODO: Add child storage support
-    // private Map<ByteString, ...?> childrenDefault;
+    // NOTE:
+    //  Whenever we want to add child storage support, it's going to be here
+    //  maybe something like... private Map<ByteString, ...?> childrenDefault;
 
     Genesis(RawChainSpec rawChainSpec) {
         Map<ByteString, ByteString> parsedTopStorage = new HashMap<>();
@@ -20,8 +21,8 @@ public class Genesis {
             rawPrefixedHex ->
                 ByteString.fromHex(StringUtils.remove0xPrefix(rawPrefixedHex));
 
-        Map<String, String> top = rawChainSpec.getGenesis().getRaw().get("top");
-        for (Map.Entry<String, String> e : top.entrySet()) {
+        Map<String, String> rawTop = rawChainSpec.getGenesis().getRaw().get("top");
+        for (Map.Entry<String, String> e : rawTop.entrySet()) {
             parsedTopStorage.put(
                 parser.apply(e.getKey()),
                 parser.apply(e.getValue())

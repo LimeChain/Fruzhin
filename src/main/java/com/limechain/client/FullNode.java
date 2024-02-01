@@ -53,9 +53,6 @@ public class FullNode implements HostNode {
 
             // TODO: Next up, manage to fetch the runtime version
             StateVersion stateVersion = StateVersion.V0;
-//            StateVersion stateVersion = new RuntimeBuilder().buildRuntime(
-//                genesisStorage.getTopValue(":code".getBytes()).toByteArray()
-//            ).getVersion().getStateVersion();
 
             TrieStructure<NodeData> trie = TrieStructureFactory.buildFromKVPs(genesisStorage.getTop(), stateVersion);
             List<InsertTrieNode> dbSerializedTrieNodes = new InsertTrieBuilder(trie).build();

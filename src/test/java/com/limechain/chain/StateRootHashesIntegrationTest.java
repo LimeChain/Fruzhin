@@ -13,7 +13,7 @@ import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class StateRootHashesIntegrationTest {
+class StateRootHashesIntegrationTest {
 
     // TODO: Refactor these hardcoded paths after we refactor to extract a logical ChainSpec module
     private static final Map<String, String> chainSpecToRootHash = Map.of(
