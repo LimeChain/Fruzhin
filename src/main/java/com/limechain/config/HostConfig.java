@@ -10,6 +10,7 @@ import lombok.Getter;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Value;
 
+import java.util.Optional;
 import java.util.logging.Level;
 
 import static com.limechain.chain.Chain.WESTEND;
@@ -55,17 +56,15 @@ public class HostConfig {
         this.dbRecreate = cliArguments.dbRecreate();
 
         String network = cliArguments.network();
-        Chain chain = network.isEmpty() ? WESTEND : fromString(network);
-        if (chain == null) {
-            throw new InvalidChainException(String.format("\"%s\" is not a valid chain.", network));
-        }
-        this.chain = chain;
+        this.chain = Optional
+            .ofNullable(network.isEmpty() ? WESTEND : fromString(network))
+            .orElseThrow(() -> new InvalidChainException(String.format("\"%s\" is not a valid chain.", network)));
 
-        NodeRole nodeRole = NodeRole.fromString(cliArguments.nodeRole());
-        if (nodeRole == null) {
-            throw new InvalidNodeRoleException(String.format("\"%s\" is not a valid node role.", cliArguments.nodeRole()));
-        }
-        this.nodeRole = nodeRole;
+        this.nodeRole = Optional
+            .ofNullable(NodeRole.fromString(cliArguments.nodeRole()))
+            .orElseThrow(() ->
+                new InvalidNodeRoleException(
+                    String.format("\"%s\" is not a valid node role.", cliArguments.nodeRole())));
 
         this.rpcNodeAddress = switch (chain) {
             case POLKADOT, LOCAL -> RpcConstants.POLKADOT_WS_RPC;
