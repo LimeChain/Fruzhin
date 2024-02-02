@@ -56,7 +56,7 @@ public class FullNode implements HostNode {
 
             TrieStructure<NodeData> trie = TrieStructureFactory.buildFromKVPs(genesisStorage.getTop(), stateVersion);
             List<InsertTrieNode> dbSerializedTrieNodes = new InsertTrieBuilder(trie).build();
-            insertStorage(db, dbSerializedTrieNodes, InsertTrieBuilder.STATE_VERSION); //Todo: calculate state version
+            insertStorage(db, dbSerializedTrieNodes, stateVersion); //Todo: calculate state version
         }
 
         // Start network
@@ -96,14 +96,14 @@ public class FullNode implements HostNode {
      *
      * @param db              The key-value repository where trie nodes are to be stored.
      * @param insertTrieNodes The list of trie nodes to be inserted.
-     * @param entriesVersion  The version number of the trie entries.
+     * @param stateVersion  The version number of the trie entries.
      */
     private void insertStorage(KVRepository<String, Object> db, List<InsertTrieNode> insertTrieNodes,
-                               int entriesVersion) {
+                               StateVersion stateVersion) {
         try {
             for (InsertTrieNode trieNode : insertTrieNodes) {
                 insertTrieNode(db, trieNode);
-                insertTrieNodeStorage(db, trieNode, entriesVersion);
+                insertTrieNodeStorage(db, trieNode, stateVersion);
                 insertChildren(db, trieNode);
             }
 
@@ -126,12 +126,12 @@ public class FullNode implements HostNode {
         db.save(key, value);
     }
 
-    private void insertTrieNodeStorage(KVRepository<String, Object> db, InsertTrieNode trieNode, int version) {
+    private void insertTrieNodeStorage(KVRepository<String, Object> db, InsertTrieNode trieNode, StateVersion stateVersion) {
         String key = TRIE_NODE_STORAGE_PREFIX + new String(trieNode.merkleValue());
         TrieNodeData storageValue = new TrieNodeData(
                 trieNode.isReferenceValue() ? null : trieNode.storageValue(),
                 trieNode.isReferenceValue() ? trieNode.storageValue() : null,
-                (byte) version);
+                (byte) stateVersion.asInt());
 
         db.save(key, storageValue);
     }

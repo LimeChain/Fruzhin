@@ -9,9 +9,6 @@ import com.limechain.trie.structure.node.InsertTrieNode;
 import java.util.List;
 
 public class InsertTrieBuilder {
-    //TODO: Figure out where we'll fetch this state version from
-    public static final int STATE_VERSION = 0;
-
     private final TrieStructure<NodeData> trieStructure;
 
     public InsertTrieBuilder(TrieStructure<NodeData> trieStructure) {
