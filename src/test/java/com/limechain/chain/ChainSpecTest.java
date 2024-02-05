@@ -1,8 +1,11 @@
 package com.limechain.chain;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.protobuf.ByteString;
 import com.limechain.chain.spec.ChainSpec;
 import com.limechain.chain.spec.ChainType;
+import com.limechain.chain.spec.PropertyValue;
 import com.limechain.chain.spec.TelemetryEndpoint;
 import com.limechain.utils.StringUtils;
 import lombok.extern.java.Log;
@@ -84,11 +87,13 @@ class ChainSpecTest {
             Map expectedChildrenDefault = new LinkedHashMap();
             assertEquals(expectedChildrenDefault, actualChildrenDefault);
 
-            Map actualProperties = chainSpec.getProperties();
-            Map expectedProperties = new LinkedHashMap();
-            expectedProperties.put("ss58Format", 0);
-            expectedProperties.put("tokenDecimals", 10);
-            expectedProperties.put("tokenSymbol", "DOT");
+            Map<String, PropertyValue> actualProperties = chainSpec.getProperties();
+
+            ObjectMapper mapper = new ObjectMapper();
+            Map<String, JsonNode> expectedProperties = new LinkedHashMap<>();
+            expectedProperties.put("ss58Format", mapper.valueToTree(0));
+            expectedProperties.put("tokenDecimals", mapper.valueToTree(10));
+            expectedProperties.put("tokenSymbol", mapper.valueToTree("DOT"));
 
             assertEquals(expectedProperties, actualProperties);
         } catch (IOException e) {

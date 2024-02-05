@@ -21,7 +21,7 @@ public class ChainSpec implements Serializable {
     private TelemetryEndpoint[] telemetryEndpoints;
     private String protocolId;
     private Genesis genesis;
-    private Map<String, Object> properties;
+    private Map<String, PropertyValue> properties;
     private String[] forkBlocks;
     private String[] badBlocks;
     private String consensusEngine;

@@ -2,6 +2,7 @@ package com.limechain.rpc.methods.system;
 
 import com.googlecode.jsonrpc4j.JsonRpcMethod;
 import com.limechain.chain.spec.ChainType;
+import com.limechain.chain.spec.PropertyValue;
 
 import java.util.List;
 import java.util.Map;
@@ -24,9 +25,8 @@ public interface SystemRPC {
     @JsonRpcMethod("system_chainType")
     ChainType systemChainType();
 
-    //TODO: Change return type to be specific class
     @JsonRpcMethod("system_properties")
-    Map<String, Object> systemProperties();
+    Map<String, PropertyValue> systemProperties();
 
     @JsonRpcMethod("system_nodeRoles")
     String[] systemNodeRoles();
