@@ -14,7 +14,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class StateRootHashesIntegrationTest {
 
-    // TODO: Refactor these hardcoded paths after we refactor to extract a logical ChainSpec module
     private static final Map<String, String> chainSpecToRootHash = Map.of(
         "genesis/polkadot.json", "29d0d972cd27cbc511e9589fcb7a4506d5eb6a9e8df205f00472e5ab354a4e17",
         "genesis/ksmcc3.json", "b0006203c3a6e6bd2c6a17b1d4ae8ca49a31da0f4579da950b127774b44aef6b",
