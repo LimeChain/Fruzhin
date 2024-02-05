@@ -3,12 +3,12 @@ package com.limechain.chain;
 import com.google.protobuf.ByteString;
 import com.limechain.chain.spec.ChainSpec;
 import com.limechain.chain.spec.ChainType;
+import com.limechain.chain.spec.TelemetryEndpoint;
 import com.limechain.utils.StringUtils;
 import lombok.extern.java.Log;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Function;
@@ -59,12 +59,11 @@ class ChainSpecTest {
                     "/dns/cc1-1.parity.tech/tcp/30333/p2p/12D3KooWFN2mhgpkJsDBuNuE5427AcDrsib8EoqGMZmkxWwx3Md4"};
             assertArrayEquals(expectedBootNodes, actualBootNodes);
 
-            Object[] actualTelemetryEndpoints = chainSpec.getTelemetryEndpoints();
-            ArrayList<Object> expectedTelemetryEndpoints = new ArrayList<>();
-            expectedTelemetryEndpoints.add("wss://telemetry.polkadot.io/submit/");
-            expectedTelemetryEndpoints.add(
-                    Integer.valueOf(0));
-            assertEquals(expectedTelemetryEndpoints, actualTelemetryEndpoints[0]);
+            TelemetryEndpoint[] actualTelemetryEndpoints = chainSpec.getTelemetryEndpoints();
+            TelemetryEndpoint[] expectedTelemetryEndpoints = new TelemetryEndpoint[] {
+                new TelemetryEndpoint("wss://telemetry.polkadot.io/submit/", 0)
+            };
+            assertArrayEquals(expectedTelemetryEndpoints, actualTelemetryEndpoints);
 
             Map<ByteString, ByteString> actualTopValue = chainSpec.getGenesis().getTop();
             Map<String, String> expectedRawTopValue = new LinkedHashMap();

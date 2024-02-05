@@ -1,6 +1,5 @@
 package com.limechain.chain.spec;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
@@ -14,13 +13,12 @@ import java.util.Map;
  * Contains the chain spec data, deserialized and parsed in-memory into appropriate structures
  */
 @Getter
-@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ChainSpec implements Serializable {
     private String name;
     private String id;
     private ChainType chainType;
     private String[] bootNodes;
-    private Object[] telemetryEndpoints;
+    private TelemetryEndpoint[] telemetryEndpoints;
     private String protocolId;
     private Genesis genesis;
     private Map<String, Object> properties;
