@@ -19,7 +19,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Map;
 
-// TODO: Consider splitting the two steps (building the trie + calculating the merkle values) as part of the public API
 @UtilityClass
 public class TrieStructureFactory {
 
