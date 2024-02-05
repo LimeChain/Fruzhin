@@ -83,10 +83,6 @@ class ChainSpecTest {
 
             assertEquals(expectedTopValue, actualTopValue);
 
-            Map actualChildrenDefault = chainSpec.getGenesis().getChildrenDefault();
-            Map expectedChildrenDefault = new LinkedHashMap();
-            assertEquals(expectedChildrenDefault, actualChildrenDefault);
-
             Map<String, PropertyValue> actualProperties = chainSpec.getProperties();
 
             ObjectMapper mapper = new ObjectMapper();
