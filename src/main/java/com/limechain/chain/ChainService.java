@@ -59,7 +59,7 @@ public class ChainService {
                 log.log(Level.INFO, "✅️Loaded chain spec from JSON");
 
                 repository.save(DBConstants.GENESIS_KEY, this.chainSpec);
-                log.log(Level.FINE, "Saved chain spec to database");
+                log.log(Level.INFO, "Saved chain spec to database");
             } catch (IOException e) {
                 throw new ChainServiceInitializationException(e);
             }
