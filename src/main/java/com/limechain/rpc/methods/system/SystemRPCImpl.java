@@ -1,6 +1,7 @@
 package com.limechain.rpc.methods.system;
 
 import com.limechain.chain.ChainService;
+import com.limechain.chain.spec.ChainType;
 import com.limechain.config.SystemInfo;
 import com.limechain.exception.ExecutionFailedException;
 import com.limechain.exception.PeerNotFoundException;
@@ -64,7 +65,7 @@ public class SystemRPCImpl {
     /**
      * Get the chain's type.
      */
-    public String systemChainType() {
+    public ChainType systemChainType() {
         return this.chainService.getChainSpec().getChainType();
     }
 

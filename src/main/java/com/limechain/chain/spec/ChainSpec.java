@@ -18,7 +18,7 @@ import java.util.Map;
 public class ChainSpec implements Serializable {
     private String name;
     private String id;
-    private String chainType;
+    private ChainType chainType;
     private String[] bootNodes;
     private Object[] telemetryEndpoints;
     private String protocolId;

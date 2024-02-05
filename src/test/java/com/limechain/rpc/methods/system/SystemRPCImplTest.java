@@ -2,6 +2,7 @@ package com.limechain.rpc.methods.system;
 
 import com.limechain.chain.ChainService;
 import com.limechain.chain.spec.ChainSpec;
+import com.limechain.chain.spec.ChainType;
 import com.limechain.config.SystemInfo;
 import com.limechain.network.Network;
 import com.limechain.sync.warpsync.WarpSyncMachine;
@@ -66,10 +67,10 @@ class SystemRPCImplTest {
     @Test
     void systemChainType() {
         ChainSpec chainSpec = mock(ChainSpec.class);
-        when(chainSpec.getChainType()).thenReturn("Polkadot - Live");
+        when(chainSpec.getChainType()).thenReturn(ChainType.LIVE);
         when(chainService.getChainSpec()).thenReturn(chainSpec);
 
-        assertEquals("Polkadot - Live", systemRPC.systemChainType());
+        assertEquals(ChainType.LIVE, systemRPC.systemChainType());
     }
 
 }

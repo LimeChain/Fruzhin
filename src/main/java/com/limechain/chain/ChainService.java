@@ -1,6 +1,7 @@
 package com.limechain.chain;
 
 import com.limechain.chain.spec.ChainSpec;
+import com.limechain.chain.spec.ChainType;
 import com.limechain.config.HostConfig;
 import com.limechain.exception.ChainServiceInitializationException;
 import com.limechain.storage.DBConstants;
@@ -66,10 +67,9 @@ public class ChainService {
     }
 
     public boolean isChainLive() {
-        // TODO: Maybe introduce a ChainType enum...?
-        String chainType = this.chainSpec.getChainType();
+        ChainType chainType = this.chainSpec.getChainType();
         if (chainType != null) {
-            return chainType.equals("Live");
+            return chainType == ChainType.LIVE;
         }
         return !isLocalChain;
     }

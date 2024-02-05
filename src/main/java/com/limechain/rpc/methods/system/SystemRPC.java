@@ -1,6 +1,7 @@
 package com.limechain.rpc.methods.system;
 
 import com.googlecode.jsonrpc4j.JsonRpcMethod;
+import com.limechain.chain.spec.ChainType;
 
 import java.util.List;
 import java.util.Map;
@@ -21,7 +22,7 @@ public interface SystemRPC {
     String systemChain();
 
     @JsonRpcMethod("system_chainType")
-    String systemChainType();
+    ChainType systemChainType();
 
     //TODO: Change return type to be specific class
     @JsonRpcMethod("system_properties")

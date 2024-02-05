@@ -2,6 +2,7 @@ package com.limechain.chain;
 
 import com.google.protobuf.ByteString;
 import com.limechain.chain.spec.ChainSpec;
+import com.limechain.chain.spec.ChainType;
 import com.limechain.utils.StringUtils;
 import lombok.extern.java.Log;
 import org.junit.jupiter.api.Test;
@@ -35,8 +36,8 @@ class ChainSpecTest {
             String expectedId = "polkadot";
             assertEquals(expectedId, actualId);
 
-            String actualChainType = chainSpec.getChainType();
-            String expectedChainType = "Live";
+            ChainType actualChainType = chainSpec.getChainType();
+            ChainType expectedChainType = ChainType.LIVE;
             assertEquals(expectedChainType, actualChainType);
 
             String actualProtocolId = chainSpec.getProtocolId();
