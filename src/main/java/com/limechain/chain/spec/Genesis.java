@@ -15,6 +15,9 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+/**
+ * Contains the parsed genesis (main and child storage data) from the chain spec.
+ */
 @Getter
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Genesis implements Serializable {
