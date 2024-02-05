@@ -1,27 +1,47 @@
 package com.limechain.chain.spec;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.Map;
+
 /**
- * Serves as a wrapper around the raw chain spec data, deserialized from JSON,
- * parsing parts of it for easier in-memory access to the spec
+ * Contains the chain spec data, deserialized and parsed in-memory into appropriate structures
  */
 @Getter
-public class ChainSpec {
-    // we store the raw chain spec in order to still access it, since this class hasn't got its full API yet
-    // (extend as needed, WIP)
-    // "raw" meaning as-is deserialized from the json file
-    // TODO: Maybe think of a better name...? To not be confused with genesis storage's "raw" field?
-    private final RawChainSpec rawChainSpec;
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class ChainSpec implements Serializable {
+    private String name;
+    private String id;
+    private String chainType;
+    private String[] bootNodes;
+    private Object[] telemetryEndpoints;
+    private String protocolId;
+    private Genesis genesis;
+    private Map<String, Object> properties;
+    private String[] forkBlocks;
+    private String[] badBlocks;
+    private String consensusEngine;
+    private Map<String, String> lightSyncState;
 
-    private final Genesis genesis;
+    /**
+     * Loads chain specification data from json file and maps its fields
+     *
+     * @param pathToChainSpecJSON path to the chain specification json file
+     * @return class instance mapped to the json file
+     * @throws IOException If path is invalid
+     */
+    public static ChainSpec newFromJSON(String pathToChainSpecJSON) throws IOException {
+        final boolean failOnUnknownProperties = false;
+        ObjectMapper objectMapper = new ObjectMapper()
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, failOnUnknownProperties);
+        var file = new File(pathToChainSpecJSON);
 
-    private ChainSpec(RawChainSpec rawChainSpec) {
-        this.rawChainSpec = rawChainSpec;
-        this.genesis = new Genesis(rawChainSpec);
-    }
-
-    public static ChainSpec fromRaw(RawChainSpec rawChainSpec) {
-        return new ChainSpec(rawChainSpec);
+        return objectMapper.readValue(file, ChainSpec.class);
     }
 }

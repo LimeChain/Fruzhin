@@ -58,21 +58,21 @@ public class SystemRPCImpl {
      * Get the chain's type. Given as a string identifier.
      */
     public String systemChain() {
-        return this.chainService.getChainSpec().getRawChainSpec().getName();
+        return this.chainService.getChainSpec().getName();
     }
 
     /**
      * Get the chain's type.
      */
     public String systemChainType() {
-        return this.chainService.getChainSpec().getRawChainSpec().getChainType();
+        return this.chainService.getChainSpec().getChainType();
     }
 
     /**
      * Get a custom set of properties as a JSON object, defined in the chain specification.
      */
     public Map<String, Object> systemProperties() {
-        return this.chainService.getChainSpec().getRawChainSpec().getProperties();
+        return this.chainService.getChainSpec().getProperties();
     }
 
     /**

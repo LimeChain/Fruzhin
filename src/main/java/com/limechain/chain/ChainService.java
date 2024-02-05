@@ -1,7 +1,6 @@
 package com.limechain.chain;
 
 import com.limechain.chain.spec.ChainSpec;
-import com.limechain.chain.spec.RawChainSpec;
 import com.limechain.config.HostConfig;
 import com.limechain.exception.ChainServiceInitializationException;
 import com.limechain.storage.DBConstants;
@@ -50,28 +49,25 @@ public class ChainService {
         // TODO: Think about extracting this initialization logic outside this constructor
         Optional<Object> cachedChainSpec = repository.find(DBConstants.GENESIS_KEY);
 
-        RawChainSpec rawChainSpec;
         if (cachedChainSpec.isPresent() && !isLocalChain) {
-            rawChainSpec = (RawChainSpec) cachedChainSpec.get();
+            this.chainSpec = (ChainSpec) cachedChainSpec.get();
             log.log(Level.INFO, "✅️Loaded chain spec from DB");
         } else {
             try {
-                rawChainSpec = RawChainSpec.newFromJSON(hostConfig.getGenesisPath());
+                this.chainSpec = ChainSpec.newFromJSON(hostConfig.getGenesisPath());
                 log.log(Level.INFO, "✅️Loaded chain spec from JSON");
 
-                repository.save(DBConstants.GENESIS_KEY, rawChainSpec);
+                repository.save(DBConstants.GENESIS_KEY, this.chainSpec);
                 log.log(Level.FINE, "Saved chain spec to database");
             } catch (IOException e) {
                 throw new ChainServiceInitializationException(e);
             }
         }
-
-        this.chainSpec = ChainSpec.fromRaw(rawChainSpec);
     }
 
     public boolean isChainLive() {
         // TODO: Maybe introduce a ChainType enum...?
-        String chainType = this.chainSpec.getRawChainSpec().getChainType();
+        String chainType = this.chainSpec.getChainType();
         if (chainType != null) {
             return chainType.equals("Live");
         }

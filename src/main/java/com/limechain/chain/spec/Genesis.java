@@ -1,46 +1,51 @@
 package com.limechain.chain.spec;
 
+import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import com.google.protobuf.ByteString;
 import com.limechain.utils.StringUtils;
+import lombok.Getter;
+import org.apache.tomcat.util.buf.HexUtils;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
-public class Genesis {
-    private final Map<ByteString, ByteString> top;
-    // NOTE:
-    //  Whenever we want to add child storage support, it's going to be here
-    //  maybe something like... private Map<ByteString, ...?> childrenDefault;
+@Getter
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class Genesis implements Serializable {
+    private Map<ByteString, ByteString> top;
 
-    Genesis(RawChainSpec rawChainSpec) {
-        Map<ByteString, ByteString> parsedTopStorage = new HashMap<>();
+    // NOTE: Figure out appropriate types when necessary, intentionally unused for now
+    private Map<String, String> childrenDefault;
 
+    @JsonGetter("top")
+    private Map<String, String> jsonGetTop() {
+        Function<ByteString, String> serializer =
+            bs -> "0x" + HexUtils.toHexString(bs.toByteArray());
+
+        return this.top.entrySet().stream().collect(Collectors.toMap(
+            e -> serializer.apply(e.getKey()),
+            e -> serializer.apply(e.getValue())
+        ));
+    }
+
+    @JsonSetter("top")
+    private void jsonSetTop(Map<String, String> deserializedTop) {
         Function<String, ByteString> parser =
-            rawPrefixedHex ->
-                ByteString.fromHex(StringUtils.remove0xPrefix(rawPrefixedHex));
+            hex -> ByteString.fromHex(StringUtils.remove0xPrefix(hex));
 
-        Map<String, String> rawTop = rawChainSpec.getGenesis().getRaw().get("top");
-        for (Map.Entry<String, String> e : rawTop.entrySet()) {
-            parsedTopStorage.put(
-                parser.apply(e.getKey()),
-                parser.apply(e.getValue())
-            );
-        }
-
-        this.top = parsedTopStorage;
+        this.top = deserializedTop.entrySet().stream().collect(Collectors.toMap(
+            e -> parser.apply(e.getKey()),
+            e -> parser.apply(e.getValue())
+        ));
     }
 
     public Map<ByteString, ByteString> getTop() {
         return Collections.unmodifiableMap(this.top);
-    }
-
-    public ByteString getTopValue(ByteString key) {
-        return this.top.get(key);
-    }
-
-    public ByteString getTopValue(byte[] key) {
-        return getTopValue(ByteString.copyFrom(key));
     }
 }

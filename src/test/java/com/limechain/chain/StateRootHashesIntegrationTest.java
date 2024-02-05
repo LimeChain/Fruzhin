@@ -1,7 +1,6 @@
 package com.limechain.chain;
 
 import com.limechain.chain.spec.ChainSpec;
-import com.limechain.chain.spec.RawChainSpec;
 import com.limechain.runtime.StateVersion;
 import com.limechain.trie.TrieStructureFactory;
 import org.apache.tomcat.util.buf.HexUtils;
@@ -28,8 +27,7 @@ class StateRootHashesIntegrationTest {
             String chainSpecPath = entry.getKey();
             String expectedRootHash = entry.getValue();
 
-            RawChainSpec rawChainSpec = RawChainSpec.newFromJSON(chainSpecPath);
-            ChainSpec chainSpec = ChainSpec.fromRaw(rawChainSpec);
+            ChainSpec chainSpec = ChainSpec.newFromJSON(chainSpecPath);
             var top = chainSpec.getGenesis().getTop();
 
             var trie = TrieStructureFactory.buildFromKVPs(top, StateVersion.V0);
