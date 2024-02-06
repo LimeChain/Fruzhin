@@ -69,12 +69,12 @@ public class CommonConfig {
     }
 
     @Bean
-    public WarpSyncMachine sync(Network network, ChainService chainService) {
+    public WarpSyncMachine warpSyncMachine(Network network, ChainService chainService) {
         return new WarpSyncMachine(network, chainService);
     }
 
     @Bean
-    public FullSyncMachine sync(Network network) {
+    public FullSyncMachine fullSyncMachine(Network network) {
         return new FullSyncMachine(network);
     }
 

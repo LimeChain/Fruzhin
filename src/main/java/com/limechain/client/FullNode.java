@@ -3,13 +3,18 @@ package com.limechain.client;
 import com.google.common.primitives.Bytes;
 import com.limechain.chain.ChainService;
 import com.limechain.cli.CliArguments;
+import com.limechain.chain.spec.Genesis;
 import com.limechain.network.Network;
 import com.limechain.rpc.server.AppBean;
+import com.limechain.runtime.StateVersion;
 import com.limechain.storage.KVRepository;
 import com.limechain.storage.block.BlockStateHelper;
 import com.limechain.sync.fullsync.FullSyncMachine;
 import com.limechain.sync.warpsync.WarpSyncMachine;
+import com.limechain.trie.TrieStructureFactory;
+import com.limechain.trie.structure.TrieStructure;
 import com.limechain.trie.structure.database.InsertTrieBuilder;
+import com.limechain.trie.structure.database.NodeData;
 import com.limechain.trie.structure.database.TrieBuildException;
 import com.limechain.trie.structure.nibble.Nibble;
 import com.limechain.trie.structure.node.InsertTrieNode;
@@ -20,7 +25,6 @@ import lombok.extern.java.Log;
 
 import java.math.BigInteger;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 
 @Log
@@ -39,17 +43,20 @@ public class FullNode implements HostNode {
     public void start() {
         //Initialize state
 
-        // TODO: Is there a better way to do this?
+        // TODO: Is there a better way to decide whether we've got any database written?
         var db = AppBean.getBean(KVRepository.class); //presume this works
         // if: database exists and has some persisted storage
         if (db != null && db.find(new BlockStateHelper().headerHashKey(BigInteger.ZERO)).isPresent()) {
             // do nothing?
         } else {
-            List<InsertTrieNode> trie = new InsertTrieBuilder()
-                    .initializeTrieStructure(loadGenesisStorage())
-                    .build();
+            Genesis genesisStorage = loadGenesisStorage();
 
-            insertStorage(db, trie, InsertTrieBuilder.STATE_VERSION); //Todo: calculate state version
+            // TODO: Next up, manage to fetch the runtime version
+            StateVersion stateVersion = StateVersion.V0;
+
+            TrieStructure<NodeData> trie = TrieStructureFactory.buildFromKVPs(genesisStorage.getTop(), stateVersion);
+            List<InsertTrieNode> dbSerializedTrieNodes = new InsertTrieBuilder(trie).build();
+            insertStorage(db, dbSerializedTrieNodes, stateVersion); //Todo: calculate state version
         }
 
         // Start network
@@ -80,9 +87,8 @@ public class FullNode implements HostNode {
         }
     }
 
-    private Map<String, String> loadGenesisStorage() {
-        var genesisStorageRaw = AppBean.getBean(ChainService.class).getGenesis().getGenesis().getRaw();
-        return genesisStorageRaw.get("top");
+    private static Genesis loadGenesisStorage() {
+        return AppBean.getBean(ChainService.class).getChainSpec().getGenesis();
     }
 
     /**
@@ -90,14 +96,14 @@ public class FullNode implements HostNode {
      *
      * @param db              The key-value repository where trie nodes are to be stored.
      * @param insertTrieNodes The list of trie nodes to be inserted.
-     * @param entriesVersion  The version number of the trie entries.
+     * @param stateVersion  The version number of the trie entries.
      */
     private void insertStorage(KVRepository<String, Object> db, List<InsertTrieNode> insertTrieNodes,
-                               int entriesVersion) {
+                               StateVersion stateVersion) {
         try {
             for (InsertTrieNode trieNode : insertTrieNodes) {
                 insertTrieNode(db, trieNode);
-                insertTrieNodeStorage(db, trieNode, entriesVersion);
+                insertTrieNodeStorage(db, trieNode, stateVersion);
                 insertChildren(db, trieNode);
             }
 
@@ -120,12 +126,12 @@ public class FullNode implements HostNode {
         db.save(key, value);
     }
 
-    private void insertTrieNodeStorage(KVRepository<String, Object> db, InsertTrieNode trieNode, int version) {
+    private void insertTrieNodeStorage(KVRepository<String, Object> db, InsertTrieNode trieNode, StateVersion stateVersion) {
         String key = TRIE_NODE_STORAGE_PREFIX + new String(trieNode.merkleValue());
         TrieNodeData storageValue = new TrieNodeData(
                 trieNode.isReferenceValue() ? null : trieNode.storageValue(),
                 trieNode.isReferenceValue() ? trieNode.storageValue() : null,
-                (byte) version);
+                (byte) stateVersion.asInt());
 
         db.save(key, storageValue);
     }

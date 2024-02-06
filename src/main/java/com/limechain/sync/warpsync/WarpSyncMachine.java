@@ -74,10 +74,10 @@ public class WarpSyncMachine {
         if (stateLoaded) {
             initStateHash = this.syncedState.getLastFinalizedBlockHash();
             new BlockState(getSyncedState().getRepository(), genesisBlockHash.getGenesisBlockHeader());
-        } else if (this.chainService.getGenesis().getLightSyncState() != null) {
+        } else if (this.chainService.getChainSpec().getLightSyncState() != null) {
             new BlockState(getSyncedState().getRepository(), genesisBlockHash.getGenesisBlockHeader());
 
-            LightSyncState initState = LightSyncState.decode(this.chainService.getGenesis().getLightSyncState());
+            LightSyncState initState = LightSyncState.decode(this.chainService.getChainSpec().getLightSyncState());
             initStateHash = initState.getFinalizedBlockHeader().getParentHash();
             this.syncedState.setAuthoritySet(initState.getGrandpaAuthoritySet().getCurrentAuthorities());
             this.syncedState.setSetId(initState.getGrandpaAuthoritySet().getSetId());

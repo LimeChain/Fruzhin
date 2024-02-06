@@ -2,7 +2,9 @@ package com.limechain.rpc.methods;
 
 import com.googlecode.jsonrpc4j.JsonRpcMethod;
 import com.googlecode.jsonrpc4j.spring.AutoJsonRpcServiceImpl;
-import com.limechain.chain.ChainSpec;
+import com.limechain.chain.spec.ChainSpec;
+import com.limechain.chain.spec.ChainType;
+import com.limechain.chain.spec.PropertyValue;
 import com.limechain.rpc.methods.sync.SyncRPCImpl;
 import com.limechain.rpc.methods.system.SystemRPC;
 import com.limechain.rpc.methods.system.SystemRPCImpl;
@@ -51,12 +53,12 @@ public class RPCMethodsImpl implements RPCMethods {
     }
 
     @Override
-    public String systemChainType() {
+    public ChainType systemChainType() {
         return systemRPC.systemChainType();
     }
 
     @Override
-    public Map<String, Object> systemProperties() {
+    public Map<String, PropertyValue> systemProperties() {
         return systemRPC.systemProperties();
     }
 

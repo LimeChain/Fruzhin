@@ -1,11 +1,12 @@
 package com.limechain.chain;
 
+import com.limechain.chain.spec.ChainSpec;
+import com.limechain.chain.spec.ChainType;
 import com.limechain.config.HostConfig;
 import com.limechain.exception.ChainServiceInitializationException;
 import com.limechain.storage.DBConstants;
 import com.limechain.storage.KVRepository;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.java.Log;
 
 import java.io.IOException;
@@ -16,7 +17,6 @@ import java.util.logging.Level;
  * Service used to read/write chain spec(genesis) info to/from the DB
  */
 @Getter
-@Setter
 @Log
 public class ChainService {
     /**
@@ -27,20 +27,17 @@ public class ChainService {
     /**
      * Instance that holds the chain spec info
      */
-    private ChainSpec genesis;
+    private final ChainSpec chainSpec;
 
     /**
      * Whether the chain setup is in local development mode
      */
-    private boolean isLocalChain;
+    private final boolean isLocalChain;
 
     public ChainService(HostConfig hostConfig, KVRepository<String, Object> repository) {
         this.repository = repository;
-        initialize(hostConfig);
-    }
+        this.isLocalChain = hostConfig.getChain() == Chain.LOCAL;
 
-    protected void initialize(HostConfig hostConfig) {
-        Optional<Object> chainSpec = repository.find(DBConstants.GENESIS_KEY);
         /*
             WORKAROUND
             The inLocalDevelopment variable and its usage below are only to aid in development.
@@ -50,29 +47,29 @@ public class ChainService {
             Saving the local genesis file is not suitable in this early phase of development.
             This might be removed in the future.
          */
-        isLocalChain = hostConfig.getChain() == Chain.LOCAL;
-        if (chainSpec.isPresent() && !isLocalChain) {
-            this.setGenesis((ChainSpec) chainSpec.get());
+        // TODO: Think about extracting this initialization logic outside this constructor
+        Optional<Object> cachedChainSpec = repository.find(DBConstants.GENESIS_KEY);
+
+        if (cachedChainSpec.isPresent() && !isLocalChain) {
+            this.chainSpec = (ChainSpec) cachedChainSpec.get();
             log.log(Level.INFO, "✅️Loaded chain spec from DB");
-            return;
+        } else {
+            try {
+                this.chainSpec = ChainSpec.newFromJSON(hostConfig.getGenesisPath());
+                log.log(Level.INFO, "✅️Loaded chain spec from JSON");
+
+                repository.save(DBConstants.GENESIS_KEY, this.chainSpec);
+                log.log(Level.INFO, "Saved chain spec to database");
+            } catch (IOException e) {
+                throw new ChainServiceInitializationException(e);
+            }
         }
-
-        try {
-            this.setGenesis(ChainSpec.newFromJSON(hostConfig.getGenesisPath()));
-            log.log(Level.INFO, "✅️Loaded chain spec from JSON");
-
-            repository.save(DBConstants.GENESIS_KEY, this.getGenesis());
-            log.log(Level.FINE, "Saved chain spec to database");
-        } catch (IOException e) {
-            throw new ChainServiceInitializationException(e);
-        }
-
     }
 
     public boolean isChainLive() {
-        String chainType = this.getGenesis().getChainType();
+        ChainType chainType = this.chainSpec.getChainType();
         if (chainType != null) {
-            return chainType.equals("Live");
+            return chainType == ChainType.LIVE;
         }
         return !isLocalChain;
     }

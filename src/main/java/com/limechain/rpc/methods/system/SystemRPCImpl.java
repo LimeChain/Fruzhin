@@ -1,6 +1,8 @@
 package com.limechain.rpc.methods.system;
 
 import com.limechain.chain.ChainService;
+import com.limechain.chain.spec.ChainType;
+import com.limechain.chain.spec.PropertyValue;
 import com.limechain.config.SystemInfo;
 import com.limechain.exception.ExecutionFailedException;
 import com.limechain.exception.PeerNotFoundException;
@@ -58,21 +60,21 @@ public class SystemRPCImpl {
      * Get the chain's type. Given as a string identifier.
      */
     public String systemChain() {
-        return this.chainService.getGenesis().getName();
+        return this.chainService.getChainSpec().getName();
     }
 
     /**
      * Get the chain's type.
      */
-    public String systemChainType() {
-        return this.chainService.getGenesis().getChainType();
+    public ChainType systemChainType() {
+        return this.chainService.getChainSpec().getChainType();
     }
 
     /**
      * Get a custom set of properties as a JSON object, defined in the chain specification.
      */
-    public Map<String, Object> systemProperties() {
-        return this.chainService.getGenesis().getProperties();
+    public Map<String, PropertyValue> systemProperties() {
+        return this.chainService.getChainSpec().getProperties();
     }
 
     /**

@@ -15,7 +15,7 @@ public class RuntimeVersion {
     private BigInteger specVersion;
     private BigInteger implementationVersion;
     private BigInteger transactionVersion;
-    private BigInteger stateVersion;
+    private StateVersion stateVersion;
     private RuntimeApis runtimeApis;
 
     @Override
@@ -46,6 +46,6 @@ public class RuntimeVersion {
         }
 
         this.setTransactionVersion(BigInteger.valueOf(reader.readUint32()));
-        this.setStateVersion(BigInteger.valueOf(reader.readUByte()));
+        this.setStateVersion(StateVersion.fromInt(reader.readUByte()));
     }
 }

@@ -1,6 +1,7 @@
 package com.limechain.sync.warpsync.scale;
 
 import com.limechain.runtime.RuntimeVersion;
+import com.limechain.runtime.StateVersion;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleReader;
 
@@ -26,7 +27,7 @@ public class RuntimeVersionReader implements ScaleReader<RuntimeVersion> {
         }
 
         runtimeVersion.setTransactionVersion(BigInteger.valueOf(reader.readUint32()));
-        runtimeVersion.setStateVersion(BigInteger.valueOf(reader.readUByte()));
+        runtimeVersion.setStateVersion(StateVersion.fromInt(reader.readUByte()));
         return runtimeVersion;
     }
 }
