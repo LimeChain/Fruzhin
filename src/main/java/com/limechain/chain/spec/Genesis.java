@@ -22,8 +22,10 @@ import java.util.stream.Collectors;
 public class Genesis implements Serializable {
     private Map<ByteString, ByteString> top;
 
-    // NOTE: Figure out appropriate types when necessary, intentionally unused for now
-    private Map<String, String> childrenDefault;
+    // NOTE:
+    //  Here, a `childrenDefault` field would live too, but we don't support child storages yet
+    //  as very few chains have them in the genesis file.
+    //  Something like:  `private Map<ByteString, ...?> childrenDefault`
 
     @JsonGetter("top")
     private Map<String, String> jsonGetTop() {
