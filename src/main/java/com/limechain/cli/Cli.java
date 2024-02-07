@@ -31,6 +31,10 @@ public class Cli {
     private static final String NODE_MODE = "node-mode";
     private static final String NO_LEGACY_PROTOCOLS = "no-legacy-protocols";
     private static final String SYNC_MODE = "sync-mode";
+    public static final String LOCAL_RPC = "local-rpc";
+    public static final String PUBLIC_RPC = "public-rpc";
+    public static final String LOCAL_RPC_UNSAFE = "local-unsafe-rpc";
+    public static final String PUBLIC_RPC_UNSAFE = "public-unsafe-rpc";
 
     /**
      * Holds CLI options
@@ -73,8 +77,10 @@ public class Cli {
             String nodeMode = cmd.getOptionValue(NODE_MODE, NodeRole.FULL.toString());
             boolean noLgacyProtocols = cmd.hasOption(NO_LEGACY_PROTOCOLS);
             SyncMode syncMode = parseSyncMode(cmd);
+            boolean unsafeEnabled = cmd.hasOption(LOCAL_RPC_UNSAFE) || cmd.hasOption(PUBLIC_RPC_UNSAFE);
 
-            return new CliArguments(network, dbPath, dbRecreate, nodeKey, nodeMode, noLgacyProtocols, syncMode);
+            return new CliArguments(network, dbPath, dbRecreate, nodeKey, nodeMode, noLgacyProtocols, syncMode,
+                    unsafeEnabled);
         } catch (ParseException e) {
             formatter.printHelp("Specify the network name - " + String.join(", ", validChains), options);
             throw new CliArgsParseException("Failed to parse cli arguments", e);
@@ -98,6 +104,10 @@ public class Cli {
                 "Doesn't use legacy protocols if set");
         Option syncMode = new Option(null, SYNC_MODE, true,
                 "Sync mode (warp/full) - warp by default");
+        Option localRpc = new Option(null, LOCAL_RPC, false, "Bind RPC methods to local");
+        Option localRpcUnsafe = new Option(null, LOCAL_RPC_UNSAFE, false, "Bind unsafe RPC methods to local");
+        Option publicRpc = new Option(null, PUBLIC_RPC, false, "Bind RPC methods to public");
+        Option publicRpcUnsafe = new Option(null, PUBLIC_RPC_UNSAFE, false, "Bind unsafe RPC methods to public");
 
         networkOption.setRequired(false);
         dbPathOption.setRequired(false);
@@ -106,6 +116,10 @@ public class Cli {
         nodeMode.setRequired(false);
         noLegacyProtocols.setRequired(false);
         syncMode.setRequired(false);
+        localRpc.setRequired(false);
+        localRpcUnsafe.setRequired(false);
+        publicRpc.setRequired(false);
+        publicRpcUnsafe.setRequired(false);
 
         result.addOption(networkOption);
         result.addOption(dbPathOption);
@@ -114,6 +128,10 @@ public class Cli {
         result.addOption(nodeMode);
         result.addOption(noLegacyProtocols);
         result.addOption(syncMode);
+        result.addOption(localRpc);
+        result.addOption(localRpcUnsafe);
+        result.addOption(publicRpc);
+        result.addOption(publicRpcUnsafe);
         return result;
     }
 
