@@ -8,6 +8,7 @@ import com.limechain.config.HostConfig;
 import com.limechain.config.SystemInfo;
 import com.limechain.constants.GenesisBlockHash;
 import com.limechain.network.Network;
+import com.limechain.rpc.server.UnsafeInterceptor;
 import com.limechain.storage.DBInitializer;
 import com.limechain.storage.DBRepository;
 import com.limechain.storage.KVRepository;
@@ -19,6 +20,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
+import java.util.List;
+
 /**
  * Spring configuration class used to instantiate beans.
  */
@@ -28,6 +31,9 @@ public class CommonConfig {
     @Bean
     public static AutoJsonRpcServiceImplExporter autoJsonRpcServiceImplExporter() {
         AutoJsonRpcServiceImplExporter exp = new AutoJsonRpcServiceImplExporter();
+
+        exp.setInterceptorList(List.of(new UnsafeInterceptor()));
+
         // in here you can provide custom HTTP status code providers etc. eg:
         // exp.setHttpStatusCodeProvider();
         // exp.setErrorResolver();

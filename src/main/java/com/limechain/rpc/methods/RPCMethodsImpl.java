@@ -26,7 +26,7 @@ import java.util.Map;
 @AutoJsonRpcServiceImpl
 @AllArgsConstructor
 public class RPCMethodsImpl implements RPCMethods {
-    
+
     /**
      * References to system rpc method implementation classes
      */

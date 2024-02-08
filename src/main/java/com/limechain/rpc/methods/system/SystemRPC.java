@@ -3,6 +3,7 @@ package com.limechain.rpc.methods.system;
 import com.googlecode.jsonrpc4j.JsonRpcMethod;
 import com.limechain.chain.spec.ChainType;
 import com.limechain.chain.spec.PropertyValue;
+import com.limechain.rpc.config.Unsafe;
 
 import java.util.List;
 import java.util.Map;
@@ -43,9 +44,11 @@ public interface SystemRPC {
     @JsonRpcMethod("system_peers")
     List<Map<String, Object>> systemSystemPeers();
 
+    @Unsafe
     @JsonRpcMethod("system_addReservedPeer")
     void systemAddReservedPeer(String peerId);
 
+    @Unsafe
     @JsonRpcMethod("system_removeReservedPeer")
     void systemRemoveReservedPeer(String peerId);
 
