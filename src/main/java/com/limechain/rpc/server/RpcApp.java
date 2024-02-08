@@ -54,7 +54,7 @@ public class RpcApp {
      * @see com.limechain.rpc.config.CommonConfig#hostConfig(com.limechain.cli.CliArguments)
      */
     public void start(String[] cliArgs) {
-        if (Arrays.stream(cliArgs).anyMatch(arg -> arg.endsWith(Cli.LOCAL_RPC) || arg.endsWith(Cli.LOCAL_RPC_UNSAFE))) {
+        if (Arrays.stream(cliArgs).noneMatch(arg -> arg.endsWith(Cli.PUBLIC_RPC))) {
             app.setDefaultProperties(Map.of("server.address", SERVER_LOCAL_ADDR, "server.port", SERVER_PORT));
         }
         ConfigurableApplicationContext ctx = app.run(cliArgs);
