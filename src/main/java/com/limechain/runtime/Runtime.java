@@ -2,12 +2,16 @@ package com.limechain.runtime;
 
 import com.limechain.runtime.hostapi.HostApi;
 import com.limechain.runtime.hostapi.WasmExports;
+import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
+import com.limechain.runtime.version.RuntimeVersion;
 import lombok.Getter;
 import lombok.extern.java.Log;
+import org.jetbrains.annotations.Nullable;
 import org.wasmer.Instance;
 import org.wasmer.Memory;
 import org.wasmer.Module;
 
+import java.nio.ByteBuffer;
 import java.util.logging.Level;
 
 import static com.limechain.runtime.RuntimeBuilder.getImports;
@@ -26,23 +30,30 @@ public class Runtime {
         hostApi.updateAllocator();
     }
 
-    public Object[] callNoParams(String functionName) {
+    // TODO: Add adequate parameters to the runtime call
+    @Nullable
+    public byte[] call(String functionName) {
         log.log(Level.INFO, "Making a runtime call: " + functionName);
-        return instance.exports.getFunction(functionName).apply();
+        Object[] response = instance.exports
+            .getFunction(functionName)
+            .apply(0, 0);
+
+        if (response == null) {
+            return null;
+        }
+
+        RuntimePointerSize responsePtrSize = new RuntimePointerSize((long) response[0]);
+        return getDataFromMemory(responsePtrSize);
     }
 
-    public Object[] call(String functionName) {
-        log.log(Level.INFO, "Making a runtime call: " + functionName);
-        //TODO Call adequate params
-        return instance.exports.getFunction(functionName).apply(0, 0);
-    }
-
-    public void setVersion(RuntimeVersion runtimeVersion) {
+    /**
+     * This setter exists to be used only in the RuntimeBuilder, since the RuntimeVersion is essentially an attribute
+     * of the Runtime, thus modeled as its field. If we can't find it in a custom section directly from the binary
+     * though, we'll still need an instance of `Runtime` in order to obtain the version, and set it afterward via
+     * this setter.
+     */
+    void setVersion(RuntimeVersion runtimeVersion) {
         this.version = runtimeVersion;
-    }
-
-    public Memory getMemory() {
-        return instance.exports.getMemory(WasmExports.MEMORY.getValue());
     }
 
     public int getHeapBase() {
@@ -51,5 +62,25 @@ public class Runtime {
 
     public int getDataEnd() {
         return instance.exports.getGlobal(WasmExports.DATA_END.getValue()).getIntValue();
+    }
+
+    public Memory getMemory() {
+        return instance.exports.getMemory(WasmExports.MEMORY.getValue());
+    }
+
+    // TODO: Think about moving `writeDataToMemory` from `HostApi` into here, too...
+    //  for now, only the reading has been moved (as deemed necessary to be here)
+    /**
+     * Get the data stored in memory using a {@link  RuntimePointerSize}
+     *
+     * @param runtimePointerSize pointer to data and its size
+     * @return byte array with read data
+     */
+    public byte[] getDataFromMemory(RuntimePointerSize runtimePointerSize) {
+        ByteBuffer memoryBuffer = this.getMemory().buffer();
+        byte[] data = new byte[runtimePointerSize.size()];
+        memoryBuffer.position(runtimePointerSize.pointer());
+        memoryBuffer.get(data);
+        return data;
     }
 }

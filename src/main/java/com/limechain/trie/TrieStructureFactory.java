@@ -3,7 +3,7 @@ package com.limechain.trie;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Bytes;
 import com.google.protobuf.ByteString;
-import com.limechain.runtime.StateVersion;
+import com.limechain.runtime.version.StateVersion;
 import com.limechain.trie.structure.NodeHandle;
 import com.limechain.trie.structure.TrieNodeIndex;
 import com.limechain.trie.structure.TrieStructure;

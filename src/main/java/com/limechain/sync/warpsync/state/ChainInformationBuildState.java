@@ -1,13 +1,12 @@
 package com.limechain.sync.warpsync.state;
 
+import com.limechain.runtime.version.ApiVersion;
 import com.limechain.sync.warpsync.SyncedState;
 import com.limechain.sync.warpsync.WarpSyncMachine;
 import com.limechain.utils.HashUtils;
 import lombok.extern.java.Log;
 
 import java.util.logging.Level;
-
-import static com.limechain.runtime.RuntimeApis.API_VERSION_LENGTH;
 
 /**
  * Sets consensus protocol versions
@@ -25,16 +24,16 @@ public class ChainInformationBuildState implements WarpSyncState {
     @Override
     public void handle(WarpSyncMachine sync) {
         byte[][] hashedApiVersions = new byte[][]{
-                HashUtils.hashWithBlake2bToLength("AuraApi".getBytes(), API_VERSION_LENGTH),
-                HashUtils.hashWithBlake2bToLength("BabeApi".getBytes(), API_VERSION_LENGTH),
-                HashUtils.hashWithBlake2bToLength("GrandpaApi".getBytes(), API_VERSION_LENGTH)
+                HashUtils.hashWithBlake2bToLength("AuraApi".getBytes(), ApiVersion.NAME_HASH_LENGTH),
+                HashUtils.hashWithBlake2bToLength("BabeApi".getBytes(), ApiVersion.NAME_HASH_LENGTH),
+                HashUtils.hashWithBlake2bToLength("GrandpaApi".getBytes(), ApiVersion.NAME_HASH_LENGTH)
         };
         sync.getChainInformation().setRuntimeAuraVersion(
-                syncedState.getRuntime().getVersion().getRuntimeApis().getApiVersion(hashedApiVersions[0]));
+                syncedState.getRuntime().getVersion().getApis().getApiVersion(hashedApiVersions[0]));
         sync.getChainInformation().setRuntimeBabeVersion(
-                syncedState.getRuntime().getVersion().getRuntimeApis().getApiVersion(hashedApiVersions[1]));
+                syncedState.getRuntime().getVersion().getApis().getApiVersion(hashedApiVersions[1]));
         sync.getChainInformation().setRuntimeGrandpaVersion(
-                syncedState.getRuntime().getVersion().getRuntimeApis().getApiVersion(hashedApiVersions[2]));
+                syncedState.getRuntime().getVersion().getApis().getApiVersion(hashedApiVersions[2]));
         log.log(Level.INFO, "Aura Api version: " + sync.getChainInformation().getRuntimeAuraVersion()
                 + " Babe api version: " + sync.getChainInformation().getRuntimeBabeVersion() +
                 " Grandpa Api Version: " + sync.getChainInformation().getRuntimeGrandpaVersion());

@@ -108,17 +108,10 @@ public class MiscellaneousHostFunctions {
         byte[] versionOption;
 
         try {
+            // TODO: Refactor using RuntimeBuilder... when we're sure it works properly
             Module module = new Module(wasmBlob);
             Runtime runtime = new Runtime(module, RuntimeBuilder.DEFAULT_HEAP_PAGES);
-            Memory memory = runtime.getInstance().exports.getMemory("memory");
-            Object[] response = runtime.call("Core_version");
-
-            byte[] runtimeVersionData = null;
-            if (response != null && response[0] != null) {
-                final RuntimePointerSize responsePointer = new RuntimePointerSize((long) response[0]);
-                runtimeVersionData = new byte[responsePointer.size()];
-                memory.buffer().get(responsePointer.pointer(), runtimeVersionData, 0, responsePointer.size());
-            }
+            byte[] runtimeVersionData = runtime.call("Core_version");
             versionOption = scaleEncodedOption(runtimeVersionData);
         } catch (UnsatisfiedLinkError e) {
             log.log(Level.SEVERE, "Error loading wasm module: " + e.getMessage());

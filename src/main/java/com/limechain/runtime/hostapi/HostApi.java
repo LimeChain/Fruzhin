@@ -59,11 +59,7 @@ public class HostApi {
      * @return byte array with read data
      */
     public byte[] getDataFromMemory(RuntimePointerSize runtimePointerSize) {
-        ByteBuffer memoryBuffer = runtime.getMemory().buffer();
-        byte[] data = new byte[runtimePointerSize.size()];
-        memoryBuffer.position(runtimePointerSize.pointer());
-        memoryBuffer.get(data);
-        return data;
+        return runtime.getDataFromMemory(runtimePointerSize);
     }
 
     /**
