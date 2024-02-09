@@ -1,0 +1,1 @@
+- Add a regression end2end/integration test for `RuntimeBuilder` that actually verifies that [falling back to calling `Core_version`](https://github.com/LimeChain/Fruzhin/blob/428d8589b7cf2f429cdedb43243d68ba84f29ecb/src/main/java/com/limechain/runtime/RuntimeBuilder.java#L48) on a real runtime wasm blob fetches the correct `RuntimeVersion`
