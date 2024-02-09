@@ -23,4 +23,12 @@ public record WasmCustomSection(byte[] name, byte[] content) {
         result = 31 * result + Arrays.hashCode(content);
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "WasmCustomSection{" +
+               "name=" + Arrays.toString(name) +
+               ", content=" + Arrays.toString(content) +
+               '}';
+    }
 }
