@@ -12,7 +12,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.Objects;
 
-// TODO: [Testability concern] Maybe make this class non-static?
 @UtilityClass
 public class WasmSectionUtils {
     private static final byte[] RUNTIME_VERSION_SECTION_NAME = "runtime_version".getBytes();
