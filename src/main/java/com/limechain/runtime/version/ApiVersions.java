@@ -1,6 +1,7 @@
 package com.limechain.runtime.version;
 
 import com.limechain.runtime.version.scale.ApiVersionReader;
+import com.limechain.utils.scale.exceptions.ScaleDecodingException;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleReader;
 
@@ -25,17 +26,32 @@ public class ApiVersions {
         return new ApiVersions(Collections.unmodifiableList(apiVersions));
     }
 
+    /**
+     * Scale decodes the list of {@link ApiVersion} from the content of the wasm custom section.
+     * The list length is presumed to be missing.
+     * @param scaleEncoded the scale encoded list of api versions
+     * @return the decoded ApiVersions instance
+     * @implNote
+     *  for some reason, the "api_versions" wasm custom section's scale encoded content doesn't contain
+     *  the length of the list (i.e. number of api versions), so this method tries to decode the list
+     *  without knowing its size. In this sense, the term "scale encoded list" should be taken with this note -
+     *  its length is not present.
+     *  <br>
+     *  Source of this conclusion: <a href="https://github.com/smol-dot/smoldot/blob/21be5a1abaebeaf7270a744485b4551da8636fb1/lib/src/executor/host/runtime_version.rs#L297">Smoldot</a>
+     */
     public static ApiVersions decodeNoLength(byte[] scaleEncoded) {
         ScaleCodecReader reader = new ScaleCodecReader(scaleEncoded);
         ScaleReader<ApiVersion> apiVersionReader = new ApiVersionReader();
         List<ApiVersion> apiVersionsRaw = new LinkedList<>();
 
-        //TODO: Think about checking if the length is divisible by the fixed byte size of an encoded api version
+        //NOTE:
+        // Instead of relying on an exception, we could check whether the length of the input parameter
+        // is divisible by the fixed byte size of an encoded api version
         while (reader.hasNext()) {
             try {
                 apiVersionsRaw.add(reader.read(apiVersionReader));
             } catch (RuntimeException e) {
-                break; // Presume end of iteration (all is ok), although other exceptions are possible
+                throw new ScaleDecodingException("Unexpected length mismatch while decoding api versions.", e);
             }
         }
 
