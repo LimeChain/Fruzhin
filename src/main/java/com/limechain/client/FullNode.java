@@ -1,12 +1,14 @@
 package com.limechain.client;
 
 import com.google.common.primitives.Bytes;
+import com.google.protobuf.ByteString;
 import com.limechain.chain.ChainService;
 import com.limechain.cli.CliArguments;
 import com.limechain.chain.spec.Genesis;
 import com.limechain.network.Network;
 import com.limechain.rpc.server.AppBean;
-import com.limechain.runtime.StateVersion;
+import com.limechain.runtime.RuntimeBuilder;
+import com.limechain.runtime.version.StateVersion;
 import com.limechain.storage.KVRepository;
 import com.limechain.storage.block.BlockStateHelper;
 import com.limechain.sync.fullsync.FullSyncMachine;
@@ -51,8 +53,9 @@ public class FullNode implements HostNode {
         } else {
             Genesis genesisStorage = loadGenesisStorage();
 
-            // TODO: Next up, manage to fetch the runtime version
-            StateVersion stateVersion = StateVersion.V0;
+            StateVersion stateVersion = new RuntimeBuilder().buildRuntime(
+                genesisStorage.getTop().get(ByteString.copyFrom(":code".getBytes())).toByteArray()
+            ).getVersion().getStateVersion();
 
             TrieStructure<NodeData> trie = TrieStructureFactory.buildFromKVPs(genesisStorage.getTop(), stateVersion);
             List<InsertTrieNode> dbSerializedTrieNodes = new InsertTrieBuilder(trie).build();

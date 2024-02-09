@@ -1,7 +1,6 @@
 package com.limechain.runtime;
 
 import com.github.luben.zstd.Zstd;
-import com.limechain.exception.WasmRuntimeException;
 import com.limechain.runtime.hostapi.AllocatorHostFunctions;
 import com.limechain.runtime.hostapi.ChildStorageHostFunctions;
 import com.limechain.runtime.hostapi.CryptoHostFunctions;
@@ -11,13 +10,15 @@ import com.limechain.runtime.hostapi.MiscellaneousHostFunctions;
 import com.limechain.runtime.hostapi.OffchainHostFunctions;
 import com.limechain.runtime.hostapi.StorageHostFunctions;
 import com.limechain.runtime.hostapi.TrieHostFunctions;
+import com.limechain.runtime.version.RuntimeVersion;
 import com.limechain.sync.warpsync.dto.RuntimeCodeException;
+import com.limechain.runtime.version.scale.RuntimeVersionReader;
 import com.limechain.trie.decoded.Trie;
 import com.limechain.trie.decoded.TrieVerifier;
 import com.limechain.trie.decoded.decoder.TrieDecoderException;
-import com.limechain.utils.ByteArrayUtils;
 import com.limechain.utils.LittleEndianUtils;
 import com.limechain.utils.StringUtils;
+import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.extern.java.Log;
 import org.wasmer.ImportObject;
@@ -37,31 +38,41 @@ public class RuntimeBuilder {
             LittleEndianUtils.convertBytes(StringUtils.hexToBytes(StringUtils.toHex(":code")));
 
     public Runtime buildRuntime(byte[] code) {
-        byte[] wasmBinary;
-        byte[] wasmBinaryPrefix = Arrays.copyOfRange(code, 0, 8);
-        if (Arrays.equals(wasmBinaryPrefix, ZSTD_PREFIX)) {
-            wasmBinary = Zstd.decompress(Arrays.copyOfRange(
-                    code, ZSTD_PREFIX.length, code.length), MAX_ZSTD_DECOMPRESSED_SIZE);
-        } else wasmBinary = code;
+        byte[] wasmBinary = zstDecompressIfNecessary(code);
 
         Module module = new Module(wasmBinary);
         Runtime runtime = new Runtime(module, DEFAULT_HEAP_PAGES);
-        RuntimeVersion runtimeVersion = getRuntimeVersion(wasmBinary);
+
+        RuntimeVersion runtimeVersion = WasmSectionUtils.parseRuntimeVersionFromCustomSections(wasmBinary);
+
+        //If we couldn't get the data from the wasm custom sections fallback to Core_version call
+        if (runtimeVersion == null) {
+            log.log(Level.INFO, "Couldn't fetch runtime version from custom section, calling 'Core_version'.");
+            runtimeVersion = this.getRuntimeVersionFromRuntime(runtime);
+        }
+
         runtime.setVersion(runtimeVersion);
         return runtime;
     }
 
-    public RuntimeVersion getRuntimeVersion(byte[] wasmBinary) {
-        // byte value of \0asm concatenated with 0x1, 0x0, 0x0, 0x0 from smoldot runtime_version.rs#97
-        byte[] searchKey = new byte[]{0x00, 0x61, 0x73, 0x6D, 0x1, 0x0, 0x0, 0x0};
+    private byte[] zstDecompressIfNecessary(byte[] code) {
+        byte[] wasmBinaryPrefix = Arrays.copyOfRange(code, 0, 8);
+        if (Arrays.equals(wasmBinaryPrefix, ZSTD_PREFIX)) {
+            return Zstd.decompress(
+                Arrays.copyOfRange(code, ZSTD_PREFIX.length, code.length),
+                MAX_ZSTD_DECOMPRESSED_SIZE
+            );
+        }
 
-        int searchedKeyIndex = ByteArrayUtils.indexOf(wasmBinary, searchKey);
-        if (searchedKeyIndex < 0) throw new WasmRuntimeException("Key not found in runtime code");
-        WasmSections wasmSections = new WasmSections();
-        wasmSections.parseCustomSections(wasmBinary);
-        if (wasmSections.getRuntimeVersion().getRuntimeApis() != null) {
-            return wasmSections.getRuntimeVersion();
-        } else throw new WasmRuntimeException("Could not get Runtime version");
+        return code;
+    }
+
+    private RuntimeVersion getRuntimeVersionFromRuntime(Runtime runtime) {
+        byte[] data = runtime.call("Core_version");
+
+        ScaleCodecReader reader = new ScaleCodecReader(data);
+        RuntimeVersionReader runtimeVersionReader = new RuntimeVersionReader();
+        return runtimeVersionReader.read(reader);
     }
 
     static Imports getImports(Module module, HostApi hostApi) {

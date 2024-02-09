@@ -147,9 +147,9 @@ public class CryptoHostFunctions {
                 HostApi.getImportObject("ext_crypto_secp256k1_ecdsa_recover_compressed_version_2",
                         argv -> secp256k1EcdsaRecoverCompressedV1(argv.get(0).intValue(), argv.get(1).intValue()),
                         List.of(Type.I32, Type.I32), Type.I64),
-                HostApi.getImportObject("ext_crypto_start_batch_verify", argv ->
+                HostApi.getImportObject("ext_crypto_start_batch_verify_version_1", argv ->
                         startBatchVerify(), HostApi.EMPTY_LIST_OF_TYPES),
-                HostApi.getImportObject("ext_crypto_finish_batch_verify", argv ->
+                HostApi.getImportObject("ext_crypto_finish_batch_verify_version_1", argv ->
                         finishBatchVerify(), HostApi.EMPTY_LIST_OF_TYPES, Type.I32));
     }
 

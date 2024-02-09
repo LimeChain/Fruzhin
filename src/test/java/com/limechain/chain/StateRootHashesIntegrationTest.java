@@ -1,7 +1,7 @@
 package com.limechain.chain;
 
 import com.limechain.chain.spec.ChainSpec;
-import com.limechain.runtime.StateVersion;
+import com.limechain.runtime.version.StateVersion;
 import com.limechain.trie.TrieStructureFactory;
 import org.apache.tomcat.util.buf.HexUtils;
 import org.junit.jupiter.api.Test;
