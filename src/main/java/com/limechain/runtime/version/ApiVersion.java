@@ -18,7 +18,7 @@ public record ApiVersion(byte[] nameHash, BigInteger version) {
      * but possibly different versions of it
      * @return true if names equal, false otherwise
      */
-    public boolean nameEquals(ApiVersion other) {
+    public boolean sameNameAs(ApiVersion other) {
         return Arrays.equals(nameHash, other.nameHash);
     }
 
