@@ -24,7 +24,8 @@ public class WasmSectionUtils {
      */
     @Nullable
     public RuntimeVersion parseRuntimeVersionFromCustomSections(byte[] wasmBinary) {
-        // byte value of \0asm concatenated with 0x1, 0x0, 0x0, 0x0 from smoldot runtime_version.rs#97
+        // byte value of \0asm concatenated with 0x1, 0x0, 0x0, 0x0
+        // taken from Smoldot: https://github.com/smol-dot/smoldot/blob/21be5a1abaebeaf7270a744485b4551da8636fb1/lib/src/executor/host/runtime_version.rs#L97
         byte[] searchKey = new byte[]{0x00, 0x61, 0x73, 0x6D, 0x1, 0x0, 0x0, 0x0};
 
         int searchedKeyIndex = ByteArrayUtils.indexOf(wasmBinary, searchKey);
