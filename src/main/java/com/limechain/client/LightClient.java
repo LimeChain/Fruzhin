@@ -1,6 +1,5 @@
 package com.limechain.client;
 
-import com.limechain.network.ConnectionManager;
 import com.limechain.network.Network;
 import com.limechain.rpc.server.AppBean;
 import com.limechain.sync.warpsync.WarpSyncMachine;
@@ -17,7 +16,6 @@ import java.util.logging.Level;
 public class LightClient implements HostNode {
     // TODO: Add service dependencies i.e rpc, sync, network, etc.
     // TODO: Do we need those as fields here...?
-    private final ConnectionManager connectionManager = ConnectionManager.getInstance();
     private final Network network;
     private WarpSyncMachine warpSyncMachine;
 

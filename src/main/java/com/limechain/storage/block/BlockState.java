@@ -74,6 +74,27 @@ public class BlockState {
         setFinalizedHash(genesisHash, BigInteger.ZERO, BigInteger.ZERO);
     }
 
+    /**
+     * Creates a new BlockState instance from existing database
+     *
+     * @param repository the kvrepository used to store the block state
+     */
+    public BlockState(final KVRepository<String, Object> repository) {
+        if (instance != null) {
+            throw new IllegalStateException("BlockState already initialized");
+        }
+        BlockState.instance = this;
+
+        this.db = repository;
+        this.unfinalizedBlocks = new HashMap<>();
+
+        this.genesisHash = getHashByNumberFromDb(BigInteger.ZERO);
+        final BlockHeader lastHeader = getHighestFinalizedHeader();
+        final Hash256 headerHash = lastHeader.getHash();
+        this.lastFinalized = headerHash;
+        this.blockTree = new BlockTree(lastHeader);
+    }
+
     public static BlockState getInstance() {
         return instance;
     }
@@ -134,14 +155,24 @@ public class BlockState {
             throw lowerThanRootException;
         } catch (BlockStorageGenericException e) {
             // If error is LowerThanRootException, number has already been finalized, so check db
-            byte[] hash = (byte[]) db.find(helper.headerHashKey(blockNum)).orElse(null);
-
-            if (hash == null) {
-                throw new BlockNotFoundException("Block " + blockNum + " not found");
-            }
-
-            return new Hash256(hash);
+            return getHashByNumberFromDb(blockNum);
         }
+    }
+
+    /**
+     * Get the block hash on our best chain with the given number from the database
+     *
+     * @param blockNum the block number
+     * @return the block hash as byte array
+     */
+    private Hash256 getHashByNumberFromDb(BigInteger blockNum) {
+        byte[] hash = (byte[]) db.find(helper.headerHashKey(blockNum)).orElse(null);
+
+        if (hash == null) {
+            throw new BlockNotFoundException("Block " + blockNum + " not found");
+        }
+
+        return new Hash256(hash);
     }
 
     /**
@@ -551,7 +582,7 @@ public class BlockState {
         // Verify that we ended up with the start hash
         if (!Objects.equals(inLoopHash, startHash)) {
             throw new BlockStorageGenericException("Start hash mismatch: expected " + startHash +
-                    ", found: " + inLoopHash);
+                                                   ", found: " + inLoopHash);
         }
 
         return hashes;
@@ -767,6 +798,44 @@ public class BlockState {
     }
 
     /**
+     * Gets the header of the latest finalized block
+     */
+    public BlockHeader getHighestFinalizedHeader() {
+        Hash256 hash = getHighestFinalizedHash();
+
+        return getHeader(hash);
+    }
+
+    /**
+     * Gets the header of the latest finalized block
+     */
+    public BigInteger getHighestFinalizedNumber() {
+        return getHighestFinalizedHeader().getBlockNumber();
+    }
+
+    /**
+     * Gets the hash of the latest finalized block
+     */
+    public Hash256 getHighestFinalizedHash() {
+        Pair<BigInteger, BigInteger> roundAndSet = getHighestRoundAndSetID();
+
+        return getFinalizedHash(roundAndSet.getValue0(), roundAndSet.getValue1());
+    }
+
+    /**
+     * Gets the hash of the finalized block for given round and setId
+     */
+    public Hash256 getFinalizedHash(final BigInteger round, final BigInteger setId) {
+        Optional<Object> foundHash = db.find(helper.finalizedHashKey(round, setId));
+
+        if (foundHash.isEmpty()) {
+            throw new HeaderNotFoundException("Header not found in database");
+        }
+
+        return new Hash256((byte[]) foundHash.get());
+    }
+
+    /**
      * Stores the highest round and setId to the database
      *
      * @param round the number of the round
@@ -831,7 +900,7 @@ public class BlockState {
             Block block = unfinalizedBlocks.get(subchainHash);
             if (block == null) {
                 throw new BlockNotFoundException("Failed to find block in unfinalized block map for hash" +
-                        subchainHash);
+                                                 subchainHash);
             }
 
             setHeader(block.getHeader());

@@ -7,7 +7,6 @@ import com.limechain.constants.GenesisBlockHash;
 import com.limechain.network.Network;
 import com.limechain.network.protocol.warp.dto.WarpSyncFragment;
 import com.limechain.rpc.server.AppBean;
-import com.limechain.storage.block.BlockState;
 import com.limechain.sync.warpsync.state.FinishedState;
 import com.limechain.sync.warpsync.state.RequestFragmentsState;
 import com.limechain.sync.warpsync.state.WarpSyncState;
@@ -32,6 +31,8 @@ public class WarpSyncMachine {
     private final Network networkService;
     @Getter
     private final SyncedState syncedState = SyncedState.getInstance();
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private final boolean stateLoaded;
     @Setter
     private WarpSyncState warpSyncState;
     @Getter
@@ -41,11 +42,8 @@ public class WarpSyncMachine {
     @Setter
     private PriorityQueue<Pair<BigInteger, Authority[]>> scheduledAuthorityChanges =
             new PriorityQueue<>(Comparator.comparing(Pair::getValue0));
-
     @Getter
     private ChainInformation chainInformation = new ChainInformation();
-    private final ExecutorService executor = Executors.newSingleThreadExecutor();
-    private final boolean stateLoaded;
 
     public WarpSyncMachine(Network network, ChainService chainService) {
         this.networkService = network;
@@ -73,10 +71,7 @@ public class WarpSyncMachine {
 
         if (stateLoaded) {
             initStateHash = this.syncedState.getLastFinalizedBlockHash();
-            new BlockState(getSyncedState().getRepository(), genesisBlockHash.getGenesisBlockHeader());
         } else if (this.chainService.getChainSpec().getLightSyncState() != null) {
-            new BlockState(getSyncedState().getRepository(), genesisBlockHash.getGenesisBlockHeader());
-
             LightSyncState initState = LightSyncState.decode(this.chainService.getChainSpec().getLightSyncState());
             initStateHash = initState.getFinalizedBlockHeader().getParentHash();
             this.syncedState.setAuthoritySet(initState.getGrandpaAuthoritySet().getCurrentAuthorities());
@@ -100,7 +95,7 @@ public class WarpSyncMachine {
         });
     }
 
-    public void stop(){
+    public void stop() {
         log.info("Stopping warp sync machine");
         executor.shutdown();
         this.warpSyncState = null;

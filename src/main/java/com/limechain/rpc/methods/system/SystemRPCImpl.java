@@ -9,14 +9,13 @@ import com.limechain.exception.PeerNotFoundException;
 import com.limechain.exception.ThreadInterruptedException;
 import com.limechain.network.ConnectionManager;
 import com.limechain.network.Network;
-import com.limechain.network.dto.PeerInfo;
+import com.limechain.storage.block.BlockState;
 import com.limechain.sync.warpsync.SyncedState;
 import com.limechain.sync.warpsync.WarpSyncMachine;
 import io.libp2p.core.PeerId;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -40,6 +39,7 @@ public class SystemRPCImpl {
     private final Network network;
     private final WarpSyncMachine warpSync;
     private final SyncedState syncedState = SyncedState.getInstance();
+    private final BlockState blockState = BlockState.getInstance();
     private final ConnectionManager connectionManager = ConnectionManager.getInstance();
 
     /**
@@ -172,18 +172,10 @@ public class SystemRPCImpl {
      * Returns the state of the syncing of the node.
      */
     public Map<String, Object> systemSyncState() {
-        BigInteger highestBlock = this.connectionManager
-                .getPeerIds()
-                .stream()
-                .map(this.connectionManager::getPeerInfo)
-                .map(PeerInfo::getBestBlock)
-                .max(BigInteger::compareTo)
-                .orElse(BigInteger.ZERO);
-
         return Map.ofEntries(
                 entry("startingBlock", this.syncedState.getStartingBlockNumber()),
                 entry("currentBlock", this.syncedState.getLastFinalizedBlockNumber()),
-                entry("highestBlock", highestBlock)
+                entry("highestBlock", this.blockState.bestBlockNumber())
         );
     }
 
