@@ -5,6 +5,7 @@ import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.runtime.version.StateVersion;
 import com.limechain.storage.KVRepository;
 import com.limechain.storage.block.BlockState;
+import com.limechain.storage.trie.exceptions.ChildNotFoundException;
 import com.limechain.trie.structure.TrieStructure;
 import com.limechain.trie.structure.nibble.Nibble;
 import com.limechain.trie.structure.nibble.Nibbles;
@@ -29,8 +30,8 @@ public class TrieStorage {
     @Getter
     private static final TrieStorage instance = new TrieStorage();
     private final BlockState blockState = BlockState.getInstance();
-    private KVRepository<String, Object> db;
     private final byte[] EMPTY_TRIE_NODE = new byte[0];
+    private KVRepository<String, Object> db;
 
     private TrieStorage() {
     }
@@ -152,7 +153,7 @@ public class TrieStorage {
      * @param trieNode The trie node from which to start the search.
      * @param key      The key for which to search. (should be nibbles array)
      * @return The value associated with the key, or {@code null} if not found.
-     * @throws RuntimeException If a referenced child node cannot be found in the database.
+     * @throws ChildNotFoundException If a referenced child node cannot be found in the database.
      */
     private TrieNodeData getNodeFromDb(TrieNodeData trieNode, byte[] key) {
         if (Arrays.equals(trieNode.getPartialKey(), key)) {
@@ -172,7 +173,7 @@ public class TrieStorage {
         // Node is referenced by hash, fetch and decode
         TrieNodeData childNode = getTrieNodeFromMerkleValue(childMerkleValue);
         if (childNode == null) {
-            throw new RuntimeException(
+            throw new ChildNotFoundException(
                     "Child node not found in database for hash: " + Arrays.toString(childMerkleValue));
         }
 
