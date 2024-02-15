@@ -222,7 +222,7 @@ public class TrieStorage {
             return EMPTY_TRIE_NODE;
         }
 
-        byte[] fullPath = concatenate(currentPath, node.getPartialKey());
+        byte[] fullPath = ByteArrayUtils.concatenate(currentPath, node.getPartialKey());
         List<byte[]> childrenMerkleValues = node.getChildrenMerkleValues();
 
         // If the current node is a leaf and the fullPath is greater than the prefix, it's a candidate.
@@ -238,7 +238,7 @@ public class TrieStorage {
 
             // Fetch the child node based on its merkle value.
             TrieNodeData childNode = getTrieNodeFromMerkleValue(childMerkleValue);
-            byte[] result = searchForNextKey(childNode, prefix, concatenate(fullPath, new byte[]{(byte) i}));
+            byte[] result = searchForNextKey(childNode, prefix, ByteArrayUtils.concatenate(fullPath, new byte[]{(byte) i}));
             if (result != EMPTY_TRIE_NODE) {
                 // If a result is found in this subtree, return it.
                 return result;
@@ -246,13 +246,6 @@ public class TrieStorage {
         }
 
         return EMPTY_TRIE_NODE;
-    }
-
-    private byte[] concatenate(byte[] a, byte[] b) {
-        byte[] result = new byte[a.length + b.length];
-        System.arraycopy(a, 0, result, 0, a.length);
-        System.arraycopy(b, 0, result, a.length, b.length);
-        return result;
     }
 
     public boolean persistAllChanges(TrieStructure<byte[]> trie) {
