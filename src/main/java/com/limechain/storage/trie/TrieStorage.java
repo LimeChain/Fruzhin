@@ -3,7 +3,6 @@ package com.limechain.storage.trie;
 import com.google.common.primitives.Bytes;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.runtime.version.StateVersion;
-import com.limechain.storage.DeleteByPrefixResult;
 import com.limechain.storage.KVRepository;
 import com.limechain.storage.block.BlockState;
 import com.limechain.trie.structure.TrieStructure;
@@ -28,17 +27,20 @@ public class TrieStorage {
 
     private static final String TRIE_NODE_PREFIX = "tn:";
     @Getter
-    private static TrieStorage instance = new TrieStorage();
-    private KVRepository<String, Object> db;
+    private static final TrieStorage instance = new TrieStorage();
     private final BlockState blockState = BlockState.getInstance();
+    private KVRepository<String, Object> db;
 
     private TrieStorage() {
     }
 
-    public void initialize(final KVRepository<String, Object> db) {
-        this.db = db;
-    }
-
+    /**
+     * Converts a list of nibbles to a byte array. (Have in mind that this byte array is not the byte array from which
+     * the nibble is constructed)
+     *
+     * @param nibbles The list of nibbles to convert.
+     * @return A byte array representing the combined nibbles.
+     */
     @NotNull
     private static byte[] partialKeyFromNibbles(List<Nibble> nibbles) {
         return Bytes.toArray(
@@ -47,12 +49,29 @@ public class TrieStorage {
                         .toList());
     }
 
+    /**
+     * Converts a byte array (reverse of @Link partialKeyFromNibbles) to a list of nibbles.
+     *
+     * @param bytes The byte array to convert.
+     * @return A list of nibbles representing the byte array.
+     */
     private static Nibbles nibblesFromBytes(byte[] bytes) {
         List<Nibble> nibbles = new ArrayList<>();
         for (byte aByte : bytes) {
             nibbles.add(Nibble.fromByte(aByte));
         }
         return Nibbles.of(nibbles);
+    }
+
+    /**
+     * Initializes the TrieStorage with a given key-value repository.
+     * This method must be called before using the TrieStorage instance.
+     *
+     * @param db The key-value repository to be used for storing trie nodes.
+     */
+
+    public void initialize(final KVRepository<String, Object> db) {
+        this.db = db;
     }
 
     /**
@@ -165,6 +184,14 @@ public class TrieStorage {
         return (TrieNodeData) encodedChild.orElse(null);
     }
 
+    /**
+     * Finds the next key in the trie that is lexicographically greater than a given prefix.
+     * It navigates the trie from the root node associated with a specific block hash.
+     *
+     * @param blockHash The hash of the block whose trie is used for the search.
+     * @param prefixStr The prefix to compare against for finding the next key.
+     * @return The next key as a String, or null if no such key exists.
+     */
     public String getNextKey(Hash256 blockHash, String prefixStr) {
         BlockHeader header = blockState.getHeader(blockHash);
 
@@ -226,11 +253,6 @@ public class TrieStorage {
         System.arraycopy(a, 0, result, 0, a.length);
         System.arraycopy(b, 0, result, a.length, b.length);
         return result;
-    }
-
-    public DeleteByPrefixResult deleteByPrefixFromBlock(Hash256 blockHash, String prefix, long limit) {
-        //todo: discuss how/why we would need this
-        return null;
     }
 
     public boolean persistAllChanges(TrieStructure<byte[]> trie) {
