@@ -35,27 +35,30 @@ import java.util.Optional;
  */
 @Log
 public class BlockState {
-    private static BlockState instance;
-    private final BlockTree blockTree;
-    private final Map<Hash256, Block> unfinalizedBlocks;
-    private final KVRepository<String, Object> db;
+    @Getter
+    private static BlockState instance = new BlockState();
+    private BlockTree blockTree;
+    private Map<Hash256, Block> unfinalizedBlocks;
+    private KVRepository<String, Object> db;
     private final BlockStateHelper helper = new BlockStateHelper();
     @Getter
-    private final Hash256 genesisHash;
+    private Hash256 genesisHash;
     @Getter
     private Hash256 lastFinalized;
 
+    private BlockState(){
+        //Singleton class
+    }
     /**
-     * Creates a new BlockState instance from genesis
+     * Initializes the BlockState instance from genesis
      *
      * @param repository the kvrepository used to store the block state
      * @param header     the genesis block header
      */
-    public BlockState(final KVRepository<String, Object> repository, final BlockHeader header) {
-        if (instance != null) {
+    public void initialize(final KVRepository<String, Object> repository, final BlockHeader header) {
+        if (genesisHash != null) {
             throw new IllegalStateException("BlockState already initialized");
         }
-        BlockState.instance = this;
 
         this.blockTree = new BlockTree(header);
         this.db = repository;
@@ -75,15 +78,14 @@ public class BlockState {
     }
 
     /**
-     * Creates a new BlockState instance from existing database
+     * Initializes the BlockState instance from existing database
      *
      * @param repository the kvrepository used to store the block state
      */
-    public BlockState(final KVRepository<String, Object> repository) {
-        if (instance != null) {
+    public void initialize(final KVRepository<String, Object> repository) {
+        if (genesisHash != null) {
             throw new IllegalStateException("BlockState already initialized");
         }
-        BlockState.instance = this;
 
         this.db = repository;
         this.unfinalizedBlocks = new HashMap<>();
@@ -93,10 +95,6 @@ public class BlockState {
         final Hash256 headerHash = lastHeader.getHash();
         this.lastFinalized = headerHash;
         this.blockTree = new BlockTree(lastHeader);
-    }
-
-    public static BlockState getInstance() {
-        return instance;
     }
 
     /**
