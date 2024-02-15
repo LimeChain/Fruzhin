@@ -12,6 +12,7 @@ import com.limechain.trie.structure.nibble.Nibbles;
 import com.limechain.trie.structure.nibble.NibblesUtils;
 import com.limechain.trie.structure.node.InsertTrieNode;
 import com.limechain.trie.structure.node.TrieNodeData;
+import com.limechain.utils.ByteArrayUtils;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.Getter;
 import lombok.extern.java.Log;
@@ -30,7 +31,7 @@ public class TrieStorage {
     @Getter
     private static final TrieStorage instance = new TrieStorage();
     private final BlockState blockState = BlockState.getInstance();
-    private final byte[] EMPTY_TRIE_NODE = new byte[0];
+    private static final byte[] EMPTY_TRIE_NODE = new byte[0];
     private KVRepository<String, Object> db;
 
     private TrieStorage() {
@@ -160,15 +161,13 @@ public class TrieStorage {
             return trieNode;
         }
 
-        int i = 0;
-        while (i < key.length && i < trieNode.getPartialKey().length && key[i] == trieNode.getPartialKey()[i]) {
-            i++;
-        }
-        byte[] childMerkleValue = trieNode.getChildrenMerkleValues().get(key[i]);
+        int commonPrefix = ByteArrayUtils.commonPrefixLength(trieNode.getPartialKey(), key);
+        byte[] childMerkleValue = trieNode.getChildrenMerkleValues().get(key[commonPrefix]);
+
         if (childMerkleValue == null) {
             return null;
         }
-        key = Arrays.copyOfRange(key, 1 + i, key.length);
+        key = Arrays.copyOfRange(key, 1 + commonPrefix, key.length);
 
         // Node is referenced by hash, fetch and decode
         TrieNodeData childNode = getTrieNodeFromMerkleValue(childMerkleValue);
