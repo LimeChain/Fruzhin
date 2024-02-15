@@ -30,6 +30,7 @@ public class TrieStorage {
     private static final TrieStorage instance = new TrieStorage();
     private final BlockState blockState = BlockState.getInstance();
     private KVRepository<String, Object> db;
+    private final byte[] EMPTY_TRIE_NODE = new byte[0];
 
     private TrieStorage() {
     }
@@ -213,12 +214,12 @@ public class TrieStorage {
         byte[] nextKeyBytes = searchForNextKey(rootNode, prefix, new byte[0]);
 
         // If a next key is found, convert it back to a String and return.
-        return nextKeyBytes == null ? null : NibblesUtils.toStringPrepending(nibblesFromBytes(nextKeyBytes));
+        return nextKeyBytes == EMPTY_TRIE_NODE ? null : NibblesUtils.toStringPrepending(nibblesFromBytes(nextKeyBytes));
     }
 
     private byte[] searchForNextKey(TrieNodeData node, byte[] prefix, byte[] currentPath) {
         if (node == null) {
-            return null;
+            return EMPTY_TRIE_NODE;
         }
 
         byte[] fullPath = concatenate(currentPath, node.getPartialKey());
@@ -238,14 +239,13 @@ public class TrieStorage {
             // Fetch the child node based on its merkle value.
             TrieNodeData childNode = getTrieNodeFromMerkleValue(childMerkleValue);
             byte[] result = searchForNextKey(childNode, prefix, concatenate(fullPath, new byte[]{(byte) i}));
-            if (result != null) {
+            if (result != EMPTY_TRIE_NODE) {
                 // If a result is found in this subtree, return it.
                 return result;
             }
         }
 
-        // If no next key is found in this subtree, return null.
-        return null;
+        return EMPTY_TRIE_NODE;
     }
 
     private byte[] concatenate(byte[] a, byte[] b) {
