@@ -9,6 +9,7 @@ import com.limechain.storage.block.BlockState;
 import com.limechain.trie.structure.TrieStructure;
 import com.limechain.trie.structure.nibble.Nibble;
 import com.limechain.trie.structure.nibble.Nibbles;
+import com.limechain.trie.structure.nibble.NibblesUtils;
 import com.limechain.trie.structure.node.InsertTrieNode;
 import com.limechain.trie.structure.node.TrieNodeData;
 import io.emeraldpay.polkaj.types.Hash256;
@@ -16,8 +17,10 @@ import lombok.Getter;
 import lombok.extern.java.Log;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Log
@@ -44,6 +47,14 @@ public class TrieStorage {
                 nibbles.stream()
                         .map(Nibble::asByte)
                         .toList());
+    }
+
+    private static Nibbles nibblesFromBytes(byte[] bytes) {
+        List<Nibble> nibbles = new ArrayList<>();
+        for (byte aByte : bytes) {
+            nibbles.add(Nibble.fromByte(aByte));
+        }
+        return Nibbles.of(nibbles);
     }
 
     /**
@@ -88,15 +99,13 @@ public class TrieStorage {
             return Optional.empty();
         }
 
-        Optional<Object> trieNodeData = db.find(TRIE_NODE_PREFIX + new String(header.getStateRoot().getBytes()));
-        if (trieNodeData.isEmpty()) {
+        TrieNodeData rootNode = getTrieNodeFromMerkleValue(header.getStateRoot().getBytes());
+        if (rootNode == null) {
             return Optional.empty();
         }
 
-        TrieNodeData trieNode = (TrieNodeData) trieNodeData.get();
-
         byte[] key = partialKeyFromNibbles(Nibbles.fromBytes(keyStr.getBytes()).asUnmodifiableList());
-        return Optional.ofNullable(getValueFromDb(trieNode, key));
+        return Optional.ofNullable(getValueFromDb(rootNode, key));
     }
 
     /**
@@ -143,18 +152,82 @@ public class TrieStorage {
         key = Arrays.copyOfRange(key, 1 + i, key.length);
 
         // Node is referenced by hash, fetch and decode
-        Optional<Object> encodedChild = db.find(TRIE_NODE_PREFIX + new String(childMerkleValue));
-        if (encodedChild.isEmpty()) {
+        TrieNodeData childNode = getTrieNodeFromMerkleValue(childMerkleValue);
+        if (childNode == null) {
             throw new RuntimeException(
                     "Child node not found in database for hash: " + Arrays.toString(childMerkleValue));
         }
-        TrieNodeData childNode = (TrieNodeData) encodedChild.get();
 
         return getNodeFromDb(childNode, key);
     }
 
-    public List<String> getNextKey(Hash256 blockHash, String prefix, long limit) {
+    private TrieNodeData getTrieNodeFromMerkleValue(byte[] childMerkleValue) {
+        Optional<Object> encodedChild = db.find(TRIE_NODE_PREFIX + new String(childMerkleValue));
+
+        return (TrieNodeData) encodedChild.orElse(null);
+    }
+
+    public String getNextKey(Hash256 blockHash, String prefixStr) {
+        BlockHeader header = blockState.getHeader(blockHash);
+
+        if (header == null) {
+            return null;
+        }
+
+        TrieNodeData rootNode = getTrieNodeFromMerkleValue(header.getStateRoot().getBytes());
+        if (rootNode == null) {
+            return null;
+        }
+
+        byte[] prefix = partialKeyFromNibbles(Nibbles.fromBytes(prefixStr.getBytes()).asUnmodifiableList());
+
+        return findNextKey(rootNode, prefix);
+    }
+
+    private String findNextKey(TrieNodeData rootNode, byte[] prefix) {
+        byte[] nextKeyBytes = searchForNextKey(rootNode, prefix, new byte[0]);
+
+        // If a next key is found, convert it back to a String and return.
+        return nextKeyBytes == null ? null : NibblesUtils.toStringPrepending(nibblesFromBytes(nextKeyBytes));
+    }
+
+    private byte[] searchForNextKey(TrieNodeData node, byte[] prefix, byte[] currentPath) {
+        if (node == null) {
+            return null;
+        }
+
+        byte[] fullPath = concatenate(currentPath, node.getPartialKey());
+        List<byte[]> childrenMerkleValues = node.getChildrenMerkleValues();
+
+        // If the current node is a leaf and the fullPath is greater than the prefix, it's a candidate.
+        if (childrenMerkleValues.stream().allMatch(Objects::isNull) && Arrays.compare(fullPath, prefix) > 0) {
+            return fullPath;
+        }
+
+        int startIndex = prefix.length > fullPath.length ? prefix[fullPath.length] : 0;
+
+        for (int i = startIndex; i < childrenMerkleValues.size(); i++) {
+            byte[] childMerkleValue = childrenMerkleValues.get(i);
+            if (childMerkleValue == null) continue; // Skip empty slots.
+
+            // Fetch the child node based on its merkle value.
+            TrieNodeData childNode = getTrieNodeFromMerkleValue(childMerkleValue);
+            byte[] result = searchForNextKey(childNode, prefix, concatenate(fullPath, new byte[]{(byte) i}));
+            if (result != null) {
+                // If a result is found in this subtree, return it.
+                return result;
+            }
+        }
+
+        // If no next key is found in this subtree, return null.
         return null;
+    }
+
+    private byte[] concatenate(byte[] a, byte[] b) {
+        byte[] result = new byte[a.length + b.length];
+        System.arraycopy(a, 0, result, 0, a.length);
+        System.arraycopy(b, 0, result, a.length, b.length);
+        return result;
     }
 
     public DeleteByPrefixResult deleteByPrefixFromBlock(Hash256 blockHash, String prefix, long limit) {

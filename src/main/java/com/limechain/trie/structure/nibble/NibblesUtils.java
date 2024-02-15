@@ -11,6 +11,20 @@ import java.util.stream.StreamSupport;
 @UtilityClass
 public class NibblesUtils {
     /**
+     * Joins a collection of nibbles into a String by
+     * joining each two consecutive nibbles into a single byte.
+     * If the number of nibbles is odd, adds a `0` nibble at the beginning.
+     */
+    public String toStringPrepending(final Nibbles nibbles) {
+        List<Byte> byteList = toBytesPrepending(nibbles);
+        byte[] bytes = new byte[byteList.size()];
+        for (int i = 0; i < byteList.size(); i++) {
+            bytes[i] = byteList.get(i);
+        }
+        return new String(bytes);
+    }
+
+    /**
      * Joins a collection of nibbles into a list of bytes by
      * joining each two consecutive nibbles into a single byte.
      * If the number of nibbles is odd, adds a `0` nibble at the beginning.
