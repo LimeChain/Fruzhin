@@ -19,7 +19,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.logging.Level;
 
 @Log
 public class TrieStorage {
@@ -45,24 +44,6 @@ public class TrieStorage {
                 nibbles.stream()
                         .map(Nibble::asByte)
                         .toList());
-    }
-
-    /**
-     * Inserts trie nodes into the key-value repository.
-     *
-     * @param insertTrieNodes The list of trie nodes to be inserted.
-     * @param stateVersion    The version number of the trie entries.
-     */
-    public void insertStorage(final List<InsertTrieNode> insertTrieNodes,
-                              final StateVersion stateVersion) {
-        try {
-            for (InsertTrieNode trieNode : insertTrieNodes) {
-                insertTrieNodeStorage(db, trieNode, stateVersion);
-            }
-
-        } catch (Exception e) {
-            log.log(Level.SEVERE, "Failed to insert trie structure to db storage", e);
-        }
     }
 
     /**
@@ -97,10 +78,10 @@ public class TrieStorage {
      * Retrieves a value by key from the trie associated with a specific block hash.
      *
      * @param blockHash The hash of the block whose trie is to be searched.
-     * @param key       The key for which to retrieve the value.
+     * @param keyStr    The key for which to retrieve the value.
      * @return An {@link Optional} containing the value associated with the key if found, or empty if not found.
      */
-    public Optional<byte[]> getByKeyFromBlock(Hash256 blockHash, byte[] key) {
+    public Optional<byte[]> getByKeyFromBlock(Hash256 blockHash, String keyStr) {
         BlockHeader header = blockState.getHeader(blockHash);
 
         if (header == null) {
@@ -114,12 +95,26 @@ public class TrieStorage {
 
         TrieNodeData trieNode = (TrieNodeData) trieNodeData.get();
 
-        return Optional.ofNullable(
-                getFromDb(trieNode, partialKeyFromNibbles(Nibbles.fromBytes(key).asUnmodifiableList())));
+        byte[] key = partialKeyFromNibbles(Nibbles.fromBytes(keyStr.getBytes()).asUnmodifiableList());
+        return Optional.ofNullable(getValueFromDb(trieNode, key));
     }
 
     /**
      * Recursively searches for a value by key starting from a given trie node.
+     * <p>
+     *
+     * @param trieNode The trie node from which to start the search.
+     * @param key      The key for which to search. (should be nibbles array)
+     * @return The value associated with the key, or {@code null} if not found.
+     * @throws RuntimeException If a referenced child node cannot be found in the database.
+     */
+    private byte[] getValueFromDb(TrieNodeData trieNode, byte[] key) {
+        TrieNodeData nodeFromDb = getNodeFromDb(trieNode, key);
+        return nodeFromDb != null ? nodeFromDb.getValue() : null;
+    }
+
+    /**
+     * Recursively searches for a TrieNode by key starting from a given trie node.
      * <p>
      * This method compares the provided key with the trie node's partial key. If they match,
      * it returns the node's value. Otherwise, it iterates through the node's children,
@@ -132,9 +127,9 @@ public class TrieStorage {
      * @return The value associated with the key, or {@code null} if not found.
      * @throws RuntimeException If a referenced child node cannot be found in the database.
      */
-    private byte[] getFromDb(TrieNodeData trieNode, byte[] key) {
+    private TrieNodeData getNodeFromDb(TrieNodeData trieNode, byte[] key) {
         if (Arrays.equals(trieNode.getPartialKey(), key)) {
-            return trieNode.getValue();
+            return trieNode;
         }
 
         int i = 0;
@@ -142,6 +137,9 @@ public class TrieStorage {
             i++;
         }
         byte[] childMerkleValue = trieNode.getChildrenMerkleValues().get(key[i]);
+        if (childMerkleValue == null) {
+            return null;
+        }
         key = Arrays.copyOfRange(key, 1 + i, key.length);
 
         // Node is referenced by hash, fetch and decode
@@ -152,12 +150,7 @@ public class TrieStorage {
         }
         TrieNodeData childNode = (TrieNodeData) encodedChild.get();
 
-        byte[] potentialValue = getFromDb(childNode, key);
-        if (potentialValue != null) {
-            return potentialValue;
-        }
-
-        return null;
+        return getNodeFromDb(childNode, key);
     }
 
     public List<String> getNextKey(Hash256 blockHash, String prefix, long limit) {
@@ -165,6 +158,7 @@ public class TrieStorage {
     }
 
     public DeleteByPrefixResult deleteByPrefixFromBlock(Hash256 blockHash, String prefix, long limit) {
+        //todo: discuss how/why we would need this
         return null;
     }
 
