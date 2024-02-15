@@ -62,13 +62,14 @@ public class FullNode implements HostNode {
         // if: database has some persisted storage
         if (db == null) {
             throw new IllegalStateException("Database is not initialized");
-        } else if (db.find(new BlockStateHelper().headerHashKey(BigInteger.ZERO)).isPresent()) {
+        }
+        TrieStorage.getInstance().initialize(db);//Initialize TrieStorage (BlockState is prerequisite)
+        if (db.find(new BlockStateHelper().headerHashKey(BigInteger.ZERO)).isPresent()) {
             BlockState.getInstance().initialize(db);//Initialize BlockState from already existing data
-            new TrieStorage(db);//Initialize TrieStorage (BlockState is prerequisite)
         } else {
             GenesisBlockHash genesisBlockHash = AppBean.getBean(GenesisBlockHash.class);
-            BlockState.getInstance().initialize(db, genesisBlockHash.getGenesisBlockHeader()); //Initialize BlockState from genesis block
-            new TrieStorage(db); //Initialize TrieStorage (BlockState is prerequisite)
+            BlockState.getInstance().initialize(db,
+                    genesisBlockHash.getGenesisBlockHeader()); //Initialize BlockState from genesis block
 
             StateVersion stateVersion = new RuntimeBuilder().buildRuntime(
                     genesisBlockHash.getGenesisStorage().get(ByteString.copyFrom(":code".getBytes())).toByteArray()

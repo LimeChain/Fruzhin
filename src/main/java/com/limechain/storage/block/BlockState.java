@@ -37,18 +37,21 @@ import java.util.Optional;
 public class BlockState {
     @Getter
     private static BlockState instance = new BlockState();
+    private final BlockStateHelper helper = new BlockStateHelper();
     private BlockTree blockTree;
     private Map<Hash256, Block> unfinalizedBlocks;
     private KVRepository<String, Object> db;
-    private final BlockStateHelper helper = new BlockStateHelper();
     @Getter
     private Hash256 genesisHash;
     @Getter
     private Hash256 lastFinalized;
+    @Getter
+    private boolean initialized;
 
-    private BlockState(){
+    private BlockState() {
         //Singleton class
     }
+
     /**
      * Initializes the BlockState instance from genesis
      *
@@ -56,9 +59,10 @@ public class BlockState {
      * @param header     the genesis block header
      */
     public void initialize(final KVRepository<String, Object> repository, final BlockHeader header) {
-        if (genesisHash != null) {
+        if (initialized) {
             throw new IllegalStateException("BlockState already initialized");
         }
+        initialized = true;
 
         this.blockTree = new BlockTree(header);
         this.db = repository;
@@ -83,9 +87,10 @@ public class BlockState {
      * @param repository the kvrepository used to store the block state
      */
     public void initialize(final KVRepository<String, Object> repository) {
-        if (genesisHash != null) {
+        if (initialized) {
             throw new IllegalStateException("BlockState already initialized");
         }
+        initialized = true;
 
         this.db = repository;
         this.unfinalizedBlocks = new HashMap<>();
@@ -917,5 +922,4 @@ public class BlockState {
             //TODO: If currentFinalizedHash is not equal to subchain hash, delete subchain state trie
         }
     }
-
 }

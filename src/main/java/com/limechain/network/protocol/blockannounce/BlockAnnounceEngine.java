@@ -77,7 +77,7 @@ public class BlockAnnounceEngine {
                 " parentHash:" + announce.getHeader().getParentHash() +
                 " stateRoot:" + announce.getHeader().getStateRoot());
 
-        if (BlockState.getInstance() != null) {
+        if (BlockState.getInstance().isInitialized()) {
             BlockState.getInstance().addUnfinalizedBlock(announce.getHeader().getHash(),
                     new Block(announce.getHeader(), new BlockBody(new ArrayList<>())));
         }

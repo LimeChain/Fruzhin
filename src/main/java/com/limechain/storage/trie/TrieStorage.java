@@ -28,17 +28,15 @@ public class TrieStorage {
 
     private static final String TRIE_NODE_PREFIX = "tn:";
     @Getter
-    private static TrieStorage instance;
-    private final KVRepository<String, Object> db;
-    private final BlockState blockState;
+    private static TrieStorage instance = new TrieStorage();
+    private KVRepository<String, Object> db;
+    private final BlockState blockState = BlockState.getInstance();
 
-    public TrieStorage(final KVRepository<String, Object> db) {
-        if (instance != null) {
-            throw new IllegalStateException("TrieStorage is already initialized");
-        }
-        instance = this;
+    private TrieStorage() {
+    }
+
+    public void initialize(final KVRepository<String, Object> db) {
         this.db = db;
-        this.blockState = BlockState.getInstance();
     }
 
     @NotNull
