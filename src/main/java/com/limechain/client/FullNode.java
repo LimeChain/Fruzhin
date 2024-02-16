@@ -14,38 +14,15 @@ import com.limechain.storage.trie.TrieStorage;
 import com.limechain.sync.fullsync.FullSyncMachine;
 import com.limechain.sync.warpsync.WarpSyncMachine;
 import com.limechain.trie.structure.TrieStructure;
-import com.limechain.trie.structure.database.InsertTrieBuilder;
 import com.limechain.trie.structure.database.NodeData;
-import com.limechain.trie.structure.node.InsertTrieNode;
 import lombok.SneakyThrows;
 import lombok.extern.java.Log;
 
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Optional;
 import java.util.logging.Level;
 
 @Log
 public class FullNode implements HostNode {
-
-    /**
-     * Inserts trie nodes into the key-value repository.
-     *
-     * @param db              The key-value repository.
-     * @param insertTrieNodes The list of trie nodes to be inserted.
-     * @param stateVersion    The version number of the trie entries.
-     */
-    private static void saveTrieNodes(final KVRepository<String, Object> db, final List<InsertTrieNode> insertTrieNodes,
-                                      final StateVersion stateVersion) {
-        TrieStorage trieStorage = TrieStorage.getInstance();
-        try {
-            for (InsertTrieNode trieNode : insertTrieNodes) {
-                trieStorage.insertTrieNodeStorage(db, trieNode, stateVersion);
-            }
-        } catch (Exception e) {
-            log.log(Level.SEVERE, "Failed to insert trie structure to db storage", e);
-        }
-    }
 
     /**
      * Starts the light client by instantiating all dependencies and services
@@ -64,7 +41,9 @@ public class FullNode implements HostNode {
         if (db == null) {
             throw new IllegalStateException("Database is not initialized");
         }
-        TrieStorage.getInstance().initialize(db);//Initialize TrieStorage (BlockState is prerequisite)
+        TrieStorage trieStorage = TrieStorage.getInstance();
+        trieStorage.initialize(db);//Initialize TrieStorage (BlockState is prerequisite)
+
         if (db.find(new BlockStateHelper().headerHashKey(BigInteger.ZERO)).isPresent()) {
             BlockState.getInstance().initialize(db);//Initialize BlockState from already existing data
         } else {
@@ -77,8 +56,7 @@ public class FullNode implements HostNode {
             ).getVersion().getStateVersion();
 
             TrieStructure<NodeData> trie = genesisBlockHash.getGenesisTrie();
-            List<InsertTrieNode> dbSerializedTrieNodes = new InsertTrieBuilder(trie).build();
-            saveTrieNodes(db, dbSerializedTrieNodes, stateVersion);
+            trieStorage.insertTrieStorage(trie, stateVersion);
         }
 
         // Start network

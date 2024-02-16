@@ -7,6 +7,8 @@ import com.limechain.storage.KVRepository;
 import com.limechain.storage.block.BlockState;
 import com.limechain.storage.trie.exceptions.ChildNotFoundException;
 import com.limechain.trie.structure.TrieStructure;
+import com.limechain.trie.structure.database.InsertTrieBuilder;
+import com.limechain.trie.structure.database.NodeData;
 import com.limechain.trie.structure.nibble.Nibble;
 import com.limechain.trie.structure.nibble.Nibbles;
 import com.limechain.trie.structure.nibble.NibblesUtils;
@@ -16,13 +18,14 @@ import com.limechain.utils.ByteArrayUtils;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.Getter;
 import lombok.extern.java.Log;
+import org.javatuples.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
+import java.util.logging.Level;
 
 @Log
 public class TrieStorage {
@@ -30,8 +33,8 @@ public class TrieStorage {
     private static final String TRIE_NODE_PREFIX = "tn:";
     @Getter
     private static final TrieStorage instance = new TrieStorage();
-    private final BlockState blockState = BlockState.getInstance();
     private static final byte[] EMPTY_TRIE_NODE = new byte[0];
+    private final BlockState blockState = BlockState.getInstance();
     private KVRepository<String, Object> db;
 
     private TrieStorage() {
@@ -75,34 +78,6 @@ public class TrieStorage {
 
     public void initialize(final KVRepository<String, Object> db) {
         this.db = db;
-    }
-
-    /**
-     * Inserts trie node storage data into the key-value repository.
-     * <p>
-     * The storage data is represented by a {@link TrieNodeData} object, which is serialized and saved to the repository.
-     *
-     * @param db           The key-value repository where trie node storage is to be saved.
-     * @param trieNode     The trie node whose storage data is to be inserted.
-     * @param stateVersion The version of the state, affecting how the storage value is interpreted.
-     */
-    public void insertTrieNodeStorage(KVRepository<String, Object> db, InsertTrieNode trieNode,
-                                      StateVersion stateVersion) {
-        String key = TRIE_NODE_PREFIX + new String(trieNode.merkleValue());
-
-        List<Nibble> nibbles = trieNode.partialKeyNibbles();
-        byte[] partialKey = partialKeyFromNibbles(nibbles);
-
-        List<byte[]> childrenMerkleValues = trieNode.childrenMerkleValues();
-
-        TrieNodeData storageValue = new TrieNodeData(
-                partialKey,
-                childrenMerkleValues,
-                trieNode.isReferenceValue() ? null : trieNode.storageValue(),
-                trieNode.isReferenceValue() ? trieNode.storageValue() : null,
-                (byte) stateVersion.asInt());
-
-        db.save(key, storageValue);
     }
 
     /**
@@ -222,15 +197,14 @@ public class TrieStorage {
             return EMPTY_TRIE_NODE;
         }
 
-        byte[] fullPath = ByteArrayUtils.concatenate(currentPath, node.getPartialKey());
-        List<byte[]> childrenMerkleValues = node.getChildrenMerkleValues();
 
         // If the current node is a leaf and the fullPath is greater than the prefix, it's a candidate.
-        if (childrenMerkleValues.stream().allMatch(Objects::isNull) && Arrays.compare(fullPath, prefix) > 0) {
-            return fullPath;
+        if (node.getValue() != null && Arrays.compare(currentPath, prefix) > 0) {
+            return currentPath;
         }
 
-        int startIndex = prefix.length > fullPath.length ? prefix[fullPath.length] : 0;
+        List<byte[]> childrenMerkleValues = node.getChildrenMerkleValues();
+        int startIndex = prefix.length > currentPath.length ? prefix[currentPath.length] : 0;
 
         for (int i = startIndex; i < childrenMerkleValues.size(); i++) {
             byte[] childMerkleValue = childrenMerkleValues.get(i);
@@ -238,7 +212,12 @@ public class TrieStorage {
 
             // Fetch the child node based on its merkle value.
             TrieNodeData childNode = getTrieNodeFromMerkleValue(childMerkleValue);
-            byte[] result = searchForNextKey(childNode, prefix, ByteArrayUtils.concatenate(fullPath, new byte[]{(byte) i}));
+
+            byte[] nextPath = ByteArrayUtils.concatenate(currentPath, new byte[]{(byte) i});
+            nextPath = ByteArrayUtils.concatenate(nextPath, childNode.getPartialKey());
+
+            byte[] result =
+                    searchForNextKey(childNode, prefix, nextPath);
             if (result != EMPTY_TRIE_NODE) {
                 // If a result is found in this subtree, return it.
                 return result;
@@ -248,8 +227,118 @@ public class TrieStorage {
         return EMPTY_TRIE_NODE;
     }
 
-    public boolean persistAllChanges(TrieStructure<byte[]> trie) {
-        return false;
+    /**
+     * Retrieves trie entries within a specified range.
+     * <p>
+     * Fetches entries from the trie that fall within the range defined by the given search key,
+     * starting from the node identified by the provided merkle value.
+     *
+     * @param merkleValue The merkle value identifying the starting node in the trie.
+     * @param searchKey   The key defining the upper limit of the search range.
+     * @return A list of pairs, each containing a set of nibbles (representing a key within the trie)
+     *         and the corresponding node data.
+     */
+    public List<Pair<Nibbles, NodeData>> entriesBetween(byte[] merkleValue, String searchKey) {
+        List<Pair<Nibbles, NodeData>> entries = new ArrayList<>();
+        TrieNodeData rootNode = getTrieNodeFromMerkleValue(merkleValue);
+
+        if (rootNode == null) {
+            return entries;
+        }
+        entries.add(
+                new Pair<>(nibblesFromBytes(rootNode.getPartialKey()), new NodeData(rootNode.getValue(), merkleValue)));
+
+        byte[] prefix = partialKeyFromNibbles(Nibbles.fromBytes(searchKey.getBytes()).asUnmodifiableList());
+        collectEntriesUpTo(rootNode, prefix, new byte[0], entries);
+
+        return entries;
     }
 
+    private void collectEntriesUpTo(TrieNodeData node, byte[] key, byte[] currentPath,
+                                    List<Pair<Nibbles, NodeData>> entries) {
+        if (node == null) {
+            return;
+        }
+
+
+        // If the current node is a leaf and the fullPath is greater than the prefix, it's a candidate.
+        if (Arrays.equals(node.getPartialKey(), key)) {
+            return;
+        }
+
+        List<byte[]> childrenMerkleValues = node.getChildrenMerkleValues();
+        int commonPrefix = ByteArrayUtils.commonPrefixLength(node.getPartialKey(), key);
+
+        byte[] childMerkleValue = childrenMerkleValues.get(key[commonPrefix]);
+        if (childMerkleValue == null) return; // Skip empty slots.
+
+        // Fetch the child node based on its merkle value.
+        TrieNodeData childNode = getTrieNodeFromMerkleValue(childMerkleValue);
+
+        byte[] nextPath = ByteArrayUtils.concatenate(currentPath, new byte[]{key[commonPrefix]});
+        nextPath = ByteArrayUtils.concatenate(nextPath, childNode.getPartialKey());
+
+        entries.add(new Pair<>(nibblesFromBytes(ByteArrayUtils.concatenate(nextPath, childNode.getPartialKey())),
+                new NodeData(childNode.getValue(), childMerkleValue)));
+
+        collectEntriesUpTo(childNode, Arrays.copyOfRange(key, 1 + commonPrefix, key.length), nextPath, entries);
+    }
+
+    /**
+     * Saves the trie structure to storage.
+     * <p>
+     * Serializes the given trie into a format suitable for storage and persists it using
+     * the specified state version for compatibility.
+     *
+     * @param trie         The trie to serialize and save.
+     * @param stateVersion The state version to use for serialization.
+     */
+    public void insertTrieStorage(TrieStructure<NodeData> trie, StateVersion stateVersion) {
+        List<InsertTrieNode> dbSerializedTrieNodes = new InsertTrieBuilder(trie).build();
+        saveTrieNodes(dbSerializedTrieNodes, stateVersion);
+    }
+
+    /**
+     * Inserts trie nodes into the key-value repository.
+     *
+     * @param insertTrieNodes The list of trie nodes to be inserted.
+     * @param stateVersion    The version number of the trie entries.
+     */
+    private void saveTrieNodes(final List<InsertTrieNode> insertTrieNodes,
+                               final StateVersion stateVersion) {
+        try {
+            for (InsertTrieNode trieNode : insertTrieNodes) {
+                insertTrieNodeStorage(trieNode, stateVersion);
+            }
+        } catch (Exception e) {
+            log.log(Level.SEVERE, "Failed to insert trie structure to db storage", e);
+        }
+    }
+
+    /**
+     * Inserts trie node storage data into the key-value repository.
+     * <p>
+     * The storage data is represented by a {@link TrieNodeData} object, which is serialized and saved to the repository.
+     *
+     * @param trieNode     The trie node whose storage data is to be inserted.
+     * @param stateVersion The version of the state, affecting how the storage value is interpreted.
+     */
+    private void insertTrieNodeStorage(InsertTrieNode trieNode,
+                                       StateVersion stateVersion) {
+        String key = TRIE_NODE_PREFIX + new String(trieNode.merkleValue());
+
+        List<Nibble> nibbles = trieNode.partialKeyNibbles();
+        byte[] partialKey = partialKeyFromNibbles(nibbles);
+
+        List<byte[]> childrenMerkleValues = trieNode.childrenMerkleValues();
+
+        TrieNodeData storageValue = new TrieNodeData(
+                partialKey,
+                childrenMerkleValues,
+                trieNode.isReferenceValue() ? null : trieNode.storageValue(),
+                trieNode.isReferenceValue() ? trieNode.storageValue() : null,
+                (byte) stateVersion.asInt());
+
+        db.save(key, storageValue);
+    }
 }
