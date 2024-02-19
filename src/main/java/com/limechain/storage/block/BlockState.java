@@ -38,7 +38,7 @@ import java.util.Optional;
 @NoArgsConstructor(access = lombok.AccessLevel.PRIVATE)
 public class BlockState {
     @Getter
-    private final static BlockState instance = new BlockState();
+    private static final BlockState instance = new BlockState();
     private final BlockStateHelper helper = new BlockStateHelper();
     private BlockTree blockTree;
     private Map<Hash256, Block> unfinalizedBlocks;
