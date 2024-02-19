@@ -196,8 +196,7 @@ public class TrieStorage {
         if (node == null) {
             return EMPTY_TRIE_NODE;
         }
-
-
+        
         // If the current node is a leaf and the fullPath is greater than the prefix, it's a candidate.
         if (node.getValue() != null && Arrays.compare(currentPath, prefix) > 0) {
             return currentPath;
