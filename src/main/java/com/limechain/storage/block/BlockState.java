@@ -808,7 +808,7 @@ public class BlockState {
     }
 
     /**
-     * Gets the header of the latest finalized block
+     * Gets the number of the latest finalized block
      */
     public BigInteger getHighestFinalizedNumber() {
         return getHighestFinalizedHeader().getBlockNumber();
