@@ -37,13 +37,13 @@ public class FullNode implements HostNode {
         // TODO: Is there a better way to decide whether we've got any database written?
         KVRepository<String, Object> db = AppBean.getBean(KVRepository.class); //presume this works
 
-        // if: database has some persisted storage
         if (db == null) {
             throw new IllegalStateException("Database is not initialized");
         }
         TrieStorage trieStorage = TrieStorage.getInstance();
         trieStorage.initialize(db);//Initialize TrieStorage
 
+        // if: database has some persisted storage
         if (db.find(new BlockStateHelper().headerHashKey(BigInteger.ZERO)).isPresent()) {
             BlockState.getInstance().initialize(db);//Initialize BlockState from already existing data
         } else {

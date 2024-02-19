@@ -237,7 +237,7 @@ public class TrieStorage {
      * @param merkleValue The merkle value identifying the starting node in the trie.
      * @param searchKey   The key defining the upper limit of the search range.
      * @return A list of pairs, each containing a set of nibbles (representing a key within the trie)
-     *         and the corresponding node data.
+     * and the corresponding node data.
      */
     public List<Pair<Nibbles, NodeData>> entriesBetween(byte[] merkleValue, String searchKey) {
         List<Pair<Nibbles, NodeData>> entries = new ArrayList<>();
@@ -272,7 +272,7 @@ public class TrieStorage {
         if (childMerkleValue == null) return; // Skip empty slots.
 
         TrieNodeData childNode = getTrieNodeFromMerkleValue(childMerkleValue);
-        if(childNode == null){
+        if (childNode == null) {
             return;
         }
 

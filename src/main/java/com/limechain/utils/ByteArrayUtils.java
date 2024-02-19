@@ -82,10 +82,19 @@ public class ByteArrayUtils {
         return -1;
     }
 
-    public static byte[] concatenate(byte[] a, byte[] b) {
-        byte[] result = new byte[a.length + b.length];
-        System.arraycopy(a, 0, result, 0, a.length);
-        System.arraycopy(b, 0, result, a.length, b.length);
+    /**
+     * Concatenates two byte arrays into a single byte array. This method combines the contents
+     * of the first byte array and the second byte array into a new byte array, where the
+     * contents of the first array precede those of the second.
+     *
+     * @param prefix The first byte array to concatenate.
+     * @param suffix The second byte array to concatenate.
+     * @return A new byte array containing the concatenated result of the two input byte arrays.
+     */
+    public static byte[] concatenate(byte[] prefix, byte[] suffix) {
+        byte[] result = new byte[prefix.length + suffix.length];
+        System.arraycopy(prefix, 0, result, 0, prefix.length);
+        System.arraycopy(suffix, 0, result, prefix.length, suffix.length);
         return result;
     }
 }
