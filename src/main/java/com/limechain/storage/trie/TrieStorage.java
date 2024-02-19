@@ -61,6 +61,7 @@ public class TrieStorage {
      * @param bytes The byte array to convert.
      * @return A list of nibbles representing the byte array.
      */
+    @NotNull
     private static Nibbles nibblesFromBytes(byte[] bytes) {
         List<Nibble> nibbles = new ArrayList<>();
         for (byte aByte : bytes) {
@@ -260,8 +261,6 @@ public class TrieStorage {
             return;
         }
 
-
-        // If the current node is a leaf and the fullPath is greater than the prefix, it's a candidate.
         if (Arrays.equals(node.getPartialKey(), key)) {
             return;
         }
@@ -272,13 +271,15 @@ public class TrieStorage {
         byte[] childMerkleValue = childrenMerkleValues.get(key[commonPrefix]);
         if (childMerkleValue == null) return; // Skip empty slots.
 
-        // Fetch the child node based on its merkle value.
         TrieNodeData childNode = getTrieNodeFromMerkleValue(childMerkleValue);
+        if(childNode == null){
+            return;
+        }
 
         byte[] nextPath = ByteArrayUtils.concatenate(currentPath, new byte[]{key[commonPrefix]});
         nextPath = ByteArrayUtils.concatenate(nextPath, childNode.getPartialKey());
 
-        entries.add(new Pair<>(nibblesFromBytes(ByteArrayUtils.concatenate(nextPath, childNode.getPartialKey())),
+        entries.add(new Pair<>(nibblesFromBytes(nextPath),
                 new NodeData(childNode.getValue(), childMerkleValue)));
 
         collectEntriesUpTo(childNode, Arrays.copyOfRange(key, 1 + commonPrefix, key.length), nextPath, entries);
