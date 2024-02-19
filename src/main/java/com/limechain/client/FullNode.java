@@ -42,7 +42,7 @@ public class FullNode implements HostNode {
             throw new IllegalStateException("Database is not initialized");
         }
         TrieStorage trieStorage = TrieStorage.getInstance();
-        trieStorage.initialize(db);//Initialize TrieStorage (BlockState is prerequisite)
+        trieStorage.initialize(db);//Initialize TrieStorage
 
         if (db.find(new BlockStateHelper().headerHashKey(BigInteger.ZERO)).isPresent()) {
             BlockState.getInstance().initialize(db);//Initialize BlockState from already existing data
