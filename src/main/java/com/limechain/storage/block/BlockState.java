@@ -42,7 +42,6 @@ public class BlockState {
     private final BlockStateHelper helper = new BlockStateHelper();
     private final Map<Hash256, Block> unfinalizedBlocks = new HashMap<>();
     private BlockTree blockTree;
-    ;
     private KVRepository<String, Object> db;
     @Getter
     private Hash256 genesisHash;
