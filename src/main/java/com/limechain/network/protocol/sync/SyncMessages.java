@@ -32,7 +32,7 @@ public class SyncMessages extends StrictProtocolBinding<SyncController> {
             log.log(Level.INFO, "Received response: " + response.toString());
             return response;
         } catch (ExecutionException | TimeoutException e) {
-            log.log(Level.SEVERE, "Error while sending remote call request: ", e);
+            log.log(Level.SEVERE, "Error while sending remote block request: ", e);
             throw new ExecutionFailedException(e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -48,7 +48,7 @@ public class SyncMessages extends StrictProtocolBinding<SyncController> {
             log.log(Level.INFO, "Received state sync response " + resp.toString());
             return resp;
         } catch (ExecutionException | TimeoutException e) {
-            log.log(Level.SEVERE, "Error while sending remote call request: ", e);
+            log.log(Level.SEVERE, "Error while sending remote state request: ", e);
             throw new ExecutionFailedException(e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
