@@ -17,6 +17,7 @@ import com.limechain.trie.structure.node.TrieNodeData;
 import com.limechain.utils.ByteArrayUtils;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.extern.java.Log;
 import org.javatuples.Pair;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +29,7 @@ import java.util.Optional;
 import java.util.logging.Level;
 
 @Log
+@NoArgsConstructor(access = lombok.AccessLevel.PRIVATE)
 public class TrieStorage {
 
     private static final String TRIE_NODE_PREFIX = "tn:";
@@ -36,9 +38,6 @@ public class TrieStorage {
     private static final byte[] EMPTY_TRIE_NODE = new byte[0];
     private final BlockState blockState = BlockState.getInstance();
     private KVRepository<String, Object> db;
-
-    private TrieStorage() {
-    }
 
     /**
      * Converts a list of nibbles to a byte array. (Have in mind that this byte array is not the byte array from which

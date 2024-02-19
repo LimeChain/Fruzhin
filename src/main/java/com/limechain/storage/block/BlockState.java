@@ -16,6 +16,7 @@ import com.limechain.storage.block.exception.RoundAndSetIdNotFoundException;
 import com.limechain.storage.block.tree.BlockTree;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.extern.java.Log;
 import org.apache.commons.lang3.SerializationUtils;
 import org.javatuples.Pair;
@@ -34,9 +35,10 @@ import java.util.Optional;
  * It wraps the blocktree (which contains unfinalized blocks) and the database (which contains finalized blocks).
  */
 @Log
+@NoArgsConstructor(access = lombok.AccessLevel.PRIVATE)
 public class BlockState {
     @Getter
-    private static BlockState instance = new BlockState();
+    private final static BlockState instance = new BlockState();
     private final BlockStateHelper helper = new BlockStateHelper();
     private BlockTree blockTree;
     private Map<Hash256, Block> unfinalizedBlocks;
@@ -47,10 +49,6 @@ public class BlockState {
     private Hash256 lastFinalized;
     @Getter
     private boolean initialized;
-
-    private BlockState() {
-        //Singleton class
-    }
 
     /**
      * Initializes the BlockState instance from genesis
