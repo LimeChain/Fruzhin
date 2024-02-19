@@ -36,7 +36,7 @@ public class TrieStorage {
     @Getter
     private static final TrieStorage instance = new TrieStorage();
     private static final byte[] EMPTY_TRIE_NODE = new byte[0];
-    private final BlockState blockState = BlockState.getInstance();
+    private BlockState blockState;
     private KVRepository<String, Object> db;
 
     /**
@@ -47,7 +47,7 @@ public class TrieStorage {
      * @return A byte array representing the combined nibbles.
      */
     @NotNull
-    private static byte[] partialKeyFromNibbles(List<Nibble> nibbles) {
+    protected byte[] partialKeyFromNibbles(List<Nibble> nibbles) {
         return Bytes.toArray(
                 nibbles.stream()
                         .map(Nibble::asByte)
@@ -61,7 +61,7 @@ public class TrieStorage {
      * @return A list of nibbles representing the byte array.
      */
     @NotNull
-    private static Nibbles nibblesFromBytes(byte[] bytes) {
+    protected Nibbles nibblesFromBytes(byte[] bytes) {
         List<Nibble> nibbles = new ArrayList<>();
         for (byte aByte : bytes) {
             nibbles.add(Nibble.fromByte(aByte));
@@ -77,7 +77,19 @@ public class TrieStorage {
      */
 
     public void initialize(final KVRepository<String, Object> db) {
+        initialize(db, BlockState.getInstance());
+    }
+
+    /**
+     * Initializes the TrieStorage with a given key-value repository.
+     * This method must be called before using the TrieStorage instance.
+     *
+     * @param db         The key-value repository to be used for storing trie nodes.
+     * @param blockState The block state to be used for retrieving block headers.
+     */
+    protected void initialize(final KVRepository<String, Object> db, final BlockState blockState) {
         this.db = db;
+        this.blockState = blockState;
     }
 
     /**
@@ -137,6 +149,9 @@ public class TrieStorage {
         }
 
         int commonPrefix = ByteArrayUtils.commonPrefixLength(trieNode.getPartialKey(), key);
+        if (trieNode.getChildrenMerkleValues().size() < key[commonPrefix]) {
+            return null;
+        }
         byte[] childMerkleValue = trieNode.getChildrenMerkleValues().get(key[commonPrefix]);
 
         if (childMerkleValue == null) {
@@ -186,7 +201,7 @@ public class TrieStorage {
     }
 
     private String findNextKey(TrieNodeData rootNode, byte[] prefix) {
-        byte[] nextKeyBytes = searchForNextKey(rootNode, prefix, new byte[0]);
+        byte[] nextKeyBytes = searchForNextKey(rootNode, prefix, rootNode.getPartialKey());
 
         // If a next key is found, convert it back to a String and return.
         return nextKeyBytes == EMPTY_TRIE_NODE ? null : NibblesUtils.toStringPrepending(nibblesFromBytes(nextKeyBytes));
@@ -196,7 +211,7 @@ public class TrieStorage {
         if (node == null) {
             return EMPTY_TRIE_NODE;
         }
-        
+
         // If the current node is a leaf and the fullPath is greater than the prefix, it's a candidate.
         if (node.getValue() != null && Arrays.compare(currentPath, prefix) > 0) {
             return currentPath;
@@ -266,6 +281,9 @@ public class TrieStorage {
         List<byte[]> childrenMerkleValues = node.getChildrenMerkleValues();
         int commonPrefix = ByteArrayUtils.commonPrefixLength(node.getPartialKey(), key);
 
+        if (childrenMerkleValues.size() < key[commonPrefix]) {
+            return;
+        }
         byte[] childMerkleValue = childrenMerkleValues.get(key[commonPrefix]);
         if (childMerkleValue == null) return; // Skip empty slots.
 

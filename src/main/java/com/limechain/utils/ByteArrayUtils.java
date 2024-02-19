@@ -19,6 +19,9 @@ public class ByteArrayUtils {
      */
     public static int commonPrefixLength(byte[] a, byte[] b) {
         int minLength = Math.min(a.length, b.length);
+        if(minLength == 0) {
+            return 0;
+        }
         int length;
         for (length = 0; length < minLength; length++) {
             if (a[length] != b[length]) {

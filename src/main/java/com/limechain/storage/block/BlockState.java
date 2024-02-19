@@ -40,8 +40,9 @@ public class BlockState {
     @Getter
     private static final BlockState instance = new BlockState();
     private final BlockStateHelper helper = new BlockStateHelper();
+    private final Map<Hash256, Block> unfinalizedBlocks = new HashMap<>();
     private BlockTree blockTree;
-    private Map<Hash256, Block> unfinalizedBlocks;
+    ;
     private KVRepository<String, Object> db;
     @Getter
     private Hash256 genesisHash;
@@ -64,7 +65,6 @@ public class BlockState {
 
         this.blockTree = new BlockTree(header);
         this.db = repository;
-        this.unfinalizedBlocks = new HashMap<>();
 
         final Hash256 headerHash = header.getHash();
         this.genesisHash = headerHash;
@@ -91,7 +91,6 @@ public class BlockState {
         initialized = true;
 
         this.db = repository;
-        this.unfinalizedBlocks = new HashMap<>();
 
         this.genesisHash = getHashByNumberFromDb(BigInteger.ZERO);
         final BlockHeader lastHeader = getHighestFinalizedHeader();
