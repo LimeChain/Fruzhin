@@ -7,4 +7,4 @@
   So: map the CLI argument to an ENUM instance and from there: 
   - in production, use `application.properties` to fetch the chain spec path;
   - in test, use another properties file (spring profiles could help) or implement local test-case specific map from enum to paths... something like that
-  - Add exception handling for RPC calls, as currently we are leaking classpath to the exceptions and not using the suggested error codes from the JSON-RPC spec
+  - Add exception handling (Error Resolver while creating the JSONRPC server) for RPC calls, as currently we are leaking classpath to the exceptions and not using the suggested error codes from the JSON-RPC spec. Look into (./libs/jsonrpc4j-1.6.2-SNAPSHOT.jar!/com/googlecode/jsonrpc4j/JsonRpcBasicServer.class:468)
