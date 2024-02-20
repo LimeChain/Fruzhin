@@ -5,6 +5,7 @@ import com.googlecode.jsonrpc4j.spring.AutoJsonRpcServiceImpl;
 import com.limechain.chain.spec.ChainSpec;
 import com.limechain.chain.spec.ChainType;
 import com.limechain.chain.spec.PropertyValue;
+import com.limechain.rpc.methods.chain.ChainRPCImpl;
 import com.limechain.rpc.methods.sync.SyncRPCImpl;
 import com.limechain.rpc.methods.system.SystemRPC;
 import com.limechain.rpc.methods.system.SystemRPCImpl;
@@ -37,6 +38,22 @@ public class RPCMethodsImpl implements RPCMethods {
      */
     private final SyncRPCImpl syncRPC;
 
+    /**
+     * References to chain rpc method implementation classes
+     */
+    private final ChainRPCImpl chainRPC;
+
+    @Override
+    public String[] rpcMethods() {
+        ArrayList<Method> methods = new ArrayList<>();
+
+        Collections.addAll(methods, RPCMethods.class.getDeclaredMethods());
+        Collections.addAll(methods, SystemRPC.class.getDeclaredMethods());
+
+        return methods.stream().map(m -> m.getAnnotation(JsonRpcMethod.class).value()).toArray(String[]::new);
+    }
+
+    //region SystemRPC methods
     @Override
     public String systemName() {
         return systemRPC.systemName();
@@ -111,20 +128,64 @@ public class RPCMethodsImpl implements RPCMethods {
     public String systemDryRun(String extrinsic, String blockHash) {
         return systemRPC.systemDryRun(extrinsic, blockHash);
     }
+    //endregion
 
-    @Override
-    public String[] rpcMethods() {
-        ArrayList<Method> methods = new ArrayList<>();
-
-        Collections.addAll(methods, RPCMethods.class.getDeclaredMethods());
-        Collections.addAll(methods, SystemRPC.class.getDeclaredMethods());
-
-        return methods.stream().map(m -> m.getAnnotation(JsonRpcMethod.class).value()).toArray(String[]::new);
-    }
-
+    //region SyncRPC methods
     @Override
     public ChainSpec syncStateGenSyncSpec(boolean raw) {
         return syncRPC.syncStateGetSyncSpec(raw);
     }
+    //endregion
 
+    //region ChainRPC methods
+    @Override
+    public Map<String, Object> chainGetHeader(final String blockHashArg) {
+        return chainRPC.chainGetHeader(blockHashArg);
+    }
+
+    @Override
+    public Map<String, Object> chainGetBlock(String blockHash) {
+        return chainRPC.chainGetBlock(blockHash);
+    }
+
+    @Override
+    public String chainGetBlockHash() {
+        return null;
+    }
+
+    @Override
+    public String chainGetFinalizedHead() {
+        return null;
+    }
+
+    @Override
+    public String chainSubscribeAllHeads() {
+        return null;
+    }
+
+    @Override
+    public String chainUnsubscribeAllHeads() {
+        return null;
+    }
+
+    @Override
+    public String chainSubscribeNewHeads() {
+        return null;
+    }
+
+    @Override
+    public String chainUnsubscribeNewHeads() {
+        return null;
+    }
+
+    @Override
+    public String chainSubscribeFinalizedHeads() {
+        return null;
+    }
+
+    @Override
+    public String chainUnsubscribeFinalizedHeads() {
+        return null;
+    }
+    //endregion
 }
