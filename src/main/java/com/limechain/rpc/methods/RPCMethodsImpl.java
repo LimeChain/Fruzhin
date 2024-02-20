@@ -140,7 +140,7 @@ public class RPCMethodsImpl implements RPCMethods {
         try {
             storageKind = StorageKind.valueOf(storageKindStr);
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Invalid storage kind: " + storageKindStr);
+            return;
         }
         offchainRPC.offchainLocalStorageSet(storageKind, key, value);
     }
@@ -151,7 +151,7 @@ public class RPCMethodsImpl implements RPCMethods {
         try {
             storageKind = StorageKind.valueOf(storageKindStr);
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Invalid storage kind: " + storageKindStr);
+            return null; //Ignored on purpose
         }
         return offchainRPC.offchainLocalStorageGet(storageKind, key);
     }
