@@ -13,8 +13,11 @@ public class JustificationReader implements ScaleReader<Justification> {
     public Justification read(ScaleCodecReader reader) {
         Justification justification = new Justification();
         justification.setRound(new UInt64Reader().read(reader));
+
+        // Target hash and target block constitute the "GRANDPA Vote":
+        // https://spec.polkadot.network/sect-finality#defn-vote
         justification.setTargetHash(new Hash256(reader.readUint256()));
-        justification.setTargetBlock(new VarUint64Reader(4).read(reader));
+        justification.setTargetBlock(BlockNumberReader.getInstance().read(reader));
 
         int precommitsCount = reader.readCompactInt();
         Precommit[] precommits = new Precommit[precommitsCount];

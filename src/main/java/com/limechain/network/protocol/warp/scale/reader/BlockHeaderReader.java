@@ -13,6 +13,8 @@ public class BlockHeaderReader implements ScaleReader<BlockHeader> {
     public BlockHeader read(ScaleCodecReader reader) {
         BlockHeader blockHeader = new BlockHeader();
         blockHeader.setParentHash(new Hash256(reader.readUint256()));
+        // NOTE: Usage of BlockNumberReader is intentionally omitted here,
+        //  since we want this to be a compact int, not a var size int
         blockHeader.setBlockNumber(BigInteger.valueOf(reader.readCompactInt()));
         blockHeader.setStateRoot(new Hash256(reader.readUint256()));
         blockHeader.setExtrinsicsRoot(new Hash256(reader.readUint256()));
