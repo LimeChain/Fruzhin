@@ -167,35 +167,5 @@ public class RPCMethodsImpl implements RPCMethods {
     public String chainGetFinalisedHead() {
         return chainGetFinalizedHead();
     }
-
-    @Override
-    public String chainSubscribeAllHeads() {
-        return null;
-    }
-
-    @Override
-    public String chainUnsubscribeAllHeads() {
-        return null;
-    }
-
-    @Override
-    public String chainSubscribeNewHeads() {
-        return null;
-    }
-
-    @Override
-    public String chainUnsubscribeNewHeads() {
-        return null;
-    }
-
-    @Override
-    public String chainSubscribeFinalizedHeads() {
-        return null;
-    }
-
-    @Override
-    public String chainUnsubscribeFinalizedHeads() {
-        return null;
-    }
     //endregion
 }
