@@ -11,6 +11,20 @@ import java.util.stream.StreamSupport;
 @UtilityClass
 public class NibblesUtils {
     /**
+     * Joins a collection of nibbles into a String by
+     * joining each two consecutive nibbles into a single byte and building String by the byte array
+     * If the number of nibbles is odd, adds a `0` nibble at the beginning.
+     */
+    public String toStringPrepending(final Nibbles nibbles) {
+        List<Byte> byteList = toBytesPrepending(nibbles);
+        byte[] bytes = new byte[byteList.size()];
+        for (int i = 0; i < byteList.size(); i++) {
+            bytes[i] = byteList.get(i);
+        }
+        return new String(bytes);
+    }
+
+    /**
      * Joins a collection of nibbles into a list of bytes by
      * joining each two consecutive nibbles into a single byte.
      * If the number of nibbles is odd, adds a `0` nibble at the beginning.
@@ -40,7 +54,7 @@ public class NibblesUtils {
         }
 
         for (int i = startFrom; i < nibbles.size() - 1; i += 2) {
-            byte decodedNibble = nibblesToByte(nibbles.get(i), nibbles.get(i+1));
+            byte decodedNibble = nibblesToByte(nibbles.get(i), nibbles.get(i + 1));
             result.add(decodedNibble);
         }
 
@@ -57,20 +71,20 @@ public class NibblesUtils {
         return (byte) (first.asInt() << 4 | second.asInt());
     }
 
-    private enum ConversionStrategy {
-        APPEND, PREPEND
-    }
-
     String toLowerHexString(Iterable<Nibble> nibbles) {
         return StreamSupport.stream(nibbles.spliterator(), false)
-            .map(Nibble::asLowerHexDigit)
-            .collect(
-                Collector.of(
-                    StringBuilder::new,
-                    StringBuilder::append,
-                    StringBuilder::append,
-                    StringBuilder::toString
-                )
-            );
+                .map(Nibble::asLowerHexDigit)
+                .collect(
+                        Collector.of(
+                                StringBuilder::new,
+                                StringBuilder::append,
+                                StringBuilder::append,
+                                StringBuilder::toString
+                        )
+                );
+    }
+
+    private enum ConversionStrategy {
+        APPEND, PREPEND
     }
 }

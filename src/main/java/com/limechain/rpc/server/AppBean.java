@@ -1,6 +1,8 @@
 package com.limechain.rpc.server;
 
+import lombok.extern.java.Log;
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
@@ -13,6 +15,7 @@ import org.springframework.stereotype.Component;
  * Pattern taken from <a href="https://bit.ly/3yqYkX0">here</a>
  */
 @Component
+@Log
 public class AppBean implements ApplicationContextAware {
 
     private static ApplicationContext context;
@@ -22,7 +25,12 @@ public class AppBean implements ApplicationContextAware {
      * Returns null otherwise.
      */
     public static <T extends Object> T getBean(Class<T> beanClass) {
-        return context.getBean(beanClass);
+        try {
+            return context.getBean(beanClass);
+        } catch (NoSuchBeanDefinitionException e) {
+            log.warning("No bean of type " + beanClass.getName() + " found in the application context");
+            return null;
+        }
     }
 
     /**

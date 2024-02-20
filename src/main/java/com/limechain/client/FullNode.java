@@ -1,39 +1,28 @@
 package com.limechain.client;
 
-import com.google.common.primitives.Bytes;
 import com.google.protobuf.ByteString;
-import com.limechain.chain.ChainService;
 import com.limechain.cli.CliArguments;
-import com.limechain.chain.spec.Genesis;
+import com.limechain.constants.GenesisBlockHash;
 import com.limechain.network.Network;
 import com.limechain.rpc.server.AppBean;
 import com.limechain.runtime.RuntimeBuilder;
 import com.limechain.runtime.version.StateVersion;
 import com.limechain.storage.KVRepository;
+import com.limechain.storage.block.BlockState;
 import com.limechain.storage.block.BlockStateHelper;
+import com.limechain.storage.trie.TrieStorage;
 import com.limechain.sync.fullsync.FullSyncMachine;
 import com.limechain.sync.warpsync.WarpSyncMachine;
-import com.limechain.trie.TrieStructureFactory;
 import com.limechain.trie.structure.TrieStructure;
-import com.limechain.trie.structure.database.InsertTrieBuilder;
 import com.limechain.trie.structure.database.NodeData;
-import com.limechain.trie.structure.database.TrieBuildException;
-import com.limechain.trie.structure.nibble.Nibble;
-import com.limechain.trie.structure.node.InsertTrieNode;
-import com.limechain.trie.structure.node.NodeChildData;
-import com.limechain.trie.structure.node.TrieNodeData;
 import lombok.SneakyThrows;
 import lombok.extern.java.Log;
 
 import java.math.BigInteger;
-import java.util.List;
 import java.util.logging.Level;
 
 @Log
 public class FullNode implements HostNode {
-    private static final String TRIE_NODE_PREFIX = "tn:";
-    private static final String TRIE_NODE_STORAGE_PREFIX = "tns:";
-    private static final String TRIE_NODE_CHILD_PREFIX = "tnc:";
 
     /**
      * Starts the light client by instantiating all dependencies and services
@@ -46,20 +35,28 @@ public class FullNode implements HostNode {
         //Initialize state
 
         // TODO: Is there a better way to decide whether we've got any database written?
-        var db = AppBean.getBean(KVRepository.class); //presume this works
-        // if: database exists and has some persisted storage
-        if (db != null && db.find(new BlockStateHelper().headerHashKey(BigInteger.ZERO)).isPresent()) {
-            // do nothing?
+        KVRepository<String, Object> db = AppBean.getBean(KVRepository.class); //presume this works
+
+        if (db == null) {
+            throw new IllegalStateException("Database is not initialized");
+        }
+        TrieStorage trieStorage = TrieStorage.getInstance();
+        trieStorage.initialize(db);
+
+        // if: database has some persisted storage
+        if (db.find(new BlockStateHelper().headerHashKey(BigInteger.ZERO)).isPresent()) {
+            BlockState.getInstance().initialize(db);//Initialize BlockState from already existing data
         } else {
-            Genesis genesisStorage = loadGenesisStorage();
+            GenesisBlockHash genesisBlockHash = AppBean.getBean(GenesisBlockHash.class);
+            BlockState.getInstance().initialize(db,
+                    genesisBlockHash.getGenesisBlockHeader()); //Initialize BlockState from genesis block
 
             StateVersion stateVersion = new RuntimeBuilder().buildRuntime(
-                genesisStorage.getTop().get(ByteString.copyFrom(":code".getBytes())).toByteArray()
+                    genesisBlockHash.getGenesisStorage().get(ByteString.copyFrom(":code".getBytes())).toByteArray()
             ).getVersion().getStateVersion();
 
-            TrieStructure<NodeData> trie = TrieStructureFactory.buildFromKVPs(genesisStorage.getTop(), stateVersion);
-            List<InsertTrieNode> dbSerializedTrieNodes = new InsertTrieBuilder(trie).build();
-            insertStorage(db, dbSerializedTrieNodes, stateVersion); //Todo: calculate state version
+            TrieStructure<NodeData> trie = genesisBlockHash.getGenesisTrie();
+            trieStorage.insertTrieStorage(trie, stateVersion);
         }
 
         // Start network
@@ -83,78 +80,11 @@ public class FullNode implements HostNode {
         log.log(Level.INFO, "Node successfully connected to a peer! Sync can start!");
 
         CliArguments args = AppBean.getBean(CliArguments.class);
-        switch (args.syncMode()){
+        switch (args.syncMode()) {
             case FULL -> AppBean.getBean(FullSyncMachine.class).start();
             case WARP -> AppBean.getBean(WarpSyncMachine.class).start();
             default -> throw new IllegalStateException("Unexpected value: " + args.syncMode());
         }
     }
 
-    private static Genesis loadGenesisStorage() {
-        return AppBean.getBean(ChainService.class).getChainSpec().getGenesis();
-    }
-
-    /**
-     * Inserts trie nodes into the key-value repository.
-     *
-     * @param db              The key-value repository where trie nodes are to be stored.
-     * @param insertTrieNodes The list of trie nodes to be inserted.
-     * @param stateVersion  The version number of the trie entries.
-     */
-    private void insertStorage(KVRepository<String, Object> db, List<InsertTrieNode> insertTrieNodes,
-                               StateVersion stateVersion) {
-        try {
-            for (InsertTrieNode trieNode : insertTrieNodes) {
-                insertTrieNode(db, trieNode);
-                insertTrieNodeStorage(db, trieNode, stateVersion);
-                insertChildren(db, trieNode);
-            }
-
-        } catch (Exception e) {
-            log.log(Level.SEVERE, "Failed to insert trie structure to db storage", e);
-        }
-    }
-
-    private void insertTrieNode(KVRepository<String, Object> db, InsertTrieNode trieNode) {
-        if (trieNode.merkleValue() == null) {
-            throw new TrieBuildException("Missing merkle value");
-        }
-
-        String key = TRIE_NODE_PREFIX + new String(trieNode.merkleValue());
-        byte[] value = Bytes.toArray(
-                trieNode.partialKeyNibbles().stream()
-                        .map(Nibble::asByte)
-                        .toList());
-
-        db.save(key, value);
-    }
-
-    private void insertTrieNodeStorage(KVRepository<String, Object> db, InsertTrieNode trieNode, StateVersion stateVersion) {
-        String key = TRIE_NODE_STORAGE_PREFIX + new String(trieNode.merkleValue());
-        TrieNodeData storageValue = new TrieNodeData(
-                trieNode.isReferenceValue() ? null : trieNode.storageValue(),
-                trieNode.isReferenceValue() ? trieNode.storageValue() : null,
-                (byte) stateVersion.asInt());
-
-        db.save(key, storageValue);
-    }
-
-    /**
-     * Inserts the children of a given trie node into
-     * the key-value repository.
-     *
-     * @param db       The key-value repository where trie node children are to be stored.
-     * @param trieNode The trie node whose children are to be inserted.
-     */
-    private void insertChildren(KVRepository<String, Object> db, InsertTrieNode trieNode) {
-        String key = TRIE_NODE_CHILD_PREFIX + new String(trieNode.merkleValue());
-        List<byte[]> childrenMerkleValues = trieNode.childrenMerkleValues();
-
-        for (int childNum = 0; childNum < childrenMerkleValues.size(); childNum++) {
-            byte[] child = childrenMerkleValues.get(childNum);
-            NodeChildData nodeChildData = new NodeChildData(childNum, child);
-
-            db.save(key, nodeChildData);
-        }
-    }
 }

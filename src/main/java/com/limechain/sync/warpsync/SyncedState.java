@@ -8,8 +8,8 @@ import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceMessage;
 import com.limechain.network.protocol.grandpa.messages.commit.CommitMessage;
 import com.limechain.network.protocol.grandpa.messages.neighbour.NeighbourMessage;
 import com.limechain.network.protocol.lightclient.pb.LightClientMessage;
-import com.limechain.network.protocol.sync.pb.SyncMessage.BlockResponse;
 import com.limechain.network.protocol.sync.pb.SyncMessage.BlockData;
+import com.limechain.network.protocol.sync.pb.SyncMessage.BlockResponse;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.network.protocol.warp.dto.ConsensusEngine;
 import com.limechain.network.protocol.warp.dto.DigestType;
@@ -17,7 +17,6 @@ import com.limechain.network.protocol.warp.dto.HeaderDigest;
 import com.limechain.network.protocol.warp.dto.Justification;
 import com.limechain.network.protocol.warp.scale.reader.BlockHeaderReader;
 import com.limechain.network.protocol.warp.scale.reader.JustificationReader;
-import com.limechain.network.protocol.warp.dto.Block;
 import com.limechain.rpc.server.AppBean;
 import com.limechain.runtime.Runtime;
 import com.limechain.runtime.RuntimeBuilder;
@@ -28,27 +27,27 @@ import com.limechain.sync.JustificationVerifier;
 import com.limechain.sync.warpsync.dto.AuthoritySetChange;
 import com.limechain.sync.warpsync.dto.GrandpaDigestMessageType;
 import com.limechain.sync.warpsync.dto.RuntimeCodeException;
+import com.limechain.sync.warpsync.dto.StateDto;
 import com.limechain.sync.warpsync.scale.ForcedChangeReader;
 import com.limechain.sync.warpsync.scale.ScheduledChangeReader;
 import com.limechain.utils.StringUtils;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
-import com.limechain.sync.warpsync.dto.StateDto;
 import io.emeraldpay.polkaj.types.Hash256;
 import io.libp2p.core.PeerId;
 import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.extern.java.Log;
 import org.javatuples.Pair;
 
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
-import java.util.PriorityQueue;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.logging.Level;
 
@@ -60,15 +59,11 @@ import java.util.logging.Level;
 @Setter
 @Log
 public class SyncedState {
-    private static final SyncedState INSTANCE = new SyncedState();
-
-    public static SyncedState getInstance() {
-        return INSTANCE;
-    }
-
     public static final int NEIGHBOUR_MESSAGE_VERSION = 1;
     public static final String CODE_KEY = StringUtils.toHex(":code");
-
+    private static final SyncedState INSTANCE = new SyncedState();
+    private final PriorityQueue<Pair<BigInteger, Authority[]>> scheduledAuthorityChanges =
+            new PriorityQueue<>(Comparator.comparing(Pair::getValue0));
     private boolean warpSyncFragmentsFinished;
     private boolean warpSyncFinished;
 
@@ -89,11 +84,11 @@ public class SyncedState {
     private Network network;
     private RuntimeBuilder runtimeBuilder = new RuntimeBuilder();
     private BlockState blockState;
-
-    private final PriorityQueue<Pair<BigInteger, Authority[]>> scheduledAuthorityChanges =
-            new PriorityQueue<>(Comparator.comparing(Pair::getValue0));
-
     private Set<BigInteger> scheduledRuntimeUpdateBlocks = new HashSet<>();
+
+    public static SyncedState getInstance() {
+        return INSTANCE;
+    }
 
     /**
      * Creates a Block Announce handshake based on the latest finalized Host state
@@ -159,10 +154,10 @@ public class SyncedState {
         }
 
         log.log(Level.INFO, "Received commit message from peer " + peerId
-                + " for block #" + commitMessage.getVote().getBlockNumber()
-                + " with hash " + commitMessage.getVote().getBlockHash()
-                + " with setId " + commitMessage.getSetId() + " and round " + commitMessage.getRoundNumber()
-                + " with " + commitMessage.getPrecommits().length + " voters");
+                            + " for block #" + commitMessage.getVote().getBlockNumber()
+                            + " with hash " + commitMessage.getVote().getBlockHash()
+                            + " with setId " + commitMessage.getSetId() + " and round " + commitMessage.getRoundNumber()
+                            + " with " + commitMessage.getPrecommits().length + " voters");
 
         boolean verified = JustificationVerifier.verify(commitMessage.getPrecommits(), commitMessage.getRoundNumber());
         if (!verified) {
@@ -180,10 +175,6 @@ public class SyncedState {
             return;
         }
         final Hash256 blockHash = commitMessage.getVote().getBlockHash();
-        Block block = blockState.deleteUnfinalizedBlock(blockHash);
-        if (block != null) {
-            blockState.setHeader(block.getHeader());
-        }
 
         latestRound = commitMessage.getRoundNumber();
         lastFinalizedBlockHash = blockHash;
@@ -208,7 +199,7 @@ public class SyncedState {
     public void updateRuntimeCode() {
         LightClientMessage.Response response = network.makeRemoteReadRequest(
                 lastFinalizedBlockHash.toString(),
-                new String[]{ CODE_KEY }
+                new String[]{CODE_KEY}
         );
 
         byte[] proof = response.getRemoteReadResponse().getProof().toByteArray();
@@ -290,7 +281,7 @@ public class SyncedState {
         Justification justification = new JustificationReader().read(
                 new ScaleCodecReader(block.getJustification().toByteArray()));
         boolean verified = justification != null
-                && JustificationVerifier.verify(justification.getPrecommits(), justification.getRound());
+                           && JustificationVerifier.verify(justification.getPrecommits(), justification.getRound());
 
         if (verified) {
             BlockHeader header = new BlockHeaderReader().read(new ScaleCodecReader(block.getHeader().toByteArray()));
