@@ -5,6 +5,7 @@ import com.googlecode.jsonrpc4j.spring.AutoJsonRpcServiceImpl;
 import com.limechain.chain.spec.ChainSpec;
 import com.limechain.chain.spec.ChainType;
 import com.limechain.chain.spec.PropertyValue;
+import com.limechain.rpc.methods.offchain.OffchainRPCImpl;
 import com.limechain.rpc.methods.sync.SyncRPCImpl;
 import com.limechain.rpc.methods.system.SystemRPC;
 import com.limechain.rpc.methods.system.SystemRPCImpl;
@@ -36,6 +37,11 @@ public class RPCMethodsImpl implements RPCMethods {
      * References to sync rpc method implementation classes
      */
     private final SyncRPCImpl syncRPC;
+
+    /**
+     * References to offchain rpc method implementation classes
+     */
+    private final OffchainRPCImpl offchainRPC;
 
     @Override
     public String systemName() {
@@ -127,4 +133,13 @@ public class RPCMethodsImpl implements RPCMethods {
         return syncRPC.syncStateGetSyncSpec(raw);
     }
 
+    @Override
+    public void offchainLocalStorageSet(String storageKind, String key, String value) {
+        offchainRPC.offchainLocalStorageSet(storageKind, key, value);
+    }
+
+    @Override
+    public String ofchainLocalStorageGet(String storageKind, String key) {
+        return offchainRPC.ofchainLocalStorageGet(storageKind, key);
+    }
 }
