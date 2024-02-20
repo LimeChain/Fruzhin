@@ -18,13 +18,31 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
 
 @Service
 @AllArgsConstructor
 public class ChainRPCImpl {
 
-    private final static String HEX_PREFIX = "0x";
+    private static final String HEX_PREFIX = "0x";
     private final BlockState blockState = BlockState.getInstance();
+
+    @NotNull
+    private static Function<Object, BigInteger> parseObjectToBigInt() {
+        return blockNumber -> {
+            if (blockNumber instanceof String blockNumStr) {
+                if (blockNumStr.startsWith(HEX_PREFIX)) {
+                    return new BigInteger(blockNumStr.substring(2), 16);
+                }
+                return new BigInteger(blockNumStr);
+            } else if (blockNumber instanceof Long blockNum) {
+                return BigInteger.valueOf(blockNum);
+            } else if (blockNumber instanceof Integer blockNum) {
+                return BigInteger.valueOf(blockNum);
+            } else
+                return null;
+        };
+    }
 
     public Map<String, Object> chainGetHeader(String blockHash) {
         if (!blockState.isInitialized()) {
@@ -76,27 +94,9 @@ public class ChainRPCImpl {
 
         List<String> blockHashes = Arrays.stream(blockNumbers)
                 .filter(Objects::nonNull)
-                .map(blockNumber -> {
-                    if (blockNumber instanceof String blockNumStr) {
-                        if (blockNumStr.startsWith(HEX_PREFIX)) {
-                            return new BigInteger(blockNumStr.substring(2), 16);
-                        }
-                        return new BigInteger(blockNumStr);
-                    } else if (blockNumber instanceof Long blockNum) {
-                        return BigInteger.valueOf(blockNum);
-                    } else if (blockNumber instanceof Integer blockNum) {
-                        return BigInteger.valueOf(blockNum);
-                    } else
-                        return null;
-                })
+                .map(parseObjectToBigInt())
                 .filter(Objects::nonNull)
-                .map(blockNum -> {
-                    try {
-                        return blockState.getHashByNumber(blockNum);
-                    } catch (BlockStorageGenericException e) {
-                        return null;
-                    }
-                })
+                .map(getBlockHashFromNum())
                 .filter(Objects::nonNull)
                 .map(Hash256::toString)
                 .toList();
@@ -107,6 +107,17 @@ public class ChainRPCImpl {
             return blockHashes.get(0);
         else
             return blockHashes;
+    }
+
+    @NotNull
+    private Function<BigInteger, Hash256> getBlockHashFromNum() {
+        return blockNum -> {
+            try {
+                return blockState.getHashByNumber(blockNum);
+            } catch (BlockStorageGenericException e) {
+                return null;
+            }
+        };
     }
 
     public String chainGetFinalizedHead() {
