@@ -5,6 +5,7 @@ import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.network.protocol.warp.dto.HeaderDigest;
 import com.limechain.storage.block.BlockState;
 import com.limechain.storage.block.exception.BlockNotFoundException;
+import com.limechain.storage.block.exception.BlockStorageGenericException;
 import com.limechain.storage.block.exception.HeaderNotFoundException;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.AllArgsConstructor;
@@ -12,8 +13,11 @@ import org.apache.tomcat.util.buf.HexUtils;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 
+import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Service
 @AllArgsConstructor
@@ -63,8 +67,46 @@ public class ChainRPCImpl {
         );
     }
 
-    public String chainGetBlockHash() {
-        return null;
+    public Object chainGetBlockHash(Object[] blockNumbers) {
+        if (!blockState.isInitialized()) {
+            return null;
+        }
+        if (blockNumbers == null || blockNumbers.length == 0)
+            return null;
+
+        List<String> blockHashes = Arrays.stream(blockNumbers)
+                .filter(Objects::nonNull)
+                .map(blockNumber -> {
+                    if (blockNumber instanceof String blockNumStr) {
+                        if (blockNumStr.startsWith(HEX_PREFIX)) {
+                            return new BigInteger(blockNumStr.substring(2), 16);
+                        }
+                        return new BigInteger(blockNumStr);
+                    } else if (blockNumber instanceof Long blockNum) {
+                        return BigInteger.valueOf(blockNum);
+                    } else if (blockNumber instanceof Integer blockNum) {
+                        return BigInteger.valueOf(blockNum);
+                    } else
+                        return null;
+                })
+                .filter(Objects::nonNull)
+                .map(blockNum -> {
+                    try {
+                        return blockState.getHashByNumber(blockNum);
+                    } catch (BlockStorageGenericException e) {
+                        return null;
+                    }
+                })
+                .filter(Objects::nonNull)
+                .map(Hash256::toString)
+                .toList();
+
+        if (blockHashes.isEmpty())
+            return null;
+        else if (blockHashes.size() == 1)
+            return blockHashes.get(0);
+        else
+            return blockHashes;
     }
 
     public String chainGetFinalizedHead() {

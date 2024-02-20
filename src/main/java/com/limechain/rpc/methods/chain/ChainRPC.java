@@ -18,7 +18,10 @@ public interface ChainRPC {
     Map<String, Object> chainGetBlock(String blockHash);
 
     @JsonRpcMethod("chain_getBlockHash")
-    String chainGetBlockHash();
+    Object chainGetBlockHash(Object... blockNumbers);
+
+    @JsonRpcMethod("chain_getHead") //Alias for chain_getBlockHash
+    Object chainGetHead(Object... blockNumbers);
 
     @JsonRpcMethod("chain_getFinalizedHead")
     String chainGetFinalizedHead();

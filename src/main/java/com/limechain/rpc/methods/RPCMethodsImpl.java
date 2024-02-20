@@ -149,8 +149,13 @@ public class RPCMethodsImpl implements RPCMethods {
     }
 
     @Override
-    public String chainGetBlockHash() {
-        return null;
+    public Object chainGetBlockHash(Object... blockNumbers) {
+        return chainRPC.chainGetBlockHash(blockNumbers);
+    }
+
+    @Override
+    public Object chainGetHead(Object... blockNumbers) {
+        return chainGetBlockHash(blockNumbers);
     }
 
     @Override
