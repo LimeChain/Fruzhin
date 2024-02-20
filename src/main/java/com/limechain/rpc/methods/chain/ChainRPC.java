@@ -29,22 +29,4 @@ public interface ChainRPC {
     @JsonRpcMethod("chain_getFinalisedHead") //Alias for chain_getFinalizedHead
     String chainGetFinalisedHead();
 
-    @JsonRpcMethod("chain_subscribeAllHeads")
-    String chainSubscribeAllHeads();
-
-    @JsonRpcMethod("chain_unsubscribeAllHeads")
-    String chainUnsubscribeAllHeads();
-
-    @JsonRpcMethod("chain_subscribeNewHeads")
-    String chainSubscribeNewHeads();
-
-    @JsonRpcMethod("chain_unsubscribeNewHeads")
-    String chainUnsubscribeNewHeads();
-
-    @JsonRpcMethod("chain_subscribeFinalizedHeads")
-    String chainSubscribeFinalizedHeads();
-
-    @JsonRpcMethod("chain_unsubscribeFinalizedHeads")
-    String chainUnsubscribeFinalizedHeads();
-
 }
