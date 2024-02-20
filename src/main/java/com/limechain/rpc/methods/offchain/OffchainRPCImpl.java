@@ -3,6 +3,7 @@ package com.limechain.rpc.methods.offchain;
 import com.limechain.runtime.hostapi.dto.InvalidArgumentException;
 import com.limechain.storage.KVRepository;
 import com.limechain.storage.offchain.OffchainStore;
+import com.limechain.utils.StringUtils;
 import org.apache.tomcat.util.buf.HexUtils;
 import org.springframework.stereotype.Service;
 
@@ -20,18 +21,14 @@ public class OffchainRPCImpl {
         localStorage = new OffchainStore(db, false);
     }
 
-    private static byte[] getFromHexString(String key) {
-        return HexUtils.fromHexString(key.substring(2));
-    }
-
     public void offchainLocalStorageSet(String storageKind, String key, String value) {
         OffchainStore offchainStore = storageByKind(storageKind.toUpperCase());
-        offchainStore.set(new String(getFromHexString(key)), getFromHexString(value));
+        offchainStore.set(new String(StringUtils.hexToBytes(key)), StringUtils.hexToBytes(value));
     }
 
     public String ofchainLocalStorageGet(String storageKind, String key) {
         OffchainStore offchainStore = storageByKind(storageKind.toUpperCase());
-        byte[] bytes = offchainStore.get(new String(getFromHexString(key)));
+        byte[] bytes = offchainStore.get(new String(StringUtils.hexToBytes(key)));
         if (bytes == null) {
             return null;
         }
