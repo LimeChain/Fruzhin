@@ -5,6 +5,7 @@ import com.googlecode.jsonrpc4j.spring.AutoJsonRpcServiceImpl;
 import com.limechain.chain.spec.ChainSpec;
 import com.limechain.chain.spec.ChainType;
 import com.limechain.chain.spec.PropertyValue;
+import com.limechain.rpc.exceptions.InvalidParametersException;
 import com.limechain.rpc.methods.offchain.OffchainRPCImpl;
 import com.limechain.rpc.methods.sync.SyncRPCImpl;
 import com.limechain.rpc.methods.system.SystemRPC;
@@ -140,7 +141,7 @@ public class RPCMethodsImpl implements RPCMethods {
         try {
             storageKind = StorageKind.valueOf(storageKindStr);
         } catch (IllegalArgumentException e) {
-            return;
+            throw new InvalidParametersException("Invalid storage kind: " + storageKindStr);
         }
         offchainRPC.offchainLocalStorageSet(storageKind, key, value);
     }
@@ -151,7 +152,7 @@ public class RPCMethodsImpl implements RPCMethods {
         try {
             storageKind = StorageKind.valueOf(storageKindStr);
         } catch (IllegalArgumentException e) {
-            return null; //Ignored on purpose
+            throw new InvalidParametersException("Invalid storage kind: " + storageKindStr);
         }
         return offchainRPC.offchainLocalStorageGet(storageKind, key);
     }
