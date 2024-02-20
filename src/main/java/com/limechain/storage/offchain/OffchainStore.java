@@ -6,15 +6,13 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class OffchainStore {
     private static final String OFFCHAIN_PREFIX = "offchain_";
-    private static final String PERSISTENT_PREFIX = "persistent_";
-    private static final String LOCAL_PREFIX = "local_";
 
     private final KVRepository<String, Object> repository;
     private final String prefix;
 
-    public OffchainStore(KVRepository<String, Object> repository, boolean persistent) {
+    public OffchainStore(KVRepository<String, Object> repository, StorageKind storageKind) {
         this.repository = repository;
-        this.prefix = OFFCHAIN_PREFIX.concat(persistent ? PERSISTENT_PREFIX : LOCAL_PREFIX);
+        this.prefix = OFFCHAIN_PREFIX.concat(storageKind.getPrefix());
     }
 
     public synchronized void set(String key, byte[] value) {
