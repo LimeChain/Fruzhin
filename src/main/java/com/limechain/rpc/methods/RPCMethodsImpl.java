@@ -9,6 +9,7 @@ import com.limechain.rpc.methods.offchain.OffchainRPCImpl;
 import com.limechain.rpc.methods.sync.SyncRPCImpl;
 import com.limechain.rpc.methods.system.SystemRPC;
 import com.limechain.rpc.methods.system.SystemRPCImpl;
+import com.limechain.storage.offchain.StorageKind;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -134,12 +135,24 @@ public class RPCMethodsImpl implements RPCMethods {
     }
 
     @Override
-    public void offchainLocalStorageSet(String storageKind, String key, String value) {
+    public void offchainLocalStorageSet(String storageKindStr, String key, String value) {
+        final StorageKind storageKind;
+        try {
+            storageKind = StorageKind.valueOf(storageKindStr);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid storage kind: " + storageKindStr);
+        }
         offchainRPC.offchainLocalStorageSet(storageKind, key, value);
     }
 
     @Override
-    public String offchainLocalStorageGet(String storageKind, String key) {
+    public String offchainLocalStorageGet(String storageKindStr, String key) {
+        final StorageKind storageKind;
+        try {
+            storageKind = StorageKind.valueOf(storageKindStr);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid storage kind: " + storageKindStr);
+        }
         return offchainRPC.offchainLocalStorageGet(storageKind, key);
     }
 }
