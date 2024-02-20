@@ -139,7 +139,7 @@ public class RPCMethodsImpl implements RPCMethods {
     }
 
     @Override
-    public String ofchainLocalStorageGet(String storageKind, String key) {
-        return offchainRPC.ofchainLocalStorageGet(storageKind, key);
+    public String offchainLocalStorageGet(String storageKind, String key) {
+        return offchainRPC.offchainLocalStorageGet(storageKind, key);
     }
 }

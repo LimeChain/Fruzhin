@@ -26,7 +26,7 @@ public class OffchainRPCImpl {
         offchainStore.set(new String(StringUtils.hexToBytes(key)), StringUtils.hexToBytes(value));
     }
 
-    public String ofchainLocalStorageGet(String storageKind, String key) {
+    public String offchainLocalStorageGet(String storageKind, String key) {
         OffchainStore offchainStore = storageByKind(storageKind.toUpperCase());
         byte[] bytes = offchainStore.get(new String(StringUtils.hexToBytes(key)));
         if (bytes == null) {

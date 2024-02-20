@@ -7,6 +7,6 @@ public interface OffchainRPC {
     void offchainLocalStorageSet(final String storageKind, final String key, final String value);
 
     @JsonRpcMethod("offchain_localStorageGet")
-    String ofchainLocalStorageGet(final String storageKind, final String key);
+    String offchainLocalStorageGet(final String storageKind, final String key);
 
 }
