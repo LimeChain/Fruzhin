@@ -110,7 +110,10 @@ public class ChainRPCImpl {
     }
 
     public String chainGetFinalizedHead() {
-        return null;
+        if (!blockState.isInitialized()) {
+            return null;
+        }
+        return blockState.getHighestFinalizedHash().toString();
     }
 
     public String chainSubscribeAllHeads() {

@@ -140,27 +140,32 @@ public class RPCMethodsImpl implements RPCMethods {
     //region ChainRPC methods
     @Override
     public Map<String, Object> chainGetHeader(final String blockHashArg) {
-        return chainRPC.chainGetHeader(blockHashArg);
+        return this.chainRPC.chainGetHeader(blockHashArg);
     }
 
     @Override
-    public Map<String, Object> chainGetBlock(String blockHash) {
-        return chainRPC.chainGetBlock(blockHash);
+    public Map<String, Object> chainGetBlock(final String blockHash) {
+        return this.chainRPC.chainGetBlock(blockHash);
     }
 
     @Override
-    public Object chainGetBlockHash(Object... blockNumbers) {
-        return chainRPC.chainGetBlockHash(blockNumbers);
+    public Object chainGetBlockHash(final Object... blockNumbers) {
+        return this.chainRPC.chainGetBlockHash(blockNumbers);
     }
 
     @Override
-    public Object chainGetHead(Object... blockNumbers) {
+    public Object chainGetHead(final Object... blockNumbers) {
         return chainGetBlockHash(blockNumbers);
     }
 
     @Override
     public String chainGetFinalizedHead() {
-        return null;
+        return this.chainRPC.chainGetFinalizedHead();
+    }
+
+    @Override
+    public String chainGetFinalisedHead() {
+        return chainGetFinalizedHead();
     }
 
     @Override
