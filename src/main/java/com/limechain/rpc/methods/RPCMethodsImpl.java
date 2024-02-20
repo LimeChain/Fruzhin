@@ -5,9 +5,12 @@ import com.googlecode.jsonrpc4j.spring.AutoJsonRpcServiceImpl;
 import com.limechain.chain.spec.ChainSpec;
 import com.limechain.chain.spec.ChainType;
 import com.limechain.chain.spec.PropertyValue;
+import com.limechain.rpc.exceptions.InvalidParametersException;
+import com.limechain.rpc.methods.offchain.OffchainRPCImpl;
 import com.limechain.rpc.methods.sync.SyncRPCImpl;
 import com.limechain.rpc.methods.system.SystemRPC;
 import com.limechain.rpc.methods.system.SystemRPCImpl;
+import com.limechain.storage.offchain.StorageKind;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -36,6 +39,11 @@ public class RPCMethodsImpl implements RPCMethods {
      * References to sync rpc method implementation classes
      */
     private final SyncRPCImpl syncRPC;
+
+    /**
+     * References to offchain rpc method implementation classes
+     */
+    private final OffchainRPCImpl offchainRPC;
 
     @Override
     public String systemName() {
@@ -127,4 +135,25 @@ public class RPCMethodsImpl implements RPCMethods {
         return syncRPC.syncStateGetSyncSpec(raw);
     }
 
+    @Override
+    public void offchainLocalStorageSet(String storageKindStr, String key, String value) {
+        final StorageKind storageKind;
+        try {
+            storageKind = StorageKind.valueOf(storageKindStr);
+        } catch (IllegalArgumentException e) {
+            throw new InvalidParametersException("Invalid storage kind: " + storageKindStr);
+        }
+        offchainRPC.offchainLocalStorageSet(storageKind, key, value);
+    }
+
+    @Override
+    public String offchainLocalStorageGet(String storageKindStr, String key) {
+        final StorageKind storageKind;
+        try {
+            storageKind = StorageKind.valueOf(storageKindStr);
+        } catch (IllegalArgumentException e) {
+            throw new InvalidParametersException("Invalid storage kind: " + storageKindStr);
+        }
+        return offchainRPC.offchainLocalStorageGet(storageKind, key);
+    }
 }
