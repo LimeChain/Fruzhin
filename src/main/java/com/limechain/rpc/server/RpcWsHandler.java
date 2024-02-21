@@ -4,8 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.googlecode.jsonrpc4j.JsonRpcBasicServer;
 import com.limechain.rpc.config.SubscriptionName;
 import com.limechain.rpc.methods.RPCMethods;
+import com.limechain.rpc.pubsub.JsonRpcWsErrorMessage;
 import com.limechain.rpc.pubsub.PubSubService;
 import com.limechain.rpc.pubsub.Topic;
+import com.limechain.rpc.pubsub.subscriberchannel.Subscriber;
 import com.limechain.rpc.subscriptions.chainhead.ChainHeadRpc;
 import com.limechain.rpc.subscriptions.transaction.TransactionRpc;
 import lombok.extern.java.Log;
@@ -60,6 +62,48 @@ public class RpcWsHandler extends TextWebSocketHandler {
         }
 
         switch (method) {
+            case CHAIN_SUBSCRIBE_ALL_HEADS -> {
+                log.log(Level.INFO, "Subscribing for all heads");
+                Subscriber subscriber = pubSubService.addSubscriber(Topic.CHAIN_ALL_HEAD, session);
+                if (subscriber != null) pubSubService.sendResultMessage(session, subscriber.getSubscriptionId());
+                else {
+                    JsonRpcWsErrorMessage subError = new JsonRpcWsErrorMessage(0, "Already subscribed", null);
+                    session.sendMessage(new TextMessage(subError.toString()));
+                }
+            }
+            case CHAIN_UNSUBSCRIBE_ALL_HEADS -> {
+                log.log(Level.INFO, "Unsubscribing for all heads");
+                boolean remove = pubSubService.removeSubscriber(Topic.CHAIN_ALL_HEAD, rpcRequest.getParams()[0]);
+                pubSubService.sendResultMessage(session, Boolean.toString(remove));
+            }
+            case CHAIN_SUBSCRIBE_NEW_HEADS -> {
+                log.log(Level.INFO, "Subscribing for new heads");
+                Subscriber subscriber = pubSubService.addSubscriber(Topic.CHAIN_NEW_HEAD, session);
+                if (subscriber != null) pubSubService.sendResultMessage(session, subscriber.getSubscriptionId());
+                else {
+                    JsonRpcWsErrorMessage subError = new JsonRpcWsErrorMessage(0, "Already subscribed", null);
+                    session.sendMessage(new TextMessage(subError.toString()));
+                }
+            }
+            case CHAIN_UNSUBSCRIBE_NEW_HEADS -> {
+                log.log(Level.INFO, "Unsubscribing for new heads");
+                boolean remove = pubSubService.removeSubscriber(Topic.CHAIN_NEW_HEAD, rpcRequest.getParams()[0]);
+                pubSubService.sendResultMessage(session, Boolean.toString(remove));
+            }
+            case CHAIN_SUBSCRIBE_FINALIZED_HEADS -> {
+                log.log(Level.INFO, "Subscribing for finalized heads");
+                Subscriber subscriber = pubSubService.addSubscriber(Topic.CHAIN_FINALIZED_HEAD, session);
+                if (subscriber != null) pubSubService.sendResultMessage(session, subscriber.getSubscriptionId());
+                else {
+                    JsonRpcWsErrorMessage subError = new JsonRpcWsErrorMessage(0, "Already subscribed", null);
+                    session.sendMessage(new TextMessage(subError.toString()));
+                }
+            }
+            case CHAIN_UNSUBSCRIBE_FINALIZED_HEADS -> {
+                log.log(Level.INFO, "Unsubscribing for finalized heads");
+                boolean remove = pubSubService.removeSubscriber(Topic.CHAIN_FINALIZED_HEAD, rpcRequest.getParams()[0]);
+                pubSubService.sendResultMessage(session, Boolean.toString(remove));
+            }
             case CHAIN_HEAD_UNSTABLE_FOLLOW -> {
                 log.log(Level.INFO, "Subscribing for follow event");
                 pubSubService.addSubscriber(Topic.UNSTABLE_FOLLOW, session);
@@ -69,7 +113,7 @@ public class RpcWsHandler extends TextWebSocketHandler {
             case CHAIN_HEAD_UNSTABLE_UNFOLLOW -> {
                 log.log(Level.INFO, "Unsubscribing from follow event");
                 this.chainHeadRpc.chainUnstableUnfollow(rpcRequest.getParams()[0]);
-                pubSubService.removeSubscriber(Topic.UNSTABLE_FOLLOW, session.getId());
+                pubSubService.removeSubscriber(Topic.UNSTABLE_FOLLOW, rpcRequest.getParams()[0]);
             }
             case CHAIN_HEAD_UNSTABLE_UNPIN -> {
                 log.log(Level.INFO, "Unpinning block");
@@ -97,7 +141,7 @@ public class RpcWsHandler extends TextWebSocketHandler {
             case TRANSACTION_UNSTABLE_UNWATCH -> {
                 log.log(Level.INFO, "Executing unstable_unwatch");
                 this.transactionRpc.transactionUnstableUnwatch(rpcRequest.getParams()[0]);
-                pubSubService.removeSubscriber(Topic.UNSTABLE_TRANSACTION_WATCH, session.getId());
+                pubSubService.removeSubscriber(Topic.UNSTABLE_TRANSACTION_WATCH, rpcRequest.getParams()[0]);
             }
             default -> log.log(Level.WARNING, "Unknown method: " + rpcRequest.getMethod());
         }

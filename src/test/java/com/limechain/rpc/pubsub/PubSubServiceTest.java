@@ -1,6 +1,7 @@
 package com.limechain.rpc.pubsub;
 
 import com.limechain.rpc.pubsub.subscriberchannel.AbstractSubscriberChannel;
+import com.limechain.rpc.pubsub.subscriberchannel.Subscriber;
 import com.limechain.rpc.pubsub.subscriberchannel.SubscriberChannel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -8,7 +9,6 @@ import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -48,9 +48,10 @@ class PubSubServiceTest {
         // Reset state of singleton manually before each state
         // Not the best approach but can't reset it using new PubSubService() because of private constructor
         setPrivateField("subscribersTopicMap", new HashMap<>() {{
-            // TODO: Instantiate more subscriber channels in the future
-            put(Topic.UNSTABLE_FOLLOW, new SubscriberChannel(Topic.UNSTABLE_FOLLOW));
-            put(Topic.UNSTABLE_TRANSACTION_WATCH, new SubscriberChannel(Topic.UNSTABLE_TRANSACTION_WATCH));
+            // TODO: Instantiate more subscriber channels in the future if needed
+            for (Topic value : Topic.values()) {
+                put(value, new SubscriberChannel(value));
+            }
         }});
 
         setPrivateField("messagesQueue", new LinkedList<>());
@@ -118,9 +119,9 @@ class PubSubServiceTest {
         SubscriberChannel channel = mock(SubscriberChannel.class);
         WebSocketSession session = mock(WebSocketSession.class);
 
-        doReturn("1").when(session).getId();
-        doReturn(new ArrayList<>() {{
-            add(session);
+        String subscriptionId = "0";
+        doReturn(new HashMap<String, Subscriber>() {{
+            put(subscriptionId, new Subscriber(subscriptionId, session));
         }}).when(channel).getSubscribers();
 
         Map<Topic, AbstractSubscriberChannel> map =
@@ -129,29 +130,9 @@ class PubSubServiceTest {
         // Overwrite channel with mocked channel
         map.put(Topic.UNSTABLE_FOLLOW, channel);
 
-        service.removeSubscriber(Topic.UNSTABLE_FOLLOW, session.getId());
+        service.removeSubscriber(Topic.UNSTABLE_FOLLOW, subscriptionId);
 
-        verify(channel, times(1)).removeSubscriber(session);
-    }
-
-    @Test
-    void RemoveSubscriber_doesNotCallChannelRemoveSubscriber_whenSessionDoesNotExist()
-            throws NoSuchFieldException, IllegalAccessException {
-        SubscriberChannel channel = mock(SubscriberChannel.class);
-        WebSocketSession session = mock(WebSocketSession.class);
-
-        doReturn("1").when(session).getId();
-        doReturn(new ArrayList<>()).when(channel).getSubscribers();
-
-        Map<Topic, AbstractSubscriberChannel> map =
-                (Map<Topic, AbstractSubscriberChannel>) getPrivateField("subscribersTopicMap");
-
-        // Overwrite channel with mocked channel
-        map.put(Topic.UNSTABLE_FOLLOW, channel);
-
-        service.removeSubscriber(Topic.UNSTABLE_FOLLOW, session.getId());
-
-        verify(channel, times(0)).removeSubscriber(session);
+        verify(channel, times(1)).removeSubscriber(subscriptionId);
     }
 
     @Test
@@ -160,7 +141,7 @@ class PubSubServiceTest {
         SubscriberChannel channel = mock(SubscriberChannel.class);
         WebSocketSession session = mock(WebSocketSession.class);
 
-        doReturn("1").when(session).getId();
+        String subscriptionId = "0";
 
         // Simulate that we don't have a channel for a topic
         HashMap<Object, Object> map = new HashMap<>() {{
@@ -170,7 +151,7 @@ class PubSubServiceTest {
 
         service.removeSubscriber(Topic.UNSTABLE_TRANSACTION_WATCH, session.getId());
 
-        verify(channel, times(0)).removeSubscriber(session);
+        verify(channel, times(0)).removeSubscriber(subscriptionId);
     }
 
     @Test
