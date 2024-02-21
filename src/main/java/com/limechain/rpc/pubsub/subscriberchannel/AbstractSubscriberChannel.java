@@ -87,12 +87,9 @@ public abstract class AbstractSubscriberChannel {
      */
     public synchronized void notifySubscribers() throws IOException {
         log.log(Level.FINE, "Sending messages to subscribers...");
-        // What happens if PubSubService tries to add new messages while we're in the for loop?
-        // Option 1. Messages get added normally (highly unlikely since there's no lock on subscriberMessages)
-        // Option 2. Messages get added and processed on the next run of printMessages
-        // Option 3. Messages get added but overwritten by new ArrayList<>() at the end of this function
-        // Option 4. Option 2 and 3 depending on the timing
-        for (Message message : pendingMessages) {
+        ArrayList<Message> messagesToProcess = new ArrayList<>(pendingMessages);
+        pendingMessages.clear();
+        for (Message message : messagesToProcess) {
             TextMessage wsMessage = new TextMessage(message.payload().getBytes());
             log.log(Level.FINE,
                     "Notifying " + subscribers.size() + " subscribers about message topic -> " + message.topic() +
