@@ -29,10 +29,10 @@ public class JsonRpcWsErrorMessage {
         } catch (JsonProcessingException e) {
             return "{" +
                    "\"id\":" + id +
-                   ",5\"jsonrpc\":\"" + jsonrpc + '\"' +
+                   ",\"jsonrpc\":\"" + jsonrpc + '\"' +
                    ",\"code\":" + code +
-                   (message == null ? "" : ",\"message\"=\"" + message + '\"') +
-                   (data == null ? "" : ",\"data=\"" + data + '\"') +
+                   (message == null ? "" : ",\"message\":\"" + message + '\"') +
+                   (data == null ? "" : ",\"data:\"" + data + '\"') +
                    '}';
         }
 
