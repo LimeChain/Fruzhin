@@ -1,6 +1,7 @@
 package com.limechain.rpc.pubsub;
 
 import com.limechain.exception.NotificationFailedException;
+import com.limechain.rpc.exceptions.WsMessageSendException;
 import com.limechain.rpc.pubsub.subscriberchannel.AbstractSubscriberChannel;
 import com.limechain.rpc.pubsub.subscriberchannel.Subscriber;
 import com.limechain.rpc.pubsub.subscriberchannel.SubscriberChannel;
@@ -130,7 +131,7 @@ public class PubSubService {
         try {
             session.sendMessage(new TextMessage(parseResultMessage(message)));
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new WsMessageSendException("Failed to send message to ws client");
         }
     }
 

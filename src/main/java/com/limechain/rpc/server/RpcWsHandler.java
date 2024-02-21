@@ -67,8 +67,9 @@ public class RpcWsHandler extends TextWebSocketHandler {
             case CHAIN_SUBSCRIBE_NEW_HEADS -> handleDefaultSubscribe(Topic.CHAIN_NEW_HEAD, session);
             case CHAIN_UNSUBSCRIBE_NEW_HEADS -> handleDefaultUnsubscribe(Topic.CHAIN_NEW_HEAD, rpcRequest, session);
             case CHAIN_SUBSCRIBE_FINALIZED_HEADS -> handleDefaultSubscribe(Topic.CHAIN_FINALIZED_HEAD, session);
-            case CHAIN_UNSUBSCRIBE_FINALIZED_HEADS -> handleDefaultUnsubscribe(Topic.CHAIN_FINALIZED_HEAD, rpcRequest, session);
-            
+            case CHAIN_UNSUBSCRIBE_FINALIZED_HEADS ->
+                    handleDefaultUnsubscribe(Topic.CHAIN_FINALIZED_HEAD, rpcRequest, session);
+
             case CHAIN_HEAD_UNSTABLE_FOLLOW -> {
                 log.log(Level.INFO, "Subscribing for follow event");
                 pubSubService.addSubscriber(Topic.UNSTABLE_FOLLOW, session);
@@ -113,7 +114,7 @@ public class RpcWsHandler extends TextWebSocketHandler {
     }
 
     private void handleDefaultUnsubscribe(Topic topic, RpcRequest rpcRequest, WebSocketSession session) {
-        log.log(Level.INFO, "Unsubscribing for " + topic.getValue()););
+        log.log(Level.INFO, "Unsubscribing for " + topic.getValue());
         boolean remove = pubSubService.removeSubscriber(topic, rpcRequest.getParams()[0]);
         pubSubService.sendResultMessage(session, Boolean.toString(remove));
     }
