@@ -3,18 +3,24 @@ package com.limechain.rpc.pubsub;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@AllArgsConstructor
 @Getter
 public class JsonRpcWsErrorMessage {
-    private final int id = 1;
-    private final String jsonrpc = "2.0";
+    private final int id;
+    private final String jsonrpc;
     private final int code;
     private final String message;
     private final String data;
+
+    public JsonRpcWsErrorMessage(final int code, final String message, final String data) {
+        this.id = 1;
+        this.jsonrpc = "2.0";
+        this.code = code;
+        this.message = message;
+        this.data = data;
+    }
 
     @Override
     public String toString() {
