@@ -14,7 +14,13 @@ public enum SubscriptionName {
     CHAIN_HEAD_UNSTABLE_CALL("chainHead_unstable_call"),
     CHAIN_HEAD_UNSTABLE_STOP_CALL("chainHead_unstable_stopCall"),
     TRANSACTION_UNSTABLE_SUBMIT_AND_WATCH("transaction_unstable_submitAndWatch"),
-    TRANSACTION_UNSTABLE_UNWATCH("transaction_unstable_unwatch");
+    TRANSACTION_UNSTABLE_UNWATCH("transaction_unstable_unwatch"),
+    CHAIN_SUBSCRIBE_ALL_HEADS("chain_subscribeAllHeads"),
+    CHAIN_UNSUBSCRIBE_ALL_HEADS("chain_unsubscribeAllHeads"),
+    CHAIN_SUBSCRIBE_NEW_HEADS("chain_subscribeNewHeads"),
+    CHAIN_UNSUBSCRIBE_NEW_HEADS("chain_unsubscribeNewHeads"),
+    CHAIN_SUBSCRIBE_FINALIZED_HEADS("chain_subscribeFinalizedHeads"),
+    CHAIN_UNSUBSCRIBE_FINALIZED_HEADS("chain_unsubscribeFinalizedHeads");
 
     /**
      * Holds the name of the rpc method

@@ -2,15 +2,19 @@ package com.limechain.rpc.pubsub.subscriberchannel;
 
 import com.limechain.rpc.pubsub.Message;
 import com.limechain.rpc.pubsub.Topic;
+import com.limechain.utils.HashUtils;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.java.Log;
+import org.apache.tomcat.util.buf.HexUtils;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 
 /**
@@ -21,11 +25,13 @@ import java.util.logging.Level;
 @Log
 public abstract class AbstractSubscriberChannel {
 
+    private static final String SUBSCRIPTION_ID_PREFIX = "fruzhin_sub_";
+    private static long lastSubscriptionId = 0;
+
     /**
      * Holds the topic for the channel
      */
     private final Topic topic;
-
     /**
      * The subscribers which will be notified. For now it's just a WebSocketSession.
      * <p>
@@ -36,7 +42,7 @@ public abstract class AbstractSubscriberChannel {
      * @see <a href="https://paritytech.github.io/json-rpc-interface-spec/api/chainHead_unstable_follow.html#usage">
      * subscription id usage</a>
      */
-    private final List<WebSocketSession> subscribers = new ArrayList<>();
+    private final Map<String, Subscriber> subscribers = new HashMap<>();
 
     /**
      * Messages that will be sent to subscribers at some point
@@ -47,19 +53,25 @@ public abstract class AbstractSubscriberChannel {
         this.topic = topic;
     }
 
+    protected static String generateSubscriptionId() {
+        byte[] subId = (SUBSCRIPTION_ID_PREFIX + (lastSubscriptionId++)).getBytes();
+        return HexUtils.toHexString(HashUtils.hashXx64(0, subId));
+    }
+
     /**
      * Adds a subscriber to the channel
      *
      * @param session the subscriber to add
+     * @return the subscription id
      */
-    public abstract void addSubscriber(WebSocketSession session);
+    public abstract Subscriber addSubscriber(WebSocketSession session);
 
     /**
      * Removes a subscriber from the channel
      *
-     * @param session the subscriber to remove
+     * @param subId the subscription id of the subscriber to remove
      */
-    public abstract void removeSubscriber(WebSocketSession session);
+    public abstract void removeSubscriber(String subId);
 
     /**
      * Adds a message to the channel
@@ -75,19 +87,15 @@ public abstract class AbstractSubscriberChannel {
      */
     public synchronized void notifySubscribers() throws IOException {
         log.log(Level.FINE, "Sending messages to subscribers...");
-        // What happens if PubSubService tries to add new messages while we're in the for loop?
-        // Option 1. Messages get added normally (highly unlikely since there's no lock on subscriberMessages)
-        // Option 2. Messages get added and processed on the next run of printMessages
-        // Option 3. Messages get added but overwritten by new ArrayList<>() at the end of this function
-        // Option 4. Option 2 and 3 depending on the timing
-        for (Message message : pendingMessages) {
+        ArrayList<Message> messagesToProcess = new ArrayList<>(pendingMessages);
+        pendingMessages.clear();
+        for (Message message : messagesToProcess) {
             TextMessage wsMessage = new TextMessage(message.payload().getBytes());
             log.log(Level.FINE,
                     "Notifying " + subscribers.size() + " subscribers about message topic -> " + message.topic() +
-                            " : " +
-                            message.payload());
-            for (WebSocketSession session : subscribers) {
-                session.sendMessage(wsMessage);
+                    " : " + message.payload());
+            for (Subscriber subscriber : subscribers.values()) {
+                subscriber.getSession().sendMessage(wsMessage);
             }
         }
         // Empty the pending messages

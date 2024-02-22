@@ -30,14 +30,12 @@ import java.util.List;
 public class CommonConfig {
     @Bean
     public static AutoJsonRpcServiceImplExporter autoJsonRpcServiceImplExporter() {
-        AutoJsonRpcServiceImplExporter exp = new AutoJsonRpcServiceImplExporter();
+        final var jsonService = new AutoJsonRpcServiceImplExporter();
 
-        exp.setInterceptorList(List.of(new UnsafeInterceptor()));
+        jsonService.setInterceptorList(List.of(new UnsafeInterceptor()));
+        jsonService.setAllowLessParams(true);
 
-        // in here you can provide custom HTTP status code providers etc. eg:
-        // exp.setHttpStatusCodeProvider();
-        // exp.setErrorResolver();
-        return exp;
+        return jsonService;
     }
 
     @Bean

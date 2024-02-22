@@ -8,7 +8,11 @@ import lombok.Getter;
 @Getter
 public enum Topic {
     UNSTABLE_FOLLOW("unstable_follow"),
-    UNSTABLE_TRANSACTION_WATCH("transaction_watch");
+    UNSTABLE_TRANSACTION_WATCH("transaction_watch"),
+    CHAIN_ALL_HEAD("chain_allHead"),
+    CHAIN_NEW_HEAD("chain_newHead"),
+    CHAIN_FINALIZED_HEAD("chain_finalizedHead");
+
     private final String value;
 
     Topic(String value) {
