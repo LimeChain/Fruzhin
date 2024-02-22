@@ -1,4 +1,4 @@
-package com.limechain.rpc.pubsub;
+package com.limechain.rpc.pubsub.messages;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;

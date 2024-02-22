@@ -95,9 +95,9 @@ public class PubSubService {
     public void broadcast() {
         while (!messagesQueue.isEmpty()) {
             Message message = messagesQueue.remove();
-            String topic = message.topic();
+            Topic topic = message.topic();
 
-            AbstractSubscriberChannel subscriberChannel = subscribersTopicMap.get(Topic.fromString(topic));
+            AbstractSubscriberChannel subscriberChannel = subscribersTopicMap.get(topic);
             // If subscriberChannel is null, the message will get lost
             if (subscriberChannel != null) {
                 subscriberChannel.addMessage(message);

@@ -67,7 +67,7 @@ class PubSubServiceTest {
 
     @Test
     void AddMessageToQueue_addsMessage() throws NoSuchFieldException, IllegalAccessException {
-        Message message = new Message(Topic.UNSTABLE_TRANSACTION_WATCH.getValue(), "test payload");
+        Message message = new Message(Topic.UNSTABLE_TRANSACTION_WATCH, "test payload");
 
         // How to proceed? Can't verify since messagesQueue is private
 
@@ -156,9 +156,9 @@ class PubSubServiceTest {
 
     @Test
     void broadcast_emptiesMessageQueue_whenCalled() throws NoSuchFieldException, IllegalAccessException {
-        Message message1 = new Message(Topic.UNSTABLE_FOLLOW.getValue(), "message1");
-        Message message2 = new Message(Topic.UNSTABLE_FOLLOW.getValue(), "message2");
-        Message message3 = new Message(Topic.UNSTABLE_TRANSACTION_WATCH.getValue(), "message3");
+        Message message1 = new Message(Topic.UNSTABLE_FOLLOW, "message1");
+        Message message2 = new Message(Topic.UNSTABLE_FOLLOW, "message2");
+        Message message3 = new Message(Topic.UNSTABLE_TRANSACTION_WATCH, "message3");
 
         service.addMessageToQueue(message1);
         service.addMessageToQueue(message2);

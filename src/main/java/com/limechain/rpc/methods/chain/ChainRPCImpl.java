@@ -27,6 +27,18 @@ public class ChainRPCImpl {
     private static final String HEX_PREFIX = "0x";
     private final BlockState blockState = BlockState.getInstance();
 
+    /**
+     * Converts an input object representing a block number into a BigInteger.
+     * The input object can be of several types, indicating the 'n-th' block in the chain:
+     * - HEX: A hex-encoded string prefixed with "0x" representing the block number.
+     * - U32: An integer or long value directly representing the block number.
+     * - ARRAY: An array of values, where each value can be either HEX or U32 type.
+     * This method is designed to handle the flexible input types and convert them into a standardized BigInteger format.
+     *
+     * @return A function that takes an Object (HEX, U32, or ARRAY) and returns a BigInteger representation of the block number.
+     * If the input is an array, the function processes each element according to its type (HEX or U32) and returns a list of BigInteger.
+     * Returns null if the input cannot be converted to a BigInteger.
+     */
     @NotNull
     private static Function<Object, BigInteger> parseObjectToBigInt() {
         return blockNumber -> {
@@ -34,7 +46,7 @@ public class ChainRPCImpl {
                 if (blockNumStr.startsWith(HEX_PREFIX)) {
                     return new BigInteger(blockNumStr.substring(2), 16);
                 }
-                return new BigInteger(blockNumStr);
+                return null;
             } else if (blockNumber instanceof Long blockNum) {
                 return BigInteger.valueOf(blockNum);
             } else if (blockNumber instanceof Integer blockNum) {
@@ -44,6 +56,13 @@ public class ChainRPCImpl {
         };
     }
 
+    /**
+     * Retrieves the header of a specified block in the blockchain.
+     * If no block hash is provided, it returns the header of the latest finalized block.
+     *
+     * @param blockHash the hex encoded hash of the block to retrieve the header for. If null, the latest block header is returned.
+     * @return a map representing the block header, or null if the block cannot be found or the block state is not initialized.
+     */
     public Map<String, Object> chainGetHeader(String blockHash) {
         if (!blockState.isInitialized()) {
             return null;
@@ -62,6 +81,13 @@ public class ChainRPCImpl {
         return headerToMap(header);
     }
 
+    /**
+     * Retrieves the full block data for a specified block in the blockchain.
+     * If no block hash is provided, the latest finalized block is returned.
+     *
+     * @param blockHash The hex encoded hash of the block to retrieve. If null, the latest block is returned.
+     * @return A map containing the block header and extrinsics, or null if the block cannot be found or the block state is not initialized.
+     */
     public Map<String, Object> chainGetBlock(String blockHash) {
         if (!blockState.isInitialized()) {
             return null;
@@ -85,6 +111,13 @@ public class ChainRPCImpl {
         );
     }
 
+    /**
+     * Retrieves the block hash for one or more block numbers.
+     * If the block state is not initialized or no block numbers are provided, null is returned.
+     *
+     * @param blockNumbers An array of block numbers for which to retrieve the hashes.
+     * @return A single block hash or a list of block hashes, or null if none can be found.
+     */
     public Object chainGetBlockHash(Object[] blockNumbers) {
         if (!blockState.isInitialized()) {
             return null;
@@ -120,6 +153,12 @@ public class ChainRPCImpl {
         };
     }
 
+    /**
+     * Retrieves the hash of the highest finalized block in the blockchain.
+     * If the block state is not initialized, null is returned.
+     *
+     * @return The hex encoded hash of the highest finalized block, or null if the block state is not initialized.
+     */
     public String chainGetFinalizedHead() {
         if (!blockState.isInitialized()) {
             return null;
@@ -127,32 +166,15 @@ public class ChainRPCImpl {
         return blockState.getHighestFinalizedHash().toString();
     }
 
-    public String chainSubscribeAllHeads() {
-        return null;
-    }
-
-    public String chainUnsubscribeAllHeads() {
-        return null;
-    }
-
-    public String chainSubscribeNewHeads() {
-        return null;
-    }
-
-    public String chainUnsubscribeNewHeads() {
-        return null;
-    }
-
-    public String chainSubscribeFinalizedHeads() {
-        return null;
-    }
-
-    public String chainUnsubscribeFinalizedHeads() {
-        return null;
-    }
-
+    /**
+     * Converts a BlockHeader object into a map representation.
+     * This map includes the block's digest, extrinsics root, number, parent hash, and state root.
+     *
+     * @param header The BlockHeader object to convert.
+     * @return A map representation of the block header.
+     */
     @NotNull
-    private Map<String, Object> headerToMap(BlockHeader header) {
+    public static Map<String, Object> headerToMap(BlockHeader header) {
         return Map.of(
                 "digest", Map.of(
                         "logs", Arrays

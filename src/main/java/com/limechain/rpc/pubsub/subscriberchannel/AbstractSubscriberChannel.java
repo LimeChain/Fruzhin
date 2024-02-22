@@ -54,7 +54,7 @@ public abstract class AbstractSubscriberChannel {
     }
 
     protected static String generateSubscriptionId() {
-        byte[] subId = (SUBSCRIPTION_ID_PREFIX + lastSubscriptionId++).getBytes();
+        byte[] subId = (SUBSCRIPTION_ID_PREFIX + (lastSubscriptionId++)).getBytes();
         return HexUtils.toHexString(HashUtils.hashXx64(0, subId));
     }
 
