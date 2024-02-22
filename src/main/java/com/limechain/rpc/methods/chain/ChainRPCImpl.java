@@ -28,32 +28,27 @@ public class ChainRPCImpl {
     private final BlockState blockState = BlockState.getInstance();
 
     /**
-     * Converts an input object representing a block number into a BigInteger.
-     * The input object can be of several types, indicating the 'n-th' block in the chain:
-     * - HEX: A hex-encoded string prefixed with "0x" representing the block number.
-     * - U32: An integer or long value directly representing the block number.
-     * - ARRAY: An array of values, where each value can be either HEX or U32 type.
-     * This method is designed to handle the flexible input types and convert them into a standardized BigInteger format.
+     * Converts a BlockHeader object into a map representation.
+     * This map includes the block's digest, extrinsics root, number, parent hash, and state root.
      *
-     * @return A function that takes an Object (HEX, U32, or ARRAY) and returns a BigInteger representation of the block number.
-     * If the input is an array, the function processes each element according to its type (HEX or U32) and returns a list of BigInteger.
-     * Returns null if the input cannot be converted to a BigInteger.
+     * @param header The BlockHeader object to convert.
+     * @return A map representation of the block header.
      */
     @NotNull
-    private static Function<Object, BigInteger> parseObjectToBigInt() {
-        return blockNumber -> {
-            if (blockNumber instanceof String blockNumStr) {
-                if (blockNumStr.startsWith(HEX_PREFIX)) {
-                    return new BigInteger(blockNumStr.substring(2), 16);
-                }
-                return null;
-            } else if (blockNumber instanceof Long blockNum) {
-                return BigInteger.valueOf(blockNum);
-            } else if (blockNumber instanceof Integer blockNum) {
-                return BigInteger.valueOf(blockNum);
-            } else
-                return null;
-        };
+    public static Map<String, Object> headerToMap(BlockHeader header) {
+        return Map.of(
+                "digest", Map.of(
+                        "logs", Arrays
+                                .stream(header.getDigest())
+                                .map(HeaderDigest::getMessage)
+                                .map(HexUtils::toHexString)
+                                .toArray()
+                ),
+                "extrinsicsRoot", header.getExtrinsicsRoot().toString(),
+                "number", HEX_PREFIX + header.getBlockNumber().toString(16),
+                "parentHash", header.getParentHash().toString(),
+                "stateRoot", header.getStateRoot().toString()
+        );
     }
 
     /**
@@ -142,6 +137,35 @@ public class ChainRPCImpl {
             return blockHashes;
     }
 
+    /**
+     * Converts an input object representing a block number into a BigInteger.
+     * The input object can be of several types, indicating the 'n-th' block in the chain:
+     * - HEX: A hex-encoded string prefixed with "0x" representing the block number.
+     * - U32: An integer or long value directly representing the block number.
+     * - ARRAY: An array of values, where each value can be either HEX or U32 type.
+     * This method is designed to handle the flexible input types and convert them into a standardized BigInteger format.
+     *
+     * @return A function that takes an Object (HEX, U32, or ARRAY) and returns a BigInteger representation of the block number.
+     * If the input is an array, the function processes each element according to its type (HEX or U32) and returns a list of BigInteger.
+     * Returns null if the input cannot be converted to a BigInteger.
+     */
+    @NotNull
+    private static Function<Object, BigInteger> parseObjectToBigInt() {
+        return blockNumber -> {
+            if (blockNumber instanceof String blockNumStr) {
+                if (blockNumStr.startsWith(HEX_PREFIX)) {
+                    return new BigInteger(blockNumStr.substring(2), 16);
+                }
+                return null;
+            } else if (blockNumber instanceof Long blockNum) {
+                return BigInteger.valueOf(blockNum);
+            } else if (blockNumber instanceof Integer blockNum) {
+                return BigInteger.valueOf(blockNum);
+            } else
+                return null;
+        };
+    }
+
     @NotNull
     private Function<BigInteger, Hash256> getBlockHashFromNum() {
         return blockNum -> {
@@ -164,29 +188,5 @@ public class ChainRPCImpl {
             return null;
         }
         return blockState.getHighestFinalizedHash().toString();
-    }
-
-    /**
-     * Converts a BlockHeader object into a map representation.
-     * This map includes the block's digest, extrinsics root, number, parent hash, and state root.
-     *
-     * @param header The BlockHeader object to convert.
-     * @return A map representation of the block header.
-     */
-    @NotNull
-    public static Map<String, Object> headerToMap(BlockHeader header) {
-        return Map.of(
-                "digest", Map.of(
-                        "logs", Arrays
-                                .stream(header.getDigest())
-                                .map(HeaderDigest::getMessage)
-                                .map(HexUtils::toHexString)
-                                .toArray()
-                ),
-                "extrinsicsRoot", header.getExtrinsicsRoot().toString(),
-                "number", HEX_PREFIX + header.getBlockNumber().toString(16),
-                "parentHash", header.getParentHash().toString(),
-                "stateRoot", header.getStateRoot().toString()
-        );
     }
 }
