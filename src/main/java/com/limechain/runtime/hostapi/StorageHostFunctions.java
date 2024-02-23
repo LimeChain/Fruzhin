@@ -1,11 +1,11 @@
 package com.limechain.runtime.hostapi;
 
+import com.limechain.runtime.version.StateVersion;
+import com.limechain.trie.AccessorHolder;
+import com.limechain.trie.BlockTrieAccessor;
 import com.limechain.utils.scale.exceptions.ScaleEncodingException;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
-import com.limechain.storage.DBConstants;
 import com.limechain.storage.DeleteByPrefixResult;
-import com.limechain.storage.KVRepository;
-import com.limechain.sync.warpsync.SyncedState;
 import io.emeraldpay.polkaj.scale.CompactMode;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
@@ -28,11 +28,11 @@ import java.util.List;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class StorageHostFunctions {
     private final HostApi hostApi;
-    private final KVRepository<String, Object> repository;
+    private final BlockTrieAccessor repository;
 
     private StorageHostFunctions(final HostApi hostApi) {
         this.hostApi = hostApi;
-        this.repository = SyncedState.getInstance().getRepository();
+        this.repository = AccessorHolder.getInstance().getBlockTrieAccessor();
     }
 
     public static List<ImportObject> getFunctions(final HostApi hostApi) {
@@ -112,7 +112,7 @@ public class StorageHostFunctions {
      */
     public RuntimePointerSize extStorageGetVersion1(RuntimePointerSize keyPointer) {
         byte[] key = hostApi.getDataFromMemory(keyPointer);
-        byte[] value = (byte[]) repository.find(new String(key)).orElse(null);
+        byte[] value = repository.find(new String(key)).orElse(null);
 
         return hostApi.writeDataToMemory(scaleEncodedOption(value));
     }
@@ -250,8 +250,7 @@ public class StorageHostFunctions {
      * @return a pointer-size to a buffer containing the 256-bit Blake2 storage root.
      */
     public RuntimePointerSize extStorageRootVersion1() {
-        //TODO: compute from Trie
-        byte[] rootHash = (byte[]) repository.find(DBConstants.STATE_TRIE_ROOT_HASH).orElseThrow();
+        byte[] rootHash = repository.getMerkleRoot(StateVersion.V0);
 
         return hostApi.writeDataToMemory(rootHash);
     }
@@ -263,8 +262,9 @@ public class StorageHostFunctions {
      * @return a pointer-size to a buffer containing the 256-bit Blake2 storage root.
      */
     public RuntimePointerSize extStorageRootVersion2(int version) {
-        // TODO: update to use state trie versions
-        return extStorageRootVersion1();
+        byte[] rootHash = repository.getMerkleRoot(StateVersion.fromInt(version));
+
+        return hostApi.writeDataToMemory(rootHash);
     }
 
     /**

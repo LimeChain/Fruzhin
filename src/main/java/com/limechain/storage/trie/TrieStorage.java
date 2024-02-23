@@ -6,6 +6,7 @@ import com.limechain.runtime.version.StateVersion;
 import com.limechain.storage.KVRepository;
 import com.limechain.storage.block.BlockState;
 import com.limechain.storage.trie.exceptions.ChildNotFoundException;
+import com.limechain.trie.dto.node.StorageNode;
 import com.limechain.trie.structure.TrieStructure;
 import com.limechain.trie.structure.database.InsertTrieBuilder;
 import com.limechain.trie.structure.database.NodeData;
@@ -19,7 +20,6 @@ import io.emeraldpay.polkaj.types.Hash256;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.extern.java.Log;
-import org.javatuples.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -149,6 +149,7 @@ public class TrieStorage {
         }
 
         int commonPrefix = ByteArrayUtils.commonPrefixLength(trieNode.getPartialKey(), key);
+        // TODO: is this right?
         if (trieNode.getChildrenMerkleValues().size() < key[commonPrefix]) {
             return null;
         }
@@ -252,15 +253,15 @@ public class TrieStorage {
      * @return A list of pairs, each containing a set of nibbles (representing a key within the trie)
      * and the corresponding node data.
      */
-    public List<Pair<Nibbles, NodeData>> entriesBetween(byte[] merkleValue, String searchKey) {
-        List<Pair<Nibbles, NodeData>> entries = new ArrayList<>();
+    public List<StorageNode> entriesBetween(byte[] merkleValue, String searchKey) {
+        List<StorageNode> entries = new ArrayList<>();
         TrieNodeData rootNode = getTrieNodeFromMerkleValue(merkleValue);
 
         if (rootNode == null) {
             return entries;
         }
         entries.add(
-                new Pair<>(nibblesFromBytes(rootNode.getPartialKey()), new NodeData(rootNode.getValue(), merkleValue)));
+                new StorageNode(nibblesFromBytes(rootNode.getPartialKey()), new NodeData(rootNode.getValue(), merkleValue)));
 
         byte[] prefix = partialKeyFromNibbles(Nibbles.fromBytes(searchKey.getBytes()).asUnmodifiableList());
         collectEntriesUpTo(rootNode, prefix, new byte[0], entries);
@@ -269,7 +270,7 @@ public class TrieStorage {
     }
 
     private void collectEntriesUpTo(TrieNodeData node, byte[] key, byte[] currentPath,
-                                    List<Pair<Nibbles, NodeData>> entries) {
+                                    List<StorageNode> entries) {
         if (node == null) {
             return;
         }
@@ -295,10 +296,21 @@ public class TrieStorage {
         byte[] nextPath = ByteArrayUtils.concatenate(currentPath, new byte[]{key[commonPrefix]});
         nextPath = ByteArrayUtils.concatenate(nextPath, childNode.getPartialKey());
 
-        entries.add(new Pair<>(nibblesFromBytes(nextPath),
-                new NodeData(childNode.getValue(), childMerkleValue)));
+        entries.add(new StorageNode(nibblesFromBytes(nextPath), new NodeData(childNode.getValue(), childMerkleValue)));
 
         collectEntriesUpTo(childNode, Arrays.copyOfRange(key, 1 + commonPrefix, key.length), nextPath, entries);
+    }
+
+    public List<StorageNode> loadChildren(byte[] parentMerkleValue) {
+        TrieNodeData parentNode = getTrieNodeFromMerkleValue(parentMerkleValue);
+        List<byte[]> childrenMerkleValues = parentNode.getChildrenMerkleValues();
+        List<StorageNode> result = new ArrayList<>();
+        for (byte[] childrenMerkleValue : childrenMerkleValues) {
+            TrieNodeData childNode = getTrieNodeFromMerkleValue(childrenMerkleValue);
+            result.add(new StorageNode(nibblesFromBytes(childNode.getPartialKey()),
+                    new NodeData(childNode.getValue(), childrenMerkleValue)));
+        }
+        return result;
     }
 
     /**
