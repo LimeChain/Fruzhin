@@ -59,6 +59,20 @@ public class TrieStructureFactory {
         }
     }
 
+    public void recalculateMerkleValues(TrieStructure<NodeData> trie, StateVersion stateVersion) {
+        List<TrieNodeIndex> nodeIndices = trie.streamOrdered().toList();
+
+        for (TrieNodeIndex index : Lists.reverse(nodeIndices)) {
+            NodeHandle<NodeData> nodeHandle = trie.nodeHandleAtIndex(index);
+            if (nodeHandle == null) {
+                throw new TrieBuildException("Could not initialize trie");
+            }
+            if (nodeHandle.getUserData() == null || nodeHandle.getUserData().getMerkleValue() == null) {
+                calculateAndSetMerkleValue(nodeHandle, stateVersion);
+            }
+        }
+    }
+
     private void calculateAndSetMerkleValue(NodeHandle<NodeData> nodeHandle, StateVersion stateVersion) {
         NodeData userData = nodeHandle.getUserData();
 

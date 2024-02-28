@@ -12,36 +12,31 @@ import com.limechain.trie.structure.database.NodeData;
 import com.limechain.trie.structure.nibble.Nibble;
 import com.limechain.trie.structure.nibble.Nibbles;
 import io.emeraldpay.polkaj.types.Hash256;
+import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.NotImplementedException;
 
 import java.util.List;
 import java.util.Optional;
 
-// TODO: change key type to Nibbles
-public class BlockTrieAccessor implements KVRepository<String, byte[]> {
+@AllArgsConstructor
+public class BlockTrieAccessor implements KVRepository<Nibbles, byte[]> {
     public static final String TRANSACTIONS_NOT_SUPPORTED = "Block Trie Accessor does not support transactions.";
     private final Hash256 blockHash;
-    private final TrieStructure<NodeData> partialTrie = new TrieStructure<>();
-    private final TrieStorage trieStorage = TrieStorage.getInstance();
+    private final TrieStructure<NodeData> partialTrie;
+    private final TrieStorage trieStorage;
 
     public BlockTrieAccessor(Hash256 blockHash) {
         this.blockHash = blockHash;
+        this.trieStorage = TrieStorage.getInstance();
+        this.partialTrie = new TrieStructure<>();
     }
 
-    public byte[] getMerkleRoot(StateVersion version) {
-        //TODO: don't recalculate calculate child leaf values
-        TrieStructureFactory.calculateMerkleValues(partialTrie, version);
-        return partialTrie.getRootNode()
-                .map(NodeHandle::getUserData)
-                .map(NodeData::getMerkleValue)
-                .orElseThrow();
-    }
     @Override
-    public boolean save(String key, byte[] value) {
+    public boolean save(Nibbles key, byte[] value) {
         loadPathToKey(key);
         loadChildren(key);
         NodeData nodeData = new NodeData(value);
-        partialTrie.insertNode(Nibbles.fromBytes(key.getBytes()), nodeData);
+        partialTrie.insertNode(key, nodeData);
         return true;
     }
 
@@ -50,21 +45,21 @@ public class BlockTrieAccessor implements KVRepository<String, byte[]> {
      *
      * @param key key
      */
-    private void loadPathToKey(String key) {
-        Entry<NodeData> closestNode = partialTrie.node(Nibbles.fromBytes(key.getBytes()));
+    private void loadPathToKey(Nibbles key) {
+        Entry<NodeData> closestNode = partialTrie.node(key);
         if (closestNode instanceof Vacant<NodeData> vacantNode) {
             Optional.of(vacantNode)
                     .map(Vacant::getClosestAncestorIndex)
                     .map(partialTrie::nodeHandleAtIndex)
                     .map(NodeHandle::getUserData)
                     .map(NodeData::getMerkleValue)
-                    .map(closestMerkle -> trieStorage.entriesBetween(closestMerkle, key))
+                    .map(closestMerkle -> trieStorage.entriesBetween(closestMerkle, key.toString()))
                     .ifPresent(entries -> entries.forEach(e -> partialTrie.insertNode(e.key(), e.nodeData())));
         }
     }
 
-    private void loadChildren(String key) {
-        Entry<NodeData> entry = partialTrie.node(Nibbles.fromBytes(key.getBytes()));
+    private void loadChildren(Nibbles key) {
+        Entry<NodeData> entry = partialTrie.node(key);
         if (entry instanceof NodeHandle<NodeData> nodeHandle) {
             Optional.of(nodeHandle)
                     .map(NodeHandle::getUserData)
@@ -75,31 +70,30 @@ public class BlockTrieAccessor implements KVRepository<String, byte[]> {
     }
 
     @Override
-    public Optional<byte[]> find(String key) {
+    public Optional<byte[]> find(Nibbles key) {
         loadPathToKey(key);
-        return partialTrie.existingNode(Nibbles.fromBytes(key.getBytes()))
+        return partialTrie.existingNode(key)
                 .map(NodeHandle::getUserData)
                 .map(NodeData::getValue);
     }
 
     @Override
-    public boolean delete(String key) {
+    public boolean delete(Nibbles key) {
         loadPathToKey(key);
         loadChildren(key);
-        return partialTrie.removeNode(Nibbles.fromBytes(key.getBytes()));
+        return partialTrie.removeNode(key);
     }
 
     @Override
-    public List<byte[]> findKeysByPrefix(String prefixSeek, int limit) {
+    public List<byte[]> findKeysByPrefix(Nibbles prefixSeek, int limit) {
         throw new NotImplementedException("Not implemented");
     }
 
     @Override
-    public DeleteByPrefixResult deleteByPrefix(String prefix, Long limit) {
+    public DeleteByPrefixResult deleteByPrefix(Nibbles prefix, Long limit) {
         loadPathToKey(prefix);
 
-        Nibbles prefixKey = Nibbles.fromBytes(prefix.getBytes());
-        NodeHandle<NodeData> parent = switch (partialTrie.node(prefixKey)) {
+        NodeHandle<NodeData> parent = switch (partialTrie.node(prefix)) {
             case Vacant<NodeData> vacant -> Optional.ofNullable(vacant.getClosestAncestorIndex())
                     .map(partialTrie::nodeHandleAtIndex)
                     .orElse(null);
@@ -113,7 +107,7 @@ public class BlockTrieAccessor implements KVRepository<String, byte[]> {
 
         return Optional.ofNullable(parent)
                 .map(NodeHandle::getFullKey)
-                .map(parentKey -> prefixIndexInParent(parentKey, prefixKey))
+                .map(parentKey -> prefixIndexInParent(parentKey, prefix))
                 .flatMap(parent::getChild)
                 .map(c -> lexicographicDelete(c, limit))
                 .orElse(new DeleteByPrefixResult(0, true));
@@ -130,7 +124,7 @@ public class BlockTrieAccessor implements KVRepository<String, byte[]> {
     }
 
     private DeleteByPrefixResult lexicographicDelete(NodeHandle<NodeData> node, long limit) {
-        loadChildren(node.getFullKey().toString());
+        loadChildren(node.getFullKey());
         int deleted = 0;
         for (Nibble nibble : Nibbles.ALL) {
             if (limit <= deleted) {
@@ -153,10 +147,11 @@ public class BlockTrieAccessor implements KVRepository<String, byte[]> {
 
 
     @Override
-    public Optional<String> getNextKey(String key) {
+    public Optional<Nibbles> getNextKey(Nibbles key) {
         loadPathToKey(key);
         //TODO: optimize using partial trie
-        return Optional.ofNullable(trieStorage.getNextKey(blockHash, key));
+        return Optional.ofNullable(trieStorage.getNextKey(blockHash, key.toString()))
+                .map(k -> Nibbles.fromBytes(k.getBytes()));
     }
 
     @Override
@@ -182,6 +177,11 @@ public class BlockTrieAccessor implements KVRepository<String, byte[]> {
         throw new NotImplementedException(TRANSACTIONS_NOT_SUPPORTED);
     }
 
-    public void persist() {
+    public byte[] getMerkleRoot(StateVersion version) {
+        TrieStructureFactory.recalculateMerkleValues(partialTrie, version);
+        return partialTrie.getRootNode()
+                .map(NodeHandle::getUserData)
+                .map(NodeData::getMerkleValue)
+                .orElseThrow();
     }
 }
