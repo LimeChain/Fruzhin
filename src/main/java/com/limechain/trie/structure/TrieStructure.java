@@ -517,10 +517,10 @@ public class TrieStructure<T> {
                 .count();
 
         if (numberOfChildren == 0) {
-            parentNode.childrenIndices[parent.parentNodeIndex()] = null;
+            parentNode.childrenIndices[parent.childIndexWithinParent().asInt()] = null;
             nodes.remove(nodeIndex);
         } else if (numberOfChildren == 1) {
-            parentNode.childrenIndices[parent.parentNodeIndex()] = mergeParentIntoChild(trieNode);
+            parentNode.childrenIndices[parent.childIndexWithinParent().asInt()] = mergeParentIntoChild(trieNode);
             nodes.remove(nodeIndex);
         } else {
             trieNode.hasStorageValue = false;
@@ -538,6 +538,7 @@ public class TrieStructure<T> {
                 child.partialKey = trieNode.partialKey
                         .add(Nibble.fromInt(i))
                         .addAll(child.partialKey);
+                child.parent = trieNode.parent;
                 return childIndex;
             }
         }
