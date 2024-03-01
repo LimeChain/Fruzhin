@@ -9,18 +9,22 @@ public class SubscriberChannel extends AbstractSubscriberChannel {
         super(topic);
     }
 
-    public void addSubscriber(WebSocketSession session) {
+    public Subscriber addSubscriber(WebSocketSession session) {
         // We shouldn't allow client to subscribe more than once for the same event.
         if (this.getSubscribers()
+                .values()
                 .stream()
-                .anyMatch(s -> s.getId().equals(session.getId()))) {
-            return;
+                .anyMatch(s -> s.getSession().getId().equals(session.getId()))) {
+            return null;
         }
-        this.getSubscribers().add(session);
+
+        Subscriber subscriber = new Subscriber(generateSubscriptionId(), session);
+        this.getSubscribers().put(subscriber.getSubscriptionId(), subscriber);
+        return subscriber;
     }
 
-    public void removeSubscriber(WebSocketSession session) {
-        this.getSubscribers().removeIf(s -> s.getId().equals(session.getId()));
+    public void removeSubscriber(final String subId) {
+        this.getSubscribers().remove(subId);
     }
 
     @Override

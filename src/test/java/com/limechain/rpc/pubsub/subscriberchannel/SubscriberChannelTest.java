@@ -29,15 +29,15 @@ class SubscriberChannelTest {
         when(session2.getId()).thenReturn("2").thenReturn("2");
         when(session3.getId()).thenReturn("3").thenReturn("3");
 
-        this.channel.addSubscriber(session1);
-        this.channel.addSubscriber(session2);
-        this.channel.addSubscriber(session3);
+        Subscriber sub1 = this.channel.addSubscriber(session1);
+        Subscriber sub2 = this.channel.addSubscriber(session2);
+        Subscriber sub3 = this.channel.addSubscriber(session3);
         assertEquals(3, this.channel.getSubscribers().size());
 
-        this.channel.removeSubscriber(session2);
-        
-        assertTrue(this.channel.getSubscribers().contains(session1));
-        assertTrue(this.channel.getSubscribers().contains(session3));
+        this.channel.removeSubscriber(sub2.getSubscriptionId());
+
+        assertTrue(this.channel.getSubscribers().containsKey(sub1.getSubscriptionId()));
+        assertTrue(this.channel.getSubscribers().containsKey(sub3.getSubscriptionId()));
         assertEquals(2, this.channel.getSubscribers().size());
 
     }

@@ -1,14 +1,16 @@
 package com.limechain.rpc.pubsub;
 
 import com.limechain.exception.NotificationFailedException;
+import com.limechain.rpc.exceptions.WsMessageSendException;
 import com.limechain.rpc.pubsub.subscriberchannel.AbstractSubscriberChannel;
+import com.limechain.rpc.pubsub.subscriberchannel.Subscriber;
 import com.limechain.rpc.pubsub.subscriberchannel.SubscriberChannel;
 import lombok.extern.java.Log;
+import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
 import java.util.EnumMap;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Queue;
@@ -61,33 +63,29 @@ public class PubSubService {
      * @param topic   the topic of the channel
      * @param session the subscriber to add
      */
-    public void addSubscriber(Topic topic, WebSocketSession session) {
+    public Subscriber addSubscriber(Topic topic, WebSocketSession session) {
         if (subscribersTopicMap.containsKey(topic)) {
             AbstractSubscriberChannel subscriberChannel = subscribersTopicMap.get(topic);
-            subscriberChannel.addSubscriber(session);
-            return;
+            return subscriberChannel.addSubscriber(session);
         }
 
         log.log(Level.WARNING, "Didn't subscribe session to topic. Topic doesn't exist: " + topic.getValue());
+        return null;
     }
 
     /**
      * Remove an existing subscriber from a channel
      *
-     * @param topic     the topic of the channel
-     * @param sessionId the subscriber id to remove
+     * @param topic          the topic of the channel
+     * @param subscriptionId the subscriber id to remove
      */
-    public void removeSubscriber(Topic topic, String sessionId) {
+    public boolean removeSubscriber(Topic topic, String subscriptionId) {
         if (subscribersTopicMap.containsKey(topic)) {
             AbstractSubscriberChannel subscriberChannel = subscribersTopicMap.get(topic);
-            subscriberChannel
-                    .getSubscribers()
-                    .stream()
-                    .filter(s -> s.getId().equals(sessionId))
-                    .findFirst()
-                    .ifPresent(subscriberChannel::removeSubscriber);
-
+            subscriberChannel.removeSubscriber(subscriptionId);
+            return true;
         }
+        return false;
     }
 
     /**
@@ -97,9 +95,9 @@ public class PubSubService {
     public void broadcast() {
         while (!messagesQueue.isEmpty()) {
             Message message = messagesQueue.remove();
-            String topic = message.topic();
+            Topic topic = message.topic();
 
-            AbstractSubscriberChannel subscriberChannel = subscribersTopicMap.get(Topic.fromString(topic));
+            AbstractSubscriberChannel subscriberChannel = subscribersTopicMap.get(topic);
             // If subscriberChannel is null, the message will get lost
             if (subscriberChannel != null) {
                 subscriberChannel.addMessage(message);
@@ -121,10 +119,23 @@ public class PubSubService {
     }
 
     private Map<Topic, AbstractSubscriberChannel> subscribersTopicMap() {
-        // TODO: Instantiate more subscriber channels in the future
+        // TODO: Instantiate more subscriber channels in the future if needed
         var map = new EnumMap<Topic, AbstractSubscriberChannel>(Topic.class);
-        map.put(Topic.UNSTABLE_FOLLOW, new SubscriberChannel(Topic.UNSTABLE_FOLLOW));
-        map.put(Topic.UNSTABLE_TRANSACTION_WATCH, new SubscriberChannel(Topic.UNSTABLE_TRANSACTION_WATCH));
+        for (Topic topic : Topic.values()) {
+            map.put(topic, new SubscriberChannel(topic));
+        }
         return map;
+    }
+
+    public void sendResultMessage(final WebSocketSession session, final String message) {
+        try {
+            session.sendMessage(new TextMessage(parseResultMessage(message)));
+        } catch (Exception e) {
+            throw new WsMessageSendException("Failed to send message to ws client");
+        }
+    }
+
+    private String parseResultMessage(final String result) {
+        return "{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":\"" + result + "\"}";
     }
 }

@@ -1,4 +1,4 @@
 package com.limechain.rpc.pubsub;
 
-public record Message(String topic, String payload) {
+public record Message(Topic topic, String payload) {
 }
