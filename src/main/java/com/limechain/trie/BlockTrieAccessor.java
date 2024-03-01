@@ -37,7 +37,21 @@ public class BlockTrieAccessor implements KVRepository<Nibbles, byte[]> {
         loadChildren(key);
         NodeData nodeData = new NodeData(value);
         partialTrie.insertNode(key, nodeData);
+        markForRecalculation(key);
+
         return true;
+    }
+
+    private void markForRecalculation(Nibbles key) {
+        NodeHandle<NodeData> createdNode = partialTrie.node(key).asNodeHandle();
+        Optional.ofNullable(createdNode.getParent())
+                .map(NodeHandle::getUserData)
+                .ifPresent(data -> data.setMerkleValue(null));
+        for (Nibble nibble : Nibbles.ALL) {
+            createdNode.getChild(nibble)
+                    .map(NodeHandle::getUserData)
+                    .ifPresent(data -> data.setMerkleValue(null));
+        }
     }
 
     /**
@@ -81,6 +95,7 @@ public class BlockTrieAccessor implements KVRepository<Nibbles, byte[]> {
     public boolean delete(Nibbles key) {
         loadPathToKey(key);
         loadChildren(key);
+        markForRecalculation(key);
         return partialTrie.removeNode(key);
     }
 
