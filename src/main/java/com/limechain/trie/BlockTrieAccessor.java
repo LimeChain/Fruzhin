@@ -78,7 +78,7 @@ public class BlockTrieAccessor implements KVRepository<Nibbles, byte[]> {
             Optional.of(nodeHandle)
                     .map(NodeHandle::getUserData)
                     .map(NodeData::getMerkleValue)
-                    .map(trieStorage::loadChildren)
+                    .map(merkle -> trieStorage.loadChildren(key, merkle))
                     .ifPresent(entries -> entries.forEach(e -> partialTrie.insertNode(e.key(), e.nodeData())));
         }
     }

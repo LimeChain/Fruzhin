@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
@@ -149,7 +150,6 @@ public class TrieStorage {
         }
 
         int commonPrefix = ByteArrayUtils.commonPrefixLength(trieNode.getPartialKey(), key);
-        // TODO: is this right?
         if (trieNode.getChildrenMerkleValues().size() < key[commonPrefix]) {
             return null;
         }
@@ -301,16 +301,23 @@ public class TrieStorage {
         collectEntriesUpTo(childNode, Arrays.copyOfRange(key, 1 + commonPrefix, key.length), nextPath, entries);
     }
 
-    public List<StorageNode> loadChildren(byte[] parentMerkleValue) {
-        TrieNodeData parentNode = getTrieNodeFromMerkleValue(parentMerkleValue);
-        List<byte[]> childrenMerkleValues = parentNode.getChildrenMerkleValues();
-        List<StorageNode> result = new ArrayList<>();
-        for (byte[] childrenMerkleValue : childrenMerkleValues) {
-            TrieNodeData childNode = getTrieNodeFromMerkleValue(childrenMerkleValue);
-            result.add(new StorageNode(nibblesFromBytes(childNode.getPartialKey()),
-                    new NodeData(childNode.getValue(), childrenMerkleValue)));
+    public List<StorageNode> loadChildren(Nibbles parentKey, byte[] parentMerkleValue) {
+        List<byte[]> childrenMerkleValues = Optional.ofNullable(parentMerkleValue)
+                .map(this::getTrieNodeFromMerkleValue)
+                .map(TrieNodeData::getChildrenMerkleValues)
+                .orElseGet(Collections::emptyList);
+
+        List<StorageNode> childrenNodes = new ArrayList<>(childrenMerkleValues.size());
+        for (int i = 0; i < childrenMerkleValues.size(); i++) {
+            byte[] childMerkleValue = childrenMerkleValues.get(i);
+            TrieNodeData childNode = getTrieNodeFromMerkleValue(childMerkleValue);
+            if (childNode != null) {
+                Nibbles childKey =
+                        parentKey.add(Nibble.fromInt(i)).addAll(Nibbles.fromBytes(childNode.getPartialKey()));
+                childrenNodes.add(new StorageNode(childKey, new NodeData(childNode.getValue(), childMerkleValue)));
+            }
         }
-        return result;
+        return childrenNodes;
     }
 
     /**
