@@ -115,11 +115,6 @@ public class BlockTrieAccessor implements KVRepository<Nibbles, byte[]> {
             case NodeHandle<NodeData> handle -> handle.getParent();
         };
 
-        if (limit == null) {
-            //TODO: detach prefix from tree
-            return null;
-        }
-
         return Optional.ofNullable(parent)
                 .map(NodeHandle::getFullKey)
                 .map(parentKey -> prefixIndexInParent(parentKey, prefix))
@@ -138,18 +133,18 @@ public class BlockTrieAccessor implements KVRepository<Nibbles, byte[]> {
         return null;
     }
 
-    private DeleteByPrefixResult lexicographicDelete(NodeHandle<NodeData> node, long limit) {
+    private DeleteByPrefixResult lexicographicDelete(NodeHandle<NodeData> node, Long limit) {
         loadChildren(node.getFullKey());
         int deleted = 0;
         for (Nibble nibble : Nibbles.ALL) {
-            if (limit <= deleted) {
+            if (limit != null && limit <= deleted) {
                 return new DeleteByPrefixResult(deleted, false);
             }
             NodeHandle<NodeData> child = node.getChild(nibble).orElse(null);
             if (child != null) {
-                DeleteByPrefixResult childResult = lexicographicDelete(child, limit - deleted);
+                DeleteByPrefixResult childResult = lexicographicDelete(child, limit == null ? null : limit - deleted);
                 deleted += childResult.deleted();
-                if(!childResult.all()) {
+                if (!childResult.all()) {
                     return new DeleteByPrefixResult(deleted, false);
                 }
             }
