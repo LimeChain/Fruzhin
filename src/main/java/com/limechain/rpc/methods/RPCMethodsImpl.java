@@ -5,9 +5,11 @@ import com.googlecode.jsonrpc4j.spring.AutoJsonRpcServiceImpl;
 import com.limechain.chain.spec.ChainSpec;
 import com.limechain.chain.spec.ChainType;
 import com.limechain.chain.spec.PropertyValue;
-import com.limechain.rpc.methods.chain.ChainRPCImpl;
 import com.limechain.rpc.exceptions.InvalidParametersException;
+import com.limechain.rpc.methods.chain.ChainRPCImpl;
 import com.limechain.rpc.methods.offchain.OffchainRPCImpl;
+import com.limechain.rpc.methods.state.StateRPCImpl;
+import com.limechain.rpc.methods.state.dto.StorageChangeSet;
 import com.limechain.rpc.methods.sync.SyncRPCImpl;
 import com.limechain.rpc.methods.system.SystemRPC;
 import com.limechain.rpc.methods.system.SystemRPCImpl;
@@ -50,6 +52,11 @@ public class RPCMethodsImpl implements RPCMethods {
      * References to offchain rpc method implementation classes
      */
     private final OffchainRPCImpl offchainRPC;
+
+    /**
+     * References to state rpc method implementation classes
+     */
+    private final StateRPCImpl stateRPC;
 
     @Override
     public String[] rpcMethods() {
@@ -198,6 +205,68 @@ public class RPCMethodsImpl implements RPCMethods {
             throw new InvalidParametersException("Invalid storage kind: " + storageKindStr);
         }
         return offchainRPC.offchainLocalStorageGet(storageKind, key);
+    }
+    //endregion
+
+    //region StateRPC methods
+    @Override
+    public void stateCall(final String method, final String data, final String blockHash) {
+        stateRPC.stateCall(method, data, blockHash);
+    }
+
+    @Override
+    public String[][] stateGetPairs(final String prefix, final String blockHash) {
+        return stateRPC.stateGetPairs(prefix, blockHash);
+    }
+
+    @Override
+    public String[][] stateGetKeysPaged(final String prefix, final int limit, final String key, final String blockHash) {
+        return stateRPC.stateGetKeysPaged(prefix, limit, key, blockHash);
+    }
+
+    @Override
+    public String stateGetStorage(final String key, final String blockHash) {
+        return stateRPC.stateGetStorage(key, blockHash);
+    }
+
+    @Override
+    public String stateGetStorageHash(final String key, final String blockHash) {
+        return stateRPC.stateGetStorageHash(key, blockHash);
+    }
+
+    @Override
+    public String stateGetStorageSize(final String key, final String blockHash) {
+        return stateRPC.stateGetStorageSize(key, blockHash);
+    }
+
+    @Override
+    public String stateGetStorageSizeAt(final String key, final String blockHash) {
+        return stateRPC.stateGetStorageSize(key, blockHash);
+    }
+
+    @Override
+    public String stateGetMetadata(final String blockHash) {
+        return stateRPC.stateGetMetadata(blockHash);
+    }
+
+    @Override
+    public String stateGetRuntimeVersion(final String blockHash) {
+        return stateRPC.stateGetRuntimeVersion(blockHash);
+    }
+
+    @Override
+    public List<StorageChangeSet> stateQueryStorage(final List<String> key, final String startBlockHash, final String endBlockHash) {
+        return stateRPC.stateQueryStorage(key, startBlockHash, endBlockHash);
+    }
+
+    @Override
+    public List<StorageChangeSet> stateQueryStorageAt(final List<String> key, final String startBlockHash) {
+        return stateRPC.stateQueryStorage(key, startBlockHash, startBlockHash);
+    }
+
+    @Override
+    public String stateGetReadProof(final List<String> key, final String blockHash) {
+        return stateRPC.stateGetReadProof(key, blockHash);
     }
     //endregion
 }
