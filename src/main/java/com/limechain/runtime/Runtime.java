@@ -1,5 +1,6 @@
 package com.limechain.runtime;
 
+import com.limechain.runtime.allocator.FreeingBumpHeapAllocator;
 import com.limechain.runtime.hostapi.HostApi;
 import com.limechain.runtime.hostapi.WasmExports;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
@@ -22,12 +23,14 @@ public class Runtime {
     private RuntimeVersion version;
     private Instance instance;
     private int heapPages;
+    private FreeingBumpHeapAllocator allocator;
 
     public Runtime(Module module, int heapPages) {
         this.heapPages = heapPages;
         HostApi hostApi = new HostApi(this);
         this.instance = module.instantiate(getImports(module, hostApi));
         hostApi.updateAllocator();
+        this.allocator = new FreeingBumpHeapAllocator(getHeapBase());
     }
 
     // TODO: Add adequate parameters to the runtime call
@@ -37,6 +40,21 @@ public class Runtime {
         Object[] response = instance.exports
             .getFunction(functionName)
             .apply(0, 0);
+
+        if (response == null) {
+            return null;
+        }
+
+        RuntimePointerSize responsePtrSize = new RuntimePointerSize((long) response[0]);
+        return getDataFromMemory(responsePtrSize);
+    }
+
+    @Nullable
+    public byte[] callWithArgs(String functionName, RuntimePointerSize rps) {
+        log.log(Level.INFO, "Making a runtime call: " + functionName);
+        Object[] response = instance.exports
+                .getFunction(functionName)
+                .apply(rps.pointer(), rps.size());
 
         if (response == null) {
             return null;
@@ -82,5 +100,21 @@ public class Runtime {
         memoryBuffer.position(runtimePointerSize.pointer());
         memoryBuffer.get(data);
         return data;
+    }
+
+    public RuntimePointerSize writeDataToMemory(byte[] data) {
+        RuntimePointerSize allocatedPointer = allocate(data.length);
+        writeDataToMemory(data, allocatedPointer);
+        return allocatedPointer;
+    }
+
+    public void writeDataToMemory(byte[] data, RuntimePointerSize runtimePointerSize) {
+        ByteBuffer memoryBuffer = getMemory().buffer();
+        memoryBuffer.position(runtimePointerSize.pointer());
+        memoryBuffer.put(data, 0, runtimePointerSize.size());
+    }
+
+    public RuntimePointerSize allocate(int numberOfBytes) {
+        return allocator.allocate(numberOfBytes, getMemory());
     }
 }

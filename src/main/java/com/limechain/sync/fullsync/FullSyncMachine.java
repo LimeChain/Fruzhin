@@ -1,6 +1,7 @@
 package com.limechain.sync.fullsync;
 
 import com.limechain.network.Network;
+import com.limechain.network.protocol.warp.dto.Block;
 import lombok.Getter;
 
 //TODO: Implement FullSyncMachine

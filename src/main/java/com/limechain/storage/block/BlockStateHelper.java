@@ -85,7 +85,7 @@ public final class BlockStateHelper {
     @NotNull
     byte[] writeHeader(BlockHeader header) {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
-             ScaleCodecWriter scaleCodecWriter = new ScaleCodecWriter(baos);) {
+             ScaleCodecWriter scaleCodecWriter = new ScaleCodecWriter(baos)) {
             BlockHeaderScaleWriter.getInstance().write(scaleCodecWriter, header);
 
             return baos.toByteArray();

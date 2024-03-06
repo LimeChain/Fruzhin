@@ -32,7 +32,7 @@ public class HeaderDigestScaleWriter implements ScaleWriter<HeaderDigest> {
         writer.writeByte(type.getValue());
 
         if (CONTAINING_MESSAGE.contains(type)) {
-            if(type != OTHER) {
+            if (type != OTHER) {
                 writer.writeByteArray(headerDigest.getId().getValue());
             }
             writer.writeCompact(headerDigest.getMessage().length);

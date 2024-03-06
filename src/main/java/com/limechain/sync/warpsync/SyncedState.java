@@ -55,7 +55,7 @@ import java.util.logging.Level;
 /**
  * Singleton class, holds and handles the synced state of the Host.
  */
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 @Getter
 @Setter
 @Log
