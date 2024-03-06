@@ -67,6 +67,10 @@ public class RpcWsHandler extends TextWebSocketHandler {
             case CHAIN_SUBSCRIBE_NEW_HEADS -> handleDefaultSubscribe(Topic.CHAIN_NEW_HEAD, session);
             case CHAIN_UNSUBSCRIBE_NEW_HEADS -> handleDefaultUnsubscribe(Topic.CHAIN_NEW_HEAD, rpcRequest, session);
             case CHAIN_SUBSCRIBE_FINALIZED_HEADS -> handleDefaultSubscribe(Topic.CHAIN_FINALIZED_HEAD, session);
+            case STATE_SUBSCRIBE_RUNTIME_VERSION -> handleDefaultUnsubscribe(Topic.STATE_RUNTIME_VERSION, rpcRequest, session);
+            case STATE_UNSUBSCRIBE_RUNTIME_VERSION -> handleDefaultSubscribe(Topic.STATE_RUNTIME_VERSION, session);
+            case STATE_SUBSCRIBE_STORAGE -> handleDefaultUnsubscribe(Topic.STATE_STORAGE, rpcRequest, session);
+            case STATE_UNSUBSCRIBE_STORAGE -> handleDefaultSubscribe(Topic.STATE_STORAGE, session);
             case CHAIN_UNSUBSCRIBE_FINALIZED_HEADS ->
                     handleDefaultUnsubscribe(Topic.CHAIN_FINALIZED_HEAD, rpcRequest, session);
 

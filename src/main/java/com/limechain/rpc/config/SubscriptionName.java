@@ -20,7 +20,11 @@ public enum SubscriptionName {
     CHAIN_SUBSCRIBE_NEW_HEADS("chain_subscribeNewHeads"),
     CHAIN_UNSUBSCRIBE_NEW_HEADS("chain_unsubscribeNewHeads"),
     CHAIN_SUBSCRIBE_FINALIZED_HEADS("chain_subscribeFinalizedHeads"),
-    CHAIN_UNSUBSCRIBE_FINALIZED_HEADS("chain_unsubscribeFinalizedHeads");
+    CHAIN_UNSUBSCRIBE_FINALIZED_HEADS("chain_unsubscribeFinalizedHeads"),
+    STATE_SUBSCRIBE_RUNTIME_VERSION("state_subscribeRuntimeVersion"),
+    STATE_UNSUBSCRIBE_RUNTIME_VERSION("state_unsubscribeRuntimeVersion"),
+    STATE_SUBSCRIBE_STORAGE("state_subscribeStorage"),
+    STATE_UNSUBSCRIBE_STORAGE("state_unsubscribeStorage");
 
     /**
      * Holds the name of the rpc method

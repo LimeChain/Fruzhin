@@ -5,7 +5,7 @@ import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.runtime.version.StateVersion;
 import com.limechain.storage.KVRepository;
 import com.limechain.storage.block.BlockState;
-import com.limechain.storage.trie.exceptions.ChildNotFoundException;
+import com.limechain.trie.dto.node.StorageNode;
 import com.limechain.trie.structure.TrieStructure;
 import com.limechain.trie.structure.database.InsertTrieBuilder;
 import com.limechain.trie.structure.database.NodeData;
@@ -99,34 +99,19 @@ public class TrieStorage {
      * @param keyStr    The key for which to retrieve the value.
      * @return An {@link Optional} containing the value associated with the key if found, or empty if not found.
      */
-    public Optional<byte[]> getByKeyFromBlock(Hash256 blockHash, String keyStr) {
+    public Optional<NodeData> getByKeyFromBlock(Hash256 blockHash, String keyStr) {
         BlockHeader header = blockState.getHeader(blockHash);
 
         if (header == null) {
             return Optional.empty();
         }
 
-        TrieNodeData rootNode = getTrieNodeFromMerkleValue(header.getStateRoot().getBytes());
-        if (rootNode == null) {
-            return Optional.empty();
-        }
-
         byte[] key = partialKeyFromNibbles(Nibbles.fromBytes(keyStr.getBytes()).asUnmodifiableList());
-        return Optional.ofNullable(getValueFromDb(rootNode, key));
-    }
-
-    /**
-     * Recursively searches for a value by key starting from a given trie node.
-     * <p>
-     *
-     * @param trieNode The trie node from which to start the search.
-     * @param key      The key for which to search. (should be nibbles array)
-     * @return The value associated with the key, or {@code null} if not found.
-     * @throws RuntimeException If a referenced child node cannot be found in the database.
-     */
-    private byte[] getValueFromDb(TrieNodeData trieNode, byte[] key) {
-        TrieNodeData nodeFromDb = getNodeFromDb(trieNode, key);
-        return nodeFromDb != null ? nodeFromDb.getValue() : null;
+        NodeData nodeFromDb = getNodeFromDb(header.getStateRoot().getBytes(), key);
+        if (nodeFromDb != null && nodeFromDb.getMerkleValue() == null) {
+            nodeFromDb.setMerkleValue(header.getStateRoot().getBytes());
+        }
+        return Optional.ofNullable(nodeFromDb);
     }
 
     /**
@@ -138,14 +123,19 @@ public class TrieStorage {
      * If a child node is referenced by a hash, the method fetches and decodes the child node
      * from the database before continuing the search.
      *
-     * @param trieNode The trie node from which to start the search.
-     * @param key      The key for which to search. (should be nibbles array)
-     * @return The value associated with the key, or {@code null} if not found.
-     * @throws ChildNotFoundException If a referenced child node cannot be found in the database.
+     * @param nodeMerkleValue The Merkle value of the trie node from which to start the search.
+     * @param key             The key for which to search. (should be nibbles array)
+     * @return The node data associated with the key, or {@code null} if not found.
      */
-    private TrieNodeData getNodeFromDb(TrieNodeData trieNode, byte[] key) {
+    private NodeData getNodeFromDb(byte[] nodeMerkleValue, byte[] key) {
+        final TrieNodeData trieNode = getTrieNodeFromMerkleValue(nodeMerkleValue);
+
+        if (trieNode == null) {
+            return null;
+        }
+
         if (Arrays.equals(trieNode.getPartialKey(), key)) {
-            return trieNode;
+            return new NodeData(trieNode.getValue(), nodeMerkleValue);
         }
 
         int commonPrefix = ByteArrayUtils.commonPrefixLength(trieNode.getPartialKey(), key);
@@ -159,14 +149,7 @@ public class TrieStorage {
         }
         key = Arrays.copyOfRange(key, 1 + commonPrefix, key.length);
 
-        // Node is referenced by hash, fetch and decode
-        TrieNodeData childNode = getTrieNodeFromMerkleValue(childMerkleValue);
-        if (childNode == null) {
-            throw new ChildNotFoundException(
-                    "Child node not found in database for hash: " + Arrays.toString(childMerkleValue));
-        }
-
-        return getNodeFromDb(childNode, key);
+        return getNodeFromDb(childMerkleValue, key);
     }
 
     private TrieNodeData getTrieNodeFromMerkleValue(byte[] childMerkleValue) {
@@ -241,6 +224,109 @@ public class TrieStorage {
         return EMPTY_TRIE_NODE;
     }
 
+    public byte[] getNextBranch(Hash256 blockHash, String prefixStr) {
+        BlockHeader header = blockState.getHeader(blockHash);
+
+        if (header == null) {
+            return EMPTY_TRIE_NODE;
+        }
+
+        byte[] rootMerkleValue = header.getStateRoot().getBytes();
+        TrieNodeData rootNode = getTrieNodeFromMerkleValue(rootMerkleValue);
+        if (rootNode == null) {
+            return EMPTY_TRIE_NODE;
+        }
+
+        byte[] prefix = partialKeyFromNibbles(Nibbles.fromBytes(prefixStr.getBytes()).asUnmodifiableList());
+        if (Arrays.equals(prefix, rootNode.getPartialKey())) {
+            return rootMerkleValue;
+        }
+
+        return searchForNextBranch(rootNode, prefix, rootNode.getPartialKey());
+    }
+
+    private byte[] searchForNextBranch(TrieNodeData node, byte[] prefix, byte[] currentPath) {
+        if (node == null) {
+            return EMPTY_TRIE_NODE;
+        }
+
+        List<byte[]> childrenMerkleValues = node.getChildrenMerkleValues();
+        int startIndex = prefix.length > currentPath.length ? prefix[currentPath.length] : 0;
+
+        for (int i = startIndex; i < childrenMerkleValues.size(); i++) {
+            byte[] childMerkleValue = childrenMerkleValues.get(i);
+            if (childMerkleValue == null) continue; // Skip empty slots.
+
+            // Fetch the child node based on its merkle value.
+            TrieNodeData childNode = getTrieNodeFromMerkleValue(childMerkleValue);
+
+            byte[] nextPath = ByteArrayUtils.concatenate(currentPath, new byte[]{(byte) i});
+            nextPath = ByteArrayUtils.concatenate(nextPath, childNode.getPartialKey());
+
+            if (Arrays.compare(nextPath, prefix) >= 0) {
+                return childMerkleValue;
+            }
+
+            byte[] result = searchForNextBranch(childNode, prefix, nextPath);
+            if (result != EMPTY_TRIE_NODE) {
+                // If a result is found in this subtree, return it.
+                return result;
+            }
+        }
+
+        return EMPTY_TRIE_NODE;
+    }
+
+    public List<byte[]> getKeysWithPrefixPaged(Hash256 blockHash, byte[] prefix, byte[] startKey, int limit) {
+        BlockHeader header = blockState.getHeader(blockHash);
+        if (header == null) {
+            return new ArrayList<>();
+        }
+
+        // Decode the root node of the trie using the state root from the block header.
+        TrieNodeData rootNode = getTrieNodeFromMerkleValue(header.getStateRoot().getBytes());
+        if (rootNode == null) {
+            return new ArrayList<>();
+        }
+
+        List<byte[]> matchingKeys = new ArrayList<>();
+        collectKeysWithPrefix(rootNode, new byte[0], prefix, startKey, limit, matchingKeys, new boolean[]{false});
+        return matchingKeys;
+    }
+
+    private void collectKeysWithPrefix(TrieNodeData node, byte[] currentPath, byte[] prefix, byte[] startKey, int limit, List<byte[]> keys, boolean[] startKeyFound) {
+        if (keys.size() >= limit) return; // Stop if limit reached
+
+        byte[] fullPath = ByteArrayUtils.concatenate(currentPath, node.getPartialKey());
+        if (node.getValue() != null && startsWith(fullPath, prefix)) {
+            if (startKey == null || startKeyFound[0] || Arrays.equals(startKey, fullPath)) {
+                if (!startKeyFound[0]) {
+                    startKeyFound[0] = true; // Mark that we've found the startKey
+                } else {
+                    keys.add(fullPath); // Add key if it matches the prefix and is after the startKey
+                }
+            }
+        }
+
+        // Traverse children
+        for (byte[] childMerkleValue : node.getChildrenMerkleValues()) {
+            if (childMerkleValue == null) continue;
+            TrieNodeData childNode = getTrieNodeFromMerkleValue(childMerkleValue);
+            if (childNode != null) {
+                collectKeysWithPrefix(childNode, fullPath, prefix, startKey, limit, keys, startKeyFound);
+            }
+        }
+    }
+
+    private boolean startsWith(byte[] array, byte[] prefix) {
+        if (array.length < prefix.length) return false;
+        for (int i = 0; i < prefix.length; i++) {
+            if (array[i] != prefix[i]) return false;
+        }
+        return true;
+    }
+
+
     /**
      * Retrieves trie entries within a specified range.
      * <p>
@@ -299,6 +385,18 @@ public class TrieStorage {
                 new NodeData(childNode.getValue(), childMerkleValue)));
 
         collectEntriesUpTo(childNode, Arrays.copyOfRange(key, 1 + commonPrefix, key.length), nextPath, entries);
+    }
+
+    public List<StorageNode> loadChildren(byte[] parentMerkleValue) {
+        TrieNodeData parentNode = getTrieNodeFromMerkleValue(parentMerkleValue);
+        List<byte[]> childrenMerkleValues = parentNode.getChildrenMerkleValues();
+        List<StorageNode> result = new ArrayList<>();
+        for (byte[] childrenMerkleValue : childrenMerkleValues) {
+            TrieNodeData childNode = getTrieNodeFromMerkleValue(childrenMerkleValue);
+            result.add(new StorageNode(nibblesFromBytes(childNode.getPartialKey()),
+                    new NodeData(childNode.getValue(), childrenMerkleValue)));
+        }
+        return result;
     }
 
     /**

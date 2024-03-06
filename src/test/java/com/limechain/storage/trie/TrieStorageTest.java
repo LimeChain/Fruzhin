@@ -4,6 +4,7 @@ package com.limechain.storage.trie;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.storage.KVRepository;
 import com.limechain.storage.block.BlockState;
+import com.limechain.trie.structure.database.NodeData;
 import com.limechain.trie.structure.nibble.Nibbles;
 import com.limechain.trie.structure.node.TrieNodeData;
 import io.emeraldpay.polkaj.types.Hash256;
@@ -55,10 +56,10 @@ class TrieStorageTest {
         when(db.find(anyString())).thenReturn(Optional.of(trieNodeData));
         when(blockState.getHeader(mockBlockHash)).thenReturn(mockBlockHeader);
 
-        Optional<byte[]> result = trieStorage.getByKeyFromBlock(mockBlockHash, keyStr);
+        Optional<NodeData> result = trieStorage.getByKeyFromBlock(mockBlockHash, keyStr);
 
         assertTrue(result.isPresent());
-        assertArrayEquals(expectedValue, result.get());
+        assertArrayEquals(expectedValue, result.get().getValue());
 
         verify(db).find(anyString());
     }
@@ -73,7 +74,7 @@ class TrieStorageTest {
 
         when(db.find(anyString())).thenReturn(Optional.empty());
 
-        Optional<byte[]> result = trieStorage.getByKeyFromBlock(mockBlockHash, keyStr);
+        Optional<NodeData> result = trieStorage.getByKeyFromBlock(mockBlockHash, keyStr);
 
         assertTrue(result.isEmpty());
 
@@ -87,7 +88,7 @@ class TrieStorageTest {
 
         when(blockState.getHeader(mockBlockHash)).thenReturn(null);
 
-        Optional<byte[]> result = trieStorage.getByKeyFromBlock(mockBlockHash, keyStr);
+        Optional<NodeData> result = trieStorage.getByKeyFromBlock(mockBlockHash, keyStr);
 
         assertTrue(result.isEmpty());
     }
@@ -107,7 +108,7 @@ class TrieStorageTest {
         when(blockState.getHeader(mockBlockHash)).thenReturn(mockBlockHeader);
 
         // Action
-        Optional<byte[]> result = trieStorage.getByKeyFromBlock(mockBlockHash, keyStr);
+        Optional<NodeData> result = trieStorage.getByKeyFromBlock(mockBlockHash, keyStr);
 
         // Assert
         assertTrue(result.isEmpty());

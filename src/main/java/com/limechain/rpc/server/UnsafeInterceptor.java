@@ -3,7 +3,7 @@ package com.limechain.rpc.server;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.googlecode.jsonrpc4j.JsonRpcInterceptor;
 import com.limechain.cli.CliArguments;
-import com.limechain.rpc.config.Unsafe;
+import com.limechain.rpc.config.UnsafeRpcMethod;
 import com.limechain.rpc.exceptions.UnsafeAccessException;
 
 import java.lang.reflect.Method;
@@ -11,7 +11,7 @@ import java.util.List;
 
 /**
  * Interceptor for JSON-RPC calls that checks for unsafe method access.
- * It prevents the execution of methods annotated with {@link Unsafe}
+ * It prevents the execution of methods annotated with {@link UnsafeRpcMethod}
  * unless the application is running in an unsafe mode.
  */
 public class UnsafeInterceptor implements JsonRpcInterceptor {
@@ -29,7 +29,7 @@ public class UnsafeInterceptor implements JsonRpcInterceptor {
         }
 
         // Check if the method is marked as unsafe and  unsafe RPC is not enabled
-        if (method.isAnnotationPresent(Unsafe.class) && !this.cliArguments.unsafeRpcEnabled()) {
+        if (method.isAnnotationPresent(UnsafeRpcMethod.class) && !this.cliArguments.unsafeRpcEnabled()) {
             throw new UnsafeAccessException(
                     "Unsafe mode is not enabled. This method is only available in unsafe mode.");
 

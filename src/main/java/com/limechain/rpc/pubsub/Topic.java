@@ -11,7 +11,9 @@ public enum Topic {
     UNSTABLE_TRANSACTION_WATCH("transaction_watch"),
     CHAIN_ALL_HEAD("chain_allHead"),
     CHAIN_NEW_HEAD("chain_newHead"),
-    CHAIN_FINALIZED_HEAD("chain_finalizedHead");
+    CHAIN_FINALIZED_HEAD("chain_finalizedHead"),
+    STATE_RUNTIME_VERSION("state_runtimeVersion"),
+    STATE_STORAGE("state_storage");
 
     private final String value;
 
