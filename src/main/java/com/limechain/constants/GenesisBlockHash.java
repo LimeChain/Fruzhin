@@ -1,5 +1,6 @@
 package com.limechain.constants;
 
+import com.google.protobuf.ByteString;
 import com.limechain.chain.ChainService;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.network.protocol.warp.dto.HeaderDigest;
@@ -14,18 +15,21 @@ import lombok.Getter;
 import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
+import java.util.Map;
 
 @Component
 @Getter
 public class GenesisBlockHash {
     private final Hash256 genesisHash;
+    private final Map<ByteString, ByteString> genesisStorage;
     private final TrieStructure<NodeData> genesisTrie;
     private final BlockHeader genesisBlockHeader;
     private final ChainService chainService;
 
     public GenesisBlockHash(ChainService chainService) {
         this.chainService = chainService;
-        this.genesisTrie = buildGenesisTrie();
+        this.genesisStorage = loadGenesisStorage();
+        this.genesisTrie = buildGenesisTrie(genesisStorage);
 
         byte[] stateRootHash = getMerkleValue(this.genesisTrie);
         this.genesisBlockHeader = buildGenesisBlock(stateRootHash);
@@ -50,8 +54,11 @@ public class GenesisBlockHash {
                 .orElseThrow(() -> new RuntimeException("Root node merkle value not found"));
     }
 
-    private TrieStructure<NodeData> buildGenesisTrie() {
-        var genesisStorage = chainService.getChainSpec().getGenesis().getTop();
+    private TrieStructure<NodeData> buildGenesisTrie(Map<ByteString, ByteString> genesisStorage) {
         return TrieStructureFactory.buildFromKVPs(genesisStorage, StateVersion.V0);
+    }
+
+    private Map<ByteString, ByteString> loadGenesisStorage() {
+        return chainService.getChainSpec().getGenesis().getTop();
     }
 }

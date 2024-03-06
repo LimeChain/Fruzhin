@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.IOException;
 
-@NoArgsConstructor(access  = AccessLevel.PRIVATE)
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class BlockHeaderScaleWriter implements ScaleWriter<BlockHeader> {
 
     private static final BlockHeaderScaleWriter INSTANCE = new BlockHeaderScaleWriter();
@@ -32,6 +32,8 @@ public class BlockHeaderScaleWriter implements ScaleWriter<BlockHeader> {
 
     private void write(ScaleCodecWriter writer, BlockHeader blockHeader, boolean sealed) throws IOException {
         writer.writeUint256(blockHeader.getParentHash().getBytes());
+        // NOTE: Usage of BlockNumberWriter is intentionally omitted here,
+        //  since we want this to be a compact int, not a var size int
         writer.writeCompact(blockHeader.getBlockNumber().intValue());
         writer.writeUint256(blockHeader.getStateRoot().getBytes());
         writer.writeUint256(blockHeader.getExtrinsicsRoot().getBytes());

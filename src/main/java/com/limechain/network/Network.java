@@ -214,6 +214,12 @@ public class Network {
         return false;
     }
 
+    public void updateCurrentSelectedPeer() {
+        if (connectionManager.getPeerIds().isEmpty()) return;
+        this.currentSelectedPeer = connectionManager.getPeerIds().stream()
+            .skip(RANDOM.nextInt(connectionManager.getPeerIds().size())).findAny().orElse(null);
+    }
+
     public String getPeerId() {
         return this.host.getPeerId().toString();
     }
@@ -278,21 +284,21 @@ public class Network {
         }
     }
 
-    public void updateCurrentSelectedPeer() {
-        if (connectionManager.getPeerIds().isEmpty()) return;
-        this.currentSelectedPeer = connectionManager.getPeerIds().stream()
-                .skip(RANDOM.nextInt(connectionManager.getPeerIds().size())).findAny().orElse(null);
-    }
-
     public BlockResponse syncBlock(PeerId peerId, BigInteger lastBlockNumber) {
         this.currentSelectedPeer = peerId;
         // TODO: fields, hash, direction and maxBlocks values not verified
         // TODO: when debugging could not get a value returned
+        return this.makeBlockRequest(
+            new BlockRequestDto(19, null, lastBlockNumber.intValue(), Direction.Ascending, 1));
+    }
+
+    public BlockResponse makeBlockRequest(BlockRequestDto blockRequestDto) {
         return syncService.getProtocol().remoteBlockRequest(
-                this.host,
-                this.host.getAddressBook(),
-                peerId,
-                new BlockRequestDto(19, null, lastBlockNumber.intValue(), Direction.Ascending, 1));
+            this.host,
+            this.host.getAddressBook(),
+            this.currentSelectedPeer,
+            blockRequestDto
+        );
     }
 
     public WarpSyncResponse makeWarpSyncRequest(String blockHash) {

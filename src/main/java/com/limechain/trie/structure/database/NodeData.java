@@ -13,4 +13,9 @@ public class NodeData {
     public NodeData(@Nullable byte[] value) {
         this.value = value;
     }
+
+    public NodeData(@Nullable byte[] value, @Nullable byte[] merkleValue) {
+        this.value = value;
+        this.merkleValue = merkleValue;
+    }
 }
