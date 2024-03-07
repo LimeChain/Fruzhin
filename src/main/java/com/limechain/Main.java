@@ -50,9 +50,9 @@ public class Main {
             }
         }
 
+        prometheusServer.emitStartTime();
         // Start the client
         // NOTE: This starts the beans the client would need - mutates the global context
-        prometheusServer.emitStartTime();
         client.start();
         log.log(Level.INFO, "\uD83D\uDE80Started {0} client!", nodeRole);
 
