@@ -196,7 +196,6 @@ public class Cli {
         listenAddress.setRequired(false);
         basePath.setRequired(false);
 
-
         result.addOption(networkOption);
         result.addOption(dbPathOption);
         result.addOption(dbClean);
