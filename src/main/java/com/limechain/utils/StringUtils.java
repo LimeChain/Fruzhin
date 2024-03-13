@@ -19,11 +19,7 @@ public class StringUtils {
             throw new InvalidParameterException("Invalid hex string");
         }
 
-        // Trim the 0x prefix if it exists
-        if (hex.startsWith("0x")) {
-            hex = hex.substring(2);
-        }
-
+        hex = remove0xPrefix(hex);
         return ByteString.fromHex(hex).toByteArray();
     }
 
