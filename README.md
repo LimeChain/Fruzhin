@@ -46,8 +46,8 @@ export JAVA_HOME=`/usr/libexec/java_home -v 17.0.8`
 Note: This step will be automated in the future
 ```
 
-Depending on your architecture type, you will have to grab one of either 2 versions(arm/amd) of the wasmer-java dylib
-file from `wasmer-setup` folder.
+For now, you will have to manually grab the compiled `wasmer-java` dynamic library
+file from the subfolder under `./wasmer-setup` corresponding to your architecture type.
 Copy the file to the Java `Extensions` folder:
 
 ```
