@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Log
 public class TrieHostFunctions {
-    final static int TRIE_ROOT_HASH_BYTE_LEN = 32;
+    static final int TRIE_ROOT_HASH_BYTE_LEN = 32;
 
     private final HostApi hostApi;
 
