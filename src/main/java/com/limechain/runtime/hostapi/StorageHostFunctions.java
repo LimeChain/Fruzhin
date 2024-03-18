@@ -2,6 +2,7 @@ package com.limechain.runtime.hostapi;
 
 import com.limechain.utils.scale.exceptions.ScaleEncodingException;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
+import com.limechain.runtime.Runtime;
 import com.limechain.storage.DBConstants;
 import com.limechain.storage.DeleteByPrefixResult;
 import com.limechain.storage.KVRepository;
@@ -27,16 +28,16 @@ import java.util.List;
  */
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class StorageHostFunctions {
-    private final HostApi hostApi;
+    private final Runtime runtime;
     private final KVRepository<String, Object> repository;
 
-    private StorageHostFunctions(final HostApi hostApi) {
-        this.hostApi = hostApi;
+    private StorageHostFunctions(Runtime runtime) {
+        this.runtime = runtime;
         this.repository = SyncedState.getInstance().getRepository();
     }
 
-    public static List<ImportObject> getFunctions(final HostApi hostApi) {
-        return new StorageHostFunctions(hostApi).buildFunctions();
+    public static List<ImportObject> getFunctions(Runtime runtime) {
+        return new StorageHostFunctions(runtime).buildFunctions();
     }
 
     public List<ImportObject> buildFunctions() {
@@ -98,8 +99,8 @@ public class StorageHostFunctions {
      * @param valuePointer a pointer-size containing the key.
      */
     public void extStorageSetVersion1(RuntimePointerSize keyPointer, RuntimePointerSize valuePointer) {
-        byte[] key = hostApi.getDataFromMemory(keyPointer);
-        byte[] value = hostApi.getDataFromMemory(valuePointer);
+        byte[] key = runtime.getDataFromMemory(keyPointer);
+        byte[] value = runtime.getDataFromMemory(valuePointer);
 
         repository.save(new String(key), value);
     }
@@ -111,10 +112,10 @@ public class StorageHostFunctions {
      * @return a pointer-size returning the SCALE encoded Option value containing the value.
      */
     public RuntimePointerSize extStorageGetVersion1(RuntimePointerSize keyPointer) {
-        byte[] key = hostApi.getDataFromMemory(keyPointer);
+        byte[] key = runtime.getDataFromMemory(keyPointer);
         byte[] value = (byte[]) repository.find(new String(key)).orElse(null);
 
-        return hostApi.writeDataToMemory(scaleEncodedOption(value));
+        return runtime.writeDataToMemory(scaleEncodedOption(value));
     }
 
     /**
@@ -131,20 +132,20 @@ public class StorageHostFunctions {
      */
     public RuntimePointerSize extStorageReadVersion1(RuntimePointerSize keyPointer, RuntimePointerSize valueOutPointer,
                                                      int offset) {
-        byte[] key = hostApi.getDataFromMemory(keyPointer);
+        byte[] key = runtime.getDataFromMemory(keyPointer);
         byte[] value = (byte[]) repository.find(new String(key)).orElse(null);
 
         if (value == null) {
-            return hostApi.writeDataToMemory(scaleEncodedOption(null));
+            return runtime.writeDataToMemory(scaleEncodedOption(null));
         }
 
         int size = 0;
         if (offset <= value.length) {
             size = value.length - offset;
-            hostApi.writeDataToMemory(Arrays.copyOfRange(value, offset, value.length), valueOutPointer);
+            runtime.writeDataToMemory(Arrays.copyOfRange(value, offset, value.length), valueOutPointer);
         }
 
-        return hostApi.writeDataToMemory(scaleEncodedOption(size));
+        return runtime.writeDataToMemory(scaleEncodedOption(size));
     }
 
     /**
@@ -153,7 +154,7 @@ public class StorageHostFunctions {
      * @param keyPointer a pointer-size containing the key.
      */
     public void extStorageClearVersion1(RuntimePointerSize keyPointer) {
-        byte[] key = hostApi.getDataFromMemory(keyPointer);
+        byte[] key = runtime.getDataFromMemory(keyPointer);
         repository.delete(new String(key));
     }
 
@@ -164,7 +165,7 @@ public class StorageHostFunctions {
      * @return integer value equal to 1 if the key exists or a value equal to 0 if otherwise.
      */
     public int extStorageExistsVersion1(RuntimePointerSize keyPointer) {
-        byte[] key = hostApi.getDataFromMemory(keyPointer);
+        byte[] key = runtime.getDataFromMemory(keyPointer);
         return repository.find(new String(key)).isPresent() ? 1 : 0;
     }
 
@@ -174,7 +175,7 @@ public class StorageHostFunctions {
      * @param prefixPointer a pointer-size containing the prefix.
      */
     public void extStorageClearPrefixVersion1(RuntimePointerSize prefixPointer) {
-        byte[] prefix = hostApi.getDataFromMemory(prefixPointer);
+        byte[] prefix = runtime.getDataFromMemory(prefixPointer);
         repository.deleteByPrefix(new String(prefix), null);
     }
 
@@ -191,14 +192,14 @@ public class StorageHostFunctions {
      */
     public RuntimePointerSize extStorageClearPrefixVersion2(RuntimePointerSize prefixPointer,
                                                             RuntimePointerSize limitPointer) {
-        String prefix = new String(hostApi.getDataFromMemory(prefixPointer));
+        String prefix = new String(runtime.getDataFromMemory(prefixPointer));
 
-        byte[] limitBytes = hostApi.getDataFromMemory(limitPointer);
+        byte[] limitBytes = runtime.getDataFromMemory(limitPointer);
         Long limit = new ScaleCodecReader(limitBytes).readOptional(ScaleCodecReader.UINT32).orElse(null);
 
         DeleteByPrefixResult result = repository.deleteByPrefix(prefix, limit);
 
-        return hostApi.writeDataToMemory(result.scaleEncoded());
+        return runtime.writeDataToMemory(result.scaleEncoded());
     }
 
     /**
@@ -210,9 +211,9 @@ public class StorageHostFunctions {
      * @param valuePointer a pointer-size containing the value to be appended.
      */
     public void extStorageAppendVersion1(RuntimePointerSize keyPointer, RuntimePointerSize valuePointer) {
-        String key = new String(hostApi.getDataFromMemory(keyPointer));
+        String key = new String(runtime.getDataFromMemory(keyPointer));
         byte[] sequence = (byte[]) repository.find(key).orElse(null);
-        byte[] valueToAppend = hostApi.getDataFromMemory(valuePointer);
+        byte[] valueToAppend = runtime.getDataFromMemory(valuePointer);
 
         if (sequence == null) {
             repository.save(key, valueToAppend);
@@ -253,7 +254,7 @@ public class StorageHostFunctions {
         //TODO: compute from Trie
         byte[] rootHash = (byte[]) repository.find(DBConstants.STATE_TRIE_ROOT_HASH).orElseThrow();
 
-        return hostApi.writeDataToMemory(rootHash);
+        return runtime.writeDataToMemory(rootHash);
     }
 
     /**
@@ -274,7 +275,7 @@ public class StorageHostFunctions {
      * @return a pointer-size to an Option type (Definition 185) that’s always None.
      */
     public RuntimePointerSize extStorageChangesRootVersion1(RuntimePointerSize parentHashPointer) {
-        return hostApi.writeDataToMemory(scaleEncodedOption(null));
+        return runtime.writeDataToMemory(scaleEncodedOption(null));
     }
 
     /**
@@ -285,10 +286,10 @@ public class StorageHostFunctions {
      * @return a pointer-size to the SCALE encoded Option value containing the next key in lexicographic order.
      */
     public RuntimePointerSize extStorageNextKeyVersion1(RuntimePointerSize keyPointer) {
-        byte[] key = hostApi.getDataFromMemory(keyPointer);
+        byte[] key = runtime.getDataFromMemory(keyPointer);
         byte[] nextKey = repository.getNextKey(new String(key)).map(String::getBytes).orElse(null);
 
-        return hostApi.writeDataToMemory(scaleEncodedOption(nextKey));
+        return runtime.writeDataToMemory(scaleEncodedOption(nextKey));
     }
 
     /**

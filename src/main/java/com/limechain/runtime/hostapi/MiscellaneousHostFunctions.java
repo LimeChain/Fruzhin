@@ -32,10 +32,10 @@ import java.util.logging.Level;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class MiscellaneousHostFunctions {
 
-    private final HostApi hostApi;
+    private final Runtime runtime;
 
-    public static List<ImportObject> getFunctions(final HostApi hostApi) {
-        return new MiscellaneousHostFunctions(hostApi).buildFunctions();
+    public static List<ImportObject> getFunctions(Runtime runtime) {
+        return new MiscellaneousHostFunctions(runtime).buildFunctions();
     }
 
     public List<ImportObject> buildFunctions() {
@@ -72,7 +72,7 @@ public class MiscellaneousHostFunctions {
      * @param strPointer a pointer-size to the valid buffer to be printed.
      */
     public void printUtf8V1(RuntimePointerSize strPointer) {
-        byte[] data = hostApi.getDataFromMemory(strPointer);
+        byte[] data = runtime.getDataFromMemory(strPointer);
 
         final String strToPrint = new String(data, StandardCharsets.UTF_8);
         log.info("Printing utf8 from runtime: " + strToPrint);
@@ -84,7 +84,7 @@ public class MiscellaneousHostFunctions {
      * @param pointer a pointer-size to the buffer to be printed.
      */
     public void printHexV1(RuntimePointerSize pointer) {
-        byte[] data = hostApi.getDataFromMemory(pointer);
+        byte[] data = runtime.getDataFromMemory(pointer);
 
         final String hexString = HexUtils.toHexString(data);
         log.info("Printing hex from runtime: " + hexString);
@@ -103,7 +103,7 @@ public class MiscellaneousHostFunctions {
      * which is encoded as a byte array.
      */
     public RuntimePointerSize runtimeVersionV1(RuntimePointerSize data) {
-        byte[] wasmBlob = hostApi.getDataFromMemory(data);
+        byte[] wasmBlob = runtime.getDataFromMemory(data);
 
         byte[] versionOption;
 
@@ -118,7 +118,7 @@ public class MiscellaneousHostFunctions {
             versionOption = scaleEncodedOption(null);
         }
 
-        return hostApi.writeDataToMemory(versionOption);
+        return runtime.writeDataToMemory(versionOption);
     }
 
     /**
@@ -131,8 +131,8 @@ public class MiscellaneousHostFunctions {
      * @param messagePtr a pointer-size to the UTF-8 encoded log message.
      */
     public void logV1(int level, RuntimePointerSize targetPtr, RuntimePointerSize messagePtr) {
-        byte[] target = hostApi.getDataFromMemory(targetPtr);
-        byte[] message = hostApi.getDataFromMemory(messagePtr);
+        byte[] target = runtime.getDataFromMemory(targetPtr);
+        byte[] message = runtime.getDataFromMemory(messagePtr);
 
         final String messageToPrint = new String(message, StandardCharsets.UTF_8);
         final String targetToPrint = new String(target);

@@ -1,7 +1,6 @@
 package com.limechain.runtime;
 
 import com.limechain.runtime.allocator.FreeingBumpHeapAllocator;
-import com.limechain.runtime.hostapi.HostApi;
 import com.limechain.runtime.hostapi.WasmExports;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import com.limechain.runtime.version.RuntimeVersion;
@@ -28,9 +27,8 @@ public class Runtime {
 
     public Runtime(Module module, int heapPages) {
         this.heapPages = heapPages;
-        HostApi hostApi = new HostApi(this);
-        this.instance = module.instantiate(getImports(module, hostApi));
-        hostApi.updateAllocator();
+        this.instance = module.instantiate(getImports(module, this));
+        updateAllocator();
         this.allocator = new FreeingBumpHeapAllocator(getHeapBase());
     }
 
@@ -50,6 +48,7 @@ public class Runtime {
      * @param parameter the SCALE encoded tuple of parameters
      * @return the SCALE encoded response
      */
+    @Nullable
     public byte[] call(String functionName, @NotNull byte[] parameter) {
         return callInner(functionName, allocateCallParameter(parameter));
     }
@@ -59,6 +58,7 @@ public class Runtime {
         return new RuntimePointerSize(0, 0);
     }
 
+    @Nullable
     private byte[] callInner(String functionName, RuntimePointerSize parameterPtrSize) {
         log.log(Level.INFO, "Making a runtime call: " + functionName);
         Object[] response = instance.exports.getFunction(functionName)
@@ -105,12 +105,10 @@ public class Runtime {
         return instance.exports.getGlobal(WasmExports.DATA_END.getValue()).getIntValue();
     }
 
-    public Memory getMemory() {
+    private Memory getMemory() {
         return instance.exports.getMemory(WasmExports.MEMORY.getValue());
     }
 
-    // TODO: Think about moving `writeDataToMemory` from `HostApi` into here, too...
-    //  for now, only the reading has been moved (as deemed necessary to be here)
     /**
      * Get the data stored in memory using a {@link  RuntimePointerSize}
      *
@@ -125,19 +123,52 @@ public class Runtime {
         return data;
     }
 
+    private void updateAllocator() {
+        this.allocator = new FreeingBumpHeapAllocator(getHeapBase());
+    }
+
+    /**
+     * Write data to memory, by allocating space in memory and then writing to it.
+     *
+     * @param data data to be written
+     * @return a pointer size to the written data
+     */
     public RuntimePointerSize writeDataToMemory(byte[] data) {
         RuntimePointerSize allocatedPointer = allocate(data.length);
         writeDataToMemory(data, allocatedPointer);
         return allocatedPointer;
     }
 
+    /**
+     * Write data to memory, by using a {@link RuntimePointerSize}.
+     * <br>Data will be written at the given {@link RuntimePointerSize#pointer() pointer}.
+     * <br>Only the first bytes up to the given {@link RuntimePointerSize#size() size} will be written.
+     *
+     * @param data               data to be written to memory
+     * @param runtimePointerSize pointer to memory and size of data to be stored.
+     */
     public void writeDataToMemory(byte[] data, RuntimePointerSize runtimePointerSize) {
         ByteBuffer memoryBuffer = getMemory().buffer();
         memoryBuffer.position(runtimePointerSize.pointer());
         memoryBuffer.put(data, 0, runtimePointerSize.size());
     }
 
+    /**
+     * Allocate a number of bytes in memory.
+     *
+     * @param numberOfBytes number of bytes to be allocated
+     * @return a pointer-size to the allocated space in memory
+     */
     public RuntimePointerSize allocate(int numberOfBytes) {
         return allocator.allocate(numberOfBytes, getMemory());
+    }
+
+    /**
+     * Deallocate the space at given memory pointer
+     *
+     * @param pointer position in memory
+     */
+    public void deallocate(int pointer) {
+        allocator.deallocate(pointer, getMemory());
     }
 }

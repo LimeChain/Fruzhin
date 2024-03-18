@@ -1,5 +1,6 @@
 package com.limechain.runtime.hostapi;
 
+import com.limechain.runtime.Runtime;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import org.wasmer.ImportObject;
@@ -15,10 +16,10 @@ import java.util.List;
  */
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class AllocatorHostFunctions {
-    private final HostApi hostApi;
+    private final Runtime runtime;
 
-    public static List<ImportObject> getFunctions(final HostApi hostApi) {
-        return new AllocatorHostFunctions(hostApi).buildFunctions();
+    public static List<ImportObject> getFunctions(Runtime runtime) {
+        return new AllocatorHostFunctions(runtime).buildFunctions();
     }
 
     public List<ImportObject> buildFunctions() {
@@ -38,7 +39,7 @@ public class AllocatorHostFunctions {
      * @return a pointer to the allocated buffer.
      */
     public int extAllocatorMallocVersion1(int size) {
-        return hostApi.allocate(size).pointer();
+        return runtime.allocate(size).pointer();
     }
 
     /**
@@ -47,6 +48,6 @@ public class AllocatorHostFunctions {
      * @param pointer a pointer to the memory buffer to be freed.
      */
     public void extAllocatorFreeVersion1(int pointer) {
-        hostApi.deallocate(pointer);
+        runtime.deallocate(pointer);
     }
 }

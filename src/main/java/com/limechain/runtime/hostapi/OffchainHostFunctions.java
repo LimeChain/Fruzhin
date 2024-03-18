@@ -5,6 +5,7 @@ import com.limechain.exception.ThreadInterruptedException;
 import com.limechain.network.Network;
 import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.rpc.server.AppBean;
+import com.limechain.runtime.Runtime;
 import com.limechain.runtime.hostapi.dto.HttpErrorType;
 import com.limechain.runtime.hostapi.dto.HttpStatusCode;
 import com.limechain.runtime.hostapi.dto.InvalidArgumentException;
@@ -53,14 +54,14 @@ import java.util.logging.Level;
 @Log
 @AllArgsConstructor
 public class OffchainHostFunctions {
-    private final HostApi hostApi;
+    private final Runtime runtime;
     private final HostConfig config;
     private final OffchainHttpRequests requests;
     private final OffchainStore persistentStorage;
     private final OffchainStore localStorage;
 
-    private OffchainHostFunctions(final HostApi hostApi) {
-        this.hostApi = hostApi;
+    private OffchainHostFunctions(Runtime runtime) {
+        this.runtime = runtime;
         this.config = AppBean.getBean(HostConfig.class);
         requests = OffchainHttpRequests.getInstance();
         KVRepository<String, Object> db = SyncedState.getInstance().getRepository();
@@ -68,8 +69,8 @@ public class OffchainHostFunctions {
         localStorage = new OffchainStore(db, false);
     }
 
-    public static List<ImportObject> getFunctions(final HostApi hostApi) {
-        return new OffchainHostFunctions(hostApi).buildFunctions();
+    public static List<ImportObject> getFunctions(Runtime runtime) {
+        return new OffchainHostFunctions(runtime).buildFunctions();
     }
 
     public List<ImportObject> buildFunctions() {
@@ -180,11 +181,11 @@ public class OffchainHostFunctions {
      * additional data provided. The cause of a failure is implementation specific.
      */
     public RuntimePointerSize extOffchainSubmitTransaction(RuntimePointerSize extrinsicPointer) {
-        byte[] extrinsic = hostApi.getDataFromMemory(extrinsicPointer);
+        byte[] extrinsic = runtime.getDataFromMemory(extrinsicPointer);
         // TODO: add to transaction pool,  when implemented, and set success to the result of that operation
         boolean success = true;
 
-        return hostApi.writeDataToMemory(scaleEncodedEmptyResult(success));
+        return runtime.writeDataToMemory(scaleEncodedEmptyResult(success));
     }
 
     /**
@@ -200,7 +201,7 @@ public class OffchainHostFunctions {
         PeerId peerId = network.getHost().getPeerId();
         List<Multiaddr> multiAddresses = network.getHost().listenAddresses();
 
-        return hostApi.writeDataToMemory(scaleEncodedOpaqueNetwork(peerId, multiAddresses));
+        return runtime.writeDataToMemory(scaleEncodedOpaqueNetwork(peerId, multiAddresses));
     }
 
     private byte[] scaleEncodedOpaqueNetwork(PeerId peerId, List<Multiaddr> multiAddresses) {
@@ -259,7 +260,7 @@ public class OffchainHostFunctions {
         } catch (NoSuchAlgorithmException e) {
             seed = SecureRandom.getSeed(32);
         }
-        return hostApi.writeDataToMemory(seed).pointer();
+        return runtime.writeDataToMemory(seed).pointer();
     }
 
     /**
@@ -275,12 +276,12 @@ public class OffchainHostFunctions {
     public RuntimePointerSize extOffchainHttpRequestStart(RuntimePointerSize methodPointer,
                                                           RuntimePointerSize uriPointer,
                                                           byte[] meta) {
-        String method = new ScaleCodecReader(hostApi.getDataFromMemory(methodPointer)).readString();
-        String uri = new ScaleCodecReader(hostApi.getDataFromMemory(uriPointer)).readString();
+        String method = new ScaleCodecReader(runtime.getDataFromMemory(methodPointer)).readString();
+        String uri = new ScaleCodecReader(runtime.getDataFromMemory(uriPointer)).readString();
 
         if (!method.equals("GET") && !method.equals("POST")) {
             log.log(Level.WARNING, "Method not allowed: " + method);
-            return hostApi.writeDataToMemory(scaleEncodedEmptyResult(false));
+            return runtime.writeDataToMemory(scaleEncodedEmptyResult(false));
         }
 
         try (ByteArrayOutputStream buf = new ByteArrayOutputStream();
@@ -291,10 +292,10 @@ public class OffchainHostFunctions {
             new ResultWriter<Integer, Exception>()
                     .writeResult(writer, ScaleCodecWriter::writeUint16, null, result);
 
-            return hostApi.writeDataToMemory(buf.toByteArray());
+            return runtime.writeDataToMemory(buf.toByteArray());
         } catch (IOException e) {
             log.log(Level.WARNING, e.getMessage(), e.getStackTrace());
-            return hostApi.writeDataToMemory(scaleEncodedEmptyResult(false));
+            return runtime.writeDataToMemory(scaleEncodedEmptyResult(false));
         }
     }
 
@@ -312,14 +313,14 @@ public class OffchainHostFunctions {
     public RuntimePointerSize extOffchainHttpRequestAddHeader(int requestId,
                                                               RuntimePointerSize namePointer,
                                                               RuntimePointerSize valuePointer) {
-        String name = new String(hostApi.getDataFromMemory(namePointer));
-        String value = new String(hostApi.getDataFromMemory(valuePointer));
+        String name = new String(runtime.getDataFromMemory(namePointer));
+        String value = new String(runtime.getDataFromMemory(valuePointer));
         try {
             requests.addHeader(requestId, name, value);
-            return hostApi.writeDataToMemory(scaleEncodedEmptyResult(true));
+            return runtime.writeDataToMemory(scaleEncodedEmptyResult(true));
         } catch (InvalidRequestId e) {
             log.log(Level.WARNING, "Invalid request id: " + requestId);
-            return hostApi.writeDataToMemory(scaleEncodedEmptyResult(false));
+            return runtime.writeDataToMemory(scaleEncodedEmptyResult(false));
         }
     }
 
@@ -337,19 +338,19 @@ public class OffchainHostFunctions {
     public RuntimePointerSize extOffchainHttpRequestWriteBody(int requestId,
                                                               RuntimePointerSize chunksPointer,
                                                               RuntimePointerSize deadlinePointer) {
-        byte[] chunks = hostApi.getDataFromMemory(chunksPointer);
+        byte[] chunks = runtime.getDataFromMemory(chunksPointer);
         try {
             int timeout = timeoutFromDeadline(deadlinePointer);
             requests.addRequestBodyChunk(requestId, chunks, timeout);
-            return hostApi.writeDataToMemory(scaleEncodedEmptyResult(true));
+            return runtime.writeDataToMemory(scaleEncodedEmptyResult(true));
         } catch (InvalidRequestId e) {
-            return hostApi.writeDataToMemory(HttpErrorType.INVALID_ID.scaleEncodedResult());
+            return runtime.writeDataToMemory(HttpErrorType.INVALID_ID.scaleEncodedResult());
         } catch (SocketTimeoutException e) {
             log.log(Level.WARNING, e.getMessage(), e.getStackTrace());
-            return hostApi.writeDataToMemory(HttpErrorType.DEADLINE_REACHED.scaleEncodedResult());
+            return runtime.writeDataToMemory(HttpErrorType.DEADLINE_REACHED.scaleEncodedResult());
         } catch (IOException e) {
             log.log(Level.WARNING, e.getMessage(), e.getStackTrace());
-            return hostApi.writeDataToMemory(HttpErrorType.IO_ERROR.scaleEncodedResult());
+            return runtime.writeDataToMemory(HttpErrorType.IO_ERROR.scaleEncodedResult());
         }
     }
 
@@ -365,12 +366,12 @@ public class OffchainHostFunctions {
     public RuntimePointerSize extOffchainHttpResponseWaitVersion1(RuntimePointerSize idsPointer,
                                                                   RuntimePointerSize deadlinePointer) {
         int timeout = timeoutFromDeadline(deadlinePointer);
-        byte[] encodedIds = hostApi.getDataFromMemory(idsPointer);
+        byte[] encodedIds = runtime.getDataFromMemory(idsPointer);
         int[] requestIds = decodeRequestIdArray(encodedIds);
 
         try {
             HttpStatusCode[] requestStatuses = requests.getRequestsResponses(requestIds, timeout);
-            return hostApi.writeDataToMemory(scaleEncodeArrayOfRequestStatuses(requestStatuses));
+            return runtime.writeDataToMemory(scaleEncodeArrayOfRequestStatuses(requestStatuses));
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new ThreadInterruptedException(e);
@@ -387,7 +388,7 @@ public class OffchainHostFunctions {
     public RuntimePointerSize extOffchainHttpResponseHeadersVersion1(int id) {
         try {
             Map<String, List<String>> headers = requests.getResponseHeaders(id);
-            return hostApi.writeDataToMemory(scaleEncodeHeaders(headers));
+            return runtime.writeDataToMemory(scaleEncodeHeaders(headers));
         } catch (IOException e) {
             throw new OffchainResponseWaitException(e);
         }
@@ -419,7 +420,7 @@ public class OffchainHostFunctions {
         long startTime = Instant.now().toEpochMilli();
         HttpStatusCode responseCode = requests.executeRequest(requestId, timeout, startTime);
         if (responseCode.hasError()) {
-            return hostApi.writeDataToMemory(responseCode.getErrorType().scaleEncodedResult());
+            return runtime.writeDataToMemory(responseCode.getErrorType().scaleEncodedResult());
         } else {
             return writeResponseToMemory(requestId, bufferPointer);
         }
@@ -428,18 +429,18 @@ public class OffchainHostFunctions {
     private RuntimePointerSize writeResponseToMemory(int requestId, RuntimePointerSize bufferPointer) {
         try {
             byte[] data = requests.readResponseBody(requestId, bufferPointer.size());
-            hostApi.writeDataToMemory(data, bufferPointer);
+            runtime.writeDataToMemory(data, bufferPointer);
 
             byte[] result = scaleEncodeIntResult(data.length);
-            return hostApi.writeDataToMemory(result);
+            return runtime.writeDataToMemory(result);
         } catch (IOException e) {
-            return hostApi.writeDataToMemory(HttpErrorType.IO_ERROR.scaleEncodedResult());
+            return runtime.writeDataToMemory(HttpErrorType.IO_ERROR.scaleEncodedResult());
         }
 
     }
 
     private int timeoutFromDeadline(RuntimePointerSize deadlinePointer) {
-        byte[] deadlineBytes = hostApi.getDataFromMemory(deadlinePointer);
+        byte[] deadlineBytes = runtime.getDataFromMemory(deadlinePointer);
 
         long currentTimestamp = Instant.now().toEpochMilli();
         return new ScaleCodecReader(deadlineBytes)
@@ -501,8 +502,8 @@ public class OffchainHostFunctions {
      */
     public void extOffchainLocalStorageSet(int kind, RuntimePointerSize keyPointer, RuntimePointerSize valuePointer) {
         OffchainStore store = storageByKind(kind);
-        String key = new String(hostApi.getDataFromMemory(keyPointer));
-        byte[] value = hostApi.getDataFromMemory(valuePointer);
+        String key = new String(runtime.getDataFromMemory(keyPointer));
+        byte[] value = runtime.getDataFromMemory(valuePointer);
 
         store.set(key, value);
     }
@@ -516,7 +517,7 @@ public class OffchainHostFunctions {
      */
     public void extOffchainLocalStorageClear(int kind, RuntimePointerSize keyPointer) {
         OffchainStore store = storageByKind(kind);
-        String key = new String(hostApi.getDataFromMemory(keyPointer));
+        String key = new String(runtime.getDataFromMemory(keyPointer));
 
         store.remove(key);
     }
@@ -536,9 +537,9 @@ public class OffchainHostFunctions {
                                                     RuntimePointerSize oldValuePointer,
                                                     RuntimePointerSize newValuePointer) {
         OffchainStore store = storageByKind(kind);
-        String key = new String(hostApi.getDataFromMemory(keyPointer));
-        byte[] oldValue = valueFromOption(hostApi.getDataFromMemory(oldValuePointer));
-        byte[] newValue = hostApi.getDataFromMemory(newValuePointer);
+        String key = new String(runtime.getDataFromMemory(keyPointer));
+        byte[] oldValue = valueFromOption(runtime.getDataFromMemory(oldValuePointer));
+        byte[] newValue = runtime.getDataFromMemory(newValuePointer);
 
         return store.compareAndSet(key, oldValue, newValue) ? 1 : 0;
     }
@@ -559,10 +560,10 @@ public class OffchainHostFunctions {
      */
     public RuntimePointerSize extOffchainLocalStorageGet(int kind, RuntimePointerSize keyPointer) {
         OffchainStore store = storageByKind(kind);
-        String key = new String(hostApi.getDataFromMemory(keyPointer));
+        String key = new String(runtime.getDataFromMemory(keyPointer));
 
         byte[] value = store.get(key);
-        return hostApi.writeDataToMemory(scaleEncodedOption(value));
+        return runtime.writeDataToMemory(scaleEncodedOption(value));
     }
 
     private OffchainStore storageByKind(int kind) {
@@ -591,8 +592,8 @@ public class OffchainHostFunctions {
      * @param valuePointer  a pointer-size containing the value.
      */
     public void offchainIndexSet(RuntimePointerSize keyPointer, RuntimePointerSize valuePointer) {
-        byte[] key = hostApi.getDataFromMemory(keyPointer);
-        byte[] value = hostApi.getDataFromMemory(valuePointer);
+        byte[] key = runtime.getDataFromMemory(keyPointer);
+        byte[] value = runtime.getDataFromMemory(valuePointer);
 
         persistentStorage.set(new String(key), value);
     }
@@ -603,7 +604,7 @@ public class OffchainHostFunctions {
      * @param keyPointer a pointer-size containing the key.
      */
     public void offchainIndexClear(RuntimePointerSize keyPointer) {
-        byte[] key = hostApi.getDataFromMemory(keyPointer);
+        byte[] key = runtime.getDataFromMemory(keyPointer);
 
         persistentStorage.remove(new String(key));
     }

@@ -1,6 +1,7 @@
 package com.limechain.runtime.hostapi;
 
 import com.google.common.primitives.Bytes;
+import com.limechain.runtime.Runtime;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import com.limechain.storage.DBConstants;
 import com.limechain.storage.DeleteByPrefixResult;
@@ -23,16 +24,16 @@ import static com.limechain.runtime.hostapi.StorageHostFunctions.scaleEncodedOpt
  */
 @AllArgsConstructor
 public class ChildStorageHostFunctions {
-    private final HostApi hostApi;
+    private final Runtime runtime;
     private final KVRepository<String, Object> repository;
 
-    public ChildStorageHostFunctions(HostApi hostApi) {
-        this.hostApi = hostApi;
+    public ChildStorageHostFunctions(Runtime runtime) {
+        this.runtime = runtime;
         this.repository = SyncedState.getInstance().getRepository();
     }
 
-    public static List<ImportObject> getFunctions(HostApi hostApi) {
-        return new ChildStorageHostFunctions(hostApi).buildFunctions();
+    public static List<ImportObject> getFunctions(Runtime runtime) {
+        return new ChildStorageHostFunctions(runtime).buildFunctions();
     }
 
     public List<ImportObject> buildFunctions() {
@@ -119,23 +120,23 @@ public class ChildStorageHostFunctions {
                                                                  RuntimePointerSize keyPointer,
                                                                  RuntimePointerSize valueOutPointer,
                                                                  int offset) {
-        byte[] childStorageKey = hostApi.getDataFromMemory(childStorageKeyPointer);
-        byte[] key = hostApi.getDataFromMemory(keyPointer);
+        byte[] childStorageKey = runtime.getDataFromMemory(childStorageKeyPointer);
+        byte[] key = runtime.getDataFromMemory(keyPointer);
         String childStorageRepositoryKey = new String(Bytes.concat(childStorageKey, key));
 
         byte[] value = (byte[]) repository.find(childStorageRepositoryKey).orElse(null);
 
         if (value == null) {
-            return hostApi.writeDataToMemory(scaleEncodedOption(null));
+            return runtime.writeDataToMemory(scaleEncodedOption(null));
         }
 
         int size = 0;
         if (offset <= value.length) {
             size = value.length - offset;
-            hostApi.writeDataToMemory(Arrays.copyOfRange(value, offset, value.length), valueOutPointer);
+            runtime.writeDataToMemory(Arrays.copyOfRange(value, offset, value.length), valueOutPointer);
         }
 
-        return hostApi.writeDataToMemory(scaleEncodedOption(size));
+        return runtime.writeDataToMemory(scaleEncodedOption(size));
     }
 
     /**
@@ -148,9 +149,9 @@ public class ChildStorageHostFunctions {
     public void extDefaultChildStorageSetVersion1(RuntimePointerSize childStorageKeyPointer,
                                                   RuntimePointerSize keyPointer,
                                                   RuntimePointerSize valuePointer) {
-        byte[] childStorageKey = hostApi.getDataFromMemory(childStorageKeyPointer);
-        byte[] key = hostApi.getDataFromMemory(keyPointer);
-        byte[] value = hostApi.getDataFromMemory(valuePointer);
+        byte[] childStorageKey = runtime.getDataFromMemory(childStorageKeyPointer);
+        byte[] key = runtime.getDataFromMemory(keyPointer);
+        byte[] value = runtime.getDataFromMemory(valuePointer);
         String childStorageRepositoryKey = new String(Bytes.concat(childStorageKey, key));
 
         repository.save(childStorageRepositoryKey, value);
@@ -164,8 +165,8 @@ public class ChildStorageHostFunctions {
      */
     public void extDefaultChildStorageClearVersion1(RuntimePointerSize childStorageKeyPointer,
                                                     RuntimePointerSize keyPointer) {
-        byte[] childStorageKey = hostApi.getDataFromMemory(childStorageKeyPointer);
-        byte[] key = hostApi.getDataFromMemory(keyPointer);
+        byte[] childStorageKey = runtime.getDataFromMemory(childStorageKeyPointer);
+        byte[] key = runtime.getDataFromMemory(keyPointer);
         String childStorageRepositoryKey = new String(Bytes.concat(childStorageKey, key));
 
         repository.delete(childStorageRepositoryKey);
@@ -179,8 +180,8 @@ public class ChildStorageHostFunctions {
      */
     public void extDefaultChildStorageClearPrefixVersion1(RuntimePointerSize childStorageKeyPointer,
                                                           RuntimePointerSize prefixPointer) {
-        byte[] childStorageKey = hostApi.getDataFromMemory(childStorageKeyPointer);
-        byte[] prefix = hostApi.getDataFromMemory(prefixPointer);
+        byte[] childStorageKey = runtime.getDataFromMemory(childStorageKeyPointer);
+        byte[] prefix = runtime.getDataFromMemory(prefixPointer);
         String childStorageRepositoryKey = new String(Bytes.concat(childStorageKey, prefix));
 
         repository.deleteByPrefix(childStorageRepositoryKey, null);
@@ -201,17 +202,17 @@ public class ChildStorageHostFunctions {
     public RuntimePointerSize extDefaultChildStorageClearPrefixVersion2(RuntimePointerSize childStorageKeyPointer,
                                                                         RuntimePointerSize prefixPointer,
                                                                         RuntimePointerSize limitPointer) {
-        byte[] childStorageKey = hostApi.getDataFromMemory(childStorageKeyPointer);
-        byte[] prefix = hostApi.getDataFromMemory(prefixPointer);
+        byte[] childStorageKey = runtime.getDataFromMemory(childStorageKeyPointer);
+        byte[] prefix = runtime.getDataFromMemory(prefixPointer);
         String childStorageRepositoryKey = new String(Bytes.concat(childStorageKey, prefix));
 
-        byte[] limitBytes = hostApi.getDataFromMemory(limitPointer);
+        byte[] limitBytes = runtime.getDataFromMemory(limitPointer);
         Long limit = new ScaleCodecReader(limitBytes).readOptional(ScaleCodecReader.UINT32).orElse(null);
 
         DeleteByPrefixResult result =
                 repository.deleteByPrefix(childStorageRepositoryKey, limit);
 
-        return hostApi.writeDataToMemory(result.scaleEncoded());
+        return runtime.writeDataToMemory(result.scaleEncoded());
     }
 
     /**
@@ -223,8 +224,8 @@ public class ChildStorageHostFunctions {
      */
     public int extDefaultChildStorageExistsVersion1(RuntimePointerSize childStorageKeyPointer,
                                                     RuntimePointerSize keyPointer) {
-        byte[] childStorageKey = hostApi.getDataFromMemory(childStorageKeyPointer);
-        byte[] key = hostApi.getDataFromMemory(keyPointer);
+        byte[] childStorageKey = runtime.getDataFromMemory(childStorageKeyPointer);
+        byte[] key = runtime.getDataFromMemory(keyPointer);
         String childStorageRepositoryKey = new String(Bytes.concat(childStorageKey, key));
         return repository.find(childStorageRepositoryKey).isPresent() ? 1 : 0;
     }
@@ -238,13 +239,13 @@ public class ChildStorageHostFunctions {
      */
     public RuntimePointerSize extDefaultChildStorageGetVersion1(RuntimePointerSize childStorageKeyPointer,
                                                                 RuntimePointerSize keyPointer) {
-        byte[] childStorageKey = hostApi.getDataFromMemory(childStorageKeyPointer);
-        byte[] key = hostApi.getDataFromMemory(keyPointer);
+        byte[] childStorageKey = runtime.getDataFromMemory(childStorageKeyPointer);
+        byte[] key = runtime.getDataFromMemory(keyPointer);
         String childStorageRepositoryKey = new String(Bytes.concat(childStorageKey, key));
         byte[] value = (byte[]) repository
                 .find(childStorageRepositoryKey).orElse(null);
 
-        return hostApi.writeDataToMemory(scaleEncodedOption(value));
+        return runtime.writeDataToMemory(scaleEncodedOption(value));
     }
 
     /**
@@ -257,13 +258,13 @@ public class ChildStorageHostFunctions {
      */
     public RuntimePointerSize extDefaultChildStorageStorageNextKeyVersion1(RuntimePointerSize childStorageKeyPointer,
                                                                            RuntimePointerSize keyPointer) {
-        byte[] childStorageKey = hostApi.getDataFromMemory(childStorageKeyPointer);
-        byte[] key = hostApi.getDataFromMemory(keyPointer);
+        byte[] childStorageKey = runtime.getDataFromMemory(childStorageKeyPointer);
+        byte[] key = runtime.getDataFromMemory(keyPointer);
         String combinedKey = new String(Bytes.concat(childStorageKey, key));
 
         byte[] nextKey = repository.getNextKey(combinedKey).map(String::getBytes).orElse(null);
 
-        return hostApi.writeDataToMemory(scaleEncodedOption(nextKey));
+        return runtime.writeDataToMemory(scaleEncodedOption(nextKey));
     }
 
     /**
@@ -275,7 +276,7 @@ public class ChildStorageHostFunctions {
         //TODO: compute from Trie
         byte[] rootHash = (byte[]) repository.find(DBConstants.STATE_TRIE_ROOT_HASH).orElseThrow();
 
-        return hostApi.writeDataToMemory(rootHash);
+        return runtime.writeDataToMemory(rootHash);
     }
 
     /**
@@ -295,7 +296,7 @@ public class ChildStorageHostFunctions {
      * @param childStorageKeyPointer a pointer-size containing the child storage key.
      */
     public void extDefaultChildStorageKillVersion1(RuntimePointerSize childStorageKeyPointer) {
-        byte[] childStorageKey = hostApi.getDataFromMemory(childStorageKeyPointer);
+        byte[] childStorageKey = runtime.getDataFromMemory(childStorageKeyPointer);
         repository.deleteByPrefix(new String(childStorageKey), null);
     }
 
@@ -307,15 +308,15 @@ public class ChildStorageHostFunctions {
      */
     public RuntimePointerSize extDefaultChildStorageKillVersion2(RuntimePointerSize childStorageKeyPointer,
                                                                  RuntimePointerSize limitPointer) {
-        byte[] childStorageKey = hostApi.getDataFromMemory(childStorageKeyPointer);
+        byte[] childStorageKey = runtime.getDataFromMemory(childStorageKeyPointer);
 
-        byte[] limitBytes = hostApi.getDataFromMemory(limitPointer);
+        byte[] limitBytes = runtime.getDataFromMemory(limitPointer);
         Long limit = new ScaleCodecReader(limitBytes).readOptional(ScaleCodecReader.UINT32).orElse(null);
 
         DeleteByPrefixResult result =
                 repository.deleteByPrefix(new String(childStorageKey), limit);
 
-        return hostApi.writeDataToMemory(result.scaleEncoded());
+        return runtime.writeDataToMemory(result.scaleEncoded());
     }
 
     /**
