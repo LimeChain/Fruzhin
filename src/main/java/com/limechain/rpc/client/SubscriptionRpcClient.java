@@ -42,7 +42,7 @@ public class SubscriptionRpcClient extends AbstractRpcClient {
         // For now, we'll be forwarding the message we've received
         // In the future, after sync module is completed
         // this functionality will be replaced with self-emitting events
-        chainPublisher.publish(new Message(topic.getValue(), message), pubSubService);
+        chainPublisher.publish(new Message(topic, message), pubSubService);
 
         // This will send messages to all subscriber channels
         // illustrating that publishing and broadcasting messages are 2 independent processes

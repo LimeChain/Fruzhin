@@ -7,3 +7,7 @@
   So: map the CLI argument to an ENUM instance and from there: 
   - in production, use `application.properties` to fetch the chain spec path;
   - in test, use another properties file (spring profiles could help) or implement local test-case specific map from enum to paths... something like that
+- Add exception handling (Error Resolver while creating the JSONRPC server) for RPC calls, as currently we are leaking classpath to the exceptions and not using the suggested error codes from the JSON-RPC spec. Look into (./libs/jsonrpc4j-1.6.2-SNAPSHOT.jar!/com/googlecode/jsonrpc4j/JsonRpcBasicServer.class:468)
+- Revisit the conversations on the VRF proofs PR from within PolkaJ's Schnorrkel wrapper [here](https://github.com/LimeChain/polkaj/pull/2). Goal: we're waiting for potential upgrade of `robusta` to a newer jni to refine the ugly hacks in our solution. More details in the PR conversation.
+- Make `wasmer-java` load the native libraries as dynamic libs and remove the need for manual intervention for the user from [the README](https://github.com/LimeChain/Fruzhin/blob/dev/README.md#wasmer-java-dylib-setup). In other words, add the mentioned "automation later" :D
+I'd suggest a similar approach to what's in `polkaj-schnorrkel`, still not ideal for the dev, but definitely better for the user.

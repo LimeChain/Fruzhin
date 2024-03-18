@@ -83,7 +83,7 @@ public class RuntimeBuilder {
         objects.addAll(CryptoHostFunctions.getFunctions(runtime));
         objects.addAll(HashingHostFunctions.getFunctions(runtime));
         objects.addAll(OffchainHostFunctions.getFunctions(runtime));
-        objects.addAll(TrieHostFunctions.getFunctions());
+        objects.addAll(TrieHostFunctions.getFunctions(runtime));
         objects.addAll(MiscellaneousHostFunctions.getFunctions(runtime));
         objects.addAll(AllocatorHostFunctions.getFunctions(runtime));
         objects.add(memory);

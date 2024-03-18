@@ -34,6 +34,22 @@ public class Cli {
     private static final String NODE_MODE = "node-mode";
     private static final String NO_LEGACY_PROTOCOLS = "no-legacy-protocols";
     private static final String SYNC_MODE = "sync-mode";
+    private static final String PROMETHEUS_PORT = "prometheus-port";
+    // The cli arguments below are added so that Zombienet tests can run.
+    // The reason is that Zombienet passes Substrate's cli arguments to every client.
+    // This leads to Fruzhin to fail parsing the arguments and it can't start.
+    // In the future, these cli arguments should be integrated in the code
+    // so that Fruzhin works like Substrate (will lead to better interoperability with various tooling in the ecosystem)
+    private static final String CHAIN = "chain";
+    private static final String NAME = "name";
+    private static final String CORS = "rpc-cors";
+    private static final String UNSAFE_RPC_EXTERNAL = "unsafe-rpc-external";
+    private static final String NO_MDNS = "no-mdns";
+    private static final String NO_TELEMETRY = "no-telemetry";
+    private static final String PROMETHEUS_EXTERNAL = "prometheus-external";
+    private static final String RPC_PORT = "rpc-port";
+    private static final String LISTEN_ADDRESS = "listen-addr";
+    private static final String BASE_PATH = "base-path";
     /**
      * Holds CLI options
      */
@@ -106,9 +122,9 @@ public class Cli {
             boolean isPublic = cmd.hasOption(PUBLIC_RPC);
 
             boolean unsafeEnabled = isPublic ? rpcMethods == RpcMethods.UNSAFE : rpcMethods != RpcMethods.SAFE;
-
+            int prometheusPort = Integer.parseInt(cmd.getOptionValue(PROMETHEUS_PORT, "9090"));
             return new CliArguments(network, dbPath, dbRecreate, nodeKey, nodeMode, noLgacyProtocols, syncMode,
-                    unsafeEnabled);
+                    unsafeEnabled, prometheusPort);
         } catch (ParseException e) {
             formatter.printHelp("Specify the network name - " + String.join(", ", validChains), options);
             throw new CliArgsParseException("Failed to parse cli arguments", e);
@@ -127,7 +143,7 @@ public class Cli {
         Option dbClean = new Option("dbc", DB_RECREATE, false, "\nClean the DB");
         Option nodeKey = new Option(null, NODE_KEY, true, "\nHEX for secret Ed25519 key");
         Option nodeMode = new Option("mode", NODE_MODE, true, "\nNode mode (light/full). " +
-                                                              "Full by default.");
+                "Full by default.");
         Option noLegacyProtocols = new Option(null, NO_LEGACY_PROTOCOLS, false,
                 "\nDoesn't use legacy protocols if set");
         Option syncMode = new Option(null, SYNC_MODE, true,
@@ -145,6 +161,19 @@ public class Cli {
                   `localhost`, otherwise serve only safe RPC methods
                 - safe:   Allow only a safe subset of RPC methods
                 - unsafe: Expose every RPC method (even potentially unsafe ones)""");
+        Option prometheusPort = new Option(null, PROMETHEUS_PORT, true, "Prometheus port");
+
+        Option chain = new Option(null, CHAIN, true, "");
+        Option name = new Option(null, NAME, true, "");
+        Option cors = new Option(null, CORS, false, "");
+        Option unsafeRpcExternal = new Option(null, UNSAFE_RPC_EXTERNAL, false, "");
+        Option noMdns = new Option(null, NO_MDNS, false, "");
+        Option noTelemetry = new Option(null, NO_TELEMETRY, false, "");
+        Option prometheusExternal = new Option(null, PROMETHEUS_EXTERNAL, false, "");
+        Option rpcPort = new Option(null, RPC_PORT, true, "");
+        Option listenAddress = new Option(null, LISTEN_ADDRESS, true, "");
+        Option basePath = new Option(null, BASE_PATH, true, "");
+
         networkOption.setRequired(false);
         dbPathOption.setRequired(false);
         dbClean.setRequired(false);
@@ -155,6 +184,18 @@ public class Cli {
         publicRpc.setRequired(false);
         rpcMethods.setRequired(false);
 
+        chain.setRequired(false);
+        name.setRequired(false);
+        cors.setRequired(false);
+        unsafeRpcExternal.setRequired(false);
+        noMdns.setRequired(false);
+        noTelemetry.setRequired(false);
+        prometheusExternal.setRequired(false);
+        prometheusPort.setRequired(false);
+        rpcPort.setRequired(false);
+        listenAddress.setRequired(false);
+        basePath.setRequired(false);
+
         result.addOption(networkOption);
         result.addOption(dbPathOption);
         result.addOption(dbClean);
@@ -164,6 +205,18 @@ public class Cli {
         result.addOption(syncMode);
         result.addOption(publicRpc);
         result.addOption(rpcMethods);
+        result.addOption(prometheusPort);
+
+        result.addOption(chain);
+        result.addOption(name);
+        result.addOption(cors);
+        result.addOption(unsafeRpcExternal);
+        result.addOption(noMdns);
+        result.addOption(noTelemetry);
+        result.addOption(prometheusExternal);
+        result.addOption(rpcPort);
+        result.addOption(listenAddress);
+        result.addOption(basePath);
         return result;
     }
 

@@ -155,10 +155,9 @@ class TrieVerifierTest {
 
     @Test
     void buildingProofTrieExceptionTest() {
-        byte[] keyLE = new byte[]{1, 1};
+        byte[] rootHash = new byte[]{1, 2, 3};
         Exception e = assertThrows(IllegalArgumentException.class, () -> {
-            byte[] rootHash = new byte[]{1, 2, 3};
-            TrieVerifier.verify(new byte[][]{}, rootHash, keyLE, new byte[]{});
+            TrieVerifier.buildTrie(new byte[][]{}, rootHash);
         });
         assertTrue(e.getMessage().contains("Encoded proof nodes is empty"));
     }
@@ -172,13 +171,11 @@ class TrieVerifierTest {
         byte[] value = new byte[]{1, 1};
         byte[] rootHash = HashUtils.hashWithBlake2b(branchBuffer.toByteArray());
         byte[] keyLE = new byte[]{1, 1};
-
         byte[][] encodedNodes = new byte[][]{branchBuffer.toByteArray(), leafBuffer.toByteArray()};
+        Trie trie = TrieVerifier.buildTrie(encodedNodes, rootHash);
+
         Exception e = assertThrows(Exception.class, () ->
-                TrieVerifier.verify(encodedNodes,
-                        rootHash,
-                        keyLE,
-                        value)
+                TrieVerifier.verify(trie, keyLE, value)
         );
         assertTrue(e.getMessage().contains("Key not found in proof trie hash"));
     }
@@ -193,7 +190,7 @@ class TrieVerifierTest {
         byte[] rootHash = HashUtils.hashWithBlake2b(branchBuffer.toByteArray());
         byte[] value = new byte[]{};
         byte[] keyLE = new byte[]{0x34, 0x21};
-        boolean result = TrieVerifier.verify(encodedNodes, rootHash, keyLE, value);
+        boolean result = TrieVerifier.verify(TrieVerifier.buildTrie(encodedNodes, rootHash), keyLE, value);
         assertTrue(result);
     }
 
@@ -207,8 +204,8 @@ class TrieVerifierTest {
         byte[] rootHash = HashUtils.hashWithBlake2b(branchBuffer.toByteArray());
         byte[] value = new byte[]{2};
         byte[] keyLE = new byte[]{0x34, 0x21};
-        Exception e = assertThrows(IllegalStateException.class, () ->
-                TrieVerifier.verify(encodedNodes, rootHash, keyLE, value));
+        Trie trie = TrieVerifier.buildTrie(encodedNodes, rootHash);
+        Exception e = assertThrows(IllegalStateException.class, () -> TrieVerifier.verify(trie, keyLE, value));
         assertTrue(e.getMessage().contains("Value mismatch"));
     }
 
@@ -222,7 +219,7 @@ class TrieVerifierTest {
         byte[] rootHash = HashUtils.hashWithBlake2b(branchBuffer.toByteArray());
         byte[] value = RandomGenerationUtils.generateBytes(40);
         byte[] keyLE = new byte[]{0x34, 0x32};
-        boolean verified = TrieVerifier.verify(encodedNodes, rootHash, keyLE, value);
+        boolean verified = TrieVerifier.verify(TrieVerifier.buildTrie(encodedNodes, rootHash), keyLE, value);
         assertTrue(verified);
     }
 }

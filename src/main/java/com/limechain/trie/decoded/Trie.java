@@ -1,6 +1,5 @@
 package com.limechain.trie.decoded;
 
-import com.limechain.utils.HashUtils;
 import io.emeraldpay.polkaj.types.Hash256;
 
 import java.math.BigInteger;
@@ -34,16 +33,6 @@ public class Trie {
      */
     public static Trie newTrie(Node node) {
         return new Trie(BigInteger.ZERO, node, new HashMap<>(), new ArrayList<>());
-    }
-
-    /**
-     * Returns the merkle value of the node
-     *
-     * @param encoding - the encoded node
-     * @return the merkle value of the node
-     */
-    public static byte[] getMerkleValueRoot(byte[] encoding) {
-        return HashUtils.hashWithBlake2b(encoding);
     }
 
     public static byte[] retrieve(Node parent, byte[] key) {

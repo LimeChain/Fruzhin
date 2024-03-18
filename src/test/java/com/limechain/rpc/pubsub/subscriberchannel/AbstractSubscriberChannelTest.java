@@ -32,8 +32,8 @@ class AbstractSubscriberChannelTest {
 
     @Test
     void notifySubscribers_callsSessionSendMessage_forEveryMessage() throws IOException {
-        Message message1 = new Message(topic.getValue(), "message1");
-        Message message2 = new Message(topic.getValue(), "message2");
+        Message message1 = new Message(topic, "message1");
+        Message message2 = new Message(topic, "message2");
 
         WebSocketSession session1 = mock(WebSocketSession.class);
         WebSocketSession session2 = mock(WebSocketSession.class);

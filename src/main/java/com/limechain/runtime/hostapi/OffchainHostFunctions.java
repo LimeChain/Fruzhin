@@ -14,6 +14,7 @@ import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import com.limechain.runtime.hostapi.exceptions.OffchainResponseWaitException;
 import com.limechain.storage.KVRepository;
 import com.limechain.storage.offchain.OffchainStore;
+import com.limechain.storage.offchain.StorageKind;
 import com.limechain.sync.warpsync.SyncedState;
 import com.limechain.utils.scale.ScaleUtils;
 import com.limechain.utils.scale.exceptions.ScaleEncodingException;
@@ -65,8 +66,8 @@ public class OffchainHostFunctions {
         this.config = AppBean.getBean(HostConfig.class);
         requests = OffchainHttpRequests.getInstance();
         KVRepository<String, Object> db = SyncedState.getInstance().getRepository();
-        persistentStorage = new OffchainStore(db, true);
-        localStorage = new OffchainStore(db, false);
+        persistentStorage = new OffchainStore(db, StorageKind.PERSISTENT);
+        localStorage = new OffchainStore(db, StorageKind.LOCAL);
     }
 
     public static List<ImportObject> getFunctions(Runtime runtime) {

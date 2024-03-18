@@ -32,6 +32,12 @@ public class HostConfig {
     private final Chain chain;
     private final NodeRole nodeRole;
     private final String rpcNodeAddress;
+    private final int prometheusPort;
+
+    /**
+     * Recreate the DB
+     */
+    private final boolean dbRecreate;
 
     // TODO:
     //  Think about how to avoid the need for this (reordering in the bean initialization necessary).
@@ -46,31 +52,28 @@ public class HostConfig {
     @Value("${genesis.path.local}")
     private String localGenesisPath;
 
-    /**
-     * Recreate the DB
-     */
-    private final boolean dbRecreate;
-
     public HostConfig(CliArguments cliArguments) {
         this.rocksDbPath = cliArguments.dbPath();
         this.dbRecreate = cliArguments.dbRecreate();
 
         String network = cliArguments.network();
         this.chain = Optional
-            .ofNullable(network.isEmpty() ? WESTEND : fromString(network))
-            .orElseThrow(() -> new InvalidChainException(String.format("\"%s\" is not a valid chain.", network)));
+                .ofNullable(network.isEmpty() ? WESTEND : fromString(network))
+                .orElseThrow(() -> new InvalidChainException(String.format("\"%s\" is not a valid chain.", network)));
 
         this.nodeRole = Optional
-            .ofNullable(NodeRole.fromString(cliArguments.nodeRole()))
-            .orElseThrow(() ->
-                new InvalidNodeRoleException(
-                    String.format("\"%s\" is not a valid node role.", cliArguments.nodeRole())));
+                .ofNullable(NodeRole.fromString(cliArguments.nodeRole()))
+                .orElseThrow(() ->
+                        new InvalidNodeRoleException(
+                                String.format("\"%s\" is not a valid node role.", cliArguments.nodeRole())));
 
         this.rpcNodeAddress = switch (chain) {
             case POLKADOT, LOCAL -> RpcConstants.POLKADOT_WS_RPC;
             case KUSAMA -> RpcConstants.KUSAMA_WS_RPC;
             case WESTEND -> RpcConstants.WESTEND_WS_RPC;
         };
+
+        this.prometheusPort = cliArguments.prometheusPort();
 
         log.log(Level.INFO, String.format("✅️Loaded app config for chain %s%n", chain));
     }

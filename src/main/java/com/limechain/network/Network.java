@@ -100,7 +100,8 @@ public class Network {
         this.initializeProtocols(chainService, genesisBlockHash, hostConfig, repository, cliArgs);
     }
 
-    private void initializeProtocols(ChainService chainService, GenesisBlockHash genesisBlockHash, HostConfig hostConfig,
+    private void initializeProtocols(ChainService chainService, GenesisBlockHash genesisBlockHash,
+                                     HostConfig hostConfig,
                                      KVRepository<String, Object> repository, CliArguments cliArgs) {
         boolean isLocalEnabled = hostConfig.getChain() == Chain.LOCAL;
         boolean clientMode = true;
@@ -246,7 +247,7 @@ public class Network {
         if (getPeersCount() >= REPLICATION) {
             log.log(Level.INFO,
                     "Connections have reached replication factor(" + REPLICATION + "). " +
-                            "No need to search for new ones yet.");
+                    "No need to search for new ones yet.");
             return;
         }
 

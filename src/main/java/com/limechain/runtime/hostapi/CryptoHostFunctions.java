@@ -111,7 +111,7 @@ public class CryptoHostFunctions {
                         ecdsaPublicKeysV1(argv.get(0).intValue()).pointerSize(), List.of(Type.I64), (Type.I64)),
                 HostApi.getImportObject("ext_crypto_ecdsa_generate_version_1", argv ->
                                 ecdsaGenerateV1(argv.get(0).intValue(), new RuntimePointerSize(argv.get(1))),
-                        List.of(Type.I32, Type.I64), (Type.I64)),
+                        List.of(Type.I32, Type.I64), (Type.I32)),
                 HostApi.getImportObject("ext_crypto_ecdsa_sign_version_1", argv ->
                                 ecdsaSignV1(argv.get(0).intValue(), argv.get(1).intValue(),
                                         new RuntimePointerSize(argv.get(2))),

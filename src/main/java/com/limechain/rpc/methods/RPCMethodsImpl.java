@@ -5,9 +5,13 @@ import com.googlecode.jsonrpc4j.spring.AutoJsonRpcServiceImpl;
 import com.limechain.chain.spec.ChainSpec;
 import com.limechain.chain.spec.ChainType;
 import com.limechain.chain.spec.PropertyValue;
+import com.limechain.rpc.methods.chain.ChainRPCImpl;
+import com.limechain.rpc.exceptions.InvalidParametersException;
+import com.limechain.rpc.methods.offchain.OffchainRPCImpl;
 import com.limechain.rpc.methods.sync.SyncRPCImpl;
 import com.limechain.rpc.methods.system.SystemRPC;
 import com.limechain.rpc.methods.system.SystemRPCImpl;
+import com.limechain.storage.offchain.StorageKind;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -37,6 +41,27 @@ public class RPCMethodsImpl implements RPCMethods {
      */
     private final SyncRPCImpl syncRPC;
 
+    /**
+     * References to chain rpc method implementation classes
+     */
+    private final ChainRPCImpl chainRPC;
+
+    /**
+     * References to offchain rpc method implementation classes
+     */
+    private final OffchainRPCImpl offchainRPC;
+
+    @Override
+    public String[] rpcMethods() {
+        ArrayList<Method> methods = new ArrayList<>();
+
+        Collections.addAll(methods, RPCMethods.class.getDeclaredMethods());
+        Collections.addAll(methods, SystemRPC.class.getDeclaredMethods());
+
+        return methods.stream().map(m -> m.getAnnotation(JsonRpcMethod.class).value()).toArray(String[]::new);
+    }
+
+    //region SystemRPC methods
     @Override
     public String systemName() {
         return systemRPC.systemName();
@@ -111,20 +136,68 @@ public class RPCMethodsImpl implements RPCMethods {
     public String systemDryRun(String extrinsic, String blockHash) {
         return systemRPC.systemDryRun(extrinsic, blockHash);
     }
+    //endregion
 
-    @Override
-    public String[] rpcMethods() {
-        ArrayList<Method> methods = new ArrayList<>();
-
-        Collections.addAll(methods, RPCMethods.class.getDeclaredMethods());
-        Collections.addAll(methods, SystemRPC.class.getDeclaredMethods());
-
-        return methods.stream().map(m -> m.getAnnotation(JsonRpcMethod.class).value()).toArray(String[]::new);
-    }
-
+    //region SyncRPC methods
     @Override
     public ChainSpec syncStateGenSyncSpec(boolean raw) {
         return syncRPC.syncStateGetSyncSpec(raw);
     }
+    //endregion
 
+    //region ChainRPC methods
+    @Override
+    public Map<String, Object> chainGetHeader(final String blockHashArg) {
+        return this.chainRPC.chainGetHeader(blockHashArg);
+    }
+
+    @Override
+    public Map<String, Object> chainGetBlock(final String blockHash) {
+        return this.chainRPC.chainGetBlock(blockHash);
+    }
+
+    @Override
+    public Object chainGetBlockHash(final Object... blockNumbers) {
+        return this.chainRPC.chainGetBlockHash(blockNumbers);
+    }
+
+    @Override
+    public Object chainGetHead(final Object... blockNumbers) {
+        return chainGetBlockHash(blockNumbers);
+    }
+
+    @Override
+    public String chainGetFinalizedHead() {
+        return this.chainRPC.chainGetFinalizedHead();
+    }
+
+    @Override
+    public String chainGetFinalisedHead() {
+        return chainGetFinalizedHead();
+    }
+    //endregion
+
+    //region OffchainRPC methods
+    @Override
+    public void offchainLocalStorageSet(String storageKindStr, String key, String value) {
+        final StorageKind storageKind;
+        try {
+            storageKind = StorageKind.valueOf(storageKindStr);
+        } catch (IllegalArgumentException e) {
+            throw new InvalidParametersException("Invalid storage kind: " + storageKindStr);
+        }
+        offchainRPC.offchainLocalStorageSet(storageKind, key, value);
+    }
+
+    @Override
+    public String offchainLocalStorageGet(String storageKindStr, String key) {
+        final StorageKind storageKind;
+        try {
+            storageKind = StorageKind.valueOf(storageKindStr);
+        } catch (IllegalArgumentException e) {
+            throw new InvalidParametersException("Invalid storage kind: " + storageKindStr);
+        }
+        return offchainRPC.offchainLocalStorageGet(storageKind, key);
+    }
+    //endregion
 }

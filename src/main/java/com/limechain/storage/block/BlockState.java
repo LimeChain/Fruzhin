@@ -4,6 +4,9 @@ import com.limechain.exception.MissingObjectException;
 import com.limechain.network.protocol.warp.dto.Block;
 import com.limechain.network.protocol.warp.dto.BlockBody;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
+import com.limechain.network.protocol.warp.scale.reader.BlockBodyReader;
+import com.limechain.network.protocol.warp.scale.writer.BlockBodyWriter;
+import com.limechain.rpc.subscriptions.chainsub.ChainSub;
 import com.limechain.runtime.Runtime;
 import com.limechain.storage.DBConstants;
 import com.limechain.storage.KVRepository;
@@ -14,6 +17,7 @@ import com.limechain.storage.block.exception.HeaderNotFoundException;
 import com.limechain.storage.block.exception.LowerThanRootException;
 import com.limechain.storage.block.exception.RoundAndSetIdNotFoundException;
 import com.limechain.storage.block.tree.BlockTree;
+import com.limechain.utils.scale.ScaleUtils;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -319,7 +323,7 @@ public class BlockState {
             throw new BlockNotFoundException("Failed to get block body from database");
         }
 
-        return BlockBody.fromEncoded(data);
+        return ScaleUtils.Decode.decode(data, BlockBodyReader.getInstance());
     }
 
     /**
@@ -329,7 +333,8 @@ public class BlockState {
      * @param blockBody the block body to be persisted
      */
     public void setBlockBody(final Hash256 hash, final BlockBody blockBody) {
-        db.save(helper.blockBodyKey(hash), blockBody.getEncoded());
+        byte[] encoded = ScaleUtils.Encode.encode(BlockBodyWriter.getInstance(), blockBody);
+        db.save(helper.blockBodyKey(hash), encoded);
     }
 
     /**
@@ -356,6 +361,9 @@ public class BlockState {
         // Add block to blocktree
         blockTree.addBlock(block.getHeader(), arrivalTime);
 
+        if (!unfinalizedBlocks.containsKey(block.getHeader().getHash())) {
+            ChainSub.getInstance().notifyNewChainHead(block.getHeader());
+        }
         // Store block in unfinalized blocks
         unfinalizedBlocks.put(block.getHeader().getHash(), block);
     }
@@ -730,26 +738,6 @@ public class BlockState {
         return unfinalizedBlocks.get(hash);
     }
 
-    /**
-     * Add non-finalized block to the blocktree
-     *
-     * @param hash  the hash of the block
-     * @param block the block
-     */
-    public void addUnfinalizedBlock(final Hash256 hash, final Block block) {
-        this.unfinalizedBlocks.put(hash, block);
-    }
-
-    /**
-     * Delete non-finalized block from the blocktree
-     *
-     * @param blockHash the hash of the block
-     * @return the block
-     */
-    public Block deleteUnfinalizedBlock(final Hash256 blockHash) {
-        return this.unfinalizedBlocks.remove(blockHash);
-    }
-
     /* Block finalization */
 
     /**
@@ -912,6 +900,7 @@ public class BlockState {
 
             // Delete from the unfinalizedBlockMap and delete reference to in-memory trie
             unfinalizedBlocks.remove(subchainHash);
+            ChainSub.getInstance().notifyFinalizedChainHead(block.getHeader());
 
             // Prune all the subchain hashes state trie from memory
             // but keep the state trie from the current finalized block
