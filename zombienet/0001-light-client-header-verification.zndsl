@@ -1,0 +1,9 @@
+Description: Block header verification (Fruzhin working as a light client)
+Network: ./0001-light-client-header-verification.toml
+Creds: config
+
+# metrics
+alice: log line matches "Started LIGHT client" within 30 seconds
+alice: log line matches "Verified justification" within 30 seconds
+# Downloading runtime means that the warp sync (justification verification step) has finished successfully.
+alice: log line matches "Downloading runtime" within 30 seconds

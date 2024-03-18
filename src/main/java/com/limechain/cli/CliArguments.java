@@ -14,5 +14,5 @@ import com.limechain.sync.SyncMode;
  * @param unsafeRpcEnabled  whether to enable unsafe RPC methods
  */
 public record CliArguments(String network, String dbPath, boolean dbRecreate, String nodeKey, String nodeRole,
-                           boolean noLegacyProtocols, SyncMode syncMode, boolean unsafeRpcEnabled) {
+                           boolean noLegacyProtocols, SyncMode syncMode, boolean unsafeRpcEnabled, int prometheusPort) {
 }
