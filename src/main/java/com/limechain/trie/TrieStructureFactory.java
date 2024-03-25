@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.UnaryOperator;
 
 @UtilityClass
 public class TrieStructureFactory {
@@ -30,11 +31,11 @@ public class TrieStructureFactory {
      */
     public TrieStructure<NodeData> buildFromKVPs(Map<ByteString, ByteString> entries, StateVersion stateVersion) {
         TrieStructure<NodeData> trie = buildTrieStructure(entries);
-        calculateMerkleValues(trie, stateVersion);
+        calculateMerkleValues(trie, stateVersion, HashUtils::hashWithBlake2b);
         return trie;
     }
 
-    private TrieStructure<NodeData> buildTrieStructure(Map<ByteString, ByteString> mainStorage) {
+    public TrieStructure<NodeData> buildTrieStructure(Map<ByteString, ByteString> mainStorage) {
         TrieStructure<NodeData> trie = new TrieStructure<>();
 
         for (var entry : mainStorage.entrySet()) {
@@ -46,7 +47,7 @@ public class TrieStructureFactory {
         return trie;
     }
 
-    public void calculateMerkleValues(TrieStructure<NodeData> trie, StateVersion stateVersion) {
+    public void calculateMerkleValues(TrieStructure<NodeData> trie, StateVersion stateVersion, UnaryOperator<byte[]> hashFunction) {
         List<TrieNodeIndex> nodeIndices = trie.streamOrdered().toList();
 
         for (TrieNodeIndex index : Lists.reverse(nodeIndices)) {
@@ -54,7 +55,7 @@ public class TrieStructureFactory {
             if (nodeHandle == null) {
                 throw new TrieBuildException("Could not initialize trie");
             }
-            calculateAndSetMerkleValue(nodeHandle, stateVersion);
+            calculateAndSetMerkleValue(nodeHandle, stateVersion, hashFunction);
         }
     }
 
@@ -72,7 +73,7 @@ public class TrieStructureFactory {
         }
     }
 
-    private void calculateAndSetMerkleValue(NodeHandle<NodeData> nodeHandle, StateVersion stateVersion) {
+    private void calculateAndSetMerkleValue(NodeHandle<NodeData> nodeHandle, StateVersion stateVersion, UnaryOperator<byte[]> hashFunction) {
         NodeData userData = nodeHandle.getUserData();
 
         // Node didn't have any userData set (hence no storage value), but now we want to calculate its merkle value
@@ -87,7 +88,7 @@ public class TrieStructureFactory {
             storageValue);
 
         byte[] merkleValue = decoded.calculateMerkleValue(
-            HashUtils::hashWithBlake2b,
+            hashFunction,
             nodeHandle.isRootNode());
 
         userData.setMerkleValue(merkleValue);
