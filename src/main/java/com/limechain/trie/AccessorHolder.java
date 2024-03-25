@@ -20,7 +20,7 @@ public class AccessorHolder {
         return instance;
     }
 
-    public BlockTrieAccessor setBlock(Hash256 blockHash) {
+    public BlockTrieAccessor setToBlock(Hash256 blockHash) {
         this.blockTrieAccessor = new BlockTrieAccessor(blockHash);
         return this.blockTrieAccessor;
     }

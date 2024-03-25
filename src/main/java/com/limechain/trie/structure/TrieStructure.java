@@ -383,7 +383,7 @@ public class TrieStructure<T> {
     }
 
     @NotNull
-    public NodeHandle<T> nodeHandleAtIndexInner(int nodeIndex) {
+    NodeHandle<T> nodeHandleAtIndexInner(int nodeIndex) {
         TrieNode<T> node = this.getNodeAtIndexInner(nodeIndex);
         return NodeHandle.<T>getConstructor(node.hasStorageValue).apply(this, nodeIndex);
     }
@@ -401,7 +401,7 @@ public class TrieStructure<T> {
     }
 
     @NotNull
-    public Nibbles nodeFullKeyAtIndexInner(int targetNodeIndex) {
+    Nibbles nodeFullKeyAtIndexInner(int targetNodeIndex) {
         Queue<Integer> nodePath = this.nodePath(targetNodeIndex); // path without target itself
         nodePath.add(targetNodeIndex); // add target to the end
 
@@ -497,18 +497,26 @@ public class TrieStructure<T> {
         }
     }
 
-    public boolean removeNode(Nibbles key) {
+    public boolean removeValueAtKey(Nibbles key) {
         return switch (existingNodeInner(key)) {
             case ExistingNodeInnerResult.NotFound ignored -> false;
-            case ExistingNodeInnerResult.Found found -> removeNode(found.nodeIndex);
+            case ExistingNodeInnerResult.Found found -> clearNodeValue(found.nodeIndex);
         };
     }
 
-    public boolean removeNode(int nodeIndex) {
+    public boolean clearNodeValue(TrieNodeIndex nodeIndex) {
+        return clearNodeValue(nodeIndex.getValue());
+    }
+
+    private boolean clearNodeValue(int nodeIndex) {
         TrieNode<T> trieNode = getNodeAtIndexInner(nodeIndex);
+        if (!trieNode.hasStorageValue) {
+            return false;
+        }
         TrieNode.Parent parent = trieNode.parent;
         if (parent == null) {
-            return false;
+            nodes.remove(nodeIndex);
+            return true;
         }
         TrieNode<T> parentNode = getNodeAtIndexInner(parent.parentNodeIndex());
 

@@ -13,7 +13,6 @@ import com.limechain.trie.structure.nibble.Nibble;
 import com.limechain.trie.structure.nibble.Nibbles;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.AllArgsConstructor;
-import org.apache.commons.lang3.NotImplementedException;
 
 import java.util.List;
 import java.util.Optional;
@@ -65,11 +64,23 @@ public class BlockTrieAccessor implements KVRepository<Nibbles, byte[]> {
             Optional.of(vacantNode)
                     .map(Vacant::getClosestAncestorIndex)
                     .map(partialTrie::nodeHandleAtIndex)
-                    .map(NodeHandle::getUserData)
-                    .map(NodeData::getMerkleValue)
+                    .map(this::closestAncestorMerkleValue)
                     .map(closestMerkle -> trieStorage.entriesBetween(closestMerkle, key.toString()))
-                    .ifPresent(entries -> entries.forEach(e -> partialTrie.insertNode(e.key(), e.nodeData())));
+                    .ifPresent(entries -> entries.forEach(
+                            storageNode -> partialTrie.insertNode(storageNode.key(), storageNode.nodeData()))
+                    );
         }
+    }
+
+    private byte[] closestAncestorMerkleValue(NodeHandle<NodeData> nodeHandle) {
+        if (nodeHandle == null) {
+            return blockHash.getBytes();
+        }
+
+        return Optional.of(nodeHandle)
+                .map(NodeHandle::getUserData)
+                .map(NodeData::getMerkleValue)
+                .orElseGet(() -> closestAncestorMerkleValue(nodeHandle.getParent()));
     }
 
     private void loadChildren(Nibbles key) {
@@ -96,12 +107,12 @@ public class BlockTrieAccessor implements KVRepository<Nibbles, byte[]> {
         loadPathToKey(key);
         loadChildren(key);
         markForRecalculation(key);
-        return partialTrie.removeNode(key);
+        return partialTrie.removeValueAtKey(key);
     }
 
     @Override
     public List<byte[]> findKeysByPrefix(Nibbles prefixSeek, int limit) {
-        throw new NotImplementedException("Not implemented");
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override
@@ -149,7 +160,7 @@ public class BlockTrieAccessor implements KVRepository<Nibbles, byte[]> {
                 }
             }
         }
-        if (partialTrie.removeNode(node.getNodeIndex().getValue())) {
+        if (partialTrie.clearNodeValue(node.getNodeIndex())) {
             deleted++;
         }
         return new DeleteByPrefixResult(deleted, true);
@@ -166,25 +177,25 @@ public class BlockTrieAccessor implements KVRepository<Nibbles, byte[]> {
 
     @Override
     public void startTransaction() {
-        throw new NotImplementedException(TRANSACTIONS_NOT_SUPPORTED);
+        throw new UnsupportedOperationException(TRANSACTIONS_NOT_SUPPORTED);
 
     }
 
     @Override
     public void rollbackTransaction() {
-        throw new NotImplementedException(TRANSACTIONS_NOT_SUPPORTED);
+        throw new UnsupportedOperationException(TRANSACTIONS_NOT_SUPPORTED);
 
     }
 
     @Override
     public void commitTransaction() {
-        throw new NotImplementedException(TRANSACTIONS_NOT_SUPPORTED);
+        throw new UnsupportedOperationException(TRANSACTIONS_NOT_SUPPORTED);
 
     }
 
     @Override
     public void closeConnection() {
-        throw new NotImplementedException(TRANSACTIONS_NOT_SUPPORTED);
+        throw new UnsupportedOperationException(TRANSACTIONS_NOT_SUPPORTED);
     }
 
     public byte[] getMerkleRoot(StateVersion version) {

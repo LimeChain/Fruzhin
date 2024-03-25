@@ -30,7 +30,6 @@ public class TrieStructureFactory {
      */
     public TrieStructure<NodeData> buildFromKVPs(Map<ByteString, ByteString> entries, StateVersion stateVersion) {
         TrieStructure<NodeData> trie = buildTrieStructure(entries);
-        // TODO: copy implementation and ignore already calculated merkleValues
         calculateMerkleValues(trie, stateVersion);
         return trie;
     }

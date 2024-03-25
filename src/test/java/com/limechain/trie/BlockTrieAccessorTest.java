@@ -7,6 +7,7 @@ import com.limechain.trie.structure.NodeHandle;
 import com.limechain.trie.structure.TrieStructure;
 import com.limechain.trie.structure.database.NodeData;
 import com.limechain.trie.structure.nibble.Nibbles;
+import io.emeraldpay.polkaj.types.Hash256;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,6 +31,9 @@ class BlockTrieAccessorTest {
 
     @Mock
     private TrieStorage trieStorage;
+
+    @Mock
+    private Hash256 blockHash;
 
     @InjectMocks
     private BlockTrieAccessor blockTrieAccessor;
@@ -125,7 +129,7 @@ class BlockTrieAccessorTest {
     }
 
     private void removeNode(Nibbles key) {
-        fullTrie.removeNode(key);
+        fullTrie.removeValueAtKey(key);
         blockTrieAccessor.delete(key);
     }
 
