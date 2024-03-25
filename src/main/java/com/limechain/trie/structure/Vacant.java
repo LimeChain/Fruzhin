@@ -2,7 +2,6 @@ package com.limechain.trie.structure;
 
 import com.limechain.trie.structure.nibble.Nibble;
 import com.limechain.trie.structure.nibble.Nibbles;
-import com.limechain.trie.structure.nibble.NibblesCollector;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.ArrayUtils;
 import org.javatuples.Pair;
@@ -34,6 +33,11 @@ public final class Vacant<T> extends Entry<T> {
         super(trieStructure);
         this.key = key;
         this.closestAncestorIndex = closestAncestorIndex;
+    }
+
+    @Nullable
+    public TrieNodeIndex getClosestAncestorIndex() {
+        return closestAncestorIndex != null ? new TrieNodeIndex(closestAncestorIndex) : null;
     }
 
     /**

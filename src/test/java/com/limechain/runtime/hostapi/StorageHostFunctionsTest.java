@@ -4,7 +4,8 @@ import com.google.common.primitives.Bytes;
 import com.limechain.runtime.Runtime;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import com.limechain.storage.DeleteByPrefixResult;
-import com.limechain.storage.KVRepository;
+import com.limechain.trie.BlockTrieAccessor;
+import com.limechain.trie.structure.nibble.Nibbles;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -40,10 +41,10 @@ class StorageHostFunctionsTest {
     private RuntimePointerSize resultPointer;
 
     @Mock
-    private KVRepository<String, Object> repository;
+    private BlockTrieAccessor repository;
 
     private final byte[] keyBytes = new byte[] { 1, 2, 3 };
-    private final String key = new String(keyBytes);
+    private final Nibbles key = Nibbles.fromBytes(keyBytes);
 
     private final byte[] valueBytes = new byte[] { 4, 5, 6 };
 
@@ -223,10 +224,11 @@ class StorageHostFunctionsTest {
 
     @Test
     void extStorageNextKeyVersion1WhenNextKeyExistsShouldReturnNextKeyAsOption() {
-        String nextKey = "next key";
+        byte[] nextKeyBytes = new byte[]{ 6, 3, 9, 8 };
+        Nibbles nextKey = Nibbles.fromBytes(nextKeyBytes);
         when(runtime.getDataFromMemory(keyPointer)).thenReturn(keyBytes);
         when(repository.getNextKey(key)).thenReturn(Optional.of(nextKey));
-        when(runtime.writeDataToMemory(toOption(nextKey.getBytes()))).thenReturn(resultPointer);
+        when(runtime.writeDataToMemory(toOption(nextKeyBytes))).thenReturn(resultPointer);
 
         RuntimePointerSize result = storageHostFunctions.extStorageNextKeyVersion1(keyPointer);
 
