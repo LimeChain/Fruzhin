@@ -113,6 +113,13 @@ public class TrieAccessor implements KVRepository<Nibbles, byte[]> {
                 .map(NodeData::getValue);
     }
 
+    public Optional<byte[]> findMerkleValue(Nibbles key) {
+        loadPathToKey(key);
+        return partialTrie.existingNode(key)
+                .map(NodeHandle::getUserData)
+                .map(NodeData::getMerkleValue);
+    }
+
     @Override
     public boolean delete(Nibbles key) {
         loadPathToKey(key);
