@@ -1,11 +1,13 @@
 package com.limechain.runtime.hostapi;
 
+import com.limechain.runtime.version.StateVersion;
+import com.limechain.trie.AccessorHolder;
+import com.limechain.trie.BlockTrieAccessor;
+import com.limechain.trie.structure.nibble.Nibbles;
+import com.limechain.trie.structure.nibble.NibblesUtils;
 import com.limechain.utils.scale.exceptions.ScaleEncodingException;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
-import com.limechain.storage.DBConstants;
 import com.limechain.storage.DeleteByPrefixResult;
-import com.limechain.storage.KVRepository;
-import com.limechain.sync.warpsync.SyncedState;
 import io.emeraldpay.polkaj.scale.CompactMode;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
@@ -28,11 +30,11 @@ import java.util.List;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class StorageHostFunctions {
     private final HostApi hostApi;
-    private final KVRepository<String, Object> repository;
+    private final BlockTrieAccessor repository;
 
     private StorageHostFunctions(final HostApi hostApi) {
         this.hostApi = hostApi;
-        this.repository = SyncedState.getInstance().getRepository();
+        this.repository = AccessorHolder.getInstance().getBlockTrieAccessor();
     }
 
     public static List<ImportObject> getFunctions(final HostApi hostApi) {
@@ -98,10 +100,10 @@ public class StorageHostFunctions {
      * @param valuePointer a pointer-size containing the key.
      */
     public void extStorageSetVersion1(RuntimePointerSize keyPointer, RuntimePointerSize valuePointer) {
-        byte[] key = hostApi.getDataFromMemory(keyPointer);
+        Nibbles key = Nibbles.fromBytes(hostApi.getDataFromMemory(keyPointer));
         byte[] value = hostApi.getDataFromMemory(valuePointer);
 
-        repository.save(new String(key), value);
+        repository.save(key, value);
     }
 
     /**
@@ -111,8 +113,8 @@ public class StorageHostFunctions {
      * @return a pointer-size returning the SCALE encoded Option value containing the value.
      */
     public RuntimePointerSize extStorageGetVersion1(RuntimePointerSize keyPointer) {
-        byte[] key = hostApi.getDataFromMemory(keyPointer);
-        byte[] value = (byte[]) repository.find(new String(key)).orElse(null);
+        Nibbles key = Nibbles.fromBytes(hostApi.getDataFromMemory(keyPointer));
+        byte[] value = repository.find(key).orElse(null);
 
         return hostApi.writeDataToMemory(scaleEncodedOption(value));
     }
@@ -131,8 +133,8 @@ public class StorageHostFunctions {
      */
     public RuntimePointerSize extStorageReadVersion1(RuntimePointerSize keyPointer, RuntimePointerSize valueOutPointer,
                                                      int offset) {
-        byte[] key = hostApi.getDataFromMemory(keyPointer);
-        byte[] value = (byte[]) repository.find(new String(key)).orElse(null);
+        Nibbles key = Nibbles.fromBytes(hostApi.getDataFromMemory(keyPointer));
+        byte[] value = repository.find(key).orElse(null);
 
         if (value == null) {
             return hostApi.writeDataToMemory(scaleEncodedOption(null));
@@ -153,8 +155,8 @@ public class StorageHostFunctions {
      * @param keyPointer a pointer-size containing the key.
      */
     public void extStorageClearVersion1(RuntimePointerSize keyPointer) {
-        byte[] key = hostApi.getDataFromMemory(keyPointer);
-        repository.delete(new String(key));
+        Nibbles key = Nibbles.fromBytes(hostApi.getDataFromMemory(keyPointer));
+        repository.delete(key);
     }
 
     /**
@@ -164,8 +166,8 @@ public class StorageHostFunctions {
      * @return integer value equal to 1 if the key exists or a value equal to 0 if otherwise.
      */
     public int extStorageExistsVersion1(RuntimePointerSize keyPointer) {
-        byte[] key = hostApi.getDataFromMemory(keyPointer);
-        return repository.find(new String(key)).isPresent() ? 1 : 0;
+        Nibbles key = Nibbles.fromBytes(hostApi.getDataFromMemory(keyPointer));
+        return repository.find(key).isPresent() ? 1 : 0;
     }
 
     /**
@@ -174,8 +176,8 @@ public class StorageHostFunctions {
      * @param prefixPointer a pointer-size containing the prefix.
      */
     public void extStorageClearPrefixVersion1(RuntimePointerSize prefixPointer) {
-        byte[] prefix = hostApi.getDataFromMemory(prefixPointer);
-        repository.deleteByPrefix(new String(prefix), null);
+        Nibbles prefix = Nibbles.fromBytes(hostApi.getDataFromMemory(prefixPointer));
+        repository.deleteByPrefix(prefix, null);
     }
 
     /**
@@ -191,7 +193,7 @@ public class StorageHostFunctions {
      */
     public RuntimePointerSize extStorageClearPrefixVersion2(RuntimePointerSize prefixPointer,
                                                             RuntimePointerSize limitPointer) {
-        String prefix = new String(hostApi.getDataFromMemory(prefixPointer));
+        Nibbles prefix = Nibbles.fromBytes(hostApi.getDataFromMemory(prefixPointer));
 
         byte[] limitBytes = hostApi.getDataFromMemory(limitPointer);
         Long limit = new ScaleCodecReader(limitBytes).readOptional(ScaleCodecReader.UINT32).orElse(null);
@@ -210,8 +212,8 @@ public class StorageHostFunctions {
      * @param valuePointer a pointer-size containing the value to be appended.
      */
     public void extStorageAppendVersion1(RuntimePointerSize keyPointer, RuntimePointerSize valuePointer) {
-        String key = new String(hostApi.getDataFromMemory(keyPointer));
-        byte[] sequence = (byte[]) repository.find(key).orElse(null);
+        Nibbles key = Nibbles.fromBytes(hostApi.getDataFromMemory(keyPointer));
+        byte[] sequence = repository.find(key).orElse(null);
         byte[] valueToAppend = hostApi.getDataFromMemory(valuePointer);
 
         if (sequence == null) {
@@ -250,8 +252,7 @@ public class StorageHostFunctions {
      * @return a pointer-size to a buffer containing the 256-bit Blake2 storage root.
      */
     public RuntimePointerSize extStorageRootVersion1() {
-        //TODO: compute from Trie
-        byte[] rootHash = (byte[]) repository.find(DBConstants.STATE_TRIE_ROOT_HASH).orElseThrow();
+        byte[] rootHash = repository.getMerkleRoot(StateVersion.V0);
 
         return hostApi.writeDataToMemory(rootHash);
     }
@@ -263,8 +264,9 @@ public class StorageHostFunctions {
      * @return a pointer-size to a buffer containing the 256-bit Blake2 storage root.
      */
     public RuntimePointerSize extStorageRootVersion2(int version) {
-        // TODO: update to use state trie versions
-        return extStorageRootVersion1();
+        byte[] rootHash = repository.getMerkleRoot(StateVersion.fromInt(version));
+
+        return hostApi.writeDataToMemory(rootHash);
     }
 
     /**
@@ -285,10 +287,21 @@ public class StorageHostFunctions {
      * @return a pointer-size to the SCALE encoded Option value containing the next key in lexicographic order.
      */
     public RuntimePointerSize extStorageNextKeyVersion1(RuntimePointerSize keyPointer) {
-        byte[] key = hostApi.getDataFromMemory(keyPointer);
-        byte[] nextKey = repository.getNextKey(new String(key)).map(String::getBytes).orElse(null);
+        Nibbles key = Nibbles.fromBytes(hostApi.getDataFromMemory(keyPointer));
+        byte[] nextKey = repository.getNextKey(key)
+                .map(NibblesUtils::toBytesAppending)
+                .map(this::asByteArray)
+                .orElse(null);
 
         return hostApi.writeDataToMemory(scaleEncodedOption(nextKey));
+    }
+
+    private byte[] asByteArray(List<Byte> bytes) {
+        byte[] result = new byte[bytes.size()];
+        for (int i = 0; i < bytes.size(); i++) {
+            result[i] = bytes.get(i);
+        }
+        return result;
     }
 
     /**

@@ -9,6 +9,7 @@ import org.javatuples.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -494,5 +495,61 @@ public class TrieStructure<T> {
                 return false;
             }
         }
+    }
+
+    public boolean removeValueAtKey(Nibbles key) {
+        return switch (existingNodeInner(key)) {
+            case ExistingNodeInnerResult.NotFound ignored -> false;
+            case ExistingNodeInnerResult.Found found -> clearNodeValue(found.nodeIndex);
+        };
+    }
+
+    public boolean clearNodeValue(TrieNodeIndex nodeIndex) {
+        return clearNodeValue(nodeIndex.getValue());
+    }
+
+    private boolean clearNodeValue(int nodeIndex) {
+        TrieNode<T> trieNode = getNodeAtIndexInner(nodeIndex);
+        if (!trieNode.hasStorageValue) {
+            return false;
+        }
+        TrieNode.Parent parent = trieNode.parent;
+        if (parent == null) {
+            nodes.remove(nodeIndex);
+            return true;
+        }
+        TrieNode<T> parentNode = getNodeAtIndexInner(parent.parentNodeIndex());
+
+        long numberOfChildren = Arrays.stream(trieNode.childrenIndices)
+                .filter(Objects::nonNull)
+                .count();
+
+        if (numberOfChildren == 0) {
+            parentNode.childrenIndices[parent.childIndexWithinParent().asInt()] = null;
+            nodes.remove(nodeIndex);
+        } else if (numberOfChildren == 1) {
+            parentNode.childrenIndices[parent.childIndexWithinParent().asInt()] = mergeParentIntoChild(trieNode);
+            nodes.remove(nodeIndex);
+        } else {
+            trieNode.hasStorageValue = false;
+            trieNode.userData = null;
+        }
+
+        return true;
+    }
+
+    private Integer mergeParentIntoChild(TrieNode<T> trieNode) {
+        for (int i = 0; i < trieNode.childrenIndices.length; i++) {
+            Integer childIndex = trieNode.childrenIndices[i];
+            if (childIndex != null) {
+                TrieNode<T> child = getNodeAtIndexInner(childIndex);
+                child.partialKey = trieNode.partialKey
+                        .add(Nibble.fromInt(i))
+                        .addAll(child.partialKey);
+                child.parent = trieNode.parent;
+                return childIndex;
+            }
+        }
+        return null;
     }
 }

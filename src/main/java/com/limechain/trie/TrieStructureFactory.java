@@ -59,7 +59,23 @@ public class TrieStructureFactory {
         }
     }
 
-    private void calculateAndSetMerkleValue(NodeHandle<NodeData> nodeHandle, StateVersion stateVersion, UnaryOperator<byte[]> hashFunction) {
+    public void recalculateMerkleValues(TrieStructure<NodeData> trie, StateVersion stateVersion,
+                                        UnaryOperator<byte[]> hashFunction) {
+        List<TrieNodeIndex> nodeIndices = trie.streamOrdered().toList();
+
+        for (TrieNodeIndex index : Lists.reverse(nodeIndices)) {
+            NodeHandle<NodeData> nodeHandle = trie.nodeHandleAtIndex(index);
+            if (nodeHandle == null) {
+                throw new TrieBuildException("Could not initialize trie");
+            }
+            if (nodeHandle.getUserData() == null || nodeHandle.getUserData().getMerkleValue() == null) {
+                calculateAndSetMerkleValue(nodeHandle, stateVersion, hashFunction);
+            }
+        }
+    }
+
+    private void calculateAndSetMerkleValue(NodeHandle<NodeData> nodeHandle, StateVersion stateVersion,
+                                            UnaryOperator<byte[]> hashFunction) {
         NodeData userData = nodeHandle.getUserData();
 
         // Node didn't have any userData set (hence no storage value), but now we want to calculate its merkle value

@@ -124,6 +124,19 @@ public class Nibbles implements Iterable<Nibble>, RandomAccess, Comparable<Itera
     }
 
     /**
+     * Concatenates this Nibbles with another Nibbles.
+     *
+     * @param other the Nibbles to concatenate with this Nibbles
+     * @return a new Nibbles representing the concatenation of this and the other Nibbles
+     * @implNote will create a new modified copy of the nibbles, does not mutate the instance invoked on
+     */
+    public Nibbles addAll(Nibbles other) {
+        List<Nibble> concatenatedList = new ArrayList<>(this.entries);
+        concatenatedList.addAll(other.entries);
+        return new Nibbles(concatenatedList);
+    }
+
+    /**
      * Returns the element at the specified position in this list.
      *
      * @param index index of the element to return
