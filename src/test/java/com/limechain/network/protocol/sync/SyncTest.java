@@ -74,7 +74,7 @@ public class SyncTest {
     }
 
     @Test
-//    @Disabled("No response is received")
+    @Disabled("No response is received")
     //TODO: See https://github.com/LimeChain/Fruzhin/issues/193
     void remoteBlockRequest_returnCorrectBlock_ifGivenBlockNumber() {
         /**

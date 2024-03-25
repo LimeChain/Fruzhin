@@ -54,8 +54,7 @@ public class Runtime {
     }
 
     private RuntimePointerSize allocateCallParameter(@NotNull byte[] parameter) {
-        // TODO: We need an allocator here to write the parameter in the runtime memory
-        return new RuntimePointerSize(0, 0);
+        return allocator.allocate(parameter.length, getMemory());
     }
 
     @Nullable
@@ -63,21 +62,6 @@ public class Runtime {
         log.log(Level.INFO, "Making a runtime call: " + functionName);
         Object[] response = instance.exports.getFunction(functionName)
             .apply(parameterPtrSize.pointer(), parameterPtrSize.size());
-
-        if (response == null) {
-            return null;
-        }
-
-        RuntimePointerSize responsePtrSize = new RuntimePointerSize((long) response[0]);
-        return getDataFromMemory(responsePtrSize);
-    }
-
-    @Nullable
-    public byte[] callWithArgs(String functionName, RuntimePointerSize rps) {
-        log.log(Level.INFO, "Making a runtime call: " + functionName);
-        Object[] response = instance.exports
-                .getFunction(functionName)
-                .apply(rps.pointer(), rps.size());
 
         if (response == null) {
             return null;
