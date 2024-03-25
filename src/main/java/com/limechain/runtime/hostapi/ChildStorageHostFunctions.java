@@ -92,10 +92,10 @@ public class ChildStorageHostFunctions {
                                         new RuntimePointerSize(argv.get(2))).pointerSize()
                         , List.of(Type.I64, Type.I64, Type.I64), Type.I64),
                 HostApi.getImportObject("ext_default_child_storage_root_version_1", argv ->
-                    extDefaultChildStorageRootVersion1(new RuntimePointerSize(argv.get(0)), StateVersion.V0).pointerSize(),
+                    extDefaultChildStorageRoot(new RuntimePointerSize(argv.get(0)), StateVersion.V0).pointerSize(),
                             List.of(Type.I64), Type.I64),
                 HostApi.getImportObject("ext_default_child_storage_root_version_2", argv ->
-                        extDefaultChildStorageRootVersion1(new RuntimePointerSize(argv.get(0)), StateVersion.fromInt(argv.get(1).intValue())).pointerSize(), List.of(Type.I64, Type.I32), Type.I64),
+                        extDefaultChildStorageRoot(new RuntimePointerSize(argv.get(0)), StateVersion.fromInt(argv.get(1).intValue())).pointerSize(), List.of(Type.I64, Type.I32), Type.I64),
                 HostApi.getImportObject("ext_default_child_storage_next_key_version_1", argv ->
                         extDefaultChildStorageStorageNextKeyVersion1(
                                 new RuntimePointerSize(argv.get(0)),
@@ -287,7 +287,7 @@ public class ChildStorageHostFunctions {
      *
      * @return a pointer-size to a buffer containing the 256-bit Blake2 child storage root.
      */
-    public RuntimePointerSize extDefaultChildStorageRootVersion1(RuntimePointerSize childStorageKeyPointer, StateVersion v0) {
+    public RuntimePointerSize extDefaultChildStorageRoot(RuntimePointerSize childStorageKeyPointer, StateVersion v0) {
         Nibbles childStorageKey = Nibbles.fromBytes(hostApi.getDataFromMemory(childStorageKeyPointer));
         ChildTrieAccessor childTrie = mainRepository.getChildTrie(childStorageKey);
 
