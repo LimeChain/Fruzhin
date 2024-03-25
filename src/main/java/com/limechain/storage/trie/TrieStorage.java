@@ -213,13 +213,15 @@ public class TrieStorage {
      * @return The next key as a String, or null if no such key exists.
      */
     public String getNextKeyByMerkleValue(byte[] merkleValue, String prefixStr) {
+        if(merkleValue == null || prefixStr == null) {
+            return null;
+        }
         TrieNodeData rootNode = getTrieNodeFromMerkleValue(merkleValue);
         if (rootNode == null) {
             return null;
         }
 
         byte[] prefix = partialKeyFromNibbles(Nibbles.fromBytes(prefixStr.getBytes()).asUnmodifiableList());
-
         return findNextKey(rootNode, prefix);
     }
 
