@@ -177,8 +177,6 @@ public class TrieAccessor implements KVRepository<Nibbles, byte[]> {
         return new DeleteByPrefixResult(deleted, true);
     }
 
-
-
     public void persistAll() {
         for (ChildTrieAccessor value : loadedChildTries.values()) value.persistAll();
         loadedChildTries.clear();
@@ -187,7 +185,6 @@ public class TrieAccessor implements KVRepository<Nibbles, byte[]> {
         lastRoot = getMerkleRoot(StateVersion.V1);
         trieStorage.insertTrieStorage(partialTrie, StateVersion.V1);
     }
-
 
     @Override
     public Optional<Nibbles> getNextKey(Nibbles key) {
