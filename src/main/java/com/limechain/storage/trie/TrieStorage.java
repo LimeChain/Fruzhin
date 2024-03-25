@@ -49,7 +49,7 @@ public class TrieStorage {
      * @return A byte array representing the combined nibbles.
      */
     @NotNull
-    protected byte[] partialKeyFromNibbles(List<Nibble> nibbles) {
+    protected byte[] partialKeyFromNibbles(@NotNull List<Nibble> nibbles) {
         return Bytes.toArray(
                 nibbles.stream()
                         .map(Nibble::asByte)
@@ -213,15 +213,13 @@ public class TrieStorage {
      * @return The next key as a String, or null if no such key exists.
      */
     public String getNextKeyByMerkleValue(byte[] merkleValue, String prefixStr) {
-        if(merkleValue == null || prefixStr == null) {
-            return null;
-        }
         TrieNodeData rootNode = getTrieNodeFromMerkleValue(merkleValue);
         if (rootNode == null) {
             return null;
         }
 
-        byte[] prefix = partialKeyFromNibbles(Nibbles.fromBytes(prefixStr.getBytes()).asUnmodifiableList());
+        List<Nibble> nibbles = Nibbles.fromBytes(prefixStr.getBytes()).asUnmodifiableList();
+        byte[] prefix = partialKeyFromNibbles(nibbles);
         return findNextKey(rootNode, prefix);
     }
 
@@ -247,18 +245,17 @@ public class TrieStorage {
 
         for (int i = startIndex; i < childrenMerkleValues.size(); i++) {
             byte[] childMerkleValue = childrenMerkleValues.get(i);
-            if (childMerkleValue == null) continue; // Skip empty slots.
-
-            // Fetch the child node based on its merkle value.
-            TrieNodeData childNode = getTrieNodeFromMerkleValue(childMerkleValue);
+            TrieNodeData childNode = null;
+            if (childMerkleValue != null) {
+                childNode = getTrieNodeFromMerkleValue(childMerkleValue);
+            }
+            if (childNode == null) continue;
 
             byte[] nextPath = ByteArrayUtils.concatenate(currentPath, new byte[]{(byte) i});
             nextPath = ByteArrayUtils.concatenate(nextPath, childNode.getPartialKey());
 
-            byte[] result =
-                    searchForNextKey(childNode, prefix, nextPath);
+            byte[] result = searchForNextKey(childNode, prefix, nextPath);
             if (result != EMPTY_TRIE_NODE) {
-                // If a result is found in this subtree, return it.
                 return result;
             }
         }
