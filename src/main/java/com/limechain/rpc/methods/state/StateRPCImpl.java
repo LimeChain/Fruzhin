@@ -42,7 +42,7 @@ public class StateRPCImpl {
                 blockHashHex != null ? Hash256.from(blockHashHex) : blockState.getHighestFinalizedHash();
 
         Optional<StorageNode> optionalNextBranch = trieStorage.getNextBranch(blockHash, new String(prefix));
-        if(optionalNextBranch.isEmpty()){
+        if (optionalNextBranch.isEmpty()) {
             return new String[0][0];
         }
         StorageNode nextBranch = optionalNextBranch.get();
