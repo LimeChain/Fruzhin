@@ -38,8 +38,7 @@ public class StateRPCImpl {
         }
 
         byte[] prefix = StringUtils.hexToBytes(prefixHex);
-        final Hash256 blockHash =
-                blockHashHex != null ? Hash256.from(blockHashHex) : blockState.getHighestFinalizedHash();
+        final Hash256 blockHash = getHash256FromHex(blockHashHex);
 
         Optional<StorageNode> optionalNextBranch = trieStorage.getNextBranch(blockHash, new String(prefix));
         if (optionalNextBranch.isEmpty()) {
@@ -66,8 +65,7 @@ public class StateRPCImpl {
 
         byte[] prefix = prefixHex != null ? StringUtils.hexToBytes(prefixHex) : new byte[0];
         byte[] startKey = keyHex != null ? StringUtils.hexToBytes(keyHex) : new byte[0];
-        final Hash256 blockHash =
-                blockHashHex != null ? Hash256.from(blockHashHex) : blockState.getHighestFinalizedHash();
+        final Hash256 blockHash = getHash256FromHex(blockHashHex);
         List<byte[]> keys = trieStorage.getKeysWithPrefixPaged(blockHash, prefix, startKey, limit);
 
         String[][] result = new String[keys.size()][];
@@ -84,8 +82,7 @@ public class StateRPCImpl {
         }
 
         byte[] key = StringUtils.hexToBytes(keyHex);
-        final Hash256 blockHash =
-                blockHashHex != null ? Hash256.from(blockHashHex) : blockState.getHighestFinalizedHash();
+        final Hash256 blockHash = getHash256FromHex(blockHashHex);
 
         return trieStorage.getByKeyFromBlock(blockHash, new String(key))
                 .map(NodeData::getValue)
@@ -99,8 +96,7 @@ public class StateRPCImpl {
         }
 
         byte[] key = StringUtils.hexToBytes(keyHex);
-        final Hash256 blockHash =
-                blockHashHex != null ? Hash256.from(blockHashHex) : blockState.getHighestFinalizedHash();
+        final Hash256 blockHash = getHash256FromHex(blockHashHex);
 
         return trieStorage.getByKeyFromBlock(blockHash, new String(key))
                 .map(NodeData::getMerkleValue)
@@ -114,8 +110,7 @@ public class StateRPCImpl {
         }
 
         byte[] key = StringUtils.hexToBytes(keyHex);
-        final Hash256 blockHash =
-                blockHashHex != null ? Hash256.from(blockHashHex) : blockState.getHighestFinalizedHash();
+        final Hash256 blockHash = getHash256FromHex(blockHashHex);
 
         return trieStorage
                 .getByKeyFromBlock(blockHash, new String(key))
@@ -130,8 +125,7 @@ public class StateRPCImpl {
             return null;
         }
 
-        final Hash256 blockHash =
-                blockHashHex != null ? Hash256.from(blockHashHex) : blockState.getHighestFinalizedHash();
+        final Hash256 blockHash = getHash256FromHex(blockHashHex);
 
         final Runtime runtime = blockState.getRuntime(blockHash);
         byte[] metadataBytes = runtime.call("Metadata_metadata");
@@ -144,8 +138,7 @@ public class StateRPCImpl {
             return null;
         }
 
-        final Hash256 blockHash =
-                blockHashHex != null ? Hash256.from(blockHashHex) : blockState.getHighestFinalizedHash();
+        final Hash256 blockHash = getHash256FromHex(blockHashHex);
 
         Runtime runtime = blockState.getRuntime(blockHash);
         if (runtime != null) {
@@ -161,8 +154,7 @@ public class StateRPCImpl {
         }
 
         final Hash256 startBlockHash = Hash256.from(startBlockHex);
-        final Hash256 endBlockHash =
-                endBlockHex != null ? Hash256.from(endBlockHex) : blockState.getHighestFinalizedHash();
+        final Hash256 endBlockHash = getHash256FromHex(endBlockHex);
 
         final List<StorageChangeSet> changesPerBlock = new ArrayList<>();
         final Map<String, String> previousValues = new HashMap<>();
@@ -192,8 +184,7 @@ public class StateRPCImpl {
     }
 
     public Map<String, Object> stateGetReadProof(final List<String> keyHexList, final String blockHashHex) {
-        final Hash256 blockHash =
-                blockHashHex != null ? Hash256.from(blockHashHex) : blockState.getHighestFinalizedHash();
+        final Hash256 blockHash = getHash256FromHex(blockHashHex);
 
         BlockTrieAccessor blockTrieAccessor = new BlockTrieAccessor(blockHash);
         List<String> readProof = keyHexList
@@ -210,6 +201,10 @@ public class StateRPCImpl {
                 "at", HexUtils.toHexString(blockHash.getBytes()),
                 "proof", readProof
         );
+    }
+
+    private Hash256 getHash256FromHex(String blockHashHex) {
+        return blockHashHex != null ? Hash256.from(blockHashHex) : blockState.getHighestFinalizedHash();
     }
 
 }
