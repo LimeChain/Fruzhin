@@ -263,7 +263,8 @@ public class TrieStorage {
             nextPath = ByteArrayUtils.concatenate(nextPath, childNode.getPartialKey());
 
             if (Arrays.compare(nextPath, prefix) >= 0) {
-                return new StorageNode(nibblesFromBytes(nextPath), new NodeData(childNode.getValue(), childMerkleValue));
+                return new StorageNode(nibblesFromBytes(nextPath),
+                        new NodeData(childNode.getValue(), childMerkleValue));
             }
 
             StorageNode result = searchForNextBranch(childNode, prefix, nextPath);
@@ -292,17 +293,17 @@ public class TrieStorage {
         return matchingKeys;
     }
 
-    private void collectKeysWithPrefix(TrieNodeData node, byte[] currentPath, byte[] prefix, byte[] startKey, int limit, List<byte[]> keys, boolean[] startKeyFound) {
+    private void collectKeysWithPrefix(TrieNodeData node, byte[] currentPath, byte[] prefix, byte[] startKey, int limit,
+                                       List<byte[]> keys, boolean[] startKeyFound) {
         if (keys.size() >= limit) return;
 
         byte[] fullPath = ByteArrayUtils.concatenate(currentPath, node.getPartialKey());
-        if (node.getValue() != null && startsWith(fullPath, prefix)) {
-            if (startKey == null || startKeyFound[0] || Arrays.equals(startKey, fullPath)) {
-                if (!startKeyFound[0]) {
-                    startKeyFound[0] = true;
-                } else {
-                    keys.add(fullPath); // Add key if it matches the prefix and is after the startKey
-                }
+        if (node.getValue() != null && startsWith(fullPath, prefix) &&
+            startKey == null || startKeyFound[0] || Arrays.equals(startKey, fullPath)) {
+            if (!startKeyFound[0]) {
+                startKeyFound[0] = true;
+            } else {
+                keys.add(fullPath); // Add key if it matches the prefix and is after the startKey
             }
         }
 
@@ -344,7 +345,8 @@ public class TrieStorage {
             return entries;
         }
         entries.add(
-                new StorageNode(nibblesFromBytes(rootNode.getPartialKey()), new NodeData(rootNode.getValue(), merkleValue)));
+                new StorageNode(nibblesFromBytes(rootNode.getPartialKey()),
+                        new NodeData(rootNode.getValue(), merkleValue)));
 
         byte[] prefix = partialKeyFromNibbles(Nibbles.fromBytes(searchKey.getBytes()).asUnmodifiableList());
         collectEntriesUpTo(rootNode, prefix, new byte[0], entries);
