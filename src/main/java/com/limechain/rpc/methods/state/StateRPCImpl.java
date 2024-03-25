@@ -4,8 +4,10 @@ import com.limechain.rpc.methods.state.dto.StorageChangeSet;
 import com.limechain.runtime.Runtime;
 import com.limechain.storage.block.BlockState;
 import com.limechain.storage.trie.TrieStorage;
+import com.limechain.trie.BlockTrieAccessor;
 import com.limechain.trie.dto.node.StorageNode;
 import com.limechain.trie.structure.database.NodeData;
+import com.limechain.trie.structure.nibble.Nibbles;
 import com.limechain.utils.StringUtils;
 import io.emeraldpay.polkaj.types.Hash256;
 import org.apache.tomcat.util.buf.HexUtils;
@@ -189,8 +191,25 @@ public class StateRPCImpl {
         return changesPerBlock;
     }
 
-    public String stateGetReadProof(final List<String> keyHex, final String blockHashHex) {
-        return null;
+    public Map<String, Object> stateGetReadProof(final List<String> keyHexList, final String blockHashHex) {
+        final Hash256 blockHash =
+                blockHashHex != null ? Hash256.from(blockHashHex) : blockState.getHighestFinalizedHash();
+
+        BlockTrieAccessor blockTrieAccessor = new BlockTrieAccessor(blockHash);
+        List<String> readProof = keyHexList
+                .stream()
+                .map(StringUtils::hexToBytes)
+                .map(key -> blockTrieAccessor
+                        .findMerkleValue(Nibbles.fromBytes(key))
+                        .orElse(null))
+                .filter(Objects::nonNull)
+                .map(HexUtils::toHexString)
+                .toList();
+
+        return Map.of(
+                "at", HexUtils.toHexString(blockHash.getBytes()),
+                "proof", readProof
+        );
     }
 
 }

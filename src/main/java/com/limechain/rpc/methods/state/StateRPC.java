@@ -5,6 +5,7 @@ import com.limechain.rpc.config.UnsafeRpcMethod;
 import com.limechain.rpc.methods.state.dto.StorageChangeSet;
 
 import java.util.List;
+import java.util.Map;
 
 public interface StateRPC {
 
@@ -46,6 +47,6 @@ public interface StateRPC {
     List<StorageChangeSet> stateQueryStorageAt(final List<String> keyHex, final String startBlockHash);
 
     @JsonRpcMethod("state_getReadProof")
-    String stateGetReadProof(final List<String> keyHex, final String blockHashHex);
+    Map<String, Object> stateGetReadProof(final List<String> keyHex, final String blockHashHex);
 
 }

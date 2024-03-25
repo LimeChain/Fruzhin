@@ -6,10 +6,14 @@ import com.limechain.chain.spec.ChainSpec;
 import com.limechain.chain.spec.ChainType;
 import com.limechain.chain.spec.PropertyValue;
 import com.limechain.rpc.exceptions.InvalidParametersException;
+import com.limechain.rpc.methods.chain.ChainRPC;
 import com.limechain.rpc.methods.chain.ChainRPCImpl;
+import com.limechain.rpc.methods.offchain.OffchainRPC;
 import com.limechain.rpc.methods.offchain.OffchainRPCImpl;
+import com.limechain.rpc.methods.state.StateRPC;
 import com.limechain.rpc.methods.state.StateRPCImpl;
 import com.limechain.rpc.methods.state.dto.StorageChangeSet;
+import com.limechain.rpc.methods.sync.SyncRPC;
 import com.limechain.rpc.methods.sync.SyncRPCImpl;
 import com.limechain.rpc.methods.system.SystemRPC;
 import com.limechain.rpc.methods.system.SystemRPCImpl;
@@ -64,6 +68,10 @@ public class RPCMethodsImpl implements RPCMethods {
 
         Collections.addAll(methods, RPCMethods.class.getDeclaredMethods());
         Collections.addAll(methods, SystemRPC.class.getDeclaredMethods());
+        Collections.addAll(methods, SyncRPC.class.getDeclaredMethods());
+        Collections.addAll(methods, ChainRPC.class.getDeclaredMethods());
+        Collections.addAll(methods, OffchainRPC.class.getDeclaredMethods());
+        Collections.addAll(methods, StateRPC.class.getDeclaredMethods());
 
         return methods.stream().map(m -> m.getAnnotation(JsonRpcMethod.class).value()).toArray(String[]::new);
     }
@@ -265,7 +273,7 @@ public class RPCMethodsImpl implements RPCMethods {
     }
 
     @Override
-    public String stateGetReadProof(final List<String> key, final String blockHash) {
+    public Map<String, Object> stateGetReadProof(final List<String> key, final String blockHash) {
         return stateRPC.stateGetReadProof(key, blockHash);
     }
     //endregion
