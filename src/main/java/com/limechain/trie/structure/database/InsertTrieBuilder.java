@@ -39,12 +39,19 @@ public class InsertTrieBuilder {
             throw new TrieBuildException("Failed to build trie.");
         }
 
+        boolean isReferenceValue = nodeHandle
+                .getFullKey()
+                .startsWith(Nibbles
+                        .fromBytes(":child_storage:"
+                                .getBytes())
+                );
+
         return new InsertTrieNode(
                 userData.getValue(),
                 userData.getMerkleValue(),
                 childrenMerkleValues(nodeHandle),
                 nodeHandle.getPartialKey().asUnmodifiableList(),
-                false);
+                isReferenceValue);
     }
 
     private static List<byte[]> childrenMerkleValues(NodeHandle<NodeData> nodeHandle) {
