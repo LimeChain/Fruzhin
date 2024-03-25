@@ -11,6 +11,7 @@ import com.limechain.trie.structure.Vacant;
 import com.limechain.trie.structure.database.NodeData;
 import com.limechain.trie.structure.nibble.Nibble;
 import com.limechain.trie.structure.nibble.Nibbles;
+import com.limechain.utils.HashUtils;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.AllArgsConstructor;
 
@@ -199,7 +200,7 @@ public class BlockTrieAccessor implements KVRepository<Nibbles, byte[]> {
     }
 
     public byte[] getMerkleRoot(StateVersion version) {
-        TrieStructureFactory.recalculateMerkleValues(partialTrie, version);
+        TrieStructureFactory.recalculateMerkleValues(partialTrie, version, HashUtils::hashWithBlake2b);
         return partialTrie.getRootNode()
                 .map(NodeHandle::getUserData)
                 .map(NodeData::getMerkleValue)

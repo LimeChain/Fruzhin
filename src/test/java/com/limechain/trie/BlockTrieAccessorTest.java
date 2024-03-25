@@ -7,6 +7,7 @@ import com.limechain.trie.structure.NodeHandle;
 import com.limechain.trie.structure.TrieStructure;
 import com.limechain.trie.structure.database.NodeData;
 import com.limechain.trie.structure.nibble.Nibbles;
+import com.limechain.utils.HashUtils;
 import io.emeraldpay.polkaj.types.Hash256;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -53,7 +54,7 @@ class BlockTrieAccessorTest {
         fullTrie = new TrieStructure<>();
         initStorageNodes.forEach(node -> fullTrie.insertNode(node.key(), node.nodeData()));
         fullTrie.insertNode(lonelyChild.key(), lonelyChild.nodeData());
-        TrieStructureFactory.calculateMerkleValues(fullTrie, StateVersion.V0);
+        TrieStructureFactory.calculateMerkleValues(fullTrie, StateVersion.V0, HashUtils::hashWithBlake2b);
         fullTrie.streamOrdered()
                 .map(index -> fullTrie.nodeHandleAtIndex(index))
                 .filter(NodeHandle::hasStorageValue)
@@ -134,7 +135,7 @@ class BlockTrieAccessorTest {
     }
 
     private byte[] fullTrieMerkleRoot() {
-        TrieStructureFactory.calculateMerkleValues(fullTrie, StateVersion.V0);
+        TrieStructureFactory.calculateMerkleValues(fullTrie, StateVersion.V0, HashUtils::hashWithBlake2b);
         return fullTrie.getRootNode()
                 .map(NodeHandle::getUserData)
                 .map(NodeData::getMerkleValue)
