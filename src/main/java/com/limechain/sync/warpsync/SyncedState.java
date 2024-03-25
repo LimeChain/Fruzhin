@@ -30,6 +30,8 @@ import com.limechain.sync.warpsync.dto.RuntimeCodeException;
 import com.limechain.sync.warpsync.dto.StateDto;
 import com.limechain.sync.warpsync.scale.ForcedChangeReader;
 import com.limechain.sync.warpsync.scale.ScheduledChangeReader;
+import com.limechain.trie.AccessorHolder;
+import com.limechain.trie.BlockTrieAccessor;
 import com.limechain.utils.StringUtils;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.types.Hash256;
@@ -231,6 +233,7 @@ public class SyncedState {
      */
     public void buildRuntime(Hash256 blockHash) {
         try {
+            AccessorHolder.getInstance().setBlockTrieAccessor(new BlockTrieAccessor(blockHash));
             runtime = runtimeBuilder.buildRuntime(runtimeCode);
             BlockState.getInstance().storeRuntime(blockHash, runtime);
         } catch (UnsatisfiedLinkError e) {
