@@ -24,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith(MockitoExtension.class)
-class BlockTrieAccessorTest {
+class TrieAccessorTest {
     @Spy
     private TrieStructure<NodeData> partialTrie;
 
@@ -37,7 +37,7 @@ class BlockTrieAccessorTest {
     private Hash256 blockHash;
 
     @InjectMocks
-    private BlockTrieAccessor blockTrieAccessor;
+    private TrieAccessor trieAccessor;
 
     private final List<StorageNode> initStorageNodes = List.of(
             new StorageNode(Nibbles.fromHexString("a1b"), new NodeData(new byte[] { 1, 2, 3 })),
@@ -75,7 +75,7 @@ class BlockTrieAccessorTest {
     @Test
     void find() {
         StorageNode storageNode = initStorageNodes.get(1);
-        byte[] result = blockTrieAccessor.find(storageNode.key()).orElse(null);
+        byte[] result = trieAccessor.find(storageNode.key()).orElse(null);
 
         assertEquals(storageNode.nodeData().getValue(), result);
     }
@@ -84,7 +84,7 @@ class BlockTrieAccessorTest {
     void save() {
         Nibbles key = Nibbles.fromHexString("abcde");
         byte[] value = new byte[] { 17, 1, 62};
-        blockTrieAccessor.save(key, value);
+        trieAccessor.save(key, value);
 
         byte[] result = Objects.requireNonNull(partialTrie.node(key).asNodeHandle().getUserData()).getValue();
         assertArrayEquals(value, result);
@@ -92,7 +92,7 @@ class BlockTrieAccessorTest {
 
     @Test
     void merkle() {
-        byte[] result = blockTrieAccessor.getMerkleRoot(StateVersion.V0);
+        byte[] result = trieAccessor.getMerkleRoot(StateVersion.V0);
         assertArrayEquals(fullTrieMerkleRoot() ,result);
     }
 
@@ -100,7 +100,7 @@ class BlockTrieAccessorTest {
     void merkleRootAfterAddLeafNode() {
         addNode(Nibbles.fromHexString("ab2aa"), new byte[] { 6, 2, 5 });
 
-        byte[] result = blockTrieAccessor.getMerkleRoot(StateVersion.V0);
+        byte[] result = trieAccessor.getMerkleRoot(StateVersion.V0);
 
         assertArrayEquals(fullTrieMerkleRoot() ,result);
     }
@@ -110,28 +110,28 @@ class BlockTrieAccessorTest {
         addNode(Nibbles.fromHexString("a1"), new byte[] { 2, 5, 9, 1 });
         addNode(Nibbles.fromHexString("a"), new byte[] { 72, 5, 11, 1 });
 
-        byte[] result = blockTrieAccessor.getMerkleRoot(StateVersion.V0);
+        byte[] result = trieAccessor.getMerkleRoot(StateVersion.V0);
 
         assertArrayEquals(fullTrieMerkleRoot() ,result);
     }
 
     private void addNode(Nibbles key, byte[] value) {
         fullTrie.insertNode(key, new NodeData(value));
-        blockTrieAccessor.save(key, value);
+        trieAccessor.save(key, value);
     }
 
     @Test
     void merkleRootAfterDelete() {
         removeNode(Nibbles.fromHexString("a81"));
 
-        byte[] result = blockTrieAccessor.getMerkleRoot(StateVersion.V0);
+        byte[] result = trieAccessor.getMerkleRoot(StateVersion.V0);
 
         assertArrayEquals(fullTrieMerkleRoot() ,result);
     }
 
     private void removeNode(Nibbles key) {
         fullTrie.removeValueAtKey(key);
-        blockTrieAccessor.delete(key);
+        trieAccessor.delete(key);
     }
 
     private byte[] fullTrieMerkleRoot() {

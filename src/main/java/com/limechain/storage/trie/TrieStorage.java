@@ -20,6 +20,7 @@ import io.emeraldpay.polkaj.types.Hash256;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.extern.java.Log;
+import org.javatuples.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -91,6 +92,15 @@ public class TrieStorage {
     protected void initialize(final KVRepository<String, Object> db, final BlockState blockState) {
         this.db = db;
         this.blockState = blockState;
+    }
+
+    public Pair<Nibbles, NodeData> getRootNodeFromMerkleValue(final byte[] merkleValue) {
+        TrieNodeData rootNode = getTrieNodeFromMerkleValue(merkleValue);
+        if (rootNode == null) {
+            return null;
+        }
+
+        return Pair.with(Nibbles.fromBytes(rootNode.getPartialKey()), new NodeData(rootNode.getValue(), merkleValue));
     }
 
     /**
@@ -191,7 +201,19 @@ public class TrieStorage {
             return null;
         }
 
-        TrieNodeData rootNode = getTrieNodeFromMerkleValue(header.getStateRoot().getBytes());
+        return getNextKeyByMerkleValue(header.getStateRoot().getBytes(), prefixStr);
+    }
+
+    /**
+     * Finds the next key in the trie that is lexicographically greater than a given prefix.
+     * It navigates the trie from the root node associated with a specific block hash.
+     *
+     * @param merkleValue The merkleValue of the trie to be used for the search.
+     * @param prefixStr The prefix to compare against for finding the next key.
+     * @return The next key as a String, or null if no such key exists.
+     */
+    public String getNextKeyByMerkleValue(byte[] merkleValue, String prefixStr) {
+        TrieNodeData rootNode = getTrieNodeFromMerkleValue(merkleValue);
         if (rootNode == null) {
             return null;
         }
