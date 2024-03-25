@@ -3,6 +3,7 @@ package com.limechain.trie;
 import com.limechain.runtime.version.StateVersion;
 import com.limechain.storage.DeleteByPrefixResult;
 import com.limechain.storage.KVRepository;
+import com.limechain.storage.block.BlockState;
 import com.limechain.storage.trie.TrieStorage;
 import com.limechain.trie.structure.Entry;
 import com.limechain.trie.structure.NodeHandle;
@@ -22,11 +23,13 @@ import java.util.Optional;
 public class BlockTrieAccessor implements KVRepository<Nibbles, byte[]> {
     public static final String TRANSACTIONS_NOT_SUPPORTED = "Block Trie Accessor does not support transactions.";
     private final Hash256 blockHash;
+    private final byte[] rootHash;
     private final TrieStructure<NodeData> partialTrie;
     private final TrieStorage trieStorage;
 
     public BlockTrieAccessor(Hash256 blockHash) {
         this.blockHash = blockHash;
+        this.rootHash = BlockState.getInstance().getHeader(blockHash).getStateRoot().getBytes();
         this.trieStorage = TrieStorage.getInstance();
         this.partialTrie = new TrieStructure<>();
     }
@@ -75,7 +78,7 @@ public class BlockTrieAccessor implements KVRepository<Nibbles, byte[]> {
 
     private byte[] closestAncestorMerkleValue(NodeHandle<NodeData> nodeHandle) {
         if (nodeHandle == null) {
-            return blockHash.getBytes();
+            return rootHash;
         }
 
         return Optional.of(nodeHandle)
