@@ -4,11 +4,11 @@ import com.limechain.rpc.methods.state.dto.StorageChangeSet;
 import com.limechain.runtime.Runtime;
 import com.limechain.storage.block.BlockState;
 import com.limechain.storage.trie.TrieStorage;
+import com.limechain.trie.dto.node.StorageNode;
 import com.limechain.trie.structure.database.NodeData;
 import com.limechain.utils.StringUtils;
 import io.emeraldpay.polkaj.types.Hash256;
 import org.apache.tomcat.util.buf.HexUtils;
-import org.bouncycastle.util.Arrays;
 import org.springframework.stereotype.Service;
 
 import java.lang.reflect.Array;
@@ -39,14 +39,15 @@ public class StateRPCImpl {
         final Hash256 blockHash =
                 blockHashHex != null ? Hash256.from(blockHashHex) : blockState.getHighestFinalizedHash();
 
-        byte[] nextBranch = trieStorage.getNextBranch(blockHash, new String(prefix));
-
-        if (Arrays.isNullOrEmpty(nextBranch)) {
+        Optional<StorageNode> optionalNextBranch = trieStorage.getNextBranch(blockHash, new String(prefix));
+        if(optionalNextBranch.isEmpty()){
             return new String[0][0];
         }
+        StorageNode nextBranch = optionalNextBranch.get();
+        byte[] nextBranchMerkle = nextBranch.nodeData().getMerkleValue();
 
         return trieStorage
-                .loadChildren(nextBranch)
+                .loadChildren(nextBranch.key(), nextBranchMerkle)
                 .stream()
                 .map(storageNode -> {
                     final String key = storageNode.key().toLowerHexString();

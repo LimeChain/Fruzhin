@@ -5,7 +5,6 @@ import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.runtime.version.StateVersion;
 import com.limechain.storage.KVRepository;
 import com.limechain.storage.block.BlockState;
-import com.limechain.storage.trie.exceptions.ChildNotFoundException;
 import com.limechain.trie.dto.node.StorageNode;
 import com.limechain.trie.structure.TrieStructure;
 import com.limechain.trie.structure.database.InsertTrieBuilder;
@@ -217,7 +216,6 @@ public class TrieStorage {
             byte[] result =
                     searchForNextKey(childNode, prefix, nextPath);
             if (result != EMPTY_TRIE_NODE) {
-                // If a result is found in this subtree, return it.
                 return result;
             }
         }
@@ -225,30 +223,30 @@ public class TrieStorage {
         return EMPTY_TRIE_NODE;
     }
 
-    public byte[] getNextBranch(Hash256 blockHash, String prefixStr) {
+    public Optional<StorageNode> getNextBranch(Hash256 blockHash, String prefixStr) {
         BlockHeader header = blockState.getHeader(blockHash);
-
         if (header == null) {
-            return EMPTY_TRIE_NODE;
+            return Optional.empty();
         }
 
         byte[] rootMerkleValue = header.getStateRoot().getBytes();
         TrieNodeData rootNode = getTrieNodeFromMerkleValue(rootMerkleValue);
         if (rootNode == null) {
-            return EMPTY_TRIE_NODE;
+            return Optional.empty();
         }
 
         byte[] prefix = partialKeyFromNibbles(Nibbles.fromBytes(prefixStr.getBytes()).asUnmodifiableList());
         if (Arrays.equals(prefix, rootNode.getPartialKey())) {
-            return rootMerkleValue;
+            return Optional.of(new StorageNode(nibblesFromBytes(rootNode.getPartialKey()),
+                    new NodeData(rootNode.getValue(), rootMerkleValue)));
         }
 
-        return searchForNextBranch(rootNode, prefix, rootNode.getPartialKey());
+        return Optional.ofNullable(searchForNextBranch(rootNode, prefix, rootNode.getPartialKey()));
     }
 
-    private byte[] searchForNextBranch(TrieNodeData node, byte[] prefix, byte[] currentPath) {
+    private StorageNode searchForNextBranch(TrieNodeData node, byte[] prefix, byte[] currentPath) {
         if (node == null) {
-            return EMPTY_TRIE_NODE;
+            return null;
         }
 
         List<byte[]> childrenMerkleValues = node.getChildrenMerkleValues();
@@ -265,17 +263,16 @@ public class TrieStorage {
             nextPath = ByteArrayUtils.concatenate(nextPath, childNode.getPartialKey());
 
             if (Arrays.compare(nextPath, prefix) >= 0) {
-                return childMerkleValue;
+                return new StorageNode(nibblesFromBytes(nextPath), new NodeData(childNode.getValue(), childMerkleValue));
             }
 
-            byte[] result = searchForNextBranch(childNode, prefix, nextPath);
-            if (result != EMPTY_TRIE_NODE) {
-                // If a result is found in this subtree, return it.
+            StorageNode result = searchForNextBranch(childNode, prefix, nextPath);
+            if (result != null) {
                 return result;
             }
         }
 
-        return EMPTY_TRIE_NODE;
+        return null;
     }
 
     public List<byte[]> getKeysWithPrefixPaged(Hash256 blockHash, byte[] prefix, byte[] startKey, int limit) {
@@ -296,13 +293,13 @@ public class TrieStorage {
     }
 
     private void collectKeysWithPrefix(TrieNodeData node, byte[] currentPath, byte[] prefix, byte[] startKey, int limit, List<byte[]> keys, boolean[] startKeyFound) {
-        if (keys.size() >= limit) return; // Stop if limit reached
+        if (keys.size() >= limit) return;
 
         byte[] fullPath = ByteArrayUtils.concatenate(currentPath, node.getPartialKey());
         if (node.getValue() != null && startsWith(fullPath, prefix)) {
             if (startKey == null || startKeyFound[0] || Arrays.equals(startKey, fullPath)) {
                 if (!startKeyFound[0]) {
-                    startKeyFound[0] = true; // Mark that we've found the startKey
+                    startKeyFound[0] = true;
                 } else {
                     keys.add(fullPath); // Add key if it matches the prefix and is after the startKey
                 }
