@@ -19,7 +19,6 @@ import io.emeraldpay.polkaj.types.Hash256;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.extern.java.Log;
-import org.javatuples.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -93,15 +92,6 @@ public class TrieStorage {
         this.blockState = blockState;
     }
 
-    public Pair<Nibbles, NodeData> getRootNodeFromMerkleValue(final byte[] merkleValue) {
-        TrieNodeData rootNode = getTrieNodeFromMerkleValue(merkleValue);
-        if (rootNode == null) {
-            return null;
-        }
-
-        return Pair.with(Nibbles.fromBytes(rootNode.getPartialKey()), new NodeData(rootNode.getValue(), merkleValue));
-    }
-
     /**
      * Retrieves a value by key from the trie associated with a specific block hash.
      *
@@ -116,10 +106,21 @@ public class TrieStorage {
             return Optional.empty();
         }
 
+        return getByKeyFromMerkle(header.getStateRoot().getBytes(), keyStr);
+    }
+
+    /**
+     * Retrieves a value by key from the trie associated with a specific block hash.
+     *
+     * @param merkleRoot The merkle root under which to search.
+     * @param keyStr     The key for which to retrieve the value.
+     * @return An {@link Optional} containing the value associated with the key if found, or empty if not found.
+     */
+    public Optional<NodeData> getByKeyFromMerkle(byte[] merkleRoot, String keyStr) {
         byte[] key = partialKeyFromNibbles(Nibbles.fromBytes(keyStr.getBytes()).asUnmodifiableList());
-        NodeData nodeFromDb = getNodeFromDb(header.getStateRoot().getBytes(), key);
+        NodeData nodeFromDb = getNodeFromDb(merkleRoot, key);
         if (nodeFromDb != null && nodeFromDb.getMerkleValue() == null) {
-            nodeFromDb.setMerkleValue(header.getStateRoot().getBytes());
+            nodeFromDb.setMerkleValue(merkleRoot);
         }
         return Optional.ofNullable(nodeFromDb);
     }
@@ -191,7 +192,7 @@ public class TrieStorage {
      * It navigates the trie from the root node associated with a specific block hash.
      *
      * @param merkleValue The merkleValue of the trie to be used for the search.
-     * @param prefixStr The prefix to compare against for finding the next key.
+     * @param prefixStr   The prefix to compare against for finding the next key.
      * @return The next key as a String, or null if no such key exists.
      */
     public String getNextKeyByMerkleValue(byte[] merkleValue, String prefixStr) {
@@ -245,6 +246,13 @@ public class TrieStorage {
         return EMPTY_TRIE_NODE;
     }
 
+    /**
+     * Searches for the next branch in the trie that is lexicographically greater than a given prefix.
+     *
+     * @param blockHash The block hash to start the search from.
+     * @param prefixStr The prefix to search for the next branch.
+     * @return An {@link Optional} containing the next {@link StorageNode} branch if found, otherwise an empty {@link Optional}.
+     */
     public Optional<StorageNode> getNextBranch(Hash256 blockHash, String prefixStr) {
         BlockHeader header = blockState.getHeader(blockHash);
         if (header == null) {
@@ -298,13 +306,54 @@ public class TrieStorage {
         return null;
     }
 
+    /**
+     * Retrieves all keys in the trie that start with a given prefix.
+     *
+     * @param merkleRoot The root of the trie from which to start searching.
+     * @param prefix The prefix for which matching keys are to be retrieved.
+     * @return A list of byte arrays representing the keys that match the given prefix.
+     */
+    public List<byte[]> getKeysWithPrefix(byte[] merkleRoot, byte[] prefix) {
+        TrieNodeData rootNode = getTrieNodeFromMerkleValue(merkleRoot);
+        if (rootNode == null) {
+            return new ArrayList<>();
+        }
+
+        List<byte[]> matchingKeys = new ArrayList<>();
+        collectKeysWithPrefix(rootNode, new byte[0], prefix, matchingKeys);
+        return matchingKeys;
+    }
+
+    private void collectKeysWithPrefix(TrieNodeData node, byte[] currentPath, byte[] prefix, List<byte[]> keys) {
+        byte[] fullPath = ByteArrayUtils.concatenate(currentPath, node.getPartialKey());
+        if (node.getValue() != null && startsWith(fullPath, prefix)) {
+            keys.add(fullPath);
+        }
+
+        for (byte[] childMerkleValue : node.getChildrenMerkleValues()) {
+            if (childMerkleValue == null) continue;
+            TrieNodeData childNode = getTrieNodeFromMerkleValue(childMerkleValue);
+            if (childNode != null) {
+                collectKeysWithPrefix(childNode, fullPath, prefix, keys);
+            }
+        }
+    }
+
+    /**
+     * Retrieves keys starting with a given prefix, supporting pagination through a starting key and limit.
+     *
+     * @param blockHash The hash of the block to search within.
+     * @param prefix The prefix to match against keys in the trie.
+     * @param startKey The key from which to start returning results.
+     * @param limit The maximum number of keys to return.
+     * @return A list of byte arrays representing the keys that match the given prefix, starting from the startKey.
+     */
     public List<byte[]> getKeysWithPrefixPaged(Hash256 blockHash, byte[] prefix, byte[] startKey, int limit) {
         BlockHeader header = blockState.getHeader(blockHash);
         if (header == null) {
             return new ArrayList<>();
         }
 
-        // Decode the root node of the trie using the state root from the block header.
         TrieNodeData rootNode = getTrieNodeFromMerkleValue(header.getStateRoot().getBytes());
         if (rootNode == null) {
             return new ArrayList<>();
@@ -408,6 +457,13 @@ public class TrieStorage {
         collectEntriesUpTo(childNode, Arrays.copyOfRange(key, 1 + commonPrefix, key.length), nextPath, entries);
     }
 
+    /**
+     * Loads children nodes of a given parent key and Merkle value.
+     *
+     * @param parentKey The nibbles representing the parent key.
+     * @param parentMerkleValue The Merkle value of the parent node.
+     * @return A list of {@link StorageNode} representing the children of the specified parent node.
+     */
     public List<StorageNode> loadChildren(Nibbles parentKey, byte[] parentMerkleValue) {
         List<byte[]> childrenMerkleValues = Optional.ofNullable(parentMerkleValue)
                 .map(this::getTrieNodeFromMerkleValue)

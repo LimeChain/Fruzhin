@@ -7,9 +7,9 @@ import com.limechain.storage.block.BlockState;
 import com.limechain.storage.block.exception.BlockNotFoundException;
 import com.limechain.storage.block.exception.BlockStorageGenericException;
 import com.limechain.storage.block.exception.HeaderNotFoundException;
+import com.limechain.utils.StringUtils;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.AllArgsConstructor;
-import org.apache.tomcat.util.buf.HexUtils;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 
@@ -41,7 +41,7 @@ public class ChainRPCImpl {
                         "logs", Arrays
                                 .stream(header.getDigest())
                                 .map(HeaderDigest::getMessage)
-                                .map(HexUtils::toHexString)
+                                .map(StringUtils::toHexWithPrefix)
                                 .toArray()
                 ),
                 "extrinsicsRoot", header.getExtrinsicsRoot().toString(),
@@ -101,7 +101,7 @@ public class ChainRPCImpl {
         return Map.of(
                 "block", Map.of("header", headerToMap(block.getHeader()),
                         "extrinsics", Arrays.stream(block.getBody().getExtrinsicsAsByteArray())
-                                .map(HexUtils::toHexString)
+                                .map(StringUtils::toHexWithPrefix)
                                 .toArray())
         );
     }

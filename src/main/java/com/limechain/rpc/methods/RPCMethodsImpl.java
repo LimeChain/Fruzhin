@@ -8,6 +8,7 @@ import com.limechain.chain.spec.PropertyValue;
 import com.limechain.rpc.exceptions.InvalidParametersException;
 import com.limechain.rpc.methods.chain.ChainRPC;
 import com.limechain.rpc.methods.chain.ChainRPCImpl;
+import com.limechain.rpc.methods.childstate.ChildStateRPCImpl;
 import com.limechain.rpc.methods.offchain.OffchainRPC;
 import com.limechain.rpc.methods.offchain.OffchainRPCImpl;
 import com.limechain.rpc.methods.state.StateRPC;
@@ -61,6 +62,11 @@ public class RPCMethodsImpl implements RPCMethods {
      * References to state rpc method implementation classes
      */
     private final StateRPCImpl stateRPC;
+
+    /**
+     * References to child state rpc method implementation classes
+     */
+    private final ChildStateRPCImpl childStateRPC;
 
     @Override
     public String[] rpcMethods() {
@@ -228,7 +234,7 @@ public class RPCMethodsImpl implements RPCMethods {
     }
 
     @Override
-    public String[][] stateGetKeysPaged(final String prefix, final int limit, final String key, final String blockHash) {
+    public List<String> stateGetKeysPaged(final String prefix, final int limit, final String key, final String blockHash) {
         return stateRPC.stateGetKeysPaged(prefix, limit, key, blockHash);
     }
 
@@ -275,6 +281,28 @@ public class RPCMethodsImpl implements RPCMethods {
     @Override
     public Map<String, Object> stateGetReadProof(final List<String> key, final String blockHash) {
         return stateRPC.stateGetReadProof(key, blockHash);
+    }
+    //endregion
+
+    //region ChildStateRPC methods
+    @Override
+    public List<String> childStateGetKeys(String childKeyHex, String prefix, String blockHashHex) {
+        return childStateRPC.childStateGetKeys(prefix, childKeyHex, blockHashHex);
+    }
+
+    @Override
+    public String childStateGetStorage(String childKeyHex, String keyHex, String blockHashHex) {
+        return childStateRPC.stateGetStorage(childKeyHex, keyHex, blockHashHex);
+    }
+
+    @Override
+    public String childStateGetStorageHash(String childKeyHex, String keyHex, String blockHashHex) {
+        return childStateRPC.stateGetStorageHash(childKeyHex, keyHex, blockHashHex);
+    }
+
+    @Override
+    public String childStateGetStorageSize(String childKeyHex, String keyHex, String blockHashHex) {
+        return childStateRPC.stateGetStorageSize(childKeyHex, keyHex, blockHashHex);
     }
     //endregion
 }
