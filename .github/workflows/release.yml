@@ -32,10 +32,13 @@ jobs:
         with:
           arguments: build
       - name: Build Changelog
-        id: github_release
-        uses: mikepenz/release-changelog-builder-action@v4
+        id: changelog
+        uses: requarks/changelog-action@v11
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          token: ${{ github.token }}
+          tag: ${{ github.ref_name }}
       - name: Create release
         id: create_release
         uses: actions/create-release@v1
@@ -44,7 +47,7 @@ jobs:
         with:
           tag_name: ${{ github.ref }}
           release_name: Release ${{ github.ref }}
-          body: ${{steps.github_release.outputs.changelog}}
+          body: ${{ steps.changelog.outputs.changes }}
           draft: false
           prerelease: false
       - name: Upload Release Asset
