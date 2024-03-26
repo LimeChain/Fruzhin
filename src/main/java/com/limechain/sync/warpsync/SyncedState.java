@@ -235,7 +235,7 @@ public class SyncedState {
         try {
             AccessorHolder.getInstance().setBlockTrieAccessor(new BlockTrieAccessor(blockHash));
             runtime = runtimeBuilder.buildRuntime(runtimeCode);
-            if(BlockState.getInstance().isInitialized()){
+            if (BlockState.getInstance().isInitialized()) {
                 BlockState.getInstance().storeRuntime(blockHash, runtime);
             }
         } catch (UnsatisfiedLinkError e) {
