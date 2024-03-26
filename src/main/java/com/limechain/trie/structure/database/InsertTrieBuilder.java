@@ -41,10 +41,7 @@ public class InsertTrieBuilder {
 
         boolean isReferenceValue = nodeHandle
                 .getFullKey()
-                .startsWith(Nibbles
-                        .fromBytes(":child_storage:"
-                                .getBytes())
-                );
+                .startsWith(Nibbles.fromBytes(":child_storage:".getBytes()));
 
         return new InsertTrieNode(
                 userData.getValue(),

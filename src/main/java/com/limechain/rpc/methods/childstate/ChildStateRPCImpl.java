@@ -120,7 +120,7 @@ public class ChildStateRPCImpl {
 
     private byte[] getChildMerkle(Hash256 blockHash, byte[] childKey) {
         return trieStorage
-                .getByKeyFromBlock(blockHash, ":child_storage:" + new String(childKey))
+                .getByKeyFromBlock(blockHash, ":child_storage:default:" + new String(childKey))
                 .map(NodeData::getValue)
                 .orElse(null);
     }

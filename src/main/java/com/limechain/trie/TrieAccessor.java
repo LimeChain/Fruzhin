@@ -36,7 +36,7 @@ public class TrieAccessor implements KVRepository<Nibbles, byte[]> {
     }
 
     public ChildTrieAccessor getChildTrie(Nibbles key) {
-        Nibbles trieKey = Nibbles.fromBytes(":child_storage:".getBytes()).addAll(key);
+        Nibbles trieKey = Nibbles.fromBytes(":child_storage:default:".getBytes()).addAll(key);
         byte[] merkleRoot = find(trieKey).orElse(null);
         return loadedChildTries.computeIfAbsent(trieKey, k -> new ChildTrieAccessor(this, trieKey, merkleRoot));
     }
