@@ -18,7 +18,7 @@ public interface StateRPC {
 
     @JsonRpcMethod("state_getKeysPaged")
     @UnsafeRpcMethod
-    String[][] stateGetKeysPaged(final String prefix, int limit, String keyHex, final String blockHashHex);
+    List<String> stateGetKeysPaged(final String prefix, int limit, String keyHex, final String blockHashHex);
 
     @JsonRpcMethod("state_getStorage")
     String stateGetStorage(final String keyHex, final String blockHashHex);

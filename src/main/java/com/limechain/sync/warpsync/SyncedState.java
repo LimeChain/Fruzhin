@@ -235,7 +235,9 @@ public class SyncedState {
         try {
             AccessorHolder.getInstance().setBlockTrieAccessor(new BlockTrieAccessor(blockHash));
             runtime = runtimeBuilder.buildRuntime(runtimeCode);
-            BlockState.getInstance().storeRuntime(blockHash, runtime);
+            if (BlockState.getInstance().isInitialized()) {
+                BlockState.getInstance().storeRuntime(blockHash, runtime);
+            }
         } catch (UnsatisfiedLinkError e) {
             log.log(Level.SEVERE, "Error loading wasm module");
             log.log(Level.SEVERE, e.getMessage(), e.getStackTrace());
