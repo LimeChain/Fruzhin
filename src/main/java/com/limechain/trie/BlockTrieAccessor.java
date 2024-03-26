@@ -8,8 +8,9 @@ public class BlockTrieAccessor extends TrieAccessor {
     public BlockTrieAccessor(Hash256 blockHash) {
         super(null);
 
-        if (BlockState.getInstance().isInitialized()) {
-            super.lastRoot = BlockState.getInstance().getHeader(blockHash).getStateRoot().getBytes();
+        BlockState blockState = BlockState.getInstance();
+        if (blockState.isInitialized() && blockState.hasHeader(blockHash)) {
+            super.lastRoot = blockState.getHeader(blockHash).getStateRoot().getBytes();
         }
     }
 
