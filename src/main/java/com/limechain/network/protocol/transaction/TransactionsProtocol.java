@@ -1,4 +1,4 @@
-package com.limechain.network.protocol.transactions;
+package com.limechain.network.protocol.transaction;
 
 import com.limechain.network.ConnectionManager;
 import com.limechain.network.encoding.Leb128LengthFrameDecoder;
@@ -93,7 +93,6 @@ public class TransactionsProtocol extends ProtocolHandler<TransactionsController
             connectionManager.closeTransactionsStream(stream);
             if (cause != null) {
                 log.log(Level.WARNING, "Transactions Exception: " + cause.getMessage());
-                cause.printStackTrace();
             } else {
                 log.log(Level.WARNING, "Transactions Exception with unknown cause");
             }

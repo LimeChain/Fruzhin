@@ -15,7 +15,7 @@ import com.limechain.network.protocol.ping.Ping;
 import com.limechain.network.protocol.sync.BlockRequestDto;
 import com.limechain.network.protocol.sync.SyncService;
 import com.limechain.network.protocol.sync.pb.SyncMessage.BlockResponse;
-import com.limechain.network.protocol.transactions.TransactionsService;
+import com.limechain.network.protocol.transaction.TransactionsService;
 import com.limechain.network.protocol.warp.WarpSyncService;
 import com.limechain.network.protocol.warp.dto.WarpSyncResponse;
 import com.limechain.storage.DBConstants;
