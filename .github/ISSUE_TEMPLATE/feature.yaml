@@ -14,7 +14,6 @@ body:
     attributes:
       label: Motivation
       description: Please give precedence as to what lead you to file this issue.
-      # placeholder: Describe ...
     validations:
       required: false
   - type: textarea
@@ -22,7 +21,6 @@ body:
     attributes:
       label: Request
       description: Please describe what is needed.
-      # placeholder: Describe what you would like to see added or changed.
     validations:
       required: true
   - type: textarea
@@ -30,7 +28,6 @@ body:
     attributes:
       label: Solution
       description: If possible, please describe what a solution could be.
-      # placeholder: Describe what you would like to see added or changed.
     validations:
       required: false
   - type: dropdown
