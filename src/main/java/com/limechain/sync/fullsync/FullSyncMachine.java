@@ -85,24 +85,18 @@ public class FullSyncMachine {
         var args = getCheckInherentsParameter(executeBlockParameter);
         byte[] checkInherentsOutput = runtime.call("BlockBuilder_check_inherents", args);
         System.out.println(Arrays.toString(checkInherentsOutput));
-        // TODO: CONTINUE FROM HERE
-        //  Kusama block 1 seems to be decoded just about right, with slight mismatches somewhere...
-        //  (index 97 in executeBlockParameter is 12 here, 6 in gossamer)
-        //  Refer to this gossamer test for verification:
-        //  https://github.com/ChainSafe/gossamer/blob/644b212ed3e4a133fbd9b069552b3f1d65e56012/lib/runtime/wazero/instance_test.go#L721
-
 
         runtime.call("Core_execute_block", executeBlockParameter);
     }
 
-    private static byte[] getCheckInherentsParameter(byte[] executeBlockParameter) {
+    public static byte[] getCheckInherentsParameter(byte[] executeBlockParameter) {
         // The first param is executeBlockParameter
         // The second param of `BlockBuilder_check_inherents` is a SCALE-encoded list of
         // tuples containing an "inherent identifier" (`[u8; 8]`) and a value (`Vec<u8>`).
         return ArrayUtils.addAll(executeBlockParameter, getInherentDataParameter());
     }
 
-    private static byte[] getInherentDataParameter() {
+    public static byte[] getInherentDataParameter() {
         long millis = System.currentTimeMillis();
         return ScaleUtils.Encode.encode(new InherentDataWriter(), new InherentData(millis));
     }

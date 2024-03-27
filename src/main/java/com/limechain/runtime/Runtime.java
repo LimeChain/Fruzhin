@@ -21,14 +21,13 @@ import static com.limechain.runtime.RuntimeBuilder.getImports;
 @Log
 public class Runtime {
     private RuntimeVersion version;
-    private Instance instance;
-    private int heapPages;
-    private FreeingBumpHeapAllocator allocator;
+    private final Instance instance;
+    private final int heapPages;
+    private final FreeingBumpHeapAllocator allocator;
 
     public Runtime(Module module, int heapPages) {
         this.heapPages = heapPages;
         this.instance = module.instantiate(getImports(module, this));
-        updateAllocator();
         this.allocator = new FreeingBumpHeapAllocator(getHeapBase());
     }
 
@@ -105,10 +104,6 @@ public class Runtime {
         memoryBuffer.position(runtimePointerSize.pointer());
         memoryBuffer.get(data);
         return data;
-    }
-
-    private void updateAllocator() {
-        this.allocator = new FreeingBumpHeapAllocator(getHeapBase());
     }
 
     /**
