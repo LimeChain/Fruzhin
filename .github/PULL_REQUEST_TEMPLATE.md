@@ -13,6 +13,7 @@ Fixes #<issue number, if applicable>
 
 ## Checklist:
 - [ ] I have read the [contributing guidelines](../CONTRIBUTING.md).
+- [ ] My PR title matches the [Conventional Commits spec](https://www.conventionalcommits.org/).
 - [ ] My change requires a change to the documentation.
 - [ ] I have updated the documentation accordingly.
 - [ ] I have added tests to cover my changes.

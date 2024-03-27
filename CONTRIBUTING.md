@@ -2,6 +2,10 @@
 
 Thank you for considering contributing to Fruzhin! We welcome contributions from everyone. To maintain a high standard of quality, please follow these guidelines when contributing to the project.
 
+## Commit Message Guidelines
+
+We follow the [Conventional Commits specification](https://www.conventionalcommits.org/) for our commit messages. Each commit message should have a clear and structured format that conveys the type, scope, and description of the changes made. This helps in understanding the purpose of each commit and automating tasks like versioning and changelog generation.
+
 ## Merge Process
 
 When submitting a new pull request (PR), please ensure the following:
