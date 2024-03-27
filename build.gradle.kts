@@ -60,7 +60,7 @@ dependencies {
     implementation("com.github.luben:zstd-jni:1.5.2-5")
 
     // Prometheus
-    implementation("io.prometheus:prometheus-metrics-core:1.0.0")
+    implementation("io.prometheus:prometheus-metrics-core:1.2.0")
     implementation("io.prometheus:prometheus-metrics-instrumentation-jvm:1.0.0")
     implementation("io.prometheus:prometheus-metrics-exporter-httpserver:1.0.0")
 
