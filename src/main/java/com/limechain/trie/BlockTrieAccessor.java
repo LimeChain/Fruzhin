@@ -15,6 +15,7 @@ import com.limechain.trie.structure.nibble.Nibbles;
 import com.limechain.utils.HashUtils;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.AllArgsConstructor;
+import lombok.Setter;
 
 import java.util.List;
 import java.util.Optional;
@@ -22,14 +23,21 @@ import java.util.Optional;
 @AllArgsConstructor
 public class BlockTrieAccessor implements KVRepository<Nibbles, byte[]> {
     public static final String TRANSACTIONS_NOT_SUPPORTED = "Block Trie Accessor does not support transactions.";
-    private final Hash256 blockHash;
-    private final byte[] rootHash;
     private final TrieStructure<NodeData> partialTrie;
     private final TrieStorage trieStorage;
+    @Setter
+    private Hash256 blockHash;
+    @Setter
+    private byte[] rootHash;
 
     public BlockTrieAccessor(Hash256 blockHash) {
         this.blockHash = blockHash;
         this.rootHash = BlockState.getInstance().getHeader(blockHash).getStateRoot().getBytes();
+        this.trieStorage = TrieStorage.getInstance();
+        this.partialTrie = new TrieStructure<>();
+    }
+
+    public BlockTrieAccessor() {
         this.trieStorage = TrieStorage.getInstance();
         this.partialTrie = new TrieStructure<>();
     }
@@ -141,7 +149,7 @@ public class BlockTrieAccessor implements KVRepository<Nibbles, byte[]> {
 
     private Nibble prefixIndexInParent(Nibbles parent, Nibbles prefix) {
         for (int i = 0; i < prefix.size(); i++) {
-            if(prefix.get(i).equals(parent.get(i))) {
+            if (prefix.get(i).equals(parent.get(i))) {
                 return parent.get(i);
             }
         }

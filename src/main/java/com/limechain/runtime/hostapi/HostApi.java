@@ -1,7 +1,5 @@
 package com.limechain.runtime.hostapi;
 
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
 import lombok.extern.java.Log;
 import org.wasmer.ImportObject;
 import org.wasmer.Type;

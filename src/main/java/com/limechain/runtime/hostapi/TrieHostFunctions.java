@@ -47,51 +47,52 @@ public class TrieHostFunctions {
 
     public List<ImportObject> buildFunctions() {
         return Arrays.asList(
-            /*
-             * TRIE ROOT
-             */
-            HostApi.getImportObject("ext_trie_blake2_256_root_version_1", this::ext_trie_blake2_256_root_version_1,
-                List.of(Type.I64), Type.I32),
+                /*
+                 * TRIE ROOT
+                 */
+                HostApi.getImportObject("ext_trie_blake2_256_root_version_1", this::ext_trie_blake2_256_root_version_1,
+                        List.of(Type.I64), Type.I32),
 
-            HostApi.getImportObject("ext_trie_blake2_256_root_version_2", this::ext_trie_blake2_256_root_version_2,
-                List.of(Type.I64, Type.I32), Type.I32),
+                HostApi.getImportObject("ext_trie_blake2_256_root_version_2", this::ext_trie_blake2_256_root_version_2,
+                        List.of(Type.I64, Type.I32), Type.I32),
 
-            HostApi.getImportObject("ext_trie_blake2_256_ordered_root_version_1",
-                this::ext_trie_blake2_256_ordered_root_version_1, List.of(Type.I64), Type.I32),
+                HostApi.getImportObject("ext_trie_blake2_256_ordered_root_version_1",
+                        this::ext_trie_blake2_256_ordered_root_version_1, List.of(Type.I64), Type.I32),
 
-            HostApi.getImportObject("ext_trie_blake2_256_ordered_root_version_2",
-                this::ext_trie_blake2_256_ordered_root_version_2, List.of(Type.I64, Type.I32), Type.I32),
+                HostApi.getImportObject("ext_trie_blake2_256_ordered_root_version_2",
+                        this::ext_trie_blake2_256_ordered_root_version_2, List.of(Type.I64, Type.I32), Type.I32),
 
-            HostApi.getImportObject("ext_trie_keccak_256_root_version_1", this::ext_trie_keccak_256_root_version_1,
-                List.of(Type.I64), Type.I32),
+                HostApi.getImportObject("ext_trie_keccak_256_root_version_1", this::ext_trie_keccak_256_root_version_1,
+                        List.of(Type.I64), Type.I32),
 
-            HostApi.getImportObject("ext_trie_keccak_256_root_version_2", this::ext_trie_keccak_256_root_version_2,
-                List.of(Type.I64, Type.I32), Type.I32),
+                HostApi.getImportObject("ext_trie_keccak_256_root_version_2", this::ext_trie_keccak_256_root_version_2,
+                        List.of(Type.I64, Type.I32), Type.I32),
 
-            HostApi.getImportObject("ext_trie_keccak_256_ordered_root_version_1",
-                this::ext_trie_keccak_256_ordered_root_version_1, List.of(Type.I64), Type.I32),
+                HostApi.getImportObject("ext_trie_keccak_256_ordered_root_version_1",
+                        this::ext_trie_keccak_256_ordered_root_version_1, List.of(Type.I64), Type.I32),
 
-            HostApi.getImportObject("ext_trie_keccak_256_ordered_root_version_2",
-                this::ext_trie_keccak_256_ordered_root_version_2, List.of(Type.I64, Type.I32), Type.I32),
+                HostApi.getImportObject("ext_trie_keccak_256_ordered_root_version_2",
+                        this::ext_trie_keccak_256_ordered_root_version_2, List.of(Type.I64, Type.I32), Type.I32),
 
-            /*
-             * PROOF VERIFICATION
-             */
-            HostApi.getImportObject("ext_trie_blake2_256_verify_proof_version_1",
-                this::ext_trie_blake2_256_verify_proof_version_1, List.of(Type.I32, Type.I64, Type.I64, Type.I64),
-                Type.I32),
-            HostApi.getImportObject("ext_trie_blake2_256_verify_proof_version_2",
-                this::ext_trie_blake2_256_verify_proof_version_2,
-                List.of(Type.I32, Type.I64, Type.I64, Type.I64, Type.I32), Type.I32),
-            HostApi.getImportObject("ext_trie_keccak_256_verify_proof_version_1",
-                this::ext_trie_keccak_256_verify_proof_version_1, List.of(Type.I32, Type.I64, Type.I64, Type.I64),
-                Type.I32),
-            HostApi.getImportObject("ext_trie_keccak_256_verify_proof_version_2",
-                this::ext_trie_keccak_256_verify_proof_version_2,
-                List.of(Type.I32, Type.I64, Type.I64, Type.I64, Type.I32), Type.I32));
+                /*
+                 * PROOF VERIFICATION
+                 */
+                HostApi.getImportObject("ext_trie_blake2_256_verify_proof_version_1",
+                        this::ext_trie_blake2_256_verify_proof_version_1, List.of(Type.I32, Type.I64, Type.I64, Type.I64),
+                        Type.I32),
+                HostApi.getImportObject("ext_trie_blake2_256_verify_proof_version_2",
+                        this::ext_trie_blake2_256_verify_proof_version_2,
+                        List.of(Type.I32, Type.I64, Type.I64, Type.I64, Type.I32), Type.I32),
+                HostApi.getImportObject("ext_trie_keccak_256_verify_proof_version_1",
+                        this::ext_trie_keccak_256_verify_proof_version_1, List.of(Type.I32, Type.I64, Type.I64, Type.I64),
+                        Type.I32),
+                HostApi.getImportObject("ext_trie_keccak_256_verify_proof_version_2",
+                        this::ext_trie_keccak_256_verify_proof_version_2,
+                        List.of(Type.I32, Type.I64, Type.I64, Type.I64, Type.I32), Type.I32));
     }
 
     Number ext_trie_blake2_256_root_version_1(List<Number> args) {
+        log.info("ext_trie_blake2_256_root_version_1");
         ArgParser argParser = new ArgParser(args);
 
         List<Pair<byte[], byte[]>> kvps = argParser.parseKeyValuePairs(0);
@@ -102,6 +103,7 @@ public class TrieHostFunctions {
     }
 
     Number ext_trie_blake2_256_root_version_2(List<Number> argv) {
+        log.info("ext_trie_blake2_256_root_version_2");
         ArgParser argParser = new ArgParser(argv);
 
         List<Pair<byte[], byte[]>> kvps = argParser.parseKeyValuePairs(0);
@@ -113,6 +115,7 @@ public class TrieHostFunctions {
     }
 
     Number ext_trie_blake2_256_ordered_root_version_1(List<Number> argv) {
+        log.info("ext_trie_blake2_256_ordered_root_version_1");
         ArgParser argParser = new ArgParser(argv);
 
         List<byte[]> values = argParser.parseOrderedValues(0);
@@ -123,6 +126,7 @@ public class TrieHostFunctions {
     }
 
     Number ext_trie_blake2_256_ordered_root_version_2(List<Number> argv) {
+        log.info("ext_trie_blake2_256_ordered_root_version_2");
         ArgParser argParser = new ArgParser(argv);
 
         List<byte[]> values = argParser.parseOrderedValues(0);
@@ -134,6 +138,7 @@ public class TrieHostFunctions {
     }
 
     Number ext_trie_keccak_256_root_version_1(List<Number> argv) {
+        log.info("ext_trie_keccak_256_root_version_1");
         ArgParser argParser = new ArgParser(argv);
 
         List<Pair<byte[], byte[]>> kvps = argParser.parseKeyValuePairs(0);
@@ -144,6 +149,7 @@ public class TrieHostFunctions {
     }
 
     Number ext_trie_keccak_256_root_version_2(List<Number> argv) {
+        log.info("ext_trie_keccak_256_root_version_2");
         ArgParser argParser = new ArgParser(argv);
 
         List<Pair<byte[], byte[]>> kvps = argParser.parseKeyValuePairs(0);
@@ -155,6 +161,7 @@ public class TrieHostFunctions {
     }
 
     Number ext_trie_keccak_256_ordered_root_version_1(List<Number> argv) {
+        log.info("ext_trie_keccak_256_ordered_root_version_1");
         ArgParser argParser = new ArgParser(argv);
 
         List<byte[]> values = argParser.parseOrderedValues(0);
@@ -165,6 +172,7 @@ public class TrieHostFunctions {
     }
 
     Number ext_trie_keccak_256_ordered_root_version_2(List<Number> argv) {
+        log.info("ext_trie_keccak_256_ordered_root_version_2");
         ArgParser argParser = new ArgParser(argv);
 
         List<byte[]> values = argParser.parseOrderedValues(0);
@@ -176,6 +184,7 @@ public class TrieHostFunctions {
     }
 
     Number ext_trie_blake2_256_verify_proof_version_1(List<Number> args) {
+        log.info("ext_trie_blake2_256_verify_proof_version_1");
         ArgParser argParser = new ArgParser(args);
         byte[] trieRoot = argParser.parseTrieRoot(0);
         byte[][] encodedProofNodes = argParser.parseProofNodes(1);
@@ -189,6 +198,7 @@ public class TrieHostFunctions {
     }
 
     Number ext_trie_blake2_256_verify_proof_version_2(List<Number> argv) {
+        log.info("ext_trie_blake2_256_verify_proof_version_2");
         ArgParser argParser = new ArgParser(argv);
         byte[] trieRoot = argParser.parseTrieRoot(0);
         byte[][] encodedProofNodes = argParser.parseProofNodes(1);
@@ -202,6 +212,7 @@ public class TrieHostFunctions {
     }
 
     Number ext_trie_keccak_256_verify_proof_version_1(List<Number> argv) {
+        log.info("ext_trie_keccak_256_verify_proof_version_1");
         ArgParser argParser = new ArgParser(argv);
         byte[] trieRoot = argParser.parseTrieRoot(0);
         byte[][] encodedProofNodes = argParser.parseProofNodes(1);
@@ -215,6 +226,7 @@ public class TrieHostFunctions {
     }
 
     Number ext_trie_keccak_256_verify_proof_version_2(List<Number> args) {
+        log.info("ext_trie_keccak_256_verify_proof_version_2");
         ArgParser argParser = new ArgParser(args);
         byte[] trieRoot = argParser.parseTrieRoot(0);
         byte[][] encodedProofNodes = argParser.parseProofNodes(1);
@@ -246,11 +258,11 @@ public class TrieHostFunctions {
         BLAKE2B(HashUtils::hashWithBlake2b), KECCAK256(HashUtils::hashWithKeccak256);
 
         private static final byte[] EMPTY_BLAKE2_TRIE_MERKLE_VALUE =
-            {3, 23, 10, 46, 117, -105, -73, -73, -29, -40, 76, 5, 57, 29, 19, -102, 98, -79, 87, -25, -121, -122, -40,
-                -64, -126, -14, -99, -49, 76, 17, 19, 20};
+                {3, 23, 10, 46, 117, -105, -73, -73, -29, -40, 76, 5, 57, 29, 19, -102, 98, -79, 87, -25, -121, -122, -40,
+                        -64, -126, -14, -99, -49, 76, 17, 19, 20};
         private static final byte[] EMPTY_KECCAK256_TRIE_MERKLE_VALUE =
-            {-68, 54, 120, -98, 122, 30, 40, 20, 54, 70, 66, 41, -126, -113, -127, 125, 102, 18, -9, -76, 119, -42, 101,
-                -111, -1, -106, -87, -32, 100, -68, -55, -118};
+                {-68, 54, 120, -98, 122, 30, 40, 20, 54, 70, 66, 41, -126, -113, -127, 125, 102, 18, -9, -76, 119, -42, 101,
+                        -111, -1, -106, -87, -32, 100, -68, -55, -118};
         private final UnaryOperator<byte[]> function;
 
         public byte[] getEmptyTrieHash() {
@@ -264,7 +276,7 @@ public class TrieHostFunctions {
     record TrieRootCalculator(HashFunction hashFunction, StateVersion stateVersion) {
         public byte[] trieRoot(List<Pair<byte[], byte[]>> entries) {
             Map<ByteString, ByteString> entriesMap = entries.stream().collect(
-                Collectors.toMap(p -> ByteString.copyFrom(p.getValue0()), p -> ByteString.copyFrom(p.getValue1())));
+                    Collectors.toMap(p -> ByteString.copyFrom(p.getValue0()), p -> ByteString.copyFrom(p.getValue1())));
             return trieRoot(entriesMap);
         }
 
@@ -284,7 +296,7 @@ public class TrieHostFunctions {
             var trie = TrieStructureFactory.buildTrieStructure(entries);
             TrieStructureFactory.calculateMerkleValues(trie, stateVersion, hashFunction.getFunction());
             return trie.getRootNode().map(NodeHandle::getUserData).map(NodeData::getMerkleValue)
-                .orElse(hashFunction.getEmptyTrieHash());
+                    .orElse(hashFunction.getEmptyTrieHash());
         }
     }
 
@@ -302,12 +314,12 @@ public class TrieHostFunctions {
 
         public List<Pair<byte[], byte[]>> parseKeyValuePairs(int index) {
             return ScaleUtils.Decode.decodeList(getDataFromMemory(index),
-                new PairReader<>(ScaleCodecReader::readByteArray, ScaleCodecReader::readByteArray));
+                    new PairReader<>(ScaleCodecReader::readByteArray, ScaleCodecReader::readByteArray));
         }
 
         public byte[][] parseProofNodes(int index) {
             return ScaleUtils.Decode.decodeList(getDataFromMemory(index), ScaleCodecReader::readByteArray)
-                .toArray(new byte[0][0]);
+                    .toArray(new byte[0][0]);
         }
 
         public byte[] parseTrieRoot(int index) {

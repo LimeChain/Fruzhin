@@ -2,6 +2,7 @@ package com.limechain.runtime.allocator;
 
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import lombok.AllArgsConstructor;
+import lombok.extern.java.Log;
 import org.wasmer.Memory;
 
 import java.util.ArrayList;
@@ -63,6 +64,7 @@ import static com.limechain.runtime.allocator.Order.NUMBER_OF_ORDERS;
  * </li>
  * </ul>
  */
+@Log
 @AllArgsConstructor
 public class FreeingBumpHeapAllocator {
     private static final int ALIGNMENT = 8;
@@ -97,18 +99,22 @@ public class FreeingBumpHeapAllocator {
      * Otherwise, memory will be bumped and the new space will be allocated.
      * <br>An occupied {@link Header header} is written before the allocated block.
      *
-     * @param size size to be allocated; max size is 32MB
+     * @param size   size to be allocated; max size is 32MB
      * @param memory memory
      * @return pointer-size to the allocated memory
      * @throws AllocationError when a block of this size can't be allocated
      */
     public RuntimePointerSize allocate(int size, Memory memory) {
+        log.info("Allocating memory... size=" + size);
         verifyMemorySize(memory);
         Order order = getOrderForSize(size);
         int headerPointer = nextFreeHeaderPointer(order, memory);
         writeOccupiedHeader(headerPointer, order.getValue(), memory);
         stats.allocated(order.getBlockSize() + HEADER_SIZE, bumper - originalHeapBase);
+        log.info("Allocated " + stats.getBytesAllocated() + " bytes successfully");
+        log.info("Total Allocated Memory: " + stats.getBytesAllocatedSum().toString());
         return new RuntimePointerSize(headerPointer + HEADER_SIZE, size);
+
     }
 
     private Order getOrderForSize(int size) {
@@ -185,7 +191,7 @@ public class FreeingBumpHeapAllocator {
      * The pointer of the order is set to the deallocated header.
      *
      * @param pointer pointer to the block
-     * @param memory memory
+     * @param memory  memory
      * @throws AllocationError when the memory cannot be deallocated
      */
     public void deallocate(int pointer, Memory memory) {
