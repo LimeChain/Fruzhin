@@ -94,22 +94,19 @@ public class TrieStructure<T> {
      *
      * @param key partial key in nibbles
      * @param nodeData data to insert
-     * @throws IllegalStateException on duplicate key
+     * @implSpec if a storage value is already present for the given key, it will be overwritten
      */
     public void insertNode(Nibbles key, T nodeData) {
         switch (node(key)) {
             case Vacant<T> vacant -> vacant
                     .prepareInsert()
                     .insert(nodeData);
-            case BranchNodeHandle<T> handle -> {
-                handle.setUserData(nodeData);
-                handle.convertToStorageNode();
+            case BranchNodeHandle<T> branchNodeHandle -> {
+                branchNodeHandle.setUserData(nodeData);
+                branchNodeHandle.convertToStorageNode();
             }
-            case StorageNodeHandle<T> __ -> {
-                // We have a duplicate entry:
-                // a second value corresponding to an already inserted key from the genesis storage.
-                // NOTE: don't throw?
-                throw new IllegalStateException("Key already exists!");
+            case StorageNodeHandle<T> storageNodeHandle -> {
+                storageNodeHandle.setUserData(nodeData);
             }
         }
     }
