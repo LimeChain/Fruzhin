@@ -101,6 +101,7 @@ public class HashingHostFunctions {
      * @return a pointer to the buffer containing the 128-bit hash result.
      */
     public int blake2128V1(RuntimePointerSize data) {
+        log.info("blake2128V1");
         byte[] dataToHash = runtime.getDataFromMemory(data);
 
         byte[] hash = HashUtils.hashWithBlake2b128(dataToHash);
