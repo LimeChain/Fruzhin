@@ -7,6 +7,7 @@ import com.limechain.storage.block.BlockState;
 import com.limechain.storage.trie.TrieStorage;
 import com.limechain.trie.structure.Entry;
 import com.limechain.trie.structure.NodeHandle;
+import com.limechain.trie.structure.StorageNodeHandle;
 import com.limechain.trie.structure.TrieStructure;
 import com.limechain.trie.structure.Vacant;
 import com.limechain.trie.structure.database.NodeData;
@@ -118,8 +119,14 @@ public class BlockTrieAccessor implements KVRepository<Nibbles, byte[]> {
     public boolean delete(Nibbles key) {
         loadPathToKey(key);
         loadChildren(key);
+
+        // Non-existing entries must be silently ignored
+        if (!(partialTrie.node(key) instanceof StorageNodeHandle<NodeData> storageNodeHandle)) {
+            return false;
+        }
+
         markForRecalculation(key);
-        return partialTrie.removeValueAtKey(key);
+        return storageNodeHandle.clearStorageValue();
     }
 
     @Override

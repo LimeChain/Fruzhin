@@ -13,4 +13,8 @@ public final class StorageNodeHandle<T> extends NodeHandle<T> {
     public boolean hasStorageValue() {
         return true;
     }
+
+    public boolean clearStorageValue() {
+        return trieStructure.clearNodeValue(rawNodeIndex);
+    }
 }

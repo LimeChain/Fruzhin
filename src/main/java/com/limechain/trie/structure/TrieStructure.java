@@ -508,7 +508,7 @@ public class TrieStructure<T> {
         return clearNodeValue(nodeIndex.getValue());
     }
 
-    private boolean clearNodeValue(int nodeIndex) {
+    boolean clearNodeValue(int nodeIndex) {
         TrieNode<T> trieNode = getNodeAtIndexInner(nodeIndex);
         if (!trieNode.hasStorageValue) {
             return false;
