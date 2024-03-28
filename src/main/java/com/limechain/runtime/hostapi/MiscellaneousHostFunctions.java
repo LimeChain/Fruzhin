@@ -50,8 +50,8 @@ public class MiscellaneousHostFunctions {
                                 runtimeVersionV1(new RuntimePointerSize(argv.get(0))).pointerSize(),
                         List.of(Type.I64), Type.I64),
                 HostApi.getImportObject("ext_logging_log_version_1", argv ->
-                        logV1(argv.get(0).intValue(), new RuntimePointerSize(argv.get(1)),
-                                new RuntimePointerSize(argv.get(1))), Arrays.asList(Type.I32, Type.I64, Type.I64)),
+                                logV1(argv.get(0).intValue(), new RuntimePointerSize(argv.get(1)), new RuntimePointerSize(argv.get(2))),
+                        List.of(Type.I32, Type.I64, Type.I64)),
                 HostApi.getImportObject("ext_logging_max_level_version_1", argv ->
                         maxLevelV1(), List.of(), Type.I32)
         );
