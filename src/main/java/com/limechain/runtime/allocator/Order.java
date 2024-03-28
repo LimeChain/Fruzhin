@@ -50,7 +50,7 @@ public class Order {
      * @return Optional of the popped value or empty if there was no value.
      */
     public Optional<Integer> popFreeHeaderPointer(Memory memory) {
-        if (freeHeaderPointer == null) {
+        if (freeHeaderPointer == null || freeHeaderPointer == Integer.MAX_VALUE) {
             return Optional.empty();
         }
 
