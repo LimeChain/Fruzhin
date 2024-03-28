@@ -49,11 +49,7 @@ public class Runtime {
      */
     @Nullable
     public byte[] call(String functionName, @NotNull byte[] parameter) {
-        return callInner(functionName, allocateCallParameter(parameter));
-    }
-
-    private RuntimePointerSize allocateCallParameter(@NotNull byte[] parameter) {
-        return allocator.allocate(parameter.length, getMemory());
+        return callInner(functionName, writeDataToMemory(parameter));
     }
 
     @Nullable
