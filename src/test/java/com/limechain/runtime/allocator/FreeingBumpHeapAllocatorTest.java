@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.wasmer.Memory;
@@ -44,7 +45,7 @@ class FreeingBumpHeapAllocatorTest {
     @Mock
     private Header header;
 
-    @Mock
+    @Spy
     private AllocationStats stats;
 
     private FreeingBumpHeapAllocator freeingBumpHeapAllocator;
