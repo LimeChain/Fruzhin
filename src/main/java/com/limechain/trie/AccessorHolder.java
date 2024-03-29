@@ -8,10 +8,10 @@ import lombok.Setter;
 @Setter
 public class AccessorHolder {
     private static AccessorHolder instance;
+
     private BlockTrieAccessor blockTrieAccessor;
 
-    private AccessorHolder() {
-    }
+    private AccessorHolder() { }
 
     public static AccessorHolder getInstance() {
         if (instance == null) {
@@ -22,11 +22,6 @@ public class AccessorHolder {
 
     public BlockTrieAccessor setToBlock(Hash256 blockHash) {
         this.blockTrieAccessor = new BlockTrieAccessor(blockHash);
-        return this.blockTrieAccessor;
-    }
-
-    public BlockTrieAccessor newAccessor() {
-        this.blockTrieAccessor = new BlockTrieAccessor();
         return this.blockTrieAccessor;
     }
 }

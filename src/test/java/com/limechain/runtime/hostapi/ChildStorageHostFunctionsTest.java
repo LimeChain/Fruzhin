@@ -4,7 +4,9 @@ import com.google.common.primitives.Bytes;
 import com.limechain.runtime.Runtime;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import com.limechain.storage.DeleteByPrefixResult;
-import com.limechain.storage.KVRepository;
+import com.limechain.trie.BlockTrieAccessor;
+import com.limechain.trie.ChildTrieAccessor;
+import com.limechain.trie.structure.nibble.Nibbles;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -43,12 +45,15 @@ class ChildStorageHostFunctionsTest {
     private RuntimePointerSize resultPointer;
 
     @Mock
-    private KVRepository<String, Object> repository;
+    private BlockTrieAccessor repository;
+
+    @Mock
+    private ChildTrieAccessor childTrieAccessor;
 
     private final byte[] keyBytes = new byte[]{1, 2, 3};
+    private final Nibbles key = Nibbles.fromBytes(keyBytes);
     private final byte[] childStorageKeyBytes = new byte[]{0, 0, 0};
-    private final String combinedKey = new String(Bytes.concat(childStorageKeyBytes, keyBytes));
-
+    private final Nibbles childStorageKey = Nibbles.fromBytes(childStorageKeyBytes);
     private final byte[] valueBytes = new byte[]{4, 5, 6};
 
     private final byte[] emptyOption = new byte[]{0};
@@ -58,17 +63,19 @@ class ChildStorageHostFunctionsTest {
         when(runtime.getDataFromMemory(childStorageKeyPointer)).thenReturn(childStorageKeyBytes);
         when(runtime.getDataFromMemory(keyPointer)).thenReturn(keyBytes);
         when(runtime.getDataFromMemory(valuePointer)).thenReturn(valueBytes);
+        when(repository.getChildTrie(childStorageKey)).thenReturn(childTrieAccessor);
 
         childStorageHostFunctions.extDefaultChildStorageSetVersion1(childStorageKeyPointer, keyPointer, valuePointer);
 
-        verify(repository).save(combinedKey, valueBytes);
+        verify(childTrieAccessor).save(key, valueBytes);
     }
 
     @Test
     void extStorageGetVersion1() {
         when(runtime.getDataFromMemory(childStorageKeyPointer)).thenReturn(childStorageKeyBytes);
         when(runtime.getDataFromMemory(keyPointer)).thenReturn(keyBytes);
-        when(repository.find(combinedKey)).thenReturn(Optional.of(valueBytes));
+        when(repository.getChildTrie(childStorageKey)).thenReturn(childTrieAccessor);
+        when(childTrieAccessor.find(key)).thenReturn(Optional.of(valueBytes));
         when(runtime.writeDataToMemory(toOption(valueBytes))).thenReturn(resultPointer);
 
         RuntimePointerSize result = childStorageHostFunctions
@@ -81,7 +88,8 @@ class ChildStorageHostFunctionsTest {
     void extStorageGetVersion1ShouldReturnNoneOptionWhenNoValue() {
         when(runtime.getDataFromMemory(childStorageKeyPointer)).thenReturn(childStorageKeyBytes);
         when(runtime.getDataFromMemory(keyPointer)).thenReturn(keyBytes);
-        when(repository.find(combinedKey)).thenReturn(Optional.empty());
+        when(repository.getChildTrie(childStorageKey)).thenReturn(childTrieAccessor);
+        when(childTrieAccessor.find(key)).thenReturn(Optional.empty());
         when(runtime.writeDataToMemory(emptyOption)).thenReturn(resultPointer);
 
         RuntimePointerSize result = childStorageHostFunctions.extDefaultChildStorageGetVersion1(
@@ -95,7 +103,8 @@ class ChildStorageHostFunctionsTest {
         byte[] scaleEncodedOptionSize = new byte[]{1, 2, 0, 0, 0}; // Option with value 2
         when(runtime.getDataFromMemory(childStorageKeyPointer)).thenReturn(childStorageKeyBytes);
         when(runtime.getDataFromMemory(keyPointer)).thenReturn(keyBytes);
-        when(repository.find(combinedKey)).thenReturn(Optional.of(valueBytes));
+        when(repository.getChildTrie(childStorageKey)).thenReturn(childTrieAccessor);
+        when(childTrieAccessor.find(key)).thenReturn(Optional.of(valueBytes));
         when(runtime.writeDataToMemory(scaleEncodedOptionSize)).thenReturn(resultPointer);
         doNothing().when(runtime).writeDataToMemory(any(), any());
 
@@ -110,7 +119,8 @@ class ChildStorageHostFunctionsTest {
     void extStorageReadVersion1ShouldReturnNoneWhenNoValue() {
         when(runtime.getDataFromMemory(childStorageKeyPointer)).thenReturn(childStorageKeyBytes);
         when(runtime.getDataFromMemory(keyPointer)).thenReturn(keyBytes);
-        when(repository.find(combinedKey)).thenReturn(Optional.empty());
+        when(repository.getChildTrie(childStorageKey)).thenReturn(childTrieAccessor);
+        when(childTrieAccessor.find(key)).thenReturn(Optional.empty());
         when(runtime.writeDataToMemory(emptyOption)).thenReturn(resultPointer);
 
         RuntimePointerSize result = childStorageHostFunctions
@@ -125,7 +135,8 @@ class ChildStorageHostFunctionsTest {
         byte[] scaleEncodedOptionSize = new byte[]{1, 0, 0, 0, 0}; // Option with value 0
         when(runtime.getDataFromMemory(childStorageKeyPointer)).thenReturn(childStorageKeyBytes);
         when(runtime.getDataFromMemory(keyPointer)).thenReturn(keyBytes);
-        when(repository.find(combinedKey)).thenReturn(Optional.of(valueBytes));
+        when(repository.getChildTrie(childStorageKey)).thenReturn(childTrieAccessor);
+        when(childTrieAccessor.find(key)).thenReturn(Optional.of(valueBytes));
         when(runtime.writeDataToMemory(scaleEncodedOptionSize)).thenReturn(resultPointer);
 
         RuntimePointerSize result = childStorageHostFunctions
@@ -137,19 +148,21 @@ class ChildStorageHostFunctionsTest {
 
     @Test
     void extStorageClearVersion1() {
-        when(runtime.getDataFromMemory(keyPointer)).thenReturn(keyBytes);
         when(runtime.getDataFromMemory(childStorageKeyPointer)).thenReturn(childStorageKeyBytes);
+        when(runtime.getDataFromMemory(keyPointer)).thenReturn(keyBytes);
+        when(repository.getChildTrie(childStorageKey)).thenReturn(childTrieAccessor);
 
         childStorageHostFunctions.extDefaultChildStorageClearVersion1(childStorageKeyPointer, keyPointer);
 
-        verify(repository).delete(combinedKey);
+        verify(childTrieAccessor).delete(key);
     }
 
     @Test
     void extStorageExistsVersion1() {
         when(runtime.getDataFromMemory(childStorageKeyPointer)).thenReturn(childStorageKeyBytes);
         when(runtime.getDataFromMemory(keyPointer)).thenReturn(keyBytes);
-        when(repository.find(combinedKey)).thenReturn(Optional.of(valueBytes));
+        when(repository.getChildTrie(childStorageKey)).thenReturn(childTrieAccessor);
+        when(childTrieAccessor.find(key)).thenReturn(Optional.of(valueBytes));
 
         int result = childStorageHostFunctions.extDefaultChildStorageExistsVersion1(
                 childStorageKeyPointer, keyPointer);
@@ -161,7 +174,8 @@ class ChildStorageHostFunctionsTest {
     void extStorageExistsVersion1WhenNonExistent() {
         when(runtime.getDataFromMemory(childStorageKeyPointer)).thenReturn(childStorageKeyBytes);
         when(runtime.getDataFromMemory(keyPointer)).thenReturn(keyBytes);
-        when(repository.find(combinedKey)).thenReturn(Optional.empty());
+        when(repository.getChildTrie(childStorageKey)).thenReturn(childTrieAccessor);
+        when(childTrieAccessor.find(key)).thenReturn(Optional.empty());
 
         int result = childStorageHostFunctions
                 .extDefaultChildStorageExistsVersion1(childStorageKeyPointer, keyPointer);
@@ -173,10 +187,11 @@ class ChildStorageHostFunctionsTest {
     void extStorageClearPrefixVersion1() {
         when(runtime.getDataFromMemory(childStorageKeyPointer)).thenReturn(childStorageKeyBytes);
         when(runtime.getDataFromMemory(keyPointer)).thenReturn(keyBytes);
+        when(repository.getChildTrie(childStorageKey)).thenReturn(childTrieAccessor);
 
         childStorageHostFunctions.extDefaultChildStorageClearPrefixVersion1(childStorageKeyPointer, keyPointer);
 
-        verify(repository).deleteByPrefix(combinedKey, null);
+        verify(childTrieAccessor).deleteByPrefix(key, null);
     }
 
     @Test
@@ -188,7 +203,8 @@ class ChildStorageHostFunctionsTest {
         when(runtime.getDataFromMemory(childStorageKeyPointer)).thenReturn(childStorageKeyBytes);
         when(runtime.getDataFromMemory(keyPointer)).thenReturn(keyBytes);
         when(runtime.getDataFromMemory(limitPointer)).thenReturn(encodedLimit);
-        when(repository.deleteByPrefix(combinedKey, 2L)).thenReturn(new DeleteByPrefixResult(2, false));
+        when(repository.getChildTrie(childStorageKey)).thenReturn(childTrieAccessor);
+        when(childTrieAccessor.deleteByPrefix(key, 2L)).thenReturn(new DeleteByPrefixResult(2, false));
         when(runtime.writeDataToMemory(encodedResult)).thenReturn(resultPointer);
 
         RuntimePointerSize result = childStorageHostFunctions
@@ -205,7 +221,8 @@ class ChildStorageHostFunctionsTest {
         when(runtime.getDataFromMemory(childStorageKeyPointer)).thenReturn(childStorageKeyBytes);
         when(runtime.getDataFromMemory(keyPointer)).thenReturn(keyBytes);
         when(runtime.getDataFromMemory(limitPointer)).thenReturn(encodedLimit);
-        when(repository.deleteByPrefix(combinedKey, 4L)).thenReturn(new DeleteByPrefixResult(3, true));
+        when(repository.getChildTrie(childStorageKey)).thenReturn(childTrieAccessor);
+        when(childTrieAccessor.deleteByPrefix(key, 4L)).thenReturn(new DeleteByPrefixResult(3, true));
         when(runtime.writeDataToMemory(encodedResult)).thenReturn(resultPointer);
 
         RuntimePointerSize result = childStorageHostFunctions
@@ -213,14 +230,16 @@ class ChildStorageHostFunctionsTest {
 
         assertEquals(resultPointer, result);
     }
-    
+
     @Test
     void extStorageNextKeyVersion1WhenNextKeyExistsShouldReturnNextKeyAsOption() {
-        String nextKey = "next key";
+        byte[] nextKeyBytes = new byte[]{ 6, 3, 9, 8 };
+        Nibbles nextKey = Nibbles.fromBytes(nextKeyBytes);
         when(runtime.getDataFromMemory(childStorageKeyPointer)).thenReturn(childStorageKeyBytes);
         when(runtime.getDataFromMemory(keyPointer)).thenReturn(keyBytes);
-        when(repository.getNextKey(combinedKey)).thenReturn(Optional.of(nextKey));
-        when(runtime.writeDataToMemory(toOption(nextKey.getBytes()))).thenReturn(resultPointer);
+        when(repository.getChildTrie(childStorageKey)).thenReturn(childTrieAccessor);
+        when(childTrieAccessor.getNextKey(key)).thenReturn(Optional.of(nextKey));
+        when(runtime.writeDataToMemory(toOption(nextKeyBytes))).thenReturn(resultPointer);
 
         RuntimePointerSize result = childStorageHostFunctions
                 .extDefaultChildStorageStorageNextKeyVersion1(childStorageKeyPointer, keyPointer);
@@ -232,7 +251,7 @@ class ChildStorageHostFunctionsTest {
     void extStorageNextKeyVersion1WhenNextKeyDoesNotExistsShouldReturnEmptyOption() {
         when(runtime.getDataFromMemory(childStorageKeyPointer)).thenReturn(childStorageKeyBytes);
         when(runtime.getDataFromMemory(keyPointer)).thenReturn(keyBytes);
-        when(repository.getNextKey(combinedKey)).thenReturn(Optional.empty());
+        when(repository.getChildTrie(childStorageKey)).thenReturn(childTrieAccessor);
         when(runtime.writeDataToMemory(emptyOption)).thenReturn(resultPointer);
 
         RuntimePointerSize result = childStorageHostFunctions

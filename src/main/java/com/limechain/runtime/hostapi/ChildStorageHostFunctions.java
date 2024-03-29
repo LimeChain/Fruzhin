@@ -1,12 +1,14 @@
 package com.limechain.runtime.hostapi;
 
-import com.google.common.primitives.Bytes;
 import com.limechain.runtime.Runtime;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
-import com.limechain.storage.DBConstants;
+import com.limechain.runtime.version.StateVersion;
 import com.limechain.storage.DeleteByPrefixResult;
-import com.limechain.storage.KVRepository;
-import com.limechain.sync.warpsync.SyncedState;
+import com.limechain.trie.AccessorHolder;
+import com.limechain.trie.BlockTrieAccessor;
+import com.limechain.trie.ChildTrieAccessor;
+import com.limechain.trie.structure.nibble.Nibbles;
+import com.limechain.trie.structure.nibble.NibblesUtils;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import lombok.AllArgsConstructor;
 import lombok.extern.java.Log;
@@ -27,11 +29,11 @@ import static com.limechain.runtime.hostapi.StorageHostFunctions.scaleEncodedOpt
 @AllArgsConstructor
 public class ChildStorageHostFunctions {
     private final Runtime runtime;
-    private final KVRepository<String, Object> repository;
+    private final BlockTrieAccessor mainRepository;
 
     public ChildStorageHostFunctions(Runtime runtime) {
         this.runtime = runtime;
-        this.repository = SyncedState.getInstance().getRepository();
+        this.mainRepository = AccessorHolder.getInstance().getBlockTrieAccessor();
     }
 
     public static List<ImportObject> getFunctions(Runtime runtime) {
@@ -93,16 +95,16 @@ public class ChildStorageHostFunctions {
                                         new RuntimePointerSize(argv.get(2))).pointerSize()
                         , List.of(Type.I64, Type.I64, Type.I64), Type.I64),
                 HostApi.getImportObject("ext_default_child_storage_root_version_1", argv ->
-                                extDefaultChildStorageRootVersion1().pointerSize(),
-                        List.of(Type.I64), Type.I64),
+                        extDefaultChildStorageRoot(new RuntimePointerSize(argv.get(0)), StateVersion.V0).pointerSize(),
+                            List.of(Type.I64), Type.I64),
                 HostApi.getImportObject("ext_default_child_storage_root_version_2", argv ->
-                        extDefaultChildStorageRootVersion1().pointerSize(), List.of(Type.I64, Type.I32), Type.I64),
+                        extDefaultChildStorageRoot(new RuntimePointerSize(argv.get(0)), StateVersion.fromInt(argv.get(1).intValue())).pointerSize(), List.of(Type.I64, Type.I32), Type.I64),
                 HostApi.getImportObject("ext_default_child_storage_next_key_version_1", argv ->
-                                extDefaultChildStorageStorageNextKeyVersion1(
-                                        new RuntimePointerSize(argv.get(0)),
-                                        new RuntimePointerSize(argv.get(1))
-                                ).pointerSize()
-                        , List.of(Type.I64, Type.I64), Type.I64));
+                        extDefaultChildStorageStorageNextKeyVersion1(
+                                new RuntimePointerSize(argv.get(0)),
+                                new RuntimePointerSize(argv.get(1))
+                        ).pointerSize()
+                , List.of(Type.I64, Type.I64), Type.I64));
     }
 
     /**
@@ -123,11 +125,12 @@ public class ChildStorageHostFunctions {
                                                                  RuntimePointerSize valueOutPointer,
                                                                  int offset) {
         log.info("extDefaultChildStorageReadVersion1");
-        byte[] childStorageKey = runtime.getDataFromMemory(childStorageKeyPointer);
-        byte[] key = runtime.getDataFromMemory(keyPointer);
-        String childStorageRepositoryKey = new String(Bytes.concat(childStorageKey, key));
+        Nibbles childStorageKey = Nibbles.fromBytes(runtime.getDataFromMemory(childStorageKeyPointer));
+        Nibbles key = Nibbles.fromBytes(runtime.getDataFromMemory(keyPointer));
 
-        byte[] value = (byte[]) repository.find(childStorageRepositoryKey).orElse(null);
+        ChildTrieAccessor childTrie = mainRepository.getChildTrie(childStorageKey);
+
+        byte[] value = childTrie.find(key).orElse(null);
 
         if (value == null) {
             return runtime.writeDataToMemory(scaleEncodedOption(null));
@@ -154,12 +157,12 @@ public class ChildStorageHostFunctions {
                                                   RuntimePointerSize valuePointer) {
         log.info("extDefaultChildStorageSetVersion1");
 
-        byte[] childStorageKey = runtime.getDataFromMemory(childStorageKeyPointer);
-        byte[] key = runtime.getDataFromMemory(keyPointer);
+        Nibbles childStorageKey = Nibbles.fromBytes(runtime.getDataFromMemory(childStorageKeyPointer));
+        Nibbles key = Nibbles.fromBytes(runtime.getDataFromMemory(keyPointer));
         byte[] value = runtime.getDataFromMemory(valuePointer);
-        String childStorageRepositoryKey = new String(Bytes.concat(childStorageKey, key));
 
-        repository.save(childStorageRepositoryKey, value);
+        ChildTrieAccessor childTrie = mainRepository.getChildTrie(childStorageKey);
+        childTrie.save(key, value);
     }
 
     /**
@@ -172,11 +175,11 @@ public class ChildStorageHostFunctions {
                                                     RuntimePointerSize keyPointer) {
         log.info("extDefaultChildStorageClearVersion1");
 
-        byte[] childStorageKey = runtime.getDataFromMemory(childStorageKeyPointer);
-        byte[] key = runtime.getDataFromMemory(keyPointer);
-        String childStorageRepositoryKey = new String(Bytes.concat(childStorageKey, key));
+        Nibbles childStorageKey = Nibbles.fromBytes(runtime.getDataFromMemory(childStorageKeyPointer));
+        Nibbles key = Nibbles.fromBytes(runtime.getDataFromMemory(keyPointer));
 
-        repository.delete(childStorageRepositoryKey);
+        ChildTrieAccessor childTrie = mainRepository.getChildTrie(childStorageKey);
+        childTrie.delete(key);
     }
 
     /**
@@ -189,11 +192,11 @@ public class ChildStorageHostFunctions {
                                                           RuntimePointerSize prefixPointer) {
         log.info("extDefaultChildStorageClearPrefixVersion1");
 
-        byte[] childStorageKey = runtime.getDataFromMemory(childStorageKeyPointer);
-        byte[] prefix = runtime.getDataFromMemory(prefixPointer);
-        String childStorageRepositoryKey = new String(Bytes.concat(childStorageKey, prefix));
+        Nibbles childStorageKey = Nibbles.fromBytes(runtime.getDataFromMemory(childStorageKeyPointer));
+        Nibbles prefix = Nibbles.fromBytes(runtime.getDataFromMemory(prefixPointer));
 
-        repository.deleteByPrefix(childStorageRepositoryKey, null);
+        ChildTrieAccessor childTrie = mainRepository.getChildTrie(childStorageKey);
+        childTrie.deleteByPrefix(prefix, null);
     }
 
     /**
@@ -213,15 +216,14 @@ public class ChildStorageHostFunctions {
                                                                         RuntimePointerSize limitPointer) {
         log.info("extDefaultChildStorageClearPrefixVersion2");
 
-        byte[] childStorageKey = runtime.getDataFromMemory(childStorageKeyPointer);
-        byte[] prefix = runtime.getDataFromMemory(prefixPointer);
-        String childStorageRepositoryKey = new String(Bytes.concat(childStorageKey, prefix));
+        Nibbles childStorageKey = Nibbles.fromBytes(runtime.getDataFromMemory(childStorageKeyPointer));
+        Nibbles prefix = Nibbles.fromBytes(runtime.getDataFromMemory(prefixPointer));
 
         byte[] limitBytes = runtime.getDataFromMemory(limitPointer);
         Long limit = new ScaleCodecReader(limitBytes).readOptional(ScaleCodecReader.UINT32).orElse(null);
 
-        DeleteByPrefixResult result =
-                repository.deleteByPrefix(childStorageRepositoryKey, limit);
+        ChildTrieAccessor childTrie = mainRepository.getChildTrie(childStorageKey);
+        DeleteByPrefixResult result = childTrie.deleteByPrefix(prefix, limit);
 
         return runtime.writeDataToMemory(result.scaleEncoded());
     }
@@ -237,10 +239,11 @@ public class ChildStorageHostFunctions {
                                                     RuntimePointerSize keyPointer) {
         log.info("extDefaultChildStorageExistsVersion1");
 
-        byte[] childStorageKey = runtime.getDataFromMemory(childStorageKeyPointer);
-        byte[] key = runtime.getDataFromMemory(keyPointer);
-        String childStorageRepositoryKey = new String(Bytes.concat(childStorageKey, key));
-        return repository.find(childStorageRepositoryKey).isPresent() ? 1 : 0;
+        Nibbles childStorageKey = Nibbles.fromBytes(runtime.getDataFromMemory(childStorageKeyPointer));
+        Nibbles key = Nibbles.fromBytes(runtime.getDataFromMemory(keyPointer));
+
+        ChildTrieAccessor childTrie = mainRepository.getChildTrie(childStorageKey);
+        return childTrie.find(key).isPresent() ? 1 : 0;
     }
 
     /**
@@ -254,11 +257,11 @@ public class ChildStorageHostFunctions {
                                                                 RuntimePointerSize keyPointer) {
         log.info("extDefaultChildStorageGetVersion1");
 
-        byte[] childStorageKey = runtime.getDataFromMemory(childStorageKeyPointer);
-        byte[] key = runtime.getDataFromMemory(keyPointer);
-        String childStorageRepositoryKey = new String(Bytes.concat(childStorageKey, key));
-        byte[] value = (byte[]) repository
-                .find(childStorageRepositoryKey).orElse(null);
+        Nibbles childStorageKey = Nibbles.fromBytes(runtime.getDataFromMemory(childStorageKeyPointer));
+        Nibbles key = Nibbles.fromBytes(runtime.getDataFromMemory(keyPointer));
+
+        ChildTrieAccessor childTrie = mainRepository.getChildTrie(childStorageKey);
+        byte[] value =  childTrie.find(key).orElse(null);
 
         return runtime.writeDataToMemory(scaleEncodedOption(value));
     }
@@ -275,40 +278,42 @@ public class ChildStorageHostFunctions {
                                                                            RuntimePointerSize keyPointer) {
         log.info("extDefaultChildStorageStorageNextKeyVersion1");
 
-        byte[] childStorageKey = runtime.getDataFromMemory(childStorageKeyPointer);
-        byte[] key = runtime.getDataFromMemory(keyPointer);
-        String combinedKey = new String(Bytes.concat(childStorageKey, key));
+        Nibbles childStorageKey = Nibbles.fromBytes(runtime.getDataFromMemory(childStorageKeyPointer));
+        Nibbles key = Nibbles.fromBytes(runtime.getDataFromMemory(keyPointer));
 
-        byte[] nextKey = repository.getNextKey(combinedKey).map(String::getBytes).orElse(null);
+        ChildTrieAccessor childTrie = mainRepository.getChildTrie(childStorageKey);
+
+        byte[] nextKey = childTrie.getNextKey(key)
+                .map(NibblesUtils::toBytesAppending)
+                .map(this::asByteArray)
+                .orElse(null);
 
         return runtime.writeDataToMemory(scaleEncodedOption(nextKey));
     }
 
-    /**
-     * Compute the child storage root.
-     *
-     * @return a pointer-size to a buffer containing the 256-bit Blake2 child storage root.
-     */
-    public RuntimePointerSize extDefaultChildStorageRootVersion1() {
-        log.info("extDefaultChildStorageRootVersion1");
 
-        //TODO: compute from Trie
-        byte[] rootHash = (byte[]) repository.find(DBConstants.STATE_TRIE_ROOT_HASH).orElseThrow();
-
-        return runtime.writeDataToMemory(rootHash);
+    private byte[] asByteArray(List<Byte> bytes) {
+        byte[] result = new byte[bytes.size()];
+        for (int i = 0; i < bytes.size(); i++) {
+            result[i] = bytes.get(i);
+        }
+        return result;
     }
 
     /**
      * Compute the child storage root.
      *
-     * @param version the state version
      * @return a pointer-size to a buffer containing the 256-bit Blake2 child storage root.
      */
-    public RuntimePointerSize extDefaultChildStorageRootVersion2(int version) {
-        log.info("extDefaultChildStorageRootVersion2");
+    public RuntimePointerSize extDefaultChildStorageRoot(RuntimePointerSize childStorageKeyPointer, StateVersion v0) {
+        log.info("extDefaultChildStorageRootVersion1");
 
-        // TODO: update to use state trie versions
-        return extDefaultChildStorageRootVersion1();
+        Nibbles childStorageKey = Nibbles.fromBytes(runtime.getDataFromMemory(childStorageKeyPointer));
+        ChildTrieAccessor childTrie = mainRepository.getChildTrie(childStorageKey);
+
+        byte[] rootHash = childTrie.getMerkleRoot(v0);
+
+        return runtime.writeDataToMemory(rootHash);
     }
 
     /**
@@ -319,8 +324,9 @@ public class ChildStorageHostFunctions {
     public void extDefaultChildStorageKillVersion1(RuntimePointerSize childStorageKeyPointer) {
         log.info("extDefaultChildStorageKillVersion1");
 
-        byte[] childStorageKey = runtime.getDataFromMemory(childStorageKeyPointer);
-        repository.deleteByPrefix(new String(childStorageKey), null);
+        Nibbles childStorageKey = Nibbles.fromBytes(runtime.getDataFromMemory(childStorageKeyPointer));
+        ChildTrieAccessor childTrie = mainRepository.getChildTrie(childStorageKey);
+        mainRepository.delete(childTrie.getChildTrieKey());
     }
 
     /**
@@ -333,13 +339,13 @@ public class ChildStorageHostFunctions {
                                                                  RuntimePointerSize limitPointer) {
         log.info("extDefaultChildStorageKillVersion2");
 
-        byte[] childStorageKey = runtime.getDataFromMemory(childStorageKeyPointer);
+        Nibbles childStorageKey = Nibbles.fromBytes(runtime.getDataFromMemory(childStorageKeyPointer));
 
         byte[] limitBytes = runtime.getDataFromMemory(limitPointer);
         Long limit = new ScaleCodecReader(limitBytes).readOptional(ScaleCodecReader.UINT32).orElse(null);
 
-        DeleteByPrefixResult result =
-                repository.deleteByPrefix(new String(childStorageKey), limit);
+        ChildTrieAccessor childTrie = mainRepository.getChildTrie(childStorageKey);
+        DeleteByPrefixResult result = childTrie.deleteByPrefix(Nibbles.EMPTY, limit);
 
         return runtime.writeDataToMemory(result.scaleEncoded());
     }
