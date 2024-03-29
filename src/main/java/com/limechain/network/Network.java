@@ -116,7 +116,9 @@ public class Network {
 
         String pingProtocol = ProtocolUtils.PING_PROTOCOL;
         String chainId = chainService.getChainSpec().getProtocolId();
-        String protocolId = cliArgs.noLegacyProtocols() ? genesisBlockHash.getGenesisHash().toString() : chainId;
+        String protocolId = cliArgs.noLegacyProtocols()
+                ? StringUtils.remove0xPrefix(genesisBlockHash.getGenesisHash().toString())
+                : chainId;
         String kadProtocolId = ProtocolUtils.getKadProtocol(chainId);
         String warpProtocolId = ProtocolUtils.getWarpSyncProtocol(protocolId);
         String lightProtocolId = ProtocolUtils.getLightMessageProtocol(protocolId);
@@ -331,6 +333,22 @@ public class Network {
         return false;
     }
 
+    public void handshakeBootNodes() {
+        kademliaService.getBootNodePeerIds()
+                .stream()
+                .distinct()
+                .forEach(this::sendGrandpaHandshake);
+    }
+
+    private void sendGrandpaHandshake(PeerId peerId) {
+        //TODO:
+        // when using threads we connect to more than 10 peers, but have some unhandled exceptions,
+        // without them we connect to only 2 peers
+        new Thread(() ->
+                blockAnnounceService.sendHandshake(this.host, this.host.getAddressBook(), peerId)
+        ).start();
+    }
+
     @Scheduled(fixedRate = 5, initialDelay = 5, timeUnit = TimeUnit.MINUTES)
     public void sendNeighbourMessages() {
         if (!SyncedState.getInstance().isWarpSyncFinished()) {
@@ -339,5 +357,9 @@ public class Network {
         connectionManager.getPeerIds().forEach(peerId -> grandpaService.sendNeighbourMessage(this.host, peerId));
         connectionManager.getPeerIds().forEach(peerId ->
                 transactionsService.sendTransactionsMessage(this.host, peerId));
+    }
+
+    public void sendNeighbourMessage(PeerId peerId) {
+        grandpaService.sendNeighbourMessage(this.host, peerId);
     }
 }

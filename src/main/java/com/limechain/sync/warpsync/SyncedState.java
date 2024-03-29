@@ -269,6 +269,7 @@ public class SyncedState {
      * @param peerId           sender of message
      */
     public void syncNeighbourMessage(NeighbourMessage neighbourMessage, PeerId peerId) {
+        network.sendNeighbourMessage(peerId);
         if (warpSyncFinished && neighbourMessage.getSetId().compareTo(setId) > 0) {
             updateSetData(neighbourMessage.getLastFinalizedBlock().add(BigInteger.ONE), peerId);
         }

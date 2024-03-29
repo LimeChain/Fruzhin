@@ -31,7 +31,8 @@ public class DnsUtils {
                 InetAddress address = InetAddress.getByName(domain);
                 newBootNode = "/ip4/" + address.getHostAddress() + postfix;
             } catch (UnknownHostException e) {
-                log.log(Level.WARNING, "Unknown domain for bootstrap node address", e);
+                log.log(Level.WARNING, "Unknown domain for bootstrap node address: " + domain);
+                log.log(Level.FINE, "Domain exception: ", e);
             }
         }
         return newBootNode;
