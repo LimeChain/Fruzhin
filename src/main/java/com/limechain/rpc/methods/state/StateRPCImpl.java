@@ -50,16 +50,17 @@ public class StateRPCImpl {
             return new String[0][0];
         }
 
-        byte[] prefix = StringUtils.hexToBytes(prefixHex);
         final Hash256 blockHash = getHash256FromHex(blockHashHex);
+        final Nibbles prefix = Nibbles.fromHexString(prefixHex);
 
-        Optional<StorageNode> optionalNextBranch = trieStorage.getNextBranch(blockHash, new String(prefix));
+        Optional<StorageNode> optionalNextBranch = trieStorage.getNextBranch(blockHash, prefix);
         if (optionalNextBranch.isEmpty()) {
             return new String[0][0];
         }
         StorageNode nextBranch = optionalNextBranch.get();
         byte[] nextBranchMerkle = nextBranch.nodeData().getMerkleValue();
 
+        // FIXME: This seems to not traverse the entire trie, but a single level deep only
         return trieStorage
                 .loadChildren(nextBranch.key(), nextBranchMerkle)
                 .stream()
@@ -85,13 +86,14 @@ public class StateRPCImpl {
             return Collections.emptyList();
         }
 
-        byte[] prefix = prefixHex != null ? StringUtils.hexToBytes(prefixHex) : new byte[0];
-        byte[] startKey = keyHex != null ? StringUtils.hexToBytes(keyHex) : new byte[0];
+        Nibbles prefix = prefixHex != null ? Nibbles.fromHexString(prefixHex) : Nibbles.EMPTY;
+        Nibbles startKey = keyHex != null ? Nibbles.fromHexString(keyHex) : Nibbles.EMPTY;
         final Hash256 blockHash = getHash256FromHex(blockHashHex);
 
         return trieStorage
                 .getKeysWithPrefixPaged(blockHash, prefix, startKey, limit)
-                .stream().map(StringUtils::toHexWithPrefix)
+                .stream()
+                .map(key -> StringUtils.HEX_PREFIX + key.toLowerHexString())
                 .toList();
     }
 
@@ -107,10 +109,9 @@ public class StateRPCImpl {
             return null;
         }
 
-        byte[] key = StringUtils.hexToBytes(keyHex);
         final Hash256 blockHash = getHash256FromHex(blockHashHex);
 
-        return trieStorage.getByKeyFromBlock(blockHash, new String(key))
+        return trieStorage.getByKeyFromBlock(blockHash, Nibbles.fromHexString(keyHex))
                 .map(NodeData::getValue)
                 .map(StringUtils::toHexWithPrefix)
                 .orElse(null);
@@ -128,10 +129,9 @@ public class StateRPCImpl {
             return null;
         }
 
-        byte[] key = StringUtils.hexToBytes(keyHex);
         final Hash256 blockHash = getHash256FromHex(blockHashHex);
 
-        return trieStorage.getByKeyFromBlock(blockHash, new String(key))
+        return trieStorage.getByKeyFromBlock(blockHash, Nibbles.fromHexString(keyHex))
                 .map(NodeData::getMerkleValue)
                 .map(StringUtils::toHexWithPrefix)
                 .orElse(null);
@@ -149,11 +149,10 @@ public class StateRPCImpl {
             return null;
         }
 
-        byte[] key = StringUtils.hexToBytes(keyHex);
         final Hash256 blockHash = getHash256FromHex(blockHashHex);
 
         return trieStorage
-                .getByKeyFromBlock(blockHash, new String(key))
+                .getByKeyFromBlock(blockHash, Nibbles.fromHexString(keyHex))
                 .map(NodeData::getValue)
                 .map(Array::getLength)
                 .map(String::valueOf)
@@ -202,12 +201,12 @@ public class StateRPCImpl {
     /**
      * Queries storage for changes to specified keys across a range of blocks.
      *
-     * @param keyHex A list of keys in hexadecimal format to query for changes.
+     * @param keysHex A list of keys in hexadecimal format to query for changes.
      * @param startBlockHex The start block hash in hexadecimal format for the query range.
      * @param endBlockHex The end block hash in hexadecimal format for the query range.
      * @return A list of {@link StorageChangeSet} representing the changes to the specified keys across the specified block range.
      */
-    public List<StorageChangeSet> stateQueryStorage(final List<String> keyHex, final String startBlockHex,
+    public List<StorageChangeSet> stateQueryStorage(final List<String> keysHex, final String startBlockHex,
                                                     final String endBlockHex) {
         if (!this.blockState.isInitialized()) {
             return Collections.emptyList();
@@ -220,19 +219,18 @@ public class StateRPCImpl {
         final Map<String, String> previousValues = new HashMap<>();
         for (Hash256 blockHash : blockState.range(startBlockHash, endBlockHash)) {
             final Map<String, String> changes = new HashMap<>();
-            for (String key : keyHex) {
-                byte[] keyBytes = StringUtils.hexToBytes(key);
+            for (String keyHex : keysHex) {
 
-                final Optional<String> currentValueOpt = trieStorage.getByKeyFromBlock(blockHash, new String(keyBytes))
+                final Optional<String> currentValueOpt = trieStorage.getByKeyFromBlock(blockHash, Nibbles.fromHexString(keyHex))
                         .map(NodeData::getValue)
                         .map(StringUtils::toHexWithPrefix);
 
                 final String currentValue = currentValueOpt.orElse(null);
-                final String previousValue = previousValues.get(key);
+                final String previousValue = previousValues.get(keyHex);
 
                 if (!Objects.equals(currentValue, previousValue)) {
-                    changes.put(key, currentValue);
-                    previousValues.put(key, currentValue);
+                    changes.put(keyHex, currentValue);
+                    previousValues.put(keyHex, currentValue);
                 }
             }
             if (!changes.isEmpty()) {

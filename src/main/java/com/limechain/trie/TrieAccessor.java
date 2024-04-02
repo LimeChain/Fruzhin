@@ -77,7 +77,7 @@ public class TrieAccessor implements KVRepository<Nibbles, byte[]> {
                     .map(Vacant::getClosestAncestorIndex)
                     .map(partialTrie::nodeHandleAtIndex)
                     .map(this::closestAncestorMerkleValue)
-                    .map(closestMerkle -> trieStorage.entriesBetween(closestMerkle, key.toString()))
+                    .map(closestMerkle -> trieStorage.entriesBetween(closestMerkle, key))
                     .ifPresent(entries -> entries.forEach(
                             storageNode -> partialTrie.insertNode(storageNode.key(), storageNode.nodeData()))
                     );
@@ -204,8 +204,7 @@ public class TrieAccessor implements KVRepository<Nibbles, byte[]> {
     public Optional<Nibbles> getNextKey(Nibbles key) {
         loadPathToKey(key);
         //TODO: optimize using partial trie
-        return Optional.ofNullable(trieStorage.getNextKeyByMerkleValue(lastRoot, key.toString()))
-                .map(k -> Nibbles.fromBytes(k.getBytes()));
+        return Optional.ofNullable(trieStorage.getNextKeyByMerkleValue(lastRoot, key));
     }
 
     @Override

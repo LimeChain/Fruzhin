@@ -3,11 +3,13 @@ package com.limechain.rpc.methods.childstate;
 import com.limechain.storage.block.BlockState;
 import com.limechain.storage.trie.TrieStorage;
 import com.limechain.trie.structure.database.NodeData;
+import com.limechain.trie.structure.nibble.Nibbles;
 import com.limechain.utils.StringUtils;
 import io.emeraldpay.polkaj.types.Hash256;
 import org.springframework.stereotype.Service;
 
 import java.lang.reflect.Array;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 
@@ -30,12 +32,13 @@ public class ChildStateRPCImpl {
             return Collections.emptyList();
         }
 
-        byte[] prefix = StringUtils.hexToBytes(prefixHex);
+        Nibbles prefix = Nibbles.fromHexString(prefixHex);
         byte[] childStorageMerkle = getChildStorageMerkle(childKeyHex, blockHashHex);
 
         return trieStorage
                 .getKeysWithPrefix(childStorageMerkle, prefix)
-                .stream().map(StringUtils::toHexWithPrefix)
+                .stream()
+                .map(key -> StringUtils.HEX_PREFIX + key.toLowerHexString())
                 .toList();
     }
 
@@ -52,10 +55,10 @@ public class ChildStateRPCImpl {
         if (!this.blockState.isInitialized()) {
             return null;
         }
-        byte[] key = StringUtils.hexToBytes(keyHex);
+
         byte[] childStorageMerkle = getChildStorageMerkle(childKeyHex, blockHashHex);
 
-        return trieStorage.getByKeyFromMerkle(childStorageMerkle, new String(key))
+        return trieStorage.getByKeyFromMerkle(childStorageMerkle, Nibbles.fromHexString(keyHex))
                 .map(NodeData::getValue)
                 .map(StringUtils::toHexWithPrefix)
                 .orElse(null);
@@ -74,10 +77,9 @@ public class ChildStateRPCImpl {
             return null;
         }
 
-        byte[] key = StringUtils.hexToBytes(keyHex);
         byte[] childStorageMerkle = getChildStorageMerkle(childKeyHex, blockHashHex);
 
-        return trieStorage.getByKeyFromMerkle(childStorageMerkle, new String(key))
+        return trieStorage.getByKeyFromMerkle(childStorageMerkle, Nibbles.fromHexString(keyHex))
                 .map(NodeData::getMerkleValue)
                 .map(StringUtils::toHexWithPrefix)
                 .orElse(null);
@@ -96,11 +98,10 @@ public class ChildStateRPCImpl {
             return null;
         }
 
-        byte[] key = StringUtils.hexToBytes(keyHex);
         byte[] childStorageMerkle = getChildStorageMerkle(childKeyHex, blockHashHex);
 
         return trieStorage
-                .getByKeyFromMerkle(childStorageMerkle, new String(key))
+                .getByKeyFromMerkle(childStorageMerkle, Nibbles.fromHexString(keyHex))
                 .map(NodeData::getValue)
                 .map(Array::getLength)
                 .map(String::valueOf)
@@ -112,15 +113,15 @@ public class ChildStateRPCImpl {
     }
 
     private byte[] getChildStorageMerkle(String childKeyHex, String blockHashHex) {
-        byte[] childKey = StringUtils.hexToBytes(childKeyHex);
+        Nibbles childKey = Nibbles.fromHexString(childKeyHex);
         final Hash256 blockHash = getHash256FromHex(blockHashHex);
 
         return getChildMerkle(blockHash, childKey);
     }
 
-    private byte[] getChildMerkle(Hash256 blockHash, byte[] childKey) {
+    private byte[] getChildMerkle(Hash256 blockHash, Nibbles childKey) {
         return trieStorage
-                .getByKeyFromBlock(blockHash, ":child_storage:default:" + new String(childKey))
+                .getByKeyFromBlock(blockHash, Nibbles.fromBytes(":child_storage:default:".getBytes(StandardCharsets.US_ASCII)).addAll(childKey))
                 .map(NodeData::getValue)
                 .orElse(null);
     }

@@ -47,7 +47,7 @@ public class InsertTrieBuilder {
                 userData.getValue(),
                 userData.getMerkleValue(),
                 childrenMerkleValues(nodeHandle),
-                nodeHandle.getPartialKey().asUnmodifiableList(),
+                nodeHandle.getPartialKey(),
                 isReferenceValue);
     }
 

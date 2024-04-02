@@ -15,6 +15,7 @@ import org.mockito.MockitoAnnotations;
 
 import java.util.ArrayList;
 import java.util.Optional;
+import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -41,7 +42,7 @@ class TrieStorageTest {
 
     @Test
     void testGetByKeyFromBlock() {
-        String keyStr = "testKey";
+        Nibbles key = Nibbles.fromBytes("testKey".getBytes());
         byte[] expectedValue = "testValue".getBytes();
         Hash256 mockBlockHash = Hash256.from(BLOCK_HASH);
         BlockHeader mockBlockHeader = mock(BlockHeader.class);
@@ -49,14 +50,18 @@ class TrieStorageTest {
 
         final TrieNodeData trieNodeData =
                 new TrieNodeData(
-                        trieStorage.partialKeyFromNibbles(Nibbles.fromBytes(keyStr.getBytes()).asUnmodifiableList()),
-                        new ArrayList<>(), expectedValue, new byte[0], (byte) 0);
+                        key,
+                        IntStream.range(0, 16).mapToObj(__ -> (byte[]) null).toList(),
+                        expectedValue,
+                        new byte[0],
+                        (byte) 0
+                );
 
 
         when(db.find(anyString())).thenReturn(Optional.of(trieNodeData));
         when(blockState.getHeader(mockBlockHash)).thenReturn(mockBlockHeader);
 
-        Optional<NodeData> result = trieStorage.getByKeyFromBlock(mockBlockHash, keyStr);
+        Optional<NodeData> result = trieStorage.getByKeyFromBlock(mockBlockHash, key);
 
         assertTrue(result.isPresent());
         assertArrayEquals(expectedValue, result.get().getValue());
@@ -74,7 +79,7 @@ class TrieStorageTest {
 
         when(db.find(anyString())).thenReturn(Optional.empty());
 
-        Optional<NodeData> result = trieStorage.getByKeyFromBlock(mockBlockHash, keyStr);
+        Optional<NodeData> result = trieStorage.getByKeyFromBlock(mockBlockHash, Nibbles.fromBytes(keyStr.getBytes()));
 
         assertTrue(result.isEmpty());
 
@@ -83,32 +88,35 @@ class TrieStorageTest {
 
     @Test
     void testGetByKeyFromBlockWithNullBlockHeader() {
-        String keyStr = "testKey";
+        Nibbles key = Nibbles.fromBytes("testKey".getBytes());
         Hash256 mockBlockHash = Hash256.from(BLOCK_HASH);
 
         when(blockState.getHeader(mockBlockHash)).thenReturn(null);
 
-        Optional<NodeData> result = trieStorage.getByKeyFromBlock(mockBlockHash, keyStr);
+        Optional<NodeData> result = trieStorage.getByKeyFromBlock(mockBlockHash, key);
 
         assertTrue(result.isEmpty());
     }
 
     @Test
     void testGetByKeyFromBlockWhenTrieNodeDoesNotMatch() {
-        String keyStr = "testKey";
+        Nibbles key = Nibbles.fromBytes("testKey".getBytes());
         Hash256 mockBlockHash = Hash256.from(BLOCK_HASH);
         BlockHeader mockBlockHeader = mock(BlockHeader.class);
         when(mockBlockHeader.getStateRoot()).thenReturn(Hash256.from(ROOT_HASH));
 
         // Simulate a trie node that does not directly match the provided key
         TrieNodeData nonMatchingTrieNodeData = new TrieNodeData(
-                new byte[]{0x01}, // Partial key that does not match the test key
-                new ArrayList<>(), null, new byte[0], (byte) 0);
+                Nibbles.fromHexString("01"), // Partial key that does not match the test key
+                IntStream.range(0, 16).mapToObj(__ -> (byte[]) null).toList(),
+                null,
+                new byte[0],
+                (byte) 0);
         when(db.find(anyString())).thenReturn(Optional.of(nonMatchingTrieNodeData));
         when(blockState.getHeader(mockBlockHash)).thenReturn(mockBlockHeader);
 
         // Action
-        Optional<NodeData> result = trieStorage.getByKeyFromBlock(mockBlockHash, keyStr);
+        Optional<NodeData> result = trieStorage.getByKeyFromBlock(mockBlockHash, key);
 
         // Assert
         assertTrue(result.isEmpty());
@@ -116,7 +124,8 @@ class TrieStorageTest {
 
     @Test
     void testGetNextKey() {
-        String prefixStr = "nextKe";
+        Nibbles prefix = Nibbles.fromBytes("nextKe".getBytes());
+        Nibbles actualKey = Nibbles.fromBytes("nextKey".getBytes());
         Hash256 blockHash = Hash256.from(BLOCK_HASH);
         BlockHeader mockBlockHeader = mock(BlockHeader.class);
 
@@ -125,16 +134,16 @@ class TrieStorageTest {
 
         // Setup a mock TrieNodeData that represents the next key
         TrieNodeData nextKeyNode = new TrieNodeData(
-                trieStorage.partialKeyFromNibbles(Nibbles.fromBytes("nextKey".getBytes()).asUnmodifiableList()),
+                actualKey,
                 new ArrayList<>(), "nextValue".getBytes(), new byte[0], (byte) 0);
 
         // Assuming the database returns the mock TrieNodeData for the next key
         when(db.find(anyString())).thenReturn(Optional.of(nextKeyNode));
 
         // Action
-        String result = trieStorage.getNextKey(blockHash, prefixStr);
+        Nibbles result = trieStorage.getNextKey(blockHash, prefix);
 
         // Assert
-        assertEquals("nextKey", result);
+        assertEquals(actualKey, result);
     }
 }
