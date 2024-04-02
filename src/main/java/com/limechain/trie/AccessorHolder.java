@@ -24,4 +24,9 @@ public class AccessorHolder {
         this.blockTrieAccessor = new BlockTrieAccessor(blockHash);
         return this.blockTrieAccessor;
     }
+
+    public BlockTrieAccessor setToStateRoot(byte[] lastRoot) {
+        this.blockTrieAccessor = new BlockTrieAccessor(lastRoot);
+        return this.blockTrieAccessor;
+    }
 }

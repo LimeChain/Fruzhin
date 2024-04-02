@@ -33,31 +33,7 @@ public class FullNode implements HostNode {
     @SneakyThrows
     public void start() {
         //Initialize state
-
-        // TODO: Is there a better way to decide whether we've got any database written?
-        KVRepository<String, Object> db = AppBean.getBean(KVRepository.class); //presume this works
-
-        if (db == null) {
-            throw new IllegalStateException("Database is not initialized");
-        }
-        TrieStorage trieStorage = TrieStorage.getInstance();
-        trieStorage.initialize(db);
-
-        // if: database has some persisted storage
-        if (db.find(new BlockStateHelper().headerHashKey(BigInteger.ZERO)).isPresent()) {
-            BlockState.getInstance().initialize(db);//Initialize BlockState from already existing data
-        } else {
-            GenesisBlockHash genesisBlockHash = AppBean.getBean(GenesisBlockHash.class);
-            BlockState.getInstance().initialize(db,
-                    genesisBlockHash.getGenesisBlockHeader()); //Initialize BlockState from genesis block
-
-            StateVersion stateVersion = new RuntimeBuilder().buildRuntime(
-                    genesisBlockHash.getGenesisStorage().get(ByteString.copyFrom(":code".getBytes())).toByteArray()
-            ).getVersion().getStateVersion();
-
-            TrieStructure<NodeData> trie = genesisBlockHash.getGenesisTrie();
-            trieStorage.insertTrieStorage(trie, stateVersion);
-        }
+        initializeGenesis();
 
         // Start network
         final Network network = AppBean.getBean(Network.class);
@@ -84,6 +60,32 @@ public class FullNode implements HostNode {
             case FULL -> AppBean.getBean(FullSyncMachine.class).start();
             case WARP -> AppBean.getBean(WarpSyncMachine.class).start();
             default -> throw new IllegalStateException("Unexpected value: " + args.syncMode());
+        }
+    }
+
+    public static void initializeGenesis() {
+        // TODO: Is there a better way to decide whether we've got any database written?
+        KVRepository<String, Object> db = AppBean.getBean(KVRepository.class); //presume this works
+
+        if (db == null) {
+            throw new IllegalStateException("Database is not initialized");
+        }
+        TrieStorage trieStorage = TrieStorage.getInstance();
+        trieStorage.initialize(db);
+        // if: database has some persisted storage
+        if (db.find(new BlockStateHelper().headerHashKey(BigInteger.ZERO)).isPresent()) {
+            BlockState.getInstance().initialize(db);//Initialize BlockState from already existing data
+        } else {
+            GenesisBlockHash genesisBlockHash = AppBean.getBean(GenesisBlockHash.class);
+            BlockState.getInstance().initialize(db,
+                genesisBlockHash.getGenesisBlockHeader()); //Initialize BlockState from genesis block
+
+            StateVersion stateVersion = new RuntimeBuilder().buildRuntime(
+                genesisBlockHash.getGenesisStorage().get(ByteString.copyFrom(":code".getBytes())).toByteArray()
+            ).getVersion().getStateVersion();
+
+            TrieStructure<NodeData> trie = genesisBlockHash.getGenesisTrie();
+            trieStorage.insertTrieStorage(trie, stateVersion);
         }
     }
 

@@ -18,6 +18,7 @@ import lombok.AllArgsConstructor;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 @AllArgsConstructor
@@ -73,12 +74,18 @@ public class TrieAccessor implements KVRepository<Nibbles, byte[]> {
     private void loadPathToKey(Nibbles key) {
         Entry<NodeData> closestNode = partialTrie.node(key);
         if (closestNode instanceof Vacant<NodeData> vacantNode) {
-            Optional.of(vacantNode)
-                    .map(Vacant::getClosestAncestorIndex)
-                    .map(partialTrie::nodeHandleAtIndex)
-                    .map(this::closestAncestorMerkleValue)
+
+            // TODO: Half-assed attempt at sacrificing efficiency in hopes of correctness
+//            var nodeHandle = Optional.of(vacantNode)
+//                    .map(Vacant::getClosestAncestorIndex)
+//                    .map(partialTrie::nodeHandleAtIndex)
+//                .orElse(null);
+
+
+            Optional.of(lastRoot)
                     .map(closestMerkle -> trieStorage.entriesBetween(closestMerkle, key))
-                    .ifPresent(entries -> entries.forEach(
+                    .ifPresent(entries ->
+                        entries.forEach(
                             storageNode -> partialTrie.insertNode(storageNode.key(), storageNode.nodeData()))
                     );
         }
@@ -102,7 +109,10 @@ public class TrieAccessor implements KVRepository<Nibbles, byte[]> {
                     .map(NodeHandle::getUserData)
                     .map(NodeData::getMerkleValue)
                     .map(merkle -> trieStorage.loadChildren(key, merkle))
-                    .ifPresent(entries -> entries.forEach(e -> partialTrie.insertNode(e.key(), e.nodeData())));
+                    .ifPresent(entries ->
+                        entries.stream()
+                            .filter(Objects::nonNull)
+                            .forEach(e -> partialTrie.insertNode(e.key(), e.nodeData())));
         }
     }
 
