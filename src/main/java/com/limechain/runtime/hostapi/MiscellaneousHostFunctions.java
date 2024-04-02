@@ -63,7 +63,7 @@ public class MiscellaneousHostFunctions {
      * @param number the number to be printed
      */
     public void printNumV1(Number number) {
-        log.info("Printing number from runtime: " + number);
+        log.fine("++HF++ Printing number from runtime: " + number);
     }
 
     /**
@@ -75,7 +75,7 @@ public class MiscellaneousHostFunctions {
         byte[] data = runtime.getDataFromMemory(strPointer);
 
         final String strToPrint = new String(data, StandardCharsets.UTF_8);
-        log.info("Printing utf8 from runtime: " + strToPrint);
+        log.fine("++HF++ Printing utf8 from runtime: " + strToPrint);
     }
 
     /**
@@ -87,7 +87,7 @@ public class MiscellaneousHostFunctions {
         byte[] data = runtime.getDataFromMemory(pointer);
 
         final String hexString = HexUtils.toHexString(data);
-        log.info("Printing hex from runtime: " + hexString);
+        log.fine("++HF++ Printing hex from runtime: " + hexString);
     }
 
     /**

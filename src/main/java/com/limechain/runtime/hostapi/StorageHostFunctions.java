@@ -123,12 +123,15 @@ public class StorageHostFunctions {
      * @param valuePointer a pointer-size containing the key.
      */
     public void extStorageSetVersion1(RuntimePointerSize keyPointer, RuntimePointerSize valuePointer) {
-        log.info("extStorageSetVersion1");
         Nibbles key = Nibbles.fromBytes(runtime.getDataFromMemory(keyPointer));
         byte[] value = runtime.getDataFromMemory(valuePointer);
 
+        log.fine("");
+        log.fine("++HF++ extStorageSetVersion1 with ");
+        log.fine("key: " + key);
+        log.fine("value: " + Arrays.toString(value));
+        log.fine("");
         repository.save(key, value);
-        log.info("saved");
     }
 
     /**
@@ -138,9 +141,13 @@ public class StorageHostFunctions {
      * @return a pointer-size returning the SCALE encoded Option value containing the value.
      */
     public RuntimePointerSize extStorageGetVersion1(RuntimePointerSize keyPointer) {
-        log.info("extStorageGetVersion1");
         Nibbles key = Nibbles.fromBytes(runtime.getDataFromMemory(keyPointer));
         byte[] value = repository.find(key).orElse(null);
+
+        log.fine("");
+        log.fine("++HF++ extStorageGetVersion1");
+        log.fine("key: " + key);
+        log.fine("");
 
         return runtime.writeDataToMemory(scaleEncodedOption(value));
     }
@@ -159,7 +166,7 @@ public class StorageHostFunctions {
      */
     public RuntimePointerSize extStorageReadVersion1(RuntimePointerSize keyPointer, RuntimePointerSize valueOutPointer,
                                                      int offset) {
-        log.info("extStorageReadVersion1");
+        log.fine("++HF++ extStorageReadVersion1");
         Nibbles key = Nibbles.fromBytes(runtime.getDataFromMemory(keyPointer));
         byte[] value = repository.find(key).orElse(null);
 
@@ -182,7 +189,7 @@ public class StorageHostFunctions {
      * @param keyPointer a pointer-size containing the key.
      */
     public void extStorageClearVersion1(RuntimePointerSize keyPointer) {
-        log.info("extStorageClearVersion1");
+        log.fine("++HF++ extStorageClearVersion1");
         Nibbles key = Nibbles.fromBytes(runtime.getDataFromMemory(keyPointer));
         repository.delete(key);
     }
@@ -194,7 +201,7 @@ public class StorageHostFunctions {
      * @return integer value equal to 1 if the key exists or a value equal to 0 if otherwise.
      */
     public int extStorageExistsVersion1(RuntimePointerSize keyPointer) {
-        log.info("extStorageExistsVersion1");
+        log.fine("++HF++ extStorageExistsVersion1");
         Nibbles key = Nibbles.fromBytes(runtime.getDataFromMemory(keyPointer));
         return repository.find(key).isPresent() ? 1 : 0;
     }
@@ -205,7 +212,7 @@ public class StorageHostFunctions {
      * @param prefixPointer a pointer-size containing the prefix.
      */
     public void extStorageClearPrefixVersion1(RuntimePointerSize prefixPointer) {
-        log.info("extStorageClearPrefixVersion1");
+        log.fine("++HF++ extStorageClearPrefixVersion1");
         Nibbles prefix = Nibbles.fromBytes(runtime.getDataFromMemory(prefixPointer));
         repository.deleteByPrefix(prefix, null);
     }
@@ -223,7 +230,7 @@ public class StorageHostFunctions {
      */
     public RuntimePointerSize extStorageClearPrefixVersion2(RuntimePointerSize prefixPointer,
                                                             RuntimePointerSize limitPointer) {
-        log.info("extStorageClearPrefixVersion2");
+        log.fine("++HF++ extStorageClearPrefixVersion2");
         Nibbles prefix = Nibbles.fromBytes(runtime.getDataFromMemory(prefixPointer));
 
         byte[] limitBytes = runtime.getDataFromMemory(limitPointer);
@@ -243,7 +250,7 @@ public class StorageHostFunctions {
      * @param valuePointer a pointer-size containing the value to be appended.
      */
     public void extStorageAppendVersion1(RuntimePointerSize keyPointer, RuntimePointerSize valuePointer) {
-        log.info("extStorageAppendVersion1");
+        log.fine("++HF++ extStorageAppendVersion1");
 
         Nibbles key = Nibbles.fromBytes(runtime.getDataFromMemory(keyPointer));
         byte[] sequence = repository.find(key).orElse(null);
@@ -285,7 +292,7 @@ public class StorageHostFunctions {
      * @return a pointer-size to a buffer containing the 256-bit Blake2 storage root.
      */
     public RuntimePointerSize extStorageRootVersion1() {
-        log.info("extStorageRootVersion1");
+        log.fine("++HF++ extStorageRootVersion1");
         byte[] rootHash = repository.getMerkleRoot(StateVersion.V0);
 
         return runtime.writeDataToMemory(rootHash);
@@ -298,7 +305,7 @@ public class StorageHostFunctions {
      * @return a pointer-size to a buffer containing the 256-bit Blake2 storage root.
      */
     public RuntimePointerSize extStorageRootVersion2(int version) {
-        log.info("extStorageRootVersion2");
+        log.fine("++HF++ extStorageRootVersion2");
 
         byte[] rootHash = repository.getMerkleRoot(StateVersion.fromInt(version));
 
@@ -312,7 +319,7 @@ public class StorageHostFunctions {
      * @return a pointer-size to an Option type (Definition 185) that’s always None.
      */
     public RuntimePointerSize extStorageChangesRootVersion1(RuntimePointerSize parentHashPointer) {
-        log.info("extStorageChangesRootVersion1");
+        log.fine("++HF++ extStorageChangesRootVersion1");
 
         return runtime.writeDataToMemory(scaleEncodedOption(null));
     }
@@ -325,7 +332,7 @@ public class StorageHostFunctions {
      * @return a pointer-size to the SCALE encoded Option value containing the next key in lexicographic order.
      */
     public RuntimePointerSize extStorageNextKeyVersion1(RuntimePointerSize keyPointer) {
-        log.info("extStorageNextKeyVersion1");
+        log.fine("++HF++ extStorageNextKeyVersion1");
 
         Nibbles key = Nibbles.fromBytes(runtime.getDataFromMemory(keyPointer));
         byte[] nextKey = repository.getNextKey(key)
@@ -351,7 +358,7 @@ public class StorageHostFunctions {
      * It’s legal to call this function multiple times in a row.
      */
     public void extStorageStartTransactionVersion1() {
-        log.info("extStorageStartTransactionVersion1");
+        log.fine("++HF++ extStorageStartTransactionVersion1");
         repository.startTransaction();
     }
 

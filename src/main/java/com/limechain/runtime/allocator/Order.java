@@ -56,7 +56,7 @@ public class Order {
 
         int result = freeHeaderPointer;
         freeHeaderPointer = Header.fromMemory(freeHeaderPointer, memory).getNextFreeHeaderPointer();
-        log.log(Level.INFO, "Next free header pointer=" + freeHeaderPointer);
+        log.finer("Next free header pointer=" + freeHeaderPointer);
         return Optional.of(result);
     }
 }

@@ -1,6 +1,7 @@
 package com.limechain.storage;
 
 import com.limechain.exception.DBException;
+import com.limechain.trie.structure.nibble.Nibbles;
 import com.limechain.utils.ByteArrayUtils;
 import lombok.extern.java.Log;
 import org.apache.commons.io.FileUtils;
@@ -96,14 +97,14 @@ public class DBRepository implements KVRepository<String, Object> {
                 value = SerializationUtils.deserialize(bytes);
             }
         } catch (RocksDBException e) {
-            log.log(Level.SEVERE, String.format(
+            log.severe(String.format(
                     "Error retrieving the entry with key: %s, cause: %s, message: %s",
                     key,
                     e.getCause(),
                     e.getMessage())
             );
         }
-        log.log(Level.INFO, String.format("finding key '%s' returns '%s'", key, value));
+        log.info(String.format("finding key '%s' returns '%s'", Nibbles.fromBytes(key.getBytes()), value));
         return Optional.ofNullable(value);
     }
 

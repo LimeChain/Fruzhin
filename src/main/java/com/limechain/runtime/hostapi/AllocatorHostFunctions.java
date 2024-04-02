@@ -41,7 +41,7 @@ public class AllocatorHostFunctions {
      * @return a pointer to the allocated buffer.
      */
     public int extAllocatorMallocVersion1(int size) {
-        log.info("extAllocatorMallocVersion1");
+        log.finest("++HF++ extAllocatorMallocVersion1");
         return runtime.allocate(size).pointer();
 
     }
@@ -52,7 +52,7 @@ public class AllocatorHostFunctions {
      * @param pointer a pointer to the memory buffer to be freed.
      */
     public void extAllocatorFreeVersion1(int pointer) {
-        log.info("extAllocatorFreeVersion1");
+        log.finest("++HF++ extAllocatorFreeVersion1");
         runtime.deallocate(pointer);
     }
 }

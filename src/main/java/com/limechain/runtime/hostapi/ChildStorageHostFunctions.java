@@ -124,7 +124,7 @@ public class ChildStorageHostFunctions {
                                                                  RuntimePointerSize keyPointer,
                                                                  RuntimePointerSize valueOutPointer,
                                                                  int offset) {
-        log.info("extDefaultChildStorageReadVersion1");
+        log.fine("++HF++ extDefaultChildStorageReadVersion1");
         Nibbles childStorageKey = Nibbles.fromBytes(runtime.getDataFromMemory(childStorageKeyPointer));
         Nibbles key = Nibbles.fromBytes(runtime.getDataFromMemory(keyPointer));
 
@@ -155,7 +155,7 @@ public class ChildStorageHostFunctions {
     public void extDefaultChildStorageSetVersion1(RuntimePointerSize childStorageKeyPointer,
                                                   RuntimePointerSize keyPointer,
                                                   RuntimePointerSize valuePointer) {
-        log.info("extDefaultChildStorageSetVersion1");
+        log.fine("++HF++ extDefaultChildStorageSetVersion1");
 
         Nibbles childStorageKey = Nibbles.fromBytes(runtime.getDataFromMemory(childStorageKeyPointer));
         Nibbles key = Nibbles.fromBytes(runtime.getDataFromMemory(keyPointer));
@@ -173,7 +173,7 @@ public class ChildStorageHostFunctions {
      */
     public void extDefaultChildStorageClearVersion1(RuntimePointerSize childStorageKeyPointer,
                                                     RuntimePointerSize keyPointer) {
-        log.info("extDefaultChildStorageClearVersion1");
+        log.fine("++HF++ extDefaultChildStorageClearVersion1");
 
         Nibbles childStorageKey = Nibbles.fromBytes(runtime.getDataFromMemory(childStorageKeyPointer));
         Nibbles key = Nibbles.fromBytes(runtime.getDataFromMemory(keyPointer));
@@ -190,7 +190,7 @@ public class ChildStorageHostFunctions {
      */
     public void extDefaultChildStorageClearPrefixVersion1(RuntimePointerSize childStorageKeyPointer,
                                                           RuntimePointerSize prefixPointer) {
-        log.info("extDefaultChildStorageClearPrefixVersion1");
+        log.fine("++HF++ extDefaultChildStorageClearPrefixVersion1");
 
         Nibbles childStorageKey = Nibbles.fromBytes(runtime.getDataFromMemory(childStorageKeyPointer));
         Nibbles prefix = Nibbles.fromBytes(runtime.getDataFromMemory(prefixPointer));
@@ -214,7 +214,7 @@ public class ChildStorageHostFunctions {
     public RuntimePointerSize extDefaultChildStorageClearPrefixVersion2(RuntimePointerSize childStorageKeyPointer,
                                                                         RuntimePointerSize prefixPointer,
                                                                         RuntimePointerSize limitPointer) {
-        log.info("extDefaultChildStorageClearPrefixVersion2");
+        log.fine("++HF++ extDefaultChildStorageClearPrefixVersion2");
 
         Nibbles childStorageKey = Nibbles.fromBytes(runtime.getDataFromMemory(childStorageKeyPointer));
         Nibbles prefix = Nibbles.fromBytes(runtime.getDataFromMemory(prefixPointer));
@@ -237,7 +237,7 @@ public class ChildStorageHostFunctions {
      */
     public int extDefaultChildStorageExistsVersion1(RuntimePointerSize childStorageKeyPointer,
                                                     RuntimePointerSize keyPointer) {
-        log.info("extDefaultChildStorageExistsVersion1");
+        log.fine("++HF++ extDefaultChildStorageExistsVersion1");
 
         Nibbles childStorageKey = Nibbles.fromBytes(runtime.getDataFromMemory(childStorageKeyPointer));
         Nibbles key = Nibbles.fromBytes(runtime.getDataFromMemory(keyPointer));
@@ -255,7 +255,7 @@ public class ChildStorageHostFunctions {
      */
     public RuntimePointerSize extDefaultChildStorageGetVersion1(RuntimePointerSize childStorageKeyPointer,
                                                                 RuntimePointerSize keyPointer) {
-        log.info("extDefaultChildStorageGetVersion1");
+        log.fine("++HF++ extDefaultChildStorageGetVersion1");
 
         Nibbles childStorageKey = Nibbles.fromBytes(runtime.getDataFromMemory(childStorageKeyPointer));
         Nibbles key = Nibbles.fromBytes(runtime.getDataFromMemory(keyPointer));
@@ -276,7 +276,7 @@ public class ChildStorageHostFunctions {
      */
     public RuntimePointerSize extDefaultChildStorageStorageNextKeyVersion1(RuntimePointerSize childStorageKeyPointer,
                                                                            RuntimePointerSize keyPointer) {
-        log.info("extDefaultChildStorageStorageNextKeyVersion1");
+        log.fine("++HF++ extDefaultChildStorageStorageNextKeyVersion1");
 
         Nibbles childStorageKey = Nibbles.fromBytes(runtime.getDataFromMemory(childStorageKeyPointer));
         Nibbles key = Nibbles.fromBytes(runtime.getDataFromMemory(keyPointer));
@@ -306,7 +306,7 @@ public class ChildStorageHostFunctions {
      * @return a pointer-size to a buffer containing the 256-bit Blake2 child storage root.
      */
     public RuntimePointerSize extDefaultChildStorageRoot(RuntimePointerSize childStorageKeyPointer, StateVersion v0) {
-        log.info("extDefaultChildStorageRootVersion1");
+        log.fine("++HF++ extDefaultChildStorageRootVersion1");
 
         Nibbles childStorageKey = Nibbles.fromBytes(runtime.getDataFromMemory(childStorageKeyPointer));
         ChildTrieAccessor childTrie = mainRepository.getChildTrie(childStorageKey);
@@ -322,7 +322,7 @@ public class ChildStorageHostFunctions {
      * @param childStorageKeyPointer a pointer-size containing the child storage key.
      */
     public void extDefaultChildStorageKillVersion1(RuntimePointerSize childStorageKeyPointer) {
-        log.info("extDefaultChildStorageKillVersion1");
+        log.fine("++HF++ extDefaultChildStorageKillVersion1");
 
         Nibbles childStorageKey = Nibbles.fromBytes(runtime.getDataFromMemory(childStorageKeyPointer));
         ChildTrieAccessor childTrie = mainRepository.getChildTrie(childStorageKey);
@@ -337,7 +337,7 @@ public class ChildStorageHostFunctions {
      */
     public RuntimePointerSize extDefaultChildStorageKillVersion2(RuntimePointerSize childStorageKeyPointer,
                                                                  RuntimePointerSize limitPointer) {
-        log.info("extDefaultChildStorageKillVersion2");
+        log.fine("++HF++ extDefaultChildStorageKillVersion2");
 
         Nibbles childStorageKey = Nibbles.fromBytes(runtime.getDataFromMemory(childStorageKeyPointer));
 
@@ -357,7 +357,7 @@ public class ChildStorageHostFunctions {
      */
     public RuntimePointerSize extDefaultChildStorageKillVersion3(RuntimePointerSize childStorageKeyPointer,
                                                                  RuntimePointerSize limitPointer) {
-        log.info("extDefaultChildStorageKillVersion3");
+        log.fine("++HF++ extDefaultChildStorageKillVersion3");
 
         return extDefaultChildStorageKillVersion2(childStorageKeyPointer, limitPointer);
     }

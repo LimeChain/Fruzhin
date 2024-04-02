@@ -41,7 +41,7 @@ public class Header {
      */
     public static Header occupied(int order) {
         Header header = new Header(true);
-        log.log(Level.INFO, "Creating occupied header, order=" + order);
+        log.finer( "Creating occupied header, order=" + order);
         header.order = order;
         return header;
     }
@@ -55,7 +55,7 @@ public class Header {
     public static Header free(int next) {
         Header header = new Header(false);
         header.nextFreeHeaderPointer = next;
-        log.log(Level.INFO, "Creating free header, next=" + next);
+        log.finer("Creating free header, next=" + next);
 
         return header;
     }
@@ -68,7 +68,7 @@ public class Header {
      * @return parsed header
      */
     public static Header fromMemory(int pointer, Memory memory) {
-        log.log(Level.INFO, "Reading header from memory, pointer=" + pointer);
+        log.finer("Reading header from memory, pointer=" + pointer);
         long rawHeader = memory.buffer().getLong(pointer);
         boolean occupied = (rawHeader & OCCUPIED_HEADER_MASK) != 0;
         int data = (int) rawHeader;
