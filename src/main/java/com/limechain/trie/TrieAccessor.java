@@ -85,8 +85,12 @@ public class TrieAccessor implements KVRepository<Nibbles, byte[]> {
             Optional.of(lastRoot)
                     .map(closestMerkle -> trieStorage.entriesBetween(closestMerkle, key))
                     .ifPresent(entries ->
-                        entries.forEach(
-                            storageNode -> partialTrie.insertNode(storageNode.key(), storageNode.nodeData()))
+                            entries.forEach(
+                                    storageNode -> {
+                                        if (partialTrie.node(storageNode.key()) instanceof Vacant<NodeData>) {
+                                            partialTrie.insertNode(storageNode.key(), storageNode.nodeData());
+                                        }
+                                    })
                     );
         }
     }
@@ -110,9 +114,13 @@ public class TrieAccessor implements KVRepository<Nibbles, byte[]> {
                     .map(NodeData::getMerkleValue)
                     .map(merkle -> trieStorage.loadChildren(key, merkle))
                     .ifPresent(entries ->
-                        entries.stream()
-                            .filter(Objects::nonNull)
-                            .forEach(e -> partialTrie.insertNode(e.key(), e.nodeData())));
+                            entries.stream()
+                                    .filter(Objects::nonNull)
+                                    .forEach(e -> {
+                                        if (partialTrie.node(e.key()) instanceof Vacant<NodeData>) {
+                                            partialTrie.insertNode(e.key(), e.nodeData());
+                                        }
+                                    }));
         }
     }
 
@@ -172,7 +180,7 @@ public class TrieAccessor implements KVRepository<Nibbles, byte[]> {
 
     private Nibble prefixIndexInParent(Nibbles parent, Nibbles prefix) {
         for (int i = 0; i < prefix.size(); i++) {
-            if(prefix.get(i).equals(parent.get(i))) {
+            if (prefix.get(i).equals(parent.get(i))) {
                 return parent.get(i);
             }
         }
@@ -242,9 +250,10 @@ public class TrieAccessor implements KVRepository<Nibbles, byte[]> {
 
     public byte[] getMerkleRoot(StateVersion version) {
         TrieStructureFactory.recalculateMerkleValues(partialTrie, version, HashUtils::hashWithBlake2b);
-        return partialTrie.getRootNode()
+        byte[] bytes = partialTrie.getRootNode()
                 .map(NodeHandle::getUserData)
                 .map(NodeData::getMerkleValue)
                 .orElseThrow();
+        return bytes;
     }
 }

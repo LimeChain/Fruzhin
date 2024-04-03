@@ -57,7 +57,7 @@ public class StorageHostFunctions {
     public static byte[] scaleEncodedOption(@Nullable byte[] data) {
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
         try (ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
-            writer.writeOptional(ScaleCodecWriter::writeByteArray, data);
+            writer.writeOptional(ScaleCodecWriter::writeAsList, data);
         } catch (IOException e) {
             throw new ScaleEncodingException(e);
         }
