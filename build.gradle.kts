@@ -1,6 +1,6 @@
 plugins {
     id("java")
-    id("io.freefair.lombok") version "6.6.1"
+    id("io.freefair.lombok") version "8.6"
     // Can't use newest 3.x version of Spring Boot as it fails to build with jsonprc4j
     // See: https://stackoverflow.com/questions/74760350/application-fails-on-run-in-a-new-release-of-springboot-3-0-0
     id("org.springframework.boot") version "2.7.3"
