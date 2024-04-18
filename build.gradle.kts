@@ -40,7 +40,7 @@ dependencies {
     testImplementation("org.mockito:mockito-core:5.1.1")
 
     // Jackson
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.14.2")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.17.0")
 
     // CLI
     implementation("commons-cli:commons-cli:1.6.0")
