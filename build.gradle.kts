@@ -43,7 +43,7 @@ dependencies {
     implementation("com.fasterxml.jackson.core:jackson-databind:2.14.2")
 
     // CLI
-    implementation("commons-cli:commons-cli:1.3.1")
+    implementation("commons-cli:commons-cli:1.6.0")
 
     // TODO: Publish imported packages to mvnrepository and import them
     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
