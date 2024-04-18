@@ -1,12 +1,13 @@
 package com.limechain.trie;
 
+import com.limechain.constants.GenesisBlockHash;
+import com.limechain.rpc.server.AppBean;
 import com.limechain.runtime.version.StateVersion;
 import com.limechain.storage.DeleteByPrefixResult;
 import com.limechain.storage.KVRepository;
 import com.limechain.storage.trie.TrieStorage;
 import com.limechain.trie.structure.Entry;
 import com.limechain.trie.structure.NodeHandle;
-import com.limechain.trie.structure.StorageNodeHandle;
 import com.limechain.trie.structure.TrieStructure;
 import com.limechain.trie.structure.Vacant;
 import com.limechain.trie.structure.database.NodeData;
@@ -28,6 +29,7 @@ public class TrieAccessor implements KVRepository<Nibbles, byte[]> {
     private final Map<Nibbles, ChildTrieAccessor> loadedChildTries;
     protected final TrieStructure<NodeData> partialTrie;
     protected final TrieStorage trieStorage;
+    private final TrieDiff trieDiff;
     protected byte[] lastRoot;
 
     public TrieAccessor(byte[] trieRoot) {
@@ -35,6 +37,7 @@ public class TrieAccessor implements KVRepository<Nibbles, byte[]> {
         this.loadedChildTries = new HashMap<>();
         this.trieStorage = TrieStorage.getInstance();
         this.partialTrie = new TrieStructure<>();
+        this.trieDiff = new TrieDiff();
     }
 
     public ChildTrieAccessor getChildTrie(Nibbles key) {
@@ -48,46 +51,24 @@ public class TrieAccessor implements KVRepository<Nibbles, byte[]> {
         loadPathToKey(key);
         loadChildren(key);
         NodeData nodeData = new NodeData(value);
-        partialTrie.insertNode(key, nodeData);
-        markForRecalculation(key);
-
+        trieDiff.diffInsert(key, nodeData);
         return true;
     }
 
-    private void markForRecalculation(Nibbles key) {
-        NodeHandle<NodeData> createdNode = partialTrie.node(key).asNodeHandle();
-        Optional.ofNullable(createdNode.getParent())
-                .map(NodeHandle::getUserData)
-                .ifPresent(data -> data.setMerkleValue(null));
-        for (Nibble nibble : Nibbles.ALL) {
-            createdNode.getChild(nibble)
-                    .map(NodeHandle::getUserData)
-                    .ifPresent(data -> data.setMerkleValue(null));
-        }
-    }
-
-    /**
-     * Load the path up to the given key, from the TrieStorage into our partial trie.
-     *
-     * @param key key
-     */
+    //    /**
+//     * Load the path up to the given key, from the TrieStorage into our partial trie.
+//     *
+//     * @param key key
+//     */
     private void loadPathToKey(Nibbles key) {
         Entry<NodeData> closestNode = partialTrie.node(key);
-        if (closestNode instanceof Vacant<NodeData> vacantNode) {
-
-            // TODO: Half-assed attempt at sacrificing efficiency in hopes of correctness
-//            var nodeHandle = Optional.of(vacantNode)
-//                    .map(Vacant::getClosestAncestorIndex)
-//                    .map(partialTrie::nodeHandleAtIndex)
-//                .orElse(null);
-
-
+        if (closestNode instanceof Vacant<NodeData>) {
             Optional.of(lastRoot)
                     .map(closestMerkle -> trieStorage.entriesBetween(closestMerkle, key))
                     .ifPresent(entries ->
                             entries.forEach(
                                     storageNode -> {
-                                        if (partialTrie.node(storageNode.key()) instanceof Vacant<NodeData>) {
+                                        if (Boolean.TRUE.equals(!trieDiff.isDeleted(storageNode.key()))) {
                                             partialTrie.insertNode(storageNode.key(), storageNode.nodeData());
                                         }
                                     })
@@ -95,62 +76,39 @@ public class TrieAccessor implements KVRepository<Nibbles, byte[]> {
         }
     }
 
-    private byte[] closestAncestorMerkleValue(NodeHandle<NodeData> nodeHandle) {
-        if (nodeHandle == null) {
-            return lastRoot;
-        }
-
-        return Optional.of(nodeHandle)
-                .map(NodeHandle::getUserData)
-                .map(NodeData::getMerkleValue)
-                .orElseGet(() -> closestAncestorMerkleValue(nodeHandle.getParent()));
-    }
-
     private void loadChildren(Nibbles key) {
-        Entry<NodeData> entry = partialTrie.node(key);
-        if (entry instanceof NodeHandle<NodeData> nodeHandle) {
-            Optional.of(nodeHandle)
-                    .map(NodeHandle::getUserData)
-                    .map(NodeData::getMerkleValue)
-                    .map(merkle -> trieStorage.loadChildren(key, merkle))
-                    .ifPresent(entries ->
-                            entries.stream()
-                                    .filter(Objects::nonNull)
-                                    .forEach(e -> {
-                                        if (partialTrie.node(e.key()) instanceof Vacant<NodeData>) {
-                                            partialTrie.insertNode(e.key(), e.nodeData());
-                                        }
-                                    }));
-        }
+        findMerkleValue(key)
+                .map(merkle -> trieStorage.loadChildren(key, merkle))
+                .ifPresent(entries ->
+                        entries.stream()
+                                .filter(Objects::nonNull)
+                                .forEach(storageNode -> {
+                                    if (Boolean.TRUE.equals(!trieDiff.isDeleted(storageNode.key())))
+                                        partialTrie.insertNode(storageNode.key(), storageNode.nodeData());
+                                }));
     }
 
     @Override
     public Optional<byte[]> find(Nibbles key) {
+        if (trieDiff.isAvailable(key)) {
+            return Optional.ofNullable(trieDiff.get(key).getValue());
+        }
         loadPathToKey(key);
+        loadChildren(key);
         return partialTrie.existingNode(key)
                 .map(NodeHandle::getUserData)
                 .map(NodeData::getValue);
     }
 
     public Optional<byte[]> findMerkleValue(Nibbles key) {
-        loadPathToKey(key);
-        return partialTrie.existingNode(key)
-                .map(NodeHandle::getUserData)
+        return trieStorage.getByKeyFromMerkle(lastRoot, key)
                 .map(NodeData::getMerkleValue);
     }
 
     @Override
     public boolean delete(Nibbles key) {
-        loadPathToKey(key);
-        loadChildren(key);
-
-        // Non-existing entries must be silently ignored
-        if (!(partialTrie.node(key) instanceof StorageNodeHandle<NodeData> storageNodeHandle)) {
-            return false;
-        }
-
-        markForRecalculation(key);
-        return storageNodeHandle.clearStorageValue();
+        trieDiff.diffInsertErase(key);
+        return true;
     }
 
     @Override
@@ -160,22 +118,23 @@ public class TrieAccessor implements KVRepository<Nibbles, byte[]> {
 
     @Override
     public DeleteByPrefixResult deleteByPrefix(Nibbles prefix, Long limit) {
-        loadPathToKey(prefix);
+//        loadPathToKey(prefix);
 
-        NodeHandle<NodeData> parent = switch (partialTrie.node(prefix)) {
-            case Vacant<NodeData> vacant -> Optional.ofNullable(vacant.getClosestAncestorIndex())
-                    .map(partialTrie::nodeHandleAtIndex)
-                    .orElse(null);
-            case NodeHandle<NodeData> handle -> handle.getParent();
-        };
+//        NodeHandle<NodeData> parent = switch (partialTrie.node(prefix)) {
+//            case Vacant<NodeData> vacant -> Optional.ofNullable(vacant.getClosestAncestorIndex())
+//                    .map(partialTrie::nodeHandleAtIndex)
+//                    .orElse(null);
+//            case NodeHandle<NodeData> handle -> handle.getParent();
+//        };
 
-        return Optional.ofNullable(parent)
-                .map(NodeHandle::getFullKey)
-                .map(parentKey -> prefixIndexInParent(parentKey, prefix))
-                .flatMap(parent::getChild)
-                .map(c -> lexicographicDelete(c, limit))
-                .orElse(new DeleteByPrefixResult(0, true));
-
+        DeleteByPrefixResult other = new DeleteByPrefixResult(0, true);
+        return other;
+//        return Optional.ofNullable(parent)
+//                .map(NodeHandle::getFullKey)
+//                .map(parentKey -> prefixIndexInParent(parentKey, prefix))
+//                .flatMap(parent::getChild)
+//                .map(c -> lexicographicDelete(c, limit))
+//                .orElse(other);
     }
 
     private Nibble prefixIndexInParent(Nibbles parent, Nibbles prefix) {
@@ -188,7 +147,6 @@ public class TrieAccessor implements KVRepository<Nibbles, byte[]> {
     }
 
     private DeleteByPrefixResult lexicographicDelete(NodeHandle<NodeData> node, Long limit) {
-        loadChildren(node.getFullKey());
         int deleted = 0;
         for (Nibble nibble : Nibbles.ALL) {
             if (limit != null && limit <= deleted) {
@@ -203,9 +161,8 @@ public class TrieAccessor implements KVRepository<Nibbles, byte[]> {
                 }
             }
         }
-        if (partialTrie.clearNodeValue(node.getNodeIndex())) {
-            deleted++;
-        }
+
+        trieDiff.diffInsertErase(node.getFullKey());
         return new DeleteByPrefixResult(deleted, true);
     }
 
@@ -214,14 +171,13 @@ public class TrieAccessor implements KVRepository<Nibbles, byte[]> {
         loadedChildTries.clear();
 
         if (partialTrie.isEmpty()) return;
-        lastRoot = getMerkleRoot(StateVersion.V1);
-        trieStorage.insertTrieStorage(partialTrie, StateVersion.V1);
+        lastRoot = getMerkleRoot(StateVersion.V0);
+        trieStorage.insertTrieStorage(partialTrie, StateVersion.V0);
     }
 
     @Override
     public Optional<Nibbles> getNextKey(Nibbles key) {
         loadPathToKey(key);
-        //TODO: optimize using partial trie
         return Optional.ofNullable(trieStorage.getNextKeyByMerkleValue(lastRoot, key));
     }
 
@@ -249,11 +205,39 @@ public class TrieAccessor implements KVRepository<Nibbles, byte[]> {
     }
 
     public byte[] getMerkleRoot(StateVersion version) {
-        TrieStructureFactory.recalculateMerkleValues(partialTrie, version, HashUtils::hashWithBlake2b);
-        byte[] bytes = partialTrie.getRootNode()
+        TrieStructure<NodeData> testTrie = AppBean.getBean(GenesisBlockHash.class).getTestTrie();
+
+        for (Map.Entry<Nibbles, NodeData> entry : trieDiff.diffIterUnordered().entrySet()) {
+            Nibbles key = entry.getKey();
+            if (trieDiff.isDeleted(key)) {
+                Entry<NodeData> node = testTrie.node(key);
+                if (!(node instanceof Vacant<NodeData>)) {
+                    NodeHandle<NodeData> nodeHandle = node.asNodeHandle();
+                    testTrie.clearNodeValue(nodeHandle.getNodeIndex());
+                }
+            } else {
+                NodeData nodeData = new NodeData(entry.getValue().getValue());
+                testTrie.insertNode(key, nodeData);
+            }
+        }
+
+        clearMerkleValues(testTrie);
+        TrieStructureFactory.recalculateMerkleValues(testTrie, version, HashUtils::hashWithBlake2b);
+
+        byte[] bytes = testTrie.getRootNode()
                 .map(NodeHandle::getUserData)
                 .map(NodeData::getMerkleValue)
                 .orElseThrow();
         return bytes;
     }
+
+    private void clearMerkleValues(TrieStructure<NodeData> testTrie) {
+        testTrie.iteratorUnordered().forEachRemaining(nodeIndex -> {
+            NodeData userData = testTrie.nodeHandleAtIndex(nodeIndex).getUserData();
+            if (userData != null) {
+                userData.setMerkleValue(null);
+            }
+        });
+    }
+
 }

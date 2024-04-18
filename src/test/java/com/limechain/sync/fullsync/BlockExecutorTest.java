@@ -11,17 +11,10 @@ import com.limechain.network.protocol.warp.dto.Extrinsics;
 import com.limechain.network.protocol.warp.dto.HeaderDigest;
 import com.limechain.network.protocol.warp.scale.reader.HeaderDigestReader;
 import com.limechain.network.protocol.warp.scale.writer.BlockBodyWriter;
-import com.limechain.rpc.server.AppBean;
 import com.limechain.rpc.server.RpcApp;
 import com.limechain.runtime.Runtime;
 import com.limechain.runtime.RuntimeBuilder;
-import com.limechain.storage.KVRepository;
-import com.limechain.storage.block.BlockState;
-import com.limechain.storage.trie.TrieStorage;
-import com.limechain.sync.fullsync.inherents.InherentData;
-import com.limechain.sync.fullsync.inherents.scale.InherentDataWriter;
 import com.limechain.trie.AccessorHolder;
-import com.limechain.trie.BlockTrieAccessor;
 import com.limechain.utils.StringUtils;
 import com.limechain.utils.scale.ScaleUtils;
 import com.limechain.utils.scale.readers.PairReader;
@@ -29,25 +22,17 @@ import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.reader.ListReader;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.extern.java.Log;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.Handler;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.mock;
 
 @Log
 @ExtendWith(MockitoExtension.class)
@@ -56,7 +41,7 @@ public class BlockExecutorTest {
     @BeforeEach
     public void setup() {
         // We need the rpc app in order to initialize the spring context we're so dependent on.
-        new RpcApp().start("-n kusama -node-mode full -db-recreate -sync-mode full".split(" "));
+        new RpcApp().start("-n kusama --node-mode full --db-recreate --sync-mode full".split(" "));
 
         // Also, populating the DB with the genesis state is necessary.
         FullNode.initializeGenesis();

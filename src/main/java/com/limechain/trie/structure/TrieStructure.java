@@ -507,9 +507,7 @@ public class TrieStructure<T> {
 
     boolean clearNodeValue(int nodeIndex) {
         TrieNode<T> trieNode = getNodeAtIndexInner(nodeIndex);
-        if (!trieNode.hasStorageValue) {
-            return false;
-        }
+
         TrieNode.Parent parent = trieNode.parent;
         if (parent == null) {
             nodes.remove(nodeIndex);
@@ -521,9 +519,20 @@ public class TrieStructure<T> {
                 .filter(Objects::nonNull)
                 .count();
 
+        long parentChildren = Arrays.stream(parentNode.childrenIndices)
+                .filter(Objects::nonNull)
+                .count();
+
         if (numberOfChildren == 0) {
             parentNode.childrenIndices[parent.childIndexWithinParent().asInt()] = null;
             nodes.remove(nodeIndex);
+
+            if(parentChildren == 1 && !parentNode.hasStorageValue) {
+                return clearNodeValue(parent.parentNodeIndex());
+            }else if(parentChildren == 2){
+                TrieNode.Parent grandparent = parentNode.parent;
+                getNodeAtIndexInner(grandparent.parentNodeIndex()).childrenIndices[grandparent.childIndexWithinParent().asInt()] = mergeParentIntoChild(parentNode);
+            }
         } else if (numberOfChildren == 1) {
             parentNode.childrenIndices[parent.childIndexWithinParent().asInt()] = mergeParentIntoChild(trieNode);
             nodes.remove(nodeIndex);
