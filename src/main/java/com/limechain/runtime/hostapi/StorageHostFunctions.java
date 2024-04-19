@@ -5,7 +5,7 @@ import com.limechain.trie.AccessorHolder;
 import com.limechain.trie.BlockTrieAccessor;
 import com.limechain.trie.structure.nibble.Nibbles;
 import com.limechain.trie.structure.nibble.NibblesUtils;
-import com.limechain.utils.scale.exceptions.ScaleEncodingException;
+import com.limechain.exception.scale.ScaleEncodingException;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import com.limechain.storage.DeleteByPrefixResult;
 import io.emeraldpay.polkaj.scale.CompactMode;

@@ -2,7 +2,7 @@ package com.limechain.sync.warpsync.state;
 
 import com.limechain.sync.warpsync.SyncedState;
 import com.limechain.sync.warpsync.WarpSyncMachine;
-import com.limechain.sync.warpsync.dto.RuntimeCodeException;
+import com.limechain.exception.global.RuntimeCodeException;
 import io.emeraldpay.polkaj.types.Hash256;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

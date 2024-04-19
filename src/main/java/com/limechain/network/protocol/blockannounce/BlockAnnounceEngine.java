@@ -10,7 +10,7 @@ import com.limechain.network.protocol.warp.dto.Block;
 import com.limechain.network.protocol.warp.dto.BlockBody;
 import com.limechain.storage.block.BlockState;
 import com.limechain.sync.warpsync.SyncedState;
-import com.limechain.utils.scale.exceptions.ScaleEncodingException;
+import com.limechain.exception.scale.ScaleEncodingException;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.libp2p.core.PeerId;

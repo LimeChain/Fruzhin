@@ -1,7 +1,7 @@
 package com.limechain.rpc.subscriptions.chainhead;
 
-import com.limechain.exception.InvalidURIException;
-import com.limechain.exception.ThreadInterruptedException;
+import com.limechain.exception.rpc.InvalidURIException;
+import com.limechain.exception.global.ThreadInterruptedException;
 import com.limechain.rpc.config.SubscriptionName;
 import com.limechain.rpc.pubsub.Topic;
 import com.limechain.rpc.pubsub.publisher.PublisherImpl;

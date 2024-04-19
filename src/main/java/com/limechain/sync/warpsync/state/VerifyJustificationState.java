@@ -1,6 +1,6 @@
 package com.limechain.sync.warpsync.state;
 
-import com.limechain.exception.JustificationVerificationException;
+import com.limechain.exception.sync.JustificationVerificationException;
 import com.limechain.network.protocol.warp.dto.WarpSyncFragment;
 import com.limechain.sync.JustificationVerifier;
 import com.limechain.sync.warpsync.SyncedState;

@@ -26,7 +26,7 @@ import com.limechain.storage.block.BlockState;
 import com.limechain.sync.JustificationVerifier;
 import com.limechain.sync.warpsync.dto.AuthoritySetChange;
 import com.limechain.sync.warpsync.dto.GrandpaDigestMessageType;
-import com.limechain.sync.warpsync.dto.RuntimeCodeException;
+import com.limechain.exception.global.RuntimeCodeException;
 import com.limechain.sync.warpsync.dto.StateDto;
 import com.limechain.sync.warpsync.scale.ForcedChangeReader;
 import com.limechain.sync.warpsync.scale.ScheduledChangeReader;

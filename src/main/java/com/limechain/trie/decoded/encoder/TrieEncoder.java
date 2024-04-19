@@ -1,5 +1,6 @@
 package com.limechain.trie.decoded.encoder;
 
+import com.limechain.exception.trie.TrieEncoderException;
 import com.limechain.trie.decoded.Nibbles;
 import com.limechain.trie.decoded.Node;
 import com.limechain.trie.decoded.NodeKind;

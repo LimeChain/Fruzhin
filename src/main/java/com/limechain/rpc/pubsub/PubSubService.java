@@ -1,7 +1,7 @@
 package com.limechain.rpc.pubsub;
 
-import com.limechain.exception.NotificationFailedException;
-import com.limechain.rpc.exceptions.WsMessageSendException;
+import com.limechain.exception.rpc.NotificationFailedException;
+import com.limechain.exception.rpc.WsMessageSendException;
 import com.limechain.rpc.pubsub.subscriberchannel.AbstractSubscriberChannel;
 import com.limechain.rpc.pubsub.subscriberchannel.Subscriber;
 import com.limechain.rpc.pubsub.subscriberchannel.SubscriberChannel;

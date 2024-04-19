@@ -1,7 +1,7 @@
 package com.limechain.network.protocol.ping;
 
-import com.limechain.exception.ExecutionFailedException;
-import com.limechain.exception.ThreadInterruptedException;
+import com.limechain.exception.global.ExecutionFailedException;
+import com.limechain.exception.global.ThreadInterruptedException;
 import com.limechain.network.StrictProtocolBinding;
 import io.libp2p.core.AddressBook;
 import io.libp2p.core.Host;

@@ -2,7 +2,7 @@ package com.limechain.config;
 
 import com.limechain.chain.Chain;
 import com.limechain.cli.CliArguments;
-import com.limechain.exception.InvalidChainException;
+import com.limechain.exception.misc.InvalidChainException;
 import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.storage.DBInitializer;
 import org.junit.jupiter.api.BeforeEach;

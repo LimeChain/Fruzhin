@@ -1,6 +1,6 @@
 package com.limechain.network.protocol.warp.dto;
 
-import com.limechain.utils.scale.exceptions.ScaleEncodingException;
+import com.limechain.exception.scale.ScaleEncodingException;
 import com.limechain.utils.HashUtils;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import lombok.Data;

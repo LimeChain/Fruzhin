@@ -1,6 +1,6 @@
 package com.limechain.sync.warpsync.state;
 
-import com.limechain.exception.MissingObjectException;
+import com.limechain.exception.global.MissingObjectException;
 import com.limechain.network.protocol.warp.dto.WarpSyncResponse;
 import com.limechain.sync.warpsync.SyncedState;
 import com.limechain.sync.warpsync.WarpSyncMachine;

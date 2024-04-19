@@ -2,7 +2,7 @@ package com.limechain.sync.warpsync.state;
 
 import com.limechain.sync.warpsync.SyncedState;
 import com.limechain.sync.warpsync.WarpSyncMachine;
-import com.limechain.sync.warpsync.dto.RuntimeCodeException;
+import com.limechain.exception.global.RuntimeCodeException;
 import lombok.AllArgsConstructor;
 import lombok.extern.java.Log;
 

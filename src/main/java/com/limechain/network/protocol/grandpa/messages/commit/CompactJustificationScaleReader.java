@@ -1,6 +1,6 @@
 package com.limechain.network.protocol.grandpa.messages.commit;
 
-import com.limechain.exception.SignatureCountMismatchException;
+import com.limechain.exception.network.SignatureCountMismatchException;
 import com.limechain.network.protocol.warp.dto.Precommit;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleReader;

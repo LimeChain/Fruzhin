@@ -1,7 +1,7 @@
 package com.limechain.network.protocol.lightclient;
 
-import com.limechain.exception.ExecutionFailedException;
-import com.limechain.exception.ThreadInterruptedException;
+import com.limechain.exception.global.ExecutionFailedException;
+import com.limechain.exception.global.ThreadInterruptedException;
 import com.limechain.network.StrictProtocolBinding;
 import com.limechain.network.protocol.lightclient.pb.LightClientMessage;
 import com.limechain.utils.StringUtils;

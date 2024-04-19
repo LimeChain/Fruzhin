@@ -1,7 +1,7 @@
 package com.limechain.utils.scale;
 
-import com.limechain.utils.scale.exceptions.ScaleDecodingException;
-import com.limechain.utils.scale.exceptions.ScaleEncodingException;
+import com.limechain.exception.scale.ScaleDecodingException;
+import com.limechain.exception.scale.ScaleEncodingException;
 import com.limechain.utils.scale.writers.IterableWriter;
 import com.limechain.utils.scale.writers.PairWriter;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;

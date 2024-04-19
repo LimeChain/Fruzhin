@@ -4,7 +4,7 @@ import com.limechain.trie.structure.nibble.Nibble;
 import com.limechain.trie.structure.nibble.Nibbles;
 import com.limechain.trie.structure.nibble.NibblesCollector;
 import com.limechain.trie.structure.slab.Slab;
-import com.limechain.trie.structure.slab.exceptions.InvalidSlabIndexException;
+import com.limechain.exception.trie.InvalidSlabIndexException;
 import org.javatuples.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

@@ -4,7 +4,7 @@ import com.limechain.config.HostConfig;
 import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.runtime.hostapi.dto.HttpErrorType;
 import com.limechain.runtime.hostapi.dto.HttpStatusCode;
-import com.limechain.runtime.hostapi.dto.InvalidArgumentException;
+import com.limechain.exception.hostapi.InvalidArgumentException;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import com.limechain.storage.offchain.OffchainStore;
 import com.limechain.utils.scale.ScaleUtils;

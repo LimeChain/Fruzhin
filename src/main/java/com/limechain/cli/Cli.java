@@ -1,7 +1,7 @@
 package com.limechain.cli;
 
 import com.limechain.chain.Chain;
-import com.limechain.exception.CliArgsParseException;
+import com.limechain.exception.misc.CliArgsParseException;
 import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.rpc.config.RpcMethods;
 import com.limechain.storage.DBInitializer;
