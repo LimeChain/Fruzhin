@@ -1,7 +1,7 @@
 package com.limechain.runtime.version;
 
 import com.limechain.runtime.version.scale.ApiVersionReader;
-import com.limechain.utils.scale.exceptions.ScaleDecodingException;
+import com.limechain.exception.scale.ScaleDecodingException;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleReader;
 

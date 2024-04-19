@@ -3,7 +3,7 @@ package com.limechain.chain;
 import com.limechain.chain.spec.ChainSpec;
 import com.limechain.chain.spec.ChainType;
 import com.limechain.config.HostConfig;
-import com.limechain.exception.ChainServiceInitializationException;
+import com.limechain.exception.chain.ChainServiceInitializationException;
 import com.limechain.storage.DBConstants;
 import com.limechain.storage.KVRepository;
 import lombok.Getter;

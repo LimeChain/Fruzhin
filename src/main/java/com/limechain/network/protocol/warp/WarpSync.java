@@ -1,7 +1,7 @@
 package com.limechain.network.protocol.warp;
 
-import com.limechain.exception.ExecutionFailedException;
-import com.limechain.exception.ThreadInterruptedException;
+import com.limechain.exception.global.ExecutionFailedException;
+import com.limechain.exception.global.ThreadInterruptedException;
 import com.limechain.network.StrictProtocolBinding;
 import com.limechain.network.protocol.warp.dto.WarpSyncResponse;
 import io.libp2p.core.AddressBook;

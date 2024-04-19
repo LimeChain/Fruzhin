@@ -1,9 +1,9 @@
 package com.limechain.runtime.hostapi;
 
-import com.limechain.exception.BatchVerificationNotStartedException;
-import com.limechain.exception.InvalidKeyTypeException;
-import com.limechain.exception.InvalidSeedException;
-import com.limechain.utils.scale.exceptions.ScaleEncodingException;
+import com.limechain.exception.hostapi.BatchVerificationNotStartedException;
+import com.limechain.exception.hostapi.InvalidKeyTypeException;
+import com.limechain.exception.hostapi.InvalidSeedException;
+import com.limechain.exception.scale.ScaleEncodingException;
 import com.limechain.rpc.server.AppBean;
 import com.limechain.runtime.hostapi.dto.Key;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
@@ -534,7 +534,7 @@ public class CryptoHostFunctions {
     }
 
     /**
-     * Registers ECDSA sr25519 signature for batch verification. Batch verification is enabled by calling
+     * Registers ECDSA signature for batch verification. Batch verification is enabled by calling
      * ext_crypto_start_batch_verify. The result of the verification is returned by ext_crypto_finish_batch_verify.
      * If batch verification is not enabled, the signature is verified immediately.
      *

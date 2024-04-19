@@ -1,9 +1,9 @@
 package com.limechain.trie.decoded.decoder;
 
+import com.limechain.exception.trie.TrieDecoderException;
 import com.limechain.trie.decoded.Node;
 import com.limechain.trie.decoded.NodeKind;
 import com.limechain.trie.decoded.NodeVariant;
-import com.limechain.trie.decoded.Trie;
 import com.limechain.trie.decoded.encoder.TrieEncoder;
 import com.limechain.utils.HashUtils;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;

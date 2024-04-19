@@ -1,6 +1,6 @@
 package com.limechain.storage;
 
-import com.limechain.exception.DBException;
+import com.limechain.exception.storage.DBException;
 import com.limechain.utils.ByteArrayUtils;
 import lombok.extern.java.Log;
 import org.apache.commons.io.FileUtils;

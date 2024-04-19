@@ -7,7 +7,7 @@ import com.limechain.network.protocol.lightclient.pb.LightClientMessage;
 import com.limechain.runtime.RuntimeBuilder;
 import com.limechain.trie.decoded.Trie;
 import com.limechain.trie.decoded.TrieVerifier;
-import com.limechain.trie.decoded.decoder.TrieDecoderException;
+import com.limechain.exception.trie.TrieDecoderException;
 import com.limechain.utils.LittleEndianUtils;
 import com.limechain.utils.RandomGenerationUtils;
 import com.limechain.utils.StringUtils;
