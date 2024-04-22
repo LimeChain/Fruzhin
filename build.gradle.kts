@@ -3,7 +3,7 @@ plugins {
     id("io.freefair.lombok") version "8.6"
     // Can't use newest 3.x version of Spring Boot as it fails to build with jsonprc4j
     // See: https://stackoverflow.com/questions/74760350/application-fails-on-run-in-a-new-release-of-springboot-3-0-0
-    id("org.springframework.boot") version "2.7.3"
+    id("org.springframework.boot") version "3.2.5"
     id("io.spring.dependency-management") version "1.1.0"
     id("application")
 }
