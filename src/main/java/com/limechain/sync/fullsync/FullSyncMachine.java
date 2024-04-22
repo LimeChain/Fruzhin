@@ -13,6 +13,7 @@ import com.limechain.runtime.Runtime;
 import com.limechain.runtime.RuntimeBuilder;
 import com.limechain.sync.fullsync.inherents.InherentData;
 import com.limechain.sync.fullsync.inherents.scale.InherentDataWriter;
+import com.limechain.trie.AccessorHolder;
 import com.limechain.trie.structure.nibble.Nibbles;
 import com.limechain.utils.scale.ScaleUtils;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
@@ -32,61 +33,63 @@ public class FullSyncMachine {
     }
 
     public void start() {
-
         // TODO: DIRTY INITIALIZATION FIX:
         //  this.networkService.currentSelectedPeer is null,
         //  unless explicitly set via some of the "update..." methods
         this.networkService.updateCurrentSelectedPeerWithNextBootnode();
+        AccessorHolder.getInstance().setToGenesis();
 
         // get response from block request
         final int HEADER = 0b0000_0001;
         final int BODY = 0b0000_0010;
         final int JUSTIFICATION = 0b0001_0000;
         SyncMessage.BlockResponse response = networkService.makeBlockRequest(new BlockRequestDto(
-            HEADER | BODY | JUSTIFICATION,
-            null, // no hash, number instead
-            1, //we want to start from the first block
-            SyncMessage.Direction.Descending,
-            1 //let's say we only want the next block after the genesis
+                HEADER | BODY | JUSTIFICATION,
+                null, // no hash, number instead
+                1, //we want to start from the first block
+                SyncMessage.Direction.Ascending,
+                10 //let's say we only want the next block after the genesis
         ));
 
         // Get the block from the list of responses:
         List<SyncMessage.BlockData> receivedBlockDatas = response.getBlocksList();
-        SyncMessage.BlockData blockData = receivedBlockDatas.get(0);
+        for (SyncMessage.BlockData blockData : receivedBlockDatas) {
+            // Protobuf decode the block header
+            var encodedHeader = blockData.getHeader().toByteArray();
+            BlockHeader blockHeader = ScaleUtils.Decode.decode(encodedHeader, new BlockHeaderReader());
+            System.out.println("block number is " + blockHeader.getBlockNumber());
+            byte[] encodedUnsealedHeader =
+                    ScaleUtils.Encode.encode(BlockHeaderScaleWriter.getInstance()::writeUnsealed, blockHeader);
 
-        // Protobuf decode the block header
-        var encodedHeader = blockData.getHeader().toByteArray();
-        BlockHeader blockHeader = ScaleUtils.Decode.decode(encodedHeader, new BlockHeaderReader());
-        System.out.println("block number is " + blockHeader.getBlockNumber());
-        byte[] encodedUnsealedHeader =
-            ScaleUtils.Encode.encode(BlockHeaderScaleWriter.getInstance()::writeUnsealed, blockHeader);
+            // Protobuf decode the block body and scale encode it
+            var extrinsincs = blockData.getBodyList();
+            var encodedBody = ScaleUtils.Encode.encodeAsList(
+                    ScaleCodecWriter::writeByteArray,
+                    () -> extrinsincs.stream().map(ByteString::toByteArray).iterator()
+            );
 
-        // Protobuf decode the block body and scale encode it
-        var extrinsincs = blockData.getBodyList();
-        var encodedBody = ScaleUtils.Encode.encodeAsList(
-            ScaleCodecWriter::writeByteArray,
-            () -> extrinsincs.stream().map(ByteString::toByteArray).iterator()
-        );
+            byte[] executeBlockParameter = ArrayUtils.addAll(encodedUnsealedHeader, encodedBody);
 
-        byte[] executeBlockParameter = ArrayUtils.addAll(encodedUnsealedHeader, encodedBody);
+            // Begin with runtime calls
+            // TODO: Fetch the bytecode better
+            byte[] runtimeCode = Objects.requireNonNull(AppBean.getBean(GenesisBlockHash.class)
+                            .getGenesisTrie()
+                            .node(Nibbles.fromBytes(":code".getBytes()))
+                            .asNodeHandle()
+                            .getUserData())
+                    .getValue();
 
-        // Begin with runtime calls
-        // TODO: Fetch the bytecode better
-        byte[] runtimeCode = Objects.requireNonNull(AppBean.getBean(GenesisBlockHash.class)
-                .getGenesisTrie()
-                .node(Nibbles.fromBytes(":code".getBytes()))
-                .asNodeHandle()
-                .getUserData())
-                .getValue();
+            Runtime runtime = new RuntimeBuilder()
+                    .buildRuntime(runtimeCode);
 
-        Runtime runtime = new RuntimeBuilder().buildRuntime(runtimeCode);
+            // Call BlockBuilder_check_inherents:
+            var args = getCheckInherentsParameter(executeBlockParameter);
+            byte[] checkInherentsOutput = runtime.call("BlockBuilder_check_inherents", args);
+            System.out.println(Arrays.toString(checkInherentsOutput));
 
-        // Call BlockBuilder_check_inherents:
-        var args = getCheckInherentsParameter(executeBlockParameter);
-        byte[] checkInherentsOutput = runtime.call("BlockBuilder_check_inherents", args);
-        System.out.println(Arrays.toString(checkInherentsOutput));
-
-        runtime.call("Core_execute_block", executeBlockParameter);
+            runtime.call("Core_execute_block", executeBlockParameter);
+        }
+        System.out.println("Done");
     }
 
     public static byte[] getCheckInherentsParameter(byte[] executeBlockParameter) {

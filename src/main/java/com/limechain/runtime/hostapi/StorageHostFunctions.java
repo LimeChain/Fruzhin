@@ -257,7 +257,14 @@ public class StorageHostFunctions {
         byte[] valueToAppend = runtime.getDataFromMemory(valuePointer);
 
         if (sequence == null) {
-            repository.save(key, valueToAppend);
+            ByteArrayOutputStream buf = new ByteArrayOutputStream();
+            try (ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
+                writer.writeCompact( 1);
+                writer.writeByteArray(valueToAppend);
+            } catch (IOException e) {
+                throw new ScaleEncodingException(e);
+            }
+            repository.save(key, buf.toByteArray());
             return;
         }
 
@@ -265,7 +272,14 @@ public class StorageHostFunctions {
         try {
             numberOfItems = new ScaleCodecReader(sequence).readCompactInt();
         } catch (IndexOutOfBoundsException e) {
-            repository.save(key, valueToAppend);
+            ByteArrayOutputStream buf = new ByteArrayOutputStream();
+            try (ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
+                writer.writeCompact( 1);
+                writer.writeByteArray(valueToAppend);
+            } catch (IOException ez) {
+                throw new ScaleEncodingException(e);
+            }
+            repository.save(key, buf.toByteArray());
             return;
         }
 

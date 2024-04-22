@@ -1,5 +1,7 @@
 package com.limechain.trie;
 
+import com.limechain.constants.GenesisBlockHash;
+import com.limechain.rpc.server.AppBean;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.Getter;
 import lombok.Setter;
@@ -20,8 +22,9 @@ public class AccessorHolder {
         return instance;
     }
 
-    public BlockTrieAccessor setToBlock(Hash256 blockHash) {
-        this.blockTrieAccessor = new BlockTrieAccessor(blockHash);
+    public BlockTrieAccessor setToGenesis() {
+        Hash256 genesisHash = AppBean.getBean(GenesisBlockHash.class).getGenesisHash();
+        this.blockTrieAccessor = new BlockTrieAccessor(genesisHash);
         return this.blockTrieAccessor;
     }
 
