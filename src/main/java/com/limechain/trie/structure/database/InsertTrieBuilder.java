@@ -7,6 +7,7 @@ import com.limechain.trie.structure.nibble.Nibbles;
 import com.limechain.trie.structure.node.InsertTrieNode;
 
 import java.util.List;
+import java.util.Objects;
 
 public class InsertTrieBuilder {
     private final TrieStructure<NodeData> trieStructure;
@@ -25,13 +26,13 @@ public class InsertTrieBuilder {
      *                               indicates an invalid state for the trie nodes.
      */
     public List<InsertTrieNode> build() {
-        return trieStructure.streamUnordered().map(this::prepareForInsert).toList();
+        return trieStructure.streamUnordered().map(this::prepareForInsert).filter(Objects::nonNull).toList();
     }
 
     private InsertTrieNode prepareForInsert(TrieNodeIndex nodeIndex) {
         NodeData userData = trieStructure.getUserDataAtIndex(nodeIndex);
         if (userData == null || userData.getMerkleValue() == null) {
-            throw new IllegalStateException("Merkle value should not be empty!");
+            return null;
         }
 
         NodeHandle<NodeData> nodeHandle = trieStructure.nodeHandleAtIndex(nodeIndex);

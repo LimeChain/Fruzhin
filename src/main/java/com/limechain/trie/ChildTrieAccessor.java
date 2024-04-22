@@ -15,7 +15,8 @@ public class ChildTrieAccessor extends TrieAccessor {
         this.childTrieKey = trieKey;
     }
 
-    public void persist() {
+    public void persistAll() {
+        super.persistAll();
         parentTrie.save(childTrieKey, lastRoot);
     }
 

@@ -104,6 +104,7 @@ public class FullSyncMachine {
 
             runtime.call("Core_execute_block", executeBlockParameter);
             log.info("Block executed successfully");
+            AccessorHolder.getInstance().getBlockTrieAccessor().persistAll();
         }
     }
 

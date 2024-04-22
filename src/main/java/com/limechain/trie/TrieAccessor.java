@@ -125,8 +125,15 @@ public class TrieAccessor implements KVRepository<Nibbles, byte[]> {
             }
         }
 
-//        trieDiff.diffInsertErase(node.getFullKey());
         return new DeleteByPrefixResult(deleted, true);
+    }
+
+    public void persistAll() {
+        for (ChildTrieAccessor value : loadedChildTries.values()) value.persistAll();
+        loadedChildTries.clear();
+
+        lastRoot = getMerkleRoot(StateVersion.V0);
+        trieStorage.insertTrieStorage(initialTrie, StateVersion.V0);
     }
 
     @Override

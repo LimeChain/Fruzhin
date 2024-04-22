@@ -32,4 +32,5 @@ public class AccessorHolder {
         this.blockTrieAccessor = new BlockTrieAccessor(lastRoot);
         return this.blockTrieAccessor;
     }
+
 }
