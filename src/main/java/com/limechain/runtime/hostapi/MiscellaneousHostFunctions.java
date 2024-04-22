@@ -10,6 +10,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.java.Log;
 import org.apache.tomcat.util.buf.HexUtils;
 import org.springframework.lang.Nullable;
+import org.wasmer.Module;
 import org.wasmer.ImportObject;
 import org.wasmer.Type;
 
@@ -48,7 +49,8 @@ public class MiscellaneousHostFunctions {
                                 runtimeVersionV1(new RuntimePointerSize(argv.get(0))).pointerSize(),
                         List.of(Type.I64), Type.I64),
                 HostApi.getImportObject("ext_logging_log_version_1", argv ->
-                                logV1(argv.get(0).intValue(), new RuntimePointerSize(argv.get(1)), new RuntimePointerSize(argv.get(2))),
+                                logV1(argv.get(0).intValue(), new RuntimePointerSize(argv.get(1)),
+                                        new RuntimePointerSize(argv.get(2))),
                         List.of(Type.I32, Type.I64, Type.I64)),
                 HostApi.getImportObject("ext_logging_max_level_version_1", argv ->
                         maxLevelV1(), List.of(), Type.I32)
