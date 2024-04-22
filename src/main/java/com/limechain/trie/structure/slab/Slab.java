@@ -1,6 +1,6 @@
 package com.limechain.trie.structure.slab;
 
-import com.limechain.trie.structure.slab.exceptions.InvalidSlabIndexException;
+import com.limechain.exception.trie.InvalidSlabIndexException;
 import org.javatuples.Pair;
 import org.jetbrains.annotations.NotNull;
 

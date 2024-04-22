@@ -1,6 +1,6 @@
 package com.limechain.runtime;
 
-import com.limechain.exception.WasmRuntimeException;
+import com.limechain.exception.misc.WasmRuntimeException;
 import com.limechain.runtime.version.scale.RuntimeVersionReader;
 import com.limechain.runtime.version.ApiVersions;
 import com.limechain.runtime.version.RuntimeVersion;

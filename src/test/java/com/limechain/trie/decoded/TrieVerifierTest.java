@@ -1,6 +1,6 @@
 package com.limechain.trie.decoded;
 
-import com.limechain.trie.decoded.decoder.TrieDecoderException;
+import com.limechain.exception.trie.TrieDecoderException;
 import com.limechain.trie.decoded.encoder.TrieEncoder;
 import com.limechain.utils.HashUtils;
 import com.limechain.utils.RandomGenerationUtils;

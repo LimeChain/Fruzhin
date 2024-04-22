@@ -1,7 +1,7 @@
 package com.limechain.trie.structure.nibble;
 
-import com.limechain.trie.structure.nibble.exceptions.NibbleFromHexDigitException;
-import com.limechain.trie.structure.nibble.exceptions.NibbleFromIntegerException;
+import com.limechain.exception.trie.NibbleFromHexDigitException;
+import com.limechain.exception.trie.NibbleFromIntegerException;
 
 import java.io.Serializable;
 import java.util.Objects;

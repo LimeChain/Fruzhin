@@ -4,7 +4,7 @@ import com.limechain.client.FullNode;
 import com.limechain.client.HostNode;
 import com.limechain.client.LightClient;
 import com.limechain.config.HostConfig;
-import com.limechain.exception.PrometheusServerStartException;
+import com.limechain.exception.misc.PrometheusServerStartException;
 import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.prometheus.PrometheusServer;
 import com.limechain.rpc.server.AppBean;

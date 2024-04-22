@@ -5,7 +5,7 @@ import com.googlecode.jsonrpc4j.spring.AutoJsonRpcServiceImpl;
 import com.limechain.chain.spec.ChainSpec;
 import com.limechain.chain.spec.ChainType;
 import com.limechain.chain.spec.PropertyValue;
-import com.limechain.rpc.exceptions.InvalidParametersException;
+import com.limechain.exception.rpc.InvalidParametersException;
 import com.limechain.rpc.methods.chain.ChainRPC;
 import com.limechain.rpc.methods.chain.ChainRPCImpl;
 import com.limechain.rpc.methods.childstate.ChildStateRPCImpl;

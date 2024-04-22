@@ -8,7 +8,7 @@ import com.limechain.trie.structure.NodeHandle;
 import com.limechain.trie.structure.TrieNodeIndex;
 import com.limechain.trie.structure.TrieStructure;
 import com.limechain.trie.structure.database.NodeData;
-import com.limechain.trie.structure.database.TrieBuildException;
+import com.limechain.exception.trie.TrieBuildException;
 import com.limechain.trie.dto.node.DecodedNode;
 import com.limechain.trie.dto.node.StorageValue;
 import com.limechain.trie.structure.nibble.Nibbles;

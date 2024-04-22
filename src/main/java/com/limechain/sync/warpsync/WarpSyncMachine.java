@@ -104,6 +104,6 @@ public class WarpSyncMachine {
 
     private void startFullSync() {
         this.syncedState.setWarpSyncFinished(true);
-        networkService.sendNeighbourMessages();
+        this.networkService.handshakeBootNodes();
     }
 }

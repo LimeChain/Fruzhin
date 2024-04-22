@@ -1,6 +1,7 @@
 package com.limechain.runtime.hostapi;
 
 import lombok.Getter;
+
 public enum WasmExports {
     HEAP_BASE("__heap_base"),
     DATA_END("__data_end"),

@@ -1,6 +1,6 @@
 package com.limechain.utils;
 
-import com.limechain.exception.Sr25519Exception;
+import com.limechain.exception.misc.Sr25519Exception;
 import com.limechain.runtime.hostapi.dto.VerifySignature;
 import io.emeraldpay.polkaj.schnorrkel.Schnorrkel;
 import io.emeraldpay.polkaj.schnorrkel.SchnorrkelException;

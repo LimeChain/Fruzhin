@@ -1,23 +1,23 @@
 package com.limechain.runtime.hostapi;
 
 import com.limechain.config.HostConfig;
-import com.limechain.exception.ThreadInterruptedException;
+import com.limechain.exception.global.ThreadInterruptedException;
 import com.limechain.network.Network;
 import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.rpc.server.AppBean;
 import com.limechain.runtime.Runtime;
 import com.limechain.runtime.hostapi.dto.HttpErrorType;
 import com.limechain.runtime.hostapi.dto.HttpStatusCode;
-import com.limechain.runtime.hostapi.dto.InvalidArgumentException;
+import com.limechain.exception.hostapi.InvalidArgumentException;
 import com.limechain.runtime.hostapi.dto.InvalidRequestId;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
-import com.limechain.runtime.hostapi.exceptions.OffchainResponseWaitException;
+import com.limechain.exception.hostapi.OffchainResponseWaitException;
 import com.limechain.storage.KVRepository;
 import com.limechain.storage.offchain.OffchainStore;
 import com.limechain.storage.offchain.StorageKind;
 import com.limechain.sync.warpsync.SyncedState;
 import com.limechain.utils.scale.ScaleUtils;
-import com.limechain.utils.scale.exceptions.ScaleEncodingException;
+import com.limechain.exception.scale.ScaleEncodingException;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.emeraldpay.polkaj.scale.reader.ListReader;

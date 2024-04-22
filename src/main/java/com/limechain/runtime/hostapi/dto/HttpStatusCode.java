@@ -1,6 +1,6 @@
 package com.limechain.runtime.hostapi.dto;
 
-import com.limechain.utils.scale.exceptions.ScaleEncodingException;
+import com.limechain.exception.scale.ScaleEncodingException;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

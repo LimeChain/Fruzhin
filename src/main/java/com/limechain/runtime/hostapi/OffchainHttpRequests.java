@@ -1,5 +1,6 @@
 package com.limechain.runtime.hostapi;
 
+import com.limechain.exception.hostapi.SocketTimeoutException;
 import com.limechain.runtime.hostapi.dto.HttpErrorType;
 import com.limechain.runtime.hostapi.dto.HttpStatusCode;
 import com.limechain.runtime.hostapi.dto.InvalidRequestId;
@@ -9,7 +10,6 @@ import lombok.extern.java.Log;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.time.Instant;
 import java.util.HashMap;
@@ -116,7 +116,7 @@ public class OffchainHttpRequests {
         return requestStatuses;
     }
 
-    public HttpStatusCode executeRequest(int requestId, int timeout, long startTime){
+    public HttpStatusCode executeRequest(int requestId, int timeout, long startTime) {
         try {
             HttpURLConnection request = getExistingRequest(requestId);
             int statusCode = waitRequestResponseWithTimeout(request, timeout, startTime);

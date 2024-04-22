@@ -1,5 +1,6 @@
 package com.limechain.trie.structure.database;
 
+import com.limechain.exception.trie.TrieBuildException;
 import com.limechain.trie.structure.NodeHandle;
 import com.limechain.trie.structure.TrieNodeIndex;
 import com.limechain.trie.structure.TrieStructure;

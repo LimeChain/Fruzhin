@@ -1,6 +1,6 @@
 package com.limechain.storage.block;
 
-import com.limechain.exception.MissingObjectException;
+import com.limechain.exception.global.MissingObjectException;
 import com.limechain.network.protocol.warp.dto.Block;
 import com.limechain.network.protocol.warp.dto.BlockBody;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
@@ -10,12 +10,12 @@ import com.limechain.rpc.subscriptions.chainsub.ChainSub;
 import com.limechain.runtime.Runtime;
 import com.limechain.storage.DBConstants;
 import com.limechain.storage.KVRepository;
-import com.limechain.storage.block.exception.BlockNodeNotFoundException;
-import com.limechain.storage.block.exception.BlockNotFoundException;
-import com.limechain.storage.block.exception.BlockStorageGenericException;
-import com.limechain.storage.block.exception.HeaderNotFoundException;
-import com.limechain.storage.block.exception.LowerThanRootException;
-import com.limechain.storage.block.exception.RoundAndSetIdNotFoundException;
+import com.limechain.exception.storage.BlockNodeNotFoundException;
+import com.limechain.exception.storage.BlockNotFoundException;
+import com.limechain.exception.storage.BlockStorageGenericException;
+import com.limechain.exception.storage.HeaderNotFoundException;
+import com.limechain.exception.storage.LowerThanRootException;
+import com.limechain.exception.storage.RoundAndSetIdNotFoundException;
 import com.limechain.storage.block.tree.BlockTree;
 import com.limechain.utils.scale.ScaleUtils;
 import io.emeraldpay.polkaj.types.Hash256;

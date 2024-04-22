@@ -2,10 +2,10 @@ package com.limechain.storage.block.tree;
 
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.runtime.Runtime;
-import com.limechain.storage.block.exception.BlockAlreadyExistsException;
-import com.limechain.storage.block.exception.BlockNodeNotFoundException;
-import com.limechain.storage.block.exception.BlockStorageGenericException;
-import com.limechain.storage.block.exception.LowerThanRootException;
+import com.limechain.exception.storage.BlockAlreadyExistsException;
+import com.limechain.exception.storage.BlockNodeNotFoundException;
+import com.limechain.exception.storage.BlockStorageGenericException;
+import com.limechain.exception.storage.LowerThanRootException;
 import com.limechain.storage.block.map.HashToRuntime;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.Getter;

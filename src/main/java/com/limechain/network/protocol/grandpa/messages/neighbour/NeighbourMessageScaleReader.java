@@ -1,6 +1,6 @@
 package com.limechain.network.protocol.grandpa.messages.neighbour;
 
-import com.limechain.exception.WrongMessageTypeException;
+import com.limechain.exception.scale.WrongMessageTypeException;
 import com.limechain.network.protocol.grandpa.messages.GrandpaMessageType;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleReader;

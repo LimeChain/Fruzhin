@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.googlecode.jsonrpc4j.JsonRpcInterceptor;
 import com.limechain.cli.CliArguments;
 import com.limechain.rpc.config.UnsafeRpcMethod;
-import com.limechain.rpc.exceptions.UnsafeAccessException;
+import com.limechain.exception.rpc.UnsafeAccessException;
 
 import java.lang.reflect.Method;
 import java.util.List;

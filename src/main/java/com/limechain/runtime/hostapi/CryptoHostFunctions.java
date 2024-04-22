@@ -1,8 +1,9 @@
 package com.limechain.runtime.hostapi;
 
-import com.limechain.exception.BatchVerificationNotStartedException;
-import com.limechain.exception.InvalidKeyTypeException;
-import com.limechain.exception.InvalidSeedException;
+import com.limechain.exception.hostapi.BatchVerificationNotStartedException;
+import com.limechain.exception.hostapi.InvalidKeyTypeException;
+import com.limechain.exception.hostapi.InvalidSeedException;
+import com.limechain.exception.scale.ScaleEncodingException;
 import com.limechain.rpc.server.AppBean;
 import com.limechain.runtime.Runtime;
 import com.limechain.runtime.hostapi.dto.Key;
@@ -16,7 +17,6 @@ import com.limechain.utils.EcdsaUtils;
 import com.limechain.utils.Ed25519Utils;
 import com.limechain.utils.HashUtils;
 import com.limechain.utils.Sr25519Utils;
-import com.limechain.utils.scale.exceptions.ScaleEncodingException;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.emeraldpay.polkaj.scale.writer.ListWriter;
@@ -568,7 +568,7 @@ public class CryptoHostFunctions {
     }
 
     /**
-     * Registers ECDSA sr25519 signature for batch verification. Batch verification is enabled by calling
+     * Registers ECDSA signature for batch verification. Batch verification is enabled by calling
      * ext_crypto_start_batch_verify. The result of the verification is returned by ext_crypto_finish_batch_verify.
      * If batch verification is not enabled, the signature is verified immediately.
      *
@@ -618,7 +618,7 @@ public class CryptoHostFunctions {
      */
     public int secp256k1EcdsaRecoverCompressedV1(int signature, int message) {
         log.log(Level.INFO, "secp256k1EcdsaRecoverCompressedV1");
-        
+
         byte[] rawBytes = internalSecp256k1RecoverKey(signature, message, true);
         return secp2561kScaleKeyResult(rawBytes);
     }
