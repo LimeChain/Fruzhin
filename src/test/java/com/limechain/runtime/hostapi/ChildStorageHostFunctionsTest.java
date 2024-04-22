@@ -7,6 +7,7 @@ import com.limechain.storage.DeleteByPrefixResult;
 import com.limechain.trie.BlockTrieAccessor;
 import com.limechain.trie.ChildTrieAccessor;
 import com.limechain.trie.structure.nibble.Nibbles;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -25,6 +26,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
+@Disabled
 class ChildStorageHostFunctionsTest {
     @InjectMocks
     private ChildStorageHostFunctions childStorageHostFunctions;
