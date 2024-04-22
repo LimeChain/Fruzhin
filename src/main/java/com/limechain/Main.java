@@ -12,42 +12,13 @@ import com.limechain.rpc.server.RpcApp;
 import lombok.extern.java.Log;
 import sun.misc.Signal;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.IOException;
 import java.util.logging.Level;
 
 @Log
 public class Main {
-    public static String getCurrentPlatformIdentifier() {
-        String osName = System.getProperty("os.name").toLowerCase();
-
-        if (osName.contains("windows")) {
-            osName = "windows";
-        } else if (osName.contains("mac os x")) {
-            osName = "darwin";
-            String[] args = new String[] {"/bin/bash", "-c", "uname", "-p"};
-            try {
-                Process proc = new ProcessBuilder(args).start();
-                BufferedReader reader = new BufferedReader(new InputStreamReader(proc.getInputStream()));
-                if (reader.readLine().equals("Darwin")) {
-                    return osName + "-arm64";
-                }
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        } else {
-            osName = osName.replaceAll("\\s+", "_");
-        }
-        return osName + "-" + System.getProperty("os.arch");
-    }
 
     public static void main(String[] args) throws IOException {
-//        final File libfile = File.createTempFile("wasmer_jni", ".lib", new File(System.getProperty("user.dir")));
-//        libfile.deleteOnExit(); // just in case
-//        System.out.println(libfile.getAbsolutePath());
         // Instantiate and start the spring application, so we get the global context
         RpcApp rpcApp = new RpcApp();
         rpcApp.start(args);

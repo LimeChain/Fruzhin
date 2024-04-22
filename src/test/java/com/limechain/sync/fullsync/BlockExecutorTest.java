@@ -70,7 +70,6 @@ public class BlockExecutorTest {
         BlockBody body = new BlockBody(exts.stream().map(Extrinsics::new).toList());
         Block block = new Block(header, body);
 
-
         ChainSpec chainSpec = ChainSpec.newFromJSON("genesis/ksmcc3.json");
         var top = chainSpec.getGenesis().getTop();
 
