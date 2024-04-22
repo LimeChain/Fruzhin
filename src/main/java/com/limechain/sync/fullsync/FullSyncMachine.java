@@ -43,27 +43,33 @@ public class FullSyncMachine {
 
         int startNumber = 1;
         List<SyncMessage.BlockData> receivedBlockDatas = getBlocks(startNumber, 10);
-        while(!receivedBlockDatas.isEmpty()) {
-            startNumber+=10;
+        while (!receivedBlockDatas.isEmpty()) {
+            startNumber += 10;
             executeBlocks(receivedBlockDatas);
             receivedBlockDatas = getBlocks(startNumber, 10);
         }
     }
 
     private @NotNull List<SyncMessage.BlockData> getBlocks(int start, int amount) {
-        final int HEADER = 0b0000_0001;
-        final int BODY = 0b0000_0010;
-        final int JUSTIFICATION = 0b0001_0000;
-        SyncMessage.BlockResponse response = networkService.makeBlockRequest(new BlockRequestDto(
-                HEADER | BODY | JUSTIFICATION,
-                null, // no hash, number instead
-                start,
-                SyncMessage.Direction.Ascending,
-                amount
-        ));
+        try {
+            final int HEADER = 0b0000_0001;
+            final int BODY = 0b0000_0010;
+            final int JUSTIFICATION = 0b0001_0000;
+            SyncMessage.BlockResponse response = networkService.makeBlockRequest(new BlockRequestDto(
+                    HEADER | BODY | JUSTIFICATION,
+                    null, // no hash, number instead
+                    start,
+                    SyncMessage.Direction.Ascending,
+                    amount
+            ));
 
-        // Get the block from the list of responses:
-        return response.getBlocksList();
+            // Get the block from the list of responses:
+            return response.getBlocksList();
+        } catch (Exception ex) {
+            log.info("Error while fetching blocks, trying to fetch again");
+            this.networkService.updateCurrentSelectedPeerWithNextBootnode();
+            return getBlocks(start, amount);
+        }
     }
 
     private void executeBlocks(List<SyncMessage.BlockData> receivedBlockDatas) {
