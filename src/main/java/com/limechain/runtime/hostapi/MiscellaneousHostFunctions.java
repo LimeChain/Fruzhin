@@ -1,9 +1,9 @@
 package com.limechain.runtime.hostapi;
 
+import com.limechain.exception.scale.ScaleEncodingException;
 import com.limechain.runtime.Runtime;
 import com.limechain.runtime.RuntimeBuilder;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
-import com.limechain.exception.scale.ScaleEncodingException;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -11,7 +11,6 @@ import lombok.extern.java.Log;
 import org.apache.tomcat.util.buf.HexUtils;
 import org.springframework.lang.Nullable;
 import org.wasmer.ImportObject;
-import org.wasmer.Module;
 import org.wasmer.Type;
 
 import java.io.ByteArrayOutputStream;
@@ -62,7 +61,7 @@ public class MiscellaneousHostFunctions {
      * @param number the number to be printed
      */
     public void printNumV1(Number number) {
-        log.fine("++HF++ Printing number from runtime: " + number);
+        log.fine("Printing number from runtime: " + number);
     }
 
     /**
@@ -74,7 +73,7 @@ public class MiscellaneousHostFunctions {
         byte[] data = runtime.getDataFromMemory(strPointer);
 
         final String strToPrint = new String(data, StandardCharsets.UTF_8);
-        log.fine("++HF++ Printing utf8 from runtime: " + strToPrint);
+        log.fine("Printing utf8 from runtime: " + strToPrint);
     }
 
     /**
@@ -86,7 +85,7 @@ public class MiscellaneousHostFunctions {
         byte[] data = runtime.getDataFromMemory(pointer);
 
         final String hexString = HexUtils.toHexString(data);
-        log.fine("++HF++ Printing hex from runtime: " + hexString);
+        log.fine("Printing hex from runtime: " + hexString);
     }
 
     /**

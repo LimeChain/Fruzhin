@@ -105,14 +105,14 @@ public class FreeingBumpHeapAllocator {
      * @throws AllocationError when a block of this size can't be allocated
      */
     public RuntimePointerSize allocate(int size, Memory memory) {
-        log.finer("++HF++ Allocating memory... size=" + size);
+        log.finer("Allocating memory... size=" + size);
         verifyMemorySize(memory);
         Order order = getOrderForSize(size);
         int headerPointer = nextFreeHeaderPointer(order, memory);
         writeOccupiedHeader(headerPointer, order.getValue(), memory);
         stats.allocated(order.getBlockSize() + HEADER_SIZE, bumper - originalHeapBase);
-        log.finer("++HF++ Allocated " + stats.getBytesAllocated() + " bytes successfully");
-        log.finer("++HF++ Total Allocated Memory: " + stats.getBytesAllocatedSum().toString());
+        log.finer("Allocated " + stats.getBytesAllocated() + " bytes successfully");
+        log.finer("Total Allocated Memory: " + stats.getBytesAllocatedSum().toString());
         return new RuntimePointerSize(headerPointer + HEADER_SIZE, size);
 
     }

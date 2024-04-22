@@ -2,7 +2,6 @@ package com.limechain.runtime.hostapi;
 
 import com.limechain.runtime.Runtime;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
-import com.limechain.trie.structure.nibble.Nibbles;
 import com.limechain.utils.HashUtils;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -55,7 +54,7 @@ public class HashingHostFunctions {
      * @return a pointer to the buffer containing the 256-bit hash result.
      */
     public int keccak256V1(RuntimePointerSize data) {
-        log.fine("++HF++ keccak256V1");
+        log.fine("keccak256V1");
         byte[] dataToHash = runtime.getDataFromMemory(data);
 
         byte[] hash = HashUtils.hashWithKeccak256(dataToHash);
@@ -70,7 +69,7 @@ public class HashingHostFunctions {
      * @return a pointer to the buffer containing the 512-bit hash result.
      */
     public int keccak512V1(RuntimePointerSize data) {
-        log.fine("++HF++ keccak512V1");
+        log.fine("keccak512V1");
 
         byte[] dataToHash = runtime.getDataFromMemory(data);
 
@@ -86,7 +85,7 @@ public class HashingHostFunctions {
      * @return a pointer to the buffer containing the 256-bit hash result.
      */
     public int sha2256V1(RuntimePointerSize data) {
-        log.fine("++HF++ sha2256V1");
+        log.fine("sha2256V1");
 
         byte[] dataToHash = runtime.getDataFromMemory(data);
 
@@ -102,7 +101,7 @@ public class HashingHostFunctions {
      * @return a pointer to the buffer containing the 128-bit hash result.
      */
     public int blake2128V1(RuntimePointerSize data) {
-        log.fine("++HF++ blake2128V1");
+        log.fine("blake2128V1");
         byte[] dataToHash = runtime.getDataFromMemory(data);
 
         byte[] hash = HashUtils.hashWithBlake2b128(dataToHash);
@@ -117,7 +116,7 @@ public class HashingHostFunctions {
      * @return a pointer to the buffer containing the 256-bit hash result.
      */
     public int blake2256V1(RuntimePointerSize data) {
-        log.fine("++HF++ blake2256V1");
+        log.fine("blake2256V1");
 
         byte[] dataToHash = runtime.getDataFromMemory(data);
 
@@ -133,7 +132,7 @@ public class HashingHostFunctions {
      * @return a pointer to the buffer containing the 64-bit hash result.
      */
     public int twox64V1(final RuntimePointerSize data) {
-        log.fine("++HF++ twox64V1");
+        log.fine("twox64V1");
 
         byte[] dataToHash = runtime.getDataFromMemory(data);
 
@@ -149,7 +148,7 @@ public class HashingHostFunctions {
      * @return a pointer to the buffer containing the 128-bit hash result.
      */
     public int twox128V1(final RuntimePointerSize data) {
-        log.fine("++HF++ twox128V1");
+        log.fine("twox128V1");
 
         byte[] dataToHash = runtime.getDataFromMemory(data);
         log.fine("with data to hash: " + new String(dataToHash));
@@ -167,7 +166,7 @@ public class HashingHostFunctions {
      * @return a pointer to the buffer containing the 256-bit hash result.
      */
     public int twox256V1(final RuntimePointerSize data) {
-        log.fine("++HF++ twox256V1");
+        log.fine("twox256V1");
 
         byte[] dataToHash = runtime.getDataFromMemory(data);
 
