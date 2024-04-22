@@ -18,13 +18,15 @@ import com.limechain.trie.structure.nibble.Nibbles;
 import com.limechain.utils.scale.ScaleUtils;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import lombok.Getter;
+import lombok.extern.java.Log;
 import org.apache.commons.lang3.ArrayUtils;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
 @Getter
+@Log
 public class FullSyncMachine {
     private final Network networkService;
 
@@ -37,27 +39,39 @@ public class FullSyncMachine {
         //  this.networkService.currentSelectedPeer is null,
         //  unless explicitly set via some of the "update..." methods
         this.networkService.updateCurrentSelectedPeerWithNextBootnode();
-        AccessorHolder.getInstance().setToGenesis();
+        AccessorHolder.getInstance().setToGenesis(); //todo: dirty fix for now
 
-        // get response from block request
+        int startNumber = 1;
+        List<SyncMessage.BlockData> receivedBlockDatas = getBlocks(startNumber, 10);
+        while(!receivedBlockDatas.isEmpty()) {
+            startNumber+=10;
+            executeBlocks(receivedBlockDatas);
+            receivedBlockDatas = getBlocks(startNumber, 10);
+        }
+    }
+
+    private @NotNull List<SyncMessage.BlockData> getBlocks(int start, int amount) {
         final int HEADER = 0b0000_0001;
         final int BODY = 0b0000_0010;
         final int JUSTIFICATION = 0b0001_0000;
         SyncMessage.BlockResponse response = networkService.makeBlockRequest(new BlockRequestDto(
                 HEADER | BODY | JUSTIFICATION,
                 null, // no hash, number instead
-                1, //we want to start from the first block
+                start,
                 SyncMessage.Direction.Ascending,
-                10 //let's say we only want the next block after the genesis
+                amount
         ));
 
         // Get the block from the list of responses:
-        List<SyncMessage.BlockData> receivedBlockDatas = response.getBlocksList();
+        return response.getBlocksList();
+    }
+
+    private void executeBlocks(List<SyncMessage.BlockData> receivedBlockDatas) {
         for (SyncMessage.BlockData blockData : receivedBlockDatas) {
             // Protobuf decode the block header
             var encodedHeader = blockData.getHeader().toByteArray();
             BlockHeader blockHeader = ScaleUtils.Decode.decode(encodedHeader, new BlockHeaderReader());
-            System.out.println("block number is " + blockHeader.getBlockNumber());
+            log.info("Block number to be executed is " + blockHeader.getBlockNumber());
             byte[] encodedUnsealedHeader =
                     ScaleUtils.Encode.encode(BlockHeaderScaleWriter.getInstance()::writeUnsealed, blockHeader);
 
@@ -85,11 +99,12 @@ public class FullSyncMachine {
             // Call BlockBuilder_check_inherents:
             var args = getCheckInherentsParameter(executeBlockParameter);
             byte[] checkInherentsOutput = runtime.call("BlockBuilder_check_inherents", args);
-            System.out.println(Arrays.toString(checkInherentsOutput));
+            boolean checkOk = checkInherentsOutput[0] == 1;
+            log.info("Block is good to execute: " + checkOk);
 
             runtime.call("Core_execute_block", executeBlockParameter);
+            log.info("Block executed successfully");
         }
-        System.out.println("Done");
     }
 
     public static byte[] getCheckInherentsParameter(byte[] executeBlockParameter) {
