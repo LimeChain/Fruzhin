@@ -9,7 +9,7 @@ authoring and relaying node, increasing security of the Polkadot Protocol. It's 
 # Status
 
 - [x] Light Client
-- [ ] Full Node
+- [x] Full Node
 - [ ] Authoring Node
 - [ ] Relaying Node
 
@@ -46,6 +46,7 @@ export JAVA_HOME=`/usr/libexec/java_home -v 17.0.8`
 Note: This step will be automated in the future
 ```
 
+Mac users can skip this step.
 For now, you will have to manually grab the compiled `wasmer-java` dynamic library
 file from the subfolder under `./wasmer-setup` corresponding to your architecture type.
 Copy the file to the Java `Extensions` folder:
@@ -65,9 +66,10 @@ Copy the file to the Java `Extensions` folder:
 ### Sync with official chain
 
 ```bash
-java -jar build/libs/fruzhin-0.1.0.jar -n {network}
+java --enable-preview -jar build/libs/fruzhin-0.1.0.jar -n {network}
 ```
 
+- `--enable-preview` flag is necessary as we are using java preview features
 - `network` can be `westend`, `polkadot` or `kusama`
 
 ### Local development
