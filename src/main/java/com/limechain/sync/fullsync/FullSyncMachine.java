@@ -41,11 +41,12 @@ public class FullSyncMachine {
         AccessorHolder.getInstance().setToGenesis(); //todo: dirty fix for now
 
         int startNumber = 1;
-        List<SyncMessage.BlockData> receivedBlockDatas = getBlocks(startNumber, 10);
+        int blocksToFetch = 50;
+        List<SyncMessage.BlockData> receivedBlockDatas = getBlocks(startNumber, blocksToFetch);
         while (!receivedBlockDatas.isEmpty()) {
-            startNumber += 10;
+            startNumber += blocksToFetch;
             executeBlocks(receivedBlockDatas);
-            receivedBlockDatas = getBlocks(startNumber, 10);
+            receivedBlockDatas = getBlocks(startNumber, blocksToFetch);
         }
     }
 
