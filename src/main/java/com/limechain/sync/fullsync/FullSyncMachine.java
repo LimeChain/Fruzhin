@@ -2,6 +2,7 @@ package com.limechain.sync.fullsync;
 
 import com.google.protobuf.ByteString;
 import com.limechain.constants.GenesisBlockHash;
+import com.limechain.exception.sync.BlockExecutionException;
 import com.limechain.network.Network;
 import com.limechain.network.protocol.blockannounce.scale.BlockHeaderScaleWriter;
 import com.limechain.network.protocol.sync.BlockRequestDto;
@@ -16,7 +17,9 @@ import com.limechain.sync.fullsync.inherents.scale.InherentDataWriter;
 import com.limechain.trie.AccessorHolder;
 import com.limechain.trie.structure.nibble.Nibbles;
 import com.limechain.utils.scale.ScaleUtils;
+import com.limechain.utils.scale.readers.PairReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
+import io.emeraldpay.polkaj.scale.reader.ListReader;
 import lombok.Getter;
 import lombok.extern.java.Log;
 import org.apache.commons.lang3.ArrayUtils;
@@ -105,13 +108,36 @@ public class FullSyncMachine {
             // Call BlockBuilder_check_inherents:
             var args = getCheckInherentsParameter(executeBlockParameter);
             byte[] checkInherentsOutput = runtime.call("BlockBuilder_check_inherents", args);
-            boolean checkOk = checkInherentsOutput[0] == 1;
-            log.info("Block is good to execute: " + checkOk);
+            boolean goodToExecute = isBlockGoodToExecute(checkInherentsOutput);
 
-            runtime.call("Core_execute_block", executeBlockParameter);
-            log.info("Block executed successfully");
-            AccessorHolder.getInstance().getBlockTrieAccessor().persistAll();
+            log.info("Block is good to execute: " + goodToExecute);
+
+            if (goodToExecute) {
+                runtime.call("Core_execute_block", executeBlockParameter);
+                log.info("Block executed successfully");
+                AccessorHolder.getInstance().getBlockTrieAccessor().persistAll();
+            }else{
+                log.info("Block not executed");
+                throw new BlockExecutionException();
+            }
         }
+    }
+
+    private static boolean isBlockGoodToExecute(byte[] checkInherentsOutput) {
+        var data = ScaleUtils.Decode.decode(ArrayUtils.subarray(checkInherentsOutput, 2, checkInherentsOutput.length),
+                new ListReader<>(new PairReader<>(scr -> new String(scr.readByteArray(8)), scr -> new String(scr.readByteArray()))));
+
+        boolean goodToExecute;
+
+        if(data.size() > 1){
+            goodToExecute = false;
+        }else if (data.size() == 1) {
+            //If the inherent is babeslot or auraslot, then it's an expected issue and we can proceed
+            goodToExecute = data.get(0).getValue0().equals("babeslot") || data.get(0).getValue0().equals("auraslot");
+        }else{
+            goodToExecute = true;
+        }
+        return goodToExecute;
     }
 
     public static byte[] getCheckInherentsParameter(byte[] executeBlockParameter) {

@@ -81,23 +81,19 @@ public class TrieAccessor implements KVRepository<Nibbles, byte[]> {
 
     @Override
     public DeleteByPrefixResult deleteByPrefix(Nibbles prefix, Long limit) {
-//        loadPathToKey(prefix);
+        NodeHandle<NodeData> parent = switch (initialTrie.node(prefix)) {
+            case Vacant<NodeData> vacant -> Optional.ofNullable(vacant.getClosestAncestorIndex())
+                    .map(initialTrie::nodeHandleAtIndex)
+                    .orElse(null);
+            case NodeHandle<NodeData> handle -> handle.getParent();
+        };
 
-//        NodeHandle<NodeData> parent = switch (partialTrie.node(prefix)) {
-//            case Vacant<NodeData> vacant -> Optional.ofNullable(vacant.getClosestAncestorIndex())
-//                    .map(partialTrie::nodeHandleAtIndex)
-//                    .orElse(null);
-//            case NodeHandle<NodeData> handle -> handle.getParent();
-//        };
-
-        DeleteByPrefixResult other = new DeleteByPrefixResult(0, true);
-        return other;
-//        return Optional.ofNullable(parent)
-//                .map(NodeHandle::getFullKey)
-//                .map(parentKey -> prefixIndexInParent(parentKey, prefix))
-//                .flatMap(parent::getChild)
-//                .map(c -> lexicographicDelete(c, limit))
-//                .orElse(other);
+        return Optional.ofNullable(parent)
+                .map(NodeHandle::getFullKey)
+                .map(parentKey -> prefixIndexInParent(parentKey, prefix))
+                .flatMap(parent::getChild)
+                .map(c -> lexicographicDelete(c, limit))
+                .orElse(new DeleteByPrefixResult(0, true));
     }
 
     private Nibble prefixIndexInParent(Nibbles parent, Nibbles prefix) {
