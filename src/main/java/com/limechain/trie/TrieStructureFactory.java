@@ -3,19 +3,20 @@ package com.limechain.trie;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Bytes;
 import com.google.protobuf.ByteString;
+import com.limechain.exception.trie.TrieBuildException;
 import com.limechain.runtime.version.StateVersion;
+import com.limechain.trie.dto.node.DecodedNode;
+import com.limechain.trie.dto.node.StorageValue;
 import com.limechain.trie.structure.NodeHandle;
 import com.limechain.trie.structure.TrieNodeIndex;
 import com.limechain.trie.structure.TrieStructure;
 import com.limechain.trie.structure.database.NodeData;
-import com.limechain.exception.trie.TrieBuildException;
-import com.limechain.trie.dto.node.DecodedNode;
-import com.limechain.trie.dto.node.StorageValue;
 import com.limechain.trie.structure.nibble.Nibbles;
 import com.limechain.utils.HashUtils;
 import lombok.experimental.UtilityClass;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.UnaryOperator;
@@ -59,18 +60,51 @@ public class TrieStructureFactory {
         }
     }
 
-    public void recalculateMerkleValues(TrieStructure<NodeData> trie, StateVersion stateVersion,
-                                        UnaryOperator<byte[]> hashFunction) {
+    public List<TrieNodeIndex> recalculateMerkleValues(TrieStructure<NodeData> trie, StateVersion stateVersion,
+                                                       UnaryOperator<byte[]> hashFunction) {
         List<TrieNodeIndex> nodeIndices = trie.streamOrdered().toList();
+        List<TrieNodeIndex> updatedNodes = new ArrayList<>();
 
         for (TrieNodeIndex index : Lists.reverse(nodeIndices)) {
             NodeHandle<NodeData> nodeHandle = trie.nodeHandleAtIndex(index);
             if (nodeHandle == null) {
                 throw new TrieBuildException("Could not initialize trie");
             }
-            if (nodeHandle.getUserData() == null || nodeHandle.getUserData().getMerkleValue() == null) {
-                calculateAndSetMerkleValue(nodeHandle, stateVersion, hashFunction);
+            boolean updated = recalculateAndSetMerkleValue(nodeHandle, stateVersion, hashFunction);
+            if (updated) {
+                updatedNodes.add(index);
+
             }
+        }
+        return updatedNodes;
+    }
+
+    private boolean recalculateAndSetMerkleValue(NodeHandle<NodeData> nodeHandle, StateVersion stateVersion,
+                                            UnaryOperator<byte[]> hashFunction) {
+        NodeData userData = nodeHandle.getUserData();
+
+        // Node didn't have any userData set (hence no storage value), but now we want to calculate its merkle value
+        if (userData == null) {
+            userData = new NodeData(null);
+        }
+
+        StorageValue storageValue = constructStorageValue(userData.getValue(), stateVersion);
+        DecodedNode<List<Byte>> decoded = new DecodedNode<>(
+            getChildrenValues(nodeHandle),
+            nodeHandle.getPartialKey(),
+            storageValue);
+
+        byte[] merkleValue = decoded.calculateMerkleValue(
+            hashFunction,
+                nodeHandle.isRootNode());
+
+        if (userData.getMerkleValue() != null &&
+            Bytes.asList(userData.getMerkleValue()).equals(Bytes.asList(merkleValue))) {
+            return false;
+        } else {
+            userData.setMerkleValue(merkleValue);
+            nodeHandle.setUserData(userData);
+            return true;
         }
     }
 

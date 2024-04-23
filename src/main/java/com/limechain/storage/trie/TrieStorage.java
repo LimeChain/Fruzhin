@@ -5,6 +5,7 @@ import com.limechain.runtime.version.StateVersion;
 import com.limechain.storage.KVRepository;
 import com.limechain.storage.block.BlockState;
 import com.limechain.trie.dto.node.StorageNode;
+import com.limechain.trie.structure.TrieNodeIndex;
 import com.limechain.trie.structure.TrieStructure;
 import com.limechain.trie.structure.database.InsertTrieBuilder;
 import com.limechain.trie.structure.database.NodeData;
@@ -240,7 +241,7 @@ public class TrieStorage {
 
         if (prefix.equals(rootNode.getPartialKey())) {
             return Optional.of(new StorageNode(rootNode.getPartialKey(),
-                new NodeData(rootNode.getValue(), rootMerkleValue)));
+                    new NodeData(rootNode.getValue(), rootMerkleValue)));
         }
 
         return Optional.ofNullable(searchForNextBranch(rootNode, prefix, rootNode.getPartialKey()));
@@ -332,7 +333,7 @@ public class TrieStorage {
         }
 
         List<Nibbles> matchingKeys = new ArrayList<>();
-        collectKeysWithPrefix(rootNode, Nibbles.EMPTY, prefix, startKey, limit, matchingKeys, new boolean[] {false});
+        collectKeysWithPrefix(rootNode, Nibbles.EMPTY, prefix, startKey, limit, matchingKeys, new boolean[]{false});
         return matchingKeys;
     }
 
@@ -390,8 +391,8 @@ public class TrieStorage {
         }
 
         entries.add(
-            new StorageNode(rootNode.getPartialKey(),
-                new NodeData(rootNode.getValue(), merkleValue)));
+                new StorageNode(rootNode.getPartialKey(),
+                        new NodeData(rootNode.getValue(), merkleValue)));
 
         collectEntriesUpTo(rootNode, searchKey, rootNode.getPartialKey(), entries);
 
@@ -442,9 +443,9 @@ public class TrieStorage {
      */
     public List<StorageNode> loadChildren(Nibbles parentKey, byte[] parentMerkleValue) {
         List<byte[]> childrenMerkleValues = Optional.ofNullable(parentMerkleValue)
-            .map(this::getTrieNodeFromMerkleValue)
-            .map(TrieNodeData::getChildrenMerkleValues)
-            .orElseGet(Collections::emptyList);
+                .map(this::getTrieNodeFromMerkleValue)
+                .map(TrieNodeData::getChildrenMerkleValues)
+                .orElseGet(Collections::emptyList);
 
         List<StorageNode> childrenNodes = new ArrayList<>(Collections.nCopies(childrenMerkleValues.size(), null));
         for (int i = 0; i < childrenMerkleValues.size(); i++) {
@@ -468,7 +469,19 @@ public class TrieStorage {
      * @param stateVersion The state version to use for serialization.
      */
     public void insertTrieStorage(TrieStructure<NodeData> trie, StateVersion stateVersion) {
-        List<InsertTrieNode> dbSerializedTrieNodes = new InsertTrieBuilder(trie).build();
+        List<InsertTrieNode> dbSerializedTrieNodes = InsertTrieBuilder.build(trie);
+        saveTrieNodes(dbSerializedTrieNodes, stateVersion);
+    }
+
+    /**
+     * Saves only specified nodes from the trie structure to storage.
+     *
+     * @param trie         The trie to serialize and save.
+     * @param nodes        Only the nodes specified in the list will be saved.
+     * @param stateVersion The state version to use for serialization.
+     */
+    public void updateTrieStorage(TrieStructure<NodeData> trie, List<TrieNodeIndex> nodes, StateVersion stateVersion) {
+        List<InsertTrieNode> dbSerializedTrieNodes = InsertTrieBuilder.build(trie, nodes);
         saveTrieNodes(dbSerializedTrieNodes, stateVersion);
     }
 
@@ -504,11 +517,11 @@ public class TrieStorage {
         List<byte[]> childrenMerkleValues = trieNode.childrenMerkleValues();
 
         TrieNodeData storageValue = new TrieNodeData(
-            trieNode.partialKeyNibbles(),
-            childrenMerkleValues,
-            trieNode.isReferenceValue() ? null : trieNode.storageValue(),
-            trieNode.isReferenceValue() ? trieNode.storageValue() : null,
-            (byte) stateVersion.asInt());
+                trieNode.partialKeyNibbles(),
+                childrenMerkleValues,
+                trieNode.isReferenceValue() ? null : trieNode.storageValue(),
+                trieNode.isReferenceValue() ? trieNode.storageValue() : null,
+                (byte) stateVersion.asInt());
 
         db.save(key, storageValue);
     }

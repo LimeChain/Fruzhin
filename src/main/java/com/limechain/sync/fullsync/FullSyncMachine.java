@@ -115,7 +115,7 @@ public class FullSyncMachine {
             if (goodToExecute) {
                 runtime.call("Core_execute_block", executeBlockParameter);
                 log.info("Block executed successfully");
-                AccessorHolder.getInstance().getBlockTrieAccessor().persistAll();
+                AccessorHolder.getInstance().getBlockTrieAccessor().persistUpdates();
             }else{
                 log.info("Block not executed");
                 throw new BlockExecutionException();

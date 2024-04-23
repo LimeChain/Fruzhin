@@ -11,10 +11,21 @@ import java.util.List;
 import java.util.Objects;
 
 public class InsertTrieBuilder {
-    private final TrieStructure<NodeData> trieStructure;
 
-    public InsertTrieBuilder(TrieStructure<NodeData> trieStructure) {
-        this.trieStructure = trieStructure;
+    /**
+     * Builds a list of {@link InsertTrieNode} objects representing the nodes in a trie structure.
+     * Each trie node is constructed with its storage value, merkle value, children's merkle values,
+     * and partial key nibbles.
+     *
+     * @return A list of {@link InsertTrieNode} objects representing the nodes in the given trie structure.
+     * @throws IllegalStateException if the user data in the trie structure is empty or null, which
+     *                               indicates an invalid state for the trie nodes.
+     */
+    public static List<InsertTrieNode> build(TrieStructure<NodeData> trieStructure) {
+        return trieStructure
+                .streamUnordered()
+                .map((TrieNodeIndex trieIndex) -> prepareForInsert(trieStructure, trieIndex))
+                .filter(Objects::nonNull).toList();
     }
 
     /**
@@ -26,11 +37,14 @@ public class InsertTrieBuilder {
      * @throws IllegalStateException if the user data in the trie structure is empty or null, which
      *                               indicates an invalid state for the trie nodes.
      */
-    public List<InsertTrieNode> build() {
-        return trieStructure.streamUnordered().map(this::prepareForInsert).filter(Objects::nonNull).toList();
+    public static List<InsertTrieNode> build(TrieStructure<NodeData> trieStructure, List<TrieNodeIndex> trieNodes) {
+        return trieNodes
+                .stream()
+                .map((TrieNodeIndex trieIndex) -> prepareForInsert(trieStructure, trieIndex))
+                .filter(Objects::nonNull).toList();
     }
 
-    private InsertTrieNode prepareForInsert(TrieNodeIndex nodeIndex) {
+    private static InsertTrieNode prepareForInsert(TrieStructure<NodeData> trieStructure, TrieNodeIndex nodeIndex) {
         NodeData userData = trieStructure.getUserDataAtIndex(nodeIndex);
         if (userData == null || userData.getMerkleValue() == null) {
             return null;

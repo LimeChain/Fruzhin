@@ -8,6 +8,7 @@ import com.limechain.storage.KVRepository;
 import com.limechain.storage.trie.TrieStorage;
 import com.limechain.trie.structure.Entry;
 import com.limechain.trie.structure.NodeHandle;
+import com.limechain.trie.structure.TrieNodeIndex;
 import com.limechain.trie.structure.TrieStructure;
 import com.limechain.trie.structure.Vacant;
 import com.limechain.trie.structure.database.NodeData;
@@ -29,6 +30,7 @@ public class TrieAccessor implements KVRepository<Nibbles, byte[]> {
     protected final TrieStorage trieStorage;
     protected byte[] lastRoot;
     private TrieStructure<NodeData> initialTrie;
+    private List<TrieNodeIndex> updates;
 
     public TrieAccessor(byte[] trieRoot) {
         this.lastRoot = trieRoot;
@@ -124,12 +126,11 @@ public class TrieAccessor implements KVRepository<Nibbles, byte[]> {
         return new DeleteByPrefixResult(deleted, true);
     }
 
-    public void persistAll() {
-        for (ChildTrieAccessor value : loadedChildTries.values()) value.persistAll();
+    public void persistUpdates() {
+        for (ChildTrieAccessor value : loadedChildTries.values()) value.persistUpdates();
         loadedChildTries.clear();
 
-        lastRoot = getMerkleRoot(StateVersion.V0);
-        trieStorage.insertTrieStorage(initialTrie, StateVersion.V0);
+        trieStorage.updateTrieStorage(initialTrie, updates, StateVersion.V0);
     }
 
     @Override
@@ -161,22 +162,14 @@ public class TrieAccessor implements KVRepository<Nibbles, byte[]> {
     }
 
     public byte[] getMerkleRoot(StateVersion version) {
-        clearMerkleValues(initialTrie);
-        TrieStructureFactory.recalculateMerkleValues(initialTrie, version, HashUtils::hashWithBlake2b);
+        this.updates = TrieStructureFactory.recalculateMerkleValues(initialTrie, version, HashUtils::hashWithBlake2b);
 
-        return initialTrie.getRootNode()
+        this.lastRoot = initialTrie.getRootNode()
                 .map(NodeHandle::getUserData)
                 .map(NodeData::getMerkleValue)
                 .orElseThrow();
-    }
 
-    private void clearMerkleValues(TrieStructure<NodeData> testTrie) {
-        testTrie.iteratorUnordered().forEachRemaining(nodeIndex -> {
-            NodeData userData = testTrie.nodeHandleAtIndex(nodeIndex).getUserData();
-            if (userData != null) {
-                userData.setMerkleValue(null);
-            }
-        });
+        return lastRoot;
     }
 
 }
