@@ -23,6 +23,7 @@ public class GenesisBlockHash {
     private final Hash256 genesisHash;
     private final Map<ByteString, ByteString> genesisStorage;
     private final TrieStructure<NodeData> genesisTrie;
+    private final TrieStructure<NodeData> initialSyncTrie;
     private final BlockHeader genesisBlockHeader;
     private final ChainService chainService;
 
@@ -30,6 +31,7 @@ public class GenesisBlockHash {
         this.chainService = chainService;
         this.genesisStorage = loadGenesisStorage();
         this.genesisTrie = buildGenesisTrie(genesisStorage);
+        this.initialSyncTrie = buildGenesisTrie(genesisStorage);
 
         byte[] stateRootHash = getMerkleValue(this.genesisTrie);
         this.genesisBlockHeader = buildGenesisBlock(stateRootHash);

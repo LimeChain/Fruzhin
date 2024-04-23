@@ -5,7 +5,6 @@ import com.limechain.runtime.hostapi.AllocatorHostFunctions;
 import com.limechain.runtime.hostapi.ChildStorageHostFunctions;
 import com.limechain.runtime.hostapi.CryptoHostFunctions;
 import com.limechain.runtime.hostapi.HashingHostFunctions;
-import com.limechain.runtime.hostapi.HostApi;
 import com.limechain.runtime.hostapi.MiscellaneousHostFunctions;
 import com.limechain.runtime.hostapi.OffchainHostFunctions;
 import com.limechain.runtime.hostapi.StorageHostFunctions;
@@ -75,18 +74,18 @@ public class RuntimeBuilder {
         return runtimeVersionReader.read(reader);
     }
 
-    static Imports getImports(Module module, HostApi hostApi) {
+    static Imports getImports(Module module, Runtime runtime) {
         ImportObject.MemoryImport memory = new ImportObject.MemoryImport("env", 22, false);
 
         ArrayList<ImportObject> objects = new ArrayList<>();
-        objects.addAll(StorageHostFunctions.getFunctions(hostApi));
-        objects.addAll(ChildStorageHostFunctions.getFunctions(hostApi));
-        objects.addAll(CryptoHostFunctions.getFunctions(hostApi));
-        objects.addAll(HashingHostFunctions.getFunctions(hostApi));
-        objects.addAll(OffchainHostFunctions.getFunctions(hostApi));
-        objects.addAll(TrieHostFunctions.getFunctions(hostApi));
-        objects.addAll(MiscellaneousHostFunctions.getFunctions(hostApi));
-        objects.addAll(AllocatorHostFunctions.getFunctions(hostApi));
+        objects.addAll(StorageHostFunctions.getFunctions(runtime));
+        objects.addAll(ChildStorageHostFunctions.getFunctions(runtime));
+        objects.addAll(CryptoHostFunctions.getFunctions(runtime));
+        objects.addAll(HashingHostFunctions.getFunctions(runtime));
+        objects.addAll(OffchainHostFunctions.getFunctions(runtime));
+        objects.addAll(TrieHostFunctions.getFunctions(runtime));
+        objects.addAll(MiscellaneousHostFunctions.getFunctions(runtime));
+        objects.addAll(AllocatorHostFunctions.getFunctions(runtime));
         objects.add(memory);
 
         return Imports.from(objects, module);

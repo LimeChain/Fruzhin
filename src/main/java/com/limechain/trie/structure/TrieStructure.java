@@ -1,10 +1,10 @@
 package com.limechain.trie.structure;
 
+import com.limechain.exception.trie.InvalidSlabIndexException;
 import com.limechain.trie.structure.nibble.Nibble;
 import com.limechain.trie.structure.nibble.Nibbles;
 import com.limechain.trie.structure.nibble.NibblesCollector;
 import com.limechain.trie.structure.slab.Slab;
-import com.limechain.exception.trie.InvalidSlabIndexException;
 import org.javatuples.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -94,22 +94,19 @@ public class TrieStructure<T> {
      *
      * @param key partial key in nibbles
      * @param nodeData data to insert
-     * @throws IllegalStateException on duplicate key
+     * @implSpec if a storage value is already present for the given key, it will be overwritten
      */
     public void insertNode(Nibbles key, T nodeData) {
         switch (node(key)) {
             case Vacant<T> vacant -> vacant
                     .prepareInsert()
                     .insert(nodeData);
-            case BranchNodeHandle<T> handle -> {
-                handle.setUserData(nodeData);
-                handle.convertToStorageNode();
+            case BranchNodeHandle<T> branchNodeHandle -> {
+                branchNodeHandle.setUserData(nodeData);
+                branchNodeHandle.convertToStorageNode();
             }
-            case StorageNodeHandle<T> __ -> {
-                // We have a duplicate entry:
-                // a second value corresponding to an already inserted key from the genesis storage.
-                // NOTE: don't throw?
-                throw new IllegalStateException("Key already exists!");
+            case StorageNodeHandle<T> storageNodeHandle -> {
+                storageNodeHandle.setUserData(nodeData);
             }
         }
     }
@@ -508,11 +505,9 @@ public class TrieStructure<T> {
         return clearNodeValue(nodeIndex.getValue());
     }
 
-    private boolean clearNodeValue(int nodeIndex) {
+    boolean clearNodeValue(int nodeIndex) {
         TrieNode<T> trieNode = getNodeAtIndexInner(nodeIndex);
-        if (!trieNode.hasStorageValue) {
-            return false;
-        }
+
         TrieNode.Parent parent = trieNode.parent;
         if (parent == null) {
             nodes.remove(nodeIndex);
@@ -524,9 +519,21 @@ public class TrieStructure<T> {
                 .filter(Objects::nonNull)
                 .count();
 
+        long parentChildren = Arrays.stream(parentNode.childrenIndices)
+                .filter(Objects::nonNull)
+                .count();
+
         if (numberOfChildren == 0) {
             parentNode.childrenIndices[parent.childIndexWithinParent().asInt()] = null;
             nodes.remove(nodeIndex);
+
+            if (parentChildren == 1 && !parentNode.hasStorageValue) {
+                return clearNodeValue(parent.parentNodeIndex());
+            } else if (parentChildren == 2) {
+                TrieNode.Parent grandparent = parentNode.parent;
+                getNodeAtIndexInner(grandparent.parentNodeIndex()).childrenIndices[grandparent.childIndexWithinParent()
+                        .asInt()] = mergeParentIntoChild(parentNode);
+            }
         } else if (numberOfChildren == 1) {
             parentNode.childrenIndices[parent.childIndexWithinParent().asInt()] = mergeParentIntoChild(trieNode);
             nodes.remove(nodeIndex);

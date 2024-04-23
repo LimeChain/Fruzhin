@@ -22,9 +22,7 @@ public class StringUtils {
         }
 
         // Trim the 0x prefix if it exists
-        if (hex.startsWith(HEX_PREFIX)) {
-            hex = hex.substring(2);
-        }
+        hex = remove0xPrefix(hex);
 
         return ByteString.fromHex(hex).toByteArray();
     }

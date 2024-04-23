@@ -16,8 +16,8 @@ public class ChildTrieAccessor extends TrieAccessor {
     }
 
     @Override
-    public void persistAll() {
-        super.persistAll();
+    public void persistUpdates() {
+        super.persistUpdates();
         parentTrie.save(childTrieKey, lastRoot);
     }
 

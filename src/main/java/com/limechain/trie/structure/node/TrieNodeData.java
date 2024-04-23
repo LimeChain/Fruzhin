@@ -1,10 +1,12 @@
 package com.limechain.trie.structure.node;
 
+import com.limechain.trie.structure.nibble.Nibbles;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -16,9 +18,20 @@ import java.util.List;
 @EqualsAndHashCode
 @Getter
 public class TrieNodeData implements Serializable {
-    private byte[] partialKey;
+    private Nibbles partialKey;
     private List<byte[]> childrenMerkleValues;
     private byte[] value;
     private byte[] trieRootRef;
     private byte entriesVersion;
+
+    @Override
+    public String toString() {
+        return "TrieNodeData{" +
+               "partialKey=" + partialKey +
+               ", childrenMerkleValues=" + childrenMerkleValues +
+               ", value=" + Arrays.toString(value) +
+               ", trieRootRef=" + Arrays.toString(trieRootRef) +
+               ", entriesVersion=" + entriesVersion +
+               '}';
+    }
 }

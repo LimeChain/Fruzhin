@@ -1,8 +1,10 @@
 package com.limechain.trie.structure.nibble;
 
+import com.limechain.utils.StringUtils;
 import org.apache.commons.collections4.IteratorUtils;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -17,7 +19,7 @@ import java.util.stream.Stream;
  * Convenience wrapper for any 'sequence of Nibble'-like structure.
  * It's immutable and its public static factory methods eagerly copy passed data (nibbles) to obtain ownership.
  */
-public class Nibbles implements Iterable<Nibble>, RandomAccess, Comparable<Iterable<Nibble>> {
+public class Nibbles implements Iterable<Nibble>, RandomAccess, Comparable<Iterable<Nibble>>, Serializable {
     /**
      * A sequence of zero nibbles, i.e. empty
      */
@@ -73,7 +75,8 @@ public class Nibbles implements Iterable<Nibble>, RandomAccess, Comparable<Itera
      * The capitalization of the characters doesn't matter.
      */
     public static Nibbles fromHexString(String hex) {
-        return hex.chars()
+        return StringUtils.remove0xPrefix(hex)
+            .chars()
             .mapToObj(c -> Nibble.fromAsciiHexDigit((char) c))
             .collect(NibblesCollector.toNibbles());
     }
@@ -170,7 +173,7 @@ public class Nibbles implements Iterable<Nibble>, RandomAccess, Comparable<Itera
      *         ({@code n < 0 || n > size})
      */
     public Nibbles drop(int n) {
-        return new Nibbles(this.entries.subList(n, this.entries.size()));
+        return Nibbles.of(this.entries.subList(n, this.entries.size()));
     }
 
     /**
@@ -181,7 +184,7 @@ public class Nibbles implements Iterable<Nibble>, RandomAccess, Comparable<Itera
      *         ({@code n < 0 || n > size})
      */
     public Nibbles take(int n) {
-        return new Nibbles(this.entries.subList(0, n));
+        return Nibbles.of(this.entries.subList(0, n));
     }
 
     /**

@@ -18,7 +18,7 @@ import java.util.logging.Level;
 @Log
 public class Main {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         // Instantiate and start the spring application, so we get the global context
         RpcApp rpcApp = new RpcApp();
         rpcApp.start(args);

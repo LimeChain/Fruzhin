@@ -1,6 +1,6 @@
 package com.limechain.trie.structure.node;
 
-import com.limechain.trie.structure.nibble.Nibble;
+import com.limechain.trie.structure.nibble.Nibbles;
 
 import java.util.Arrays;
 import java.util.List;
@@ -16,10 +16,10 @@ import java.util.Objects;
  * @param childrenMerkleValues A list of merkle values of the children of this trie node.
  *                             Each entry in the list is a byte array representing the merkle value of a child node.
  * @param partialKeyNibbles    A list of nibbles representing the partial key associated with this trie node.
- * @param isReferenceValue     Notes if the value stored is a reference to anothed node
+ * @param isReferenceValue     Notes if the value stored is a reference to another node
  */
 public record InsertTrieNode(byte[] storageValue, byte[] merkleValue, List<byte[]> childrenMerkleValues,
-                             List<Nibble> partialKeyNibbles, boolean isReferenceValue) {
+                             Nibbles partialKeyNibbles, boolean isReferenceValue) {
 
     @Override
     public boolean equals(Object obj) {

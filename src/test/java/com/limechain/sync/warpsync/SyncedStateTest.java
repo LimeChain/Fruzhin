@@ -1,6 +1,7 @@
 package com.limechain.sync.warpsync;
 
 import com.google.protobuf.ByteString;
+import com.limechain.exception.global.RuntimeCodeException;
 import com.limechain.network.Network;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceMessage;
 import com.limechain.network.protocol.lightclient.pb.LightClientMessage;
@@ -11,7 +12,6 @@ import com.limechain.runtime.Runtime;
 import com.limechain.runtime.RuntimeBuilder;
 import com.limechain.storage.DBConstants;
 import com.limechain.storage.KVRepository;
-import com.limechain.exception.global.RuntimeCodeException;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.types.Hash256;
 import org.junit.jupiter.api.Test;

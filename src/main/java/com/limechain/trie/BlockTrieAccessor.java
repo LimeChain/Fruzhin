@@ -14,4 +14,8 @@ public class BlockTrieAccessor extends TrieAccessor {
         }
     }
 
+    public BlockTrieAccessor(byte[] lastRoot) {
+        super(lastRoot);
+    }
+
 }

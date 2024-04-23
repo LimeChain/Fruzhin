@@ -2,6 +2,7 @@ package com.limechain.sync.warpsync;
 
 import com.limechain.chain.lightsyncstate.Authority;
 import com.limechain.constants.GenesisBlockHash;
+import com.limechain.exception.global.RuntimeCodeException;
 import com.limechain.network.Network;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshake;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceMessage;
@@ -26,12 +27,9 @@ import com.limechain.storage.block.BlockState;
 import com.limechain.sync.JustificationVerifier;
 import com.limechain.sync.warpsync.dto.AuthoritySetChange;
 import com.limechain.sync.warpsync.dto.GrandpaDigestMessageType;
-import com.limechain.exception.global.RuntimeCodeException;
 import com.limechain.sync.warpsync.dto.StateDto;
 import com.limechain.sync.warpsync.scale.ForcedChangeReader;
 import com.limechain.sync.warpsync.scale.ScheduledChangeReader;
-import com.limechain.trie.AccessorHolder;
-import com.limechain.trie.BlockTrieAccessor;
 import com.limechain.utils.StringUtils;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.types.Hash256;
@@ -56,7 +54,7 @@ import java.util.logging.Level;
 /**
  * Singleton class, holds and handles the synced state of the Host.
  */
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 @Getter
 @Setter
 @Log
@@ -233,7 +231,6 @@ public class SyncedState {
      */
     public void buildRuntime(Hash256 blockHash) {
         try {
-            AccessorHolder.getInstance().setBlockTrieAccessor(new BlockTrieAccessor(blockHash));
             runtime = runtimeBuilder.buildRuntime(runtimeCode);
             if (BlockState.getInstance().isInitialized()) {
                 BlockState.getInstance().storeRuntime(blockHash, runtime);

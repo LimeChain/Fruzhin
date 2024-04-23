@@ -3,6 +3,7 @@ package com.limechain.trie.structure.nibble;
 import com.limechain.exception.trie.NibbleFromHexDigitException;
 import com.limechain.exception.trie.NibbleFromIntegerException;
 
+import java.io.Serializable;
 import java.util.Objects;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -15,7 +16,7 @@ import java.util.stream.Stream;
  * Represents half a byte, i.e. a nibble, i.e. a four-bit sequence.
  * Immutable by design.
  */
-public class Nibble {
+public class Nibble implements Serializable {
     private final byte value;
     private Nibble(final int value) {
         this((byte) value);

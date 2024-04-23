@@ -42,4 +42,8 @@ public final class BranchNodeHandle<T> extends NodeHandle<T> {
 
         return new StorageNodeHandle<>(this.trieStructure, this.rawNodeIndex);
     }
+
+    public boolean clearStorageValue() {
+        return trieStructure.clearNodeValue(rawNodeIndex);
+    }
 }

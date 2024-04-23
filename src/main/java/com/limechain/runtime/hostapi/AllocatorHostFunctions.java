@@ -1,7 +1,9 @@
 package com.limechain.runtime.hostapi;
 
+import com.limechain.runtime.Runtime;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.extern.java.Log;
 import org.wasmer.ImportObject;
 import org.wasmer.Type;
 
@@ -13,21 +15,22 @@ import java.util.List;
  * For more info check
  * {<a href="https://spec.polkadot.network/chap-host-api#sect-allocator-api">Allocator API</a>}
  */
+@Log
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class AllocatorHostFunctions {
-    private final HostApi hostApi;
+    private final Runtime runtime;
 
-    public static List<ImportObject> getFunctions(final HostApi hostApi) {
-        return new AllocatorHostFunctions(hostApi).buildFunctions();
+    public static List<ImportObject> getFunctions(Runtime runtime) {
+        return new AllocatorHostFunctions(runtime).buildFunctions();
     }
 
     public List<ImportObject> buildFunctions() {
         return Arrays.asList(
                 HostApi.getImportObject("ext_allocator_malloc_version_1", argv ->
-                        extAllocatorMallocVersion1(argv.get(0).intValue()),
+                                extAllocatorMallocVersion1(argv.get(0).intValue()),
                         List.of(Type.I32), Type.I32),
                 HostApi.getImportObject("ext_allocator_free_version_1", argv ->
-                        extAllocatorFreeVersion1(argv.get(0).intValue()),
+                                extAllocatorFreeVersion1(argv.get(0).intValue()),
                         List.of(Type.I32)));
     }
 
@@ -38,7 +41,9 @@ public class AllocatorHostFunctions {
      * @return a pointer to the allocated buffer.
      */
     public int extAllocatorMallocVersion1(int size) {
-        return hostApi.allocate(size).pointer();
+        log.finest("extAllocatorMallocVersion1");
+        return runtime.allocate(size).pointer();
+
     }
 
     /**
@@ -47,6 +52,7 @@ public class AllocatorHostFunctions {
      * @param pointer a pointer to the memory buffer to be freed.
      */
     public void extAllocatorFreeVersion1(int pointer) {
-        hostApi.deallocate(pointer);
+        log.finest("extAllocatorFreeVersion1");
+        runtime.deallocate(pointer);
     }
 }
