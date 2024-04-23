@@ -39,9 +39,6 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.8.1")
     testImplementation("org.mockito:mockito-core:5.1.1")
 
-    // Jackson
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.14.2")
-
     // CLI
     implementation("commons-cli:commons-cli:1.6.0")
 
@@ -62,7 +59,7 @@ dependencies {
     // Prometheus
     implementation("io.prometheus:prometheus-metrics-core:1.2.1")
     implementation("io.prometheus:prometheus-metrics-instrumentation-jvm:1.2.1")
-    implementation("io.prometheus:prometheus-metrics-exporter-httpserver:1.0.0")
+    implementation("io.prometheus:prometheus-metrics-exporter-httpserver:1.2.1")
 
 }
 
