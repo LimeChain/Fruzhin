@@ -36,7 +36,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Log
 @ExtendWith(MockitoExtension.class)
-public class BlockExecutorTest {
+class BlockExecutorTest {
 
     @BeforeEach
     public void setup() {
