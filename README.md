@@ -46,7 +46,7 @@ export JAVA_HOME=`/usr/libexec/java_home -v 17.0.8`
 Note: This step will be automated in the future
 ```
 
-Mac users can skip this step.
+Apple silicon users can skip this step.
 For now, you will have to manually grab the compiled `wasmer-java` dynamic library
 file from the subfolder under `./wasmer-setup` corresponding to your architecture type.
 Copy the file to the Java `Extensions` folder:
@@ -80,7 +80,7 @@ java --enable-preview -jar build/libs/fruzhin-0.1.0.jar -n {network}
 4. Fetch the chain spec
 
    ```bash
-   curl -H "Content-Type: application/json" -d '{"id":1, "jsonrpc":"2.0", "method": "sync_state_genSyncSpec", "params": [true]}' http://localhost:9944
+   curl -H "Content-Type: application/json" -d '{"id":1, "jsonrpc":"2.0", "method": "sync_state_genSyncSpec", "params": [true]}' http://localhost:9922
    ```
 
    The `lightSyncState` field is important for the light client to
@@ -92,7 +92,7 @@ java --enable-preview -jar build/libs/fruzhin-0.1.0.jar -n {network}
 5. Get the local boot nodes.
 
    ```bash
-   curl -H "Content-Type: application/json" -d '{"id":1, "jsonrpc":"2.0", "method": "system_localListenAddresses"}' http://localhost:9944
+   curl -H "Content-Type: application/json" -d '{"id":1, "jsonrpc":"2.0", "method": "system_localListenAddresses"}' http://localhost:9922
    ```
 
    Paste the response into the `bootNodes` field of the chain spec.
