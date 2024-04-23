@@ -1,6 +1,5 @@
 package com.limechain.storage.trie;
 
-import com.google.common.primitives.Bytes;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.runtime.version.StateVersion;
 import com.limechain.storage.KVRepository;
@@ -382,10 +381,6 @@ public class TrieStorage {
      * @return A list of pairs, each containing a set of nibbles (representing a key within the trie)
      * and the corresponding node data.
      */
-    // FIXME: Epic mismatch: this function returns all the nodes on the paths; but the caller expects storage nodes only.
-    //  Also, when talking about a partial trie, we can't simply insert the storage nodes only (i.e. the storage KVPs)
-    //  since the partial trie won't have any information about the entire trie it's a part of, so that'll offset merkle values and stuff
-    //  Full structural replication will be necessary, but the TrieStructure isn't fit for that purpose :D
     public List<StorageNode> entriesBetween(byte[] merkleValue, Nibbles searchKey) {
         List<StorageNode> entries = new ArrayList<>();
         TrieNodeData rootNode = getTrieNodeFromMerkleValue(merkleValue);
@@ -421,7 +416,6 @@ public class TrieStorage {
 
             childIndexWithinParent = keyIter.next();
         }
-
 
         byte[] childMerkleValue = node.getChildrenMerkleValues().get(childIndexWithinParent.asInt());
         if (childMerkleValue == null) return; // Skip empty slots.

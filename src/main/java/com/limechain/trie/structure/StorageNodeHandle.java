@@ -13,16 +13,4 @@ public final class StorageNodeHandle<T> extends NodeHandle<T> {
     public boolean hasStorageValue() {
         return true;
     }
-
-    public boolean clearStorageValue() {
-        return trieStructure.clearNodeValue(rawNodeIndex);
-    }
-
-    //convert to branchNode
-    public BranchNodeHandle<T> convertToBranchNode() {
-        TrieNode<T> node = this.trieStructure.getNodeAtIndexInner(this.rawNodeIndex);
-        assert node.hasStorageValue : "Storage node cannot be converted to a branch node.";
-        node.hasStorageValue = false;
-        return new BranchNodeHandle<>(this.trieStructure, this.rawNodeIndex);
-    }
 }

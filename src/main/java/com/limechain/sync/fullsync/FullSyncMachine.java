@@ -20,7 +20,6 @@ import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import lombok.Getter;
 import lombok.extern.java.Log;
 import org.apache.commons.lang3.ArrayUtils;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Objects;
@@ -50,7 +49,7 @@ public class FullSyncMachine {
         }
     }
 
-    private @NotNull List<SyncMessage.BlockData> getBlocks(int start, int amount) {
+    private List<SyncMessage.BlockData> getBlocks(int start, int amount) {
         try {
             final int HEADER = 0b0000_0001;
             final int BODY = 0b0000_0010;

@@ -13,7 +13,6 @@ import java.util.List;
  */
 public record InherentData(
     long timestamp
-    // TODO: parachain-related inherents are missing
 ) {
 
     /**

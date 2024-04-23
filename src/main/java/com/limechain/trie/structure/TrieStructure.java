@@ -1,10 +1,10 @@
 package com.limechain.trie.structure;
 
+import com.limechain.exception.trie.InvalidSlabIndexException;
 import com.limechain.trie.structure.nibble.Nibble;
 import com.limechain.trie.structure.nibble.Nibbles;
 import com.limechain.trie.structure.nibble.NibblesCollector;
 import com.limechain.trie.structure.slab.Slab;
-import com.limechain.exception.trie.InvalidSlabIndexException;
 import org.javatuples.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -527,11 +527,12 @@ public class TrieStructure<T> {
             parentNode.childrenIndices[parent.childIndexWithinParent().asInt()] = null;
             nodes.remove(nodeIndex);
 
-            if(parentChildren == 1 && !parentNode.hasStorageValue) {
+            if (parentChildren == 1 && !parentNode.hasStorageValue) {
                 return clearNodeValue(parent.parentNodeIndex());
-            }else if(parentChildren == 2){
+            } else if (parentChildren == 2) {
                 TrieNode.Parent grandparent = parentNode.parent;
-                getNodeAtIndexInner(grandparent.parentNodeIndex()).childrenIndices[grandparent.childIndexWithinParent().asInt()] = mergeParentIntoChild(parentNode);
+                getNodeAtIndexInner(grandparent.parentNodeIndex()).childrenIndices[grandparent.childIndexWithinParent()
+                        .asInt()] = mergeParentIntoChild(parentNode);
             }
         } else if (numberOfChildren == 1) {
             parentNode.childrenIndices[parent.childIndexWithinParent().asInt()] = mergeParentIntoChild(trieNode);
