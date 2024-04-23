@@ -10,8 +10,8 @@ import lombok.AllArgsConstructor;
 import lombok.extern.java.Log;
 import org.apache.tomcat.util.buf.HexUtils;
 import org.springframework.lang.Nullable;
-import org.wasmer.Module;
 import org.wasmer.ImportObject;
+import org.wasmer.Module;
 import org.wasmer.Type;
 
 import java.io.ByteArrayOutputStream;
@@ -110,8 +110,8 @@ public class MiscellaneousHostFunctions {
         try {
             // TODO: Refactor using RuntimeBuilder... when we're sure it works properly
             Module module = new Module(wasmBlob);
-            Runtime runtime = new Runtime(module, RuntimeBuilder.DEFAULT_HEAP_PAGES);
-            byte[] runtimeVersionData = runtime.call("Core_version");
+            Runtime newRuntime = new Runtime(module, RuntimeBuilder.DEFAULT_HEAP_PAGES);
+            byte[] runtimeVersionData = newRuntime.call("Core_version");
             versionOption = scaleEncodedOption(runtimeVersionData);
         } catch (UnsatisfiedLinkError e) {
             log.log(Level.SEVERE, "Error loading wasm module: " + e.getMessage());
