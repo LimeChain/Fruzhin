@@ -44,7 +44,7 @@ public class FullSyncMachine {
         AccessorHolder.getInstance().setToGenesis(); //todo: dirty fix for now
 
         int startNumber = 1;
-        int blocksToFetch = 50;
+        int blocksToFetch = 100;
         List<SyncMessage.BlockData> receivedBlockDatas = getBlocks(startNumber, blocksToFetch);
         while (!receivedBlockDatas.isEmpty()) {
             startNumber += blocksToFetch;
@@ -76,6 +76,15 @@ public class FullSyncMachine {
     }
 
     private void executeBlocks(List<SyncMessage.BlockData> receivedBlockDatas) {
+        byte[] runtimeCode = Objects.requireNonNull(AppBean.getBean(GenesisBlockHash.class)
+                        .getGenesisTrie()
+                        .node(Nibbles.fromBytes(":code".getBytes()))
+                        .asNodeHandle()
+                        .getUserData())
+                .getValue();
+
+        Runtime runtime = new RuntimeBuilder()
+                .buildRuntime(runtimeCode);
         for (SyncMessage.BlockData blockData : receivedBlockDatas) {
             // Protobuf decode the block header
             var encodedHeader = blockData.getHeader().toByteArray();
@@ -92,18 +101,6 @@ public class FullSyncMachine {
             );
 
             byte[] executeBlockParameter = ArrayUtils.addAll(encodedUnsealedHeader, encodedBody);
-
-            // Begin with runtime calls
-            // TODO: Fetch the bytecode better
-            byte[] runtimeCode = Objects.requireNonNull(AppBean.getBean(GenesisBlockHash.class)
-                            .getGenesisTrie()
-                            .node(Nibbles.fromBytes(":code".getBytes()))
-                            .asNodeHandle()
-                            .getUserData())
-                    .getValue();
-
-            Runtime runtime = new RuntimeBuilder()
-                    .buildRuntime(runtimeCode);
 
             // Call BlockBuilder_check_inherents:
             var args = getCheckInherentsParameter(executeBlockParameter);
