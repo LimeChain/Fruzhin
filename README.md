@@ -66,13 +66,13 @@ Copy the file to the Java `Extensions` folder:
 ### Sync with official chain
 
 ```bash
-java --enable-preview -jar build/libs/fruzhin-0.1.0.jar -n polkadot -node-mode full -sync-mode full
+java --enable-preview -jar build/libs/Fruzhin-0.1.0.jar -n polkadot -node-mode full --sync-mode full
 ```
 
 - `--enable-preview` flag is necessary as we are using java preview features
 - `-n`(network) could be `westend`, `polkadot` or `kusama`
 - `-node-mode` could be `full` or `light`
-- `-sync-mode` could be `full` or `warp`
+- `--sync-mode` could be `full` or `warp`
 
 ### Local development
 
