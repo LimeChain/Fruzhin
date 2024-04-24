@@ -1,4 +1,4 @@
-# Protocol Subpackage Documentation
+# Overview
 
 The `protocol` subpackage of the Fruzhin project is dedicated to defining the various network protocols and services that facilitate communication and data exchange within the blockchain network.
 

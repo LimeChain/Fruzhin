@@ -1,4 +1,4 @@
-# Network Package Documentation
+# Overview
 
 The `network` package in the Fruzhin project orchestrates all network-related operations, encompassing peer connections, protocol implementations, and communication strategies for the blockchain node.
 

@@ -1,4 +1,4 @@
-# Config Package Documentation
+# Overview
 
 The `config` package in the Fruzhin project is pivotal for defining and managing the configuration settings required for the blockchain node's operation. It encompasses the setup of host-specific configurations and system information that influence the node's behavior and interaction within the network.
 
@@ -27,7 +27,3 @@ The `SystemInfo` class encapsulates various system-related configurations and in
 - **Role and Chain Information**: Stores and provides access to the node's role and the blockchain network it is part of, aiding in contextual operations and decision-making.
 - **Database and Identity Information**: Maintains the path to the database and the node's identity within the network, crucial for data storage and peer interactions.
 - **Versioning and Host Details**: Keeps track of the node's version and host information, supporting compatibility and operational insights.
-
-### Usage:
-
-`SystemInfo` is typically utilized to log system information at node startup, offering a comprehensive overview of the node's configuration and state. This aids in debugging, monitoring, and ensuring the node is operating as expected within its environment.

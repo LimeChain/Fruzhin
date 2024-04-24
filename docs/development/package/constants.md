@@ -1,4 +1,4 @@
-# Constants Package Documentation
+# Overview
 
 The `constants` package in the Fruzhin project houses essential, immutable values that are pivotal for the operation of the blockchain node. It includes definitions for genesis block information and RPC connection constants.
 
@@ -26,7 +26,3 @@ The `constants` package in the Fruzhin project houses essential, immutable value
 - **POLKADOT_WS_RPC**: WebSocket RPC endpoint for the Polkadot mainnet.
 - **KUSAMA_WS_RPC**: WebSocket RPC endpoint for the Kusama network.
 - **WESTEND_WS_RPC**: WebSocket RPC endpoint for the Westend testnet.
-
-### Usage:
-
-These constants are used throughout the Fruzhin project to establish connections to the specified blockchain networks, facilitating data fetches, transaction submissions, and other network interactions.

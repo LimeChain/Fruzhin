@@ -9,9 +9,6 @@ The `fullsync` subpackage is responsible for managing the full synchronization p
 - **Purpose**: Coordinates the steps involved in a full blockchain synchronization.
 - **Functionality**: Initiates block requests, processes received blocks, and handles the transition between different synchronization states.
 
-### Usage
-The `fullsync` subpackage is used when nodes perform an initial sync.
-
 ## WarpSync
 
 ### Overview
@@ -26,6 +23,3 @@ The `fullsync` subpackage is used when nodes perform an initial sync.
 #### SyncedState
 - **Purpose**: Maintains a shared state across the warp sync process, storing critical information such as the current sync status and received data fragments.
 - **Functionality**: Ensures that all components involved in the warp sync process can access and modify the sync state coherently.
-
-### Usage
-`warpsync` is particularly useful in environments where bandwidth or storage is limited, or when nodes need to rapidly update their state to the latest consensus without the overhead of processing all historical blocks.

@@ -1,4 +1,4 @@
-# Client Package Documentation
+# Overview
 
 The `client` package of the Fruzhin project encompasses the core components for initiating and managing different types of blockchain nodes. This package is crucial for defining the operational behavior of full nodes and light clients within the network.
 
@@ -28,10 +28,3 @@ The `LightClient` also implements the `HostNode` interface, focusing on providin
 
 - **Network Connectivity**: Establishes connections to the network, facilitating peer discovery and interaction without the need for full blockchain data.
 - **Warp Sync**: Employs the `WarpSyncMachine` for efficient state synchronization, allowing the light client to stay updated with the latest blockchain state with minimal data.
-
-## Usage
-
-These components are crucial for anyone looking to run a node within the Fruzhin blockchain ecosystem. They provide the flexibility to operate a node in full capacity or as a light client, depending on the use case and resource availability.
-
-- **Full Node**: Ideal for network validators and service providers who require access to the entire blockchain data.
-- **Light Client**: Suited for end-users and applications that need to interact with the blockchain without the overhead of managing the full state.

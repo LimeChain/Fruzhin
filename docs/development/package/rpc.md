@@ -63,4 +63,3 @@
 
 **Features**:
 - Provides logic for system information, blockchain synchronization, state queries, and more.
-5
