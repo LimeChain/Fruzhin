@@ -1,6 +1,8 @@
 package com.limechain.runtime;
 
 import com.github.luben.zstd.Zstd;
+import com.limechain.exception.global.RuntimeCodeException;
+import com.limechain.exception.trie.TrieDecoderException;
 import com.limechain.runtime.hostapi.AllocatorHostFunctions;
 import com.limechain.runtime.hostapi.ChildStorageHostFunctions;
 import com.limechain.runtime.hostapi.CryptoHostFunctions;
@@ -10,11 +12,9 @@ import com.limechain.runtime.hostapi.OffchainHostFunctions;
 import com.limechain.runtime.hostapi.StorageHostFunctions;
 import com.limechain.runtime.hostapi.TrieHostFunctions;
 import com.limechain.runtime.version.RuntimeVersion;
-import com.limechain.exception.global.RuntimeCodeException;
 import com.limechain.runtime.version.scale.RuntimeVersionReader;
 import com.limechain.trie.decoded.Trie;
 import com.limechain.trie.decoded.TrieVerifier;
-import com.limechain.exception.trie.TrieDecoderException;
 import com.limechain.utils.LittleEndianUtils;
 import com.limechain.utils.StringUtils;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
@@ -36,6 +36,12 @@ public class RuntimeBuilder {
     private static final byte[] CODE_KEY_BYTES =
             LittleEndianUtils.convertBytes(StringUtils.hexToBytes(StringUtils.toHex(":code")));
 
+    /**
+     * Builds and returns a Runtime object for executing WebAssembly code.
+     *
+     * @param code The WebAssembly bytecode.
+     * @return A Runtime object.
+     */
     public Runtime buildRuntime(byte[] code) {
         byte[] wasmBinary = zstDecompressIfNecessary(code);
 
@@ -91,6 +97,14 @@ public class RuntimeBuilder {
         return Imports.from(objects, module);
     }
 
+    /**
+     * Builds and returns the runtime code based on decoded proofs and state root hash.
+     *
+     * @param decodedProofs The decoded trie proofs.
+     * @param stateRoot     The state root hash.
+     * @return The runtime code.
+     * @throws RuntimeCodeException if an error occurs during the construction of the trie or retrieval of the code.
+     */
     public byte[] buildRuntimeCode(byte[][] decodedProofs, Hash256 stateRoot) {
         try {
             Trie trie = TrieVerifier.buildTrie(decodedProofs, stateRoot.getBytes());

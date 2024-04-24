@@ -25,6 +25,12 @@ public class KeyStore {
         return (byte[]) repository.find(getKey(keyType, publicKey)).orElse(null);
     }
 
+    /**
+     * Retrieves a list of public keys associated with the given key type.
+     *
+     * @param keyType The type of the key.
+     * @return A list of public keys associated with the given key type.
+     */
     public List<byte[]> getPublicKeysByKeyType(KeyType keyType) {
         return repository
                 .findKeysByPrefix(new String(keyType.getBytes()), 90000)
@@ -37,6 +43,13 @@ public class KeyStore {
         return Arrays.copyOfRange(key, KeyType.KEY_TYPE_LEN, key.length);
     }
 
+    /**
+     * Constructs the key using the key type and key bytes.
+     *
+     * @param keyType The type of the key.
+     * @param key     The key bytes.
+     * @return The constructed key string.
+     */
     private String getKey(KeyType keyType, byte[] key) {
         return new String(keyType.getBytes()).concat(new String(key));
     }

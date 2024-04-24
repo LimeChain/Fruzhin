@@ -39,12 +39,25 @@ public class TrieAccessor implements KVRepository<Nibbles, byte[]> {
         this.initialTrie = AppBean.getBean(GenesisBlockHash.class).getInitialSyncTrie();
     }
 
+    /**
+     * Retrieves the child trie accessor for the given key.
+     *
+     * @param key The key corresponding to the child trie accessor.
+     * @return The ChildTrieAccessor for the specified key.
+     */
     public ChildTrieAccessor getChildTrie(Nibbles key) {
         Nibbles trieKey = Nibbles.fromBytes(":child_storage:default:".getBytes()).addAll(key);
         byte[] merkleRoot = find(trieKey).orElse(null);
         return loadedChildTries.computeIfAbsent(trieKey, k -> new ChildTrieAccessor(this, trieKey, merkleRoot));
     }
 
+    /**
+     * Saves a key-value pair to the trie.
+     *
+     * @param key   The key to save.
+     * @param value The value to save.
+     * @return      True if the operation was successful, false otherwise.
+     */
     @Override
     public boolean save(Nibbles key, byte[] value) {
         NodeData nodeData = new NodeData(value);
@@ -52,7 +65,12 @@ public class TrieAccessor implements KVRepository<Nibbles, byte[]> {
         return true;
     }
 
-
+    /**
+     * Finds the value associated with the given key in the trie.
+     *
+     * @param key The key to search for.
+     * @return    An Optional containing the value if found, or empty otherwise.
+     */
     @Override
     public Optional<byte[]> find(Nibbles key) {
         return initialTrie.existingNode(key)
@@ -60,11 +78,23 @@ public class TrieAccessor implements KVRepository<Nibbles, byte[]> {
                 .map(NodeData::getValue);
     }
 
+    /**
+     * Finds the Merkle value associated with the given key in the trie.
+     *
+     * @param key The key to search for.
+     * @return    An Optional containing the Merkle value if found, or empty otherwise.
+     */
     public Optional<byte[]> findMerkleValue(Nibbles key) {
         return trieStorage.getByKeyFromMerkle(lastRoot, key)
                 .map(NodeData::getMerkleValue);
     }
 
+    /**
+     * Deletes the value associated with the given key from the trie.
+     *
+     * @param key The key to delete.
+     * @return    True if the operation was successful, false otherwise.
+     */
     @Override
     public boolean delete(Nibbles key) {
         Entry<NodeData> node = initialTrie.node(key);
@@ -81,6 +111,13 @@ public class TrieAccessor implements KVRepository<Nibbles, byte[]> {
         throw new UnsupportedOperationException("Not implemented");
     }
 
+    /**
+     * Deletes keys in the trie that match the given prefix.
+     *
+     * @param prefix The prefix to match for deletion.
+     * @param limit  The maximum number of keys to delete.
+     * @return       A DeleteByPrefixResult indicating the number of keys deleted and whether all keys were deleted.
+     */
     @Override
     public DeleteByPrefixResult deleteByPrefix(Nibbles prefix, Long limit) {
         NodeHandle<NodeData> parent = switch (initialTrie.node(prefix)) {
@@ -161,6 +198,12 @@ public class TrieAccessor implements KVRepository<Nibbles, byte[]> {
         throw new UnsupportedOperationException(TRANSACTIONS_NOT_SUPPORTED);
     }
 
+    /**
+     * Retrieves the Merkle root hash of the trie with the specified state version.
+     *
+     * @param version The state version.
+     * @return        The Merkle root hash.
+     */
     public byte[] getMerkleRoot(StateVersion version) {
         this.updates = TrieStructureFactory.recalculateMerkleValues(initialTrie, version, HashUtils::hashWithBlake2b);
 

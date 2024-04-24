@@ -3,6 +3,9 @@ package com.limechain.storage.offchain;
 import com.limechain.storage.KVRepository;
 import lombok.AllArgsConstructor;
 
+/**
+ * OffchainStore provides methods for storing, retrieving, and manipulating offchain data.
+ */
 @AllArgsConstructor
 public class OffchainStore {
     private static final String OFFCHAIN_PREFIX = "offchain_";

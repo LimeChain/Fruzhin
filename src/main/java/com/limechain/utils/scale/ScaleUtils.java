@@ -29,6 +29,16 @@ public class ScaleUtils {
 
     @UtilityClass
     public class Decode {
+
+        /**
+         * Decodes a byte array into an object of type T using the provided ScaleReader.
+         *
+         * @param encodedData The byte array containing the encoded data.
+         * @param reader      The ScaleReader implementation for decoding.
+         * @param <T>         The type of object to decode.
+         * @return The decoded object of type T.
+         * @throws ScaleDecodingException If an error occurs during decoding.
+         */
         public <T> T decode(byte[] encodedData, ScaleReader<T> reader) {
             try {
                 return new ScaleCodecReader(encodedData).read(reader);
@@ -37,6 +47,15 @@ public class ScaleUtils {
             }
         }
 
+        /**
+         * Decodes a byte array representing a list of items into a List using the provided ScaleReader for the list items.
+         *
+         * @param encodedData   The byte array containing the encoded list.
+         * @param listItemReader The ScaleReader implementation for decoding individual list items.
+         * @param <T>           The type of objects in the list.
+         * @return The decoded List of items.
+         * @throws ScaleDecodingException If an error occurs during decoding.
+         */
         public <T> List<T> decodeList(byte[] encodedData, ScaleReader<T> listItemReader) {
             return decode(encodedData, new ListReader<>(listItemReader));
         }
@@ -44,6 +63,17 @@ public class ScaleUtils {
 
     @UtilityClass
     public class Encode {
+
+        /**
+         * Encodes a list of pairs into SCALE format using the provided serializers for the key and value types.
+         *
+         * @param pairs          The list of pairs to encode.
+         * @param fstSerializer The serializer function for the first element of each pair.
+         * @param sndSerializer The serializer function for the second element of each pair.
+         * @param <K>            The type of the first element in the pairs.
+         * @param <V>            The type of the second element in the pairs.
+         * @return The encoded byte array representing the list of pairs.
+         */
         public <K, V> byte[] encodeListOfPairs(
             List<Pair<K, V>> pairs,
             Function<K, byte[]> fstSerializer,
@@ -58,6 +88,12 @@ public class ScaleUtils {
                     .toList());
         }
 
+        /**
+         * Encodes a list of pairs into SCALE format using default pair serialization.
+         *
+         * @param pairs The list of pairs to encode.
+         * @return The encoded byte array representing the list of pairs.
+         */
         public byte[] encodeListOfPairs(List<Pair<byte[], byte[]>> pairs) {
             return encode(
                 new ListWriter<>(
@@ -67,18 +103,47 @@ public class ScaleUtils {
                 pairs);
         }
 
+        /**
+         * Encodes an Iterable of bytes into SCALE format.
+         *
+         * @param bytes The Iterable of bytes to encode.
+         * @return The encoded byte array.
+         */
         public byte[] encodeAsListOfBytes(Iterable<Byte> bytes) {
             return encodeAsList(ScaleCodecWriter::directWrite, bytes);
         }
 
+        /**
+         * Encodes an Iterable of values into SCALE format using the provided ScaleWriter.
+         *
+         * @param collectionItemWriter The ScaleWriter for encoding each item.
+         * @param values               The Iterable of values to encode.
+         * @param <T>                  The type of values to encode.
+         * @return The encoded byte array.
+         */
         public <T> byte[] encodeAsList(ScaleWriter<T> collectionItemWriter, Iterable<T> values) {
             return encode(new IterableWriter<>(collectionItemWriter), values);
         }
 
+        /**
+         * Encodes a two-dimensional byte array into SCALE format.
+         *
+         * @param values The two-dimensional byte array to encode.
+         * @return The encoded byte array.
+         */
         public byte[] encode(byte[][] values) {
             return encode(new ListWriter<>(ScaleCodecWriter::writeAsList), Arrays.asList(values));
         }
 
+        /**
+         * Encodes an object into SCALE format using the provided ScaleWriter.
+         *
+         * @param writer The ScaleWriter for encoding the object.
+         * @param value  The object to encode.
+         * @param <T>    The type of the object to encode.
+         * @return The encoded byte array.
+         * @throws ScaleEncodingException If an unexpected error occurs during encoding.
+         */
         public <T> byte[] encode(ScaleWriter<T> writer, T value) {
             try (ByteArrayOutputStream buffer = new ByteArrayOutputStream();
                  ScaleCodecWriter scaleCodecWriter = new ScaleCodecWriter(buffer)) {
