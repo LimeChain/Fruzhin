@@ -43,7 +43,7 @@ If exception is thrown you will have to manually grab the compiled wasmer-java d
 Run the following command to start the blockchain node:
 
 ```bash
-./java --enable-preview -jar build/libs/Fruzhin-0.1.0.jar -n polkadot -node-mode full --sync-mode full
+./java --enable-preview -jar build/libs/Fruzhin-0.1.0.jar -n polkadot --node-mode full --sync-mode full
 ```
 
 ## Contributing
