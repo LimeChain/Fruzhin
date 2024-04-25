@@ -7,6 +7,13 @@ import java.nio.ByteOrder;
 
 @UtilityClass
 public class LittleEndianUtils {
+
+    /**
+     * Converts the given byte array to little-endian format.
+     *
+     * @param byteArray The byte array to be converted.
+     * @return A new byte array representing the input byte array in little-endian format.
+     */
     public static byte[] convertBytes(byte[] byteArray) {
         // Create a ByteBuffer and set its order to little-endian
         ByteBuffer buffer = ByteBuffer.wrap(byteArray);
@@ -19,6 +26,14 @@ public class LittleEndianUtils {
         return littleEndianBytes;
     }
 
+    /**
+     * Converts the given byte array to a fixed length little-endian byte array.
+     * If the input array is shorter than the specified length, it will be padded with zeros.
+     *
+     * @param byteArray The byte array to be converted to fixed length little-endian.
+     * @param length The desired length of the resulting byte array.
+     * @return A new byte array with the little-endian representation of the input, padded with zeros if necessary.
+     */
     public static byte[] bytesToFixedLength(byte[] byteArray, int length) {
         byte[] littleEndian = new byte[length];
 
@@ -29,6 +44,12 @@ public class LittleEndianUtils {
         return littleEndian;
     }
 
+    /**
+     * Converts the given integer to a little-endian byte array of length 4 (32 bits).
+     *
+     * @param number The integer to be converted.
+     * @return A new byte array representing the little-endian bytes of the input integer.
+     */
     public static byte[] intTo32LEBytes(int number) {
         byte byte1 = (byte) (number);
         byte byte2 = (byte) (number >>> 8);

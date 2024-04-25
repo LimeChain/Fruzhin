@@ -37,7 +37,6 @@ public class TrieStorage {
     private BlockState blockState;
     private KVRepository<String, Object> db;
 
-
     /**
      * Initializes the TrieStorage with a given key-value repository.
      * This method must be called before using the TrieStorage instance.
@@ -361,15 +360,6 @@ public class TrieStorage {
             }
         }
     }
-
-    private boolean startsWith(byte[] array, byte[] prefix) {
-        if (array.length < prefix.length) return false;
-        for (int i = 0; i < prefix.length; i++) {
-            if (array[i] != prefix[i]) return false;
-        }
-        return true;
-    }
-
 
     /**
      * Retrieves trie entries within a specified range.

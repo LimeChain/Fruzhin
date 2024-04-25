@@ -24,7 +24,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class SyncTest {
-    public static final String PEER_ID = "12D3KooWSz8r2WyCdsfWHgPyvD8GKQdJ1UAiRmrcrs8sQB3fe2KU";
+    public static final String PEER_ID = "12D3KooWPyEvPEXghnMC67Gff6PuZiSvfx3fmziKiPZcGStZ5xff";
+    public static final String PEER_URL = "/dns/dot14.rotko.net/tcp/33214/p2p/";
     private Host senderNode = null;
     private KademliaService kademliaService = null;
     private SyncMessages syncService = null;
@@ -56,11 +57,9 @@ public class SyncTest {
     }
 
     @Test
-//    @Disabled("No response is received")
-    //TODO: See https://github.com/LimeChain/Fruzhin/issues/193
     void remoteBlockRequest_returnCorrectBlock_ifGivenBlockHash() {
         var peerId = PeerId.fromBase58(PEER_ID);
-        var receivers = new String[]{"/dns/polkadot-bootnode-0.polkadot.io/tcp/30333/p2p/" + PEER_ID};
+        var receivers = new String[]{PEER_URL + PEER_ID};
         int connectedNodes = kademliaService.connectBootNodes(receivers);
         int expectedConnectedNodes = 1;
         assertEquals(expectedConnectedNodes, connectedNodes);
@@ -74,19 +73,15 @@ public class SyncTest {
     }
 
     @Test
-    @Disabled("No response is received")
-    //TODO: See https://github.com/LimeChain/Fruzhin/issues/193
     void remoteBlockRequest_returnCorrectBlock_ifGivenBlockNumber() {
-        /**
-         */
         var peerId = PeerId.fromBase58(PEER_ID);
-        var receivers = new String[]{"/dns/polkadot-bootnode-0.polkadot.io/tcp/30333/p2p/" + PEER_ID};
+        var receivers = new String[]{PEER_URL + PEER_ID};
         int connectedNodes = kademliaService.connectBootNodes(receivers);
         int expectedConnectedNodes = 1;
         assertEquals(expectedConnectedNodes, connectedNodes);
         var response = syncService.remoteBlockRequest(senderNode, senderNode.getAddressBook(), peerId, new BlockRequestDto(19, null,
-                19_000_000, SyncMessage.Direction.Ascending, 1));
-        ByteString expected = ByteString.copyFrom(new byte[]{-5, -114, 15, -47, 54, 111, 75, -101, 58, 121, -122, 66, -103, -41, -9, 10, -125, -12, 77, 72, -53, -7, -84, 19, 95, 45, -110, -39, 104, 8, 6, -88});
+                15_030_299, SyncMessage.Direction.Ascending, 1));
+        ByteString expected = ByteString.copyFrom(new byte[]{-53, -45, -25, 46, 118, -106, 82, -8, 4, 86, -118, 72, -120, -109, -126, -19, -1, 71, 66, 7, 74, 114, 1, 48, -102, -49, -47, 6, -98, 93, -23, 10});
         assertNotNull(response);
         assertTrue(response.getBlocksCount() > 0);
 
@@ -98,7 +93,7 @@ public class SyncTest {
     //TODO: See https://github.com/LimeChain/Fruzhin/issues/193
     void remoteFunctions_return_correctData() {
         var peerId = PeerId.fromBase58(PEER_ID);
-        var receivers = new String[]{"/dns/polkadot-bootnode-0.polkadot.io/tcp/30333/p2p/" + PEER_ID};
+        var receivers = new String[]{PEER_URL + PEER_ID};
 
         int connectedNodes = kademliaService.connectBootNodes(receivers);
         int expectedConnectedNodes = 1;

@@ -27,6 +27,10 @@ import org.apache.commons.lang3.ArrayUtils;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * FullSyncMachine is responsible for executing full synchronization of blocks.
+ * It communicates with the network to fetch blocks, execute them, and update the trie structure accordingly.
+ */
 @Getter
 @Log
 public class FullSyncMachine {
@@ -53,6 +57,13 @@ public class FullSyncMachine {
         }
     }
 
+    /**
+     * Fetches blocks from the network.
+     *
+     * @param start   The block number to start fetching from.
+     * @param amount  The number of blocks to fetch.
+     * @return        A list of BlockData received from the network.
+     */
     private List<SyncMessage.BlockData> getBlocks(int start, int amount) {
         try {
             final int HEADER = 0b0000_0001;
@@ -75,6 +86,11 @@ public class FullSyncMachine {
         }
     }
 
+    /**
+     * Executes blocks received from the network.
+     *
+     * @param receivedBlockDatas A list of BlockData to execute.
+     */
     private void executeBlocks(List<SyncMessage.BlockData> receivedBlockDatas) {
         byte[] runtimeCode = Objects.requireNonNull(AppBean.getBean(GenesisBlockHash.class)
                         .getGenesisTrie()
@@ -100,11 +116,14 @@ public class FullSyncMachine {
                     () -> extrinsincs.stream().map(ByteString::toByteArray).iterator()
             );
 
+            // Construct the parameter for executing the block
             byte[] executeBlockParameter = ArrayUtils.addAll(encodedUnsealedHeader, encodedBody);
 
-            // Call BlockBuilder_check_inherents:
+            // Call BlockBuilder_check_inherents to check the inherents of the block
             var args = getCheckInherentsParameter(executeBlockParameter);
             byte[] checkInherentsOutput = runtime.call("BlockBuilder_check_inherents", args);
+
+            // Check if the block is good to execute based on the output of BlockBuilder_check_inherents
             boolean goodToExecute = isBlockGoodToExecute(checkInherentsOutput);
 
             log.info("Block is good to execute: " + goodToExecute);
@@ -112,6 +131,8 @@ public class FullSyncMachine {
             if (goodToExecute) {
                 runtime.call("Core_execute_block", executeBlockParameter);
                 log.info("Block executed successfully");
+
+                // Persist the updates to the trie structure
                 AccessorHolder.getInstance().getBlockTrieAccessor().persistUpdates();
             }else{
                 log.info("Block not executed");
@@ -120,6 +141,12 @@ public class FullSyncMachine {
         }
     }
 
+    /**
+     * Checks whether a block is good to execute based on the output of BlockBuilder_check_inherents.
+     *
+     * @param checkInherentsOutput The output of BlockBuilder_check_inherents.
+     * @return                      True if the block is good to execute, false otherwise.
+     */
     private static boolean isBlockGoodToExecute(byte[] checkInherentsOutput) {
         var data = ScaleUtils.Decode.decode(ArrayUtils.subarray(checkInherentsOutput, 2, checkInherentsOutput.length),
                 new ListReader<>(new PairReader<>(scr -> new String(scr.readByteArray(8)), scr -> new String(scr.readByteArray()))));
@@ -137,6 +164,12 @@ public class FullSyncMachine {
         return goodToExecute;
     }
 
+    /**
+     * Constructs the parameter for calling BlockBuilder_check_inherents.
+     *
+     * @param executeBlockParameter The parameter for executing the block.
+     * @return                      The parameter for checking inherents.
+     */
     public static byte[] getCheckInherentsParameter(byte[] executeBlockParameter) {
         // The first param is executeBlockParameter
         // The second param of `BlockBuilder_check_inherents` is a SCALE-encoded list of
@@ -144,6 +177,11 @@ public class FullSyncMachine {
         return ArrayUtils.addAll(executeBlockParameter, getInherentDataParameter());
     }
 
+    /**
+     * Constructs the parameter for inherent data.
+     *
+     * @return The parameter for inherent data.
+     */
     public static byte[] getInherentDataParameter() {
         long millis = System.currentTimeMillis();
         return ScaleUtils.Encode.encode(new InherentDataWriter(), new InherentData(millis));
