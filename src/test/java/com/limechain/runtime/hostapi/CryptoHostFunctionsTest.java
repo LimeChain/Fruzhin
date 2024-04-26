@@ -454,7 +454,7 @@ class CryptoHostFunctionsTest {
                             EcdsaUtils.recoverPublicKeyFromSignature(signData, hashedMessage, false))
                     .thenReturn(ecdsaKeyPair.getSecond().raw());
 
-            int result = cryptoHostFunctions.secp256k1EcdsaRecoverV1(signaturePosition, keyPosition);
+            long result = cryptoHostFunctions.secp256k1EcdsaRecoverV1(signaturePosition, keyPosition);
 
             assertEquals(returnPointer.pointer(), result);
         }
@@ -471,7 +471,7 @@ class CryptoHostFunctionsTest {
                             EcdsaUtils.recoverPublicKeyFromSignature(signData, hashedMessage, true))
                     .thenReturn(ecdsaKeyPair.getSecond().raw());
 
-            int result = cryptoHostFunctions.secp256k1EcdsaRecoverCompressedV1(signaturePosition, keyPosition);
+            long result = cryptoHostFunctions.secp256k1EcdsaRecoverCompressedV1(signaturePosition, keyPosition);
 
             assertEquals(returnPointer.pointer(), result);
         }

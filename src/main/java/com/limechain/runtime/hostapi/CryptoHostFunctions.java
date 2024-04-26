@@ -600,7 +600,7 @@ public class CryptoHostFunctions {
      * @return a pointer-size to the SCALE encoded Result. On success it contains the 64-byte recovered public key or
      * an error type on failure.
      */
-    public int secp256k1EcdsaRecoverV1(int signature, int message) {
+    public long secp256k1EcdsaRecoverV1(int signature, int message) {
         log.log(Level.FINEST, "secp256k1EcdsaRecoverV1");
 
         byte[] ecdsaPublicKey = internalSecp256k1RecoverKey(signature, message, false);
@@ -616,21 +616,22 @@ public class CryptoHostFunctions {
      * @return a pointer-size (Definition 201) to the SCALE encoded Result value. On success it contains the 33-byte
      * recovered public key in compressed form on success or an error type on failure.
      */
-    public int secp256k1EcdsaRecoverCompressedV1(int signature, int message) {
+    public long secp256k1EcdsaRecoverCompressedV1(int signature, int message) {
         log.log(Level.FINEST, "secp256k1EcdsaRecoverCompressedV1");
 
         byte[] rawBytes = internalSecp256k1RecoverKey(signature, message, true);
-        return secp2561kScaleKeyResult(rawBytes);
+        long result = secp2561kScaleKeyResult(rawBytes);
+        return result;
     }
 
-    private int secp2561kScaleKeyResult(byte[] rawBytes) {
+    private long secp2561kScaleKeyResult(byte[] rawBytes) {
         ResultWriter resultWriter = new ResultWriter();
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
              ScaleCodecWriter scaleCodecWriter = new ScaleCodecWriter(baos)) {
 
             resultWriter.writeResult(scaleCodecWriter, true);
             resultWriter.write(scaleCodecWriter, rawBytes);
-            return runtime.writeDataToMemory(baos.toByteArray()).pointer();
+            return runtime.writeDataToMemory(baos.toByteArray()).pointerSize();
         } catch (IOException e) {
             throw new ScaleEncodingException(SCALE_ENCODING_SIGNED_MESSAGE_ERROR);
         }
