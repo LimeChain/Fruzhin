@@ -20,10 +20,12 @@ import com.limechain.utils.scale.ScaleUtils;
 import com.limechain.utils.scale.readers.PairReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.emeraldpay.polkaj.scale.reader.ListReader;
+import io.emeraldpay.polkaj.types.Hash256;
 import lombok.Getter;
 import lombok.extern.java.Log;
 import org.apache.commons.lang3.ArrayUtils;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Objects;
 
@@ -45,7 +47,9 @@ public class FullSyncMachine {
         //  this.networkService.currentSelectedPeer is null,
         //  unless explicitly set via some of the "update..." methods
         this.networkService.updateCurrentSelectedPeerWithNextBootnode();
-        AccessorHolder.getInstance().setToGenesis(); //todo: dirty fix for now
+
+        Hash256 stateRoot = AppBean.getBean(GenesisBlockHash.class).getGenesisBlockHeader().getStateRoot();
+        AccessorHolder.getInstance().setToStateRoot(stateRoot.getBytes());
 
         int startNumber = 1;
         int blocksToFetch = 100;
@@ -60,9 +64,9 @@ public class FullSyncMachine {
     /**
      * Fetches blocks from the network.
      *
-     * @param start   The block number to start fetching from.
-     * @param amount  The number of blocks to fetch.
-     * @return        A list of BlockData received from the network.
+     * @param start  The block number to start fetching from.
+     * @param amount The number of blocks to fetch.
+     * @return A list of BlockData received from the network.
      */
     private List<SyncMessage.BlockData> getBlocks(int start, int amount) {
         try {
@@ -105,7 +109,8 @@ public class FullSyncMachine {
             // Protobuf decode the block header
             var encodedHeader = blockData.getHeader().toByteArray();
             BlockHeader blockHeader = ScaleUtils.Decode.decode(encodedHeader, new BlockHeaderReader());
-            log.info("Block number to be executed is " + blockHeader.getBlockNumber());
+            BigInteger blockNumber = blockHeader.getBlockNumber();
+            log.info("Block number to be executed is " + blockNumber);
             byte[] encodedUnsealedHeader =
                     ScaleUtils.Encode.encode(BlockHeaderScaleWriter.getInstance()::writeUnsealed, blockHeader);
 
@@ -134,7 +139,7 @@ public class FullSyncMachine {
 
                 // Persist the updates to the trie structure
                 AccessorHolder.getInstance().getBlockTrieAccessor().persistUpdates();
-            }else{
+            } else {
                 log.info("Block not executed");
                 throw new BlockExecutionException();
             }
@@ -145,20 +150,21 @@ public class FullSyncMachine {
      * Checks whether a block is good to execute based on the output of BlockBuilder_check_inherents.
      *
      * @param checkInherentsOutput The output of BlockBuilder_check_inherents.
-     * @return                      True if the block is good to execute, false otherwise.
+     * @return True if the block is good to execute, false otherwise.
      */
     private static boolean isBlockGoodToExecute(byte[] checkInherentsOutput) {
         var data = ScaleUtils.Decode.decode(ArrayUtils.subarray(checkInherentsOutput, 2, checkInherentsOutput.length),
-                new ListReader<>(new PairReader<>(scr -> new String(scr.readByteArray(8)), scr -> new String(scr.readByteArray()))));
+                new ListReader<>(new PairReader<>(scr -> new String(scr.readByteArray(8)),
+                        scr -> new String(scr.readByteArray()))));
 
         boolean goodToExecute;
 
-        if(data.size() > 1){
+        if (data.size() > 1) {
             goodToExecute = false;
-        }else if (data.size() == 1) {
+        } else if (data.size() == 1) {
             //If the inherent is babeslot or auraslot, then it's an expected issue and we can proceed
             goodToExecute = data.get(0).getValue0().equals("babeslot") || data.get(0).getValue0().equals("auraslot");
-        }else{
+        } else {
             goodToExecute = true;
         }
         return goodToExecute;
@@ -168,7 +174,7 @@ public class FullSyncMachine {
      * Constructs the parameter for calling BlockBuilder_check_inherents.
      *
      * @param executeBlockParameter The parameter for executing the block.
-     * @return                      The parameter for checking inherents.
+     * @return The parameter for checking inherents.
      */
     public static byte[] getCheckInherentsParameter(byte[] executeBlockParameter) {
         // The first param is executeBlockParameter

@@ -10,7 +10,7 @@ import io.emeraldpay.polkaj.types.Hash256;
 public class BlockTrieAccessor extends TrieAccessor {
 
     public BlockTrieAccessor(Hash256 blockHash) {
-        super(null);
+        super(blockHash.getBytes());
 
         BlockState blockState = BlockState.getInstance();
         if (blockState.isInitialized() && blockState.hasHeader(blockHash)) {

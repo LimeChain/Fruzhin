@@ -515,4 +515,55 @@ public class TrieStorage {
 
         db.save(key, storageValue);
     }
+
+    /**
+     * Loads the trie structure from the database starting from a given root.
+     *
+     * @param trieRoot The Merkle root of the trie to load.
+     * @return The reconstructed trie structure, or null if the root is not found.
+     */
+    public TrieStructure<NodeData> loadTrieStructure(byte[] trieRoot) {
+        if (trieRoot == null || trieRoot.length == 0) {
+            log.warning("Invalid or empty trie root provided.");
+            return null;
+        }
+
+        TrieNodeData rootNode = getTrieNodeFromMerkleValue(trieRoot);
+        if (rootNode == null) {
+            log.warning("No trie node found for the given root.");
+            return null;
+        }
+
+        TrieStructure<NodeData> trie = new TrieStructure<>();
+        loadSubTrie(trie, rootNode, trieRoot, Nibbles.EMPTY);
+        return trie;
+    }
+
+    /**
+     * Recursively loads the sub-trie from the database and adds it to the given trie structure.
+     *
+     * @param trie            The trie structure being constructed.
+     * @param currentNodeData The current node data being processed.
+     * @param merkleValue     The Merkle value of the current node.
+     * @param currentPath     The nibble path to the current node.
+     */
+    private void loadSubTrie(TrieStructure<NodeData> trie, TrieNodeData currentNodeData, byte[] merkleValue,
+                             Nibbles currentPath) {
+        trie.insertNode(currentPath,
+                new NodeData(currentNodeData.getValue() == null ? currentNodeData.getTrieRootRef() :
+        currentNodeData.getValue(), merkleValue));
+
+        // Recursively load children and construct the trie
+        List<byte[]> childrenMerkleValues = currentNodeData.getChildrenMerkleValues();
+        for (int i = 0; i < childrenMerkleValues.size(); i++) {
+            byte[] childMerkleValue = childrenMerkleValues.get(i);
+            if (childMerkleValue != null) {
+                TrieNodeData childNodeData = getTrieNodeFromMerkleValue(childMerkleValue);
+                if (childNodeData != null) {
+                    Nibbles childPath = currentPath.add(Nibble.fromInt(i)).addAll(childNodeData.getPartialKey());
+                    loadSubTrie(trie, childNodeData, childMerkleValue, childPath);
+                }
+            }
+        }
+    }
 }
