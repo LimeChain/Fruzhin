@@ -36,7 +36,7 @@ dependencies {
     implementation("org.web3j:crypto:5.0.0")
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.2")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.8.1")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.3")
     testImplementation("org.mockito:mockito-core:5.1.1")
 
     // CLI
