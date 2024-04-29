@@ -28,6 +28,7 @@ import java.util.logging.Level;
 /**
  * Service used for operating the Kademlia distributed hash table.
  */
+@Getter
 @Log
 public class KademliaService extends NetworkService<Kademlia> {
     public static final int REPLICATION = 20;
@@ -35,11 +36,8 @@ public class KademliaService extends NetworkService<Kademlia> {
     private static final Random RANDOM = new Random();
 
     @Setter
-    @Getter
     private Host host;
-    @Getter
     private List<PeerId> bootNodePeerIds;
-    @Getter
     private int successfulBootNodes;
 
     public KademliaService(String protocolId, Multihash hostId, boolean localDht, boolean clientMode) {
@@ -55,7 +53,7 @@ public class KademliaService extends NetworkService<Kademlia> {
      */
     private void initialize(String protocolId, Multihash hostId, boolean localEnabled, boolean clientMode) {
         protocol = new Kademlia(
-                new KademliaEngine(hostId, new RamProviderStore(), new RamRecordStore(), new RamBlockstore()),
+                new KademliaEngine(hostId, new RamProviderStore(1000), new RamRecordStore(), new RamBlockstore()),
                 protocolId, REPLICATION, ALPHA, localEnabled, clientMode);
     }
 

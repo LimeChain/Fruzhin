@@ -1,9 +1,9 @@
 package com.limechain.network.protocol.sync;
 
 import com.google.protobuf.ByteString;
+import com.limechain.exception.NotImplementedException;
 import com.limechain.network.protocol.sync.pb.SyncMessage;
 import com.limechain.utils.LittleEndianUtils;
-import org.apache.commons.lang3.NotImplementedException;
 
 import java.nio.ByteBuffer;
 import java.util.concurrent.CompletableFuture;

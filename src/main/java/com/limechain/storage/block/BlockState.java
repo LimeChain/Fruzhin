@@ -22,8 +22,8 @@ import io.emeraldpay.polkaj.types.Hash256;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.extern.java.Log;
-import org.apache.commons.lang3.SerializationUtils;
 import org.javatuples.Pair;
+import org.springframework.util.SerializationUtils;
 
 import java.math.BigInteger;
 import java.time.Instant;
@@ -690,7 +690,7 @@ public class BlockState {
         if (obj instanceof Instant instant) {
             return instant;
         } else {
-            return SerializationUtils.deserialize((byte[]) obj);
+            return (Instant) SerializationUtils.deserialize((byte[]) obj);
         }
     }
 

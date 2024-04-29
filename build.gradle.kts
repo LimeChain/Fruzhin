@@ -26,6 +26,7 @@ tasks.withType<JavaExec> {
 
 repositories {
     mavenCentral()
+    maven("https://jitpack.io")
 }
 
 dependencies {
@@ -63,6 +64,23 @@ dependencies {
     implementation("io.prometheus:prometheus-metrics-core:1.2.0")
     implementation("io.prometheus:prometheus-metrics-instrumentation-jvm:1.2.0")
     implementation("io.prometheus:prometheus-metrics-exporter-httpserver:1.0.0")
+
+    // NOTE:
+    //  We implicitly rely on Nabu's transitive dependency on Netty's public interfaces.
+    //  We could explicitly include Netty ourselves, but we prefer to make sure we use the same version as Nabu.
+
+    // NOTE:
+    //  For jitpack's syntax for GitHub version resolution, refer to: https://docs.jitpack.io/
+
+    // Nabu
+//    implementation("com.github.LimeChain:nabu:master-SNAPSHOT") // Uncomment for "most-recent on the master branch"
+    implementation("com.github.LimeChain:nabu:16c6586")
+
+    // Guava
+    implementation("com.google.guava:guava:33.1.0-jre")
+
+    // Apache commons
+    implementation("commons-io:commons-io:2.16.1")
 
 }
 
