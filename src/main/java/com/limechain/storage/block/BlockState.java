@@ -1,6 +1,12 @@
 package com.limechain.storage.block;
 
 import com.limechain.exception.global.MissingObjectException;
+import com.limechain.exception.storage.BlockNodeNotFoundException;
+import com.limechain.exception.storage.BlockNotFoundException;
+import com.limechain.exception.storage.BlockStorageGenericException;
+import com.limechain.exception.storage.HeaderNotFoundException;
+import com.limechain.exception.storage.LowerThanRootException;
+import com.limechain.exception.storage.RoundAndSetIdNotFoundException;
 import com.limechain.network.protocol.warp.dto.Block;
 import com.limechain.network.protocol.warp.dto.BlockBody;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
@@ -10,12 +16,6 @@ import com.limechain.rpc.subscriptions.chainsub.ChainSub;
 import com.limechain.runtime.Runtime;
 import com.limechain.storage.DBConstants;
 import com.limechain.storage.KVRepository;
-import com.limechain.exception.storage.BlockNodeNotFoundException;
-import com.limechain.exception.storage.BlockNotFoundException;
-import com.limechain.exception.storage.BlockStorageGenericException;
-import com.limechain.exception.storage.HeaderNotFoundException;
-import com.limechain.exception.storage.LowerThanRootException;
-import com.limechain.exception.storage.RoundAndSetIdNotFoundException;
 import com.limechain.storage.block.tree.BlockTree;
 import com.limechain.utils.scale.ScaleUtils;
 import io.emeraldpay.polkaj.types.Hash256;
@@ -876,10 +876,7 @@ public class BlockState {
 
         List<Hash256> subchain = rangeInMemory(lastFinalized, currentFinalizedHash);
 
-        List<Hash256> subchainExcludingLatestFinalized = subchain.subList(1, subchain.size());
-
-        // root of subchain is previously finalized block, which has already been stored in the db
-        for (Hash256 subchainHash : subchainExcludingLatestFinalized) {
+        for (Hash256 subchainHash : subchain) {
             if (Objects.equals(subchainHash, genesisHash)) {
                 continue;
             }
@@ -893,7 +890,7 @@ public class BlockState {
             setHeader(block.getHeader());
             setBlockBody(subchainHash, block.getBody());
 
-            Instant arrivalTime = getArrivalTime(subchainHash);
+            Instant arrivalTime = blockTree.getArrivalTime(subchainHash);
             setArrivalTime(subchainHash, arrivalTime);
 
             db.save(helper.headerHashKey(block.getHeader().getBlockNumber()), subchainHash.getBytes());

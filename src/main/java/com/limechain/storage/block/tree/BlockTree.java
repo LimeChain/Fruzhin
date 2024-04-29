@@ -1,11 +1,11 @@
 package com.limechain.storage.block.tree;
 
-import com.limechain.network.protocol.warp.dto.BlockHeader;
-import com.limechain.runtime.Runtime;
 import com.limechain.exception.storage.BlockAlreadyExistsException;
 import com.limechain.exception.storage.BlockNodeNotFoundException;
 import com.limechain.exception.storage.BlockStorageGenericException;
 import com.limechain.exception.storage.LowerThanRootException;
+import com.limechain.network.protocol.warp.dto.BlockHeader;
+import com.limechain.runtime.Runtime;
 import com.limechain.storage.block.map.HashToRuntime;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.Getter;
@@ -199,9 +199,7 @@ public class BlockTree {
             throw new IllegalArgumentException("Start is greater than end");
         }
 
-        // blocksInRange is the difference between the end number to start number
-        // but the difference don't include the start item that is why we add 1
-        int blocksInRange = (int) (endNode.getNumber() - startNode.getNumber() + 1);
+        int blocksInRange = (int) (endNode.getNumber() - startNode.getNumber());
         List<Hash256> hashes = new ArrayList<>(blocksInRange);
 
         BlockNode tempNode = endNode;

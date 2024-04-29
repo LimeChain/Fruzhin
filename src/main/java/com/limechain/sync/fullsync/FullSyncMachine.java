@@ -7,11 +7,15 @@ import com.limechain.network.Network;
 import com.limechain.network.protocol.blockannounce.scale.BlockHeaderScaleWriter;
 import com.limechain.network.protocol.sync.BlockRequestDto;
 import com.limechain.network.protocol.sync.pb.SyncMessage;
+import com.limechain.network.protocol.warp.dto.Block;
+import com.limechain.network.protocol.warp.dto.BlockBody;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
+import com.limechain.network.protocol.warp.dto.Extrinsics;
 import com.limechain.network.protocol.warp.scale.reader.BlockHeaderReader;
 import com.limechain.rpc.server.AppBean;
 import com.limechain.runtime.Runtime;
 import com.limechain.runtime.RuntimeBuilder;
+import com.limechain.storage.block.BlockState;
 import com.limechain.sync.fullsync.inherents.InherentData;
 import com.limechain.sync.fullsync.inherents.scale.InherentDataWriter;
 import com.limechain.trie.AccessorHolder;
@@ -37,6 +41,7 @@ import java.util.Objects;
 @Log
 public class FullSyncMachine {
     private final Network networkService;
+    private final BlockState blockState = BlockState.getInstance();
 
     public FullSyncMachine(final Network networkService) {
         this.networkService = networkService;
@@ -48,10 +53,14 @@ public class FullSyncMachine {
         //  unless explicitly set via some of the "update..." methods
         this.networkService.updateCurrentSelectedPeerWithNextBootnode();
 
-        Hash256 stateRoot = AppBean.getBean(GenesisBlockHash.class).getGenesisBlockHeader().getStateRoot();
+        BlockHeader highestFinalizedHeader = blockState.getHighestFinalizedHeader();
+        Hash256 stateRoot = highestFinalizedHeader.getStateRoot();
         AccessorHolder.getInstance().setToStateRoot(stateRoot.getBytes());
 
-        int startNumber = 1;
+        int startNumber = highestFinalizedHeader
+                .getBlockNumber()
+                .add(BigInteger.ONE)
+                .intValue();
         int blocksToFetch = 100;
         List<SyncMessage.BlockData> receivedBlockDatas = getBlocks(startNumber, blocksToFetch);
         while (!receivedBlockDatas.isEmpty()) {
@@ -121,6 +130,9 @@ public class FullSyncMachine {
                     () -> extrinsincs.stream().map(ByteString::toByteArray).iterator()
             );
 
+            List<Extrinsics> extrinsicsList = extrinsincs.stream().map(ByteString::toByteArray).map(Extrinsics::new).toList();
+            blockState.addBlock(new Block(blockHeader, new BlockBody(extrinsicsList)));
+
             // Construct the parameter for executing the block
             byte[] executeBlockParameter = ArrayUtils.addAll(encodedUnsealedHeader, encodedBody);
 
@@ -139,6 +151,7 @@ public class FullSyncMachine {
 
                 // Persist the updates to the trie structure
                 AccessorHolder.getInstance().getBlockTrieAccessor().persistUpdates();
+                blockState.setFinalizedHash(blockHeader.getHash(), BigInteger.ZERO, BigInteger.ZERO);
             } else {
                 log.info("Block not executed");
                 throw new BlockExecutionException();
