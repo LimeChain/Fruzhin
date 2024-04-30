@@ -150,7 +150,35 @@ public class TrieAccessor implements KVRepository<Nibbles, byte[]> {
 
     @Override
     public Optional<Nibbles> getNextKey(Nibbles key) {
-        return Optional.ofNullable(trieStorage.getNextKeyByMerkleValue(lastRoot, key));
+        NodeHandle<NodeData> rootHandle = initialTrie.getRootNode().orElse(null);
+        if (rootHandle == null) {
+            return Optional.empty();
+        }
+
+        return findNextKey(rootHandle, key, Nibbles.EMPTY);
+    }
+
+    private Optional<Nibbles> findNextKey(NodeHandle<NodeData> node, Nibbles prefix, Nibbles currentPath) {
+        if (node == null) {
+            return Optional.empty();
+        }
+
+        // If the current node is a leaf and the fullPath is greater than the prefix, it's a candidate.
+        if (node.getUserData() != null && node.getUserData().getValue() != null && currentPath.compareTo(prefix) > 0) {
+            return Optional.of(currentPath);
+        }
+
+        for (Nibble nibble : Nibbles.ALL) {
+            NodeHandle<NodeData> childNode = node.getChild(nibble).orElse(null);
+            if(childNode == null) continue;
+            Nibbles nextPath = currentPath.add(nibble).addAll(childNode.getPartialKey());
+            Optional<Nibbles> result = findNextKey(childNode, prefix, nextPath);
+            if (result.isPresent()) {
+                return result;
+            }
+        }
+
+        return Optional.empty();
     }
 
     @Override

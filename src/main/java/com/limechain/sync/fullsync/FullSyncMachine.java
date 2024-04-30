@@ -1,7 +1,6 @@
 package com.limechain.sync.fullsync;
 
 import com.google.protobuf.ByteString;
-import com.limechain.constants.GenesisBlockHash;
 import com.limechain.exception.sync.BlockExecutionException;
 import com.limechain.network.Network;
 import com.limechain.network.protocol.blockannounce.scale.BlockHeaderScaleWriter;
@@ -12,9 +11,9 @@ import com.limechain.network.protocol.warp.dto.BlockBody;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.network.protocol.warp.dto.Extrinsics;
 import com.limechain.network.protocol.warp.scale.reader.BlockHeaderReader;
-import com.limechain.rpc.server.AppBean;
 import com.limechain.runtime.Runtime;
 import com.limechain.runtime.RuntimeBuilder;
+import com.limechain.runtime.version.StateVersion;
 import com.limechain.storage.block.BlockState;
 import com.limechain.sync.fullsync.inherents.InherentData;
 import com.limechain.sync.fullsync.inherents.scale.InherentDataWriter;
@@ -31,7 +30,6 @@ import org.apache.commons.lang3.ArrayUtils;
 
 import java.math.BigInteger;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * FullSyncMachine is responsible for executing full synchronization of blocks.
@@ -42,6 +40,7 @@ import java.util.Objects;
 public class FullSyncMachine {
     private final Network networkService;
     private final BlockState blockState = BlockState.getInstance();
+    private final AccessorHolder accessorHolder = AccessorHolder.getInstance();
 
     public FullSyncMachine(final Network networkService) {
         this.networkService = networkService;
@@ -55,7 +54,13 @@ public class FullSyncMachine {
 
         BlockHeader highestFinalizedHeader = blockState.getHighestFinalizedHeader();
         Hash256 stateRoot = highestFinalizedHeader.getStateRoot();
-        AccessorHolder.getInstance().setToStateRoot(stateRoot.getBytes());
+        accessorHolder.setToStateRoot(stateRoot.getBytes());
+
+        byte[] calculatedMerkleRoot = accessorHolder.getBlockTrieAccessor().getMerkleRoot(StateVersion.V0);
+        if (!stateRoot.equals(new Hash256(calculatedMerkleRoot))) {
+            log.info("State root is not equal to the one in the trie, cannot start full sync");
+            return;
+        }
 
         int startNumber = highestFinalizedHeader
                 .getBlockNumber()
@@ -130,7 +135,8 @@ public class FullSyncMachine {
                     () -> extrinsincs.stream().map(ByteString::toByteArray).iterator()
             );
 
-            List<Extrinsics> extrinsicsList = extrinsincs.stream().map(ByteString::toByteArray).map(Extrinsics::new).toList();
+            List<Extrinsics> extrinsicsList =
+                    extrinsincs.stream().map(ByteString::toByteArray).map(Extrinsics::new).toList();
             blockState.addBlock(new Block(blockHeader, new BlockBody(extrinsicsList)));
 
             // Construct the parameter for executing the block
@@ -166,9 +172,10 @@ public class FullSyncMachine {
      * @return True if the block is good to execute, false otherwise.
      */
     private static boolean isBlockGoodToExecute(byte[] checkInherentsOutput) {
-        var data = ScaleUtils.Decode.decode(ArrayUtils.subarray(checkInherentsOutput, 2, checkInherentsOutput.length),
-                new ListReader<>(new PairReader<>(scr -> new String(scr.readByteArray(8)),
-                        scr -> new String(scr.readByteArray()))));
+        var data =
+                ScaleUtils.Decode.decode(ArrayUtils.subarray(checkInherentsOutput, 2, checkInherentsOutput.length),
+                        new ListReader<>(new PairReader<>(scr -> new String(scr.readByteArray(8)),
+                                scr -> new String(scr.readByteArray()))));
 
         boolean goodToExecute;
 
@@ -176,7 +183,8 @@ public class FullSyncMachine {
             goodToExecute = false;
         } else if (data.size() == 1) {
             //If the inherent is babeslot or auraslot, then it's an expected issue and we can proceed
-            goodToExecute = data.get(0).getValue0().equals("babeslot") || data.get(0).getValue0().equals("auraslot");
+            goodToExecute =
+                    data.get(0).getValue0().equals("babeslot") || data.get(0).getValue0().equals("auraslot");
         } else {
             goodToExecute = true;
         }
