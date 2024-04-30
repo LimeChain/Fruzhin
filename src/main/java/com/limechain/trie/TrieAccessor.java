@@ -151,10 +151,6 @@ public class TrieAccessor implements KVRepository<Nibbles, byte[]> {
     @Override
     public Optional<Nibbles> getNextKey(Nibbles key) {
         NodeHandle<NodeData> rootHandle = initialTrie.getRootNode().orElse(null);
-        if (rootHandle == null) {
-            return Optional.empty();
-        }
-
         return findNextKey(rootHandle, key, Nibbles.EMPTY);
     }
 

@@ -174,10 +174,15 @@ public class FullSyncMachine {
      * @return True if the block is good to execute, false otherwise.
      */
     private static boolean isBlockGoodToExecute(byte[] checkInherentsOutput) {
-        var data =
-                ScaleUtils.Decode.decode(ArrayUtils.subarray(checkInherentsOutput, 2, checkInherentsOutput.length),
-                        new ListReader<>(new PairReader<>(scr -> new String(scr.readByteArray(8)),
-                                scr -> new String(scr.readByteArray()))));
+        var data = ScaleUtils.Decode.decode(
+                ArrayUtils.subarray(checkInherentsOutput, 2, checkInherentsOutput.length),
+                new ListReader<>(
+                        new PairReader<>(
+                                scr -> new String(scr.readByteArray(8)),
+                                scr -> new String(scr.readByteArray())
+                        )
+                )
+        );
 
         boolean goodToExecute;
 
@@ -185,8 +190,7 @@ public class FullSyncMachine {
             goodToExecute = false;
         } else if (data.size() == 1) {
             //If the inherent is babeslot or auraslot, then it's an expected issue and we can proceed
-            goodToExecute =
-                    data.get(0).getValue0().equals("babeslot") || data.get(0).getValue0().equals("auraslot");
+            goodToExecute = data.get(0).getValue0().equals("babeslot") || data.get(0).getValue0().equals("auraslot");
         } else {
             goodToExecute = true;
         }

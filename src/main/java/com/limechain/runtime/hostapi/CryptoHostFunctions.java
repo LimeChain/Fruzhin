@@ -620,8 +620,7 @@ public class CryptoHostFunctions {
         log.log(Level.FINEST, "secp256k1EcdsaRecoverCompressedV1");
 
         byte[] rawBytes = internalSecp256k1RecoverKey(signature, message, true);
-        long result = secp2561kScaleKeyResult(rawBytes);
-        return result;
+        return secp2561kScaleKeyResult(rawBytes);
     }
 
     private long secp2561kScaleKeyResult(byte[] rawBytes) {
