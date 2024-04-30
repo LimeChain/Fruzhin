@@ -510,7 +510,7 @@ public class TrieStructure<T> {
         return clearNodeValueRecursive(nodeIndex.getValue(), limit);
     }
 
-    public int clearNodeValueRecursive(int nodeIndex, Long limit) {
+    private int clearNodeValueRecursive(int nodeIndex, Long limit) {
         int deleted = 0;
         TrieNode<T> trieNode = getNodeAtIndexInner(nodeIndex);
 
@@ -541,7 +541,7 @@ public class TrieStructure<T> {
         return clearNodeValue(nodeIndex.getValue());
     }
 
-    boolean clearNodeValue(int nodeIndex) {
+    private boolean clearNodeValue(int nodeIndex) {
         TrieNode<T> trieNode = getNodeAtIndexInner(nodeIndex);
 
         TrieNode.Parent parent = trieNode.parent;
