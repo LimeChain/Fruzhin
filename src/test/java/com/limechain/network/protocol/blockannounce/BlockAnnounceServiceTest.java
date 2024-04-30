@@ -11,14 +11,15 @@ import io.libp2p.core.Host;
 import io.libp2p.core.PeerId;
 import io.libp2p.core.multiformats.Multiaddr;
 import io.libp2p.protocol.Ping;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.peergos.HostBuilder;
 
+import java.lang.reflect.Field;
 import java.math.BigInteger;
 import java.util.List;
 
@@ -27,8 +28,6 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class BlockAnnounceServiceTest {
-    @InjectMocks
-    private BlockAnnounceService blockAnnounceService = new BlockAnnounceService("pid");
     @Mock
     private BlockAnnounce protocol;
     @Mock
@@ -39,6 +38,13 @@ class BlockAnnounceServiceTest {
     private AddressBook addressBook;
     @Mock
     private BlockAnnounceController blockAnnounceController;
+
+    private final BlockAnnounceService blockAnnounceService = new BlockAnnounceService("pid");
+
+    @BeforeEach
+    public void setupEach() throws NoSuchFieldException, IllegalAccessException {
+        setPrivateFieldOfSuperclass(blockAnnounceService, "protocol", protocol);
+    }
 
     @Test
     void sendHandshake() {
@@ -108,6 +114,16 @@ class BlockAnnounceServiceTest {
                 senderNode.stop();
             }
         }
+    }
+
+    // Setting private fields. Not a good idea in general.
+    // Necessary due to mockito's newer versions not being able to inject generic type fields in superclass
+    private void setPrivateFieldOfSuperclass(Object object, String fieldName, Object value)
+            throws NoSuchFieldException, IllegalAccessException {
+        Field privateField = object.getClass().getSuperclass().getDeclaredField(fieldName);
+        privateField.setAccessible(true);
+
+        privateField.set(object, value);
     }
 
 }
