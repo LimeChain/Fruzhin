@@ -126,8 +126,7 @@ public class FullSyncMachine {
             // Protobuf decode the block header
             var encodedHeader = blockData.getHeader().toByteArray();
             BlockHeader blockHeader = ScaleUtils.Decode.decode(encodedHeader, new BlockHeaderReader());
-            BigInteger blockNumber = blockHeader.getBlockNumber();
-            log.info("Block number to be executed is " + blockNumber);
+            log.info("Block number to be executed is " + blockHeader.getBlockNumber());
             byte[] encodedUnsealedHeader =
                     ScaleUtils.Encode.encode(BlockHeaderScaleWriter.getInstance()::writeUnsealed, blockHeader);
 
