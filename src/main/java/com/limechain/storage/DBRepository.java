@@ -29,7 +29,7 @@ public class DBRepository implements KVRepository<String, Object> {
     /**
      * Main DB folder
      */
-    private static final  String FOLDER_NAME = "db";
+    private static final String FOLDER_NAME = "db";
 
     /**
      * Connection to the DB
