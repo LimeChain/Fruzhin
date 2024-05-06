@@ -74,7 +74,7 @@ dependencies {
     implementation("com.github.LimeChain:nabu:16c6586")
 
     // Guava
-    implementation("com.google.guava:guava:33.1.0-jre")
+    implementation("com.google.guava:guava:33.2.0-jre")
 
     // Apache commons
     implementation("commons-io:commons-io:2.16.1")
