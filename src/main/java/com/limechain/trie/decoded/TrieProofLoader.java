@@ -1,7 +1,7 @@
 package com.limechain.trie.decoded;
 
-import com.limechain.trie.decoded.decoder.TrieDecoder;
 import com.limechain.exception.trie.TrieDecoderException;
+import com.limechain.trie.decoded.decoder.TrieDecoder;
 import lombok.experimental.UtilityClass;
 import org.apache.tomcat.util.buf.HexUtils;
 
@@ -53,6 +53,11 @@ public class TrieProofLoader {
             // it becomes used with a database in the future, we set the dirty flag
             // to true.
             decodedChild.setDirty(true);
+
+            if (decodedChild.isValueHashed() &&
+               digestToEncoding.containsKey(HexUtils.toHexString(decodedChild.getStorageValue()))){
+                decodedChild.setStorageValue(digestToEncoding.get(HexUtils.toHexString(decodedChild.getStorageValue())));
+            }
 
             Node[] children = node.getChildren();
             children[i] = decodedChild;
