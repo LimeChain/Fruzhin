@@ -1,8 +1,5 @@
 package com.limechain.trie;
 
-import com.limechain.constants.GenesisBlockHash;
-import com.limechain.rpc.server.AppBean;
-import io.emeraldpay.polkaj.types.Hash256;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -24,17 +21,6 @@ public class AccessorHolder {
             instance = new AccessorHolder();
         }
         return instance;
-    }
-
-    /**
-     * Sets the current BlockTrieAccessor instance to the trie structure of the genesis block.
-     *
-     * @return The BlockTrieAccessor instance representing the genesis block trie.
-     */
-    public BlockTrieAccessor setToGenesis() {
-        Hash256 genesisHash = AppBean.getBean(GenesisBlockHash.class).getGenesisHash();
-        this.blockTrieAccessor = new BlockTrieAccessor(genesisHash);
-        return this.blockTrieAccessor;
     }
 
     /**

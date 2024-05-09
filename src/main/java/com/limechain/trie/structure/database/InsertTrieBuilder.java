@@ -47,7 +47,7 @@ public class InsertTrieBuilder {
     private static InsertTrieNode prepareForInsert(TrieStructure<NodeData> trieStructure, TrieNodeIndex nodeIndex) {
         NodeData userData = trieStructure.getUserDataAtIndex(nodeIndex);
         if (userData == null || userData.getMerkleValue() == null) {
-            return null;
+            throw new TrieBuildException("Trying to save node without merkle value");
         }
 
         NodeHandle<NodeData> nodeHandle = trieStructure.nodeHandleAtIndex(nodeIndex);
@@ -60,6 +60,7 @@ public class InsertTrieBuilder {
                 .startsWith(Nibbles.fromBytes(":child_storage:".getBytes()));
 
         return new InsertTrieNode(
+                !nodeHandle.hasStorageValue(),
                 userData.getValue(),
                 userData.getMerkleValue(),
                 childrenMerkleValues(nodeHandle),

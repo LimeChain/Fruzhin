@@ -16,6 +16,7 @@ import java.util.LinkedList;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Queue;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -52,8 +53,8 @@ public class TrieStructure<T> {
 
     /**
      * @return the number of nodes in the trie structure, both
-     *         branch (purely structural, with no storage value) and
-     *         storage nodes (leafs or branches).
+     * branch (purely structural, with no storage value) and
+     * storage nodes (leafs or branches).
      */
     public int size() {
         return this.nodes.size();
@@ -69,6 +70,7 @@ public class TrieStructure<T> {
 
     /**
      * Queries the trie at the given key.
+     *
      * @param key to look up at
      * @return the {@link Entry} at the given key
      */
@@ -76,7 +78,7 @@ public class TrieStructure<T> {
     public Entry<T> node(Nibbles key) {
         return switch (this.existingNodeInner(key)) {
             case ExistingNodeInnerResult.Found found ->
-                NodeHandle.<T>getConstructor(found.hasStorageValue()).apply(this, found.nodeIndex());
+                    NodeHandle.<T>getConstructor(found.hasStorageValue()).apply(this, found.nodeIndex());
             case ExistingNodeInnerResult.NotFound notFound -> {
                 Integer closestAncestorIndex = null;
 
@@ -90,9 +92,37 @@ public class TrieStructure<T> {
     }
 
     /**
+     * Insert a branch node at the given key.
+     *
+     * Warning: This method is only to be used when loading a Trie from the database.
+     * If you need to use this method for other purposes, you are probably doing something wrong.
+     *
+     * @param key      partial key in nibbles
+     * @param nodeData data to insert
+     * @implSpec if a storage value is already present for the given key, it will be overwritten
+     */
+    public void insertBranch(Nibbles key, T nodeData) {
+        switch (node(key)) {
+            case Vacant<T> vacant -> {
+                StorageNodeHandle<T> nodeHandle = vacant
+                        .prepareInsert()
+                        .insert(nodeData);
+                nodeHandle.convertToBranchNode();
+            }
+            case BranchNodeHandle<T> branchNodeHandle -> {
+                branchNodeHandle.setUserData(nodeData);
+            }
+            case StorageNodeHandle<T> storageNodeHandle -> {
+                throw new IllegalStateException(
+                        "Trying to insert a branch node at a key that already has a storage node.");
+            }
+        }
+    }
+
+    /**
      * Insert a node at the given key.
      *
-     * @param key partial key in nibbles
+     * @param key      partial key in nibbles
      * @param nodeData data to insert
      * @implSpec if a storage value is already present for the given key, it will be overwritten
      */
@@ -113,7 +143,7 @@ public class TrieStructure<T> {
 
     /**
      * @return an iterator of all {@link TrieNode}s in no specific order,
-     *         indexed by their respective {@link TrieNodeIndex}es.
+     * indexed by their respective {@link TrieNodeIndex}es.
      */
     public Iterator<TrieNodeIndex> iteratorUnordered() {
         return this.streamUnordered().iterator();
@@ -121,6 +151,7 @@ public class TrieStructure<T> {
 
     /**
      * Convenience alternative for {@link TrieStructure#iteratorUnordered()}
+     *
      * @return the trie structure, represented as an iterable of {@link TrieNodeIndex}es in no specific order.
      * @see TrieStructure#iteratorUnordered()
      */
@@ -130,17 +161,17 @@ public class TrieStructure<T> {
 
     /**
      * @return a stream of all {@link TrieNode}s in no specific order,
-     *           indexed by their respective {@link TrieNodeIndex}es.
+     * indexed by their respective {@link TrieNodeIndex}es.
      */
     public Stream<TrieNodeIndex> streamUnordered() {
         return StreamSupport.stream(this.nodes.spliterator(), false)
-            .map(Pair::getValue0)
-            .map(TrieNodeIndex::new);
+                .map(Pair::getValue0)
+                .map(TrieNodeIndex::new);
     }
 
     /**
      * @return an iterator of all {@link TrieNode}s in lexicographic order,
-     *         indexed by their respective {@link TrieNodeIndex}es.
+     * indexed by their respective {@link TrieNodeIndex}es.
      */
     public Iterator<TrieNodeIndex> iteratorOrdered() {
         return this.streamOrdered().iterator();
@@ -148,6 +179,7 @@ public class TrieStructure<T> {
 
     /**
      * Convenience alternative for {@link TrieStructure#iteratorOrdered()}
+     *
      * @return the trie structure, represented as an iterable of {@link TrieNodeIndex}es in lexicographic order.
      * @see TrieStructure#iteratorOrdered()
      */
@@ -157,64 +189,64 @@ public class TrieStructure<T> {
 
     /**
      * @return a stream of all {@link TrieNode}s in lexicographic order,
-     *           indexed by their respective {@link TrieNodeIndex}es.
+     * indexed by their respective {@link TrieNodeIndex}es.
      */
     public Stream<TrieNodeIndex> streamOrdered() {
         return this
-            .allNodesInLexicographicOrder()
-            .map(TrieNodeIndex::new);
+                .allNodesInLexicographicOrder()
+                .map(TrieNodeIndex::new);
     }
 
     /**
      * @return a stream of all {@link TrieNode}s in lexicographic order,
-     *         indexed by their respective integer indices.
+     * indexed by their respective integer indices.
      */
     Stream<Integer> allNodesInLexicographicOrder() {
         return Stream.iterate(
-            this.rootIndex,
-            Objects::nonNull,
-            nodeIndex -> {
-                TrieNode<T> node = this.getNodeAtIndexInner(nodeIndex);
-                // Search for first direct child (as lexicographically next)
-                {
-                    Optional<Integer> firstChild = node.firstChild();
+                this.rootIndex,
+                Objects::nonNull,
+                nodeIndex -> {
+                    TrieNode<T> node = this.getNodeAtIndexInner(nodeIndex);
+                    // Search for first direct child (as lexicographically next)
+                    {
+                        Optional<Integer> firstChild = node.firstChild();
 
-                    if (firstChild.isPresent()) {
-                        return firstChild.get();
-                    }
-                }
-
-                // If no children, then search for direct siblings
-                {
-                    Integer nextSibling = this.nextSibling(nodeIndex);
-                    if (nextSibling != null) {
-                        return nextSibling;
-                    }
-                }
-
-                // If no direct siblings either, then go up the tree and repeat for parent
-                TrieNode.Parent parent = node.parent;
-                while (parent != null) {
-                    int idx = parent.parentNodeIndex();
-                    Integer nextSibling = this.nextSibling(idx);
-
-                    if (nextSibling != null) {
-                        return nextSibling;
+                        if (firstChild.isPresent()) {
+                            return firstChild.get();
+                        }
                     }
 
-                    parent = this.getNodeAtIndexInner(idx).parent;
-                }
+                    // If no children, then search for direct siblings
+                    {
+                        Integer nextSibling = this.nextSibling(nodeIndex);
+                        if (nextSibling != null) {
+                            return nextSibling;
+                        }
+                    }
 
-                // At the end, no nodes should be left.
-                return null;
-            }
+                    // If no direct siblings either, then go up the tree and repeat for parent
+                    TrieNode.Parent parent = node.parent;
+                    while (parent != null) {
+                        int idx = parent.parentNodeIndex();
+                        Integer nextSibling = this.nextSibling(idx);
+
+                        if (nextSibling != null) {
+                            return nextSibling;
+                        }
+
+                        parent = this.getNodeAtIndexInner(idx).parent;
+                    }
+
+                    // At the end, no nodes should be left.
+                    return null;
+                }
         );
     }
 
     /**
      * @param nodeIndex index of a node
      * @return the index of the next sibling of the node,
-     *         null if it's the last (lexicographically speaking) child if its parent, thus no next sibling exists.
+     * null if it's the last (lexicographically speaking) child if its parent, thus no next sibling exists.
      */
     private @Nullable Integer nextSibling(int nodeIndex) {
         var parentIndexPair = this.getNodeAtIndexInner(nodeIndex).parent;
@@ -245,8 +277,8 @@ public class TrieStructure<T> {
         return switch (this.existingNodeInner(key)) {
             case ExistingNodeInnerResult.Found found -> Optional.of(
                     NodeHandle
-                        .<T>getConstructor(found.hasStorageValue())
-                        .apply(this, found.nodeIndex())
+                            .<T>getConstructor(found.hasStorageValue())
+                            .apply(this, found.nodeIndex())
             );
             case ExistingNodeInnerResult.NotFound ignored -> Optional.empty();
         };
@@ -362,6 +394,7 @@ public class TrieStructure<T> {
 
     /**
      * Returns the user data of the node by its index.
+     *
      * @param nodeIndex the index of the existing node
      * @return the user data of the node with the index provided
      */
@@ -372,6 +405,7 @@ public class TrieStructure<T> {
 
     /**
      * Returns a handle for the node at the given index.
+     *
      * @param nodeIndex the index of the existing node
      * @return a node handle for the node
      */
@@ -403,20 +437,20 @@ public class TrieStructure<T> {
         nodePath.add(targetNodeIndex); // add target to the end
 
         Stream<Nibble> nibblesStream = nodePath
-            .stream()
-            .flatMap(n -> {
-                TrieNode<T> node = this.getNodeAtIndexInner(n);
+                .stream()
+                .flatMap(n -> {
+                    TrieNode<T> node = this.getNodeAtIndexInner(n);
 
-                Stream<Nibble> childIndex = Stream.ofNullable(
-                    node.parent == null
-                        ? null
-                        : node.parent.childIndexWithinParent()
-                );
+                    Stream<Nibble> childIndex = Stream.ofNullable(
+                            node.parent == null
+                                    ? null
+                                    : node.parent.childIndexWithinParent()
+                    );
 
-                Nibbles partialKey = node.partialKey.copy();
+                    Nibbles partialKey = node.partialKey.copy();
 
-                return Stream.concat(childIndex, partialKey.stream());
-            });
+                    return Stream.concat(childIndex, partialKey.stream());
+                });
 
         return nibblesStream.collect(NibblesCollector.toNibbles());
     }
@@ -424,7 +458,7 @@ public class TrieStructure<T> {
     /**
      * @param targetNodeIndex index of the target node
      * @return the indices to traverse to reach {@code target} from root, not including {@code target} itself.
-     *         So if {@code target} is root, returns an empty deque.
+     * So if {@code target} is root, returns an empty deque.
      * @throws NullPointerException if targetNodeIndex is not a valid index
      */
     Deque<Integer> nodePath(int targetNodeIndex) {
@@ -445,9 +479,9 @@ public class TrieStructure<T> {
      * Everything is compared for equality except for the {@link TrieNode#userData}s.
      *
      * @implNote This method first compares the sizes of the two trie structures,
-     *           and if they don't match, it early returns false.
-     *           Otherwise, it performs the expensive operation of traversing both tries
-     *           in order to identify a potential mismatch.
+     * and if they don't match, it early returns false.
+     * Otherwise, it performs the expensive operation of traversing both tries
+     * in order to identify a potential mismatch.
      */
     public <U> boolean structurallyEquals(TrieStructure<U> other) {
         if (this.nodes.size() != other.nodes.size()) {
@@ -479,9 +513,9 @@ public class TrieStructure<T> {
 
                 boolean bothParentsNull = thisNodeParent == null || otherNodeParent == null;
                 boolean bothParentsNotNullAndSameChildIndices =
-                    thisNodeParent != null
-                    && otherNodeParent != null
-                    && thisNodeParent.childIndexWithinParent().equals(otherNodeParent.childIndexWithinParent());
+                        thisNodeParent != null
+                        && otherNodeParent != null
+                        && thisNodeParent.childIndexWithinParent().equals(otherNodeParent.childIndexWithinParent());
 
                 if (!(bothParentsNull || bothParentsNotNullAndSameChildIndices)) {
                     return false;
@@ -494,24 +528,67 @@ public class TrieStructure<T> {
         }
     }
 
-    public boolean removeValueAtKey(Nibbles key) {
-        return switch (existingNodeInner(key)) {
-            case ExistingNodeInnerResult.NotFound ignored -> false;
-            case ExistingNodeInnerResult.Found found -> clearNodeValue(found.nodeIndex);
+    public boolean deleteStorageNodeAt(Nibbles key) {
+        return switch (node(key)){
+            case StorageNodeHandle<T> storageNodeHandle -> {
+                deleteNodeAt(storageNodeHandle.rawNodeIndex);
+                yield true;
+            }
+            case BranchNodeHandle<T> branchNodeHandle -> false;
+            case Vacant<T> vacant -> false;
         };
     }
 
-    public boolean clearNodeValue(TrieNodeIndex nodeIndex) {
-        return clearNodeValue(nodeIndex.getValue());
+    public boolean deleteInternalNodeAt(Nibbles key) {
+        Entry<T> entry = node(key);
+        if(!(entry instanceof Vacant<T>)){
+            deleteNodeAt(entry.asNodeHandle().rawNodeIndex);
+            return true;
+        }
+        return false;
     }
 
-    boolean clearNodeValue(int nodeIndex) {
+    public void deleteNodesRecursively(TrieNodeIndex nodeIndex, Long limit, AtomicInteger deleted) {
+        deleteNodesRecursively(nodeIndex.getValue(), limit, deleted);
+    }
+
+    private void deleteNodesRecursively(int nodeIndex, Long limit, AtomicInteger deleted) {
+        TrieNode<T> trieNode = getNodeAtIndexInner(nodeIndex);
+
+        TrieNode.Parent parent = trieNode.parent;
+        if (parent == null) {
+            if (trieNode.hasStorageValue) {
+                deleted.incrementAndGet();
+            }
+            nodes.remove(nodeIndex);
+            return;
+        }
+
+        TrieNode<T> parentNode = getNodeAtIndexInner(parent.parentNodeIndex());
+
+        for (Integer childrenIndex : trieNode.childrenIndices) {
+            if (limit != null && deleted.get() >= limit) {
+                return;
+            }
+            if (childrenIndex != null) {
+                deleteNodesRecursively(childrenIndex, limit, deleted);
+            }
+        }
+
+        parentNode.childrenIndices[parent.childIndexWithinParent().asInt()] = null;
+        nodes.remove(nodeIndex);
+        if (trieNode.hasStorageValue) {
+            deleted.incrementAndGet();
+        }
+    }
+
+    private void deleteNodeAt(int nodeIndex) {
         TrieNode<T> trieNode = getNodeAtIndexInner(nodeIndex);
 
         TrieNode.Parent parent = trieNode.parent;
         if (parent == null) {
             nodes.remove(nodeIndex);
-            return true;
+            return;
         }
         TrieNode<T> parentNode = getNodeAtIndexInner(parent.parentNodeIndex());
 
@@ -527,9 +604,10 @@ public class TrieStructure<T> {
             parentNode.childrenIndices[parent.childIndexWithinParent().asInt()] = null;
             nodes.remove(nodeIndex);
 
-            if (parentChildren == 1 && !parentNode.hasStorageValue) {
-                return clearNodeValue(parent.parentNodeIndex());
-            } else if (parentChildren == 2) {
+            //A leaf node being single child of a it's parent is invalid scenario.
+            assert !(parentChildren == 1 && !parentNode.hasStorageValue) : "Unreachable state.";
+
+            if (parentChildren == 2) {
                 TrieNode.Parent grandparent = parentNode.parent;
                 getNodeAtIndexInner(grandparent.parentNodeIndex()).childrenIndices[grandparent.childIndexWithinParent()
                         .asInt()] = mergeParentIntoChild(parentNode);
@@ -541,8 +619,6 @@ public class TrieStructure<T> {
             trieNode.hasStorageValue = false;
             trieNode.userData = null;
         }
-
-        return true;
     }
 
     private Integer mergeParentIntoChild(TrieNode<T> trieNode) {

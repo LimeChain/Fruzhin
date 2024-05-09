@@ -9,17 +9,19 @@ import io.emeraldpay.polkaj.types.Hash256;
  */
 public class BlockTrieAccessor extends TrieAccessor {
 
+    /**
+     * Constructs a new BlockTrieAccessor using a {@link Hash256} block hash.
+     *
+     * @param blockHash the block hash of the block whose trie is to be accessed
+     */
     public BlockTrieAccessor(Hash256 blockHash) {
-        super(null);
-
-        BlockState blockState = BlockState.getInstance();
-        if (blockState.isInitialized() && blockState.hasHeader(blockHash)) {
-            super.lastRoot = blockState.getHeader(blockHash).getStateRoot().getBytes();
-        }
+        super(BlockState.getInstance().isInitialized() ?
+                BlockState.getInstance().getHeader(blockHash).getStateRoot().getBytes() :
+                null);
     }
 
-    public BlockTrieAccessor(byte[] lastRoot) {
-        super(lastRoot);
+    public BlockTrieAccessor(byte[] stateRoot) {
+        super(stateRoot);
     }
 
 }

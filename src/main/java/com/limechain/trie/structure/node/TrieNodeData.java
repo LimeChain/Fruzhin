@@ -18,6 +18,7 @@ import java.util.List;
 @EqualsAndHashCode
 @Getter
 public class TrieNodeData implements Serializable {
+    private boolean isBranchNode;
     private Nibbles partialKey;
     private List<byte[]> childrenMerkleValues;
     private byte[] value;
@@ -27,7 +28,8 @@ public class TrieNodeData implements Serializable {
     @Override
     public String toString() {
         return "TrieNodeData{" +
-               "partialKey=" + partialKey +
+               "isBranchNode=" + isBranchNode +
+               ", partialKey=" + partialKey +
                ", childrenMerkleValues=" + childrenMerkleValues +
                ", value=" + Arrays.toString(value) +
                ", trieRootRef=" + Arrays.toString(trieRootRef) +

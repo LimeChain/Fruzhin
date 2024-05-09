@@ -18,7 +18,8 @@ import java.util.Objects;
  * @param partialKeyNibbles    A list of nibbles representing the partial key associated with this trie node.
  * @param isReferenceValue     Notes if the value stored is a reference to another node
  */
-public record InsertTrieNode(byte[] storageValue, byte[] merkleValue, List<byte[]> childrenMerkleValues,
+public record InsertTrieNode(boolean isBranch, byte[] storageValue, byte[] merkleValue,
+                             List<byte[]> childrenMerkleValues,
                              Nibbles partialKeyNibbles, boolean isReferenceValue) {
 
     @Override
@@ -26,11 +27,12 @@ public record InsertTrieNode(byte[] storageValue, byte[] merkleValue, List<byte[
         if (obj == this) return true;
         if (obj == null || obj.getClass() != this.getClass()) return false;
         var that = (InsertTrieNode) obj;
-        return Arrays.equals(this.storageValue, that.storageValue) &&
-                Arrays.equals(this.merkleValue, that.merkleValue) &&
-                Objects.equals(this.childrenMerkleValues, that.childrenMerkleValues) &&
-                Objects.equals(this.partialKeyNibbles, that.partialKeyNibbles) &&
-                this.isReferenceValue == that.isReferenceValue;
+        return this.isBranch == that.isBranch
+               && Arrays.equals(this.storageValue, that.storageValue) &&
+               Arrays.equals(this.merkleValue, that.merkleValue) &&
+               Objects.equals(this.childrenMerkleValues, that.childrenMerkleValues) &&
+               Objects.equals(this.partialKeyNibbles, that.partialKeyNibbles) &&
+               this.isReferenceValue == that.isReferenceValue;
     }
 
     @Override
@@ -42,10 +44,11 @@ public record InsertTrieNode(byte[] storageValue, byte[] merkleValue, List<byte[
     @Override
     public String toString() {
         return "InsertTrieNode[" +
-                "storageValue=" + Arrays.toString(storageValue) + ", " +
-                "merkleValue=" + Arrays.toString(merkleValue) + ", " +
-                "childrenMerkleValues=" + childrenMerkleValues + ", " +
-                "partialKeyNibbles=" + partialKeyNibbles + ", " +
-                "isReferenceValue=" + isReferenceValue + ']';
+               "isBranch=" + isBranch + ", " +
+               "storageValue=" + Arrays.toString(storageValue) + ", " +
+               "merkleValue=" + Arrays.toString(merkleValue) + ", " +
+               "childrenMerkleValues=" + childrenMerkleValues + ", " +
+               "partialKeyNibbles=" + partialKeyNibbles + ", " +
+               "isReferenceValue=" + isReferenceValue + ']';
     }
 }

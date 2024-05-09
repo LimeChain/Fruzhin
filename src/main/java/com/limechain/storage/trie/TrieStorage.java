@@ -507,6 +507,7 @@ public class TrieStorage {
         List<byte[]> childrenMerkleValues = trieNode.childrenMerkleValues();
 
         TrieNodeData storageValue = new TrieNodeData(
+                trieNode.isBranch(),
                 trieNode.partialKeyNibbles(),
                 childrenMerkleValues,
                 trieNode.isReferenceValue() ? null : trieNode.storageValue(),
@@ -514,5 +515,66 @@ public class TrieStorage {
                 (byte) stateVersion.asInt());
 
         db.save(key, storageValue);
+    }
+
+    /**
+     * Loads the trie structure from the database starting from a given root.
+     *
+     * @param trieRoot The Merkle root of the trie to load.
+     * @return The reconstructed trie structure, or null if the root is not found.
+     */
+    public TrieStructure<NodeData> loadTrieStructure(byte[] trieRoot) {
+        if (trieRoot == null || trieRoot.length == 0) {
+            log.warning("Invalid or empty trie root provided.");
+            return null;
+        }
+
+        TrieNodeData rootNode = getTrieNodeFromMerkleValue(trieRoot);
+        if (rootNode == null) {
+            log.warning("No trie node found for the given root.");
+            return null;
+        }
+
+        TrieStructure<NodeData> trie = new TrieStructure<>();
+        loadSubTrie(trie, rootNode, trieRoot, Nibbles.EMPTY);
+        return trie;
+    }
+
+    /**
+     * Recursively loads the sub-trie from the database and adds it to the given trie structure.
+     *
+     * @param trie            The trie structure being constructed.
+     * @param currentNodeData The current node data being processed.
+     * @param merkleValue     The Merkle value of the current node.
+     * @param currentPath     The nibble path to the current node.
+     */
+    private void loadSubTrie(TrieStructure<NodeData> trie, TrieNodeData currentNodeData, byte[] merkleValue,
+                             Nibbles currentPath) {
+        // TODO Known issue:
+        // We're inserting all nodes from the DB as key-value-pairs, thus marking a lot of
+        // structural branch nodes (i.e. branch nodes with no storage value) as actually having a storage value.
+        // Miraculously though, we're still able to calculate proper state root hashes since we're not actually
+        // utilising our knowledge of which node has a storage value anywhere in our algorithm, which is a grand
+        // coincidence.
+
+        if (currentNodeData.isBranchNode()) {
+            trie.insertBranch(currentPath, new NodeData(null, merkleValue));
+        } else {
+            byte[] value = currentNodeData.getValue() == null ? currentNodeData.getTrieRootRef() : currentNodeData.getValue();
+            trie.insertNode(currentPath, new NodeData(value, merkleValue));
+        }
+
+        // Recursively load children and construct the trie
+        List<byte[]> childrenMerkleValues = currentNodeData.getChildrenMerkleValues();
+        for (int i = 0; i < childrenMerkleValues.size(); i++) {
+            byte[] childMerkleValue = childrenMerkleValues.get(i);
+            if (childMerkleValue != null) {
+                TrieNodeData childNodeData = getTrieNodeFromMerkleValue(childMerkleValue);
+                if (childNodeData != null) {
+                    Nibbles childPath = currentPath.add(Nibble.fromInt(i)).addAll(childNodeData.getPartialKey());
+                    loadSubTrie(trie, childNodeData, childMerkleValue, childPath);
+                }
+            }
+        }
     }
 }

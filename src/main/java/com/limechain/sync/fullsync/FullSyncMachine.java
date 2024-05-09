@@ -7,11 +7,16 @@ import com.limechain.network.Network;
 import com.limechain.network.protocol.blockannounce.scale.BlockHeaderScaleWriter;
 import com.limechain.network.protocol.sync.BlockRequestDto;
 import com.limechain.network.protocol.sync.pb.SyncMessage;
+import com.limechain.network.protocol.warp.dto.Block;
+import com.limechain.network.protocol.warp.dto.BlockBody;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
+import com.limechain.network.protocol.warp.dto.Extrinsics;
 import com.limechain.network.protocol.warp.scale.reader.BlockHeaderReader;
 import com.limechain.rpc.server.AppBean;
 import com.limechain.runtime.Runtime;
 import com.limechain.runtime.RuntimeBuilder;
+import com.limechain.runtime.version.StateVersion;
+import com.limechain.storage.block.BlockState;
 import com.limechain.sync.fullsync.inherents.InherentData;
 import com.limechain.sync.fullsync.inherents.scale.InherentDataWriter;
 import com.limechain.trie.AccessorHolder;
@@ -20,10 +25,12 @@ import com.limechain.utils.scale.ScaleUtils;
 import com.limechain.utils.scale.readers.PairReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.emeraldpay.polkaj.scale.reader.ListReader;
+import io.emeraldpay.polkaj.types.Hash256;
 import lombok.Getter;
 import lombok.extern.java.Log;
 import org.apache.commons.lang3.ArrayUtils;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Objects;
 
@@ -35,6 +42,8 @@ import java.util.Objects;
 @Log
 public class FullSyncMachine {
     private final Network networkService;
+    private final BlockState blockState = BlockState.getInstance();
+    private final AccessorHolder accessorHolder = AccessorHolder.getInstance();
 
     public FullSyncMachine(final Network networkService) {
         this.networkService = networkService;
@@ -45,9 +54,21 @@ public class FullSyncMachine {
         //  this.networkService.currentSelectedPeer is null,
         //  unless explicitly set via some of the "update..." methods
         this.networkService.updateCurrentSelectedPeerWithNextBootnode();
-        AccessorHolder.getInstance().setToGenesis(); //todo: dirty fix for now
 
-        int startNumber = 1;
+        BlockHeader highestFinalizedHeader = blockState.getHighestFinalizedHeader();
+        Hash256 stateRoot = highestFinalizedHeader.getStateRoot();
+        accessorHolder.setToStateRoot(stateRoot.getBytes());
+
+        byte[] calculatedMerkleRoot = accessorHolder.getBlockTrieAccessor().getMerkleRoot(StateVersion.V0);
+        if (!stateRoot.equals(new Hash256(calculatedMerkleRoot))) {
+            log.info("State root is not equal to the one in the trie, cannot start full sync");
+            return;
+        }
+
+        int startNumber = highestFinalizedHeader
+                .getBlockNumber()
+                .add(BigInteger.ONE)
+                .intValue();
         int blocksToFetch = 100;
         List<SyncMessage.BlockData> receivedBlockDatas = getBlocks(startNumber, blocksToFetch);
         while (!receivedBlockDatas.isEmpty()) {
@@ -60,9 +81,9 @@ public class FullSyncMachine {
     /**
      * Fetches blocks from the network.
      *
-     * @param start   The block number to start fetching from.
-     * @param amount  The number of blocks to fetch.
-     * @return        A list of BlockData received from the network.
+     * @param start  The block number to start fetching from.
+     * @param amount The number of blocks to fetch.
+     * @return A list of BlockData received from the network.
      */
     private List<SyncMessage.BlockData> getBlocks(int start, int amount) {
         try {
@@ -116,6 +137,10 @@ public class FullSyncMachine {
                     () -> extrinsincs.stream().map(ByteString::toByteArray).iterator()
             );
 
+            List<Extrinsics> extrinsicsList =
+                    extrinsincs.stream().map(ByteString::toByteArray).map(Extrinsics::new).toList();
+            blockState.addBlock(new Block(blockHeader, new BlockBody(extrinsicsList)));
+
             // Construct the parameter for executing the block
             byte[] executeBlockParameter = ArrayUtils.addAll(encodedUnsealedHeader, encodedBody);
 
@@ -134,7 +159,8 @@ public class FullSyncMachine {
 
                 // Persist the updates to the trie structure
                 AccessorHolder.getInstance().getBlockTrieAccessor().persistUpdates();
-            }else{
+                blockState.setFinalizedHash(blockHeader.getHash(), BigInteger.ZERO, BigInteger.ZERO);
+            } else {
                 log.info("Block not executed");
                 throw new BlockExecutionException();
             }
@@ -145,20 +171,27 @@ public class FullSyncMachine {
      * Checks whether a block is good to execute based on the output of BlockBuilder_check_inherents.
      *
      * @param checkInherentsOutput The output of BlockBuilder_check_inherents.
-     * @return                      True if the block is good to execute, false otherwise.
+     * @return True if the block is good to execute, false otherwise.
      */
     private static boolean isBlockGoodToExecute(byte[] checkInherentsOutput) {
-        var data = ScaleUtils.Decode.decode(ArrayUtils.subarray(checkInherentsOutput, 2, checkInherentsOutput.length),
-                new ListReader<>(new PairReader<>(scr -> new String(scr.readByteArray(8)), scr -> new String(scr.readByteArray()))));
+        var data = ScaleUtils.Decode.decode(
+                ArrayUtils.subarray(checkInherentsOutput, 2, checkInherentsOutput.length),
+                new ListReader<>(
+                        new PairReader<>(
+                                scr -> new String(scr.readByteArray(8)),
+                                scr -> new String(scr.readByteArray())
+                        )
+                )
+        );
 
         boolean goodToExecute;
 
-        if(data.size() > 1){
+        if (data.size() > 1) {
             goodToExecute = false;
-        }else if (data.size() == 1) {
+        } else if (data.size() == 1) {
             //If the inherent is babeslot or auraslot, then it's an expected issue and we can proceed
             goodToExecute = data.get(0).getValue0().equals("babeslot") || data.get(0).getValue0().equals("auraslot");
-        }else{
+        } else {
             goodToExecute = true;
         }
         return goodToExecute;
@@ -168,7 +201,7 @@ public class FullSyncMachine {
      * Constructs the parameter for calling BlockBuilder_check_inherents.
      *
      * @param executeBlockParameter The parameter for executing the block.
-     * @return                      The parameter for checking inherents.
+     * @return The parameter for checking inherents.
      */
     public static byte[] getCheckInherentsParameter(byte[] executeBlockParameter) {
         // The first param is executeBlockParameter

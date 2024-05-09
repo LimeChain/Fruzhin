@@ -50,6 +50,7 @@ class TrieStorageTest {
 
         final TrieNodeData trieNodeData =
                 new TrieNodeData(
+                        false,
                         key,
                         IntStream.range(0, 16).mapToObj(__ -> (byte[]) null).toList(),
                         expectedValue,
@@ -107,6 +108,7 @@ class TrieStorageTest {
 
         // Simulate a trie node that does not directly match the provided key
         TrieNodeData nonMatchingTrieNodeData = new TrieNodeData(
+                false,
                 Nibbles.fromHexString("01"), // Partial key that does not match the test key
                 IntStream.range(0, 16).mapToObj(__ -> (byte[]) null).toList(),
                 null,
@@ -134,6 +136,7 @@ class TrieStorageTest {
 
         // Setup a mock TrieNodeData that represents the next key
         TrieNodeData nextKeyNode = new TrieNodeData(
+                false,
                 actualKey,
                 new ArrayList<>(), "nextValue".getBytes(), new byte[0], (byte) 0);
 

@@ -104,7 +104,7 @@ public class DBRepository implements KVRepository<String, Object> {
                     e.getMessage())
             );
         }
-        log.info(String.format("finding key '%s' returns '%s'", Nibbles.fromBytes(key.getBytes()), value));
+        log.fine(String.format("finding key '%s' returns '%s'", Nibbles.fromBytes(key.getBytes()), value));
         return Optional.ofNullable(value);
     }
 
@@ -118,7 +118,7 @@ public class DBRepository implements KVRepository<String, Object> {
 
     @Override
     public synchronized boolean delete(String key) {
-        log.log(Level.INFO, String.format("deleting key '%s'", key));
+        log.log(Level.FINE, String.format("deleting key '%s'", key));
         try {
             db.delete(getPrefixedKey(key));
         } catch (RocksDBException e) {
@@ -131,7 +131,7 @@ public class DBRepository implements KVRepository<String, Object> {
 
     @Override
     public synchronized DeleteByPrefixResult deleteByPrefix(String prefix, Long limit) {
-        log.log(Level.INFO, String.format("deleting %s keys with prefix '%s'", limit == null ? "all" : limit, prefix));
+        log.log(Level.FINE, String.format("deleting %s keys with prefix '%s'", limit == null ? "all" : limit, prefix));
         List<byte[]> keysToDelete = findByPrefix(prefix, limit);
 
         keysToDelete.forEach(key -> {
