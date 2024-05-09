@@ -54,7 +54,7 @@ public class TrieProofLoader {
             // to true.
             decodedChild.setDirty(true);
 
-            if(decodedChild.isValueHashed() &&
+            if (decodedChild.isValueHashed() &&
                digestToEncoding.containsKey(HexUtils.toHexString(decodedChild.getStorageValue()))){
                 decodedChild.setStorageValue(digestToEncoding.get(HexUtils.toHexString(decodedChild.getStorageValue())));
             }
