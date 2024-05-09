@@ -503,7 +503,7 @@ public class TrieStructure<T> {
     public boolean deleteNodeAt(Nibbles key) {
         return switch (existingNodeInner(key)) {
             case ExistingNodeInnerResult.NotFound ignored -> false;
-            case ExistingNodeInnerResult.Found found -> clearNodeValue(found.nodeIndex);
+            case ExistingNodeInnerResult.Found found -> deleteNodeAt(found.nodeIndex);
         };
     }
 
@@ -535,7 +535,7 @@ public class TrieStructure<T> {
         nodes.remove(nodeIndex);
     }
 
-    private boolean clearNodeValue(int nodeIndex) {
+    private boolean deleteNodeAt(int nodeIndex) {
         TrieNode<T> trieNode = getNodeAtIndexInner(nodeIndex);
 
         TrieNode.Parent parent = trieNode.parent;
