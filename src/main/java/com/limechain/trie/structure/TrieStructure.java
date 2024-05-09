@@ -94,6 +94,9 @@ public class TrieStructure<T> {
     /**
      * Insert a branch node at the given key.
      *
+     * Warning: This method is only to be used when loading a Trie from the database.
+     * If you need to use this method for other purposes, you are probably doing something wrong.
+     *
      * @param key      partial key in nibbles
      * @param nodeData data to insert
      * @implSpec if a storage value is already present for the given key, it will be overwritten
@@ -528,7 +531,7 @@ public class TrieStructure<T> {
     public boolean deleteStorageNodeAt(Nibbles key) {
         return switch (node(key)){
             case StorageNodeHandle<T> storageNodeHandle -> {
-                deleteStorageNodeAt(storageNodeHandle.rawNodeIndex);
+                deleteNodeAt(storageNodeHandle.rawNodeIndex);
                 yield true;
             }
             case BranchNodeHandle<T> branchNodeHandle -> false;
@@ -539,7 +542,7 @@ public class TrieStructure<T> {
     public boolean deleteInternalNodeAt(Nibbles key) {
         Entry<T> entry = node(key);
         if(!(entry instanceof Vacant<T>)){
-            deleteStorageNodeAt(entry.asNodeHandle().rawNodeIndex);
+            deleteNodeAt(entry.asNodeHandle().rawNodeIndex);
             return true;
         }
         return false;
@@ -579,7 +582,7 @@ public class TrieStructure<T> {
         }
     }
 
-    private void deleteStorageNodeAt(int nodeIndex) {
+    private void deleteNodeAt(int nodeIndex) {
         TrieNode<T> trieNode = getNodeAtIndexInner(nodeIndex);
 
         TrieNode.Parent parent = trieNode.parent;
