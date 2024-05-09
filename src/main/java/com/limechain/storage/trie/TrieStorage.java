@@ -549,6 +549,13 @@ public class TrieStorage {
      */
     private void loadSubTrie(TrieStructure<NodeData> trie, TrieNodeData currentNodeData, byte[] merkleValue,
                              Nibbles currentPath) {
+        // TODO Known issue:
+        // We're inserting all nodes from the DB as key-value-pairs, thus marking a lot of
+        // structural branch nodes (i.e. branch nodes with no storage value) as actually having a storage value.
+        // Miraculously though, we're still able to calculate proper state root hashes since we're not actually
+        // utilising our knowledge of which node has a storage value anywhere in our algorithm, which is a grand
+        // coincidence.
+
         trie.insertNode(currentPath,
                 new NodeData(currentNodeData.getValue() == null ? currentNodeData.getTrieRootRef() :
         currentNodeData.getValue(), merkleValue));

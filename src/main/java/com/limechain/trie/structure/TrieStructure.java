@@ -563,9 +563,10 @@ public class TrieStructure<T> {
             parentNode.childrenIndices[parent.childIndexWithinParent().asInt()] = null;
             nodes.remove(nodeIndex);
 
-            if (parentChildren == 1 && !parentNode.hasStorageValue) {
-                return clearNodeValue(parent.parentNodeIndex());
-            } else if (parentChildren == 2) {
+            //A leaf node being single child of a it's parent is invalid scenario.
+            assert !(parentChildren == 1 && !parentNode.hasStorageValue) : "Unreachable state.";
+
+            if (parentChildren == 2) {
                 TrieNode.Parent grandparent = parentNode.parent;
                 getNodeAtIndexInner(grandparent.parentNodeIndex()).childrenIndices[grandparent.childIndexWithinParent()
                         .asInt()] = mergeParentIntoChild(parentNode);
