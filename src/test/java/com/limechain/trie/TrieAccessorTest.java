@@ -132,7 +132,7 @@ class TrieAccessorTest {
     }
 
     private void removeNode(Nibbles key) {
-        fullTrie.removeValueAtKey(key);
+        fullTrie.deleteNodeAt(key);
         trieAccessor.delete(key);
     }
 

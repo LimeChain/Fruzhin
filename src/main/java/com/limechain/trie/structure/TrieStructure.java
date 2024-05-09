@@ -16,6 +16,7 @@ import java.util.LinkedList;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Queue;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -499,46 +500,39 @@ public class TrieStructure<T> {
         }
     }
 
-    public boolean removeValueAtKey(Nibbles key) {
+    public boolean deleteNodeAt(Nibbles key) {
         return switch (existingNodeInner(key)) {
             case ExistingNodeInnerResult.NotFound ignored -> false;
             case ExistingNodeInnerResult.Found found -> clearNodeValue(found.nodeIndex);
         };
     }
 
-    public int clearNodeValueRecursive(TrieNodeIndex nodeIndex, Long limit) {
-        return clearNodeValueRecursive(nodeIndex.getValue(), limit);
+    public void deleteNodesRecursively(TrieNodeIndex nodeIndex, Long limit, AtomicInteger deleted) {
+        deleteNodesRecursively(nodeIndex.getValue(), limit, deleted);
     }
 
-    private int clearNodeValueRecursive(int nodeIndex, Long limit) {
-        int deleted = 0;
+    private void deleteNodesRecursively(int nodeIndex, Long limit, AtomicInteger deleted) {
         TrieNode<T> trieNode = getNodeAtIndexInner(nodeIndex);
 
         TrieNode.Parent parent = trieNode.parent;
         if (parent == null) {
             nodes.remove(nodeIndex);
-            deleted++;
-            return deleted;
+             deleted.incrementAndGet();
+             return;
         }
         TrieNode<T> parentNode = getNodeAtIndexInner(parent.parentNodeIndex());
 
         for (Integer childrenIndex : trieNode.childrenIndices) {
-            if (limit != null && deleted >= limit) {
-                return deleted;
+            if (limit != null && deleted.get() >= limit) {
+                return;
             }
             if (childrenIndex != null) {
-                deleted += clearNodeValueRecursive(childrenIndex, limit);
+                deleteNodesRecursively(childrenIndex, limit, deleted);
             }
         }
 
         parentNode.childrenIndices[parent.childIndexWithinParent().asInt()] = null;
         nodes.remove(nodeIndex);
-
-        return deleted;
-    }
-
-    public boolean clearNodeValue(TrieNodeIndex nodeIndex) {
-        return clearNodeValue(nodeIndex.getValue());
     }
 
     private boolean clearNodeValue(int nodeIndex) {

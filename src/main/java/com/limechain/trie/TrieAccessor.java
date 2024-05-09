@@ -4,11 +4,9 @@ import com.limechain.runtime.version.StateVersion;
 import com.limechain.storage.DeleteByPrefixResult;
 import com.limechain.storage.KVRepository;
 import com.limechain.storage.trie.TrieStorage;
-import com.limechain.trie.structure.Entry;
 import com.limechain.trie.structure.NodeHandle;
 import com.limechain.trie.structure.TrieNodeIndex;
 import com.limechain.trie.structure.TrieStructure;
-import com.limechain.trie.structure.Vacant;
 import com.limechain.trie.structure.database.NodeData;
 import com.limechain.trie.structure.nibble.Nibble;
 import com.limechain.trie.structure.nibble.Nibbles;
@@ -19,6 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @AllArgsConstructor
 public class TrieAccessor implements KVRepository<Nibbles, byte[]> {
@@ -95,13 +94,7 @@ public class TrieAccessor implements KVRepository<Nibbles, byte[]> {
      */
     @Override
     public boolean delete(Nibbles key) {
-        Entry<NodeData> node = initialTrie.node(key);
-        if (!(node instanceof Vacant<NodeData>)) {
-            NodeHandle<NodeData> nodeHandle = node.asNodeHandle();
-            initialTrie.clearNodeValue(nodeHandle.getNodeIndex());
-            return true;
-        }
-        return false;
+        return initialTrie.deleteNodeAt(key);
     }
 
     @Override
@@ -125,20 +118,20 @@ public class TrieAccessor implements KVRepository<Nibbles, byte[]> {
         }
 
         NodeHandle<NodeData> nodeHandle = optionalNodeHandle.get();
-        int deleted = 0;
+        AtomicInteger deleted = new AtomicInteger(0);
 
         for (Nibble nibble : Nibbles.ALL) {
-            deleted += nodeHandle.getChild(nibble)
+            nodeHandle.getChild(nibble)
                     .map(NodeHandle::getNodeIndex)
-                    .map(childIndex -> initialTrie.clearNodeValueRecursive(childIndex, limit)).orElse(0);
+                    .ifPresent(childIndex -> initialTrie.deleteNodesRecursively(childIndex, limit, deleted));
         }
 
-        if (limit != null && deleted >= limit) {
-            return new DeleteByPrefixResult(deleted, false);
+        if (limit != null && deleted.get() >= limit) {
+            return new DeleteByPrefixResult(deleted.get(), false);
         }
 
-        initialTrie.clearNodeValue(nodeHandle.getNodeIndex());
-        return new DeleteByPrefixResult(deleted, true);
+        initialTrie.deleteNodeAt(nodeHandle.getFullKey());
+        return new DeleteByPrefixResult(deleted.incrementAndGet(), true);
     }
 
     public void persistUpdates() {
@@ -166,7 +159,7 @@ public class TrieAccessor implements KVRepository<Nibbles, byte[]> {
 
         for (Nibble nibble : Nibbles.ALL) {
             NodeHandle<NodeData> childNode = node.getChild(nibble).orElse(null);
-            if(childNode == null) continue;
+            if (childNode == null) continue;
             Nibbles nextPath = currentPath.add(nibble).addAll(childNode.getPartialKey());
             Optional<Nibbles> result = findNextKey(childNode, prefix, nextPath);
             if (result.isPresent()) {
