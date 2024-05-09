@@ -60,6 +60,7 @@ public class InsertTrieBuilder {
                 .startsWith(Nibbles.fromBytes(":child_storage:".getBytes()));
 
         return new InsertTrieNode(
+                !nodeHandle.hasStorageValue(),
                 userData.getValue(),
                 userData.getMerkleValue(),
                 childrenMerkleValues(nodeHandle),

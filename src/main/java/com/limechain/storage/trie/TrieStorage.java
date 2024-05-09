@@ -507,6 +507,7 @@ public class TrieStorage {
         List<byte[]> childrenMerkleValues = trieNode.childrenMerkleValues();
 
         TrieNodeData storageValue = new TrieNodeData(
+                trieNode.isBranch(),
                 trieNode.partialKeyNibbles(),
                 childrenMerkleValues,
                 trieNode.isReferenceValue() ? null : trieNode.storageValue(),
@@ -556,9 +557,12 @@ public class TrieStorage {
         // utilising our knowledge of which node has a storage value anywhere in our algorithm, which is a grand
         // coincidence.
 
-        trie.insertNode(currentPath,
-                new NodeData(currentNodeData.getValue() == null ? currentNodeData.getTrieRootRef() :
-        currentNodeData.getValue(), merkleValue));
+        if (currentNodeData.isBranchNode()) {
+            trie.insertBranch(currentPath, new NodeData(null, merkleValue));
+        } else {
+            byte[] value = currentNodeData.getValue() == null ? currentNodeData.getTrieRootRef() : currentNodeData.getValue();
+            trie.insertNode(currentPath, new NodeData(value, merkleValue));
+        }
 
         // Recursively load children and construct the trie
         List<byte[]> childrenMerkleValues = currentNodeData.getChildrenMerkleValues();

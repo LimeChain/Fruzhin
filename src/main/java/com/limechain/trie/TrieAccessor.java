@@ -94,7 +94,7 @@ public class TrieAccessor implements KVRepository<Nibbles, byte[]> {
      */
     @Override
     public boolean delete(Nibbles key) {
-        return initialTrie.deleteNodeAt(key);
+        return initialTrie.deleteStorageNodeAt(key);
     }
 
     @Override
@@ -130,8 +130,14 @@ public class TrieAccessor implements KVRepository<Nibbles, byte[]> {
             return new DeleteByPrefixResult(deleted.get(), false);
         }
 
-        initialTrie.deleteNodeAt(nodeHandle.getFullKey());
-        return new DeleteByPrefixResult(deleted.incrementAndGet(), true);
+        if (nodeHandle.hasStorageValue()) {
+            initialTrie.deleteStorageNodeAt(nodeHandle.getFullKey());
+            deleted.incrementAndGet();
+        }else{
+            initialTrie.deleteInternalNodeAt(nodeHandle.getFullKey());
+        }
+
+        return new DeleteByPrefixResult(deleted.get(), true);
     }
 
     public void persistUpdates() {

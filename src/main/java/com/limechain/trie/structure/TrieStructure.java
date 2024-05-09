@@ -92,6 +92,31 @@ public class TrieStructure<T> {
     }
 
     /**
+     * Insert a branch node at the given key.
+     *
+     * @param key      partial key in nibbles
+     * @param nodeData data to insert
+     * @implSpec if a storage value is already present for the given key, it will be overwritten
+     */
+    public void insertBranch(Nibbles key, T nodeData) {
+        switch (node(key)) {
+            case Vacant<T> vacant -> {
+                StorageNodeHandle<T> nodeHandle = vacant
+                        .prepareInsert()
+                        .insert(nodeData);
+                nodeHandle.convertToBranchNode();
+            }
+            case BranchNodeHandle<T> branchNodeHandle -> {
+                branchNodeHandle.setUserData(nodeData);
+            }
+            case StorageNodeHandle<T> storageNodeHandle -> {
+                throw new IllegalStateException(
+                        "Trying to insert a branch node at a key that already has a storage node.");
+            }
+        }
+    }
+
+    /**
      * Insert a node at the given key.
      *
      * @param key      partial key in nibbles
@@ -500,11 +525,24 @@ public class TrieStructure<T> {
         }
     }
 
-    public boolean deleteNodeAt(Nibbles key) {
-        return switch (existingNodeInner(key)) {
-            case ExistingNodeInnerResult.NotFound ignored -> false;
-            case ExistingNodeInnerResult.Found found -> deleteNodeAt(found.nodeIndex);
+    public boolean deleteStorageNodeAt(Nibbles key) {
+        return switch (node(key)){
+            case StorageNodeHandle<T> storageNodeHandle -> {
+                deleteStorageNodeAt(storageNodeHandle.rawNodeIndex);
+                yield true;
+            }
+            case BranchNodeHandle<T> branchNodeHandle -> false;
+            case Vacant<T> vacant -> false;
         };
+    }
+
+    public boolean deleteInternalNodeAt(Nibbles key) {
+        Entry<T> entry = node(key);
+        if(!(entry instanceof Vacant<T>)){
+            deleteStorageNodeAt(entry.asNodeHandle().rawNodeIndex);
+            return true;
+        }
+        return false;
     }
 
     public void deleteNodesRecursively(TrieNodeIndex nodeIndex, Long limit, AtomicInteger deleted) {
@@ -516,10 +554,13 @@ public class TrieStructure<T> {
 
         TrieNode.Parent parent = trieNode.parent;
         if (parent == null) {
+            if (trieNode.hasStorageValue) {
+                deleted.incrementAndGet();
+            }
             nodes.remove(nodeIndex);
-             deleted.incrementAndGet();
-             return;
+            return;
         }
+
         TrieNode<T> parentNode = getNodeAtIndexInner(parent.parentNodeIndex());
 
         for (Integer childrenIndex : trieNode.childrenIndices) {
@@ -533,15 +574,18 @@ public class TrieStructure<T> {
 
         parentNode.childrenIndices[parent.childIndexWithinParent().asInt()] = null;
         nodes.remove(nodeIndex);
+        if (trieNode.hasStorageValue) {
+            deleted.incrementAndGet();
+        }
     }
 
-    private boolean deleteNodeAt(int nodeIndex) {
+    private void deleteStorageNodeAt(int nodeIndex) {
         TrieNode<T> trieNode = getNodeAtIndexInner(nodeIndex);
 
         TrieNode.Parent parent = trieNode.parent;
         if (parent == null) {
             nodes.remove(nodeIndex);
-            return true;
+            return;
         }
         TrieNode<T> parentNode = getNodeAtIndexInner(parent.parentNodeIndex());
 
@@ -572,8 +616,6 @@ public class TrieStructure<T> {
             trieNode.hasStorageValue = false;
             trieNode.userData = null;
         }
-
-        return true;
     }
 
     private Integer mergeParentIntoChild(TrieNode<T> trieNode) {
