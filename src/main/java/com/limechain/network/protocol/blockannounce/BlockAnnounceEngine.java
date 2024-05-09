@@ -1,5 +1,7 @@
 package com.limechain.network.protocol.blockannounce;
 
+import com.limechain.exception.scale.ScaleEncodingException;
+import com.limechain.exception.storage.BlockNodeNotFoundException;
 import com.limechain.network.ConnectionManager;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshake;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshakeScaleReader;
@@ -10,7 +12,6 @@ import com.limechain.network.protocol.warp.dto.Block;
 import com.limechain.network.protocol.warp.dto.BlockBody;
 import com.limechain.storage.block.BlockState;
 import com.limechain.sync.warpsync.SyncedState;
-import com.limechain.exception.scale.ScaleEncodingException;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.libp2p.core.PeerId;
@@ -78,7 +79,11 @@ public class BlockAnnounceEngine {
                             " stateRoot:" + announce.getHeader().getStateRoot());
 
         if (BlockState.getInstance().isInitialized()) {
-            BlockState.getInstance().addBlock(new Block(announce.getHeader(), new BlockBody(new ArrayList<>())));
+            try {
+                BlockState.getInstance().addBlock(new Block(announce.getHeader(), new BlockBody(new ArrayList<>())));
+            } catch (BlockNodeNotFoundException ignored) {
+                //ignored
+            }
         }
     }
 
