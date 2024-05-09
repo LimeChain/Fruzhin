@@ -5,12 +5,14 @@ import com.limechain.network.protocol.NetworkService;
 import io.libp2p.core.Host;
 import io.libp2p.core.PeerId;
 import io.libp2p.core.Stream;
+import lombok.extern.java.Log;
 
 import java.util.Optional;
 
 /**
  * Service for sending messages on {@link Grandpa} protocol.
  */
+@Log
 public class GrandpaService extends NetworkService<Grandpa> {
     ConnectionManager connectionManager = ConnectionManager.getInstance();
     public GrandpaService(String protocolId) {
@@ -39,7 +41,11 @@ public class GrandpaService extends NetworkService<Grandpa> {
     }
 
     private void sendHandshake(Host us, PeerId peerId) {
-        GrandpaController controller = this.protocol.dialPeer(us, peerId, us.getAddressBook());
-        controller.sendHandshake();
+        try{
+            GrandpaController controller = this.protocol.dialPeer(us, peerId, us.getAddressBook());
+            controller.sendHandshake();
+        } catch (Exception e) {
+            log.warning("Failed to send Grandpa handshake to " + peerId);
+        }
     }
 }

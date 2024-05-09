@@ -23,15 +23,15 @@ public class SyncMessages extends StrictProtocolBinding<SyncController> {
 
     public SyncMessage.BlockResponse remoteBlockRequest(Host us, AddressBook addrs, PeerId peer,
                                                         BlockRequestDto blockRequest) {
-        SyncController controller = dialPeer(us, peer, addrs);
         try {
+            SyncController controller = dialPeer(us, peer, addrs);
             SyncMessage.BlockResponse response = controller
                     .sendBlockRequest(blockRequest.getFields(), blockRequest.getHash(), blockRequest.getNumber(),
                             blockRequest.getDirection(), blockRequest.getMaxBlocks())
                     .get(2, TimeUnit.SECONDS);
             log.log(Level.INFO, "Received blocks: " + response.getBlocksCount());
             return response;
-        } catch (ExecutionException | TimeoutException e) {
+        } catch (ExecutionException | TimeoutException | IllegalStateException e) {
             log.log(Level.SEVERE, "Error while sending remote block request: ", e);
             throw new ExecutionFailedException(e);
         } catch (InterruptedException e) {
@@ -41,13 +41,13 @@ public class SyncMessages extends StrictProtocolBinding<SyncController> {
     }
 
     public SyncMessage.StateResponse remoteStateRequest(Host us, AddressBook addrs, PeerId peer, String blockHash) {
-        SyncController controller = dialPeer(us, peer, addrs);
         try {
+            SyncController controller = dialPeer(us, peer, addrs);
             SyncMessage.StateResponse resp = controller.sendStateRequest(StringUtils.remove0xPrefix(blockHash))
                     .get(10, TimeUnit.SECONDS);
             log.log(Level.INFO, "Received state sync response " + resp.toString());
             return resp;
-        } catch (ExecutionException | TimeoutException e) {
+        } catch (ExecutionException | TimeoutException | IllegalStateException e) {
             log.log(Level.SEVERE, "Error while sending remote state request: ", e);
             throw new ExecutionFailedException(e);
         } catch (InterruptedException e) {
