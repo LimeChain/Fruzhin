@@ -82,7 +82,9 @@ public class BlockAnnounceEngine {
             try {
                 BlockState.getInstance().addBlock(new Block(announce.getHeader(), new BlockBody(new ArrayList<>())));
             } catch (BlockNodeNotFoundException ignored) {
-                //ignored
+                // Currently we ignore this exception, because our syncing strategy as full node is not implemented yet.
+                // And thus when we receive a block announce and try to add it in the BlockState we will get this
+                // exception because the parent block of the received one is not found in the BlockState.
             }
         }
     }
