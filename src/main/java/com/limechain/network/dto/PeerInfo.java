@@ -22,7 +22,7 @@ public class PeerInfo {
     private final ProtocolStreams grandpaStreams = new ProtocolStreams();
     private final ProtocolStreams transactionsStreams = new ProtocolStreams();
 
-    public String getNodeRoleName(){
+    public String getNodeRoleName() {
         return Arrays
                 .stream(NodeRole.values())
                 .filter(role -> role.getValue() == nodeRole)
