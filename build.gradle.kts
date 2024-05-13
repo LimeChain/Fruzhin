@@ -1,9 +1,7 @@
 plugins {
     id("java")
     id("io.freefair.lombok") version "8.6"
-    // Can't use newest 3.x version of Spring Boot as it fails to build with jsonprc4j
-    // See: https://stackoverflow.com/questions/74760350/application-fails-on-run-in-a-new-release-of-springboot-3-0-0
-    id("org.springframework.boot") version "2.7.3"
+    id("org.springframework.boot") version "3.2.5"
     id("io.spring.dependency-management") version "1.1.5"
     id("application")
 }
@@ -30,7 +28,7 @@ dependencies {
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.2")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.3")
-    testImplementation("org.mockito:mockito-core:5.11.0")
+    testImplementation("org.mockito:mockito-core:5.12.0")
 
     // CLI
     implementation("commons-cli:commons-cli:1.7.0")
