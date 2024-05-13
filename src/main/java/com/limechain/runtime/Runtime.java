@@ -54,7 +54,7 @@ public class Runtime {
 
     @Nullable
     private byte[] callInner(String functionName, RuntimePointerSize parameterPtrSize) {
-        log.log(Level.INFO, "Making a runtime call: " + functionName);
+        log.log(Level.FINE, "Making a runtime call: " + functionName);
         Object[] response = instance.exports.getFunction(functionName)
             .apply(parameterPtrSize.pointer(), parameterPtrSize.size());
 

@@ -79,8 +79,9 @@ public class FullSyncMachine {
         int blocksToFetch = 100;
         List<SyncMessage.BlockData> receivedBlockDatas = getBlocks(startNumber, blocksToFetch);
         while (!receivedBlockDatas.isEmpty()) {
-            startNumber += blocksToFetch;
             executeBlocks(receivedBlockDatas);
+            log.info("Executed blocks from " + startNumber + " to " + (startNumber + blocksToFetch));
+            startNumber += blocksToFetch;
             receivedBlockDatas = getBlocks(startNumber, blocksToFetch);
         }
     }
@@ -124,7 +125,7 @@ public class FullSyncMachine {
             // Protobuf decode the block header
             var encodedHeader = blockData.getHeader().toByteArray();
             BlockHeader blockHeader = ScaleUtils.Decode.decode(encodedHeader, new BlockHeaderReader());
-            log.info("Block number to be executed is " + blockHeader.getBlockNumber());
+            log.fine("Block number to be executed is " + blockHeader.getBlockNumber());
             byte[] encodedUnsealedHeader =
                     ScaleUtils.Encode.encode(BlockHeaderScaleWriter.getInstance()::writeUnsealed, blockHeader);
 
@@ -149,11 +150,11 @@ public class FullSyncMachine {
             // Check if the block is good to execute based on the output of BlockBuilder_check_inherents
             boolean goodToExecute = isBlockGoodToExecute(checkInherentsOutput);
 
-            log.info("Block is good to execute: " + goodToExecute);
+            log.fine("Block is good to execute: " + goodToExecute);
 
             if (goodToExecute) {
                 runtime.call("Core_execute_block", executeBlockParameter);
-                log.info("Block executed successfully");
+                log.fine("Block executed successfully");
 
                 // Persist the updates to the trie structure
                 AccessorHolder.getInstance().getBlockTrieAccessor().persistUpdates();
@@ -168,7 +169,7 @@ public class FullSyncMachine {
                 }
 
             } else {
-                log.info("Block not executed");
+                log.fine("Block not executed");
                 throw new BlockExecutionException();
             }
         }
