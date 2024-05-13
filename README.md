@@ -27,17 +27,17 @@ cd Fruzhin
 ### Java Version
 
 Fruzhin only works
-with [Java 17 Coretto](https://docs.aws.amazon.com/corretto/latest/corretto-17-ug/downloads-list.html). Using any other
+with [Java 21 Coretto](https://docs.aws.amazon.com/corretto/latest/corretto-21-ug/downloads-list.html). Using any other
 version may cause "cannot calculate secret" errors when running the node:
 
 ```
 org.bouncycastle.tls.crypto.TlsCryptoException: cannot calculate secret
 ```
 
-If you have multiple java version installed please make sure you're using 17:
+If you have multiple java version installed please make sure you're using 21:
 
 ```
-export JAVA_HOME=`/usr/libexec/java_home -v 17.0.8`
+export JAVA_HOME=`/usr/libexec/java_home -v 21`
 ```
 
 ### Wasmer-Java dylib setup
@@ -66,10 +66,9 @@ Copy the file to the Java `Extensions` folder:
 ### Sync with official chain
 
 ```bash
-java --enable-preview -jar build/libs/Fruzhin-0.1.0.jar -n polkadot --node-mode full --sync-mode full
+java -jar build/libs/Fruzhin-0.1.0.jar -n polkadot --node-mode full --sync-mode full
 ```
 
-- `--enable-preview` flag is necessary as we are using java preview features
 - `-n`(network) could be `westend`, `polkadot` or `kusama`
 - `--node-mode` could be `full` or `light`
 - `--sync-mode` could be `full` or `warp`
