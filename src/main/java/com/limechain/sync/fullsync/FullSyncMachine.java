@@ -1,7 +1,6 @@
 package com.limechain.sync.fullsync;
 
 import com.google.protobuf.ByteString;
-import com.limechain.constants.GenesisBlockHash;
 import com.limechain.exception.sync.BlockExecutionException;
 import com.limechain.network.Network;
 import com.limechain.network.protocol.blockannounce.scale.BlockHeaderScaleWriter;
@@ -10,9 +9,10 @@ import com.limechain.network.protocol.sync.pb.SyncMessage;
 import com.limechain.network.protocol.warp.dto.Block;
 import com.limechain.network.protocol.warp.dto.BlockBody;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
+import com.limechain.network.protocol.warp.dto.DigestType;
 import com.limechain.network.protocol.warp.dto.Extrinsics;
+import com.limechain.network.protocol.warp.dto.HeaderDigest;
 import com.limechain.network.protocol.warp.scale.reader.BlockHeaderReader;
-import com.limechain.rpc.server.AppBean;
 import com.limechain.runtime.Runtime;
 import com.limechain.runtime.RuntimeBuilder;
 import com.limechain.runtime.version.StateVersion;
@@ -31,8 +31,8 @@ import lombok.extern.java.Log;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * FullSyncMachine is responsible for executing full synchronization of blocks.
@@ -44,6 +44,7 @@ public class FullSyncMachine {
     private final Network networkService;
     private final BlockState blockState = BlockState.getInstance();
     private final AccessorHolder accessorHolder = AccessorHolder.getInstance();
+    private Runtime runtime = null;
 
     public FullSyncMachine(final Network networkService) {
         this.networkService = networkService;
@@ -65,6 +66,9 @@ public class FullSyncMachine {
             return;
         }
 
+        runtime = getRuntimeFromState();
+        blockState.storeRuntime(highestFinalizedHeader.getHash(), runtime);
+
         int startNumber = highestFinalizedHeader
                 .getBlockNumber()
                 .add(BigInteger.ONE)
@@ -72,8 +76,9 @@ public class FullSyncMachine {
         int blocksToFetch = 100;
         List<SyncMessage.BlockData> receivedBlockDatas = getBlocks(startNumber, blocksToFetch);
         while (!receivedBlockDatas.isEmpty()) {
-            startNumber += blocksToFetch;
             executeBlocks(receivedBlockDatas);
+            log.info("Executed blocks from " + startNumber + " to " + (startNumber + blocksToFetch));
+            startNumber += blocksToFetch;
             receivedBlockDatas = getBlocks(startNumber, blocksToFetch);
         }
     }
@@ -113,20 +118,11 @@ public class FullSyncMachine {
      * @param receivedBlockDatas A list of BlockData to execute.
      */
     private void executeBlocks(List<SyncMessage.BlockData> receivedBlockDatas) {
-        byte[] runtimeCode = Objects.requireNonNull(AppBean.getBean(GenesisBlockHash.class)
-                        .getGenesisTrie()
-                        .node(Nibbles.fromBytes(":code".getBytes()))
-                        .asNodeHandle()
-                        .getUserData())
-                .getValue();
-
-        Runtime runtime = new RuntimeBuilder()
-                .buildRuntime(runtimeCode);
         for (SyncMessage.BlockData blockData : receivedBlockDatas) {
             // Protobuf decode the block header
             var encodedHeader = blockData.getHeader().toByteArray();
             BlockHeader blockHeader = ScaleUtils.Decode.decode(encodedHeader, new BlockHeaderReader());
-            log.info("Block number to be executed is " + blockHeader.getBlockNumber());
+            log.fine("Block number to be executed is " + blockHeader.getBlockNumber());
             byte[] encodedUnsealedHeader =
                     ScaleUtils.Encode.encode(BlockHeaderScaleWriter.getInstance()::writeUnsealed, blockHeader);
 
@@ -151,20 +147,38 @@ public class FullSyncMachine {
             // Check if the block is good to execute based on the output of BlockBuilder_check_inherents
             boolean goodToExecute = isBlockGoodToExecute(checkInherentsOutput);
 
-            log.info("Block is good to execute: " + goodToExecute);
+            log.fine("Block is good to execute: " + goodToExecute);
 
             if (goodToExecute) {
                 runtime.call("Core_execute_block", executeBlockParameter);
-                log.info("Block executed successfully");
+                log.fine("Block executed successfully");
 
                 // Persist the updates to the trie structure
                 AccessorHolder.getInstance().getBlockTrieAccessor().persistUpdates();
                 blockState.setFinalizedHash(blockHeader.getHash(), BigInteger.ZERO, BigInteger.ZERO);
+
+                if (Arrays.stream(blockHeader.getDigest())
+                        .map(HeaderDigest::getType)
+                        .anyMatch(type -> type.equals(DigestType.RUN_ENV_UPDATED))) {
+                    log.info("Runtime updated, updating the runtime code");
+                    runtime = getRuntimeFromState();
+                    blockState.storeRuntime(blockHeader.getHash(), runtime);
+                }
+
             } else {
-                log.info("Block not executed");
+                log.fine("Block not executed");
                 throw new BlockExecutionException();
             }
         }
+    }
+
+    private static Runtime getRuntimeFromState() {
+        return AccessorHolder
+                .getInstance()
+                .getBlockTrieAccessor()
+                .find(Nibbles.fromBytes(":code".getBytes()))
+                .map(new RuntimeBuilder()::buildRuntime)
+                .orElseThrow(() -> new RuntimeException("Runtime code not found in the trie"));
     }
 
     /**
