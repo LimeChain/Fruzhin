@@ -73,6 +73,9 @@ dependencies {
 //    implementation("com.github.LimeChain:nabu:master-SNAPSHOT") // Uncomment for "most-recent on the master branch"
     implementation("com.github.LimeChain:nabu:16c6586")
 
+    //JSON-RPC
+    implementation("com.github.LimeChain:jsonrpc4j:aefaade0c5")
+
     // Guava
     implementation("com.google.guava:guava:33.2.0-jre")
 
