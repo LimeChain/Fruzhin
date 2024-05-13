@@ -1,7 +1,6 @@
 package com.limechain.sync.fullsync;
 
 import com.google.protobuf.ByteString;
-import com.limechain.constants.GenesisBlockHash;
 import com.limechain.exception.sync.BlockExecutionException;
 import com.limechain.network.Network;
 import com.limechain.network.protocol.blockannounce.scale.BlockHeaderScaleWriter;
@@ -14,7 +13,6 @@ import com.limechain.network.protocol.warp.dto.DigestType;
 import com.limechain.network.protocol.warp.dto.Extrinsics;
 import com.limechain.network.protocol.warp.dto.HeaderDigest;
 import com.limechain.network.protocol.warp.scale.reader.BlockHeaderReader;
-import com.limechain.rpc.server.AppBean;
 import com.limechain.runtime.Runtime;
 import com.limechain.runtime.RuntimeBuilder;
 import com.limechain.runtime.version.StateVersion;
@@ -35,7 +33,6 @@ import org.apache.commons.lang3.ArrayUtils;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * FullSyncMachine is responsible for executing full synchronization of blocks.
@@ -176,15 +173,12 @@ public class FullSyncMachine {
     }
 
     private static Runtime getRuntimeFromState() {
-        byte[] runtimeCode = Objects.requireNonNull(AppBean.getBean(GenesisBlockHash.class)
-                        .getGenesisTrie()
-                        .node(Nibbles.fromBytes(":code".getBytes()))
-                        .asNodeHandle()
-                        .getUserData())
-                .getValue();
-
-        return new RuntimeBuilder()
-                .buildRuntime(runtimeCode);
+        return AccessorHolder
+                .getInstance()
+                .getBlockTrieAccessor()
+                .find(Nibbles.fromBytes(":code".getBytes()))
+                .map(new RuntimeBuilder()::buildRuntime)
+                .orElseThrow(() -> new RuntimeException("Runtime code not found in the trie"));
     }
 
     /**
