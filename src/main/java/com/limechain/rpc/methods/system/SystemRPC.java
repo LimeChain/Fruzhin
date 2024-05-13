@@ -38,8 +38,8 @@ public interface SystemRPC {
     @JsonRpcMethod("system_localPeerId")
     String systemLocalPeerId();
 
-    @JsonRpcMethod("system_localListenAddress")
-    String[] systemLocalListenAddress();
+    @JsonRpcMethod("system_localListenAddresses")
+    String[] systemLocalListenAddresses();
 
     @JsonRpcMethod("system_peers")
     List<Map<String, Object>> systemSystemPeers();

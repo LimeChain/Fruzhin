@@ -124,7 +124,7 @@ public class RPCMethodsImpl implements RPCMethods {
     }
 
     @Override
-    public String[] systemLocalListenAddress() {
+    public String[] systemLocalListenAddresses() {
         return systemRPC.systemLocalListenAddress();
     }
 
