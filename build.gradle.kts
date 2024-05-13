@@ -14,15 +14,7 @@ application {
 
 group = "com.limechain"
 version = "0.1.0"
-java.sourceCompatibility = JavaVersion.VERSION_17
-
-tasks.withType<JavaCompile> {
-    options.compilerArgs.add("--enable-preview")
-}
-
-tasks.withType<JavaExec> {
-    jvmArgs("--enable-preview")
-}
+java.sourceCompatibility = JavaVersion.VERSION_21
 
 repositories {
     mavenCentral()
@@ -71,7 +63,7 @@ dependencies {
 
     // Nabu
 //    implementation("com.github.LimeChain:nabu:master-SNAPSHOT") // Uncomment for "most-recent on the master branch"
-    implementation("com.github.LimeChain:nabu:16c6586")
+    implementation("com.github.LimeChain:nabu:32f159f413")
 
     //JSON-RPC
     implementation("com.github.LimeChain:jsonrpc4j:aefaade0c5")
@@ -86,5 +78,5 @@ dependencies {
 
 tasks.getByName<Test>("test") {
     useJUnitPlatform()
-    jvmArgs("--enable-preview")
+    jvmArgs("-Dnet.bytebuddy.experimental=true")
 }
