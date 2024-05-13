@@ -57,8 +57,6 @@ public class Network {
     private static final int HOST_PORT = 30333;
     private static final Random RANDOM = new Random();
     @Getter
-    private static Network network;
-    @Getter
     private final Chain chain;
     @Getter
     private final NodeRole nodeRole;
@@ -134,8 +132,6 @@ public class Network {
         blockAnnounceService = new BlockAnnounceService(blockAnnounceProtocolId);
         grandpaService = new GrandpaService(grandpaProtocolId);
         ping = new Ping(pingProtocol, new PingProtocol());
-        transactionsService = new TransactionsService(transactionsProtocolId);
-
         hostBuilder.addProtocols(
                 List.of(
                         ping,
@@ -149,6 +145,8 @@ public class Network {
         );
 
         if (nodeRole == NodeRole.FULL) {
+
+            transactionsService = new TransactionsService(transactionsProtocolId);
             hostBuilder.addProtocols(
                     List.of(
                             transactionsService.getProtocol()
@@ -228,8 +226,12 @@ public class Network {
     }
 
     public String[] getListenAddresses() {
-        // TODO Bug: .listenAddresses() returns empty list
-        return this.host.listenAddresses().stream().map(Multiaddr::toString).toArray(String[]::new);
+        // TODO: KNOWN ISSUE: `.listenAddresses()` returns empty list
+        //  The issue diagnosed thus far: `listenAddresses` doesn't provide all the registered addresses, but only the active ones
+        //  So, the state of the host is properly populated, but the method used is not a "getter" as we'd like to
+        //  Reference from the source code of `jvm-libp2p`: https://github.com/libp2p/jvm-libp2p/blob/9fd77410345f72bb1c327ef8d09a9f3ed41d15be/libp2p/src/main/kotlin/io/libp2p/core/Host.kt#L41
+        var listenAddrs = this.host.listenAddresses();
+        return listenAddrs.stream().map(Multiaddr::toString).toArray(String[]::new);
     }
 
     public int getPeersCount() {

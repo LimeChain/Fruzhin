@@ -199,7 +199,7 @@ public class OffchainHostFunctions {
      * @see <a href=https://spec.polkadot.network/chap-host-api#defn-opaque-network-state>Opaque Network State</a>
      */
     public RuntimePointerSize extOffchainNetworkState() {
-        Network network = Network.getNetwork();
+        Network network = AppBean.getBean(Network.class);
         PeerId peerId = network.getHost().getPeerId();
         List<Multiaddr> multiAddresses = network.getHost().listenAddresses();
 
