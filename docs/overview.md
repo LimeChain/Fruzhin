@@ -19,11 +19,11 @@ git clone https://github.com/LimeChain/Fruzhin.git
 cd Fruzhin
 ```
 
-#### Install java 17 corretto (if you don't already have it)
+#### Install java 21 corretto (if you don't already have it)
 Setup guide:
-- [Windows](https://docs.aws.amazon.com/corretto/latest/corretto-17-ug/windows-install.html)
-- [Linux](https://docs.aws.amazon.com/corretto/latest/corretto-17-ug/generic-linux-install.html)
-- [Mac](https://docs.aws.amazon.com/corretto/latest/corretto-17-ug/macos-install.html)
+- [Windows](https://docs.aws.amazon.com/corretto/latest/corretto-21-ug/windows-install.html)
+- [Linux](https://docs.aws.amazon.com/corretto/latest/corretto-21-ug/generic-linux-install.html)
+- [Mac](https://docs.aws.amazon.com/corretto/latest/corretto-21-ug/macos-install.html)
 
 #### Build project
 
@@ -43,7 +43,7 @@ If exception is thrown you will have to manually grab the compiled wasmer-java d
 Run the following command to start the blockchain node:
 
 ```bash
-./java --enable-preview -jar build/libs/Fruzhin-0.1.0.jar -n polkadot --node-mode full --sync-mode full
+./java -jar build/libs/Fruzhin-0.1.0.jar -n polkadot --node-mode full --sync-mode full
 ```
 
 ## Contributing

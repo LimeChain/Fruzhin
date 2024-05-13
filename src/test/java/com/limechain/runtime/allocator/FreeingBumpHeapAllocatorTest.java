@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -33,8 +34,7 @@ class FreeingBumpHeapAllocatorTest {
 
     @Mock
     private Memory memory;
-    @Mock
-    private ByteBuffer buffer;
+    private ByteBuffer buffer = Mockito.spy(ByteBuffer.allocate(1000));
 
     @Mock
     private List<Order> orders;
