@@ -10,7 +10,9 @@ import com.limechain.network.protocol.sync.pb.SyncMessage;
 import com.limechain.network.protocol.warp.dto.Block;
 import com.limechain.network.protocol.warp.dto.BlockBody;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
+import com.limechain.network.protocol.warp.dto.DigestType;
 import com.limechain.network.protocol.warp.dto.Extrinsics;
+import com.limechain.network.protocol.warp.dto.HeaderDigest;
 import com.limechain.network.protocol.warp.scale.reader.BlockHeaderReader;
 import com.limechain.rpc.server.AppBean;
 import com.limechain.runtime.Runtime;
@@ -31,6 +33,7 @@ import lombok.extern.java.Log;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -44,6 +47,7 @@ public class FullSyncMachine {
     private final Network networkService;
     private final BlockState blockState = BlockState.getInstance();
     private final AccessorHolder accessorHolder = AccessorHolder.getInstance();
+    private Runtime runtime = null;
 
     public FullSyncMachine(final Network networkService) {
         this.networkService = networkService;
@@ -64,6 +68,9 @@ public class FullSyncMachine {
             log.info("State root is not equal to the one in the trie, cannot start full sync");
             return;
         }
+
+        runtime = getRuntimeFromState();
+        blockState.storeRuntime(highestFinalizedHeader.getHash(), runtime);
 
         int startNumber = highestFinalizedHeader
                 .getBlockNumber()
@@ -113,15 +120,6 @@ public class FullSyncMachine {
      * @param receivedBlockDatas A list of BlockData to execute.
      */
     private void executeBlocks(List<SyncMessage.BlockData> receivedBlockDatas) {
-        byte[] runtimeCode = Objects.requireNonNull(AppBean.getBean(GenesisBlockHash.class)
-                        .getGenesisTrie()
-                        .node(Nibbles.fromBytes(":code".getBytes()))
-                        .asNodeHandle()
-                        .getUserData())
-                .getValue();
-
-        Runtime runtime = new RuntimeBuilder()
-                .buildRuntime(runtimeCode);
         for (SyncMessage.BlockData blockData : receivedBlockDatas) {
             // Protobuf decode the block header
             var encodedHeader = blockData.getHeader().toByteArray();
@@ -160,11 +158,32 @@ public class FullSyncMachine {
                 // Persist the updates to the trie structure
                 AccessorHolder.getInstance().getBlockTrieAccessor().persistUpdates();
                 blockState.setFinalizedHash(blockHeader.getHash(), BigInteger.ZERO, BigInteger.ZERO);
+
+                if (Arrays.stream(blockHeader.getDigest())
+                        .map(HeaderDigest::getType)
+                        .anyMatch(type -> type.equals(DigestType.RUN_ENV_UPDATED))) {
+                    log.info("Runtime updated, updating the runtime code");
+                    runtime = getRuntimeFromState();
+                    blockState.storeRuntime(blockHeader.getHash(), runtime);
+                }
+
             } else {
                 log.info("Block not executed");
                 throw new BlockExecutionException();
             }
         }
+    }
+
+    private static Runtime getRuntimeFromState() {
+        byte[] runtimeCode = Objects.requireNonNull(AppBean.getBean(GenesisBlockHash.class)
+                        .getGenesisTrie()
+                        .node(Nibbles.fromBytes(":code".getBytes()))
+                        .asNodeHandle()
+                        .getUserData())
+                .getValue();
+
+        return new RuntimeBuilder()
+                .buildRuntime(runtimeCode);
     }
 
     /**
