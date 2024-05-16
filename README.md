@@ -77,11 +77,11 @@ java -jar build/libs/Fruzhin-0.1.0.jar -n polkadot --node-mode full --sync-mode 
 
 1. Create a local chain specification file by making a copy of `genesis/westend-local-example.json` in the same folder.
 2. Rename the copied file to `westend-local.json`
-3. Run a local Polkadot node with ```polkadot --dev``` command.
+3. Run a local Polkadot node with ```polkadot --dev``` command. (The default starting port is 9944)
 4. Fetch the chain spec
 
    ```bash
-   curl -H "Content-Type: application/json" -d '{"id":1, "jsonrpc":"2.0", "method": "sync_state_genSyncSpec", "params": [true]}' http://localhost:9922
+   curl -H "Content-Type: application/json" -d '{"id":1, "jsonrpc":"2.0", "method": "sync_state_genSyncSpec", "params": [true]}' http://localhost:9944
    ```
 
    The `lightSyncState` field is important for the light client to
@@ -93,7 +93,7 @@ java -jar build/libs/Fruzhin-0.1.0.jar -n polkadot --node-mode full --sync-mode 
 5. Get the local boot nodes.
 
    ```bash
-   curl -H "Content-Type: application/json" -d '{"id":1, "jsonrpc":"2.0", "method": "system_localListenAddresses"}' http://localhost:9922
+   curl -H "Content-Type: application/json" -d '{"id":1, "jsonrpc":"2.0", "method": "system_localListenAddresses"}' http://localhost:9944
    ```
 
    Paste the response into the `bootNodes` field of the chain spec.
