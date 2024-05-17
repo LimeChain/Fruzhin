@@ -34,7 +34,6 @@ public class TrieStorage {
     private static final String TRIE_NODE_PREFIX = "tn:";
     @Getter
     private static final TrieStorage instance = new TrieStorage();
-    private BlockState blockState;
     private KVRepository<String, Object> db;
 
     /**
@@ -57,24 +56,6 @@ public class TrieStorage {
      */
     protected void initialize(final KVRepository<String, Object> db, final BlockState blockState) {
         this.db = db;
-        this.blockState = blockState;
-    }
-
-    /**
-     * Retrieves a value by key from the trie associated with a specific block hash.
-     *
-     * @param blockHash The hash of the block whose trie is to be searched.
-     * @param key       The key for which to retrieve the value.
-     * @return An {@link Optional} containing the value associated with the key if found, or empty if not found.
-     */
-    public Optional<NodeData> getByKeyFromBlock(Hash256 blockHash, Nibbles key) {
-        BlockHeader header = blockState.getHeader(blockHash);
-
-        if (header == null) {
-            return Optional.empty();
-        }
-
-        return getByKeyFromMerkle(header.getStateRoot().getBytes(), key);
     }
 
     /**
@@ -149,24 +130,6 @@ public class TrieStorage {
      * Finds the next key in the trie that is lexicographically greater than a given prefix.
      * It navigates the trie from the root node associated with a specific block hash.
      *
-     * @param blockHash The hash of the block whose trie is used for the search.
-     * @param prefix    The prefix to compare against for finding the next key.
-     * @return The next key as a String, or null if no such key exists.
-     */
-    public Nibbles getNextKey(Hash256 blockHash, Nibbles prefix) {
-        BlockHeader header = blockState.getHeader(blockHash);
-
-        if (header == null) {
-            return null;
-        }
-
-        return getNextKeyByMerkleValue(header.getStateRoot().getBytes(), prefix);
-    }
-
-    /**
-     * Finds the next key in the trie that is lexicographically greater than a given prefix.
-     * It navigates the trie from the root node associated with a specific block hash.
-     *
      * @param merkleValue The merkleValue of the trie to be used for the search.
      * @param prefix      The prefix to compare against for finding the next key.
      * @return The next key as a String, or null if no such key exists.
@@ -222,17 +185,12 @@ public class TrieStorage {
     /**
      * Searches for the next branch in the trie that is lexicographically greater than a given prefix.
      *
-     * @param blockHash The block hash to start the search from.
+     * @param blockStateRoot The state root to start the search from.
      * @param prefix    The prefix to search for the next branch.
      * @return An {@link Optional} containing the next {@link StorageNode} branch if found, otherwise an empty {@link Optional}.
      */
-    public Optional<StorageNode> getNextBranch(Hash256 blockHash, Nibbles prefix) {
-        BlockHeader header = blockState.getHeader(blockHash);
-        if (header == null) {
-            return Optional.empty();
-        }
-
-        byte[] rootMerkleValue = header.getStateRoot().getBytes();
+    public Optional<StorageNode> getNextBranch(Hash256 blockStateRoot, Nibbles prefix) {
+        byte[] rootMerkleValue = blockStateRoot.getBytes();
         TrieNodeData rootNode = getTrieNodeFromMerkleValue(rootMerkleValue);
         if (rootNode == null) {
             return Optional.empty();
@@ -314,19 +272,14 @@ public class TrieStorage {
     /**
      * Retrieves keys starting with a given prefix, supporting pagination through a starting key and limit.
      *
-     * @param blockHash The hash of the block to search within.
+     * @param blockStateRoot The state root of the block to search within.
      * @param prefix    The prefix to match against keys in the trie.
      * @param startKey  The key from which to start returning results.
      * @param limit     The maximum number of keys to return.
      * @return A list of byte arrays representing the keys that match the given prefix, starting from the startKey.
      */
-    public List<Nibbles> getKeysWithPrefixPaged(Hash256 blockHash, Nibbles prefix, Nibbles startKey, int limit) {
-        BlockHeader header = blockState.getHeader(blockHash);
-        if (header == null) {
-            return new ArrayList<>();
-        }
-
-        TrieNodeData rootNode = getTrieNodeFromMerkleValue(header.getStateRoot().getBytes());
+    public List<Nibbles> getKeysWithPrefixPaged(Hash256 blockStateRoot, Nibbles prefix, Nibbles startKey, int limit) {
+        TrieNodeData rootNode = getTrieNodeFromMerkleValue(blockStateRoot.getBytes());
         if (rootNode == null) {
             return new ArrayList<>();
         }

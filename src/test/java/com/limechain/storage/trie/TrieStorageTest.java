@@ -44,9 +44,9 @@ class TrieStorageTest {
     void testGetByKeyFromBlock() {
         Nibbles key = Nibbles.fromBytes("testKey".getBytes());
         byte[] expectedValue = "testValue".getBytes();
-        Hash256 mockBlockHash = Hash256.from(BLOCK_HASH);
-        BlockHeader mockBlockHeader = mock(BlockHeader.class);
-        when(mockBlockHeader.getStateRoot()).thenReturn(Hash256.from(ROOT_HASH));
+//        Hash256 mockBlockHash = Hash256.from(BLOCK_HASH);
+//        BlockHeader mockBlockHeader = mock(BlockHeader.class);
+//        when(mockBlockHeader.getStateRoot()).thenReturn(Hash256.from(ROOT_HASH));
 
         final TrieNodeData trieNodeData =
                 new TrieNodeData(
@@ -60,9 +60,11 @@ class TrieStorageTest {
 
 
         when(db.find(anyString())).thenReturn(Optional.of(trieNodeData));
-        when(blockState.getHeader(mockBlockHash)).thenReturn(mockBlockHeader);
+//        when(blockState.getHeader(mockBlockHash)).thenReturn(mockBlockHeader);
+//        when(blockState.getBlockStateRoot(mockBlockHash)).thenReturn(mockBlockHash);
 
-        Optional<NodeData> result = trieStorage.getByKeyFromBlock(mockBlockHash, key);
+        byte[] blockStateRoot = Hash256.from(ROOT_HASH).getBytes();
+        Optional<NodeData> result = trieStorage.getByKeyFromMerkle(blockStateRoot, key);
 
         assertTrue(result.isPresent());
         assertArrayEquals(expectedValue, result.get().getValue());
@@ -73,38 +75,40 @@ class TrieStorageTest {
     @Test
     void testGetByKeyFromBlockWithNonMatchingKey() {
         String keyStr = "nonMatchingKey";
-        Hash256 mockBlockHash = Hash256.from(BLOCK_HASH);
-        BlockHeader mockBlockHeader = mock(BlockHeader.class);
-        when(mockBlockHeader.getStateRoot()).thenReturn(Hash256.from(ROOT_HASH));
-        when(blockState.getHeader(mockBlockHash)).thenReturn(mockBlockHeader);
+//        Hash256 mockBlockHash = Hash256.from(BLOCK_HASH);
+//        BlockHeader mockBlockHeader = mock(BlockHeader.class);
+//        when(mockBlockHeader.getStateRoot()).thenReturn(Hash256.from(ROOT_HASH));
+//        when(blockState.getHeader(mockBlockHash)).thenReturn(mockBlockHeader);
 
         when(db.find(anyString())).thenReturn(Optional.empty());
 
-        Optional<NodeData> result = trieStorage.getByKeyFromBlock(mockBlockHash, Nibbles.fromBytes(keyStr.getBytes()));
+        byte[] blockStateRoot = Hash256.from(ROOT_HASH).getBytes();
+        Optional<NodeData> result = trieStorage.getByKeyFromMerkle(blockStateRoot, Nibbles.fromBytes(keyStr.getBytes()));
 
         assertTrue(result.isEmpty());
 
         verify(db).find(anyString());
     }
 
-    @Test
-    void testGetByKeyFromBlockWithNullBlockHeader() {
-        Nibbles key = Nibbles.fromBytes("testKey".getBytes());
-        Hash256 mockBlockHash = Hash256.from(BLOCK_HASH);
-
-        when(blockState.getHeader(mockBlockHash)).thenReturn(null);
-
-        Optional<NodeData> result = trieStorage.getByKeyFromBlock(mockBlockHash, key);
-
-        assertTrue(result.isEmpty());
-    }
+//    @Test
+//    void testGetByKeyFromBlockWithNullBlockHeader() {
+//        Nibbles key = Nibbles.fromBytes("testKey".getBytes());
+////        Hash256 mockBlockHash = Hash256.from(BLOCK_HASH);
+////
+////        when(blockState.getHeader(mockBlockHash)).thenReturn(null);
+//
+//        byte[] blockStateRoot = Hash256.from(ROOT_HASH).getBytes();
+//        Optional<NodeData> result = trieStorage.getByKeyFromMerkle(blockStateRoot, key);
+//
+//        assertTrue(result.isEmpty());
+//    }
 
     @Test
     void testGetByKeyFromBlockWhenTrieNodeDoesNotMatch() {
         Nibbles key = Nibbles.fromBytes("testKey".getBytes());
-        Hash256 mockBlockHash = Hash256.from(BLOCK_HASH);
-        BlockHeader mockBlockHeader = mock(BlockHeader.class);
-        when(mockBlockHeader.getStateRoot()).thenReturn(Hash256.from(ROOT_HASH));
+//        Hash256 mockBlockHash = Hash256.from(BLOCK_HASH);
+//        BlockHeader mockBlockHeader = mock(BlockHeader.class);
+//        when(mockBlockHeader.getStateRoot()).thenReturn(Hash256.from(ROOT_HASH));
 
         // Simulate a trie node that does not directly match the provided key
         TrieNodeData nonMatchingTrieNodeData = new TrieNodeData(
@@ -115,10 +119,11 @@ class TrieStorageTest {
                 new byte[0],
                 (byte) 0);
         when(db.find(anyString())).thenReturn(Optional.of(nonMatchingTrieNodeData));
-        when(blockState.getHeader(mockBlockHash)).thenReturn(mockBlockHeader);
+//        when(blockState.getHeader(mockBlockHash)).thenReturn(mockBlockHeader);
 
         // Action
-        Optional<NodeData> result = trieStorage.getByKeyFromBlock(mockBlockHash, key);
+        byte[] blockStateRoot = Hash256.from(ROOT_HASH).getBytes();
+        Optional<NodeData> result = trieStorage.getByKeyFromMerkle(blockStateRoot, key);
 
         // Assert
         assertTrue(result.isEmpty());
@@ -128,11 +133,11 @@ class TrieStorageTest {
     void testGetNextKey() {
         Nibbles prefix = Nibbles.fromBytes("nextKe".getBytes());
         Nibbles actualKey = Nibbles.fromBytes("nextKey".getBytes());
-        Hash256 blockHash = Hash256.from(BLOCK_HASH);
-        BlockHeader mockBlockHeader = mock(BlockHeader.class);
-
-        when(mockBlockHeader.getStateRoot()).thenReturn(Hash256.from(ROOT_HASH));
-        when(blockState.getHeader(blockHash)).thenReturn(mockBlockHeader);
+//        Hash256 blockHash = Hash256.from(BLOCK_HASH);
+//        BlockHeader mockBlockHeader = mock(BlockHeader.class);
+//
+//        when(mockBlockHeader.getStateRoot()).thenReturn(Hash256.from(ROOT_HASH));
+//        when(blockState.getHeader(blockHash)).thenReturn(mockBlockHeader);
 
         // Setup a mock TrieNodeData that represents the next key
         TrieNodeData nextKeyNode = new TrieNodeData(
@@ -144,7 +149,8 @@ class TrieStorageTest {
         when(db.find(anyString())).thenReturn(Optional.of(nextKeyNode));
 
         // Action
-        Nibbles result = trieStorage.getNextKey(blockHash, prefix);
+        byte[] blockStateRoot = Hash256.from(ROOT_HASH).getBytes();
+        Nibbles result = trieStorage.getNextKeyByMerkleValue(blockStateRoot, prefix);
 
         // Assert
         assertEquals(actualKey, result);

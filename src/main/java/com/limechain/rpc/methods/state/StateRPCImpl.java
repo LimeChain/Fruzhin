@@ -50,10 +50,10 @@ public class StateRPCImpl {
             return new String[0][0];
         }
 
-        final Hash256 blockHash = getHash256FromHex(blockHashHex);
+        final Hash256 blockStateRoot = blockState.getBlockStateRoot(getHash256FromHex(blockHashHex));
         final Nibbles prefix = Nibbles.fromHexString(prefixHex);
 
-        Optional<StorageNode> optionalNextBranch = trieStorage.getNextBranch(blockHash, prefix);
+        Optional<StorageNode> optionalNextBranch = trieStorage.getNextBranch(blockStateRoot, prefix);
         if (optionalNextBranch.isEmpty()) {
             return new String[0][0];
         }
@@ -88,10 +88,10 @@ public class StateRPCImpl {
 
         Nibbles prefix = prefixHex != null ? Nibbles.fromHexString(prefixHex) : Nibbles.EMPTY;
         Nibbles startKey = keyHex != null ? Nibbles.fromHexString(keyHex) : Nibbles.EMPTY;
-        final Hash256 blockHash = getHash256FromHex(blockHashHex);
+        final Hash256 blockStateRoot = blockState.getBlockStateRoot(getHash256FromHex(blockHashHex));
 
         return trieStorage
-                .getKeysWithPrefixPaged(blockHash, prefix, startKey, limit)
+                .getKeysWithPrefixPaged(blockStateRoot, prefix, startKey, limit)
                 .stream()
                 .map(key -> StringUtils.HEX_PREFIX + key.toLowerHexString())
                 .toList();
@@ -104,14 +104,17 @@ public class StateRPCImpl {
      * @param blockHashHex The block hash in hexadecimal format to scope the query.
      * @return The storage value in hexadecimal format for the given key within the specified block, or null if not found.
      */
+    // TODO: Figure out whether incoming requests will only ask for state in finalised block (i.e. db persisted blocks)
+    //  or also unfinalised blocks must be supported (i.e. these in BlockState.BlockTree)
     public String stateGetStorage(final String keyHex, final String blockHashHex) {
         if (!this.blockState.isInitialized()) {
             return null;
         }
 
         final Hash256 blockHash = getHash256FromHex(blockHashHex);
+        byte[] blockStateRoot = blockState.getBlockStateRoot(blockHash).getBytes();
 
-        return trieStorage.getByKeyFromBlock(blockHash, Nibbles.fromHexString(keyHex))
+        return trieStorage.getByKeyFromMerkle(blockStateRoot, Nibbles.fromHexString(keyHex))
                 .map(NodeData::getValue)
                 .map(StringUtils::toHexWithPrefix)
                 .orElse(null);
@@ -130,8 +133,9 @@ public class StateRPCImpl {
         }
 
         final Hash256 blockHash = getHash256FromHex(blockHashHex);
+        byte[] blockStateRoot = blockState.getBlockStateRoot(blockHash).getBytes();
 
-        return trieStorage.getByKeyFromBlock(blockHash, Nibbles.fromHexString(keyHex))
+        return trieStorage.getByKeyFromMerkle(blockStateRoot, Nibbles.fromHexString(keyHex))
                 .map(NodeData::getMerkleValue)
                 .map(StringUtils::toHexWithPrefix)
                 .orElse(null);
@@ -150,9 +154,10 @@ public class StateRPCImpl {
         }
 
         final Hash256 blockHash = getHash256FromHex(blockHashHex);
+        byte[] blockStateRoot = blockState.getBlockStateRoot(blockHash).getBytes();
 
         return trieStorage
-                .getByKeyFromBlock(blockHash, Nibbles.fromHexString(keyHex))
+                .getByKeyFromMerkle(blockStateRoot, Nibbles.fromHexString(keyHex))
                 .map(NodeData::getValue)
                 .map(Array::getLength)
                 .map(String::valueOf)
@@ -221,7 +226,8 @@ public class StateRPCImpl {
             final Map<String, String> changes = new HashMap<>();
             for (String keyHex : keysHex) {
 
-                final Optional<String> currentValueOpt = trieStorage.getByKeyFromBlock(blockHash, Nibbles.fromHexString(keyHex))
+                byte[] blockStateRoot = blockState.getBlockStateRoot(blockHash).getBytes();
+                final Optional<String> currentValueOpt = trieStorage.getByKeyFromMerkle(blockStateRoot, Nibbles.fromHexString(keyHex))
                         .map(NodeData::getValue)
                         .map(StringUtils::toHexWithPrefix);
 
