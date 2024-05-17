@@ -75,10 +75,8 @@ java -jar build/libs/Fruzhin-0.1.0.jar -n polkadot --node-mode full --sync-mode 
 
 ### Local development
 
-1. Create a local chain specification file by making a copy of `genesis/westend-local-example.json` in the same folder.
-2. Rename the copied file to `westend-local.json`
-3. Run a local Polkadot node with ```polkadot --dev``` command. (The default starting port is 9944)
-4. Fetch the chain spec
+1. Run a local Polkadot node with ```polkadot --dev``` command. (The default starting port is 9944)
+2. Fetch the chain spec
 
    ```bash
    curl -H "Content-Type: application/json" -d '{"id":1, "jsonrpc":"2.0", "method": "sync_state_genSyncSpec", "params": [true]}' http://localhost:9944
@@ -89,21 +87,45 @@ java -jar build/libs/Fruzhin-0.1.0.jar -n polkadot --node-mode full --sync-mode 
    it, the light client won't have a checkpoint to start from
    and could be long-range attacked
 
+3. Create a new `westend-local.json` inside of the `genesis` project directory.
+4. Copy the contents of the `result` field from the fetched chain spec into the newly created `westend-local.json`.
+5. In order to comply with the project requirements change the json structured as follows:
 
-5. Get the local boot nodes.
+Fetched chain spec
+```JSON
+{
+  "genesis": {
+    "raw": {
+      "top": {},
+      "childrenDefault": {}
+    }
+  }
+}
+```
+
+Desired chain spec
+```JSON
+{
+  "genesis": {
+     "top": {},
+     "childrenDefault": {}
+  }
+}
+```
+
+6. Fetch the local boot nodes.
 
    ```bash
    curl -H "Content-Type: application/json" -d '{"id":1, "jsonrpc":"2.0", "method": "system_localListenAddresses"}' http://localhost:9944
    ```
 
-   Paste the response into the `bootNodes` field of the chain spec.
+   Paste the response into the `bootNodes` field of the `westend-local.json` chain spec.
 
-
-6. Build Host
+7. Build Host
    ```
    ./gradlew build
    ```
-7. Run Host
+8. Run Host
    ```
    java -jar build/libs/fruzhin-0.1.0.jar -n local
    ```
