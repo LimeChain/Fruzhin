@@ -100,6 +100,7 @@ Now you have 2 options:
    2. `START_FRUZHIN(BOOL)` - Required. If true builds the project and starts the local Fruzhin node.
    
    The following parameters are required if `START_FRUZHIN` is true.
+
    3. `NODE_MODE(STRING)` - `full` or `light`.
    4. `SYNC_MODE(STRING)` - `full` or `warp`.
    5. `DB_RECREATE(BOOL)` - If true removes saved data from previous node runs.
