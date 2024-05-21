@@ -4,6 +4,7 @@ import com.limechain.runtime.version.scale.ApiVersionReader;
 import com.limechain.exception.scale.ScaleDecodingException;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleReader;
+import lombok.Getter;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -13,6 +14,7 @@ import java.util.List;
 import java.util.Objects;
 
 public class ApiVersions {
+    @Getter // NOTE: Only necessary to be visible to the scale writer; think about reordering
     private final List<ApiVersion> entries;
 
     private ApiVersions(List<ApiVersion> entries) {

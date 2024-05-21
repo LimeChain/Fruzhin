@@ -4,6 +4,8 @@ import com.limechain.exception.scale.ScaleEncodingException;
 import com.limechain.runtime.Runtime;
 import com.limechain.runtime.RuntimeBuilder;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
+import com.limechain.runtime.version.scale.RuntimeVersionWriter;
+import com.limechain.utils.scale.ScaleUtils;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -11,7 +13,6 @@ import lombok.extern.java.Log;
 import org.apache.tomcat.util.buf.HexUtils;
 import org.springframework.lang.Nullable;
 import org.wasmer.ImportObject;
-import org.wasmer.Module;
 import org.wasmer.Type;
 
 import java.io.ByteArrayOutputStream;
@@ -108,10 +109,11 @@ public class MiscellaneousHostFunctions {
         byte[] versionOption;
 
         try {
-            // TODO: Refactor using RuntimeBuilder... when we're sure it works properly
-            Module module = new Module(wasmBlob);
-            Runtime newRuntime = new Runtime(module, RuntimeBuilder.DEFAULT_HEAP_PAGES);
-            byte[] runtimeVersionData = newRuntime.call("Core_version");
+            byte[] runtimeVersionData =
+                ScaleUtils.Encode.encode(
+                    new RuntimeVersionWriter(),
+                    new RuntimeBuilder().buildRuntime(wasmBlob).getVersion());
+
             versionOption = scaleEncodedOption(runtimeVersionData);
         } catch (UnsatisfiedLinkError e) {
             log.log(Level.SEVERE, "Error loading wasm module: " + e.getMessage());
