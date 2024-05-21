@@ -1,6 +1,7 @@
 package com.limechain.rpc.methods.state;
 
 import com.limechain.rpc.methods.state.dto.StorageChangeSet;
+import com.limechain.rpc.server.AppBean;
 import com.limechain.runtime.Runtime;
 import com.limechain.storage.block.BlockState;
 import com.limechain.storage.trie.TrieStorage;
@@ -10,6 +11,7 @@ import com.limechain.trie.structure.database.NodeData;
 import com.limechain.trie.structure.nibble.Nibbles;
 import com.limechain.utils.StringUtils;
 import io.emeraldpay.polkaj.types.Hash256;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.lang.reflect.Array;
@@ -24,7 +26,9 @@ import java.util.Optional;
 @Service
 public class StateRPCImpl {
 
-    private final TrieStorage trieStorage = TrieStorage.getInstance();
+    @Autowired
+    private TrieStorage trieStorage;
+
     private final BlockState blockState = BlockState.getInstance();
 
     /**
