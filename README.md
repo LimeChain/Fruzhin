@@ -74,22 +74,50 @@ java -jar build/libs/Fruzhin-0.1.0.jar -n polkadot --node-mode full --sync-mode 
 - `--sync-mode` could be `full` or `warp`
 
 ### Local development
+In order to use the Fruzhin node for local development you will first need to start another node that would serve as a
+peer. 
 
-1. Run a local Polkadot node with ```polkadot --dev``` command. (The default starting port is 9944)
-2. Fetch the chain spec
+For the sake of this example we will use [Paritytech's implementation](https://github.com/paritytech/polkadot-sdk).
+If you are not familiar with how to run a node see [this](https://wiki.polkadot.network/docs/maintain-sync#setup-instructions).
+
+Once you have successfully built the Polkadot project run the node via ``polkadot --dev``.
+(The node starts on port 9944 by default)
+
+Now you have 2 options:
+- Use the automated `local_dev.sh` script
+- Manual setup.
+
+#### Automated script
+1. Install [JQ](https://github.com/jqlang/jq).
+
+`sudo apt-get install jq` Ubuntu
+
+`brew install jq` MacOS
+
+2. Head to the main directory of Fruzhin and run `chmod +x script.sh`
+3. Execute the script `./local_dev.sh` with the following parameters:
+   1. `PORT(INT)` Required. The port where the local Rust node is running.
+   2. `START_FRUZHIN(BOOL)` - Required. If true builds the project and starts the local Fruzhin node.
+   
+   The following parameters are required if `START_FRUZHIN` is true.
+   3. `NODE_MODE(STRING)` - `full` or `light`.
+   4. `SYNC_MODE(STRING)` - `full` or `warp`.
+   5. `DB_RECREATE(BOOL)` - If true removes saved data from previous node runs.
+
+#### Manual setup
+1. Fetch the chain spec
 
    ```bash
    curl -H "Content-Type: application/json" -d '{"id":1, "jsonrpc":"2.0", "method": "sync_state_genSyncSpec", "params": [true]}' http://localhost:9944
    ```
 
    The `lightSyncState` field is important for the light client to
-   work. Without
-   it, the light client won't have a checkpoint to start from
+   work. Without it, the light client won't have a checkpoint to start from
    and could be long-range attacked
 
-3. Create a new `westend-local.json` inside of the `genesis` project directory.
-4. Copy the contents of the `result` field from the fetched chain spec into the newly created `westend-local.json`.
-5. In order to comply with the project requirements change the json structured as follows:
+2. Create a new `westend-local.json` inside of the `genesis` project directory.
+3. Copy the contents of the `result` field from the fetched chain spec into the newly created `westend-local.json`.
+4. In order to comply with the project requirements change the json structured as follows:
 
 Fetched chain spec
 ```JSON
@@ -113,7 +141,7 @@ Desired chain spec
 }
 ```
 
-6. Fetch the local boot nodes.
+5. Fetch the local boot nodes.
 
    ```bash
    curl -H "Content-Type: application/json" -d '{"id":1, "jsonrpc":"2.0", "method": "system_localListenAddresses"}' http://localhost:9944
@@ -121,11 +149,11 @@ Desired chain spec
 
    Paste the response into the `bootNodes` field of the `westend-local.json` chain spec.
 
-7. Build Host
+6. Build Host
    ```
    ./gradlew build
    ```
-8. Run Host
+7. Run Host
    ```
-   java -jar build/libs/fruzhin-0.1.0.jar -n local
+   java -jar build/libs/Fruzhin-0.1.0.jar -n 'local' --node-mode 'full'/'light' --sync-mode 'full'/'warp' --db-recreate true/false
    ```
