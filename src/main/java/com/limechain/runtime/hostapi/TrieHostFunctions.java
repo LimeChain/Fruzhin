@@ -254,7 +254,7 @@ public class TrieHostFunctions {
 
     @Getter
     @AllArgsConstructor
-    enum HashFunction {
+    public enum HashFunction {
         BLAKE2B(HashUtils::hashWithBlake2b), KECCAK256(HashUtils::hashWithKeccak256);
 
         private static final byte[] EMPTY_BLAKE2_TRIE_MERKLE_VALUE =
@@ -273,7 +273,7 @@ public class TrieHostFunctions {
         }
     }
 
-    record TrieRootCalculator(HashFunction hashFunction, StateVersion stateVersion) {
+    public record TrieRootCalculator(HashFunction hashFunction, StateVersion stateVersion) {
         public byte[] trieRoot(List<Pair<byte[], byte[]>> entries) {
             Map<ByteString, ByteString> entriesMap = entries.stream().collect(
                     Collectors.toMap(p -> ByteString.copyFrom(p.getValue0()), p -> ByteString.copyFrom(p.getValue1())));
@@ -301,7 +301,7 @@ public class TrieHostFunctions {
     }
 
     @AllArgsConstructor
-    class ArgParser {
+    public class ArgParser {
         private final List<Number> args;
 
         public StateVersion parseStateVersion(int index) {
