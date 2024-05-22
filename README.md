@@ -90,20 +90,12 @@ Now you have 2 options:
 #### Automated script
 1. Install [JQ](https://github.com/jqlang/jq).
 
-`sudo apt-get install jq` Ubuntu
-
-`brew install jq` MacOS
+   `sudo apt-get install jq` Ubuntu
+   
+   `brew install jq` MacOS
 
 2. Head to the main directory of Fruzhin and run `chmod +x script.sh`
-3. Execute the script `./local_dev.sh` with the following parameters:
-   1. `PORT(INT)` Required. The port where the local Rust node is running.
-   2. `START_FRUZHIN(BOOL)` - Required. If true builds the project and starts the local Fruzhin node.
-   
-   The following parameters are required if `START_FRUZHIN` is true.
-
-   3. `NODE_MODE(STRING)` - `full` or `light`.
-   4. `SYNC_MODE(STRING)` - `full` or `warp`.
-   5. `DB_RECREATE(BOOL)` - If true removes saved data from previous node runs.
+3. Execute the script `./local_dev.sh`
 
 #### Manual setup
 1. Fetch the chain spec
@@ -150,11 +142,12 @@ Desired chain spec
 
    Paste the response into the `bootNodes` field of the `westend-local.json` chain spec.
 
-6. Build Host
+#### Build & Run
+1. Build project
    ```
    ./gradlew build
    ```
-7. Run Host
+2. Run Fruzhin
    ```
    java -jar build/libs/Fruzhin-0.1.0.jar -n 'local' --node-mode 'full'/'light' --sync-mode 'full'/'warp' --db-recreate true/false
    ```
