@@ -94,8 +94,7 @@ Now you have 2 options:
    
    `brew install jq` MacOS
 
-2. Head to the main directory of Fruzhin and run `chmod +x script.sh`
-3. Execute the script `./local_dev.sh`
+2. Head to the main directory of Fruzhin execute the script `./local_dev.sh`.
 
 #### Manual setup
 1. Fetch the chain spec
