@@ -5,6 +5,8 @@ import com.limechain.chain.spec.ChainSpec;
 import com.limechain.chain.spec.ChainType;
 import com.limechain.config.SystemInfo;
 import com.limechain.network.Network;
+import com.limechain.network.protocol.blockannounce.NodeRole;
+import com.limechain.storage.block.SyncState;
 import com.limechain.sync.warpsync.WarpSyncMachine;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,6 +25,7 @@ class SystemRPCImplTest {
     private WarpSyncMachine warpSync;
     private Network network;
     private SystemInfo systemInfo;
+    private SyncState syncState;
 
     @BeforeEach
     public void setup() {
@@ -30,7 +33,8 @@ class SystemRPCImplTest {
         systemInfo = mock(SystemInfo.class);
         warpSync = mock(WarpSyncMachine.class);
         network = mock(Network.class);
-        systemRPC = new SystemRPCImpl(chainService, systemInfo, network, warpSync);
+        syncState = mock(SyncState.class);
+        systemRPC = new SystemRPCImpl(chainService, systemInfo, network, warpSync, syncState);
     }
 
     @Test
@@ -49,9 +53,9 @@ class SystemRPCImplTest {
 
     @Test
     void systemNodeRoles() {
-        when(systemInfo.getRole()).thenReturn("Light Client");
+        when(systemInfo.getNodeRole()).thenReturn(NodeRole.LIGHT);
 
-        assertArrayEquals(new String[]{"Light Client"}, systemRPC.systemNodeRoles());
+        assertArrayEquals(new String[]{"LIGHT"}, systemRPC.systemNodeRoles());
     }
 
     @Test

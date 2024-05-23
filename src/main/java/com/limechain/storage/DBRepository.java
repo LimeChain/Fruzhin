@@ -13,10 +13,11 @@ import org.springframework.util.SerializationUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
@@ -30,12 +31,12 @@ public class DBRepository implements KVRepository<String, Object> {
      * Main DB folder
      */
     private static final String FOLDER_NAME = "db";
+    public static final Charset UTF_8 = StandardCharsets.UTF_8;
 
     /**
      * Connection to the DB
      */
     private RocksDB db;
-    private final String chainPrefix;
 
     public DBRepository(String path, String chain, boolean dbRecreate) {
         RocksDB.loadLibrary();
@@ -45,7 +46,6 @@ public class DBRepository implements KVRepository<String, Object> {
         if (dbRecreate) {
             cleanDatabaseFolder(baseDir);
         }
-        chainPrefix = chain;
         try {
             Files.createDirectories(baseDir.getParentFile().toPath());
             Files.createDirectories(baseDir.getAbsoluteFile().toPath());
@@ -79,7 +79,7 @@ public class DBRepository implements KVRepository<String, Object> {
     public synchronized boolean save(String key, Object value) {
         log.log(Level.FINE, String.format("saving value '%s' with key '%s'", value, key));
         try {
-            db.put(getPrefixedKey(key), SerializationUtils.serialize(value));
+            db.put(key.getBytes(UTF_8), SerializationUtils.serialize(value));
         } catch (RocksDBException e) {
             log.log(Level.WARNING,
                     String.format("Error saving entry. Cause: '%s', message: '%s'", e.getCause(), e.getMessage()));
@@ -92,7 +92,7 @@ public class DBRepository implements KVRepository<String, Object> {
     public synchronized Optional<Object> find(String key) {
         Object value = null;
         try {
-            byte[] bytes = db.get(getPrefixedKey(key));
+            byte[] bytes = db.get(key.getBytes(UTF_8));
             if (bytes != null) {
                 value = SerializationUtils.deserialize(bytes);
             }
@@ -112,7 +112,6 @@ public class DBRepository implements KVRepository<String, Object> {
     public synchronized List<byte[]> findKeysByPrefix(String prefixSeek, int limit) {
         return findByPrefix(prefixSeek, (long) limit)
                 .stream()
-                .map(this::removePrefixFromKey)
                 .toList();
     }
 
@@ -120,7 +119,7 @@ public class DBRepository implements KVRepository<String, Object> {
     public synchronized boolean delete(String key) {
         log.log(Level.FINE, String.format("deleting key '%s'", key));
         try {
-            db.delete(getPrefixedKey(key));
+            db.delete(key.getBytes(UTF_8));
         } catch (RocksDBException e) {
             log.log(Level.SEVERE,
                     String.format("Error deleting entry, cause: '%s', message: '%s'", e.getCause(), e.getMessage()));
@@ -139,7 +138,7 @@ public class DBRepository implements KVRepository<String, Object> {
                 db.delete(key);
             } catch (RocksDBException e) {
                 log.log(Level.SEVERE, String.format("Error deleting entry, cause: '%s', message: '%s'",
-                                e.getCause(), e.getMessage()));
+                        e.getCause(), e.getMessage()));
             }
         });
 
@@ -149,14 +148,12 @@ public class DBRepository implements KVRepository<String, Object> {
     }
 
     private List<byte[]> findByPrefix(String prefix, Long limit) {
-        String prefixedKey = new String(getPrefixedKey(prefix));
-
         List<byte[]> values = new ArrayList<>();
         RocksIterator rocksIterator = db.newIterator();
-        rocksIterator.seek(prefixedKey.getBytes());
+        rocksIterator.seek(prefix.getBytes());
         while (rocksIterator.isValid() && (limit == null || values.size() < limit)) {
             byte[] key = rocksIterator.key();
-            if (ByteArrayUtils.hasPrefix(key, prefixedKey.getBytes())) {
+            if (ByteArrayUtils.hasPrefix(key, prefix.getBytes())) {
                 values.add(rocksIterator.key());
             }
             rocksIterator.next();
@@ -169,7 +166,7 @@ public class DBRepository implements KVRepository<String, Object> {
     @Override
     public synchronized Optional<String> getNextKey(String key) {
         RocksIterator iterator = db.newIterator();
-        iterator.seek(getPrefixedKey(key));
+        iterator.seek(key.getBytes(UTF_8));
         iterator.next();
         String nextKey = iterator.isValid() ? new String(iterator.key()) : null;
         iterator.close();
@@ -189,13 +186,6 @@ public class DBRepository implements KVRepository<String, Object> {
     @Override
     public void commitTransaction() {
         //TODO: implement
-    }
-
-    private byte[] getPrefixedKey(String key) {
-        return chainPrefix.concat(key).getBytes();
-    }
-    public byte[] removePrefixFromKey(byte[] key) {
-        return Arrays.copyOfRange(key, chainPrefix.length(), key.length);
     }
 
     public synchronized void closeConnection() {

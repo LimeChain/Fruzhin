@@ -12,10 +12,11 @@ import com.limechain.rpc.server.UnsafeInterceptor;
 import com.limechain.storage.DBInitializer;
 import com.limechain.storage.DBRepository;
 import com.limechain.storage.KVRepository;
+import com.limechain.storage.block.SyncState;
 import com.limechain.storage.trie.TrieStorage;
 import com.limechain.sync.fullsync.FullSyncMachine;
-import com.limechain.sync.warpsync.SyncedState;
 import com.limechain.sync.warpsync.WarpSyncMachine;
+import com.limechain.sync.warpsync.WarpSyncState;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -53,7 +54,7 @@ public class CommonConfig {
     public KVRepository<String, Object> repository(HostConfig hostConfig) {
         DBRepository repository = DBInitializer.initialize(hostConfig.getRocksDbPath(),
                 hostConfig.getChain(), hostConfig.isDbRecreate());
-        SyncedState.getInstance().setRepository(repository);
+        WarpSyncState.getInstance().setRepository(repository);
         return repository;
     }
 
@@ -68,8 +69,13 @@ public class CommonConfig {
     }
 
     @Bean
-    public SystemInfo systemInfo(HostConfig hostConfig, Network network) {
-        return new SystemInfo(hostConfig, network);
+    public SyncState syncState(GenesisBlockHash genesisBlockHash) {
+        return new SyncState(genesisBlockHash);
+    }
+
+    @Bean
+    public SystemInfo systemInfo(HostConfig hostConfig, Network network, SyncState syncState) {
+        return new SystemInfo(hostConfig, network, syncState);
     }
 
     @Bean
@@ -79,8 +85,8 @@ public class CommonConfig {
     }
 
     @Bean
-    public WarpSyncMachine warpSyncMachine(Network network, ChainService chainService) {
-        return new WarpSyncMachine(network, chainService);
+    public WarpSyncMachine warpSyncMachine(Network network, ChainService chainService, SyncState syncState) {
+        return new WarpSyncMachine(network, chainService, syncState);
     }
 
     @Bean
@@ -92,4 +98,5 @@ public class CommonConfig {
     public GenesisBlockHash genesisBlockHash(ChainService chainService) {
         return new GenesisBlockHash(chainService);
     }
+
 }

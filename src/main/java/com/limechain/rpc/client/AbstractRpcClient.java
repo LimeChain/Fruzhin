@@ -20,7 +20,7 @@ public abstract class AbstractRpcClient extends WebSocketClient {
 
     @Override
     public void onOpen(ServerHandshake handshake) {
-        log.log(Level.INFO, "new WS connection opened");
+        log.log(Level.FINE, "new WS connection opened");
     }
 
     @Override

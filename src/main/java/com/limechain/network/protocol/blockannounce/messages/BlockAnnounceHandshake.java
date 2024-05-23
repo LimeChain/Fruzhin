@@ -1,4 +1,4 @@
-package com.limechain.network.protocol.blockannounce.scale;
+package com.limechain.network.protocol.blockannounce.messages;
 
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.AllArgsConstructor;

@@ -29,7 +29,7 @@ public class SyncMessages extends StrictProtocolBinding<SyncController> {
                     .sendBlockRequest(blockRequest.getFields(), blockRequest.getHash(), blockRequest.getNumber(),
                             blockRequest.getDirection(), blockRequest.getMaxBlocks())
                     .get(2, TimeUnit.SECONDS);
-            log.log(Level.INFO, "Received blocks: " + response.getBlocksCount());
+            log.log(Level.FINE, "Received blocks: " + response.getBlocksCount());
             return response;
         } catch (ExecutionException | TimeoutException | IllegalStateException e) {
             log.log(Level.SEVERE, "Error while sending remote block request: ", e);

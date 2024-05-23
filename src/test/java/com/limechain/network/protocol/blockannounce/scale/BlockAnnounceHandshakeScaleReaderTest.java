@@ -1,6 +1,7 @@
 package com.limechain.network.protocol.blockannounce.scale;
 
 import com.google.protobuf.ByteString;
+import com.limechain.network.protocol.blockannounce.messages.BlockAnnounceHandshake;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.emeraldpay.polkaj.types.Hash256;

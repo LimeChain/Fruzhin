@@ -5,13 +5,13 @@ import com.limechain.chain.spec.ChainType;
 import com.limechain.chain.spec.PropertyValue;
 import com.limechain.config.SystemInfo;
 import com.limechain.exception.global.ExecutionFailedException;
-import com.limechain.exception.rpc.PeerNotFoundException;
 import com.limechain.exception.global.ThreadInterruptedException;
+import com.limechain.exception.rpc.PeerNotFoundException;
 import com.limechain.network.ConnectionManager;
 import com.limechain.network.Network;
 import com.limechain.network.dto.PeerInfo;
 import com.limechain.storage.block.BlockState;
-import com.limechain.sync.warpsync.SyncedState;
+import com.limechain.storage.block.SyncState;
 import com.limechain.sync.warpsync.WarpSyncMachine;
 import io.libp2p.core.PeerId;
 import lombok.AllArgsConstructor;
@@ -40,7 +40,7 @@ public class SystemRPCImpl {
     private final SystemInfo systemInfo;
     private final Network network;
     private final WarpSyncMachine warpSync;
-    private final SyncedState syncedState = SyncedState.getInstance();
+    private final SyncState syncState;
     private final BlockState blockState = BlockState.getInstance();
     private final ConnectionManager connectionManager = ConnectionManager.getInstance();
 
@@ -83,7 +83,7 @@ public class SystemRPCImpl {
      * Returns the roles the node is running as.
      */
     public String[] systemNodeRoles() {
-        return new String[]{this.systemInfo.getRole()};
+        return new String[]{this.systemInfo.getNodeRole().name()};
     }
 
     /**
@@ -189,8 +189,8 @@ public class SystemRPCImpl {
         }
 
         return Map.ofEntries(
-                entry("startingBlock", this.syncedState.getStartingBlockNumber()),
-                entry("currentBlock", this.syncedState.getLastFinalizedBlockNumber()),
+                entry("startingBlock", this.syncState.getStartingBlock()),
+                entry("currentBlock", this.syncState.getLastFinalizedBlockNumber()),
                 entry("highestBlock", highestBlock)
         );
     }

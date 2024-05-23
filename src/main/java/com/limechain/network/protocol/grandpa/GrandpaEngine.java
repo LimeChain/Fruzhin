@@ -1,6 +1,8 @@
 package com.limechain.network.protocol.grandpa;
 
+import com.limechain.exception.scale.ScaleEncodingException;
 import com.limechain.network.ConnectionManager;
+import com.limechain.network.protocol.blockannounce.messages.BlockAnnounceHandshakeBuilder;
 import com.limechain.network.protocol.grandpa.messages.GrandpaMessageType;
 import com.limechain.network.protocol.grandpa.messages.catchup.req.CatchUpReqMessage;
 import com.limechain.network.protocol.grandpa.messages.catchup.req.CatchUpReqMessageScaleReader;
@@ -9,12 +11,12 @@ import com.limechain.network.protocol.grandpa.messages.catchup.res.CatchUpMessag
 import com.limechain.network.protocol.grandpa.messages.commit.CommitMessage;
 import com.limechain.network.protocol.grandpa.messages.commit.CommitMessageScaleReader;
 import com.limechain.network.protocol.grandpa.messages.neighbour.NeighbourMessage;
+import com.limechain.network.protocol.grandpa.messages.neighbour.NeighbourMessageBuilder;
 import com.limechain.network.protocol.grandpa.messages.neighbour.NeighbourMessageScaleReader;
 import com.limechain.network.protocol.grandpa.messages.neighbour.NeighbourMessageScaleWriter;
 import com.limechain.network.protocol.grandpa.messages.vote.VoteMessage;
 import com.limechain.network.protocol.grandpa.messages.vote.VoteMessageScaleReader;
-import com.limechain.exception.scale.ScaleEncodingException;
-import com.limechain.sync.warpsync.SyncedState;
+import com.limechain.sync.warpsync.WarpSyncState;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.libp2p.core.PeerId;
@@ -33,7 +35,9 @@ public class GrandpaEngine {
     private static final int HANDSHAKE_LENGTH = 1;
 
     protected ConnectionManager connectionManager = ConnectionManager.getInstance();
-    protected SyncedState syncedState = SyncedState.getInstance();
+    protected WarpSyncState warpSyncState = WarpSyncState.getInstance();
+    protected NeighbourMessageBuilder neighbourMessageBuilder = new NeighbourMessageBuilder();
+    protected BlockAnnounceHandshakeBuilder handshakeBuilder = new BlockAnnounceHandshakeBuilder();
 
     /**
      * Handles an incoming request as follows:
@@ -44,7 +48,7 @@ public class GrandpaEngine {
      * <p><b>On responder stream: </b>
      * <p>If message payload contains a valid handshake, adds the stream when the peer is not connected already,
      * ignore otherwise. </p>
-     * <p>On neighbour and commit messages, syncs received data using {@link SyncedState}. </p>
+     * <p>On neighbour and commit messages, syncs received data using {@link WarpSyncState}. </p>
      * <p>Logs and ignores other message types. </p>
      *
      * @param message received message as byre array
@@ -121,7 +125,7 @@ public class GrandpaEngine {
         ScaleCodecReader reader = new ScaleCodecReader(message);
         NeighbourMessage neighbourMessage = reader.read(NeighbourMessageScaleReader.getInstance());
         log.log(Level.INFO, "Received neighbour message from Peer " + peerId + "\n" + neighbourMessage);
-        new Thread(() -> syncedState.syncNeighbourMessage(neighbourMessage, peerId)).start();
+        new Thread(() -> warpSyncState.syncNeighbourMessage(neighbourMessage, peerId)).start();
     }
 
     private void handleVoteMessage(byte[] message, PeerId peerId) {
@@ -134,7 +138,7 @@ public class GrandpaEngine {
     private void handleCommitMessage(byte[] message, PeerId peerId) {
         ScaleCodecReader reader = new ScaleCodecReader(message);
         CommitMessage commitMessage = reader.read(CommitMessageScaleReader.getInstance());
-        syncedState.syncCommit(commitMessage, peerId);
+        warpSyncState.syncCommit(commitMessage, peerId);
     }
 
     private void handleCatchupRequestMessage(byte[] message, PeerId peerId) {
@@ -159,7 +163,7 @@ public class GrandpaEngine {
      */
     public void writeHandshakeToStream(Stream stream, PeerId peerId) {
         byte[] handshake = new byte[]{
-                (byte) syncedState.getHandshake().getNodeRole()
+                (byte) handshakeBuilder.getBlockAnnounceHandshake().getNodeRole()
         };
 
         log.log(Level.INFO, "Sending grandpa handshake to " + peerId);
@@ -167,7 +171,7 @@ public class GrandpaEngine {
     }
 
     /**
-     * Send our GRANDPA neighbour message from {@link SyncedState} on a given <b>responder</b> stream.
+     * Send our GRANDPA neighbour message from {@link WarpSyncState} on a given <b>responder</b> stream.
      *
      * @param stream <b>responder</b> stream to write the message to
      * @param peerId peer to send to
@@ -175,7 +179,7 @@ public class GrandpaEngine {
     public void writeNeighbourMessage(Stream stream, PeerId peerId) {
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
         try (ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
-            writer.write(NeighbourMessageScaleWriter.getInstance(), syncedState.getNeighbourMessage());
+            writer.write(NeighbourMessageScaleWriter.getInstance(), neighbourMessageBuilder.getNeighbourMessage());
         } catch (IOException e) {
             throw new ScaleEncodingException(e);
         }

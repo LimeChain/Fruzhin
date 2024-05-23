@@ -1,10 +1,10 @@
 package com.limechain.network.protocol.transactions;
 
+import com.limechain.exception.scale.ScaleEncodingException;
 import com.limechain.network.ConnectionManager;
 import com.limechain.network.protocol.transactions.scale.TransactionsReader;
 import com.limechain.network.protocol.transactions.scale.TransactionsWriter;
-import com.limechain.exception.scale.ScaleEncodingException;
-import com.limechain.sync.warpsync.SyncedState;
+import com.limechain.sync.warpsync.WarpSyncState;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.libp2p.core.PeerId;
@@ -23,7 +23,7 @@ public class TransactionsEngine {
     private static final int HANDSHAKE_LENGTH = 1;
 
     private final ConnectionManager connectionManager = ConnectionManager.getInstance();
-    private final SyncedState syncedState = SyncedState.getInstance();
+    private final WarpSyncState warpSyncState = WarpSyncState.getInstance();
 
     /**
      * Handles an incoming request as follows:
@@ -34,7 +34,7 @@ public class TransactionsEngine {
      * <p><b>On responder stream: </b>
      * <p>If message payload contains a valid handshake, adds the stream when the peer is not connected already,
      * ignore otherwise. </p>
-     * <p>On transactions messages {@link SyncedState}: </p>
+     * <p>On transactions messages {@link WarpSyncState}: </p>
      * <p>Logs and ignores other message types.</p>
      *
      * @param message received message as byre array
@@ -118,7 +118,7 @@ public class TransactionsEngine {
     }
 
     /**
-     * Send our Transactions message from {@link SyncedState} on a given <b>responder</b> stream.
+     * Send our Transactions message from {@link WarpSyncState} on a given <b>responder</b> stream.
      *
      * @param stream <b>responder</b> stream to write the message to
      * @param peerId peer to send to

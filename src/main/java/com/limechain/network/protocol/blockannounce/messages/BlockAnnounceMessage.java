@@ -1,4 +1,4 @@
-package com.limechain.network.protocol.blockannounce.scale;
+package com.limechain.network.protocol.blockannounce.messages;
 
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import lombok.Getter;

@@ -20,7 +20,7 @@ import com.limechain.network.protocol.warp.WarpSyncService;
 import com.limechain.network.protocol.warp.dto.WarpSyncResponse;
 import com.limechain.storage.DBConstants;
 import com.limechain.storage.KVRepository;
-import com.limechain.sync.warpsync.SyncedState;
+import com.limechain.sync.warpsync.WarpSyncState;
 import com.limechain.utils.Ed25519Utils;
 import com.limechain.utils.StringUtils;
 import io.ipfs.multiaddr.MultiAddress;
@@ -56,8 +56,6 @@ public class Network {
     public static final String LOCAL_IPV4_TCP_ADDRESS = "/ip4/127.0.0.1/tcp/";
     private static final int HOST_PORT = 30333;
     private static final Random RANDOM = new Random();
-    @Getter
-    private static Network network;
     @Getter
     private final Chain chain;
     @Getter
@@ -148,7 +146,7 @@ public class Network {
                 )
         );
 
-        if (nodeRole == NodeRole.FULL) {
+        if (nodeRole == NodeRole.AUTHORING) {
             hostBuilder.addProtocols(
                     List.of(
                             transactionsService.getProtocol()
@@ -357,7 +355,7 @@ public class Network {
 
     @Scheduled(fixedRate = 5, initialDelay = 5, timeUnit = TimeUnit.MINUTES)
     public void sendNeighbourMessages() {
-        if (!SyncedState.getInstance().isWarpSyncFinished()) {
+        if (!WarpSyncState.getInstance().isWarpSyncFinished()) {
             return;
         }
         connectionManager.getPeerIds().forEach(peerId -> grandpaService.sendNeighbourMessage(this.host, peerId));

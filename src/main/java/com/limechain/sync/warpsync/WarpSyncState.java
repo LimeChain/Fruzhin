@@ -1,11 +1,9 @@
 package com.limechain.sync.warpsync;
 
 import com.limechain.chain.lightsyncstate.Authority;
-import com.limechain.constants.GenesisBlockHash;
 import com.limechain.exception.global.RuntimeCodeException;
 import com.limechain.network.Network;
-import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshake;
-import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceMessage;
+import com.limechain.network.protocol.blockannounce.messages.BlockAnnounceMessage;
 import com.limechain.network.protocol.grandpa.messages.commit.CommitMessage;
 import com.limechain.network.protocol.grandpa.messages.neighbour.NeighbourMessage;
 import com.limechain.network.protocol.lightclient.pb.LightClientMessage;
@@ -23,11 +21,10 @@ import com.limechain.runtime.Runtime;
 import com.limechain.runtime.RuntimeBuilder;
 import com.limechain.storage.DBConstants;
 import com.limechain.storage.KVRepository;
-import com.limechain.storage.block.BlockState;
+import com.limechain.storage.block.SyncState;
 import com.limechain.sync.JustificationVerifier;
 import com.limechain.sync.warpsync.dto.AuthoritySetChange;
 import com.limechain.sync.warpsync.dto.GrandpaDigestMessageType;
-import com.limechain.sync.warpsync.dto.StateDto;
 import com.limechain.sync.warpsync.scale.ForcedChangeReader;
 import com.limechain.sync.warpsync.scale.ScheduledChangeReader;
 import com.limechain.utils.StringUtils;
@@ -45,8 +42,6 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
 import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.logging.Level;
@@ -58,69 +53,25 @@ import java.util.logging.Level;
 @Getter
 @Setter
 @Log
-public class SyncedState {
-    public static final int NEIGHBOUR_MESSAGE_VERSION = 1;
+public class WarpSyncState {
     public static final String CODE_KEY = StringUtils.toHex(":code");
-    private static final SyncedState INSTANCE = new SyncedState();
+    private static final WarpSyncState INSTANCE = new WarpSyncState();
     private final PriorityQueue<Pair<BigInteger, Authority[]>> scheduledAuthorityChanges =
             new PriorityQueue<>(Comparator.comparing(Pair::getValue0));
+
     private boolean warpSyncFragmentsFinished;
     private boolean warpSyncFinished;
 
-    private BigInteger startingBlockNumber = BigInteger.ZERO;
-    private BigInteger lastFinalizedBlockNumber = BigInteger.ZERO;
-    private Hash256 lastFinalizedBlockHash;
-    private Hash256 stateRoot;
-
-    private Authority[] authoritySet;
-    private BigInteger setId = BigInteger.ZERO;
-    private BigInteger latestRound = BigInteger.ONE;
-
     private Runtime runtime;
     private byte[] runtimeCode;
-    private byte[] heapPages;
 
     private KVRepository<String, Object> repository;
     private Network network;
     private RuntimeBuilder runtimeBuilder = new RuntimeBuilder();
-    private BlockState blockState;
     private Set<BigInteger> scheduledRuntimeUpdateBlocks = new HashSet<>();
 
-    public static SyncedState getInstance() {
+    public static WarpSyncState getInstance() {
         return INSTANCE;
-    }
-
-    /**
-     * Creates a Block Announce handshake based on the latest finalized Host state
-     *
-     * @return our Block Announce handshake
-     */
-    public BlockAnnounceHandshake getHandshake() {
-        Hash256 genesisBlockHash = AppBean.getBean(GenesisBlockHash.class).getGenesisHash();
-
-        Hash256 blockHash = this.lastFinalizedBlockHash == null
-                ? genesisBlockHash
-                : this.lastFinalizedBlockHash;
-        return new BlockAnnounceHandshake(
-                network.getNodeRole().getValue(),
-                this.lastFinalizedBlockNumber,
-                blockHash,
-                genesisBlockHash
-        );
-    }
-
-    /**
-     * Creates a GRANDPA handshake based on the latest finalized Host state
-     *
-     * @return our GRANDPA handshake
-     */
-    public NeighbourMessage getNeighbourMessage() {
-        return new NeighbourMessage(
-                NEIGHBOUR_MESSAGE_VERSION,
-                this.latestRound,
-                this.setId,
-                this.lastFinalizedBlockNumber
-        );
     }
 
     /**
@@ -147,7 +98,8 @@ public class SyncedState {
      * @param peerId        sender of the message
      */
     public synchronized void syncCommit(CommitMessage commitMessage, PeerId peerId) {
-        if (commitMessage.getVote().getBlockNumber().compareTo(lastFinalizedBlockNumber) <= 0) {
+        SyncState bean = AppBean.getBean(SyncState.class);
+        if (commitMessage.getVote().getBlockNumber().compareTo(bean.getLastFinalizedBlockNumber()) <= 0) {
             log.log(Level.FINE, String.format("Received commit message for finalized block %d from peer %s",
                     commitMessage.getVote().getBlockNumber(), peerId));
             return;
@@ -171,24 +123,23 @@ public class SyncedState {
     }
 
     private void updateState(CommitMessage commitMessage) {
+        SyncState bean = AppBean.getBean(SyncState.class);
+        BigInteger lastFinalizedBlockNumber = bean.getLastFinalizedBlockNumber();
         if (commitMessage.getVote().getBlockNumber().compareTo(lastFinalizedBlockNumber) < 1) {
             return;
         }
-        final Hash256 blockHash = commitMessage.getVote().getBlockHash();
+        bean.finalizedCommitMessage(commitMessage);
 
-        latestRound = commitMessage.getRoundNumber();
-        lastFinalizedBlockHash = blockHash;
-        lastFinalizedBlockNumber = commitMessage.getVote().getBlockNumber();
         log.log(Level.INFO, "Reached block #" + lastFinalizedBlockNumber);
         if (warpSyncFinished && scheduledRuntimeUpdateBlocks.contains(lastFinalizedBlockNumber)) {
-            new Thread(() -> updateRuntime(blockHash)).start();
+            new Thread(this::updateRuntime).start();
         }
-        persistState();
     }
 
-    private void updateRuntime(Hash256 blockHash) {
+    private void updateRuntime() {
         updateRuntimeCode();
-        buildRuntime(blockHash);
+        buildRuntime();
+        BigInteger lastFinalizedBlockNumber = AppBean.getBean(SyncState.class).getLastFinalizedBlockNumber();
         scheduledRuntimeUpdateBlocks.remove(lastFinalizedBlockNumber);
     }
 
@@ -197,6 +148,11 @@ public class SyncedState {
      * Light Messages protocol.
      */
     public void updateRuntimeCode() {
+        SyncState syncState = AppBean.getBean(SyncState.class);
+
+        Hash256 lastFinalizedBlockHash = syncState.getLastFinalizedBlockHash();
+        Hash256 stateRoot = syncState.getStateRoot();
+
         LightClientMessage.Response response = network.makeRemoteReadRequest(
                 lastFinalizedBlockHash.toString(),
                 new String[]{CODE_KEY}
@@ -205,9 +161,9 @@ public class SyncedState {
         byte[] proof = response.getRemoteReadResponse().getProof().toByteArray();
         byte[][] decodedProofs = decodeProof(proof);
 
-        saveProofState(decodedProofs);
-
         this.runtimeCode = runtimeBuilder.buildRuntimeCode(decodedProofs, stateRoot);
+
+        saveRuntimeCode(runtimeCode);
     }
 
     private byte[][] decodeProof(byte[] proof) {
@@ -221,20 +177,16 @@ public class SyncedState {
         return decodedProofs;
     }
 
-    private void saveProofState(byte[][] proof) {
-        repository.save(DBConstants.STATE_TRIE_MERKLE_PROOF, proof);
-        repository.save(DBConstants.STATE_TRIE_ROOT_HASH, stateRoot.toString());
+    private void saveRuntimeCode(byte[] runtimeCode) {
+        repository.save(DBConstants.RUNTIME_CODE, runtimeCode);
     }
 
     /**
      * Build the runtime from the available runtime code.
      */
-    public void buildRuntime(Hash256 blockHash) {
+    public void buildRuntime() {
         try {
             runtime = runtimeBuilder.buildRuntime(runtimeCode);
-            if (BlockState.getInstance().isInitialized()) {
-                BlockState.getInstance().storeRuntime(blockHash, runtime);
-            }
         } catch (UnsatisfiedLinkError e) {
             log.log(Level.SEVERE, "Error loading wasm module");
             log.log(Level.SEVERE, e.getMessage(), e.getStackTrace());
@@ -248,13 +200,8 @@ public class SyncedState {
      * Load a saved runtime from database
      */
     public void loadSavedRuntimeCode() {
-        byte[][] merkleProof = (byte[][]) repository.find(DBConstants.STATE_TRIE_MERKLE_PROOF)
-                .orElseThrow(() -> new RuntimeCodeException("No available merkle proof"));
-        Hash256 stateRootDecoded = repository.find(DBConstants.STATE_TRIE_ROOT_HASH)
-                .map(storedRootState -> Hash256.from(storedRootState.toString()))
-                .orElseThrow(() -> new RuntimeCodeException("No available state root"));
-
-        this.runtimeCode = runtimeBuilder.buildRuntimeCode(merkleProof, stateRootDecoded);
+        this.runtimeCode = (byte[]) repository.find(DBConstants.RUNTIME_CODE)
+                .orElseThrow(() -> new RuntimeCodeException("No available runtime code"));
     }
 
     /**
@@ -267,7 +214,8 @@ public class SyncedState {
      */
     public void syncNeighbourMessage(NeighbourMessage neighbourMessage, PeerId peerId) {
         network.sendNeighbourMessage(peerId);
-        if (warpSyncFinished && neighbourMessage.getSetId().compareTo(setId) > 0) {
+        SyncState syncState = AppBean.getBean(SyncState.class);
+        if (warpSyncFinished && neighbourMessage.getSetId().compareTo(syncState.getSetId()) > 0) {
             updateSetData(neighbourMessage.getLastFinalizedBlock().add(BigInteger.ONE), peerId);
         }
     }
@@ -288,12 +236,10 @@ public class SyncedState {
 
         if (verified) {
             BlockHeader header = new BlockHeaderReader().read(new ScaleCodecReader(block.getHeader().toByteArray()));
-            this.lastFinalizedBlockNumber = header.getBlockNumber();
-            this.lastFinalizedBlockHash = header.getHash();
 
+            AppBean.getBean(SyncState.class).finalizeHeader(header);
             handleAuthorityChanges(header.getDigest(), setChangeBlock);
             handleScheduledEvents();
-            persistState();
         }
     }
 
@@ -302,12 +248,14 @@ public class SyncedState {
      */
     public void handleScheduledEvents() {
         Pair<BigInteger, Authority[]> data = scheduledAuthorityChanges.peek();
+        SyncState bean = AppBean.getBean(SyncState.class);
+        BigInteger setId = bean.getSetId();
         boolean updated = false;
         while (data != null) {
-            if (data.getValue0().compareTo(this.getLastFinalizedBlockNumber()) < 1) {
-                authoritySet = data.getValue1();
-                setId = setId.add(BigInteger.ONE);
-                latestRound = BigInteger.ONE;
+            if (data.getValue0().compareTo(bean.getLastFinalizedBlockNumber()) < 1) {
+                setId = bean.incrementSetId();
+                bean.resetRound();
+                bean.setAuthoritySet(data.getValue1());
                 scheduledAuthorityChanges.poll();
                 updated = true;
             } else break;
@@ -370,55 +318,6 @@ public class SyncedState {
                 }
             }
         }
-    }
-
-    /**
-     * Persists the Host's current state to the DB.
-     */
-    public void persistState() {
-        List<Pair<String, BigInteger>> authorities = Arrays
-                .stream(authoritySet)
-                .map(authority -> {
-                    String key = authority.getPublicKey().toString();
-                    BigInteger weight = authority.getWeight();
-                    return new Pair<>(key, weight);
-                }).toList();
-
-        StateDto stateDto = new StateDto(
-                latestRound,
-                lastFinalizedBlockHash.toString(),
-                lastFinalizedBlockNumber,
-                authorities,
-                setId
-        );
-        repository.save(DBConstants.SYNC_STATE_KEY, stateDto);
-    }
-
-    /**
-     * Loads the Host's saved state from the DB.
-     *
-     * @return is the state loaded successfully
-     */
-    public boolean loadState() {
-        Optional<Object> syncState = repository.find(DBConstants.SYNC_STATE_KEY);
-        if (syncState.isPresent() && syncState.get() instanceof StateDto state) {
-            this.latestRound = state.latestRound();
-            this.lastFinalizedBlockHash = Hash256.from(state.lastFinalizedBlockHash());
-            this.lastFinalizedBlockNumber = state.lastFinalizedBlockNumber();
-            this.startingBlockNumber = lastFinalizedBlockNumber;
-            this.authoritySet = state.authoritySet()
-                    .stream()
-                    .map(pair -> {
-                        Hash256 publicKey = Hash256.from(pair.getValue0());
-                        BigInteger weight = pair.getValue1();
-                        return new Authority(publicKey, weight);
-                    }).toArray(Authority[]::new);
-
-            this.setId = state.setId();
-
-            return true;
-        }
-        return false;
     }
 
 }

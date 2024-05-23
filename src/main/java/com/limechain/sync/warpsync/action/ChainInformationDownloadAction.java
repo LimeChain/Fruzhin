@@ -1,4 +1,4 @@
-package com.limechain.sync.warpsync.state;
+package com.limechain.sync.warpsync.action;
 
 import com.limechain.sync.warpsync.WarpSyncMachine;
 import lombok.extern.java.Log;
@@ -11,7 +11,7 @@ import java.util.logging.Level;
  * be downloaded from a source in the Chain Information Download State
  */
 @Log
-public class ChainInformationDownloadState implements WarpSyncState {
+public class ChainInformationDownloadAction implements WarpSyncAction {
     private String[] runtimeFunctionCalls = new String[]{
             "AuraApi_slot_duration",
             "AuraApi_authorities",
@@ -25,7 +25,7 @@ public class ChainInformationDownloadState implements WarpSyncState {
     @Override
     public void next(WarpSyncMachine sync) {
         // We're done with the warp sync process!
-        sync.setWarpSyncState(new FinishedState());
+        sync.setWarpSyncAction(new FinishedAction());
     }
 
     @Override
