@@ -10,13 +10,11 @@ import com.limechain.constants.GenesisBlockHash;
 import com.limechain.network.Network;
 import com.limechain.rpc.server.UnsafeInterceptor;
 import com.limechain.storage.DBInitializer;
-import com.limechain.storage.DBRepository;
 import com.limechain.storage.KVRepository;
 import com.limechain.storage.block.SyncState;
 import com.limechain.storage.trie.TrieStorage;
 import com.limechain.sync.fullsync.FullSyncMachine;
 import com.limechain.sync.warpsync.WarpSyncMachine;
-import com.limechain.sync.warpsync.WarpSyncState;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -52,10 +50,8 @@ public class CommonConfig {
 
     @Bean
     public KVRepository<String, Object> repository(HostConfig hostConfig) {
-        DBRepository repository = DBInitializer.initialize(hostConfig.getRocksDbPath(),
+        return DBInitializer.initialize(hostConfig.getRocksDbPath(),
                 hostConfig.getChain(), hostConfig.isDbRecreate());
-        WarpSyncState.getInstance().setRepository(repository);
-        return repository;
     }
 
     @Bean

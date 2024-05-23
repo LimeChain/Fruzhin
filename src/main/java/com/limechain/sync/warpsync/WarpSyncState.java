@@ -65,8 +65,6 @@ public class WarpSyncState {
     private Runtime runtime;
     private byte[] runtimeCode;
 
-    private KVRepository<String, Object> repository;
-    private Network network;
     private RuntimeBuilder runtimeBuilder = new RuntimeBuilder();
     private Set<BigInteger> scheduledRuntimeUpdateBlocks = new HashSet<>();
 
@@ -98,8 +96,8 @@ public class WarpSyncState {
      * @param peerId        sender of the message
      */
     public synchronized void syncCommit(CommitMessage commitMessage, PeerId peerId) {
-        SyncState bean = AppBean.getBean(SyncState.class);
-        if (commitMessage.getVote().getBlockNumber().compareTo(bean.getLastFinalizedBlockNumber()) <= 0) {
+        SyncState snycState = AppBean.getBean(SyncState.class);
+        if (commitMessage.getVote().getBlockNumber().compareTo(snycState.getLastFinalizedBlockNumber()) <= 0) {
             log.log(Level.FINE, String.format("Received commit message for finalized block %d from peer %s",
                     commitMessage.getVote().getBlockNumber(), peerId));
             return;
@@ -123,12 +121,12 @@ public class WarpSyncState {
     }
 
     private void updateState(CommitMessage commitMessage) {
-        SyncState bean = AppBean.getBean(SyncState.class);
-        BigInteger lastFinalizedBlockNumber = bean.getLastFinalizedBlockNumber();
+        SyncState syncState = AppBean.getBean(SyncState.class);
+        BigInteger lastFinalizedBlockNumber = syncState.getLastFinalizedBlockNumber();
         if (commitMessage.getVote().getBlockNumber().compareTo(lastFinalizedBlockNumber) < 1) {
             return;
         }
-        bean.finalizedCommitMessage(commitMessage);
+        syncState.finalizedCommitMessage(commitMessage);
 
         log.log(Level.INFO, "Reached block #" + lastFinalizedBlockNumber);
         if (warpSyncFinished && scheduledRuntimeUpdateBlocks.contains(lastFinalizedBlockNumber)) {
@@ -149,6 +147,7 @@ public class WarpSyncState {
      */
     public void updateRuntimeCode() {
         SyncState syncState = AppBean.getBean(SyncState.class);
+        Network network = AppBean.getBean(Network.class);
 
         Hash256 lastFinalizedBlockHash = syncState.getLastFinalizedBlockHash();
         Hash256 stateRoot = syncState.getStateRoot();
@@ -178,7 +177,8 @@ public class WarpSyncState {
     }
 
     private void saveRuntimeCode(byte[] runtimeCode) {
-        repository.save(DBConstants.RUNTIME_CODE, runtimeCode);
+        KVRepository<String, Object> db = AppBean.getBean(KVRepository.class);
+        db.save(DBConstants.RUNTIME_CODE, runtimeCode);
     }
 
     /**
@@ -200,7 +200,8 @@ public class WarpSyncState {
      * Load a saved runtime from database
      */
     public void loadSavedRuntimeCode() {
-        this.runtimeCode = (byte[]) repository.find(DBConstants.RUNTIME_CODE)
+        KVRepository<String, Object> db = AppBean.getBean(KVRepository.class);
+        this.runtimeCode = (byte[]) db.find(DBConstants.RUNTIME_CODE)
                 .orElseThrow(() -> new RuntimeCodeException("No available runtime code"));
     }
 
@@ -213,14 +214,19 @@ public class WarpSyncState {
      * @param peerId           sender of message
      */
     public void syncNeighbourMessage(NeighbourMessage neighbourMessage, PeerId peerId) {
-        network.sendNeighbourMessage(peerId);
         SyncState syncState = AppBean.getBean(SyncState.class);
+        Network network = AppBean.getBean(Network.class);
+
+        network.sendNeighbourMessage(peerId);
         if (warpSyncFinished && neighbourMessage.getSetId().compareTo(syncState.getSetId()) > 0) {
             updateSetData(neighbourMessage.getLastFinalizedBlock().add(BigInteger.ONE), peerId);
         }
     }
 
     private void updateSetData(BigInteger setChangeBlock, PeerId peerId) {
+        Network network = AppBean.getBean(Network.class);
+        SyncState syncState = AppBean.getBean(SyncState.class);
+
         BlockResponse response = network.syncBlock(peerId, setChangeBlock);
         BlockData block = response.getBlocksList().get(0);
 
@@ -237,7 +243,7 @@ public class WarpSyncState {
         if (verified) {
             BlockHeader header = new BlockHeaderReader().read(new ScaleCodecReader(block.getHeader().toByteArray()));
 
-            AppBean.getBean(SyncState.class).finalizeHeader(header);
+            syncState.finalizeHeader(header);
             handleAuthorityChanges(header.getDigest(), setChangeBlock);
             handleScheduledEvents();
         }
@@ -247,15 +253,17 @@ public class WarpSyncState {
      * Executes authority changes, scheduled for the current block.
      */
     public void handleScheduledEvents() {
+        SyncState syncState = AppBean.getBean(SyncState.class);
+        Network network = AppBean.getBean(Network.class);
+
         Pair<BigInteger, Authority[]> data = scheduledAuthorityChanges.peek();
-        SyncState bean = AppBean.getBean(SyncState.class);
-        BigInteger setId = bean.getSetId();
+        BigInteger setId = syncState.getSetId();
         boolean updated = false;
         while (data != null) {
-            if (data.getValue0().compareTo(bean.getLastFinalizedBlockNumber()) < 1) {
-                setId = bean.incrementSetId();
-                bean.resetRound();
-                bean.setAuthoritySet(data.getValue1());
+            if (data.getValue0().compareTo(syncState.getLastFinalizedBlockNumber()) < 1) {
+                setId = syncState.incrementSetId();
+                syncState.resetRound();
+                syncState.setAuthoritySet(data.getValue1());
                 scheduledAuthorityChanges.poll();
                 updated = true;
             } else break;

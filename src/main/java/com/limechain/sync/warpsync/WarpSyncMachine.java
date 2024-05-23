@@ -48,7 +48,6 @@ public class WarpSyncMachine {
         this.networkService = network;
         this.chainService = chainService;
         this.syncState = syncState;
-        warpState.setNetwork(network);
     }
 
     public void nextState() {
