@@ -120,8 +120,9 @@ public class ChildStateRPCImpl {
     }
 
     private byte[] getChildMerkle(Hash256 blockHash, Nibbles childKey) {
+        Hash256 mainTrieMerkle = blockState.getBlockStateRoot(blockHash);
         return trieStorage
-                .getByKeyFromBlock(blockHash, Nibbles.fromBytes(":child_storage:default:".getBytes(StandardCharsets.US_ASCII)).addAll(childKey))
+                .getByKeyFromMerkle(mainTrieMerkle.getBytes(), Nibbles.fromBytes(":child_storage:default:".getBytes(StandardCharsets.US_ASCII)).addAll(childKey))
                 .map(NodeData::getValue)
                 .orElse(null);
     }
