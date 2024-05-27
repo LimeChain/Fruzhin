@@ -15,7 +15,6 @@ import org.wasmer.Memory;
 import org.wasmer.Module;
 
 import java.nio.ByteBuffer;
-import java.util.List;
 import java.util.logging.Level;
 
 import static com.limechain.runtime.RuntimeBuilder.getImports;
