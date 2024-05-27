@@ -22,6 +22,7 @@ import java.util.Objects;
 public class WasmSectionUtils {
     private static final String RUNTIME_VERSION_SECTION_NAME = "runtime_version";
     private static final String RUNTIME_APIS_SECTION_NAME = "runtime_apis";
+    private static final int DEFAULT_MINIMUM_MEMORY_PAGES = 24;
 
     /**
      * Parses the runtime version if both wasm custom sections ("runtime_apis" and "runtime_version") are present.
@@ -66,7 +67,7 @@ public class WasmSectionUtils {
                 .findFirst()
                 .orElse(null);
         return new ImportObject.MemoryImport("env",
-                parsedMemoryImport != null ? parsedMemoryImport.limits().initialPages() : 24,
+                parsedMemoryImport != null ? parsedMemoryImport.limits().initialPages() : DEFAULT_MINIMUM_MEMORY_PAGES,
                 false);
     }
 
