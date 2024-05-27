@@ -32,7 +32,7 @@ dependencies {
     testImplementation("org.mockito:mockito-core:5.12.0")
 
     // CLI
-    implementation("commons-cli:commons-cli:1.7.0")
+    implementation("commons-cli:commons-cli:1.8.0")
 
     // TODO: Publish imported packages to mvnrepository and import them
     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
