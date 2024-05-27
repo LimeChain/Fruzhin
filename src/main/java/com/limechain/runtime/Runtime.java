@@ -8,11 +8,14 @@ import lombok.Getter;
 import lombok.extern.java.Log;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.wasmer.ImportObject;
+import org.wasmer.Imports;
 import org.wasmer.Instance;
 import org.wasmer.Memory;
 import org.wasmer.Module;
 
 import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.logging.Level;
 
 import static com.limechain.runtime.RuntimeBuilder.getImports;
@@ -25,9 +28,9 @@ public class Runtime {
     private final int heapPages;
     private final FreeingBumpHeapAllocator allocator;
 
-    public Runtime(Module module, int heapPages) {
+    public Runtime(Module module, ImportObject.MemoryImport memoryImport, int heapPages) {
         this.heapPages = heapPages;
-        this.instance = module.instantiate(getImports(module, this));
+        this.instance = module.instantiate(Imports.from(getImports(memoryImport, this), module));
         this.allocator = new FreeingBumpHeapAllocator(getHeapBase());
     }
 

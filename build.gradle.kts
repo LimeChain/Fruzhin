@@ -21,6 +21,7 @@ repositories {
 }
 
 dependencies {
+    implementation("com.dylibso.chicory:wasm:0.0.10")
     implementation("net.openhft:zero-allocation-hashing:0.16")
     implementation("org.rocksdb:rocksdbjni:9.1.1")
     compileOnly("org.projectlombok:lombok:1.18.32")

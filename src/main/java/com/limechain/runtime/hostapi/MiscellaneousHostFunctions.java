@@ -3,6 +3,7 @@ package com.limechain.runtime.hostapi;
 import com.limechain.exception.scale.ScaleEncodingException;
 import com.limechain.runtime.Runtime;
 import com.limechain.runtime.RuntimeBuilder;
+import com.limechain.runtime.WasmSectionUtils;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import lombok.AccessLevel;
@@ -110,7 +111,8 @@ public class MiscellaneousHostFunctions {
         try {
             // TODO: Refactor using RuntimeBuilder... when we're sure it works properly
             Module module = new Module(wasmBlob);
-            Runtime newRuntime = new Runtime(module, RuntimeBuilder.DEFAULT_HEAP_PAGES);
+            ImportObject.MemoryImport memoryImport = WasmSectionUtils.parseMemoryImportFromBinary(wasmBlob);
+            Runtime newRuntime = new Runtime(module, memoryImport, RuntimeBuilder.DEFAULT_HEAP_PAGES);
             byte[] runtimeVersionData = newRuntime.call("Core_version");
             versionOption = scaleEncodedOption(runtimeVersionData);
         } catch (UnsatisfiedLinkError e) {

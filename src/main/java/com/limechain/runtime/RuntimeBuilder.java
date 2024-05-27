@@ -21,7 +21,6 @@ import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.extern.java.Log;
 import org.wasmer.ImportObject;
-import org.wasmer.Imports;
 import org.wasmer.Module;
 
 import java.util.ArrayList;
@@ -46,9 +45,10 @@ public class RuntimeBuilder {
         byte[] wasmBinary = zstDecompressIfNecessary(code);
 
         Module module = new Module(wasmBinary);
-        Runtime runtime = new Runtime(module, DEFAULT_HEAP_PAGES);
+        ImportObject.MemoryImport memoryImport = WasmSectionUtils.parseMemoryImportFromBinary(wasmBinary);
+        Runtime runtime = new Runtime(module, memoryImport, DEFAULT_HEAP_PAGES);
 
-        RuntimeVersion runtimeVersion = WasmSectionUtils.parseRuntimeVersionFromCustomSections(wasmBinary);
+        RuntimeVersion runtimeVersion = WasmSectionUtils.parseRuntimeVersionFromBinary(wasmBinary);
 
         //If we couldn't get the data from the wasm custom sections fallback to Core_version call
         if (runtimeVersion == null) {
@@ -80,9 +80,7 @@ public class RuntimeBuilder {
         return runtimeVersionReader.read(reader);
     }
 
-    static Imports getImports(Module module, Runtime runtime) {
-        ImportObject.MemoryImport memory = new ImportObject.MemoryImport("env", 22, false);
-
+    static ArrayList<ImportObject> getImports(ImportObject.MemoryImport memoryImport, Runtime runtime) {
         ArrayList<ImportObject> objects = new ArrayList<>();
         objects.addAll(StorageHostFunctions.getFunctions(runtime));
         objects.addAll(ChildStorageHostFunctions.getFunctions(runtime));
@@ -92,9 +90,9 @@ public class RuntimeBuilder {
         objects.addAll(TrieHostFunctions.getFunctions(runtime));
         objects.addAll(MiscellaneousHostFunctions.getFunctions(runtime));
         objects.addAll(AllocatorHostFunctions.getFunctions(runtime));
-        objects.add(memory);
+        objects.add(memoryImport);
 
-        return Imports.from(objects, module);
+        return objects;
     }
 
     /**

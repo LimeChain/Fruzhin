@@ -16,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class WasmSectionUtilsTest {
     @Test
-    void test_parseRuntimeVersionFromCustomSections_success() throws IOException {
+    void test_parseRuntimeVersionFromBinary_success() throws IOException {
         // expected data extracted from Smoldot, given the same wasm blob
         RuntimeVersion expectedRuntimeVersion = new RuntimeVersion();
         expectedRuntimeVersion.setSpecName("node-template");
@@ -85,7 +85,7 @@ class WasmSectionUtilsTest {
         try (InputStream wasmBytesInput = this.getClass().getResourceAsStream("/runtime_version_custom_section.wasm")) {
             byte[] wasmBytes = Objects.requireNonNull(wasmBytesInput).readAllBytes();
 
-            RuntimeVersion actualRuntimeVersion = WasmSectionUtils.parseRuntimeVersionFromCustomSections(wasmBytes);
+            RuntimeVersion actualRuntimeVersion = WasmSectionUtils.parseRuntimeVersionFromBinary(wasmBytes);
 
             assertEquals(expectedRuntimeVersion, actualRuntimeVersion);
         }
