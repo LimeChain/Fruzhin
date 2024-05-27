@@ -1,5 +1,9 @@
 package com.limechain.runtime.version;
 
+import io.emeraldpay.polkaj.scale.ScaleReader;
+import io.emeraldpay.polkaj.scale.ScaleWriter;
+import lombok.experimental.UtilityClass;
+
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Objects;
@@ -43,5 +47,20 @@ public record ApiVersion(byte[] nameHash, BigInteger version) {
         int result = Objects.hash(version);
         result = 31 * result + Arrays.hashCode(nameHash);
         return result;
+    }
+
+    @UtilityClass
+    public static class Scale {
+        public static ScaleWriter<ApiVersion> WRITER = (writer, apiVersion) -> {
+            writer.writeByteArray(apiVersion.nameHash());
+            writer.writeUint32(apiVersion.version().longValueExact());
+        };
+
+        public static ScaleReader<ApiVersion> READER = (reader) -> {
+            byte[] hashedName = reader.readByteArray(ApiVersion.NAME_HASH_LENGTH);
+            long version = reader.readUint32();
+
+            return new ApiVersion(hashedName, BigInteger.valueOf(version));
+        };
     }
 }
