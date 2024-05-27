@@ -1,5 +1,6 @@
 package com.limechain.trie;
 
+import com.limechain.rpc.server.AppBean;
 import com.limechain.runtime.version.StateVersion;
 import com.limechain.storage.DeleteByPrefixResult;
 import com.limechain.storage.KVRepository;
@@ -32,7 +33,7 @@ public class TrieAccessor implements KVRepository<Nibbles, byte[]> {
     public TrieAccessor(byte[] trieRoot) {
         this.lastRoot = trieRoot;
         this.loadedChildTries = new HashMap<>();
-        this.trieStorage = TrieStorage.getInstance();
+        this.trieStorage = AppBean.getBean(TrieStorage.class);
         this.initialTrie = trieStorage.loadTrieStructure(trieRoot);
     }
 

@@ -1,17 +1,16 @@
 package com.limechain.storage.trie;
 
 
-import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.storage.KVRepository;
-import com.limechain.storage.block.BlockState;
 import com.limechain.trie.structure.database.NodeData;
 import com.limechain.trie.structure.nibble.Nibbles;
 import com.limechain.trie.structure.node.TrieNodeData;
 import io.emeraldpay.polkaj.types.Hash256;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
 import java.util.Optional;
@@ -21,24 +20,18 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class TrieStorageTest {
-
-    private static final String BLOCK_HASH = "0x7b22fc4469863c9671686c189a3238708033d364a77ba8d83e78777e7563f346";
     private static final String ROOT_HASH = "0x7b22fc4469863c9671686c189a3238708033d364a77ba8d83e78777e7563f347";
-    private final TrieStorage trieStorage = TrieStorage.getInstance();
-    private final BlockState blockState = mock(BlockState.class);
+
     @Mock
     private KVRepository<String, Object> db;
 
-    @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
-        trieStorage.initialize(db, blockState);
-    }
+    @InjectMocks
+    private TrieStorage trieStorage;
 
     @Test
     void testGetByKeyFromBlock() {
@@ -46,15 +39,14 @@ class TrieStorageTest {
         byte[] expectedValue = "testValue".getBytes();
 
         final TrieNodeData trieNodeData =
-                new TrieNodeData(
-                        false,
-                        key,
-                        IntStream.range(0, 16).mapToObj(__ -> (byte[]) null).toList(),
-                        expectedValue,
-                        new byte[0],
-                        (byte) 0
-                );
-
+            new TrieNodeData(
+                false,
+                key,
+                IntStream.range(0, 16).mapToObj(__ -> (byte[]) null).toList(),
+                expectedValue,
+                new byte[0],
+                (byte) 0
+            );
 
         when(db.find(anyString())).thenReturn(Optional.of(trieNodeData));
 
@@ -74,7 +66,8 @@ class TrieStorageTest {
         when(db.find(anyString())).thenReturn(Optional.empty());
 
         byte[] blockStateRoot = Hash256.from(ROOT_HASH).getBytes();
-        Optional<NodeData> result = trieStorage.getByKeyFromMerkle(blockStateRoot, Nibbles.fromBytes(keyStr.getBytes()));
+        Optional<NodeData> result =
+            trieStorage.getByKeyFromMerkle(blockStateRoot, Nibbles.fromBytes(keyStr.getBytes()));
 
         assertTrue(result.isEmpty());
 
@@ -87,12 +80,12 @@ class TrieStorageTest {
 
         // Simulate a trie node that does not directly match the provided key
         TrieNodeData nonMatchingTrieNodeData = new TrieNodeData(
-                false,
-                Nibbles.fromHexString("01"), // Partial key that does not match the test key
-                IntStream.range(0, 16).mapToObj(__ -> (byte[]) null).toList(),
-                null,
-                new byte[0],
-                (byte) 0);
+            false,
+            Nibbles.fromHexString("01"), // Partial key that does not match the test key
+            IntStream.range(0, 16).mapToObj(__ -> (byte[]) null).toList(),
+            null,
+            new byte[0],
+            (byte) 0);
         when(db.find(anyString())).thenReturn(Optional.of(nonMatchingTrieNodeData));
 
         // Action
@@ -110,9 +103,9 @@ class TrieStorageTest {
 
         // Setup a mock TrieNodeData that represents the next key
         TrieNodeData nextKeyNode = new TrieNodeData(
-                false,
-                actualKey,
-                new ArrayList<>(), "nextValue".getBytes(), new byte[0], (byte) 0);
+            false,
+            actualKey,
+            new ArrayList<>(), "nextValue".getBytes(), new byte[0], (byte) 0);
 
         // Assuming the database returns the mock TrieNodeData for the next key
         when(db.find(anyString())).thenReturn(Optional.of(nextKeyNode));

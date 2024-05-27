@@ -1,9 +1,7 @@
 package com.limechain.storage.trie;
 
-import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.runtime.version.StateVersion;
 import com.limechain.storage.KVRepository;
-import com.limechain.storage.block.BlockState;
 import com.limechain.trie.dto.node.StorageNode;
 import com.limechain.trie.structure.TrieNodeIndex;
 import com.limechain.trie.structure.TrieStructure;
@@ -14,8 +12,7 @@ import com.limechain.trie.structure.nibble.Nibbles;
 import com.limechain.trie.structure.node.InsertTrieNode;
 import com.limechain.trie.structure.node.TrieNodeData;
 import io.emeraldpay.polkaj.types.Hash256;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 import lombok.extern.java.Log;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,35 +25,11 @@ import java.util.Optional;
 import java.util.logging.Level;
 
 @Log
-@NoArgsConstructor(access = lombok.AccessLevel.PRIVATE)
+@AllArgsConstructor
 public class TrieStorage {
 
     private static final String TRIE_NODE_PREFIX = "tn:";
-    @Getter
-    private static final TrieStorage instance = new TrieStorage();
     private KVRepository<String, Object> db;
-
-    /**
-     * Initializes the TrieStorage with a given key-value repository.
-     * This method must be called before using the TrieStorage instance.
-     *
-     * @param db The key-value repository to be used for storing trie nodes.
-     */
-
-    public void initialize(final KVRepository<String, Object> db) {
-        initialize(db, BlockState.getInstance());
-    }
-
-    /**
-     * Initializes the TrieStorage with a given key-value repository.
-     * This method must be called before using the TrieStorage instance.
-     *
-     * @param db         The key-value repository to be used for storing trie nodes.
-     * @param blockState The block state to be used for retrieving block headers.
-     */
-    protected void initialize(final KVRepository<String, Object> db, final BlockState blockState) {
-        this.db = db;
-    }
 
     /**
      * Retrieves a value by key from the trie associated with a specific block hash.
@@ -312,68 +285,6 @@ public class TrieStorage {
                 collectKeysWithPrefix(childNode, fullPath, prefix, startKey, limit, keys, startKeyFound);
             }
         }
-    }
-
-    /**
-     * Retrieves trie entries within a specified range.
-     * <p>
-     * Fetches entries from the trie that fall within the range defined by the given search key,
-     * starting from the node identified by the provided merkle value.
-     *
-     * @param merkleValue The merkle value identifying the starting node in the trie.
-     * @param searchKey   The key defining the upper limit of the search range.
-     * @return A list of pairs, each containing a set of nibbles (representing a key within the trie)
-     * and the corresponding node data.
-     */
-    public List<StorageNode> entriesBetween(byte[] merkleValue, Nibbles searchKey) {
-        List<StorageNode> entries = new ArrayList<>();
-        TrieNodeData rootNode = getTrieNodeFromMerkleValue(merkleValue);
-
-        if (rootNode == null) {
-            return entries;
-        }
-
-        entries.add(
-                new StorageNode(rootNode.getPartialKey(),
-                        new NodeData(rootNode.getValue(), merkleValue)));
-
-        collectEntriesUpTo(rootNode, searchKey, rootNode.getPartialKey(), entries);
-
-        return entries;
-    }
-
-    private void collectEntriesUpTo(TrieNodeData node, Nibbles key, Nibbles currentPath, List<StorageNode> entries) {
-        if (node == null || key.isEmpty()) {
-            return;
-        }
-
-        var keyIter = key.iterator();
-        Nibble childIndexWithinParent = keyIter.next();
-        for (Nibble nibble : node.getPartialKey()) {
-            if (!childIndexWithinParent.equals(nibble)) {
-                break;
-            }
-
-            if (!keyIter.hasNext()) {
-                return;
-            }
-
-            childIndexWithinParent = keyIter.next();
-        }
-
-        byte[] childMerkleValue = node.getChildrenMerkleValues().get(childIndexWithinParent.asInt());
-        if (childMerkleValue == null) return; // Skip empty slots.
-
-        TrieNodeData childNode = getTrieNodeFromMerkleValue(childMerkleValue);
-        if (childNode == null) {
-            return;
-        }
-
-        Nibbles nextPath = currentPath.add(childIndexWithinParent).addAll(childNode.getPartialKey());
-
-        entries.add(new StorageNode(nextPath, new NodeData(childNode.getValue(), childMerkleValue)));
-
-        collectEntriesUpTo(childNode, Nibbles.of(keyIter), nextPath, entries);
     }
 
     /**

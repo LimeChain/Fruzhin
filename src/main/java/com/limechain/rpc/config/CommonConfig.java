@@ -12,6 +12,7 @@ import com.limechain.rpc.server.UnsafeInterceptor;
 import com.limechain.storage.DBInitializer;
 import com.limechain.storage.DBRepository;
 import com.limechain.storage.KVRepository;
+import com.limechain.storage.trie.TrieStorage;
 import com.limechain.sync.fullsync.FullSyncMachine;
 import com.limechain.sync.warpsync.SyncedState;
 import com.limechain.sync.warpsync.WarpSyncMachine;
@@ -54,6 +55,11 @@ public class CommonConfig {
                 hostConfig.getChain(), hostConfig.isDbRecreate());
         SyncedState.getInstance().setRepository(repository);
         return repository;
+    }
+
+    @Bean
+    public TrieStorage trieStorage(KVRepository<String, Object> repository) {
+        return new TrieStorage(repository);
     }
 
     @Bean
