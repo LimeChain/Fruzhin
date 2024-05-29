@@ -56,9 +56,15 @@ public class FullNode implements HostNode {
         log.log(Level.INFO, "Node successfully connected to a peer! Sync can start!");
 
         CliArguments args = AppBean.getBean(CliArguments.class);
+        WarpSyncMachine warpSyncMachine = AppBean.getBean(WarpSyncMachine.class);
+        FullSyncMachine fullSyncMachine = AppBean.getBean(FullSyncMachine.class);
+
         switch (args.syncMode()) {
-            case FULL -> AppBean.getBean(FullSyncMachine.class).start();
-            case WARP -> AppBean.getBean(WarpSyncMachine.class).start();
+            case FULL -> fullSyncMachine.start();
+            case WARP -> {
+                warpSyncMachine.onFinish(() -> fullSyncMachine.start());
+                warpSyncMachine.start();
+            }
             default -> throw new IllegalStateException("Unexpected value: " + args.syncMode());
         }
     }

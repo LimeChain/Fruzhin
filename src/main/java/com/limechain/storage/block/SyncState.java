@@ -6,34 +6,62 @@ import com.limechain.constants.GenesisBlockHash;
 import com.limechain.network.protocol.grandpa.messages.commit.CommitMessage;
 import com.limechain.network.protocol.warp.dto.Block;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
+import com.limechain.storage.KVRepository;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.math.BigInteger;
 
 @Getter
 public class SyncState {
 
-    private final GenesisBlockHash genesisBlockHashCalculator;
+    public static final String LAST_FINALIZED_BLOCK_NUMBER = "ss::lastFinalizedBlockNumber";
+    public static final String LAST_FINALIZED_BLOCK_HASH = "ss::lastFinalizedBlockHash";
+    public static final String AUTHORITY_SET = "ss::authoritySet";
+    public static final String LATEST_ROUND = "ss::latestRound";
+    public static final String STATE_ROOT = "ss::stateRoot";
+    public static final String SET_ID = "ss::setId";
 
+    private final GenesisBlockHash genesisBlockHashCalculator;
+    private final KVRepository<String, Object> repository;
+    private BigInteger lastFinalizedBlockNumber;
     private final BigInteger startingBlock;
     private final Hash256 genesisBlockHash;
-    private BigInteger lastFinalizedBlockNumber;
     private Hash256 lastFinalizedBlockHash;
+    @Setter
+    private Authority[] authoritySet;
     private BigInteger latestRound;
     private Hash256 stateRoot;
     private BigInteger setId;
-    private Authority[] authoritySet;
 
-    public SyncState(final GenesisBlockHash genesisBlockHashCalculator) {
+    public SyncState(GenesisBlockHash genesisBlockHashCalculator, KVRepository<String, Object> repository) {
         this.genesisBlockHashCalculator = genesisBlockHashCalculator;
         this.genesisBlockHash = genesisBlockHashCalculator.getGenesisHash();
+        this.repository = repository;
 
-        this.setId = BigInteger.ZERO;
-        this.latestRound = BigInteger.ONE;
-        this.startingBlock = BigInteger.ZERO;
-        this.lastFinalizedBlockNumber = startingBlock;
-        this.lastFinalizedBlockHash = genesisBlockHash;
+        loadPersistedState();
+        this.startingBlock = this.lastFinalizedBlockNumber;
+    }
+
+    private void loadPersistedState() {
+        this.lastFinalizedBlockNumber = (BigInteger) repository.find(LAST_FINALIZED_BLOCK_NUMBER).orElse(BigInteger.ZERO);
+        this.lastFinalizedBlockHash = new Hash256(
+                (byte[]) repository.find(LAST_FINALIZED_BLOCK_HASH).orElse(genesisBlockHash.getBytes()));
+        this.authoritySet = (Authority[]) repository.find(AUTHORITY_SET).orElse(new Authority[0]);
+        this.latestRound = (BigInteger) repository.find(LATEST_ROUND).orElse(BigInteger.ONE);
+        byte[] stateRootBytes = (byte[]) repository.find(STATE_ROOT).orElse(null);
+        this.stateRoot = stateRootBytes != null ? new Hash256(stateRootBytes) : null;
+        this.setId = (BigInteger) repository.find(SET_ID).orElse(BigInteger.ZERO);
+    }
+
+    public void persistState() {
+        repository.save(LAST_FINALIZED_BLOCK_NUMBER, lastFinalizedBlockNumber);
+        repository.save(LAST_FINALIZED_BLOCK_HASH, lastFinalizedBlockHash.getBytes());
+        repository.save(AUTHORITY_SET, authoritySet);
+        repository.save(LATEST_ROUND, latestRound);
+        repository.save(STATE_ROOT, stateRoot.getBytes());
+        repository.save(SET_ID, setId);
     }
 
     public void finalizeHeader(BlockHeader header) {
@@ -66,7 +94,4 @@ public class SyncState {
         finalizeHeader(initState.getFinalizedBlockHeader());
     }
 
-    public void setAuthoritySet(Authority[] authoritySet) {
-        this.authoritySet = authoritySet;
-    }
 }

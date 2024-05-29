@@ -271,7 +271,7 @@ public class WarpSyncState {
         }
         if (warpSyncFinished && updated) {
             log.log(Level.INFO, "Successfully transitioned to authority set id: " + setId);
-            new Thread(() -> network.sendNeighbourMessages()).start();
+            new Thread(network::sendNeighbourMessages).start();
         }
     }
 

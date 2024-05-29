@@ -65,8 +65,8 @@ public class CommonConfig {
     }
 
     @Bean
-    public SyncState syncState(GenesisBlockHash genesisBlockHash) {
-        return new SyncState(genesisBlockHash);
+    public SyncState syncState(GenesisBlockHash genesisBlockHash, KVRepository<String, Object> repository) {
+        return new SyncState(genesisBlockHash, repository);
     }
 
     @Bean
@@ -86,8 +86,8 @@ public class CommonConfig {
     }
 
     @Bean
-    public FullSyncMachine fullSyncMachine(Network network) {
-        return new FullSyncMachine(network);
+    public FullSyncMachine fullSyncMachine(Network network, SyncState syncState) {
+        return new FullSyncMachine(network, syncState);
     }
 
     @Bean

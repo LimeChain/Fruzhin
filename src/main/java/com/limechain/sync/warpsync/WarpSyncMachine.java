@@ -16,7 +16,9 @@ import lombok.extern.java.Log;
 import org.javatuples.Pair;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.concurrent.ExecutorService;
@@ -24,30 +26,31 @@ import java.util.concurrent.Executors;
 import java.util.logging.Level;
 
 @Log
+@Getter
+@Setter
 public class WarpSyncMachine {
-    private final ChainService chainService;
-    @Getter
-    private final Network networkService;
-    @Getter
-    private final WarpSyncState warpState = WarpSyncState.getInstance();
-    private final SyncState syncState;
-    private final ExecutorService executor = Executors.newSingleThreadExecutor();
-    @Setter
-    private WarpSyncAction warpSyncAction;
-    @Getter
-    @Setter
+
+    private final PriorityQueue<Pair<BigInteger, Authority[]>> scheduledAuthorityChanges;
+    private final ChainInformation chainInformation;
     private Queue<WarpSyncFragment> fragmentsQueue;
-    @Getter
-    @Setter
-    private PriorityQueue<Pair<BigInteger, Authority[]>> scheduledAuthorityChanges =
-            new PriorityQueue<>(Comparator.comparing(Pair::getValue0));
-    @Getter
-    private final ChainInformation chainInformation = new ChainInformation();
+    private final ChainService chainService;
+    private final ExecutorService executor;
+    private WarpSyncAction warpSyncAction;
+    private final WarpSyncState warpState;
+    private final Network networkService;
+    private final SyncState syncState;
+    private final List<Runnable> onFinishCallbacks;
 
     public WarpSyncMachine(Network network, ChainService chainService, SyncState syncState) {
         this.networkService = network;
         this.chainService = chainService;
         this.syncState = syncState;
+
+        this.warpState = WarpSyncState.getInstance();
+        this.executor = Executors.newSingleThreadExecutor();
+        this.scheduledAuthorityChanges = new PriorityQueue<>(Comparator.comparing(Pair::getValue0));
+        this.chainInformation = new ChainInformation();
+        this.onFinishCallbacks = new ArrayList<>();
     }
 
     public void nextState() {
@@ -83,7 +86,7 @@ public class WarpSyncMachine {
                 this.nextState();
             }
 
-            startFullSync();
+            finishWarpSync();
         });
     }
 
@@ -94,8 +97,15 @@ public class WarpSyncMachine {
         log.info("Warp sync machine stopped.");
     }
 
-    private void startFullSync() {
+    private void finishWarpSync() {
         this.warpState.setWarpSyncFinished(true);
         this.networkService.handshakeBootNodes();
+        this.syncState.persistState();
+        log.info("Warp sync finished.");
+        this.onFinishCallbacks.forEach(executor::submit);
+    }
+
+    public void onFinish(Runnable function) {
+        onFinishCallbacks.add(function);
     }
 }

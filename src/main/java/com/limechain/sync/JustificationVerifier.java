@@ -41,6 +41,7 @@ public class JustificationVerifier {
         Set<Hash256> seenPublicKeys = new HashSet<>();
         Set<Hash256> authorityKeys = Arrays.stream(authorities)
                 .map(Authority::getPublicKey)
+                .map(Hash256::new)
                 .collect(Collectors.toSet());
 
         for (Precommit precommit : precommits) {

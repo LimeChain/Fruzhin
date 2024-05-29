@@ -4,11 +4,10 @@ import com.limechain.chain.lightsyncstate.Authority;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleReader;
 import io.emeraldpay.polkaj.scale.reader.UInt64Reader;
-import io.emeraldpay.polkaj.types.Hash256;
 
 public class AuthorityReader implements ScaleReader<Authority> {
     @Override
     public Authority read(ScaleCodecReader reader) {
-        return new Authority(new Hash256(reader.readUint256()), new UInt64Reader().read(reader));
+        return new Authority(reader.readUint256(), new UInt64Reader().read(reader));
     }
 }
