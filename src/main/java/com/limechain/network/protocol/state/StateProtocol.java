@@ -47,7 +47,6 @@ public class StateProtocol extends ProtocolHandler<StateController> {
 
         @Override
         public void onMessage(Stream stream, SyncMessage.StateResponse msg) {
-            System.out.println("Response received");
             if (msg.getEntriesList().stream().anyMatch(SyncMessage.KeyValueStateEntry::getComplete)) {
                 Objects.requireNonNull(queue.poll()).complete(msg);
                 stream.closeWrite();
