@@ -1,4 +1,4 @@
-package com.limechain.network.protocol.sync;
+package com.limechain.network.protocol.state;
 
 import com.limechain.network.protocol.sync.pb.SyncMessage;
 import io.libp2p.core.Stream;
@@ -13,48 +13,52 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingDeque;
 
-public class SyncProtocol extends ProtocolHandler<SyncController> {
+public class StateProtocol extends ProtocolHandler<StateController> {
     public static final int MAX_REQUEST_SIZE = 1024 * 512;
-    public static final int MAX_RESPONSE_SIZE = 16 * 1024 * 1024; //16mb
+    public static final int MAX_RESPONSE_SIZE = 5 * 1024 * 1024 * 1024; //1gb
 
-    public SyncProtocol() {
+    public StateProtocol() {
         super(MAX_REQUEST_SIZE, MAX_RESPONSE_SIZE);
     }
 
     @Override
-    protected CompletableFuture<SyncController> onStartInitiator(Stream stream) {
+    protected CompletableFuture<StateController> onStartInitiator(Stream stream) {
         stream.pushHandler(new ProtobufVarint32FrameDecoder());
-        stream.pushHandler(new ProtobufDecoder(SyncMessage.BlockResponse.getDefaultInstance()));
+        stream.pushHandler(new ProtobufDecoder(SyncMessage.StateResponse.getDefaultInstance()));
 
         stream.pushHandler((new ProtobufVarint32LengthFieldPrepender()));
         stream.pushHandler((new ProtobufEncoder()));
 
-        Sender handler = new Sender(stream);
+        StateHandler handler = new StateHandler(stream);
         stream.pushHandler(handler);
         return CompletableFuture.completedFuture(handler);
     }
 
-    static class Sender implements ProtocolMessageHandler<SyncMessage.BlockResponse>,
-            SyncController {
+    static class StateHandler implements ProtocolMessageHandler<SyncMessage.StateResponse>, StateController {
         public static final int MAX_QUEUE_SIZE = 50;
-        private final LinkedBlockingDeque<CompletableFuture<SyncMessage.BlockResponse>> queue =
+        private final LinkedBlockingDeque<CompletableFuture<SyncMessage.StateResponse>> queue =
                 new LinkedBlockingDeque<>(MAX_QUEUE_SIZE);
 
         private final Stream stream;
 
-        public Sender(Stream stream) {
+        public StateHandler(Stream stream) {
             this.stream = stream;
         }
 
         @Override
-        public void onMessage(Stream stream, SyncMessage.BlockResponse msg) {
-            Objects.requireNonNull(queue.poll()).complete(msg);
-            stream.closeWrite();
+        public void onMessage(Stream stream, SyncMessage.StateResponse msg) {
+            System.out.println("Response received");
+            if (msg.getEntriesList().stream().anyMatch(SyncMessage.KeyValueStateEntry::getComplete)) {
+                Objects.requireNonNull(queue.poll()).complete(msg);
+                stream.closeWrite();
+            } else {
+                Objects.requireNonNull(queue.poll()).complete(msg);
+            }
         }
 
         @Override
-        public CompletableFuture<SyncMessage.BlockResponse> send(SyncMessage.BlockRequest req) {
-            CompletableFuture<SyncMessage.BlockResponse> res = new CompletableFuture<>();
+        public CompletableFuture<SyncMessage.StateResponse> send(SyncMessage.StateRequest req) {
+            CompletableFuture<SyncMessage.StateResponse> res = new CompletableFuture<>();
             queue.add(res);
             stream.writeAndFlush(req);
             return res;

@@ -11,7 +11,6 @@ import io.libp2p.core.PeerId;
 import io.libp2p.protocol.Ping;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.peergos.HostBuilder;
@@ -88,22 +87,4 @@ public class SyncTest {
         assertEquals(expected, response.getBlocks(0).getHash());
     }
 
-    @Test
-    @Disabled("No response is received")
-    //TODO: See https://github.com/LimeChain/Fruzhin/issues/193
-    void remoteFunctions_return_correctData() {
-        var peerId = PeerId.fromBase58(PEER_ID);
-        var receivers = new String[]{PEER_URL + PEER_ID};
-
-        int connectedNodes = kademliaService.connectBootNodes(receivers);
-        int expectedConnectedNodes = 1;
-        assertEquals(expectedConnectedNodes, connectedNodes);
-
-        kademliaService.findNewPeers();
-
-        var response = syncService.remoteStateRequest(senderNode, senderNode.getAddressBook(), peerId,
-                "0x077dcf416ad8585e1438e5fb6be60d0137b67cc4b161fa153c3c709c8881e51c"
-        );
-        assertNotNull(response);
-    }
 }

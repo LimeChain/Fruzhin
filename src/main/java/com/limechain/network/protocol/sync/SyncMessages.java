@@ -4,7 +4,6 @@ import com.limechain.exception.global.ExecutionFailedException;
 import com.limechain.exception.global.ThreadInterruptedException;
 import com.limechain.network.StrictProtocolBinding;
 import com.limechain.network.protocol.sync.pb.SyncMessage;
-import com.limechain.utils.StringUtils;
 import io.libp2p.core.AddressBook;
 import io.libp2p.core.Host;
 import io.libp2p.core.PeerId;
@@ -33,22 +32,6 @@ public class SyncMessages extends StrictProtocolBinding<SyncController> {
             return response;
         } catch (ExecutionException | TimeoutException | IllegalStateException e) {
             log.log(Level.SEVERE, "Error while sending remote block request: ", e);
-            throw new ExecutionFailedException(e);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new ThreadInterruptedException(e);
-        }
-    }
-
-    public SyncMessage.StateResponse remoteStateRequest(Host us, AddressBook addrs, PeerId peer, String blockHash) {
-        try {
-            SyncController controller = dialPeer(us, peer, addrs);
-            SyncMessage.StateResponse resp = controller.sendStateRequest(StringUtils.remove0xPrefix(blockHash))
-                    .get(10, TimeUnit.SECONDS);
-            log.log(Level.INFO, "Received state sync response " + resp.toString());
-            return resp;
-        } catch (ExecutionException | TimeoutException | IllegalStateException e) {
-            log.log(Level.SEVERE, "Error while sending remote state request: ", e);
             throw new ExecutionFailedException(e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
