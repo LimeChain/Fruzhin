@@ -13,14 +13,14 @@ import org.springframework.util.SerializationUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * Implementation for Key-Value DB interface with String as key and Object as value types
@@ -31,7 +31,6 @@ public class DBRepository implements KVRepository<String, Object> {
      * Main DB folder
      */
     private static final String FOLDER_NAME = "db";
-    public static final Charset UTF_8 = StandardCharsets.UTF_8;
 
     /**
      * Connection to the DB
