@@ -96,8 +96,8 @@ public class WarpSyncState {
      * @param peerId        sender of the message
      */
     public synchronized void syncCommit(CommitMessage commitMessage, PeerId peerId) {
-        SyncState snycState = AppBean.getBean(SyncState.class);
-        if (commitMessage.getVote().getBlockNumber().compareTo(snycState.getLastFinalizedBlockNumber()) <= 0) {
+        SyncState syncState = AppBean.getBean(SyncState.class);
+        if (commitMessage.getVote().getBlockNumber().compareTo(syncState.getLastFinalizedBlockNumber()) <= 0) {
             log.log(Level.FINE, String.format("Received commit message for finalized block %d from peer %s",
                     commitMessage.getVote().getBlockNumber(), peerId));
             return;
