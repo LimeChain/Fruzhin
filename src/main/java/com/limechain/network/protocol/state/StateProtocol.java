@@ -29,19 +29,19 @@ public class StateProtocol extends ProtocolHandler<StateController> {
         stream.pushHandler((new ProtobufVarint32LengthFieldPrepender()));
         stream.pushHandler((new ProtobufEncoder()));
 
-        StateHandler handler = new StateHandler(stream);
+        Sender handler = new Sender(stream);
         stream.pushHandler(handler);
         return CompletableFuture.completedFuture(handler);
     }
 
-    static class StateHandler implements ProtocolMessageHandler<SyncMessage.StateResponse>, StateController {
+    static class Sender implements ProtocolMessageHandler<SyncMessage.StateResponse>, StateController {
         public static final int MAX_QUEUE_SIZE = 50;
         private final LinkedBlockingDeque<CompletableFuture<SyncMessage.StateResponse>> queue =
                 new LinkedBlockingDeque<>(MAX_QUEUE_SIZE);
 
         private final Stream stream;
 
-        public StateHandler(Stream stream) {
+        public Sender(Stream stream) {
             this.stream = stream;
         }
 
