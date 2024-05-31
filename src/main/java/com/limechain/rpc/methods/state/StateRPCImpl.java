@@ -261,7 +261,9 @@ public class StateRPCImpl {
     public Map<String, Object> stateGetReadProof(final List<String> keyHexList, final String blockHashHex) {
         final Hash256 blockHash = getHash256FromHex(blockHashHex);
 
-        BlockTrieAccessor blockTrieAccessor = new BlockTrieAccessor(blockHash);
+        final Hash256 blockStateRoot = blockState.getBlockStateRoot(blockHash);
+        BlockTrieAccessor blockTrieAccessor = new BlockTrieAccessor(trieStorage, blockStateRoot);
+
         List<String> readProof = keyHexList
                 .stream()
                 .map(StringUtils::hexToBytes)

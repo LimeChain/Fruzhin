@@ -1,6 +1,6 @@
 package com.limechain.runtime.hostapi;
 
-import com.limechain.runtime.Runtime;
+import com.limechain.runtime.SharedMemory;
 import com.limechain.runtime.hostapi.dto.Key;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import com.limechain.runtime.hostapi.dto.VerifySignature;
@@ -70,7 +70,7 @@ class CryptoHostFunctionsTest {
     @Spy
     private Set<VerifySignature> signaturesToVerify = new HashSet<>();
     @Mock
-    private Runtime runtime;
+    private SharedMemory sharedMemory;
     @Mock
     private RuntimePointerSize seedPointer;
     @Mock
@@ -92,9 +92,9 @@ class CryptoHostFunctionsTest {
         ArrayList<byte[]> pubKeys = new ArrayList<>();
         pubKeys.add(ed25519PrivateKey.publicKey().raw());
 
-        when(runtime.getDataFromMemory(keyPointer)).thenReturn(KeyType.GRANDPA.getBytes());
+        when(sharedMemory.readData(keyPointer)).thenReturn(KeyType.GRANDPA.getBytes());
         when(keyStore.getPublicKeysByKeyType(KeyType.GRANDPA)).thenReturn(pubKeys);
-        when(runtime.writeDataToMemory(toScaleEncoded(pubKeys))).thenReturn(returnPointer);
+        when(sharedMemory.writeData(toScaleEncoded(pubKeys))).thenReturn(returnPointer);
 
         RuntimePointerSize result = cryptoHostFunctions.ed25519PublicKeysV1(keyPosition);
 
@@ -104,9 +104,9 @@ class CryptoHostFunctionsTest {
 
     @Test
     void ed25519GenerateV1_no_seed() {
-        when(runtime.getDataFromMemory(keyPointer)).thenReturn(KeyType.GRANDPA.getBytes());
-        when(runtime.getDataFromMemory(seedPointer)).thenReturn(missingSeed);
-        when(runtime.writeDataToMemory(ed25519PrivateKey.publicKey().raw())).thenReturn(returnPointer);
+        when(sharedMemory.readData(keyPointer)).thenReturn(KeyType.GRANDPA.getBytes());
+        when(sharedMemory.readData(seedPointer)).thenReturn(missingSeed);
+        when(sharedMemory.writeData(ed25519PrivateKey.publicKey().raw())).thenReturn(returnPointer);
 
         try (var ed25519Statick = mockStatic(Ed25519Utils.class)) {
             ed25519Statick.when(Ed25519Utils::generateKeyPair).thenReturn(ed25519PrivateKey);
@@ -120,9 +120,9 @@ class CryptoHostFunctionsTest {
 
     @Test
     void ed25519GenerateV1_with_seed() {
-        when(runtime.getDataFromMemory(keyPointer)).thenReturn(KeyType.GRANDPA.getBytes());
-        when(runtime.getDataFromMemory(seedPointer)).thenReturn(existingSeed);
-        when(runtime.writeDataToMemory(ed25519PrivateKey.publicKey().raw())).thenReturn(returnPointer);
+        when(sharedMemory.readData(keyPointer)).thenReturn(KeyType.GRANDPA.getBytes());
+        when(sharedMemory.readData(seedPointer)).thenReturn(existingSeed);
+        when(sharedMemory.writeData(ed25519PrivateKey.publicKey().raw())).thenReturn(returnPointer);
 
         try (var ed25519Statick = mockStatic(Ed25519Utils.class)) {
             ed25519Statick.when(() -> Ed25519Utils.generateKeyPair(seed)).thenReturn(ed25519PrivateKey);
@@ -136,11 +136,11 @@ class CryptoHostFunctionsTest {
 
     @Test
     void ed25519SignV1() {
-        when(runtime.getDataFromMemory(keyPointer)).thenReturn(KeyType.GRANDPA.getBytes());
-        when(runtime.getDataFromMemory(publicKeyPointer)).thenReturn(ed25519PrivateKey.publicKey().raw());
-        when(runtime.getDataFromMemory(messagePointer)).thenReturn(message);
+        when(sharedMemory.readData(keyPointer)).thenReturn(KeyType.GRANDPA.getBytes());
+        when(sharedMemory.readData(publicKeyPointer)).thenReturn(ed25519PrivateKey.publicKey().raw());
+        when(sharedMemory.readData(messagePointer)).thenReturn(message);
         when(keyStore.get(KeyType.GRANDPA, ed25519PrivateKey.publicKey().raw())).thenReturn(ed25519PrivateKey.raw());
-        when(runtime.writeDataToMemory(scaleEncodedOption(signData))).thenReturn(returnPointer);
+        when(sharedMemory.writeData(scaleEncodedOption(signData))).thenReturn(returnPointer);
 
         try (var ed25519Statick = mockStatic(Ed25519Utils.class)) {
             ed25519Statick.when(() -> Ed25519Utils.signMessage(ed25519PrivateKey.raw(), message)).thenReturn(signData);
@@ -152,9 +152,9 @@ class CryptoHostFunctionsTest {
 
     @Test
     void ed25519VerifyV1() {
-        when(runtime.getDataFromMemory(publicKeyPointer)).thenReturn(ed25519PrivateKey.publicKey().raw());
-        when(runtime.getDataFromMemory(messagePointer)).thenReturn(message);
-        when(runtime.getDataFromMemory(signaturePointer)).thenReturn(ed25519PrivateKey.sign(message));
+        when(sharedMemory.readData(publicKeyPointer)).thenReturn(ed25519PrivateKey.publicKey().raw());
+        when(sharedMemory.readData(messagePointer)).thenReturn(message);
+        when(sharedMemory.readData(signaturePointer)).thenReturn(ed25519PrivateKey.sign(message));
 
         int verify = cryptoHostFunctions.ed25519VerifyV1(signaturePosition, messagePointer, publicKeyPosition);
         assertEquals(1, verify);
@@ -162,10 +162,10 @@ class CryptoHostFunctionsTest {
 
     @Test
     void ed25519BatchVerifyV1_with_verification_off() {
-        when(runtime.getDataFromMemory(publicKeyPointer)).thenReturn(ed25519PrivateKey.publicKey().raw());
-        when(runtime.getDataFromMemory(messagePointer)).thenReturn(message);
+        when(sharedMemory.readData(publicKeyPointer)).thenReturn(ed25519PrivateKey.publicKey().raw());
+        when(sharedMemory.readData(messagePointer)).thenReturn(message);
         byte[] signed = ed25519PrivateKey.sign(message);
-        when(runtime.getDataFromMemory(signaturePointer)).thenReturn(signed);
+        when(sharedMemory.readData(signaturePointer)).thenReturn(signed);
 
         assertFalse(cryptoHostFunctions.batchVerificationStarted);
 
@@ -181,9 +181,9 @@ class CryptoHostFunctionsTest {
         byte[] pubKey = ed25519PrivateKey.publicKey().raw();
         VerifySignature sig = new VerifySignature(signData, message, pubKey, Key.ED25519);
 
-        when(runtime.getDataFromMemory(publicKeyPointer)).thenReturn(pubKey);
-        when(runtime.getDataFromMemory(messagePointer)).thenReturn(message);
-        when(runtime.getDataFromMemory(signaturePointer)).thenReturn(signData);
+        when(sharedMemory.readData(publicKeyPointer)).thenReturn(pubKey);
+        when(sharedMemory.readData(messagePointer)).thenReturn(message);
+        when(sharedMemory.readData(signaturePointer)).thenReturn(signData);
 
         assertTrue(cryptoHostFunctions.batchVerificationStarted);
 
@@ -198,9 +198,9 @@ class CryptoHostFunctionsTest {
         ArrayList<byte[]> pubKeys = new ArrayList<>();
         pubKeys.add(sr25519KeyPair.getPublicKey());
 
-        when(runtime.getDataFromMemory(keyPointer)).thenReturn(KeyType.BABE.getBytes());
+        when(sharedMemory.readData(keyPointer)).thenReturn(KeyType.BABE.getBytes());
         when(keyStore.getPublicKeysByKeyType(KeyType.BABE)).thenReturn(pubKeys);
-        when(runtime.writeDataToMemory(toScaleEncoded(pubKeys))).thenReturn(returnPointer);
+        when(sharedMemory.writeData(toScaleEncoded(pubKeys))).thenReturn(returnPointer);
 
         RuntimePointerSize result = cryptoHostFunctions.sr25519PublicKeysV1(keyPosition);
 
@@ -210,9 +210,9 @@ class CryptoHostFunctionsTest {
 
     @Test
     void sr25519GenerateV1_no_seed() {
-        when(runtime.getDataFromMemory(keyPointer)).thenReturn(KeyType.BABE.getBytes());
-        when(runtime.getDataFromMemory(seedPointer)).thenReturn(missingSeed);
-        when(runtime.writeDataToMemory(sr25519KeyPair.getPublicKey())).thenReturn(returnPointer);
+        when(sharedMemory.readData(keyPointer)).thenReturn(KeyType.BABE.getBytes());
+        when(sharedMemory.readData(seedPointer)).thenReturn(missingSeed);
+        when(sharedMemory.writeData(sr25519KeyPair.getPublicKey())).thenReturn(returnPointer);
 
         try (var sr25519Statick = mockStatic(Sr25519Utils.class)) {
             sr25519Statick.when(Sr25519Utils::generateKeyPair).thenReturn(sr25519KeyPair);
@@ -226,9 +226,9 @@ class CryptoHostFunctionsTest {
 
     @Test
     void sr25519GenerateV1_with_seed() {
-        when(runtime.getDataFromMemory(keyPointer)).thenReturn(KeyType.BABE.getBytes());
-        when(runtime.getDataFromMemory(seedPointer)).thenReturn(existingSeed);
-        when(runtime.writeDataToMemory(sr25519KeyPair.getPublicKey())).thenReturn(returnPointer);
+        when(sharedMemory.readData(keyPointer)).thenReturn(KeyType.BABE.getBytes());
+        when(sharedMemory.readData(seedPointer)).thenReturn(existingSeed);
+        when(sharedMemory.writeData(sr25519KeyPair.getPublicKey())).thenReturn(returnPointer);
 
         try (var sr25519Statick = mockStatic(Sr25519Utils.class)) {
             sr25519Statick.when(() -> Sr25519Utils.generateKeyPair(seed)).thenReturn(sr25519KeyPair);
@@ -242,11 +242,11 @@ class CryptoHostFunctionsTest {
 
     @Test
     void sr25519SignV1() {
-        when(runtime.getDataFromMemory(keyPointer)).thenReturn(KeyType.BABE.getBytes());
-        when(runtime.getDataFromMemory(publicKeyPointer)).thenReturn(sr25519KeyPair.getPublicKey());
-        when(runtime.getDataFromMemory(messagePointer)).thenReturn(message);
+        when(sharedMemory.readData(keyPointer)).thenReturn(KeyType.BABE.getBytes());
+        when(sharedMemory.readData(publicKeyPointer)).thenReturn(sr25519KeyPair.getPublicKey());
+        when(sharedMemory.readData(messagePointer)).thenReturn(message);
         when(keyStore.get(KeyType.BABE, sr25519KeyPair.getPublicKey())).thenReturn(sr25519KeyPair.getSecretKey());
-        when(runtime.writeDataToMemory(scaleEncodedOption(signData))).thenReturn(returnPointer);
+        when(sharedMemory.writeData(scaleEncodedOption(signData))).thenReturn(returnPointer);
 
         try (var sr25519Statick = mockStatic(Sr25519Utils.class)) {
             sr25519Statick
@@ -262,10 +262,10 @@ class CryptoHostFunctionsTest {
 
     @Test
     void sr25519VerifyV1() {
-        when(runtime.getDataFromMemory(publicKeyPointer)).thenReturn(sr25519KeyPair.getPublicKey());
-        when(runtime.getDataFromMemory(messagePointer)).thenReturn(message);
+        when(sharedMemory.readData(publicKeyPointer)).thenReturn(sr25519KeyPair.getPublicKey());
+        when(sharedMemory.readData(messagePointer)).thenReturn(message);
         byte[] sig = Sr25519Utils.signMessage(sr25519KeyPair.getPublicKey(), sr25519KeyPair.getSecretKey(), message);
-        when(runtime.getDataFromMemory(signaturePointer)).thenReturn(sig);
+        when(sharedMemory.readData(signaturePointer)).thenReturn(sig);
 
         int verify = cryptoHostFunctions.sr25519VerifyV1(signaturePosition, messagePointer, publicKeyPosition);
         assertEquals(1, verify);
@@ -273,10 +273,10 @@ class CryptoHostFunctionsTest {
 
     @Test
     void sr25519BatchVerifyV1_with_verification_off() {
-        when(runtime.getDataFromMemory(publicKeyPointer)).thenReturn(sr25519KeyPair.getPublicKey());
-        when(runtime.getDataFromMemory(messagePointer)).thenReturn(message);
+        when(sharedMemory.readData(publicKeyPointer)).thenReturn(sr25519KeyPair.getPublicKey());
+        when(sharedMemory.readData(messagePointer)).thenReturn(message);
         byte[] sig = Sr25519Utils.signMessage(sr25519KeyPair.getPublicKey(), sr25519KeyPair.getSecretKey(), message);
-        when(runtime.getDataFromMemory(signaturePointer)).thenReturn(sig);
+        when(sharedMemory.readData(signaturePointer)).thenReturn(sig);
 
         assertFalse(cryptoHostFunctions.batchVerificationStarted);
 
@@ -293,9 +293,9 @@ class CryptoHostFunctionsTest {
         ;
         VerifySignature sig = new VerifySignature(signData, message, pubKey, Key.SR25519);
 
-        when(runtime.getDataFromMemory(publicKeyPointer)).thenReturn(sr25519KeyPair.getPublicKey());
-        when(runtime.getDataFromMemory(messagePointer)).thenReturn(message);
-        when(runtime.getDataFromMemory(signaturePointer)).thenReturn(signData);
+        when(sharedMemory.readData(publicKeyPointer)).thenReturn(sr25519KeyPair.getPublicKey());
+        when(sharedMemory.readData(messagePointer)).thenReturn(message);
+        when(sharedMemory.readData(signaturePointer)).thenReturn(signData);
 
         assertTrue(cryptoHostFunctions.batchVerificationStarted);
 
@@ -310,9 +310,9 @@ class CryptoHostFunctionsTest {
         ArrayList<byte[]> pubKeys = new ArrayList<>();
         pubKeys.add(ecdsaKeyPair.getSecond().raw());
 
-        when(runtime.getDataFromMemory(keyPointer)).thenReturn(KeyType.CONTROLLING_ACCOUNTS.getBytes());
+        when(sharedMemory.readData(keyPointer)).thenReturn(KeyType.CONTROLLING_ACCOUNTS.getBytes());
         when(keyStore.getPublicKeysByKeyType(KeyType.CONTROLLING_ACCOUNTS)).thenReturn(pubKeys);
-        when(runtime.writeDataToMemory(toScaleEncoded(pubKeys))).thenReturn(returnPointer);
+        when(sharedMemory.writeData(toScaleEncoded(pubKeys))).thenReturn(returnPointer);
 
         RuntimePointerSize result = cryptoHostFunctions.ecdsaPublicKeysV1(keyPosition);
 
@@ -322,9 +322,9 @@ class CryptoHostFunctionsTest {
 
     @Test
     void ecdsaGenerateV1_no_seed() {
-        when(runtime.getDataFromMemory(keyPointer)).thenReturn(KeyType.CONTROLLING_ACCOUNTS.getBytes());
-        when(runtime.getDataFromMemory(seedPointer)).thenReturn(missingSeed);
-        when(runtime.writeDataToMemory(ecdsaKeyPair.getSecond().raw())).thenReturn(returnPointer);
+        when(sharedMemory.readData(keyPointer)).thenReturn(KeyType.CONTROLLING_ACCOUNTS.getBytes());
+        when(sharedMemory.readData(seedPointer)).thenReturn(missingSeed);
+        when(sharedMemory.writeData(ecdsaKeyPair.getSecond().raw())).thenReturn(returnPointer);
 
         try (var ecdsaUtil = mockStatic(EcdsaUtils.class)) {
             ecdsaUtil.when(EcdsaUtils::generateKeyPair).thenReturn(ecdsaKeyPair);
@@ -338,9 +338,9 @@ class CryptoHostFunctionsTest {
 
     @Test
     void ecdsaGenerateV1_use_seed() {
-        when(runtime.getDataFromMemory(keyPointer)).thenReturn(KeyType.CONTROLLING_ACCOUNTS.getBytes());
-        when(runtime.getDataFromMemory(seedPointer)).thenReturn(existingSeed);
-        when(runtime.writeDataToMemory(ecdsaKeyPair.getSecond().raw())).thenReturn(returnPointer);
+        when(sharedMemory.readData(keyPointer)).thenReturn(KeyType.CONTROLLING_ACCOUNTS.getBytes());
+        when(sharedMemory.readData(seedPointer)).thenReturn(existingSeed);
+        when(sharedMemory.writeData(ecdsaKeyPair.getSecond().raw())).thenReturn(returnPointer);
 
         try (var ecdsaUtil = mockStatic(EcdsaUtils.class)) {
             ecdsaUtil.when(() -> EcdsaUtils.generateKeyPair(seed)).thenReturn(ecdsaKeyPair);
@@ -354,12 +354,12 @@ class CryptoHostFunctionsTest {
 
     @Test
     void ecdsaSignV1() {
-        when(runtime.getDataFromMemory(keyPointer)).thenReturn(KeyType.CONTROLLING_ACCOUNTS.getBytes());
-        when(runtime.getDataFromMemory(ecdsaKeyPointer)).thenReturn(ecdsaKeyPair.getSecond().raw());
-        when(runtime.getDataFromMemory(messagePointer)).thenReturn(message);
+        when(sharedMemory.readData(keyPointer)).thenReturn(KeyType.CONTROLLING_ACCOUNTS.getBytes());
+        when(sharedMemory.readData(ecdsaKeyPointer)).thenReturn(ecdsaKeyPair.getSecond().raw());
+        when(sharedMemory.readData(messagePointer)).thenReturn(message);
         when(keyStore.get(KeyType.CONTROLLING_ACCOUNTS, ecdsaKeyPair.getSecond().raw()))
                 .thenReturn(ecdsaKeyPair.getFirst().raw());
-        when(runtime.writeDataToMemory(scaleEncodedOption(signData))).thenReturn(returnPointer);
+        when(sharedMemory.writeData(scaleEncodedOption(signData))).thenReturn(returnPointer);
 
         try (var ecdsaStatic = mockStatic(EcdsaUtils.class)) {
             ecdsaStatic.when(() ->
@@ -372,12 +372,12 @@ class CryptoHostFunctionsTest {
 
     @Test
     void ecdsaSignPrehashedV1() {
-        when(runtime.getDataFromMemory(keyPointer)).thenReturn(KeyType.CONTROLLING_ACCOUNTS.getBytes());
-        when(runtime.getDataFromMemory(ecdsaKeyPointer)).thenReturn(ecdsaKeyPair.getSecond().raw());
-        when(runtime.getDataFromMemory(messagePointer)).thenReturn(hashedMessage);
+        when(sharedMemory.readData(keyPointer)).thenReturn(KeyType.CONTROLLING_ACCOUNTS.getBytes());
+        when(sharedMemory.readData(ecdsaKeyPointer)).thenReturn(ecdsaKeyPair.getSecond().raw());
+        when(sharedMemory.readData(messagePointer)).thenReturn(hashedMessage);
         when(keyStore.get(KeyType.CONTROLLING_ACCOUNTS, ecdsaKeyPair.getSecond().raw()))
                 .thenReturn(ecdsaKeyPair.getFirst().raw());
-        when(runtime.writeDataToMemory(scaleEncodedOption(signData))).thenReturn(returnPointer);
+        when(sharedMemory.writeData(scaleEncodedOption(signData))).thenReturn(returnPointer);
 
         try (var ecdsaStatic = mockStatic(EcdsaUtils.class)) {
             ecdsaStatic.when(() ->
@@ -390,10 +390,10 @@ class CryptoHostFunctionsTest {
 
     @Test
     void ecdsaVerifyV1() {
-        when(runtime.getDataFromMemory(ecdsaKeyPointer)).thenReturn(ecdsaKeyPair.getSecond().raw());
-        when(runtime.getDataFromMemory(messagePointer)).thenReturn(message);
+        when(sharedMemory.readData(ecdsaKeyPointer)).thenReturn(ecdsaKeyPair.getSecond().raw());
+        when(sharedMemory.readData(messagePointer)).thenReturn(message);
         byte[] sig = EcdsaUtils.signMessage(ecdsaKeyPair.getFirst().raw(), hashedMessage);
-        when(runtime.getDataFromMemory(signaturePointer)).thenReturn(sig);
+        when(sharedMemory.readData(signaturePointer)).thenReturn(sig);
 
         int verify = cryptoHostFunctions.ecdsaVerifyV1(signaturePosition, messagePointer, publicKeyPosition);
         assertEquals(1, verify);
@@ -401,10 +401,10 @@ class CryptoHostFunctionsTest {
 
     @Test
     void ecdsaVerifyPrehashedV1() {
-        when(runtime.getDataFromMemory(ecdsaKeyPointer)).thenReturn(ecdsaKeyPair.getSecond().raw());
-        when(runtime.getDataFromMemory(new RuntimePointerSize(keyPosition, 32))).thenReturn(hashedMessage);
+        when(sharedMemory.readData(ecdsaKeyPointer)).thenReturn(ecdsaKeyPair.getSecond().raw());
+        when(sharedMemory.readData(new RuntimePointerSize(keyPosition, 32))).thenReturn(hashedMessage);
         byte[] sig = EcdsaUtils.signMessage(ecdsaKeyPair.getFirst().raw(), hashedMessage);
-        when(runtime.getDataFromMemory(signaturePointer)).thenReturn(sig);
+        when(sharedMemory.readData(signaturePointer)).thenReturn(sig);
 
         int verify = cryptoHostFunctions.ecdsaVerifyPrehashedV1(signaturePosition, keyPosition, publicKeyPosition);
         assertEquals(1, verify);
@@ -412,10 +412,10 @@ class CryptoHostFunctionsTest {
 
     @Test
     void ecdsaBatchVerifyV1_with_verification_off() {
-        when(runtime.getDataFromMemory(ecdsaKeyPointer)).thenReturn(ecdsaKeyPair.getSecond().raw());
-        when(runtime.getDataFromMemory(messagePointer)).thenReturn(message);
+        when(sharedMemory.readData(ecdsaKeyPointer)).thenReturn(ecdsaKeyPair.getSecond().raw());
+        when(sharedMemory.readData(messagePointer)).thenReturn(message);
         byte[] sig = EcdsaUtils.signMessage(ecdsaKeyPair.getFirst().raw(), hashedMessage);
-        when(runtime.getDataFromMemory(signaturePointer)).thenReturn(sig);
+        when(sharedMemory.readData(signaturePointer)).thenReturn(sig);
 
         assertFalse(cryptoHostFunctions.batchVerificationStarted);
 
@@ -431,9 +431,9 @@ class CryptoHostFunctionsTest {
         byte[] pubKey = ecdsaKeyPair.getSecond().raw();
         VerifySignature sig = new VerifySignature(signData, hashedMessage, pubKey, Key.ECDSA);
 
-        when(runtime.getDataFromMemory(ecdsaKeyPointer)).thenReturn(ecdsaKeyPair.getSecond().raw());
-        when(runtime.getDataFromMemory(messagePointer)).thenReturn(message);
-        when(runtime.getDataFromMemory(signaturePointer)).thenReturn(signData);
+        when(sharedMemory.readData(ecdsaKeyPointer)).thenReturn(ecdsaKeyPair.getSecond().raw());
+        when(sharedMemory.readData(messagePointer)).thenReturn(message);
+        when(sharedMemory.readData(signaturePointer)).thenReturn(signData);
 
         assertTrue(cryptoHostFunctions.batchVerificationStarted);
 
@@ -445,9 +445,9 @@ class CryptoHostFunctionsTest {
 
     @Test
     void secp256k1EcdsaRecoverV1() {
-        when(runtime.getDataFromMemory(new RuntimePointerSize(signaturePosition, 65))).thenReturn(signData);
-        when(runtime.getDataFromMemory(new RuntimePointerSize(keyPosition, 32))).thenReturn(hashedMessage);
-        when(runtime.writeDataToMemory(toEncodedResult(ecdsaKeyPair.getSecond().raw()))).thenReturn(returnPointer);
+        when(sharedMemory.readData(new RuntimePointerSize(signaturePosition, 65))).thenReturn(signData);
+        when(sharedMemory.readData(new RuntimePointerSize(keyPosition, 32))).thenReturn(hashedMessage);
+        when(sharedMemory.writeData(toEncodedResult(ecdsaKeyPair.getSecond().raw()))).thenReturn(returnPointer);
 
         try (var ecdsaStatic = mockStatic(EcdsaUtils.class)) {
             ecdsaStatic.when(() ->
@@ -462,9 +462,9 @@ class CryptoHostFunctionsTest {
 
     @Test
     void secp256k1EcdsaRecoverCompressedV1() {
-        when(runtime.getDataFromMemory(new RuntimePointerSize(signaturePosition, 65))).thenReturn(signData);
-        when(runtime.getDataFromMemory(new RuntimePointerSize(keyPosition, 32))).thenReturn(hashedMessage);
-        when(runtime.writeDataToMemory(toEncodedResult(ecdsaKeyPair.getSecond().raw()))).thenReturn(returnPointer);
+        when(sharedMemory.readData(new RuntimePointerSize(signaturePosition, 65))).thenReturn(signData);
+        when(sharedMemory.readData(new RuntimePointerSize(keyPosition, 32))).thenReturn(hashedMessage);
+        when(sharedMemory.writeData(toEncodedResult(ecdsaKeyPair.getSecond().raw()))).thenReturn(returnPointer);
 
         try (var ecdsaStatic = mockStatic(EcdsaUtils.class)) {
             ecdsaStatic.when(() ->

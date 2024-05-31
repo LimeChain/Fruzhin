@@ -1,6 +1,5 @@
 package com.limechain.trie;
 
-import com.limechain.rpc.server.AppBean;
 import com.limechain.runtime.version.StateVersion;
 import com.limechain.storage.DeleteByPrefixResult;
 import com.limechain.storage.KVRepository;
@@ -24,17 +23,20 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class TrieAccessor implements KVRepository<Nibbles, byte[]> {
 
     public static final String TRANSACTIONS_NOT_SUPPORTED = "Block Trie Accessor does not support transactions.";
-    private final Map<Nibbles, ChildTrieAccessor> loadedChildTries;
+
     protected final TrieStorage trieStorage;
-    protected byte[] lastRoot;
+    protected byte[] mainTrieRoot;
+
+    private final Map<Nibbles, ChildTrieAccessor> loadedChildTries;
     private TrieStructure<NodeData> initialTrie;
     private List<TrieNodeIndex> updates;
 
-    public TrieAccessor(byte[] trieRoot) {
-        this.lastRoot = trieRoot;
+    public TrieAccessor(TrieStorage trieStorage, byte[] mainTrieRoot) {
+        this.trieStorage = trieStorage;
+        this.mainTrieRoot = mainTrieRoot;
+
         this.loadedChildTries = new HashMap<>();
-        this.trieStorage = AppBean.getBean(TrieStorage.class);
-        this.initialTrie = trieStorage.loadTrieStructure(trieRoot);
+        this.initialTrie = trieStorage.loadTrieStructure(mainTrieRoot);
     }
 
     /**
@@ -46,7 +48,7 @@ public class TrieAccessor implements KVRepository<Nibbles, byte[]> {
     public ChildTrieAccessor getChildTrie(Nibbles key) {
         Nibbles trieKey = Nibbles.fromBytes(":child_storage:default:".getBytes()).addAll(key);
         byte[] merkleRoot = find(trieKey).orElse(null);
-        return loadedChildTries.computeIfAbsent(trieKey, k -> new ChildTrieAccessor(this, trieKey, merkleRoot));
+        return loadedChildTries.computeIfAbsent(trieKey, k -> new ChildTrieAccessor(this.trieStorage, this, trieKey, merkleRoot));
     }
 
     /**
@@ -83,7 +85,7 @@ public class TrieAccessor implements KVRepository<Nibbles, byte[]> {
      * @return An Optional containing the Merkle value if found, or empty otherwise.
      */
     public Optional<byte[]> findMerkleValue(Nibbles key) {
-        return trieStorage.getByKeyFromMerkle(lastRoot, key)
+        return trieStorage.getByKeyFromMerkle(mainTrieRoot, key)
                 .map(NodeData::getMerkleValue);
     }
 
@@ -209,12 +211,12 @@ public class TrieAccessor implements KVRepository<Nibbles, byte[]> {
     public byte[] getMerkleRoot(StateVersion version) {
         this.updates = TrieStructureFactory.recalculateMerkleValues(initialTrie, version, HashUtils::hashWithBlake2b);
 
-        this.lastRoot = initialTrie.getRootNode()
+        this.mainTrieRoot = initialTrie.getRootNode()
                 .map(NodeHandle::getUserData)
                 .map(NodeData::getMerkleValue)
                 .orElseThrow();
 
-        return lastRoot;
+        return this.mainTrieRoot;
     }
 
 }

@@ -159,7 +159,7 @@ public class TrieStorage {
      * Searches for the next branch in the trie that is lexicographically greater than a given prefix.
      *
      * @param blockStateRoot The state root to start the search from.
-     * @param prefix    The prefix to search for the next branch.
+     * @param prefix         The prefix to search for the next branch.
      * @return An {@link Optional} containing the next {@link StorageNode} branch if found, otherwise an empty {@link Optional}.
      */
     public Optional<StorageNode> getNextBranch(Hash256 blockStateRoot, Nibbles prefix) {
@@ -171,7 +171,7 @@ public class TrieStorage {
 
         if (prefix.equals(rootNode.getPartialKey())) {
             return Optional.of(new StorageNode(rootNode.getPartialKey(),
-                    new NodeData(rootNode.getValue(), rootMerkleValue)));
+                new NodeData(rootNode.getValue(), rootMerkleValue)));
         }
 
         return Optional.ofNullable(searchForNextBranch(rootNode, prefix, rootNode.getPartialKey()));
@@ -246,9 +246,9 @@ public class TrieStorage {
      * Retrieves keys starting with a given prefix, supporting pagination through a starting key and limit.
      *
      * @param blockStateRoot The state root of the block to search within.
-     * @param prefix    The prefix to match against keys in the trie.
-     * @param startKey  The key from which to start returning results.
-     * @param limit     The maximum number of keys to return.
+     * @param prefix         The prefix to match against keys in the trie.
+     * @param startKey       The key from which to start returning results.
+     * @param limit          The maximum number of keys to return.
      * @return A list of byte arrays representing the keys that match the given prefix, starting from the startKey.
      */
     public List<Nibbles> getKeysWithPrefixPaged(Hash256 blockStateRoot, Nibbles prefix, Nibbles startKey, int limit) {
@@ -258,7 +258,7 @@ public class TrieStorage {
         }
 
         List<Nibbles> matchingKeys = new ArrayList<>();
-        collectKeysWithPrefix(rootNode, Nibbles.EMPTY, prefix, startKey, limit, matchingKeys, new boolean[]{false});
+        collectKeysWithPrefix(rootNode, Nibbles.EMPTY, prefix, startKey, limit, matchingKeys, new boolean[] {false});
         return matchingKeys;
     }
 
@@ -297,9 +297,9 @@ public class TrieStorage {
      */
     public List<StorageNode> loadChildren(Nibbles parentKey, byte[] parentMerkleValue) {
         List<byte[]> childrenMerkleValues = Optional.ofNullable(parentMerkleValue)
-                .map(this::getTrieNodeFromMerkleValue)
-                .map(TrieNodeData::getChildrenMerkleValues)
-                .orElseGet(Collections::emptyList);
+            .map(this::getTrieNodeFromMerkleValue)
+            .map(TrieNodeData::getChildrenMerkleValues)
+            .orElseGet(Collections::emptyList);
 
         List<StorageNode> childrenNodes = new ArrayList<>(Collections.nCopies(childrenMerkleValues.size(), null));
         for (int i = 0; i < childrenMerkleValues.size(); i++) {
@@ -371,12 +371,12 @@ public class TrieStorage {
         List<byte[]> childrenMerkleValues = trieNode.childrenMerkleValues();
 
         TrieNodeData storageValue = new TrieNodeData(
-                trieNode.isBranch(),
-                trieNode.partialKeyNibbles(),
-                childrenMerkleValues,
-                trieNode.isReferenceValue() ? null : trieNode.storageValue(),
-                trieNode.isReferenceValue() ? trieNode.storageValue() : null,
-                (byte) stateVersion.asInt());
+            trieNode.isBranch(),
+            trieNode.partialKeyNibbles(),
+            childrenMerkleValues,
+            trieNode.isReferenceValue() ? null : trieNode.storageValue(),
+            trieNode.isReferenceValue() ? trieNode.storageValue() : null,
+            (byte) stateVersion.asInt());
 
         db.save(key, storageValue);
     }
@@ -424,7 +424,10 @@ public class TrieStorage {
         if (currentNodeData.isBranchNode()) {
             trie.insertBranch(currentPath, new NodeData(null, merkleValue));
         } else {
-            byte[] value = currentNodeData.getValue() == null ? currentNodeData.getTrieRootRef() : currentNodeData.getValue();
+            byte[] value =
+                currentNodeData.getValue() == null
+                    ? currentNodeData.getTrieRootRef()
+                    : currentNodeData.getValue();
             trie.insertNode(currentPath, new NodeData(value, merkleValue));
         }
 

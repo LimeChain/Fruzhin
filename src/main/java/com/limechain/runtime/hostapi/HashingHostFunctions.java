@@ -1,16 +1,16 @@
 package com.limechain.runtime.hostapi;
 
-import com.limechain.runtime.Runtime;
+import com.limechain.runtime.SharedMemory;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import com.limechain.utils.HashUtils;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.extern.java.Log;
 import org.wasmer.ImportObject;
-import org.wasmer.Type;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.Map;
+
+import static com.limechain.runtime.hostapi.PartialHostApi.newImportObjectPair;
 
 /**
  * Implementations of the Hashing HostAPI functions
@@ -18,33 +18,39 @@ import java.util.List;
  * {<a href="https://spec.polkadot.network/chap-host-api#sect-hashing-api">Hashing API</a>}
  */
 @Log
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class HashingHostFunctions {
+@AllArgsConstructor(access = AccessLevel.PACKAGE)
+public class HashingHostFunctions implements PartialHostApi {
 
-    private final Runtime runtime;
+    private final SharedMemory sharedMemory;
 
-    public static List<ImportObject> getFunctions(final Runtime runtime) {
-        return new HashingHostFunctions(runtime).buildFunctions();
-    }
-
-    public List<ImportObject> buildFunctions() {
-        return Arrays.asList(
-                HostApi.getImportObject("ext_hashing_keccak_256_version_1", argv ->
-                        keccak256V1(new RuntimePointerSize(argv.get(0))), List.of(Type.I64), Type.I32),
-                HostApi.getImportObject("ext_hashing_keccak_512_version_1", argv ->
-                        keccak512V1(new RuntimePointerSize(argv.get(0))), List.of(Type.I64), Type.I32),
-                HostApi.getImportObject("ext_hashing_sha2_256_version_1", argv ->
-                        sha2256V1(new RuntimePointerSize(argv.get(0))), List.of(Type.I64), Type.I32),
-                HostApi.getImportObject("ext_hashing_blake2_128_version_1", argv ->
-                        blake2128V1(new RuntimePointerSize(argv.get(0))), List.of(Type.I64), Type.I32),
-                HostApi.getImportObject("ext_hashing_blake2_256_version_1", argv ->
-                        blake2256V1(new RuntimePointerSize(argv.get(0))), List.of(Type.I64), Type.I32),
-                HostApi.getImportObject("ext_hashing_twox_64_version_1", argv ->
-                        twox64V1(new RuntimePointerSize(argv.get(0))), List.of(Type.I64), Type.I32),
-                HostApi.getImportObject("ext_hashing_twox_128_version_1", argv ->
-                        twox128V1(new RuntimePointerSize(argv.get(0))), List.of(Type.I64), Type.I32),
-                HostApi.getImportObject("ext_hashing_twox_256_version_1", argv ->
-                        twox256V1(new RuntimePointerSize(argv.get(0))), List.of(Type.I64), Type.I32));
+    @Override
+    public Map<Endpoint, ImportObject.FuncImport> getFunctionImports() {
+        return Map.ofEntries(
+            newImportObjectPair(Endpoint.ext_hashing_keccak_256_version_1, argv -> {
+                return keccak256V1(new RuntimePointerSize(argv.get(0)));
+            }),
+            newImportObjectPair(Endpoint.ext_hashing_keccak_512_version_1, argv -> {
+                return keccak512V1(new RuntimePointerSize(argv.get(0)));
+            }),
+            newImportObjectPair(Endpoint.ext_hashing_sha2_256_version_1, argv -> {
+                return sha2256V1(new RuntimePointerSize(argv.get(0)));
+            }),
+            newImportObjectPair(Endpoint.ext_hashing_blake2_128_version_1, argv -> {
+                return blake2128V1(new RuntimePointerSize(argv.get(0)));
+            }),
+            newImportObjectPair(Endpoint.ext_hashing_blake2_256_version_1, argv -> {
+                return blake2256V1(new RuntimePointerSize(argv.get(0)));
+            }),
+            newImportObjectPair(Endpoint.ext_hashing_twox_64_version_1, argv -> {
+                return twox64V1(new RuntimePointerSize(argv.get(0)));
+            }),
+            newImportObjectPair(Endpoint.ext_hashing_twox_128_version_1, argv -> {
+                return twox128V1(new RuntimePointerSize(argv.get(0)));
+            }),
+            newImportObjectPair(Endpoint.ext_hashing_twox_256_version_1, argv -> {
+                return twox256V1(new RuntimePointerSize(argv.get(0)));
+            })
+        );
     }
 
     /**
@@ -55,11 +61,11 @@ public class HashingHostFunctions {
      */
     public int keccak256V1(RuntimePointerSize data) {
         log.fine("keccak256V1");
-        byte[] dataToHash = runtime.getDataFromMemory(data);
+        byte[] dataToHash = sharedMemory.readData(data);
 
         byte[] hash = HashUtils.hashWithKeccak256(dataToHash);
 
-        return runtime.writeDataToMemory(hash).pointer();
+        return sharedMemory.writeData(hash).pointer();
     }
 
     /**
@@ -71,11 +77,11 @@ public class HashingHostFunctions {
     public int keccak512V1(RuntimePointerSize data) {
         log.fine("keccak512V1");
 
-        byte[] dataToHash = runtime.getDataFromMemory(data);
+        byte[] dataToHash = sharedMemory.readData(data);
 
         byte[] hash = HashUtils.hashWithKeccak512(dataToHash);
 
-        return runtime.writeDataToMemory(hash).pointer();
+        return sharedMemory.writeData(hash).pointer();
     }
 
     /**
@@ -87,11 +93,11 @@ public class HashingHostFunctions {
     public int sha2256V1(RuntimePointerSize data) {
         log.fine("sha2256V1");
 
-        byte[] dataToHash = runtime.getDataFromMemory(data);
+        byte[] dataToHash = sharedMemory.readData(data);
 
         byte[] hash = HashUtils.hashWithSha256(dataToHash);
 
-        return runtime.writeDataToMemory(hash).pointer();
+        return sharedMemory.writeData(hash).pointer();
     }
 
     /**
@@ -102,11 +108,11 @@ public class HashingHostFunctions {
      */
     public int blake2128V1(RuntimePointerSize data) {
         log.fine("blake2128V1");
-        byte[] dataToHash = runtime.getDataFromMemory(data);
+        byte[] dataToHash = sharedMemory.readData(data);
 
         byte[] hash = HashUtils.hashWithBlake2b128(dataToHash);
 
-        return runtime.writeDataToMemory(hash).pointer();
+        return sharedMemory.writeData(hash).pointer();
     }
 
     /**
@@ -118,11 +124,11 @@ public class HashingHostFunctions {
     public int blake2256V1(RuntimePointerSize data) {
         log.fine("blake2256V1");
 
-        byte[] dataToHash = runtime.getDataFromMemory(data);
+        byte[] dataToHash = sharedMemory.readData(data);
 
         byte[] hash = HashUtils.hashWithBlake2b(dataToHash);
 
-        return runtime.writeDataToMemory(hash).pointer();
+        return sharedMemory.writeData(hash).pointer();
     }
 
     /**
@@ -134,11 +140,11 @@ public class HashingHostFunctions {
     public int twox64V1(final RuntimePointerSize data) {
         log.fine("twox64V1");
 
-        byte[] dataToHash = runtime.getDataFromMemory(data);
+        byte[] dataToHash = sharedMemory.readData(data);
 
         byte[] hash = HashUtils.hashXx64(0, dataToHash);
 
-        return runtime.writeDataToMemory(hash).pointer();
+        return sharedMemory.writeData(hash).pointer();
     }
 
     /**
@@ -150,13 +156,13 @@ public class HashingHostFunctions {
     public int twox128V1(final RuntimePointerSize data) {
         log.fine("twox128V1");
 
-        byte[] dataToHash = runtime.getDataFromMemory(data);
+        byte[] dataToHash = sharedMemory.readData(data);
         log.fine("with data to hash: " + new String(dataToHash));
 
 
         byte[] hash = HashUtils.hashXx128(0, dataToHash);
 
-        return runtime.writeDataToMemory(hash).pointer();
+        return sharedMemory.writeData(hash).pointer();
     }
 
     /**
@@ -168,11 +174,11 @@ public class HashingHostFunctions {
     public int twox256V1(final RuntimePointerSize data) {
         log.fine("twox256V1");
 
-        byte[] dataToHash = runtime.getDataFromMemory(data);
+        byte[] dataToHash = sharedMemory.readData(data);
 
         byte[] hash = HashUtils.hashXx256(0, dataToHash);
 
-        return runtime.writeDataToMemory(hash).pointer();
+        return sharedMemory.writeData(hash).pointer();
     }
 
 }

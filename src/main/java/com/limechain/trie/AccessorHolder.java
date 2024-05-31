@@ -1,5 +1,7 @@
 package com.limechain.trie;
 
+import com.limechain.rpc.server.AppBean;
+import com.limechain.storage.trie.TrieStorage;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -30,7 +32,9 @@ public class AccessorHolder {
      * @return         The BlockTrieAccessor instance representing the block trie with the specified root hash.
      */
     public BlockTrieAccessor setToStateRoot(byte[] lastRoot) {
-        this.blockTrieAccessor = new BlockTrieAccessor(lastRoot);
+        TrieStorage trieStorage = AppBean.getBean(TrieStorage.class);
+
+        this.blockTrieAccessor = new BlockTrieAccessor(trieStorage, lastRoot);
         return this.blockTrieAccessor;
     }
 

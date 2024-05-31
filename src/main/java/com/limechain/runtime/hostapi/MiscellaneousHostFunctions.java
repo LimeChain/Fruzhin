@@ -1,7 +1,7 @@
 package com.limechain.runtime.hostapi;
 
 import com.limechain.exception.scale.ScaleEncodingException;
-import com.limechain.runtime.Runtime;
+import com.limechain.runtime.SharedMemory;
 import com.limechain.runtime.RuntimeBuilder;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import com.limechain.runtime.version.scale.RuntimeVersionWriter;
@@ -13,14 +13,14 @@ import lombok.extern.java.Log;
 import org.apache.tomcat.util.buf.HexUtils;
 import org.springframework.lang.Nullable;
 import org.wasmer.ImportObject;
-import org.wasmer.Type;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
+
+import static com.limechain.runtime.hostapi.PartialHostApi.newImportObjectPair;
 
 /**
  * Implementations of the Miscellaneous and Logging HostAPI functions
@@ -29,32 +29,32 @@ import java.util.logging.Level;
  * {<a href="https://spec.polkadot.network/chap-host-api#sect-logging-api">Logging API</a>}
  */
 @Log
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class MiscellaneousHostFunctions {
+@AllArgsConstructor(access = AccessLevel.PACKAGE)
+public class MiscellaneousHostFunctions implements PartialHostApi {
 
-    private final Runtime runtime;
+    private final SharedMemory sharedMemory;
 
-    public static List<ImportObject> getFunctions(Runtime runtime) {
-        return new MiscellaneousHostFunctions(runtime).buildFunctions();
-    }
-
-    public List<ImportObject> buildFunctions() {
-        return Arrays.asList(
-                HostApi.getImportObject("ext_misc_print_num_version_1", argv ->
-                        printNumV1(argv.get(0)), List.of(Type.I64)),
-                HostApi.getImportObject("ext_misc_print_utf8_version_1", argv ->
-                        printUtf8V1(new RuntimePointerSize(argv.get(0))), List.of(Type.I64)),
-                HostApi.getImportObject("ext_misc_print_hex_version_1", argv ->
-                        printHexV1(new RuntimePointerSize(argv.get(0))), List.of(Type.I64)),
-                HostApi.getImportObject("ext_misc_runtime_version_version_1", argv ->
-                                runtimeVersionV1(new RuntimePointerSize(argv.get(0))).pointerSize(),
-                        List.of(Type.I64), Type.I64),
-                HostApi.getImportObject("ext_logging_log_version_1", argv ->
-                                logV1(argv.get(0).intValue(), new RuntimePointerSize(argv.get(1)),
-                                        new RuntimePointerSize(argv.get(2))),
-                        List.of(Type.I32, Type.I64, Type.I64)),
-                HostApi.getImportObject("ext_logging_max_level_version_1", argv ->
-                        maxLevelV1(), List.of(), Type.I32)
+    @Override
+    public Map<Endpoint, ImportObject.FuncImport> getFunctionImports() {
+        return Map.ofEntries(
+            newImportObjectPair(Endpoint.ext_misc_print_num_version_1, argv -> {
+                printNumV1(argv.get(0));
+            }),
+            newImportObjectPair(Endpoint.ext_misc_print_utf8_version_1, argv -> {
+                printUtf8V1(new RuntimePointerSize(argv.get(0)));
+            }),
+            newImportObjectPair(Endpoint.ext_misc_print_hex_version_1, argv -> {
+                printHexV1(new RuntimePointerSize(argv.get(0)));
+            }),
+            newImportObjectPair(Endpoint.ext_misc_runtime_version_version_1, argv -> {
+                return runtimeVersionV1(new RuntimePointerSize(argv.get(0))).pointerSize();
+            }),
+            newImportObjectPair(Endpoint.ext_logging_log_version_1, argv -> {
+                logV1(argv.get(0).intValue(), new RuntimePointerSize(argv.get(1)), new RuntimePointerSize(argv.get(2)));
+            }),
+            newImportObjectPair(Endpoint.ext_logging_max_level_version_1, argv -> {
+                return maxLevelV1();
+            })
         );
     }
 
@@ -73,7 +73,7 @@ public class MiscellaneousHostFunctions {
      * @param strPointer a pointer-size to the valid buffer to be printed.
      */
     public void printUtf8V1(RuntimePointerSize strPointer) {
-        byte[] data = runtime.getDataFromMemory(strPointer);
+        byte[] data = sharedMemory.readData(strPointer);
 
         final String strToPrint = new String(data, StandardCharsets.UTF_8);
         log.fine("Printing utf8 from runtime: " + strToPrint);
@@ -85,7 +85,7 @@ public class MiscellaneousHostFunctions {
      * @param pointer a pointer-size to the buffer to be printed.
      */
     public void printHexV1(RuntimePointerSize pointer) {
-        byte[] data = runtime.getDataFromMemory(pointer);
+        byte[] data = sharedMemory.readData(pointer);
 
         final String hexString = HexUtils.toHexString(data);
         log.fine("Printing hex from runtime: " + hexString);
@@ -104,7 +104,7 @@ public class MiscellaneousHostFunctions {
      * which is encoded as a byte array.
      */
     public RuntimePointerSize runtimeVersionV1(RuntimePointerSize data) {
-        byte[] wasmBlob = runtime.getDataFromMemory(data);
+        byte[] wasmBlob = sharedMemory.readData(data);
 
         byte[] versionOption;
 
@@ -120,7 +120,7 @@ public class MiscellaneousHostFunctions {
             versionOption = scaleEncodedOption(null);
         }
 
-        return runtime.writeDataToMemory(versionOption);
+        return sharedMemory.writeData(versionOption);
     }
 
     /**
@@ -133,8 +133,8 @@ public class MiscellaneousHostFunctions {
      * @param messagePtr a pointer-size to the UTF-8 encoded log message.
      */
     public void logV1(int level, RuntimePointerSize targetPtr, RuntimePointerSize messagePtr) {
-        byte[] target = runtime.getDataFromMemory(targetPtr);
-        byte[] message = runtime.getDataFromMemory(messagePtr);
+        byte[] target = sharedMemory.readData(targetPtr);
+        byte[] message = sharedMemory.readData(messagePtr);
 
         final String messageToPrint = new String(message, StandardCharsets.UTF_8);
         final String targetToPrint = new String(target);

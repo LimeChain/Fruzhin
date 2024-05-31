@@ -1,9 +1,9 @@
 package com.limechain.runtime.allocator;
 
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
+import com.limechain.runtime.memory.Memory;
 import lombok.AllArgsConstructor;
 import lombok.extern.java.Log;
-import org.wasmer.Memory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -66,7 +66,7 @@ import static com.limechain.runtime.allocator.Order.NUMBER_OF_ORDERS;
  */
 @Log
 @AllArgsConstructor
-public class FreeingBumpHeapAllocator {
+public class FreeingBumpHeapAllocator implements Allocator {
     private static final int ALIGNMENT = 8;
     private static final int HEADER_SIZE = 8;
     private static final int PAGE_SIZE = 65536;

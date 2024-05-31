@@ -7,7 +7,7 @@ import lombok.AllArgsConstructor;
  * OffchainStore provides methods for storing, retrieving, and manipulating offchain data.
  */
 @AllArgsConstructor
-public class OffchainStore {
+public class OffchainStore implements BasicStorage {
     private static final String OFFCHAIN_PREFIX = "offchain_";
 
     private final KVRepository<String, Object> repository;
@@ -28,18 +28,6 @@ public class OffchainStore {
 
     public synchronized void remove(String key) {
         repository.delete(prefixedKey(key));
-    }
-
-    public synchronized boolean compareAndSet(String key, byte[] oldValue, byte[] newValue) {
-        String prefixedKey = prefixedKey(key);
-        byte[] currentValue = (byte[]) repository.find(prefixedKey).orElse(null);
-
-        if (currentValue != oldValue) {
-            return false;
-        }
-
-        repository.save(prefixedKey, newValue);
-        return true;
     }
 
     private String prefixedKey(String key) {
