@@ -17,6 +17,7 @@ import com.limechain.storage.crypto.KeyStore;
 import com.limechain.storage.offchain.OffchainStorages;
 import com.limechain.storage.offchain.OffchainStore;
 import com.limechain.storage.offchain.StorageKind;
+import com.limechain.trie.AccessorHolder;
 import com.limechain.trie.BlockTrieAccessor;
 import com.limechain.trie.decoded.Trie;
 import com.limechain.trie.decoded.TrieVerifier;
@@ -66,9 +67,12 @@ public class RuntimeBuilder {
         //  Figure out the right approach, when it becomes relevant.
         var baseStorage = persistentStorage;
 
+        var keyStore = AppBean.getBean(KeyStore.class);
+        var blockTrieAccessor = AccessorHolder.getInstance().getBlockTrieAccessor();
+
         RuntimeBuilder.Config cfg = new RuntimeBuilder.Config(
-            null,
-            null,
+            blockTrieAccessor,
+            keyStore,
             new OffchainStorages(localStorage, persistentStorage, baseStorage),
             nodeRole == NodeRole.AUTHORING
         );
