@@ -502,7 +502,7 @@ public class OffchainHostFunctions implements PartialHostApi {
      */
     public void extOffchainLocalStorageSet(int kind, RuntimePointerSize keyPointer, RuntimePointerSize valuePointer) {
         BasicStorage store = storageByKind(kind);
-        String key = new String(sharedMemory.readData(keyPointer));
+        byte[] key = sharedMemory.readData(keyPointer);
         byte[] value = sharedMemory.readData(valuePointer);
 
         store.set(key, value);
@@ -517,7 +517,7 @@ public class OffchainHostFunctions implements PartialHostApi {
      */
     public void extOffchainLocalStorageClear(int kind, RuntimePointerSize keyPointer) {
         BasicStorage store = storageByKind(kind);
-        String key = new String(sharedMemory.readData(keyPointer));
+        byte[] key = sharedMemory.readData(keyPointer);
 
         store.remove(key);
     }
@@ -537,7 +537,7 @@ public class OffchainHostFunctions implements PartialHostApi {
                                                     RuntimePointerSize oldValuePointer,
                                                     RuntimePointerSize newValuePointer) {
         BasicStorage store = storageByKind(kind);
-        String key = new String(sharedMemory.readData(keyPointer));
+        byte[] key = sharedMemory.readData(keyPointer);
         byte[] oldValue = valueFromOption(sharedMemory.readData(oldValuePointer));
         byte[] newValue = sharedMemory.readData(newValuePointer);
 
@@ -560,7 +560,7 @@ public class OffchainHostFunctions implements PartialHostApi {
      */
     public RuntimePointerSize extOffchainLocalStorageGet(int kind, RuntimePointerSize keyPointer) {
         BasicStorage store = storageByKind(kind);
-        String key = new String(sharedMemory.readData(keyPointer));
+        byte[] key = sharedMemory.readData(keyPointer);
 
         byte[] value = store.get(key);
         return sharedMemory.writeData(scaleEncodedOption(value));
@@ -595,7 +595,7 @@ public class OffchainHostFunctions implements PartialHostApi {
         byte[] key = sharedMemory.readData(keyPointer);
         byte[] value = sharedMemory.readData(valuePointer);
 
-        offchainStorages.getBaseStorage().set(new String(key), value);
+        offchainStorages.getBaseStorage().set(key, value);
     }
 
     /**
@@ -606,6 +606,6 @@ public class OffchainHostFunctions implements PartialHostApi {
     public void offchainIndexClear(RuntimePointerSize keyPointer) {
         byte[] key = sharedMemory.readData(keyPointer);
 
-        offchainStorages.getBaseStorage().remove(new String(key));
+        offchainStorages.getBaseStorage().remove(key);
     }
 }

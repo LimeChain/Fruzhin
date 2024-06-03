@@ -6,10 +6,9 @@ import java.util.Arrays;
  * A minimal interface for a basic key-value storage.
  */
 public interface BasicStorage {
-    // TODO: Shouldn't these `key`s be byte[] instead of String? `String` is not a good container for raw `byte[]`s.
-    void set(String key, byte[] value);
-    byte[] get(String key);
-    void remove(String key);
+    void set(byte[] key, byte[] value);
+    byte[] get(byte[] key);
+    void remove(byte[] key);
 
     /**
      * A default, thread-safe implementation of 'compare and set'.
@@ -20,7 +19,7 @@ public interface BasicStorage {
      * @param newValue the new value to replace if old value matches
      * @return true if the old value was replaced with the new one; false otherwise
      */
-    default boolean compareAndSet(String key, byte[] oldValue, byte[] newValue) {
+    default boolean compareAndSet(byte[] key, byte[] oldValue, byte[] newValue) {
         synchronized (this) {
             byte[] currentValue = this.get(key);
 

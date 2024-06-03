@@ -3,6 +3,11 @@ package com.limechain.storage.offchain;
 import com.limechain.storage.KVRepository;
 import lombok.AllArgsConstructor;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+
+import static java.nio.charset.StandardCharsets.US_ASCII;
+
 /**
  * OffchainStore provides methods for storing, retrieving, and manipulating offchain data.
  */
@@ -18,19 +23,35 @@ public class OffchainStore implements BasicStorage {
         this.prefix = OFFCHAIN_PREFIX.concat(storageKind.getPrefix());
     }
 
-    public synchronized void set(String key, byte[] value) {
+    public synchronized void set(byte[] key, byte[] value) {
         repository.save(prefixedKey(key), value);
     }
 
-    public synchronized byte[] get(String key) {
+    public synchronized void set(String key, byte[] value) {
+        this.set(key.getBytes(US_ASCII), value);
+    }
+
+    public synchronized byte[] get(byte[] key) {
         return (byte[]) repository.find(prefixedKey(key)).orElse(null);
     }
 
-    public synchronized void remove(String key) {
+    public synchronized byte[] get(String key) {
+        return this.get(key.getBytes(US_ASCII));
+    }
+
+    public synchronized void remove(byte[] key) {
         repository.delete(prefixedKey(key));
     }
 
-    private String prefixedKey(String key) {
-        return prefix.concat(key);
+    public synchronized void remove(String key) {
+        this.remove(key.getBytes(US_ASCII));
+    }
+
+    public synchronized boolean compareAndSet(String key, byte[] oldValue, byte[] newValue) {
+        return this.compareAndSet(key.getBytes(US_ASCII), oldValue, newValue);
+    }
+
+    private String prefixedKey(byte[] key) {
+        return prefix.concat(new String(key));
     }
 }
