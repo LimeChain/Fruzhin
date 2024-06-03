@@ -6,6 +6,7 @@ import com.limechain.exception.hostapi.OffchainResponseWaitException;
 import com.limechain.exception.scale.ScaleEncodingException;
 import com.limechain.network.Network;
 import com.limechain.runtime.SharedMemory;
+import com.limechain.runtime.hostapi.dto.OffchainNetworkState;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import com.limechain.storage.offchain.BasicStorage;
 import com.limechain.storage.offchain.OffchainStorages;
@@ -54,13 +55,18 @@ import static com.limechain.runtime.hostapi.PartialHostApi.newImportObjectPair;
 public class OffchainHostFunctions implements PartialHostApi {
     private final SharedMemory sharedMemory;
     private final OffchainStorages offchainStorages;
+    private final OffchainNetworkState networkState;
     private final boolean isValidator;
     private final OffchainHttpRequests requests;
 
-    OffchainHostFunctions(SharedMemory sharedMemory, OffchainStorages offchainStorages, boolean isValidator) {
+    OffchainHostFunctions(SharedMemory sharedMemory,
+                          OffchainStorages offchainStorages,
+                          OffchainNetworkState offchainNetworkState,
+                          boolean isValidator) {
         this.sharedMemory = sharedMemory;
         this.offchainStorages = offchainStorages;
         this.isValidator = isValidator;
+        this.networkState = offchainNetworkState;
 
         this.requests = OffchainHttpRequests.getInstance();
     }

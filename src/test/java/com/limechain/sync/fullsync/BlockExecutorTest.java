@@ -56,7 +56,7 @@ class BlockExecutorTest {
         BlockTrieAccessor trieAccessor = new BlockTrieAccessor(trieStorage, genesisStateRoot); // instantiate a block trie accessor with the trieStorage specified for the genesis block
 
         // Package all dependencies into the expected configuration for the runtime builder
-        var cfg = new RuntimeBuilder.Config(trieAccessor, null, null, false);
+        var cfg = new RuntimeBuilder.Config(trieAccessor, null, null, null, false);
 
         Runtime genesisRuntime = new RuntimeBuilder().buildRuntime(runtimeByteCode, cfg);
 

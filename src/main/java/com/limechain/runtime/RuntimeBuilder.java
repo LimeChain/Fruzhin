@@ -4,12 +4,14 @@ import com.github.luben.zstd.Zstd;
 import com.limechain.config.HostConfig;
 import com.limechain.exception.global.RuntimeCodeException;
 import com.limechain.exception.trie.TrieDecoderException;
+import com.limechain.network.Network;
 import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.rpc.server.AppBean;
 import com.limechain.runtime.allocator.FreeingBumpHeapAllocator;
 import com.limechain.runtime.hostapi.DefaultHostApi;
 import com.limechain.runtime.hostapi.HostApi;
 import com.limechain.runtime.hostapi.WasmExports;
+import com.limechain.runtime.hostapi.dto.OffchainNetworkState;
 import com.limechain.runtime.memory.WasmMemory;
 import com.limechain.runtime.version.RuntimeVersion;
 import com.limechain.storage.KVRepository;
@@ -24,6 +26,7 @@ import com.limechain.trie.decoded.TrieVerifier;
 import com.limechain.utils.LittleEndianUtils;
 import com.limechain.utils.StringUtils;
 import io.emeraldpay.polkaj.types.Hash256;
+import io.libp2p.core.Host;
 import lombok.extern.java.Log;
 import org.jetbrains.annotations.Nullable;
 import org.wasmer.ImportObject;
@@ -70,10 +73,14 @@ public class RuntimeBuilder {
         var keyStore = AppBean.getBean(KeyStore.class);
         var blockTrieAccessor = AccessorHolder.getInstance().getBlockTrieAccessor();
 
+        Host host = Network.getNetwork().getHost();
+        var offchainNetworkState = new OffchainNetworkState(host.getPeerId(), host.listenAddresses());
+
         RuntimeBuilder.Config cfg = new RuntimeBuilder.Config(
             blockTrieAccessor,
             keyStore,
             new OffchainStorages(localStorage, persistentStorage, baseStorage),
+            offchainNetworkState,
             nodeRole == NodeRole.AUTHORING
         );
 
@@ -115,6 +122,7 @@ public class RuntimeBuilder {
             config.blockTrieAccessor(),
             config.keyStore(),
             config.offchainStorages(),
+            config.offchainNetworkState(),
             config.isValidator(),
             sharedMemory,
             null
@@ -184,6 +192,7 @@ public class RuntimeBuilder {
      * @param blockTrieAccessor used by storage related endpoints for accessing the trie storage for a block
      * @param keyStore          used by crypto host functions to access secret keys
      * @param offchainStorages  used by offchain host functions to access the different offchain storages
+     * @param offchainNetworkState used by offchain host functions.
      * @param isValidator       used by offchain host functions to determine
      *                          whether the node is a validator (i.e. authoring node) or not
      * @apiNote Explicitly passing `null`s for some of the dependencies is admissible in case you desire a partial
@@ -198,9 +207,11 @@ public class RuntimeBuilder {
         KeyStore keyStore,
         @Nullable
         OffchainStorages offchainStorages,
+        @Nullable
+        OffchainNetworkState offchainNetworkState,
         boolean isValidator
     ) {
-        public static final Config EMPTY = new Config(null, null, null, false);
+        public static final Config EMPTY = new Config(null, null, null, null, false);
     }
 
     // TODO: Move this method somewhere else as it doesn't have to do with actually building a runtime instance

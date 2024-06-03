@@ -1,6 +1,7 @@
 package com.limechain.runtime.hostapi;
 
 import com.limechain.runtime.SharedMemory;
+import com.limechain.runtime.hostapi.dto.OffchainNetworkState;
 import com.limechain.storage.offchain.OffchainStorages;
 import com.limechain.runtime.hostapi.dto.HttpErrorType;
 import com.limechain.runtime.hostapi.dto.HttpStatusCode;
@@ -73,7 +74,8 @@ class OffchainHostFunctionsTest {
     @BeforeEach
     void setup() {
         OffchainStorages offchainStorages = new OffchainStorages(localStorage, persistentStorage, persistentStorage);
-        offchainHostFunctions = new OffchainHostFunctions(sharedMemory, offchainStorages, false, requests);
+        OffchainNetworkState networkState = null; // NOTE: Intentionally null as it's not needed for the test suite
+        offchainHostFunctions = new OffchainHostFunctions(sharedMemory, offchainStorages, networkState, false, requests);
     }
 
     @Test

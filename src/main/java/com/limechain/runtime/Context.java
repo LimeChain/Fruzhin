@@ -1,5 +1,6 @@
 package com.limechain.runtime;
 
+import com.limechain.runtime.hostapi.dto.OffchainNetworkState;
 import com.limechain.storage.offchain.OffchainStorages;
 import com.limechain.trie.BlockTrieAccessor;
 import com.limechain.runtime.version.RuntimeVersion;
@@ -31,6 +32,11 @@ public class Context {
      * @see OffchainStorages
      */
     OffchainStorages offchainStorages;
+
+    /**
+     * Used by offchain host functions to provide information about the offchain network state.
+     */
+    OffchainNetworkState offchainNetworkState;
 
     /**
      * Used by offchain host functions to determine

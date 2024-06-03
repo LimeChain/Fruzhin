@@ -23,7 +23,7 @@ public class DefaultHostApi extends HostApi {
             new StorageHostFunctions(sharedMemory, context.getBlockTrieAccessor()),
             new TrieHostFunctions(sharedMemory),
             new MiscellaneousHostFunctions(sharedMemory),
-            new OffchainHostFunctions(sharedMemory, context.getOffchainStorages(), context.isValidator()),
+            new OffchainHostFunctions(sharedMemory, context.getOffchainStorages(), context.getOffchainNetworkState(), context.isValidator()),
             new CryptoHostFunctions(sharedMemory, context.getKeyStore()),
             new ChildStorageHostFunctions(sharedMemory, context.getBlockTrieAccessor())
         );
