@@ -163,7 +163,7 @@ public enum Endpoint {
         }
 
         return new ImportObject.FuncImport("env", functionName, argv -> {
-            log.info(String.format("Host API endpoint invoked: '%s'%n", functionName));
+            log.finest(String.format("Host API endpoint invoked: '%s'%n", functionName));
             return Collections.singletonList(impl.apply(argv));
         }, args, Collections.singletonList(retType));
     }
@@ -179,7 +179,7 @@ public enum Endpoint {
         }
 
         return new ImportObject.FuncImport("env", functionName, argv -> {
-            log.info(String.format("Host API endpoint invoked '%s'%n", functionName));
+            log.finest(String.format("Host API endpoint invoked '%s'%n", functionName));
             impl.accept(argv);
             return List.of();
         }, args, List.of());
