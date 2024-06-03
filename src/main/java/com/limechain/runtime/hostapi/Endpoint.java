@@ -81,7 +81,7 @@ public enum Endpoint {
     ext_crypto_secp256k1_ecdsa_recover_compressed_version_1("ext_crypto_secp256k1_ecdsa_recover_compressed_version_1", List.of(Type.I32, Type.I32), Type.I64),
     ext_crypto_secp256k1_ecdsa_recover_compressed_version_2("ext_crypto_secp256k1_ecdsa_recover_compressed_version_2", List.of(Type.I32, Type.I32), Type.I64),
     ext_crypto_start_batch_verify_version_1("ext_crypto_start_batch_verify_version_1", List.of(), null),
-    ext_crypto_finish_batch_verify_version_1("ext_crypto_finish_batch_verify_version_1", List.of(), null),
+    ext_crypto_finish_batch_verify_version_1("ext_crypto_finish_batch_verify_version_1", List.of(), Type.I32),
 
     // Hashing Host API endpoints
     ext_hashing_keccak_256_version_1("ext_hashing_keccak_256_version_1", List.of(Type.I64), Type.I32),

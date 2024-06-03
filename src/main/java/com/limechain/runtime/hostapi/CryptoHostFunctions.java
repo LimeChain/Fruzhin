@@ -175,7 +175,7 @@ public class CryptoHostFunctions implements PartialHostApi {
                 startBatchVerify();
             }),
             newImportObjectPair(Endpoint.ext_crypto_finish_batch_verify_version_1, argv -> {
-                finishBatchVerify();
+                return finishBatchVerify();
             })
         );
     }
