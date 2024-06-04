@@ -18,6 +18,7 @@ import java.util.function.Function;
  * An enum to hold the signatures of all necessary function imports for the runtime.
  * Think of this class as containing "just data" - minimally necessary to define what a "Host API endpoint" is.
  */
+@SuppressWarnings("java:S115") // Intentionally lowercase enum identifiers
 @Log
 @Getter
 @AllArgsConstructor
