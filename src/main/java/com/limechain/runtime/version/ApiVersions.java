@@ -85,11 +85,11 @@ public class ApiVersions {
 
     @UtilityClass
     public static class Scale {
-        public static ScaleWriter<ApiVersions> WRITER = (writer, apiVersions) -> {
+        public static final ScaleWriter<ApiVersions> WRITER = (writer, apiVersions) -> {
             writer.write(new ListWriter<>(ApiVersion.Scale.WRITER), apiVersions.entries);
         };
 
-        public static ScaleReader<ApiVersions> READER = (reader) -> {
+        public static final ScaleReader<ApiVersions> READER = reader -> {
             List<ApiVersion> apiVersions = reader.read(new ListReader<>(ApiVersion.Scale.READER));
             return ApiVersions.of(apiVersions);
         };

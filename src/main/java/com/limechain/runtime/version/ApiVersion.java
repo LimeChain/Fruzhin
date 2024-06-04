@@ -51,12 +51,12 @@ public record ApiVersion(byte[] nameHash, BigInteger version) {
 
     @UtilityClass
     public static class Scale {
-        public static ScaleWriter<ApiVersion> WRITER = (writer, apiVersion) -> {
+        public static final ScaleWriter<ApiVersion> WRITER = (writer, apiVersion) -> {
             writer.writeByteArray(apiVersion.nameHash());
             writer.writeUint32(apiVersion.version().longValueExact());
         };
 
-        public static ScaleReader<ApiVersion> READER = (reader) -> {
+        public static final ScaleReader<ApiVersion> READER = reader -> {
             byte[] hashedName = reader.readByteArray(ApiVersion.NAME_HASH_LENGTH);
             long version = reader.readUint32();
 
