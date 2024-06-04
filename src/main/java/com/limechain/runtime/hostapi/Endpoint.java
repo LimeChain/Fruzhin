@@ -159,7 +159,7 @@ public enum Endpoint {
      */
     public ImportObject.FuncImport getImportObject(Function<List<Number>, Number> impl) {
         if (retType == null) {
-            throw new RuntimeException(String.format("The Host API endpoint '%s' returns no value, wrong implementation provided.", functionName));
+            throw new IllegalArgumentException(String.format("The Host API endpoint '%s' returns no value, wrong implementation provided.", functionName));
         }
 
         return new ImportObject.FuncImport("env", functionName, argv -> {
@@ -175,7 +175,7 @@ public enum Endpoint {
      */
     public ImportObject.FuncImport getImportObject(Consumer<List<Number>> impl) {
         if (retType != null) {
-            throw new RuntimeException(String.format("The Host API endpoint '%s' does return a value, wrong implementation provided.", functionName));
+            throw new IllegalArgumentException(String.format("The Host API endpoint '%s' does return a value, wrong implementation provided.", functionName));
         }
 
         return new ImportObject.FuncImport("env", functionName, argv -> {
