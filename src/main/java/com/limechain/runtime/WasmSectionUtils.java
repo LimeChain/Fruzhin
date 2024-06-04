@@ -42,9 +42,9 @@ public class WasmSectionUtils {
         Module moduleWithCustomSections = toModuleWithSections(wasmBinary, SectionId.CUSTOM);
 
         UnknownCustomSection runtimeApis = (UnknownCustomSection) moduleWithCustomSections
-                .customSection(RUNTIME_APIS_SECTION_NAME);
+            .customSection(RUNTIME_APIS_SECTION_NAME);
         UnknownCustomSection runtimeVersion = (UnknownCustomSection) moduleWithCustomSections
-                .customSection(RUNTIME_VERSION_SECTION_NAME);
+            .customSection(RUNTIME_VERSION_SECTION_NAME);
 
         // If we're missing any of the two custom sections, fallback to `Core_runtime`
         if (Objects.isNull(runtimeApis) || Objects.isNull(runtimeVersion)) {
@@ -71,17 +71,17 @@ public class WasmSectionUtils {
      */
     public ImportObject.MemoryImport parseMemoryFromBinary(byte[] wasmBinary) {
         Module moduleWithSections = toModuleWithSections(
-                wasmBinary, SectionId.IMPORT, SectionId.MEMORY, SectionId.EXPORT);
+            wasmBinary, SectionId.IMPORT, SectionId.MEMORY, SectionId.EXPORT);
         int initialPagesLimit = DEFAULT_MEMORY_PAGES;
 
         // Per Runtime spec only one memory should be available for each module.
         if (isMemorySectionValid(moduleWithSections.memorySection())
-                && isExportSectionValid(moduleWithSections.exportSection())) {
+            && isExportSectionValid(moduleWithSections.exportSection())) {
             initialPagesLimit = moduleWithSections.memorySection().getMemory(0).memoryLimits().initialPages();
         } else if (moduleWithSections.importSection() != null) {
             Optional<Import> parsedMemoryImport = moduleWithSections.importSection().stream()
-                    .filter(i -> i.name().equals(MEMORY_IMPORT_NAME))
-                    .findFirst();
+                .filter(i -> i.name().equals(MEMORY_IMPORT_NAME))
+                .findFirst();
             if (parsedMemoryImport.isPresent()) {
                 initialPagesLimit = ((MemoryImport) parsedMemoryImport.get()).limits().initialPages();
             }

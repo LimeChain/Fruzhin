@@ -79,11 +79,11 @@ public class RuntimeBuilder {
         var offchainNetworkState = new OffchainNetworkState(host.getPeerId(), host.listenAddresses());
 
         RuntimeBuilder.Config cfg = new RuntimeBuilder.Config(
-                blockTrieAccessor,
-                keyStore,
-                offchainStorages,
-                offchainNetworkState,
-                nodeRole == NodeRole.AUTHORING
+            blockTrieAccessor,
+            keyStore,
+            offchainStorages,
+            offchainNetworkState,
+            nodeRole == NodeRole.AUTHORING
         );
 
         return this.buildRuntime(code, cfg);
@@ -121,13 +121,13 @@ public class RuntimeBuilder {
 
         SharedMemory sharedMemory = new SharedMemory(null, null);
         Context context = new Context(
-                config.blockTrieAccessor(),
-                config.keyStore(),
-                config.offchainStorages(),
-                config.offchainNetworkState(),
-                config.isValidator(),
-                sharedMemory,
-                null
+            config.blockTrieAccessor(),
+            config.keyStore(),
+            config.offchainStorages(),
+            config.offchainNetworkState(),
+            config.isValidator(),
+            sharedMemory,
+            null
         );
 
         // Construct the host API implementation
@@ -165,8 +165,8 @@ public class RuntimeBuilder {
         byte[] wasmBinaryPrefix = Arrays.copyOfRange(code, 0, 8);
         if (Arrays.equals(wasmBinaryPrefix, ZSTD_PREFIX)) {
             return Zstd.decompress(
-                    Arrays.copyOfRange(code, ZSTD_PREFIX.length, code.length),
-                    MAX_ZSTD_DECOMPRESSED_SIZE
+                Arrays.copyOfRange(code, ZSTD_PREFIX.length, code.length),
+                MAX_ZSTD_DECOMPRESSED_SIZE
             );
         }
 
@@ -202,22 +202,22 @@ public class RuntimeBuilder {
      * however, still remains a responsibility of the caller.
      */
     public record Config(
-            @Nullable
-            BlockTrieAccessor blockTrieAccessor,
-            @Nullable
-            KeyStore keyStore,
-            @Nullable
-            OffchainStorages offchainStorages,
-            @Nullable
-            OffchainNetworkState offchainNetworkState,
-            boolean isValidator
+        @Nullable
+        BlockTrieAccessor blockTrieAccessor,
+        @Nullable
+        KeyStore keyStore,
+        @Nullable
+        OffchainStorages offchainStorages,
+        @Nullable
+        OffchainNetworkState offchainNetworkState,
+        boolean isValidator
     ) {
         public static final Config EMPTY = new Config(null, null, null, null, false);
     }
 
     // TODO: Move this method somewhere else as it doesn't have to do with actually building a runtime instance
     private static final byte[] CODE_KEY_BYTES =
-            LittleEndianUtils.convertBytes(StringUtils.hexToBytes(StringUtils.toHex(":code")));
+        LittleEndianUtils.convertBytes(StringUtils.hexToBytes(StringUtils.toHex(":code")));
 
     /**
      * Builds and returns the runtime code based on decoded proofs and state root hash.
