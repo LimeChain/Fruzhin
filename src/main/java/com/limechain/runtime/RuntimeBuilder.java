@@ -69,17 +69,18 @@ public class RuntimeBuilder {
         //  This shouldn't be like that: base storage (for offchain_index api) is not the same as persistent storage.
         //  Figure out the right approach, when it becomes relevant.
         var baseStorage = persistentStorage;
+        var offchainStorages = new OffchainStorages(localStorage, persistentStorage, baseStorage);
 
         var keyStore = AppBean.getBean(KeyStore.class);
         var blockTrieAccessor = AccessorHolder.getInstance().getBlockTrieAccessor();
 
-        Host host = Network.getNetwork().getHost();
+        Host host = AppBean.getBean(Network.class).getHost();
         var offchainNetworkState = new OffchainNetworkState(host.getPeerId(), host.listenAddresses());
 
         RuntimeBuilder.Config cfg = new RuntimeBuilder.Config(
             blockTrieAccessor,
             keyStore,
-            new OffchainStorages(localStorage, persistentStorage, baseStorage),
+            offchainStorages,
             offchainNetworkState,
             nodeRole == NodeRole.AUTHORING
         );
