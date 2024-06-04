@@ -151,7 +151,7 @@ public class RuntimeBuilder {
         //  This injection is necessarily delayed to circumvent the circular dependency:
         //  instance needs imports -> imports need shared memory -> shared memory needs instance (to fetch the memory from)
         Memory instanceMemory = instance.exports.getMemory(WasmExports.MEMORY.getValue());
-        int heapBase = runtime.getHeapBase();
+        int heapBase = instance.exports.getGlobal(WasmExports.HEAP_BASE.getValue()).getIntValue();
         sharedMemory.setMemory(new WasmMemory(instanceMemory));
         sharedMemory.setAllocator(new FreeingBumpHeapAllocator(heapBase));
 

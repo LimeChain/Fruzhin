@@ -1,6 +1,5 @@
 package com.limechain.runtime;
 
-import com.limechain.runtime.hostapi.WasmExports;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import com.limechain.runtime.version.RuntimeVersion;
 import com.limechain.runtime.version.scale.RuntimeVersionReader;
@@ -96,16 +95,5 @@ public class Runtime {
         //  That's what Gossamer does though, but their wasm runtime could be doing things differently underneath.
         this.module.close();
         this.instance.close();
-    }
-
-    // TODO:
-    //  These methods don't make much sense being here as of right now, since they're only used in a deprecated test.
-    //  See `RuntimeWasmTest`.
-    int getHeapBase() {
-        return instance.exports.getGlobal(WasmExports.HEAP_BASE.getValue()).getIntValue();
-    }
-
-    int getDataEnd() {
-        return instance.exports.getGlobal(WasmExports.DATA_END.getValue()).getIntValue();
     }
 }
