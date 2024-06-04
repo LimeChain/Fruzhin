@@ -1,40 +1,50 @@
 package com.limechain.runtime;
 
-import com.limechain.exception.misc.WasmRuntimeException;
-import com.limechain.runtime.version.scale.RuntimeVersionReader;
+import com.dylibso.chicory.log.SystemLogger;
+import com.dylibso.chicory.wasm.Module;
+import com.dylibso.chicory.wasm.Parser;
+import com.dylibso.chicory.wasm.types.Export;
+import com.dylibso.chicory.wasm.types.ExportSection;
+import com.dylibso.chicory.wasm.types.Import;
+import com.dylibso.chicory.wasm.types.MemoryImport;
+import com.dylibso.chicory.wasm.types.MemorySection;
+import com.dylibso.chicory.wasm.types.SectionId;
+import com.dylibso.chicory.wasm.types.UnknownCustomSection;
 import com.limechain.runtime.version.ApiVersions;
 import com.limechain.runtime.version.RuntimeVersion;
-import com.limechain.utils.ByteArrayUtils;
+import com.limechain.runtime.version.scale.RuntimeVersionReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import lombok.experimental.UtilityClass;
 import org.jetbrains.annotations.Nullable;
+import org.wasmer.ImportObject;
 
-import java.util.Arrays;
+import java.io.ByteArrayInputStream;
 import java.util.Objects;
+import java.util.Optional;
 
 @UtilityClass
 public class WasmSectionUtils {
-    private static final byte[] RUNTIME_VERSION_SECTION_NAME = "runtime_version".getBytes();
-    private static final byte[] RUNTIME_APIS_SECTION_NAME = "runtime_apis".getBytes();
+    private static final String RUNTIME_VERSION_SECTION_NAME = "runtime_version";
+    private static final String RUNTIME_APIS_SECTION_NAME = "runtime_apis";
+    private static final String MEMORY_IMPORT_NAME = "memory";
+    private static final String ENV_MODULE_NAME = "env";
+
+    private static final int DEFAULT_MEMORY_PAGES = 2048;
 
     /**
      * Parses the runtime version if both wasm custom sections ("runtime_apis" and "runtime_version") are present.
+     *
      * @param wasmBinary the wasm blob
      * @return the parsed RuntimeVersion if both custom sections are present, null otherwise
      */
     @Nullable
-    public RuntimeVersion parseRuntimeVersionFromCustomSections(byte[] wasmBinary) {
-        // byte value of \0asm concatenated with 0x1, 0x0, 0x0, 0x0
-        // taken from Smoldot: https://github.com/smol-dot/smoldot/blob/21be5a1abaebeaf7270a744485b4551da8636fb1/lib/src/executor/host/runtime_version.rs#L97
-        byte[] searchKey = new byte[]{0x00, 0x61, 0x73, 0x6D, 0x1, 0x0, 0x0, 0x0};
+    public RuntimeVersion parseRuntimeVersionFromBinary(byte[] wasmBinary) {
+        Module moduleWithCustomSections = toModuleWithSections(wasmBinary, SectionId.CUSTOM);
 
-        int searchedKeyIndex = ByteArrayUtils.indexOf(wasmBinary, searchKey);
-        if (searchedKeyIndex < 0) {
-            throw new WasmRuntimeException("Key not found in runtime code.");
-        }
-
-        WasmCustomSection runtimeApis = findRuntimeApisCustomSection(wasmBinary);
-        WasmCustomSection runtimeVersion = findRuntimeVersionCustomSection(wasmBinary);
+        UnknownCustomSection runtimeApis = (UnknownCustomSection) moduleWithCustomSections
+                .customSection(RUNTIME_APIS_SECTION_NAME);
+        UnknownCustomSection runtimeVersion = (UnknownCustomSection) moduleWithCustomSections
+                .customSection(RUNTIME_VERSION_SECTION_NAME);
 
         // If we're missing any of the two custom sections, fallback to `Core_runtime`
         if (Objects.isNull(runtimeApis) || Objects.isNull(runtimeVersion)) {
@@ -42,83 +52,69 @@ public class WasmSectionUtils {
         }
 
         // Read as many api versions as there are (we don't know the length for some reason).
-        ApiVersions apiVersions = ApiVersions.decodeNoLength(runtimeApis.content());
+        ApiVersions apiVersions = ApiVersions.decodeNoLength(runtimeApis.bytes());
 
         // Construct the runtime version partially uninitialized,
         // and then immediately set its apis we've read from the custom section.
-        RuntimeVersion version = new RuntimeVersionReader().read(new ScaleCodecReader(runtimeVersion.content()));
+        RuntimeVersion version = new RuntimeVersionReader().read(new ScaleCodecReader(runtimeVersion.bytes()));
         version.setApis(apiVersions);
 
         return version;
     }
 
     /**
-     * Finds the "runtime_apis" custom section in the given wasm binary
+     * Parses the import section of a wasm blob and extracts the "memory" import if present.
+     *
+     * @param wasmBinary the wasm blob
+     * @return the parsed {@link org.wasmer.ImportObject.MemoryImport} if present,
+     * a default one with 24 initial pages otherwise
      */
-    @Nullable
-    public WasmCustomSection findRuntimeApisCustomSection(byte[] wasmBinary) {
-        return findCustomSection(wasmBinary, RUNTIME_APIS_SECTION_NAME);
-    }
+    public ImportObject.MemoryImport parseMemoryFromBinary(byte[] wasmBinary) {
+        Module moduleWithSections = toModuleWithSections(
+                wasmBinary, SectionId.IMPORT, SectionId.MEMORY, SectionId.EXPORT);
+        int initialPagesLimit = DEFAULT_MEMORY_PAGES;
 
-    /**
-     * Finds the "runtime_version" custom section in the given wasm binary
-     */
-    @Nullable
-    public WasmCustomSection findRuntimeVersionCustomSection(byte[] wasmBinary) {
-        return WasmSectionUtils.findCustomSection(wasmBinary, RUNTIME_VERSION_SECTION_NAME);
-    }
-
-    /**
-     * Finds a wasm custom section by name
-     * @param wasmBytes the wasm blob
-     * @param sectionName the name of the custom section we're looking for
-     * @return the parsed wasm custom section with the given name,
-     *         null if no section with this name is found in the wasm blob
-     * @see WasmCustomSection for the data conatined in a "found custom section"
-     */
-    @Nullable
-    public WasmCustomSection findCustomSection(byte[] wasmBytes, byte[] sectionName) {
-        // Start after the Wasm file header
-        int offset = 8;
-
-        while (offset < wasmBytes.length) {
-            // Read section ID
-            int sectionId = wasmBytes[offset++];
-
-            // Read section size (as varint)
-            int sectionSize = 0;
-            int shift = 0;
-            byte byteRead;
-            do {
-                byteRead = wasmBytes[offset++];
-                sectionSize |= (byteRead & 0x7f) << shift;
-                shift += 7;
-            } while (byteRead < 0);
-
-            if (sectionId == 0) {
-                // Custom section found
-                // Extract its name
-                byte[] customSectionNameAndContent = new byte[sectionSize];
-                System.arraycopy(wasmBytes, offset, customSectionNameAndContent, 0, sectionSize);
-
-                ScaleCodecReader reader = new ScaleCodecReader(customSectionNameAndContent);
-                int nameSize = reader.readUByte();
-                byte[] sectionNameDecoded = reader.readByteArray(nameSize);
-
-                // If it's the name we're looking for, parse and return
-                if (Arrays.equals(sectionNameDecoded, sectionName)) {
-                    int contentSize = sectionSize - nameSize - 1;
-                    byte[] sectionContent = new byte[contentSize];
-                    System.arraycopy(customSectionNameAndContent, nameSize + 1, sectionContent, 0, contentSize);
-
-                    return new WasmCustomSection(sectionNameDecoded, sectionContent);
-                }
+        // Per Runtime spec only one memory should be available for each module.
+        if (isMemorySectionValid(moduleWithSections.memorySection())
+                && isExportSectionValid(moduleWithSections.exportSection())) {
+            initialPagesLimit = moduleWithSections.memorySection().getMemory(0).memoryLimits().initialPages();
+        } else if (moduleWithSections.importSection() != null) {
+            Optional<Import> parsedMemoryImport = moduleWithSections.importSection().stream()
+                    .filter(i -> i.name().equals(MEMORY_IMPORT_NAME))
+                    .findFirst();
+            if (parsedMemoryImport.isPresent()) {
+                initialPagesLimit = ((MemoryImport) parsedMemoryImport.get()).limits().initialPages();
             }
-
-            // Move the offset to the next section
-            offset += sectionSize;
         }
 
-        return null;
+        return new ImportObject.MemoryImport(ENV_MODULE_NAME, initialPagesLimit, false);
+    }
+
+    private boolean isMemorySectionValid(@Nullable MemorySection memorySection) {
+        return memorySection != null && memorySection.memoryCount() == 1;
+    }
+
+    private boolean isExportSectionValid(@Nullable ExportSection exportSection) {
+        if (exportSection == null) {
+            return false;
+        }
+
+        for (int i = 0; i < exportSection.exportCount(); i++) {
+            Export export = exportSection.getExport(i);
+            if (export.name().equals(MEMORY_IMPORT_NAME)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private Module toModuleWithSections(byte[] wasmBinary, int... sectionIds) {
+        Parser parser = new Parser(new SystemLogger());
+        for (int sectionId : sectionIds) {
+            parser.includeSection(sectionId);
+        }
+
+        return parser.parseModule(new ByteArrayInputStream(wasmBinary));
     }
 }
