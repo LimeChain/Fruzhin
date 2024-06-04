@@ -109,9 +109,9 @@ class OffchainHostFunctionsTest {
     void extOffchainLocalStorageSetWhenKindIs1ShouldStoreKeyValueInPersistentStorage() {
         RuntimePointerSize keyPointer = mock(RuntimePointerSize.class);
         RuntimePointerSize valuePointer = mock(RuntimePointerSize.class);
-        String key = "key";
+        byte[] key = "key".getBytes();
         byte[] value = new byte[] {1,2,3};
-        when(sharedMemory.readData(keyPointer)).thenReturn(key.getBytes());
+        when(sharedMemory.readData(keyPointer)).thenReturn(key);
         when(sharedMemory.readData(valuePointer)).thenReturn(value);
 
         offchainHostFunctions.extOffchainLocalStorageSet(1, keyPointer, valuePointer);
@@ -123,9 +123,9 @@ class OffchainHostFunctionsTest {
     void extOffchainLocalStorageSetWhenKindIs2ShouldStoreKeyValueInLocalStorage() {
         RuntimePointerSize keyPointer = mock(RuntimePointerSize.class);
         RuntimePointerSize valuePointer = mock(RuntimePointerSize.class);
-        String key = "key";
+        byte[] key = "key".getBytes();
         byte[] value = new byte[] {1,2,3};
-        when(sharedMemory.readData(keyPointer)).thenReturn(key.getBytes());
+        when(sharedMemory.readData(keyPointer)).thenReturn(key);
         when(sharedMemory.readData(valuePointer)).thenReturn(value);
 
         offchainHostFunctions.extOffchainLocalStorageSet(2, keyPointer, valuePointer);
@@ -151,7 +151,7 @@ class OffchainHostFunctionsTest {
 
         offchainHostFunctions.extOffchainLocalStorageClear(1, keyPointer);
 
-        verify(persistentStorage).remove(key);
+        verify(persistentStorage).remove(key.getBytes());
     }
 
     @Test
@@ -162,7 +162,7 @@ class OffchainHostFunctionsTest {
 
         offchainHostFunctions.extOffchainLocalStorageClear(2, keyPointer);
 
-        verify(localStorage).remove(key);
+        verify(localStorage).remove(key.getBytes());
     }
 
     @Test
@@ -180,11 +180,11 @@ class OffchainHostFunctionsTest {
         RuntimePointerSize oldValuePointer = mock(RuntimePointerSize.class);
         RuntimePointerSize newValuePointer = mock(RuntimePointerSize.class);
 
-        String key = "key";
+        byte[] key = "key".getBytes();
         byte[] oldValue = new byte[] {1,2,3};
         byte[] oldValueOption = new byte[] {1,12,1,2,3}; // 1 - non-empty, 12 - compact value of 3 (size of the value)
         byte[] newValue = new byte[] {4,5,6};
-        when(sharedMemory.readData(keyPointer)).thenReturn(key.getBytes());
+        when(sharedMemory.readData(keyPointer)).thenReturn(key);
         when(sharedMemory.readData(oldValuePointer)).thenReturn(oldValueOption);
         when(sharedMemory.readData(newValuePointer)).thenReturn(newValue);
         when(persistentStorage.compareAndSet(key, oldValue, newValue)).thenReturn(true);
@@ -201,11 +201,11 @@ class OffchainHostFunctionsTest {
         RuntimePointerSize oldValuePointer = mock(RuntimePointerSize.class);
         RuntimePointerSize newValuePointer = mock(RuntimePointerSize.class);
 
-        String key = "key";
+        byte[] key = "key".getBytes();
         byte[] oldValue = new byte[] {1,2,3};
         byte[] oldValueOption = new byte[] {1,12,1,2,3}; // 1 - non-empty, 12 - compact value of 3 (size of the value)
         byte[] newValue = new byte[] {4,5,6};
-        when(sharedMemory.readData(keyPointer)).thenReturn(key.getBytes());
+        when(sharedMemory.readData(keyPointer)).thenReturn(key);
         when(sharedMemory.readData(oldValuePointer)).thenReturn(oldValueOption);
         when(sharedMemory.readData(newValuePointer)).thenReturn(newValue);
         when(localStorage.compareAndSet(key, oldValue, newValue)).thenReturn(true);
@@ -222,11 +222,11 @@ class OffchainHostFunctionsTest {
         RuntimePointerSize oldValuePointer = mock(RuntimePointerSize.class);
         RuntimePointerSize newValuePointer = mock(RuntimePointerSize.class);
 
-        String key = "key";
+        byte[] key = "key".getBytes();
         byte[] oldValue = new byte[] {1,2,3};
         byte[] oldValueOption = new byte[] {1,12,1,2,3}; // 1 - non-empty, 12 - compact value of 3 (size of the value)
         byte[] newValue = new byte[] {4,5,6};
-        when(sharedMemory.readData(keyPointer)).thenReturn(key.getBytes());
+        when(sharedMemory.readData(keyPointer)).thenReturn(key);
         when(sharedMemory.readData(oldValuePointer)).thenReturn(oldValueOption);
         when(sharedMemory.readData(newValuePointer)).thenReturn(newValue);
         when(persistentStorage.compareAndSet(key, oldValue, newValue)).thenReturn(false);
@@ -243,11 +243,11 @@ class OffchainHostFunctionsTest {
         RuntimePointerSize oldValuePointer = mock(RuntimePointerSize.class);
         RuntimePointerSize newValuePointer = mock(RuntimePointerSize.class);
 
-        String key = "key";
+        byte[] key = "key".getBytes();
         byte[] oldValue = new byte[] {1,2,3};
         byte[] oldValueOption = new byte[] {1,12,1,2,3}; // 1 - non-empty, 12 - compact value of 3 (size of the value)
         byte[] newValue = new byte[] {4,5,6};
-        when(sharedMemory.readData(keyPointer)).thenReturn(key.getBytes());
+        when(sharedMemory.readData(keyPointer)).thenReturn(key);
         when(sharedMemory.readData(oldValuePointer)).thenReturn(oldValueOption);
         when(sharedMemory.readData(newValuePointer)).thenReturn(newValue);
         when(localStorage.compareAndSet(key, oldValue, newValue)).thenReturn(false);
@@ -274,10 +274,10 @@ class OffchainHostFunctionsTest {
     void extOffchainLocalStorageGetWhenKindIs1ShouldGetValueFromPersistentStorage() {
         RuntimePointerSize keyPointer = mock(RuntimePointerSize.class);
         RuntimePointerSize valuePointer = mock(RuntimePointerSize.class);
-        String key = "key";
+        byte[] key = "key".getBytes();
         byte[] value = new byte[] {1,2,3};
         byte[] valueAsOption = new byte[] {1,1,2,3};
-        when(sharedMemory.readData(keyPointer)).thenReturn(key.getBytes());
+        when(sharedMemory.readData(keyPointer)).thenReturn(key);
         when(persistentStorage.get(key)).thenReturn(value);
         when(sharedMemory.writeData(valueAsOption)).thenReturn(valuePointer);
 
@@ -290,10 +290,10 @@ class OffchainHostFunctionsTest {
     void extOffchainLocalStorageGetWhenKindIs2ShouldGetValueFromLocalStorage() {
         RuntimePointerSize keyPointer = mock(RuntimePointerSize.class);
         RuntimePointerSize valuePointer = mock(RuntimePointerSize.class);
-        String key = "key";
+        byte[] key = "key".getBytes();
         byte[] value = new byte[] {1,2,3};
         byte[] valueAsOption = new byte[] {1,1,2,3};
-        when(sharedMemory.readData(keyPointer)).thenReturn(key.getBytes());
+        when(sharedMemory.readData(keyPointer)).thenReturn(key);
         when(localStorage.get(key)).thenReturn(value);
         when(sharedMemory.writeData(valueAsOption)).thenReturn(valuePointer);
 
@@ -315,9 +315,9 @@ class OffchainHostFunctionsTest {
     void offchainIndexSetShouldSetInPersistentStorage() {
         RuntimePointerSize keyPointer = mock(RuntimePointerSize.class);
         RuntimePointerSize valuePointer = mock(RuntimePointerSize.class);
-        String key = "key";
+        byte[] key = "key".getBytes();
         byte[] value = new byte[] {1,2,3};
-        when(sharedMemory.readData(keyPointer)).thenReturn(key.getBytes());
+        when(sharedMemory.readData(keyPointer)).thenReturn(key);
         when(sharedMemory.readData(valuePointer)).thenReturn(value);
 
         offchainHostFunctions.offchainIndexSet(keyPointer, valuePointer);
@@ -328,8 +328,8 @@ class OffchainHostFunctionsTest {
     @Test
     void offchainIndexClearShouldRemoveKeyFromPersistentStorage() {
         RuntimePointerSize keyPointer = mock(RuntimePointerSize.class);
-        String key = "key";
-        when(sharedMemory.readData(keyPointer)).thenReturn(key.getBytes());
+        byte[] key = "key".getBytes();
+        when(sharedMemory.readData(keyPointer)).thenReturn(key);
 
         offchainHostFunctions.offchainIndexClear(keyPointer);
 

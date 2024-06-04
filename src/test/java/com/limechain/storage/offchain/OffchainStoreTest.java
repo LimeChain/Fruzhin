@@ -17,8 +17,8 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class OffchainStoreTest {
     private static final String TEST_PREFIX = "test_";
-    private final String key = "key";
-    private final String prefixedKey = TEST_PREFIX.concat(key);
+    private final byte[] key = "key".getBytes();
+    private final String prefixedKey = TEST_PREFIX.concat(new String(key));
 
     private OffchainStore offchainStore;
 
