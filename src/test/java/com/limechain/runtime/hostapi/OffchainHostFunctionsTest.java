@@ -1,8 +1,8 @@
 package com.limechain.runtime.hostapi;
 
-import com.limechain.config.HostConfig;
-import com.limechain.network.protocol.blockannounce.NodeRole;
-import com.limechain.runtime.Runtime;
+import com.limechain.runtime.SharedMemory;
+import com.limechain.runtime.hostapi.dto.OffchainNetworkState;
+import com.limechain.storage.offchain.OffchainStorages;
 import com.limechain.runtime.hostapi.dto.HttpErrorType;
 import com.limechain.runtime.hostapi.dto.HttpStatusCode;
 import com.limechain.exception.hostapi.InvalidArgumentException;
@@ -15,9 +15,6 @@ import org.javatuples.Pair;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EnumSource;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -43,15 +40,12 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class OffchainHostFunctionsTest {
-    @InjectMocks
     private OffchainHostFunctions offchainHostFunctions;
 
     @Mock
     private OffchainHttpRequests requests;
     @Mock
-    private Runtime runtime;
-    @Mock
-    private HostConfig config;
+    private SharedMemory sharedMemory;
     @Mock
     private OffchainStore persistentStorage;
     @Mock
@@ -79,26 +73,9 @@ class OffchainHostFunctionsTest {
 
     @BeforeEach
     void setup() {
-        offchainHostFunctions = new OffchainHostFunctions(runtime, config, requests, persistentStorage, localStorage);
-    }
-
-    @Test
-    void extOffchainIsValidatorWhenNodeRoleIsAuthoringShouldReturnOne() {
-        when(config.getNodeRole()).thenReturn(NodeRole.AUTHORING);
-
-        int result = offchainHostFunctions.extOffchainIsValidator();
-
-        assertEquals(1, result);
-    }
-
-    @ParameterizedTest
-    @EnumSource(value = NodeRole.class, names = {"AUTHORING"}, mode = EnumSource.Mode.EXCLUDE)
-    void extOffchainIsValidatorWhenNodeRoleIsNotAuthoringShouldReturnZero(NodeRole nodeRole) {
-        when(config.getNodeRole()).thenReturn(nodeRole);
-
-        int result = offchainHostFunctions.extOffchainIsValidator();
-
-        assertEquals(0, result);
+        OffchainStorages offchainStorages = new OffchainStorages(localStorage, persistentStorage, persistentStorage);
+        OffchainNetworkState networkState = null; // NOTE: Intentionally null as it's not needed for the test suite
+        offchainHostFunctions = new OffchainHostFunctions(sharedMemory, offchainStorages, networkState, false, requests);
     }
 
     @Test
@@ -120,7 +97,7 @@ class OffchainHostFunctionsTest {
     void extOffchainRandomSeedReturnsAPointerToA32BitNumber() {
         RuntimePointerSize runtimePointerSize = mock(RuntimePointerSize.class);
         int pointer = 123;
-        when(runtime.writeDataToMemory(argThat(argument -> argument.length == 32))).thenReturn(runtimePointerSize);
+        when(sharedMemory.writeData(argThat(argument -> argument.length == 32))).thenReturn(runtimePointerSize);
         when(runtimePointerSize.pointer()).thenReturn(pointer);
 
         int result = offchainHostFunctions.extOffchainRandomSeed();
@@ -132,10 +109,10 @@ class OffchainHostFunctionsTest {
     void extOffchainLocalStorageSetWhenKindIs1ShouldStoreKeyValueInPersistentStorage() {
         RuntimePointerSize keyPointer = mock(RuntimePointerSize.class);
         RuntimePointerSize valuePointer = mock(RuntimePointerSize.class);
-        String key = "key";
+        byte[] key = "key".getBytes();
         byte[] value = new byte[] {1,2,3};
-        when(runtime.getDataFromMemory(keyPointer)).thenReturn(key.getBytes());
-        when(runtime.getDataFromMemory(valuePointer)).thenReturn(value);
+        when(sharedMemory.readData(keyPointer)).thenReturn(key);
+        when(sharedMemory.readData(valuePointer)).thenReturn(value);
 
         offchainHostFunctions.extOffchainLocalStorageSet(1, keyPointer, valuePointer);
 
@@ -146,10 +123,10 @@ class OffchainHostFunctionsTest {
     void extOffchainLocalStorageSetWhenKindIs2ShouldStoreKeyValueInLocalStorage() {
         RuntimePointerSize keyPointer = mock(RuntimePointerSize.class);
         RuntimePointerSize valuePointer = mock(RuntimePointerSize.class);
-        String key = "key";
+        byte[] key = "key".getBytes();
         byte[] value = new byte[] {1,2,3};
-        when(runtime.getDataFromMemory(keyPointer)).thenReturn(key.getBytes());
-        when(runtime.getDataFromMemory(valuePointer)).thenReturn(value);
+        when(sharedMemory.readData(keyPointer)).thenReturn(key);
+        when(sharedMemory.readData(valuePointer)).thenReturn(value);
 
         offchainHostFunctions.extOffchainLocalStorageSet(2, keyPointer, valuePointer);
 
@@ -170,22 +147,22 @@ class OffchainHostFunctionsTest {
     void extOffchainLocalStorageClearWhenKindIs1ShouldClearKeyInPersistentStorage() {
         RuntimePointerSize keyPointer = mock(RuntimePointerSize.class);
         String key = "key";
-        when(runtime.getDataFromMemory(keyPointer)).thenReturn(key.getBytes());
+        when(sharedMemory.readData(keyPointer)).thenReturn(key.getBytes());
 
         offchainHostFunctions.extOffchainLocalStorageClear(1, keyPointer);
 
-        verify(persistentStorage).remove(key);
+        verify(persistentStorage).remove(key.getBytes());
     }
 
     @Test
     void extOffchainLocalStorageClearWhenKindIs2ShouldClearKeyInLocalStorage() {
         RuntimePointerSize keyPointer = mock(RuntimePointerSize.class);
         String key = "key";
-        when(runtime.getDataFromMemory(keyPointer)).thenReturn(key.getBytes());
+        when(sharedMemory.readData(keyPointer)).thenReturn(key.getBytes());
 
         offchainHostFunctions.extOffchainLocalStorageClear(2, keyPointer);
 
-        verify(localStorage).remove(key);
+        verify(localStorage).remove(key.getBytes());
     }
 
     @Test
@@ -203,13 +180,13 @@ class OffchainHostFunctionsTest {
         RuntimePointerSize oldValuePointer = mock(RuntimePointerSize.class);
         RuntimePointerSize newValuePointer = mock(RuntimePointerSize.class);
 
-        String key = "key";
+        byte[] key = "key".getBytes();
         byte[] oldValue = new byte[] {1,2,3};
         byte[] oldValueOption = new byte[] {1,12,1,2,3}; // 1 - non-empty, 12 - compact value of 3 (size of the value)
         byte[] newValue = new byte[] {4,5,6};
-        when(runtime.getDataFromMemory(keyPointer)).thenReturn(key.getBytes());
-        when(runtime.getDataFromMemory(oldValuePointer)).thenReturn(oldValueOption);
-        when(runtime.getDataFromMemory(newValuePointer)).thenReturn(newValue);
+        when(sharedMemory.readData(keyPointer)).thenReturn(key);
+        when(sharedMemory.readData(oldValuePointer)).thenReturn(oldValueOption);
+        when(sharedMemory.readData(newValuePointer)).thenReturn(newValue);
         when(persistentStorage.compareAndSet(key, oldValue, newValue)).thenReturn(true);
 
         int result = offchainHostFunctions.extOffchainLocalStorageCompareAndSet(1, keyPointer,
@@ -224,13 +201,13 @@ class OffchainHostFunctionsTest {
         RuntimePointerSize oldValuePointer = mock(RuntimePointerSize.class);
         RuntimePointerSize newValuePointer = mock(RuntimePointerSize.class);
 
-        String key = "key";
+        byte[] key = "key".getBytes();
         byte[] oldValue = new byte[] {1,2,3};
         byte[] oldValueOption = new byte[] {1,12,1,2,3}; // 1 - non-empty, 12 - compact value of 3 (size of the value)
         byte[] newValue = new byte[] {4,5,6};
-        when(runtime.getDataFromMemory(keyPointer)).thenReturn(key.getBytes());
-        when(runtime.getDataFromMemory(oldValuePointer)).thenReturn(oldValueOption);
-        when(runtime.getDataFromMemory(newValuePointer)).thenReturn(newValue);
+        when(sharedMemory.readData(keyPointer)).thenReturn(key);
+        when(sharedMemory.readData(oldValuePointer)).thenReturn(oldValueOption);
+        when(sharedMemory.readData(newValuePointer)).thenReturn(newValue);
         when(localStorage.compareAndSet(key, oldValue, newValue)).thenReturn(true);
 
         int result = offchainHostFunctions.extOffchainLocalStorageCompareAndSet(2, keyPointer,
@@ -245,13 +222,13 @@ class OffchainHostFunctionsTest {
         RuntimePointerSize oldValuePointer = mock(RuntimePointerSize.class);
         RuntimePointerSize newValuePointer = mock(RuntimePointerSize.class);
 
-        String key = "key";
+        byte[] key = "key".getBytes();
         byte[] oldValue = new byte[] {1,2,3};
         byte[] oldValueOption = new byte[] {1,12,1,2,3}; // 1 - non-empty, 12 - compact value of 3 (size of the value)
         byte[] newValue = new byte[] {4,5,6};
-        when(runtime.getDataFromMemory(keyPointer)).thenReturn(key.getBytes());
-        when(runtime.getDataFromMemory(oldValuePointer)).thenReturn(oldValueOption);
-        when(runtime.getDataFromMemory(newValuePointer)).thenReturn(newValue);
+        when(sharedMemory.readData(keyPointer)).thenReturn(key);
+        when(sharedMemory.readData(oldValuePointer)).thenReturn(oldValueOption);
+        when(sharedMemory.readData(newValuePointer)).thenReturn(newValue);
         when(persistentStorage.compareAndSet(key, oldValue, newValue)).thenReturn(false);
 
         int result = offchainHostFunctions.extOffchainLocalStorageCompareAndSet(1, keyPointer,
@@ -266,13 +243,13 @@ class OffchainHostFunctionsTest {
         RuntimePointerSize oldValuePointer = mock(RuntimePointerSize.class);
         RuntimePointerSize newValuePointer = mock(RuntimePointerSize.class);
 
-        String key = "key";
+        byte[] key = "key".getBytes();
         byte[] oldValue = new byte[] {1,2,3};
         byte[] oldValueOption = new byte[] {1,12,1,2,3}; // 1 - non-empty, 12 - compact value of 3 (size of the value)
         byte[] newValue = new byte[] {4,5,6};
-        when(runtime.getDataFromMemory(keyPointer)).thenReturn(key.getBytes());
-        when(runtime.getDataFromMemory(oldValuePointer)).thenReturn(oldValueOption);
-        when(runtime.getDataFromMemory(newValuePointer)).thenReturn(newValue);
+        when(sharedMemory.readData(keyPointer)).thenReturn(key);
+        when(sharedMemory.readData(oldValuePointer)).thenReturn(oldValueOption);
+        when(sharedMemory.readData(newValuePointer)).thenReturn(newValue);
         when(localStorage.compareAndSet(key, oldValue, newValue)).thenReturn(false);
 
         int result = offchainHostFunctions.extOffchainLocalStorageCompareAndSet(2, keyPointer,
@@ -297,12 +274,12 @@ class OffchainHostFunctionsTest {
     void extOffchainLocalStorageGetWhenKindIs1ShouldGetValueFromPersistentStorage() {
         RuntimePointerSize keyPointer = mock(RuntimePointerSize.class);
         RuntimePointerSize valuePointer = mock(RuntimePointerSize.class);
-        String key = "key";
+        byte[] key = "key".getBytes();
         byte[] value = new byte[] {1,2,3};
         byte[] valueAsOption = new byte[] {1,1,2,3};
-        when(runtime.getDataFromMemory(keyPointer)).thenReturn(key.getBytes());
+        when(sharedMemory.readData(keyPointer)).thenReturn(key);
         when(persistentStorage.get(key)).thenReturn(value);
-        when(runtime.writeDataToMemory(valueAsOption)).thenReturn(valuePointer);
+        when(sharedMemory.writeData(valueAsOption)).thenReturn(valuePointer);
 
         RuntimePointerSize result = offchainHostFunctions.extOffchainLocalStorageGet(1, keyPointer);
 
@@ -313,12 +290,12 @@ class OffchainHostFunctionsTest {
     void extOffchainLocalStorageGetWhenKindIs2ShouldGetValueFromLocalStorage() {
         RuntimePointerSize keyPointer = mock(RuntimePointerSize.class);
         RuntimePointerSize valuePointer = mock(RuntimePointerSize.class);
-        String key = "key";
+        byte[] key = "key".getBytes();
         byte[] value = new byte[] {1,2,3};
         byte[] valueAsOption = new byte[] {1,1,2,3};
-        when(runtime.getDataFromMemory(keyPointer)).thenReturn(key.getBytes());
+        when(sharedMemory.readData(keyPointer)).thenReturn(key);
         when(localStorage.get(key)).thenReturn(value);
-        when(runtime.writeDataToMemory(valueAsOption)).thenReturn(valuePointer);
+        when(sharedMemory.writeData(valueAsOption)).thenReturn(valuePointer);
 
         RuntimePointerSize result = offchainHostFunctions.extOffchainLocalStorageGet(2, keyPointer);
 
@@ -338,10 +315,10 @@ class OffchainHostFunctionsTest {
     void offchainIndexSetShouldSetInPersistentStorage() {
         RuntimePointerSize keyPointer = mock(RuntimePointerSize.class);
         RuntimePointerSize valuePointer = mock(RuntimePointerSize.class);
-        String key = "key";
+        byte[] key = "key".getBytes();
         byte[] value = new byte[] {1,2,3};
-        when(runtime.getDataFromMemory(keyPointer)).thenReturn(key.getBytes());
-        when(runtime.getDataFromMemory(valuePointer)).thenReturn(value);
+        when(sharedMemory.readData(keyPointer)).thenReturn(key);
+        when(sharedMemory.readData(valuePointer)).thenReturn(value);
 
         offchainHostFunctions.offchainIndexSet(keyPointer, valuePointer);
 
@@ -351,8 +328,8 @@ class OffchainHostFunctionsTest {
     @Test
     void offchainIndexClearShouldRemoveKeyFromPersistentStorage() {
         RuntimePointerSize keyPointer = mock(RuntimePointerSize.class);
-        String key = "key";
-        when(runtime.getDataFromMemory(keyPointer)).thenReturn(key.getBytes());
+        byte[] key = "key".getBytes();
+        when(sharedMemory.readData(keyPointer)).thenReturn(key);
 
         offchainHostFunctions.offchainIndexClear(keyPointer);
 
@@ -364,7 +341,7 @@ class OffchainHostFunctionsTest {
         try {
             when(requests.getResponseHeaders(requestId)).thenReturn(responseHeaders);
             byte[] scaleEncodedHeaders = scaleEncodeHeaders(responseHeaders);
-            when(runtime.writeDataToMemory(scaleEncodedHeaders)).thenReturn(resultPointer);
+            when(sharedMemory.writeData(scaleEncodedHeaders)).thenReturn(resultPointer);
 
             RuntimePointerSize result = offchainHostFunctions.extOffchainHttpResponseHeadersVersion1(requestId);
             assertEquals(resultPointer, result);
@@ -397,12 +374,12 @@ class OffchainHostFunctionsTest {
                 .add(BigInteger.valueOf(timeout)));
         mockedStatic.when(Instant::now).thenReturn(instant);
 
-        when(runtime.getDataFromMemory(deadlinePointer)).thenReturn(buf.toByteArray());
+        when(sharedMemory.readData(deadlinePointer)).thenReturn(buf.toByteArray());
         HttpStatusCode[] expectedResponses = new HttpStatusCode[]{HttpStatusCode.success(200)};
         when(requests.getRequestsResponses(new int[]{requestId}, timeout)).thenReturn(expectedResponses);
 
-        when(runtime.getDataFromMemory(runtimePointerSize)).thenReturn(scaleEncodedRequestIds);
-        when(runtime.writeDataToMemory(offchainHostFunctions
+        when(sharedMemory.readData(runtimePointerSize)).thenReturn(scaleEncodedRequestIds);
+        when(sharedMemory.writeData(offchainHostFunctions
                 .scaleEncodeArrayOfRequestStatuses(expectedResponses))).thenReturn(resultPointer);
 
         RuntimePointerSize result = offchainHostFunctions
@@ -425,10 +402,10 @@ class OffchainHostFunctionsTest {
                 .add(BigInteger.valueOf(deadlineReachedTimeout)));
 
         mockedStatic.when(Instant::now).thenReturn(instant);
-        when(runtime.getDataFromMemory(deadlinePointer)).thenReturn(buf.toByteArray());
+        when(sharedMemory.readData(deadlinePointer)).thenReturn(buf.toByteArray());
         when(requests.executeRequest(eq(requestId), eq(deadlineReachedTimeout), anyLong()))
                 .thenReturn(HttpStatusCode.error(HttpErrorType.DEADLINE_REACHED));
-        when(runtime.writeDataToMemory(HttpErrorType.DEADLINE_REACHED.scaleEncodedResult()))
+        when(sharedMemory.writeData(HttpErrorType.DEADLINE_REACHED.scaleEncodedResult()))
                 .thenReturn(resultPointer);
 
         RuntimePointerSize result = offchainHostFunctions.extOffchainHttpResponseReadBodyVersion1(requestId,
@@ -452,11 +429,11 @@ class OffchainHostFunctionsTest {
 
         mockedStatic.when(Instant::now).thenReturn(instant);
 
-        when(runtime.getDataFromMemory(deadlinePointer)).thenReturn(buf.toByteArray());
+        when(sharedMemory.readData(deadlinePointer)).thenReturn(buf.toByteArray());
         when(requests.executeRequest(eq(requestId), eq(timeout), anyLong()))
                 .thenReturn(HttpStatusCode.error(HttpErrorType.IO_ERROR));
 
-        when(runtime.writeDataToMemory(HttpErrorType.IO_ERROR.scaleEncodedResult()))
+        when(sharedMemory.writeData(HttpErrorType.IO_ERROR.scaleEncodedResult()))
                 .thenReturn(resultPointer);
 
         RuntimePointerSize result = offchainHostFunctions.extOffchainHttpResponseReadBodyVersion1(requestId,
@@ -481,11 +458,11 @@ class OffchainHostFunctionsTest {
 
         mockedStatic.when(Instant::now).thenReturn(instant);
 
-        when(runtime.getDataFromMemory(deadlinePointer)).thenReturn(buf.toByteArray());
+        when(sharedMemory.readData(deadlinePointer)).thenReturn(buf.toByteArray());
         when(requests.executeRequest(eq(requestId), eq(timeout), anyLong()))
                 .thenReturn(HttpStatusCode.error(HttpErrorType.INVALID_ID));
 
-        when(runtime.writeDataToMemory(HttpErrorType.INVALID_ID.scaleEncodedResult()))
+        when(sharedMemory.writeData(HttpErrorType.INVALID_ID.scaleEncodedResult()))
                 .thenReturn(resultPointer);
 
         RuntimePointerSize result = offchainHostFunctions.extOffchainHttpResponseReadBodyVersion1(requestId,

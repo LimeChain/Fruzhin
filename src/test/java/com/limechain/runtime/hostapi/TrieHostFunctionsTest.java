@@ -1,6 +1,6 @@
 package com.limechain.runtime.hostapi;
 
-import com.limechain.runtime.Runtime;
+import com.limechain.runtime.SharedMemory;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import com.limechain.trie.TrieStructureFactory;
 import com.limechain.trie.decoded.Trie;
@@ -44,7 +44,7 @@ class TrieHostFunctionsTest {
     @InjectMocks
     private TrieHostFunctions trieHostFunctions;
     @Mock
-    private Runtime runtime;
+    private SharedMemory sharedMemory;
     @Mock
     private RuntimePointerSize keyPointer;
     @Mock
@@ -58,9 +58,9 @@ class TrieHostFunctionsTest {
     void blakeTwo256OrderedRootVersion1() throws IOException {
         var expectedRootHash = RandomGenerationUtils.generateBytes(TRIE_ROOT_HASH_BYTE_LEN);
         var values = Stream.of("first", "second", "third").map(String::getBytes).toList();
-        when(runtime.writeDataToMemory(eq(expectedRootHash))).thenReturn(expectedResultPtr);
+        when(sharedMemory.writeData(eq(expectedRootHash))).thenReturn(expectedResultPtr);
 
-        when(runtime.writeDataToMemory(expectedRootHash)).thenReturn(expectedResultPtr);
+        when(sharedMemory.writeData(expectedRootHash)).thenReturn(expectedResultPtr);
         try (
             MockedConstruction<TrieHostFunctions.ArgParser> argParserMockedConstruction = mockConstruction(
                 TrieHostFunctions.ArgParser.class,
@@ -101,7 +101,7 @@ class TrieHostFunctionsTest {
         when(nodeHandleMock.getUserData()).thenReturn(new NodeData(new byte[] {}, expectedRootHash));
         when(trieMock.getRootNode()).thenReturn(Optional.of(nodeHandleMock));
 
-        when(runtime.writeDataToMemory(expectedRootHash)).thenReturn(expectedResultPtr);
+        when(sharedMemory.writeData(expectedRootHash)).thenReturn(expectedResultPtr);
 
         try (MockedStatic<TrieStructureFactory> mockedTSF = Mockito.mockStatic(TrieStructureFactory.class)) {
             mockedTSF
@@ -122,7 +122,7 @@ class TrieHostFunctionsTest {
         var pairs = Stream.of(new Pair<>("first", "one"), new Pair<>("second", "two"))
             .map(p -> new Pair<>(p.getValue0().getBytes(), p.getValue1().getBytes()))
             .toList();
-        when(runtime.writeDataToMemory(eq(expectedRootHash))).thenReturn(expectedResultPtr);
+        when(sharedMemory.writeData(eq(expectedRootHash))).thenReturn(expectedResultPtr);
 
         try (
             MockedConstruction<TrieHostFunctions.ArgParser> argParserMockedConstruction = mockConstruction(
@@ -167,10 +167,10 @@ class TrieHostFunctionsTest {
         final var rootPointer = new RuntimePointerSize(100, TRIE_ROOT_HASH_BYTE_LEN);
         final var proofPointer = new RuntimePointerSize(101, 0);
 
-        when(runtime.getDataFromMemory(keyPointer)).thenReturn(keyBytes);
-        when(runtime.getDataFromMemory(valuePointer)).thenReturn(valueBytes);
-        when(runtime.getDataFromMemory(rootPointer)).thenReturn(rootHash);
-        when(runtime.getDataFromMemory(proofPointer)).thenReturn(scaleEncodedNodes);
+        when(sharedMemory.readData(keyPointer)).thenReturn(keyBytes);
+        when(sharedMemory.readData(valuePointer)).thenReturn(valueBytes);
+        when(sharedMemory.readData(rootPointer)).thenReturn(rootHash);
+        when(sharedMemory.readData(proofPointer)).thenReturn(scaleEncodedNodes);
 
         try (MockedStatic<TrieVerifier> mockedVerifier = mockStatic(TrieVerifier.class)) {
             mockedVerifier

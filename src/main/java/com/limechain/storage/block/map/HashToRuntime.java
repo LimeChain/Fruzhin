@@ -82,7 +82,7 @@ public class HashToRuntime {
         Set<Runtime> stoppedRuntimes = new HashSet<>();
         for (Runtime runtimeToPrune : mapping.values()) {
             if (!inMemoryRuntime.equals(runtimeToPrune) && !stoppedRuntimes.contains(runtimeToPrune)) {
-                if (runtimeToPrune.getInstance() != null) runtimeToPrune.getInstance().close();
+                runtimeToPrune.close();
                 stoppedRuntimes.add(runtimeToPrune);
             }
         }

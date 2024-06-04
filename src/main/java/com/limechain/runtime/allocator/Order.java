@@ -1,11 +1,10 @@
 package com.limechain.runtime.allocator;
 
+import com.limechain.runtime.memory.Memory;
 import lombok.Data;
 import lombok.extern.java.Log;
-import org.wasmer.Memory;
 
 import java.util.Optional;
-import java.util.logging.Level;
 
 /**
  * <b>Order for blocks of certain size.</b>

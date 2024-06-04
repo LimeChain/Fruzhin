@@ -57,6 +57,7 @@ public class SyncTest {
     }
 
     @Test
+    @Disabled("Flaky test, connection sometimes times out...")
     void remoteBlockRequest_returnCorrectBlock_ifGivenBlockHash() {
         var peerId = PeerId.fromBase58(PEER_ID);
         var receivers = new String[]{PEER_URL + PEER_ID};
@@ -73,6 +74,7 @@ public class SyncTest {
     }
 
     @Test
+    @Disabled("Flaky test, connection sometimes times out...")
     void remoteBlockRequest_returnCorrectBlock_ifGivenBlockNumber() {
         var peerId = PeerId.fromBase58(PEER_ID);
         var receivers = new String[]{PEER_URL + PEER_ID};

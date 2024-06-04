@@ -1,14 +1,14 @@
 package com.limechain.runtime.hostapi;
 
 import com.limechain.exception.scale.ScaleEncodingException;
-import com.limechain.runtime.Runtime;
+import com.limechain.runtime.SharedMemory;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
+import com.limechain.trie.BlockTrieAccessor;
 import com.limechain.runtime.version.StateVersion;
 import com.limechain.storage.DeleteByPrefixResult;
-import com.limechain.trie.AccessorHolder;
-import com.limechain.trie.BlockTrieAccessor;
 import com.limechain.trie.structure.nibble.Nibbles;
 import com.limechain.trie.structure.nibble.NibblesUtils;
+import com.limechain.utils.scale.ScaleUtils;
 import io.emeraldpay.polkaj.scale.CompactMode;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
@@ -17,12 +17,14 @@ import lombok.AllArgsConstructor;
 import lombok.extern.java.Log;
 import org.springframework.lang.Nullable;
 import org.wasmer.ImportObject;
-import org.wasmer.Type;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+
+import static com.limechain.runtime.hostapi.PartialHostApi.newImportObjectPair;
 
 /**
  * Implementations of the Storage HostAPI functions
@@ -30,90 +32,83 @@ import java.util.List;
  * {<a href="https://spec.polkadot.network/chap-host-api#sect-storage-api">Storage API</a>}
  */
 @Log
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class StorageHostFunctions {
-    private final Runtime runtime;
-    private final BlockTrieAccessor repository;
+@AllArgsConstructor(access = AccessLevel.PACKAGE)
+public class StorageHostFunctions implements PartialHostApi {
+    private final SharedMemory sharedMemory;
+    private final BlockTrieAccessor blockTrieAccessor;
 
-    private StorageHostFunctions(Runtime runtime) {
-        this.runtime = runtime;
-        this.repository = AccessorHolder.getInstance().getBlockTrieAccessor();
-    }
-
-    public static List<ImportObject> getFunctions(Runtime runtime) {
-        return new StorageHostFunctions(runtime).buildFunctions();
-    }
-
-    public static byte[] scaleEncodedOption(@Nullable int data) {
-        ByteArrayOutputStream buf = new ByteArrayOutputStream();
-        try (ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
-            writer.writeOptional(ScaleCodecWriter::writeUint32, data);
-        } catch (IOException e) {
-            throw new ScaleEncodingException(e);
-        }
-        return buf.toByteArray();
+    public static byte[] scaleEncodedOption(int data) {
+        return ScaleUtils.Encode.encodeOptional(ScaleCodecWriter::writeUint32, data);
     }
 
     public static byte[] scaleEncodedOption(@Nullable byte[] data) {
-        ByteArrayOutputStream buf = new ByteArrayOutputStream();
-        try (ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
-            writer.writeOptional(ScaleCodecWriter::writeAsList, data);
-        } catch (IOException e) {
-            throw new ScaleEncodingException(e);
-        }
-        return buf.toByteArray();
+        return ScaleUtils.Encode.encodeOptional(ScaleCodecWriter::writeAsList, data);
     }
 
-    public List<ImportObject> buildFunctions() {
-        return Arrays.asList(
-                HostApi.getImportObject("ext_storage_set_version_1", argv ->
-                                extStorageSetVersion1(
-                                        new RuntimePointerSize(argv.get(0)),
-                                        new RuntimePointerSize(argv.get(1))),
-                        List.of(Type.I64, Type.I64)),
-                HostApi.getImportObject("ext_storage_get_version_1", argv ->
-                                extStorageGetVersion1(new RuntimePointerSize(argv.get(0))).pointerSize(),
-                        List.of(Type.I64), Type.I64),
-                HostApi.getImportObject("ext_storage_read_version_1", argv ->
-                                extStorageReadVersion1(
-                                        new RuntimePointerSize(argv.get(0)), new RuntimePointerSize(argv.get(1)),
-                                        argv.get(2).intValue()).pointerSize(),
-                        List.of(Type.I64, Type.I64, Type.I32), Type.I64),
-                HostApi.getImportObject("ext_storage_clear_version_1", argv ->
-                                extStorageClearVersion1(new RuntimePointerSize(argv.get(0))),
-                        List.of(Type.I64)),
-                HostApi.getImportObject("ext_storage_exists_version_1", argv ->
-                                extStorageExistsVersion1(new RuntimePointerSize(argv.get(0))),
-                        List.of(Type.I64), Type.I32),
-                HostApi.getImportObject("ext_storage_clear_prefix_version_1", argv ->
-                                extStorageClearPrefixVersion1(new RuntimePointerSize(argv.get(0))),
-                        List.of(Type.I64)),
-                HostApi.getImportObject("ext_storage_clear_prefix_version_2", argv ->
-                                extStorageClearPrefixVersion2(
-                                        new RuntimePointerSize(argv.get(0)), new RuntimePointerSize(argv.get(1))).pointerSize()
-                        , List.of(Type.I64, Type.I64), Type.I64),
-                HostApi.getImportObject("ext_storage_append_version_1", argv ->
-                        extStorageAppendVersion1(
-                                new RuntimePointerSize(argv.get(0)), new RuntimePointerSize(argv.get(1))
-                        ), List.of(Type.I64, Type.I64)),
-                HostApi.getImportObject("ext_storage_root_version_1", argv ->
-                                extStorageRootVersion1().pointerSize(),
-                        HostApi.EMPTY_LIST_OF_TYPES, Type.I64),
-                HostApi.getImportObject("ext_storage_root_version_2", argv ->
-                                extStorageRootVersion2(argv.get(0).intValue()).pointerSize(),
-                        List.of(Type.I32), Type.I64),
-                HostApi.getImportObject("ext_storage_changes_root_version_1", argv ->
-                                extStorageChangesRootVersion1(new RuntimePointerSize(argv.get(0))).pointerSize()
-                        , List.of(Type.I64), Type.I64),
-                HostApi.getImportObject("ext_storage_next_key_version_1", argv ->
-                                extStorageNextKeyVersion1(new RuntimePointerSize(argv.get(0))).pointerSize(),
-                        List.of(Type.I64), Type.I64),
-                HostApi.getImportObject("ext_storage_start_transaction_version_1", argv ->
-                        extStorageStartTransactionVersion1(), HostApi.EMPTY_LIST_OF_TYPES),
-                HostApi.getImportObject("ext_storage_rollback_transaction_version_1", argv ->
-                        extStorageRollbackTransactionVersion1(), HostApi.EMPTY_LIST_OF_TYPES),
-                HostApi.getImportObject("ext_storage_commit_transaction_version_1", argv ->
-                        extStorageCommitTransactionVersion1(), HostApi.EMPTY_LIST_OF_TYPES));
+    @Override
+    public Map<Endpoint, ImportObject.FuncImport> getFunctionImports() {
+        return Map.ofEntries(
+            newImportObjectPair(Endpoint.ext_storage_set_version_1, argv -> {
+                extStorageSetVersion1(
+                    new RuntimePointerSize(argv.get(0)),
+                    new RuntimePointerSize(argv.get(1)));
+            }),
+            newImportObjectPair(Endpoint.ext_storage_get_version_1, argv -> {
+                return extStorageGetVersion1(new RuntimePointerSize(argv.get(0))).pointerSize();
+            }),
+            newImportObjectPair(Endpoint.ext_storage_read_version_1, argv -> {
+                return extStorageReadVersion1(
+                    new RuntimePointerSize(argv.get(0)), new RuntimePointerSize(argv.get(1)),
+                    argv.get(2).intValue()).pointerSize();
+            }),
+            newImportObjectPair(Endpoint.ext_storage_clear_version_1, argv -> {
+                extStorageClearVersion1(new RuntimePointerSize(argv.get(0)));
+            }),
+
+            newImportObjectPair(Endpoint.ext_storage_exists_version_1, argv -> {
+                return extStorageExistsVersion1(new RuntimePointerSize(argv.get(0)));
+            }),
+
+            newImportObjectPair(Endpoint.ext_storage_clear_prefix_version_1, argv -> {
+                extStorageClearPrefixVersion1(new RuntimePointerSize(argv.get(0)));
+            }),
+
+            newImportObjectPair(Endpoint.ext_storage_clear_prefix_version_2, argv -> {
+                return extStorageClearPrefixVersion2(
+                    new RuntimePointerSize(argv.get(0)),
+                    new RuntimePointerSize(argv.get(1))
+                ).pointerSize();
+
+            }),
+            newImportObjectPair(Endpoint.ext_storage_append_version_1, argv -> {
+                extStorageAppendVersion1(
+                    new RuntimePointerSize(argv.get(0)), new RuntimePointerSize(argv.get(1))
+                );
+            }),
+
+            newImportObjectPair(Endpoint.ext_storage_root_version_1, argv -> {
+                return extStorageRootVersion1().pointerSize();
+            }),
+
+            newImportObjectPair(Endpoint.ext_storage_root_version_2, argv -> {
+                return extStorageRootVersion2(argv.get(0).intValue()).pointerSize();
+            }),
+            newImportObjectPair(Endpoint.ext_storage_changes_root_version_1, argv -> {
+                return extStorageChangesRootVersion1(new RuntimePointerSize(argv.get(0))).pointerSize();
+            }),
+            newImportObjectPair(Endpoint.ext_storage_next_key_version_1, argv -> {
+                return extStorageNextKeyVersion1(new RuntimePointerSize(argv.get(0))).pointerSize();
+            }),
+            newImportObjectPair(Endpoint.ext_storage_start_transaction_version_1, argv -> {
+                extStorageStartTransactionVersion1();
+            }),
+            newImportObjectPair(Endpoint.ext_storage_rollback_transaction_version_1, argv -> {
+                extStorageRollbackTransactionVersion1();
+            }),
+            newImportObjectPair(Endpoint.ext_storage_commit_transaction_version_1, argv -> {
+                extStorageCommitTransactionVersion1();
+            })
+        );
     }
 
     /**
@@ -123,15 +118,15 @@ public class StorageHostFunctions {
      * @param valuePointer a pointer-size containing the key.
      */
     public void extStorageSetVersion1(RuntimePointerSize keyPointer, RuntimePointerSize valuePointer) {
-        Nibbles key = Nibbles.fromBytes(runtime.getDataFromMemory(keyPointer));
-        byte[] value = runtime.getDataFromMemory(valuePointer);
+        Nibbles key = Nibbles.fromBytes(sharedMemory.readData(keyPointer));
+        byte[] value = sharedMemory.readData(valuePointer);
 
         log.fine("");
         log.fine("extStorageSetVersion1 with ");
         log.fine("key: " + key);
         log.fine("value: " + Arrays.toString(value));
         log.fine("");
-        repository.save(key, value);
+        blockTrieAccessor.save(key, value);
     }
 
     /**
@@ -141,15 +136,15 @@ public class StorageHostFunctions {
      * @return a pointer-size returning the SCALE encoded Option value containing the value.
      */
     public RuntimePointerSize extStorageGetVersion1(RuntimePointerSize keyPointer) {
-        Nibbles key = Nibbles.fromBytes(runtime.getDataFromMemory(keyPointer));
-        byte[] value = repository.find(key).orElse(null);
+        Nibbles key = Nibbles.fromBytes(sharedMemory.readData(keyPointer));
+        byte[] value = blockTrieAccessor.find(key).orElse(null);
 
         log.fine("");
         log.fine("extStorageGetVersion1");
         log.fine("key: " + key);
         log.fine("");
 
-        return runtime.writeDataToMemory(scaleEncodedOption(value));
+        return sharedMemory.writeData(scaleEncodedOption(value));
     }
 
     /**
@@ -167,20 +162,20 @@ public class StorageHostFunctions {
     public RuntimePointerSize extStorageReadVersion1(RuntimePointerSize keyPointer, RuntimePointerSize valueOutPointer,
                                                      int offset) {
         log.fine("extStorageReadVersion1");
-        Nibbles key = Nibbles.fromBytes(runtime.getDataFromMemory(keyPointer));
-        byte[] value = repository.find(key).orElse(null);
+        Nibbles key = Nibbles.fromBytes(sharedMemory.readData(keyPointer));
+        byte[] value = blockTrieAccessor.find(key).orElse(null);
 
         if (value == null) {
-            return runtime.writeDataToMemory(scaleEncodedOption(null));
+            return sharedMemory.writeData(scaleEncodedOption(null));
         }
 
         int size = 0;
         if (offset <= value.length) {
             size = value.length - offset;
-            runtime.writeDataToMemory(Arrays.copyOfRange(value, offset, value.length), valueOutPointer);
+            sharedMemory.writeData(Arrays.copyOfRange(value, offset, value.length), valueOutPointer);
         }
 
-        return runtime.writeDataToMemory(scaleEncodedOption(size));
+        return sharedMemory.writeData(scaleEncodedOption(size));
     }
 
     /**
@@ -190,8 +185,8 @@ public class StorageHostFunctions {
      */
     public void extStorageClearVersion1(RuntimePointerSize keyPointer) {
         log.fine("extStorageClearVersion1");
-        Nibbles key = Nibbles.fromBytes(runtime.getDataFromMemory(keyPointer));
-        repository.delete(key);
+        Nibbles key = Nibbles.fromBytes(sharedMemory.readData(keyPointer));
+        blockTrieAccessor.delete(key);
     }
 
     /**
@@ -202,8 +197,8 @@ public class StorageHostFunctions {
      */
     public int extStorageExistsVersion1(RuntimePointerSize keyPointer) {
         log.fine("extStorageExistsVersion1");
-        Nibbles key = Nibbles.fromBytes(runtime.getDataFromMemory(keyPointer));
-        return repository.find(key).isPresent() ? 1 : 0;
+        Nibbles key = Nibbles.fromBytes(sharedMemory.readData(keyPointer));
+        return blockTrieAccessor.find(key).isPresent() ? 1 : 0;
     }
 
     /**
@@ -213,8 +208,8 @@ public class StorageHostFunctions {
      */
     public void extStorageClearPrefixVersion1(RuntimePointerSize prefixPointer) {
         log.fine("extStorageClearPrefixVersion1");
-        Nibbles prefix = Nibbles.fromBytes(runtime.getDataFromMemory(prefixPointer));
-        repository.deleteByPrefix(prefix, null);
+        Nibbles prefix = Nibbles.fromBytes(sharedMemory.readData(prefixPointer));
+        blockTrieAccessor.deleteByPrefix(prefix, null);
     }
 
     /**
@@ -231,14 +226,14 @@ public class StorageHostFunctions {
     public RuntimePointerSize extStorageClearPrefixVersion2(RuntimePointerSize prefixPointer,
                                                             RuntimePointerSize limitPointer) {
         log.fine("extStorageClearPrefixVersion2");
-        Nibbles prefix = Nibbles.fromBytes(runtime.getDataFromMemory(prefixPointer));
+        Nibbles prefix = Nibbles.fromBytes(sharedMemory.readData(prefixPointer));
 
-        byte[] limitBytes = runtime.getDataFromMemory(limitPointer);
+        byte[] limitBytes = sharedMemory.readData(limitPointer);
         Long limit = new ScaleCodecReader(limitBytes).readOptional(ScaleCodecReader.UINT32).orElse(null);
 
-        DeleteByPrefixResult result = repository.deleteByPrefix(prefix, limit);
+        DeleteByPrefixResult result = blockTrieAccessor.deleteByPrefix(prefix, limit);
 
-        return runtime.writeDataToMemory(result.scaleEncoded());
+        return sharedMemory.writeData(result.scaleEncoded());
     }
 
     /**
@@ -252,9 +247,9 @@ public class StorageHostFunctions {
     public void extStorageAppendVersion1(RuntimePointerSize keyPointer, RuntimePointerSize valuePointer) {
         log.fine("extStorageAppendVersion1");
 
-        Nibbles key = Nibbles.fromBytes(runtime.getDataFromMemory(keyPointer));
-        byte[] sequence = repository.find(key).orElse(null);
-        byte[] valueToAppend = runtime.getDataFromMemory(valuePointer);
+        Nibbles key = Nibbles.fromBytes(sharedMemory.readData(keyPointer));
+        byte[] sequence = blockTrieAccessor.find(key).orElse(null);
+        byte[] valueToAppend = sharedMemory.readData(valuePointer);
 
         if (sequence == null) {
             ByteArrayOutputStream buf = new ByteArrayOutputStream();
@@ -264,7 +259,7 @@ public class StorageHostFunctions {
             } catch (IOException e) {
                 throw new ScaleEncodingException(e);
             }
-            repository.save(key, buf.toByteArray());
+            blockTrieAccessor.save(key, buf.toByteArray());
             return;
         }
 
@@ -279,7 +274,7 @@ public class StorageHostFunctions {
             } catch (IOException ez) {
                 throw new ScaleEncodingException(e);
             }
-            repository.save(key, buf.toByteArray());
+            blockTrieAccessor.save(key, buf.toByteArray());
             return;
         }
 
@@ -297,7 +292,7 @@ public class StorageHostFunctions {
         } catch (IOException e) {
             throw new ScaleEncodingException(e);
         }
-        repository.save(key, buf.toByteArray());
+        blockTrieAccessor.save(key, buf.toByteArray());
     }
 
     /**
@@ -307,9 +302,9 @@ public class StorageHostFunctions {
      */
     public RuntimePointerSize extStorageRootVersion1() {
         log.fine("extStorageRootVersion1");
-        byte[] rootHash = repository.getMerkleRoot(StateVersion.V0);
+        byte[] rootHash = blockTrieAccessor.getMerkleRoot(StateVersion.V0);
 
-        return runtime.writeDataToMemory(rootHash);
+        return sharedMemory.writeData(rootHash);
     }
 
     /**
@@ -321,9 +316,9 @@ public class StorageHostFunctions {
     public RuntimePointerSize extStorageRootVersion2(int version) {
         log.fine("extStorageRootVersion2");
 
-        byte[] rootHash = repository.getMerkleRoot(StateVersion.fromInt(version));
+        byte[] rootHash = blockTrieAccessor.getMerkleRoot(StateVersion.fromInt(version));
 
-        return runtime.writeDataToMemory(rootHash);
+        return sharedMemory.writeData(rootHash);
     }
 
     /**
@@ -335,7 +330,7 @@ public class StorageHostFunctions {
     public RuntimePointerSize extStorageChangesRootVersion1(RuntimePointerSize parentHashPointer) {
         log.fine("extStorageChangesRootVersion1");
 
-        return runtime.writeDataToMemory(scaleEncodedOption(null));
+        return sharedMemory.writeData(scaleEncodedOption(null));
     }
 
     /**
@@ -348,13 +343,13 @@ public class StorageHostFunctions {
     public RuntimePointerSize extStorageNextKeyVersion1(RuntimePointerSize keyPointer) {
         log.fine("extStorageNextKeyVersion1");
 
-        Nibbles key = Nibbles.fromBytes(runtime.getDataFromMemory(keyPointer));
-        byte[] nextKey = repository.getNextKey(key)
+        Nibbles key = Nibbles.fromBytes(sharedMemory.readData(keyPointer));
+        byte[] nextKey = blockTrieAccessor.getNextKey(key)
                 .map(NibblesUtils::toBytesAppending)
                 .map(this::asByteArray)
                 .orElse(null);
 
-        return runtime.writeDataToMemory(scaleEncodedOption(nextKey));
+        return sharedMemory.writeData(scaleEncodedOption(nextKey));
     }
 
     private byte[] asByteArray(List<Byte> bytes) {
@@ -373,7 +368,7 @@ public class StorageHostFunctions {
      */
     public void extStorageStartTransactionVersion1() {
         log.fine("extStorageStartTransactionVersion1");
-        repository.startTransaction();
+        blockTrieAccessor.startTransaction();
     }
 
     /**
@@ -381,7 +376,7 @@ public class StorageHostFunctions {
      * Any changes made during that transaction are discarded. It’s legal to call this function multiple times in a row.
      */
     public void extStorageRollbackTransactionVersion1() {
-        repository.rollbackTransaction();
+        blockTrieAccessor.rollbackTransaction();
     }
 
     /**
@@ -390,6 +385,6 @@ public class StorageHostFunctions {
      * It’s legal to call this function multiple times in a row.
      */
     public void extStorageCommitTransactionVersion1() {
-        repository.commitTransaction();
+        blockTrieAccessor.commitTransaction();
     }
 }

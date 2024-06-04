@@ -1,6 +1,7 @@
 package com.limechain.runtime.allocator;
 
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
+import com.limechain.runtime.memory.Memory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -10,7 +11,6 @@ import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.wasmer.Memory;
 
 import java.nio.ByteBuffer;
 import java.util.List;

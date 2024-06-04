@@ -1,34 +1,42 @@
 package com.limechain.runtime;
 
-import com.limechain.runtime.allocator.FreeingBumpHeapAllocator;
-import com.limechain.runtime.hostapi.WasmExports;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import com.limechain.runtime.version.RuntimeVersion;
-import lombok.Getter;
+import com.limechain.runtime.version.scale.RuntimeVersionReader;
+import com.limechain.utils.scale.ScaleUtils;
 import lombok.extern.java.Log;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.wasmer.Instance;
-import org.wasmer.Memory;
 import org.wasmer.Module;
 
-import java.nio.ByteBuffer;
 import java.util.logging.Level;
 
-import static com.limechain.runtime.RuntimeBuilder.getImports;
-
-@Getter
 @Log
 public class Runtime {
-    private RuntimeVersion version;
-    private final Instance instance;
-    private final int heapPages;
-    private final FreeingBumpHeapAllocator allocator;
+    // TODO: Figure out whether we'll actually need this field
+    Module module; // used to open/close all of its own instances
+    Context context;
+    Instance instance;
 
-    public Runtime(Module module, int heapPages) {
-        this.heapPages = heapPages;
-        this.instance = module.instantiate(getImports(module, this));
-        this.allocator = new FreeingBumpHeapAllocator(getHeapBase());
+    // TODO: Reconsider whether `Context` should be a constructor argument or (dependency injected)
+    //                       OR an argument of `Runtime::call()` (dependency parameterized)
+    //  The former necessitates the explicit passing of a context for every build of the runtime
+    //      (we can't build the underlying module only - we always instantiate and tie the instance to the context)
+    //    - In more lightweight cases (i.e. only build to fetch the version), we'll have to explicitly provide a "partial" context;
+    //      "partial" meaning with some of the services inside being null (or partially implemented)
+    //      since we know they are not going to be used
+    //  The latter necessitates the explicit re-instantiating of the underlying `org.wasmer.Instance`
+    //      for each RuntimeAPI call (they do that in Gossamer),
+    //      but allows for easy caching of the compiled wasm module (thus we can pass that around, e.g. in the BlockState)
+    //      and instantiate with a context only when invocation is necessary.
+    //      This might prove more fitting, for example,
+    //      when executing consecutive blocks (between which there's no runtime updates)
+    //      without rebuilding the module and by only changing the context...
+    Runtime(Module module, Context context, Instance instance) {
+        this.module = module;
+        this.context = context;
+        this.instance = instance;
     }
 
     /**
@@ -49,7 +57,7 @@ public class Runtime {
      */
     @Nullable
     public byte[] call(String functionName, @NotNull byte[] parameter) {
-        return callInner(functionName, writeDataToMemory(parameter));
+        return callInner(functionName, context.getSharedMemory().writeData(parameter));
     }
 
     @Nullable
@@ -63,87 +71,29 @@ public class Runtime {
         }
 
         RuntimePointerSize responsePtrSize = new RuntimePointerSize((long) response[0]);
-        return getDataFromMemory(responsePtrSize);
+        return context.getSharedMemory().readData(responsePtrSize);
     }
 
     /**
-     * This setter exists to be used only in the RuntimeBuilder, since the RuntimeVersion is essentially an attribute
-     * of the Runtime, thus modeled as its field. If we can't find it in a custom section directly from the binary
-     * though, we'll still need an instance of `Runtime` in order to obtain the version by calling `Core_version`,
-     * and set it afterward via this setter.
+     * @return the {@link RuntimeVersion} of this runtime instance.
+     * @implNote The runtime version is cached in the context, so no actual runtime invocation is performed.
      */
-    void setVersion(RuntimeVersion runtimeVersion) {
-        this.version = runtimeVersion;
+    public RuntimeVersion getVersion() {
+        return this.context.getRuntimeVersion();
     }
 
-    public int getHeapBase() {
-        return instance.exports.getGlobal(WasmExports.HEAP_BASE.getValue()).getIntValue();
-    }
-
-    public int getDataEnd() {
-        return instance.exports.getGlobal(WasmExports.DATA_END.getValue()).getIntValue();
-    }
-
-    private Memory getMemory() {
-        return instance.exports.getMemory(WasmExports.MEMORY.getValue());
+    RuntimeVersion callCoreVersion() {
+        return ScaleUtils.Decode.decode(this.call("Core_version"), new RuntimeVersionReader());
     }
 
     /**
-     * Get the data stored in memory using a {@link  RuntimePointerSize}
-     *
-     * @param runtimePointerSize pointer to data and its size
-     * @return byte array with read data
+     * Closes the underlying instance.
      */
-    public byte[] getDataFromMemory(RuntimePointerSize runtimePointerSize) {
-        ByteBuffer memoryBuffer = this.getMemory().buffer();
-        byte[] data = new byte[runtimePointerSize.size()];
-        memoryBuffer.position(runtimePointerSize.pointer());
-        memoryBuffer.get(data);
-        return data;
-    }
-
-    /**
-     * Write data to memory, by allocating space in memory and then writing to it.
-     *
-     * @param data data to be written
-     * @return a pointer size to the written data
-     */
-    public RuntimePointerSize writeDataToMemory(byte[] data) {
-        RuntimePointerSize allocatedPointer = allocate(data.length);
-        writeDataToMemory(data, allocatedPointer);
-        return allocatedPointer;
-    }
-
-    /**
-     * Write data to memory, by using a {@link RuntimePointerSize}.
-     * <br>Data will be written at the given {@link RuntimePointerSize#pointer() pointer}.
-     * <br>Only the first bytes up to the given {@link RuntimePointerSize#size() size} will be written.
-     *
-     * @param data               data to be written to memory
-     * @param runtimePointerSize pointer to memory and size of data to be stored.
-     */
-    public void writeDataToMemory(byte[] data, RuntimePointerSize runtimePointerSize) {
-        ByteBuffer memoryBuffer = getMemory().buffer();
-        memoryBuffer.position(runtimePointerSize.pointer());
-        memoryBuffer.put(data, 0, runtimePointerSize.size());
-    }
-
-    /**
-     * Allocate a number of bytes in memory.
-     *
-     * @param numberOfBytes number of bytes to be allocated
-     * @return a pointer-size to the allocated space in memory
-     */
-    public RuntimePointerSize allocate(int numberOfBytes) {
-        return allocator.allocate(numberOfBytes, getMemory());
-    }
-
-    /**
-     * Deallocate the space at given memory pointer
-     *
-     * @param pointer position in memory
-     */
-    public void deallocate(int pointer) {
-        allocator.deallocate(pointer, getMemory());
+    public void close() {
+        // TODO:
+        //  We're not sure whether we should also close the module.
+        //  That's what Gossamer does though, but their wasm runtime could be doing things differently underneath.
+        this.module.close();
+        this.instance.close();
     }
 }

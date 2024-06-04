@@ -1,14 +1,14 @@
 package com.limechain.runtime.hostapi;
 
-import com.limechain.runtime.Runtime;
+import com.limechain.runtime.SharedMemory;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.extern.java.Log;
 import org.wasmer.ImportObject;
-import org.wasmer.Type;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.Map;
+
+import static com.limechain.runtime.hostapi.PartialHostApi.newImportObjectPair;
 
 /**
  * Implementations of the Allocator HostAPI functions
@@ -16,22 +16,20 @@ import java.util.List;
  * {<a href="https://spec.polkadot.network/chap-host-api#sect-allocator-api">Allocator API</a>}
  */
 @Log
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class AllocatorHostFunctions {
-    private final Runtime runtime;
+@AllArgsConstructor(access = AccessLevel.PACKAGE)
+public class AllocatorHostFunctions implements PartialHostApi {
+    private final SharedMemory sharedMemory;
 
-    public static List<ImportObject> getFunctions(Runtime runtime) {
-        return new AllocatorHostFunctions(runtime).buildFunctions();
-    }
-
-    public List<ImportObject> buildFunctions() {
-        return Arrays.asList(
-                HostApi.getImportObject("ext_allocator_malloc_version_1", argv ->
-                                extAllocatorMallocVersion1(argv.get(0).intValue()),
-                        List.of(Type.I32), Type.I32),
-                HostApi.getImportObject("ext_allocator_free_version_1", argv ->
-                                extAllocatorFreeVersion1(argv.get(0).intValue()),
-                        List.of(Type.I32)));
+    @Override
+    public Map<Endpoint, ImportObject.FuncImport> getFunctionImports() {
+        return Map.ofEntries(
+            newImportObjectPair(Endpoint.ext_allocator_malloc_version_1, argv -> {
+                return extAllocatorMallocVersion1(argv.get(0).intValue());
+            }),
+            newImportObjectPair(Endpoint.ext_allocator_free_version_1, argv -> {
+                extAllocatorFreeVersion1(argv.get(0).intValue());
+            })
+        );
     }
 
     /**
@@ -42,7 +40,7 @@ public class AllocatorHostFunctions {
      */
     public int extAllocatorMallocVersion1(int size) {
         log.finest("extAllocatorMallocVersion1");
-        return runtime.allocate(size).pointer();
+        return sharedMemory.allocate(size).pointer();
 
     }
 
@@ -53,6 +51,6 @@ public class AllocatorHostFunctions {
      */
     public void extAllocatorFreeVersion1(int pointer) {
         log.finest("extAllocatorFreeVersion1");
-        runtime.deallocate(pointer);
+        sharedMemory.deallocate(pointer);
     }
 }

@@ -12,6 +12,7 @@ import io.emeraldpay.polkaj.scale.reader.ListReader;
 import io.emeraldpay.polkaj.scale.writer.ListWriter;
 import lombok.experimental.UtilityClass;
 import org.javatuples.Pair;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -152,6 +153,23 @@ public class ScaleUtils {
             } catch (IOException e) {
                 throw new ScaleEncodingException("Unexpected exception while encoding.");
             }
+        }
+
+        /**
+         * Scale encodes a nullable value as an optional.
+         * If the value is null, it is encoded as an empty optional.
+         * If the value is not null, it is encoded as an optional with a present value.
+         * @param writer The ScaleWriter for encoding the value, <strong>if</strong> not null.
+         * @param value The nullable object to encode.
+         * @return The encoded optional value.
+         * @param <T>
+         * @throws ScaleEncodingException If an unexpected error occurs during encoding.
+         */
+        public <T> byte[] encodeOptional(ScaleWriter<T> writer, @Nullable T value) {
+            return ScaleUtils.Encode.encode(
+                (scaleCodecWriter, val) -> scaleCodecWriter.writeOptional(writer, val),
+                value
+            );
         }
     }
 }

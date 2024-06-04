@@ -1,15 +1,12 @@
 package com.limechain.runtime.version.scale;
 
-import com.limechain.runtime.version.ApiVersion;
 import com.limechain.runtime.version.RuntimeVersion;
 import com.limechain.runtime.version.StateVersion;
 import com.limechain.runtime.version.ApiVersions;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleReader;
-import io.emeraldpay.polkaj.scale.reader.ListReader;
 
 import java.math.BigInteger;
-import java.util.List;
 
 public class RuntimeVersionReader implements ScaleReader<RuntimeVersion> {
     @Override
@@ -22,8 +19,7 @@ public class RuntimeVersionReader implements ScaleReader<RuntimeVersion> {
         runtimeVersion.setImplementationVersion(BigInteger.valueOf(reader.readUint32()));
 
         // Read the api versions
-        List<ApiVersion> apiVersions = reader.read(new ListReader<>(new ApiVersionReader()));
-        runtimeVersion.setApis(ApiVersions.of(apiVersions));
+        runtimeVersion.setApis(reader.read(ApiVersions.Scale.READER));
 
         // Read transaction version if it's present (older runtimes don't include that field)
         BigInteger transactionVersion = reader.hasNext() ? BigInteger.valueOf(reader.readUint32()) : null;

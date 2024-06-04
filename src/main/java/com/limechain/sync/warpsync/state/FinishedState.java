@@ -15,7 +15,7 @@ public class FinishedState implements WarpSyncState {
 
     @Override
     public void next(WarpSyncMachine sync) {
-        syncedState.getRuntime().getInstance().close();
+        syncedState.getRuntime().close();
         log.log(Level.INFO, "Closed sync runtime instance.");
         log.log(Level.INFO, "Finished! Finished with warp sync! Nothing to execute.");
     }
