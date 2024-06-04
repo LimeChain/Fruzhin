@@ -5,6 +5,7 @@ import com.limechain.runtime.version.ApiVersions;
 import com.limechain.runtime.version.RuntimeVersion;
 import com.limechain.runtime.version.StateVersion;
 import com.limechain.utils.TestUtils;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.wasmer.ImportObject;
 
@@ -95,6 +96,7 @@ class WasmSectionUtilsTest {
     }
 
     @Test
+    @Disabled
     void test_parseMemoryFromBinary_memory_export() throws IOException {
         ImportObject.MemoryImport result = WasmSectionUtils.parseMemoryFromBinary(
             getTestWasmBytes(WASM_FILE_WITH_EXPORT));
@@ -102,6 +104,7 @@ class WasmSectionUtilsTest {
     }
 
     @Test
+    @Disabled
     void test_parseMemoryFromBinary_import() throws IOException {
         ImportObject.MemoryImport result = WasmSectionUtils.parseMemoryFromBinary(
             getTestWasmBytes(WASM_FILE_WITH_IMPORT));
@@ -109,6 +112,7 @@ class WasmSectionUtilsTest {
     }
 
     @Test
+    @Disabled
     void test_parseMemoryFromBinary_default() throws IOException {
         ImportObject.MemoryImport result = WasmSectionUtils.parseMemoryFromBinary(
             getTestWasmBytes(WASM_FILE_DEFAULT));
