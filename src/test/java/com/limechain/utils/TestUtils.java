@@ -37,7 +37,7 @@ public class TestUtils {
      * @param expected the expected object used in the comparison.
      * @param result   the result object used in the comparison.
      */
-    public static void assertEquals(Object expected, Object result) throws IOException {
+    public static void assertEquals(Object expected, Object result) {
         JsonElement expectedNode = GSON.toJsonTree(expected);
         JsonElement resultNode = GSON.toJsonTree(result);
 
