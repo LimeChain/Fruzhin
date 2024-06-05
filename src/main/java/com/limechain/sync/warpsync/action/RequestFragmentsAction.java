@@ -2,6 +2,7 @@ package com.limechain.sync.warpsync.action;
 
 import com.limechain.exception.global.MissingObjectException;
 import com.limechain.network.protocol.warp.dto.WarpSyncResponse;
+import com.limechain.rpc.server.AppBean;
 import com.limechain.sync.warpsync.WarpSyncMachine;
 import com.limechain.sync.warpsync.WarpSyncState;
 import io.emeraldpay.polkaj.types.Hash256;
@@ -14,13 +15,14 @@ import java.util.logging.Level;
 @Log
 public class RequestFragmentsAction implements WarpSyncAction {
 
-    private final WarpSyncState warpSyncState = WarpSyncState.getInstance();
+    private final WarpSyncState warpSyncState;
     private final Hash256 blockHash;
     private WarpSyncResponse result;
     private Exception error;
 
     public RequestFragmentsAction(Hash256 blockHash) {
         this.blockHash = blockHash;
+        this.warpSyncState = AppBean.getBean(WarpSyncState.class);
     }
 
     @Override
@@ -35,7 +37,7 @@ public class RequestFragmentsAction implements WarpSyncAction {
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 log.log(Level.SEVERE, "Retry warp sync request fragment exception: "
-                        + e.getMessage(), e.getStackTrace());
+                                      + e.getMessage(), e.getStackTrace());
             }
         }
         if (this.result != null) {
@@ -65,7 +67,7 @@ public class RequestFragmentsAction implements WarpSyncAction {
             }
 
             log.log(Level.INFO, "Successfully received fragments from peer "
-                    + sync.getNetworkService().getCurrentSelectedPeer());
+                                + sync.getNetworkService().getCurrentSelectedPeer());
             if (resp.getFragments().length == 0) {
                 log.log(Level.WARNING, "No fragments received.");
                 return;

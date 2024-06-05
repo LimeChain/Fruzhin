@@ -23,7 +23,6 @@ public class TransactionsEngine {
     private static final int HANDSHAKE_LENGTH = 1;
 
     private final ConnectionManager connectionManager = ConnectionManager.getInstance();
-    private final WarpSyncState warpSyncState = WarpSyncState.getInstance();
 
     /**
      * Handles an incoming request as follows:

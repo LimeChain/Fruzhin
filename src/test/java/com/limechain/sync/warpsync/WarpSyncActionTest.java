@@ -12,15 +12,18 @@ import com.limechain.runtime.Runtime;
 import com.limechain.runtime.RuntimeBuilder;
 import com.limechain.storage.DBConstants;
 import com.limechain.storage.KVRepository;
+import com.limechain.storage.block.SyncState;
+import com.limechain.trie.decoded.Trie;
+import com.limechain.trie.decoded.TrieVerifier;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.types.Hash256;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedConstruction;
 import org.mockito.MockedStatic;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigInteger;
@@ -29,6 +32,7 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockConstruction;
 import static org.mockito.Mockito.mockStatic;
@@ -38,50 +42,56 @@ import static org.mockito.Mockito.when;
 
 @SuppressWarnings("unused")
 @ExtendWith(MockitoExtension.class)
-@Disabled
 class WarpSyncActionTest {
     @InjectMocks
+    @Spy
     private WarpSyncState warpSyncState;
-
     @Mock
     private Set<BigInteger> scheduledRuntimeUpdateBlocks;
     @Mock
-    private Hash256 lastFinalizedBlockHash;
-    @Mock
-    private Hash256 stateRoot;
+    private SyncState syncState;
     @Mock
     private RuntimeBuilder runtimeBuilder;
     @Mock
     private KVRepository<String, Object> repository;
     @Mock
     private Network network;
+    @Mock
+    private Hash256 lastFinalizedBlockHash;
+    @Mock
+    private Hash256 stateRoot;
+    @Mock
+    private Trie mockTrie;
 
     @Test
     void updateRuntimeCode() throws RuntimeCodeException {
-        LightClientMessage.Response response  = mock(LightClientMessage.Response.class);
+        LightClientMessage.Response response = mock(LightClientMessage.Response.class);
         LightClientMessage.RemoteReadResponse remoteReadResponse = mock(LightClientMessage.RemoteReadResponse.class);
         ByteString wrappedProof = mock(ByteString.class);
-        byte[] proof = new byte[] { 1, 2, 3 };
-        byte[] decodedProof = new byte[] { 4, 5, 6 };
-        byte[][] decodedProofs = new byte[][] { decodedProof };
+        byte[] proof = new byte[]{1, 2, 3};
+        byte[] decodedProof = new byte[]{4, 5, 6};
+        byte[][] decodedProofs = new byte[][]{decodedProof};
         String blockHashString = "blhash";
-        String[] codeKey = new String[]{ WarpSyncState.CODE_KEY };
+        String[] codeKey = new String[]{WarpSyncState.CODE_KEY};
         String stateRootString = "state root";
-        byte[] runtimeCode = new byte[]{ 1, 2 };
+        byte[] runtimeCode = new byte[]{1, 2};
+        when(syncState.getLastFinalizedBlockHash()).thenReturn(lastFinalizedBlockHash);
         when(lastFinalizedBlockHash.toString()).thenReturn(blockHashString);
-        when(stateRoot.toString()).thenReturn(stateRootString);
+        when(syncState.getStateRoot()).thenReturn(stateRoot);
         when(network.makeRemoteReadRequest(blockHashString, codeKey)).thenReturn(response);
         when(response.getRemoteReadResponse()).thenReturn(remoteReadResponse);
         when(remoteReadResponse.getProof()).thenReturn(wrappedProof);
         when(wrappedProof.toByteArray()).thenReturn(proof);
-        when(runtimeBuilder.buildRuntimeCode(decodedProofs, stateRoot)).thenReturn(runtimeCode);
 
         try (MockedConstruction<ScaleCodecReader> readerMock = mockConstruction((ScaleCodecReader.class),
                 (mock, context) -> {
                     when(mock.readCompactInt()).thenReturn(1);
                     when(mock.readByteArray()).thenReturn(decodedProof);
-                })
+                }); MockedStatic<TrieVerifier> staticVerifier = mockStatic(TrieVerifier.class)
         ) {
+            staticVerifier.when(() -> TrieVerifier.buildTrie(decodedProofs, stateRoot.getBytes())).thenReturn(mockTrie);
+            when(mockTrie.get(any())).thenReturn(runtimeCode);
+
             warpSyncState.updateRuntimeCode();
 
             verify(repository).save(DBConstants.RUNTIME_CODE, runtimeCode);
@@ -121,16 +131,15 @@ class WarpSyncActionTest {
 
     @Test
     void loadSavedRuntimeWhenValuesAvailableShouldBuildRuntimeCode() throws RuntimeCodeException {
-        byte[][] merkleProof = new byte[][] {{1, 2}, {3, 4}};
+        byte[][] merkleProof = new byte[][]{{1, 2}, {3, 4}};
         Object stateRootObject = mock(Object.class);
         String stateRoot = "root";
         Hash256 stateRootHash = mock(Hash256.class);
-        byte[] runtimeCode = new byte[]{ 1, 2 };
+        byte[] runtimeCode = new byte[]{1, 2};
         when(repository.find(DBConstants.RUNTIME_CODE)).thenReturn(Optional.of(runtimeCode));
-        when(stateRootObject.toString()).thenReturn(stateRoot);
-        when(runtimeBuilder.buildRuntimeCode(merkleProof, stateRootHash)).thenReturn(runtimeCode);
 
-        try (MockedStatic<Hash256> hashMock = mockStatic(Hash256.class)) {
+        try (MockedStatic<Hash256> hashMock = mockStatic(Hash256.class);
+             MockedStatic<TrieVerifier> staticVerifier = mockStatic(TrieVerifier.class)) {
             hashMock.when(() -> Hash256.from(stateRoot)).thenReturn(stateRootHash);
 
             warpSyncState.loadSavedRuntimeCode();
@@ -150,7 +159,7 @@ class WarpSyncActionTest {
 
     @Test
     void buildRuntime() {
-        byte[] runtimeCode = new byte[] { 1, 2, 3 };
+        byte[] runtimeCode = new byte[]{1, 2, 3};
         warpSyncState.setRuntimeCode(runtimeCode);
         Runtime runtime = mock(Runtime.class);
         when(runtimeBuilder.buildRuntime(runtimeCode)).thenReturn(runtime);

@@ -5,7 +5,6 @@ import com.limechain.storage.block.SyncState;
 import com.limechain.sync.warpsync.WarpSyncMachine;
 import com.limechain.sync.warpsync.WarpSyncState;
 import io.emeraldpay.polkaj.types.Hash256;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -26,14 +25,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-@Disabled
 class RuntimeDownloadStateTest {
     @InjectMocks
     private RuntimeDownloadAction runtimeDownloadState;
     @Mock
     private WarpSyncState warpSyncState;
     @Mock
-    SyncState syncState;
+    private SyncState syncState;
     @Mock
     private WarpSyncMachine warpSyncMachine;
 

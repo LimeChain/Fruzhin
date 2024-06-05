@@ -17,7 +17,6 @@ import com.limechain.network.protocol.warp.dto.HeaderDigest;
 import com.limechain.network.protocol.warp.dto.Justification;
 import com.limechain.network.protocol.warp.scale.reader.BlockHeaderReader;
 import com.limechain.network.protocol.warp.scale.reader.JustificationReader;
-import com.limechain.rpc.server.AppBean;
 import com.limechain.runtime.Runtime;
 import com.limechain.runtime.RuntimeBuilder;
 import com.limechain.storage.DBConstants;
@@ -35,9 +34,7 @@ import com.limechain.utils.StringUtils;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.types.Hash256;
 import io.libp2p.core.PeerId;
-import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.extern.java.Log;
 import org.javatuples.Pair;
@@ -53,27 +50,56 @@ import java.util.logging.Level;
 /**
  * Singleton class, holds and handles the synced state of the Host.
  */
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
-@Getter
-@Setter
 @Log
+@Setter
 public class WarpSyncState {
-    public static final String CODE_KEY = StringUtils.toHex(":code");
-    private static final WarpSyncState INSTANCE = new WarpSyncState();
-    private final PriorityQueue<Pair<BigInteger, Authority[]>> scheduledAuthorityChanges =
-            new PriorityQueue<>(Comparator.comparing(Pair::getValue0));
 
+    private final SyncState syncState;
+    private final Network network;
+    private final KVRepository<String, Object> db;
+
+    public static final String CODE_KEY = StringUtils.toHex(":code");
+
+    @Getter
     private boolean warpSyncFragmentsFinished;
+    @Getter
     private boolean warpSyncFinished;
 
+    @Getter
     private Runtime runtime;
+    @Getter
     private byte[] runtimeCode;
 
-    private RuntimeBuilder runtimeBuilder = new RuntimeBuilder();
-    private Set<BigInteger> scheduledRuntimeUpdateBlocks = new HashSet<>();
+    protected final RuntimeBuilder runtimeBuilder;
+    private final Set<BigInteger> scheduledRuntimeUpdateBlocks;
+    private final PriorityQueue<Pair<BigInteger, Authority[]>> scheduledAuthorityChanges;
+
+    private static WarpSyncState INSTANCE;
 
     public static WarpSyncState getInstance() {
         return INSTANCE;
+    }
+
+    public WarpSyncState(SyncState syncState, Network network, KVRepository<String, Object> db) {
+        this(syncState,
+                network,
+                db,
+                new RuntimeBuilder(),
+                new HashSet<>(),
+                new PriorityQueue<>(Comparator.comparing(Pair::getValue0)));
+    }
+
+    public WarpSyncState(SyncState syncState, Network network, KVRepository<String, Object> db,
+                         RuntimeBuilder runtimeBuilder, Set<BigInteger> scheduledRuntimeUpdateBlocks,
+                         PriorityQueue<Pair<BigInteger, Authority[]>> scheduledAuthorityChanges) {
+        INSTANCE = this;
+
+        this.syncState = syncState;
+        this.network = network;
+        this.db = db;
+        this.runtimeBuilder = runtimeBuilder;
+        this.scheduledRuntimeUpdateBlocks = scheduledRuntimeUpdateBlocks;
+        this.scheduledAuthorityChanges = scheduledAuthorityChanges;
     }
 
     /**
@@ -100,7 +126,6 @@ public class WarpSyncState {
      * @param peerId        sender of the message
      */
     public synchronized void syncCommit(CommitMessage commitMessage, PeerId peerId) {
-        SyncState syncState = AppBean.getBean(SyncState.class);
         if (commitMessage.getVote().getBlockNumber().compareTo(syncState.getLastFinalizedBlockNumber()) <= 0) {
             log.log(Level.FINE, String.format("Received commit message for finalized block %d from peer %s",
                     commitMessage.getVote().getBlockNumber(), peerId));
@@ -125,7 +150,6 @@ public class WarpSyncState {
     }
 
     private void updateState(CommitMessage commitMessage) {
-        SyncState syncState = AppBean.getBean(SyncState.class);
         BigInteger lastFinalizedBlockNumber = syncState.getLastFinalizedBlockNumber();
         if (commitMessage.getVote().getBlockNumber().compareTo(lastFinalizedBlockNumber) < 1) {
             return;
@@ -141,12 +165,13 @@ public class WarpSyncState {
     private void updateRuntime() {
         updateRuntimeCode();
         buildRuntime();
-        BigInteger lastFinalizedBlockNumber = AppBean.getBean(SyncState.class).getLastFinalizedBlockNumber();
+        BigInteger lastFinalizedBlockNumber = syncState.getLastFinalizedBlockNumber();
         scheduledRuntimeUpdateBlocks.remove(lastFinalizedBlockNumber);
     }
 
     private static final byte[] CODE_KEY_BYTES =
             LittleEndianUtils.convertBytes(StringUtils.hexToBytes(StringUtils.toHex(":code")));
+
     /**
      * Builds and returns the runtime code based on decoded proofs and state root hash.
      *
@@ -176,9 +201,6 @@ public class WarpSyncState {
      * Light Messages protocol.
      */
     public void updateRuntimeCode() {
-        SyncState syncState = AppBean.getBean(SyncState.class);
-        Network network = AppBean.getBean(Network.class);
-
         Hash256 lastFinalizedBlockHash = syncState.getLastFinalizedBlockHash();
         Hash256 stateRoot = syncState.getStateRoot();
 
@@ -207,7 +229,6 @@ public class WarpSyncState {
     }
 
     private void saveRuntimeCode(byte[] runtimeCode) {
-        KVRepository<String, Object> db = AppBean.getBean(KVRepository.class);
         db.save(DBConstants.RUNTIME_CODE, runtimeCode);
     }
 
@@ -230,7 +251,6 @@ public class WarpSyncState {
      * Load a saved runtime from database
      */
     public void loadSavedRuntimeCode() {
-        KVRepository<String, Object> db = AppBean.getBean(KVRepository.class);
         this.runtimeCode = (byte[]) db.find(DBConstants.RUNTIME_CODE)
                 .orElseThrow(() -> new RuntimeCodeException("No available runtime code"));
     }
@@ -244,9 +264,6 @@ public class WarpSyncState {
      * @param peerId           sender of message
      */
     public void syncNeighbourMessage(NeighbourMessage neighbourMessage, PeerId peerId) {
-        SyncState syncState = AppBean.getBean(SyncState.class);
-        Network network = AppBean.getBean(Network.class);
-
         network.sendNeighbourMessage(peerId);
         if (warpSyncFinished && neighbourMessage.getSetId().compareTo(syncState.getSetId()) > 0) {
             updateSetData(neighbourMessage.getLastFinalizedBlock().add(BigInteger.ONE), peerId);
@@ -254,9 +271,6 @@ public class WarpSyncState {
     }
 
     private void updateSetData(BigInteger setChangeBlock, PeerId peerId) {
-        Network network = AppBean.getBean(Network.class);
-        SyncState syncState = AppBean.getBean(SyncState.class);
-
         BlockResponse response = network.syncBlock(peerId, setChangeBlock);
         BlockData block = response.getBlocksList().get(0);
 
@@ -283,9 +297,6 @@ public class WarpSyncState {
      * Executes authority changes, scheduled for the current block.
      */
     public void handleScheduledEvents() {
-        SyncState syncState = AppBean.getBean(SyncState.class);
-        Network network = AppBean.getBean(Network.class);
-
         Pair<BigInteger, Authority[]> data = scheduledAuthorityChanges.peek();
         BigInteger setId = syncState.getSetId();
         boolean updated = false;

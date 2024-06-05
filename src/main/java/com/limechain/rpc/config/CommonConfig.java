@@ -15,6 +15,7 @@ import com.limechain.storage.block.SyncState;
 import com.limechain.storage.trie.TrieStorage;
 import com.limechain.sync.fullsync.FullSyncMachine;
 import com.limechain.sync.warpsync.WarpSyncMachine;
+import com.limechain.sync.warpsync.WarpSyncState;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -78,6 +79,12 @@ public class CommonConfig {
     public Network network(ChainService chainService, HostConfig hostConfig, KVRepository<String, Object> repository,
                            CliArguments cliArgs, GenesisBlockHash genesisBlockHash) {
         return new Network(chainService, hostConfig, repository, cliArgs, genesisBlockHash);
+    }
+
+    @Bean
+    public WarpSyncState warpSyncMachine(Network network, SyncState syncState,
+                                         KVRepository<String, Object> repository) {
+        return new WarpSyncState(syncState, network, repository);
     }
 
     @Bean

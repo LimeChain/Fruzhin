@@ -62,7 +62,7 @@ public class Network {
     @Getter
     private final NodeRole nodeRole;
     private final String[] bootNodes;
-    private final ConnectionManager connectionManager = ConnectionManager.getInstance();
+    private final ConnectionManager connectionManager;
     private SyncService syncService;
     private StateService stateService;
     private LightMessagesService lightMessagesService;
@@ -97,6 +97,7 @@ public class Network {
         this.bootNodes = chainService.getChainSpec().getBootNodes();
         this.chain = hostConfig.getChain();
         this.nodeRole = hostConfig.getNodeRole();
+        this.connectionManager = ConnectionManager.getInstance();
         this.initializeProtocols(chainService, genesisBlockHash, hostConfig, repository, cliArgs);
     }
 

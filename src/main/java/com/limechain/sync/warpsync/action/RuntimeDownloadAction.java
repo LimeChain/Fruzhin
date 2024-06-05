@@ -18,7 +18,7 @@ public class RuntimeDownloadAction implements WarpSyncAction {
     private Exception error;
 
     public RuntimeDownloadAction() {
-        this.warpSyncState = WarpSyncState.getInstance();
+        this.warpSyncState = AppBean.getBean(WarpSyncState.class);
         this.syncState = AppBean.getBean(SyncState.class);
     }
 

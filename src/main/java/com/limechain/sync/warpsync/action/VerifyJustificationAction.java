@@ -15,12 +15,13 @@ import java.util.logging.Level;
 // Maybe we can make it a singleton in order to reduce performance overhead?
 @Log
 public class VerifyJustificationAction implements WarpSyncAction {
-    private final WarpSyncState warpSyncState = WarpSyncState.getInstance();
+    private final WarpSyncState warpSyncState;
     private final SyncState syncState;
     private Exception error;
 
     public VerifyJustificationAction() {
         this.syncState = AppBean.getBean(SyncState.class);
+        this.warpSyncState = AppBean.getBean(WarpSyncState.class);
     }
 
     @Override

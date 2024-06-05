@@ -35,11 +35,11 @@ public class ChainInformationBuildAction implements WarpSyncAction {
         sync.getChainInformation().setRuntimeGrandpaVersion(
                 warpSyncState.getRuntime().getVersion().getApis().getApiVersion(hashedApiVersions[2]));
         log.log(Level.INFO, "Aura Api version: " + sync.getChainInformation().getRuntimeAuraVersion()
-                + " Babe api version: " + sync.getChainInformation().getRuntimeBabeVersion() +
-                " Grandpa Api Version: " + sync.getChainInformation().getRuntimeGrandpaVersion());
+                            + " Babe api version: " + sync.getChainInformation().getRuntimeBabeVersion() +
+                            " Grandpa Api Version: " + sync.getChainInformation().getRuntimeGrandpaVersion());
         log.log(Level.INFO, "Runtime supports aura: " + sync.getChainInformation().runtimeHasAura());
         log.log(Level.INFO, "Runtime babe api is v1: " + sync.getChainInformation().runtimeBabeApiIsV1());
         log.log(Level.INFO, "Runtime grandpa supports current setId: "
-                + sync.getChainInformation().runtimeGrandpaSupportsCurrentSetId());
+                            + sync.getChainInformation().runtimeGrandpaSupportsCurrentSetId());
     }
 }

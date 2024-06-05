@@ -25,6 +25,10 @@ public class AppBean implements ApplicationContextAware {
      * Returns null otherwise.
      */
     public static <T extends Object> T getBean(Class<T> beanClass) {
+        if (context == null) {
+            log.warning("Application context is not set");
+            return null;
+        }
         try {
             return context.getBean(beanClass);
         } catch (NoSuchBeanDefinitionException e) {
