@@ -1,5 +1,6 @@
 package com.limechain.trie;
 
+import com.limechain.storage.trie.TrieStorage;
 import com.limechain.trie.structure.nibble.Nibbles;
 import lombok.Getter;
 
@@ -13,8 +14,8 @@ public class ChildTrieAccessor extends TrieAccessor {
     @Getter
     private final Nibbles childTrieKey;
 
-    public ChildTrieAccessor(TrieAccessor parentTrie, Nibbles trieKey, byte[] merkleRoot) {
-        super(merkleRoot);
+    public ChildTrieAccessor(TrieStorage trieStorage, TrieAccessor parentTrie, Nibbles trieKey, byte[] merkleRoot) {
+        super(trieStorage, merkleRoot);
         this.parentTrie = parentTrie;
         this.childTrieKey = trieKey;
     }
@@ -22,7 +23,7 @@ public class ChildTrieAccessor extends TrieAccessor {
     @Override
     public void persistUpdates() {
         super.persistUpdates();
-        parentTrie.save(childTrieKey, lastRoot);
+        parentTrie.save(childTrieKey, mainTrieRoot);
     }
 
 }

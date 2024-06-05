@@ -1,7 +1,7 @@
 package com.limechain.runtime.hostapi;
 
 import com.google.protobuf.ByteString;
-import com.limechain.runtime.Runtime;
+import com.limechain.runtime.SharedMemory;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import com.limechain.runtime.version.StateVersion;
 import com.limechain.trie.TrieStructureFactory;
@@ -20,9 +20,7 @@ import lombok.Getter;
 import lombok.extern.java.Log;
 import org.javatuples.Pair;
 import org.wasmer.ImportObject;
-import org.wasmer.Type;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,61 +32,29 @@ import java.util.stream.Collectors;
  * For more info check
  * {<a href="https://spec.polkadot.network/chap-host-api#sect-trie-api">Trie API</a>}
  */
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@AllArgsConstructor(access = AccessLevel.PACKAGE)
 @Log
-public class TrieHostFunctions {
+public class TrieHostFunctions implements PartialHostApi {
     static final int TRIE_ROOT_HASH_BYTE_LEN = 32;
 
-    private final Runtime runtime;
+    private final SharedMemory sharedMemory;
 
-    public static List<ImportObject> getFunctions(Runtime runtime) {
-        return new TrieHostFunctions(runtime).buildFunctions();
-    }
-
-    public List<ImportObject> buildFunctions() {
-        return Arrays.asList(
-                /*
-                 * TRIE ROOT
-                 */
-                HostApi.getImportObject("ext_trie_blake2_256_root_version_1", this::ext_trie_blake2_256_root_version_1,
-                        List.of(Type.I64), Type.I32),
-
-                HostApi.getImportObject("ext_trie_blake2_256_root_version_2", this::ext_trie_blake2_256_root_version_2,
-                        List.of(Type.I64, Type.I32), Type.I32),
-
-                HostApi.getImportObject("ext_trie_blake2_256_ordered_root_version_1",
-                        this::ext_trie_blake2_256_ordered_root_version_1, List.of(Type.I64), Type.I32),
-
-                HostApi.getImportObject("ext_trie_blake2_256_ordered_root_version_2",
-                        this::ext_trie_blake2_256_ordered_root_version_2, List.of(Type.I64, Type.I32), Type.I32),
-
-                HostApi.getImportObject("ext_trie_keccak_256_root_version_1", this::ext_trie_keccak_256_root_version_1,
-                        List.of(Type.I64), Type.I32),
-
-                HostApi.getImportObject("ext_trie_keccak_256_root_version_2", this::ext_trie_keccak_256_root_version_2,
-                        List.of(Type.I64, Type.I32), Type.I32),
-
-                HostApi.getImportObject("ext_trie_keccak_256_ordered_root_version_1",
-                        this::ext_trie_keccak_256_ordered_root_version_1, List.of(Type.I64), Type.I32),
-
-                HostApi.getImportObject("ext_trie_keccak_256_ordered_root_version_2",
-                        this::ext_trie_keccak_256_ordered_root_version_2, List.of(Type.I64, Type.I32), Type.I32),
-
-                /*
-                 * PROOF VERIFICATION
-                 */
-                HostApi.getImportObject("ext_trie_blake2_256_verify_proof_version_1",
-                        this::ext_trie_blake2_256_verify_proof_version_1, List.of(Type.I32, Type.I64, Type.I64, Type.I64),
-                        Type.I32),
-                HostApi.getImportObject("ext_trie_blake2_256_verify_proof_version_2",
-                        this::ext_trie_blake2_256_verify_proof_version_2,
-                        List.of(Type.I32, Type.I64, Type.I64, Type.I64, Type.I32), Type.I32),
-                HostApi.getImportObject("ext_trie_keccak_256_verify_proof_version_1",
-                        this::ext_trie_keccak_256_verify_proof_version_1, List.of(Type.I32, Type.I64, Type.I64, Type.I64),
-                        Type.I32),
-                HostApi.getImportObject("ext_trie_keccak_256_verify_proof_version_2",
-                        this::ext_trie_keccak_256_verify_proof_version_2,
-                        List.of(Type.I32, Type.I64, Type.I64, Type.I64, Type.I32), Type.I32));
+    @Override
+    public Map<Endpoint, ImportObject.FuncImport> getFunctionImports() {
+        return Map.ofEntries(
+            PartialHostApi.newImportObjectPair(Endpoint.ext_trie_blake2_256_root_version_1, this::ext_trie_blake2_256_root_version_1),
+            PartialHostApi.newImportObjectPair(Endpoint.ext_trie_blake2_256_root_version_2, this::ext_trie_blake2_256_root_version_2),
+            PartialHostApi.newImportObjectPair(Endpoint.ext_trie_blake2_256_ordered_root_version_1, this::ext_trie_blake2_256_ordered_root_version_1),
+            PartialHostApi.newImportObjectPair(Endpoint.ext_trie_blake2_256_ordered_root_version_2, this::ext_trie_blake2_256_ordered_root_version_2),
+            PartialHostApi.newImportObjectPair(Endpoint.ext_trie_keccak_256_root_version_1, this::ext_trie_keccak_256_root_version_1),
+            PartialHostApi.newImportObjectPair(Endpoint.ext_trie_keccak_256_root_version_2, this::ext_trie_keccak_256_root_version_2),
+            PartialHostApi.newImportObjectPair(Endpoint.ext_trie_keccak_256_ordered_root_version_1, this::ext_trie_keccak_256_ordered_root_version_1),
+            PartialHostApi.newImportObjectPair(Endpoint.ext_trie_keccak_256_ordered_root_version_2, this::ext_trie_keccak_256_ordered_root_version_2),
+            PartialHostApi.newImportObjectPair(Endpoint.ext_trie_blake2_256_verify_proof_version_1, this::ext_trie_blake2_256_verify_proof_version_1),
+            PartialHostApi.newImportObjectPair(Endpoint.ext_trie_blake2_256_verify_proof_version_2, this::ext_trie_blake2_256_verify_proof_version_2),
+            PartialHostApi.newImportObjectPair(Endpoint.ext_trie_keccak_256_verify_proof_version_1, this::ext_trie_keccak_256_verify_proof_version_1),
+            PartialHostApi.newImportObjectPair(Endpoint.ext_trie_keccak_256_verify_proof_version_2, this::ext_trie_keccak_256_verify_proof_version_2)
+        );
     }
 
     Number ext_trie_blake2_256_root_version_1(List<Number> args) {
@@ -99,7 +65,7 @@ public class TrieHostFunctions {
 
         byte[] trieRoot = new TrieRootCalculator(HashFunction.BLAKE2B, StateVersion.V0).trieRoot(kvps);
 
-        return runtime.writeDataToMemory(trieRoot).pointer();
+        return sharedMemory.writeData(trieRoot).pointer();
     }
 
     Number ext_trie_blake2_256_root_version_2(List<Number> argv) {
@@ -111,7 +77,7 @@ public class TrieHostFunctions {
 
         byte[] trieRoot = new TrieRootCalculator(HashFunction.BLAKE2B, stateVersion).trieRoot(kvps);
 
-        return runtime.writeDataToMemory(trieRoot).pointer();
+        return sharedMemory.writeData(trieRoot).pointer();
     }
 
     Number ext_trie_blake2_256_ordered_root_version_1(List<Number> argv) {
@@ -122,7 +88,7 @@ public class TrieHostFunctions {
 
         byte[] trieRoot = new TrieRootCalculator(HashFunction.BLAKE2B, StateVersion.V0).orderedTrieRoot(values);
 
-        return runtime.writeDataToMemory(trieRoot).pointer();
+        return sharedMemory.writeData(trieRoot).pointer();
     }
 
     Number ext_trie_blake2_256_ordered_root_version_2(List<Number> argv) {
@@ -134,7 +100,7 @@ public class TrieHostFunctions {
 
         byte[] trieRoot = new TrieRootCalculator(HashFunction.BLAKE2B, stateVersion).orderedTrieRoot(values);
 
-        return runtime.writeDataToMemory(trieRoot).pointer();
+        return sharedMemory.writeData(trieRoot).pointer();
     }
 
     Number ext_trie_keccak_256_root_version_1(List<Number> argv) {
@@ -145,7 +111,7 @@ public class TrieHostFunctions {
 
         byte[] trieRoot = new TrieRootCalculator(HashFunction.KECCAK256, StateVersion.V0).trieRoot(kvps);
 
-        return runtime.writeDataToMemory(trieRoot).pointer();
+        return sharedMemory.writeData(trieRoot).pointer();
     }
 
     Number ext_trie_keccak_256_root_version_2(List<Number> argv) {
@@ -157,7 +123,7 @@ public class TrieHostFunctions {
 
         byte[] trieRoot = new TrieRootCalculator(HashFunction.KECCAK256, stateVersion).trieRoot(kvps);
 
-        return runtime.writeDataToMemory(trieRoot).pointer();
+        return sharedMemory.writeData(trieRoot).pointer();
     }
 
     Number ext_trie_keccak_256_ordered_root_version_1(List<Number> argv) {
@@ -168,7 +134,7 @@ public class TrieHostFunctions {
 
         byte[] trieRoot = new TrieRootCalculator(HashFunction.KECCAK256, StateVersion.V0).orderedTrieRoot(values);
 
-        return runtime.writeDataToMemory(trieRoot).pointer();
+        return sharedMemory.writeData(trieRoot).pointer();
     }
 
     Number ext_trie_keccak_256_ordered_root_version_2(List<Number> argv) {
@@ -180,7 +146,7 @@ public class TrieHostFunctions {
 
         byte[] trieRoot = new TrieRootCalculator(HashFunction.KECCAK256, stateVersion).orderedTrieRoot(values);
 
-        return runtime.writeDataToMemory(trieRoot).pointer();
+        return sharedMemory.writeData(trieRoot).pointer();
     }
 
     Number ext_trie_blake2_256_verify_proof_version_1(List<Number> args) {
@@ -255,7 +221,8 @@ public class TrieHostFunctions {
     @Getter
     @AllArgsConstructor
     enum HashFunction {
-        BLAKE2B(HashUtils::hashWithBlake2b), KECCAK256(HashUtils::hashWithKeccak256);
+        BLAKE2B(HashUtils::hashWithBlake2b),
+        KECCAK256(HashUtils::hashWithKeccak256);
 
         private static final byte[] EMPTY_BLAKE2_TRIE_MERKLE_VALUE =
                 {3, 23, 10, 46, 117, -105, -73, -73, -29, -40, 76, 5, 57, 29, 19, -102, 98, -79, 87, -25, -121, -122, -40,
@@ -324,11 +291,11 @@ public class TrieHostFunctions {
 
         public byte[] parseTrieRoot(int index) {
             int rootPtr = args.get(index).intValue();
-            return runtime.getDataFromMemory(new RuntimePointerSize(rootPtr, TRIE_ROOT_HASH_BYTE_LEN));
+            return sharedMemory.readData(new RuntimePointerSize(rootPtr, TRIE_ROOT_HASH_BYTE_LEN));
         }
 
         public byte[] getDataFromMemory(int index) {
-            return runtime.getDataFromMemory(new RuntimePointerSize(args.get(index)));
+            return sharedMemory.readData(new RuntimePointerSize(args.get(index)));
         }
     }
 }

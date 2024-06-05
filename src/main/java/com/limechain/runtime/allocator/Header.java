@@ -4,9 +4,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.java.Log;
-import org.wasmer.Memory;
-
-import java.util.logging.Level;
+import com.limechain.runtime.memory.Memory;
 
 /**
  * Allocation header preceding a memory block.

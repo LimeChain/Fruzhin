@@ -1,9 +1,12 @@
 package com.limechain.runtime.version;
 
-import com.limechain.runtime.version.scale.ApiVersionReader;
 import com.limechain.exception.scale.ScaleDecodingException;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleReader;
+import io.emeraldpay.polkaj.scale.ScaleWriter;
+import io.emeraldpay.polkaj.scale.reader.ListReader;
+import io.emeraldpay.polkaj.scale.writer.ListWriter;
+import lombok.experimental.UtilityClass;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -41,7 +44,7 @@ public class ApiVersions {
      */
     public static ApiVersions decodeNoLength(byte[] scaleEncoded) {
         ScaleCodecReader reader = new ScaleCodecReader(scaleEncoded);
-        ScaleReader<ApiVersion> apiVersionReader = new ApiVersionReader();
+        ScaleReader<ApiVersion> apiVersionReader = ApiVersion.Scale.READER;
         List<ApiVersion> apiVersionsRaw = new LinkedList<>();
 
         //NOTE:
@@ -78,5 +81,17 @@ public class ApiVersions {
     @Override
     public int hashCode() {
         return Objects.hash(entries);
+    }
+
+    @UtilityClass
+    public static class Scale {
+        public static final ScaleWriter<ApiVersions> WRITER = (writer, apiVersions) -> {
+            writer.write(new ListWriter<>(ApiVersion.Scale.WRITER), apiVersions.entries);
+        };
+
+        public static final ScaleReader<ApiVersions> READER = reader -> {
+            List<ApiVersion> apiVersions = reader.read(new ListReader<>(ApiVersion.Scale.READER));
+            return ApiVersions.of(apiVersions);
+        };
     }
 }

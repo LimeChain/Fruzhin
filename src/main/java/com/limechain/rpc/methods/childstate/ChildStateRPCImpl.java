@@ -6,6 +6,7 @@ import com.limechain.trie.structure.database.NodeData;
 import com.limechain.trie.structure.nibble.Nibbles;
 import com.limechain.utils.StringUtils;
 import io.emeraldpay.polkaj.types.Hash256;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.lang.reflect.Array;
@@ -15,8 +16,9 @@ import java.util.List;
 
 @Service
 public class ChildStateRPCImpl {
+    @Autowired
+    private TrieStorage trieStorage;
 
-    private final TrieStorage trieStorage = TrieStorage.getInstance();
     private final BlockState blockState = BlockState.getInstance();
 
     /**
@@ -120,8 +122,9 @@ public class ChildStateRPCImpl {
     }
 
     private byte[] getChildMerkle(Hash256 blockHash, Nibbles childKey) {
+        Hash256 mainTrieMerkle = blockState.getBlockStateRoot(blockHash);
         return trieStorage
-                .getByKeyFromBlock(blockHash, Nibbles.fromBytes(":child_storage:default:".getBytes(StandardCharsets.US_ASCII)).addAll(childKey))
+                .getByKeyFromMerkle(mainTrieMerkle.getBytes(), Nibbles.fromBytes(":child_storage:default:".getBytes(StandardCharsets.US_ASCII)).addAll(childKey))
                 .map(NodeData::getValue)
                 .orElse(null);
     }

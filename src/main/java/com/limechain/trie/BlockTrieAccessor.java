@@ -1,6 +1,7 @@
 package com.limechain.trie;
 
 import com.limechain.storage.block.BlockState;
+import com.limechain.storage.trie.TrieStorage;
 import io.emeraldpay.polkaj.types.Hash256;
 
 /**
@@ -14,14 +15,14 @@ public class BlockTrieAccessor extends TrieAccessor {
      *
      * @param blockHash the block hash of the block whose trie is to be accessed
      */
-    public BlockTrieAccessor(Hash256 blockHash) {
-        super(BlockState.getInstance().isInitialized() ?
+    public BlockTrieAccessor(TrieStorage trieStorage, Hash256 blockHash) {
+        super(trieStorage, BlockState.getInstance().isInitialized() ?
                 BlockState.getInstance().getHeader(blockHash).getStateRoot().getBytes() :
                 null);
     }
 
-    public BlockTrieAccessor(byte[] stateRoot) {
-        super(stateRoot);
+    public BlockTrieAccessor(TrieStorage trieStorage, byte[] stateRoot) {
+        super(trieStorage, stateRoot);
     }
 
 }

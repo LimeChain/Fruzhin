@@ -1,7 +1,7 @@
 package com.limechain.runtime.hostapi;
 
 import com.limechain.rpc.server.AppBean;
-import com.limechain.runtime.Runtime;
+import com.limechain.runtime.SharedMemory;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import com.limechain.storage.crypto.KeyStore;
 import org.junit.jupiter.api.Disabled;
@@ -31,7 +31,7 @@ class MiscellaneousHostFunctionsTest {
     @InjectMocks
     private MiscellaneousHostFunctions miscellaneousHostFunctions;
     @Mock
-    private Runtime runtime;
+    private SharedMemory sharedMemory;
     @Mock
     private Number number;
     @Mock
@@ -42,27 +42,27 @@ class MiscellaneousHostFunctionsTest {
     @Test
     void printNumV1() {
         miscellaneousHostFunctions.printNumV1(number);
-        verifyNoMoreInteractions(runtime);
+        verifyNoMoreInteractions(sharedMemory);
     }
 
     @Test
     void printUtf8V1() {
-        when(runtime.getDataFromMemory(valuePointer)).thenReturn(value.getBytes());
+        when(sharedMemory.readData(valuePointer)).thenReturn(value.getBytes());
 
         miscellaneousHostFunctions.printUtf8V1(valuePointer);
 
-        Mockito.verify(runtime).getDataFromMemory(valuePointer);
-        verifyNoMoreInteractions(runtime);
+        Mockito.verify(sharedMemory).readData(valuePointer);
+        verifyNoMoreInteractions(sharedMemory);
     }
 
     @Test
     void printHexV1() {
-        when(runtime.getDataFromMemory(valuePointer)).thenReturn(value.getBytes());
+        when(sharedMemory.readData(valuePointer)).thenReturn(value.getBytes());
 
         miscellaneousHostFunctions.printHexV1(valuePointer);
 
-        Mockito.verify(runtime).getDataFromMemory(valuePointer);
-        verifyNoMoreInteractions(runtime);
+        Mockito.verify(sharedMemory).readData(valuePointer);
+        verifyNoMoreInteractions(sharedMemory);
     }
 
     @Test
@@ -70,8 +70,8 @@ class MiscellaneousHostFunctionsTest {
     void runtimeVersionV1() throws IOException {
         byte[] wasmRuntime = Files.readAllBytes(Paths.get("src","test","resources","runtime.wasm"));
         byte[] runtimeData = Files.readAllBytes(Paths.get("src","test","resources","runtime.data"));
-        when(runtime.getDataFromMemory(valuePointer)).thenReturn(wasmRuntime);
-        when(runtime.writeDataToMemory(runtimeData)).thenReturn(targetPointer);
+        when(sharedMemory.readData(valuePointer)).thenReturn(wasmRuntime);
+        when(sharedMemory.writeData(runtimeData)).thenReturn(targetPointer);
 
         try(MockedStatic<AppBean> appBeanMockedStatic = mockStatic(AppBean.class)){
             appBeanMockedStatic.when(() -> AppBean.getBean(KeyStore.class)).thenReturn(mock(KeyStore.class));
@@ -79,28 +79,28 @@ class MiscellaneousHostFunctionsTest {
             RuntimePointerSize result = miscellaneousHostFunctions.runtimeVersionV1(valuePointer);
 
             assertEquals(targetPointer, result);
-            verify(runtime).getDataFromMemory(valuePointer);
-            verify(runtime).writeDataToMemory(runtimeData);
-            verifyNoMoreInteractions(runtime);
+            verify(sharedMemory).readData(valuePointer);
+            verify(sharedMemory).writeData(runtimeData);
+            verifyNoMoreInteractions(sharedMemory);
         }
     }
 
     @Test
     void logV1() {
-        when(runtime.getDataFromMemory(valuePointer)).thenReturn(value.getBytes());
-        when(runtime.getDataFromMemory(targetPointer)).thenReturn(target.getBytes());
+        when(sharedMemory.readData(valuePointer)).thenReturn(value.getBytes());
+        when(sharedMemory.readData(targetPointer)).thenReturn(target.getBytes());
 
         miscellaneousHostFunctions.logV1(1, targetPointer, valuePointer);
 
-        verify(runtime).getDataFromMemory(valuePointer);
-        verify(runtime).getDataFromMemory(targetPointer);
-        verifyNoMoreInteractions(runtime);
+        verify(sharedMemory).readData(valuePointer);
+        verify(sharedMemory).readData(targetPointer);
+        verifyNoMoreInteractions(sharedMemory);
     }
 
     @Test
     void maxLevelV1() {
         assertEquals(4, miscellaneousHostFunctions.maxLevelV1());
-        verifyNoMoreInteractions(runtime);
+        verifyNoMoreInteractions(sharedMemory);
     }
 
 }
