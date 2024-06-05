@@ -15,13 +15,13 @@ import java.math.BigInteger;
 import java.util.List;
 import java.util.Objects;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 class WasmSectionUtilsTest {
 
     private static final String WASM_FILE_WITH_IMPORT = "/runtime_sections.wasm";
     private static final String WASM_FILE_WITH_EXPORT = "/runtime_sections_memory_export.wasm";
-    private static final String WASM_FILE_DEFAULT = "/runtime_sections_memory_default.wasm";
+    private static final String WASM_FILE_WITHOUT_MEMORY = "/runtime_sections_without_memory.wasm";
 
     @Test
     void test_parseRuntimeVersionFromCustomSections_success() throws IOException {
@@ -96,27 +96,35 @@ class WasmSectionUtilsTest {
     }
 
     @Test
-    @Disabled
+    @Disabled("Broken in CI due to the wasmer-java native lib. Works locally.")
     void test_parseMemoryFromBinary_memory_export() throws IOException {
+        ImportObject.MemoryImport expected = new ImportObject.MemoryImport(WasmSectionUtils.ENV_MODULE_NAME,
+            24, false);
+
         ImportObject.MemoryImport result = WasmSectionUtils.parseMemoryFromBinary(
             getTestWasmBytes(WASM_FILE_WITH_EXPORT));
-        TestUtils.assertEquals("memory_export.json", result);
+
+        TestUtils.assertEquals(expected, result);
     }
 
     @Test
-    @Disabled
+    @Disabled("Broken in CI due to the wasmer-java native lib. Works locally.")
     void test_parseMemoryFromBinary_import() throws IOException {
+        ImportObject.MemoryImport expected = new ImportObject.MemoryImport(WasmSectionUtils.ENV_MODULE_NAME,
+            83, false);
+
         ImportObject.MemoryImport result = WasmSectionUtils.parseMemoryFromBinary(
             getTestWasmBytes(WASM_FILE_WITH_IMPORT));
-        TestUtils.assertEquals("memory_import.json", result);
+
+        TestUtils.assertEquals(expected, result);
     }
 
     @Test
-    @Disabled
-    void test_parseMemoryFromBinary_default() throws IOException {
+    @Disabled("Broken in CI due to the wasmer-java native lib. Works locally.")
+    void test_parseMemoryFromBinary_null() throws IOException {
         ImportObject.MemoryImport result = WasmSectionUtils.parseMemoryFromBinary(
-            getTestWasmBytes(WASM_FILE_DEFAULT));
-        TestUtils.assertEquals("memory_default.json", result);
+            getTestWasmBytes(WASM_FILE_WITHOUT_MEMORY));
+        assertNull(result);
     }
 
     private byte[] getTestWasmBytes(String wasmFileName) throws IOException {

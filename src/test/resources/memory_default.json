@@ -1,6 +1,0 @@
-{
-  "minPages": 2048,
-  "shared": false,
-  "namespace": "env",
-  "name": "memory"
-}
