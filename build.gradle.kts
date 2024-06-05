@@ -66,7 +66,7 @@ dependencies {
     implementation("com.github.LimeChain:nabu:32f159f413")
 
     //JSON-RPC
-    implementation("com.github.LimeChain:jsonrpc4j:aefaade0c5")
+    implementation("com.github.LimeChain:jsonrpc4j:1.7.0")
 
     // Guava
     implementation("com.google.guava:guava:33.2.1-jre")
