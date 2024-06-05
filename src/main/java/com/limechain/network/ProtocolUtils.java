@@ -19,6 +19,10 @@ public final class ProtocolUtils {
         return String.format("/%s/sync/2", chainId);
     }
 
+    public static String getStateProtocol(String chainId) {
+        return String.format("/%s/state/2", chainId);
+    }
+
     public static String getBlockAnnounceProtocol(String chainId) {
         return String.format("/%s/block-announces/1", chainId);
     }
