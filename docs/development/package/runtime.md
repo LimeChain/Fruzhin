@@ -4,7 +4,6 @@ The `runtime` package is central to the Fruzhin project's ability to execute Web
 ### Main Components
 - **`Runtime.java`**: Manages the execution of WASM modules, including instantiation, function calls, and memory management.
 - **`RuntimeBuilder.java`**: Constructs runtime instances by setting up necessary configurations and dependencies, including the allocator and host API functions.
-- **`WasmCustomSection.java`**: Handles custom sections within WASM modules, often used for embedding additional metadata or configuration.
 - **`WasmSectionUtils.java`**: Provides utility functions for parsing and managing various sections of a WASM module.
 
 ### Allocator Subpackage

@@ -47,11 +47,14 @@ import java.util.logging.Level;
  */
 @Log
 public class RuntimeBuilder {
-    private static final byte[] ZSTD_PREFIX = new byte[] {82, -68, 83, 118, 70, -37, -114, 5};
+    private static final byte[] ZSTD_PREFIX = new byte[]{82, -68, 83, 118, 70, -37, -114, 5};
     private static final int MAX_ZSTD_DECOMPRESSED_SIZE = 50 * 1024 * 1024;
+
+    private static final int DEFAULT_MEMORY_PAGES = 2048;
 
     // TODO: Do we want this implicit logic for building with the spring context to reside here (within the Builder)
     //  or delegate it somewhere else (user-site)?
+
     /**
      * Builds and returns a ready-to-execute `Runtime` with dependencies from the global Spring context.
      *
@@ -133,12 +136,13 @@ public class RuntimeBuilder {
         HostApi hostApi = hostApiProvider.apply(context);
 
         // Build the imports
-        // TODO: Extract the memory import from the runtime, don't hardcode.
-        ImportObject.MemoryImport memory = new ImportObject.MemoryImport("env", 22, false);
+        ImportObject.MemoryImport memory = WasmSectionUtils.parseMemoryFromBinary(wasmBinary);
         List<ImportObject.FuncImport> functionImports = hostApi.getFunctionImports();
 
         List<ImportObject> imports = new ArrayList<>(functionImports);
-        imports.add(memory);
+        imports.add(memory != null
+            ? memory
+            : new ImportObject.MemoryImport(WasmSectionUtils.ENV_MODULE_NAME, DEFAULT_MEMORY_PAGES, false));
 
         // Instantiate the wasm module
         Instance instance = module.instantiate(Imports.from(imports, module));
@@ -175,7 +179,7 @@ public class RuntimeBuilder {
 
     private void cacheRuntimeVersion(byte[] wasmBinary, Runtime runtime, Context context) {
         // Attempt parsing the runtime version from custom sections
-        RuntimeVersion runtimeVersion = WasmSectionUtils.parseRuntimeVersionFromCustomSections(wasmBinary);
+        RuntimeVersion runtimeVersion = WasmSectionUtils.parseRuntimeVersionFromBinary(wasmBinary);
 
         // If we couldn't get the data from the wasm custom sections,
         // we must fall back to calling Core_version
@@ -190,12 +194,12 @@ public class RuntimeBuilder {
     /**
      * A configuration holding all necessary dependencies for runtime calls.
      *
-     * @param blockTrieAccessor used by storage related endpoints for accessing the trie storage for a block
-     * @param keyStore          used by crypto host functions to access secret keys
-     * @param offchainStorages  used by offchain host functions to access the different offchain storages
+     * @param blockTrieAccessor    used by storage related endpoints for accessing the trie storage for a block
+     * @param keyStore             used by crypto host functions to access secret keys
+     * @param offchainStorages     used by offchain host functions to access the different offchain storages
      * @param offchainNetworkState used by offchain host functions.
-     * @param isValidator       used by offchain host functions to determine
-     *                          whether the node is a validator (i.e. authoring node) or not
+     * @param isValidator          used by offchain host functions to determine
+     *                             whether the node is a validator (i.e. authoring node) or not
      * @apiNote Explicitly passing `null`s for some of the dependencies is admissible in case you desire a partial
      * runtime execution context (e.g. when you need a really lightweight runtime invocation).
      * The implicit knowledge of whether a dependency will be used for the runtime invocations about to be performed,
@@ -218,6 +222,7 @@ public class RuntimeBuilder {
     // TODO: Move this method somewhere else as it doesn't have to do with actually building a runtime instance
     private static final byte[] CODE_KEY_BYTES =
         LittleEndianUtils.convertBytes(StringUtils.hexToBytes(StringUtils.toHex(":code")));
+
     /**
      * Builds and returns the runtime code based on decoded proofs and state root hash.
      *
