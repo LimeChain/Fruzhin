@@ -7,13 +7,14 @@ import com.dylibso.chicory.wasm.types.Export;
 import com.dylibso.chicory.wasm.types.ExportSection;
 import com.dylibso.chicory.wasm.types.Import;
 import com.dylibso.chicory.wasm.types.MemoryImport;
+import com.dylibso.chicory.wasm.types.MemoryLimits;
 import com.dylibso.chicory.wasm.types.MemorySection;
 import com.dylibso.chicory.wasm.types.SectionId;
 import com.dylibso.chicory.wasm.types.UnknownCustomSection;
 import com.limechain.runtime.version.ApiVersions;
 import com.limechain.runtime.version.RuntimeVersion;
 import com.limechain.runtime.version.scale.RuntimeVersionReader;
-import io.emeraldpay.polkaj.scale.ScaleCodecReader;
+import com.limechain.utils.scale.ScaleUtils;
 import lombok.experimental.UtilityClass;
 import org.jetbrains.annotations.Nullable;
 import org.wasmer.ImportObject;
@@ -27,9 +28,7 @@ public class WasmSectionUtils {
     private static final String RUNTIME_VERSION_SECTION_NAME = "runtime_version";
     private static final String RUNTIME_APIS_SECTION_NAME = "runtime_apis";
     private static final String MEMORY_IMPORT_NAME = "memory";
-    private static final String ENV_MODULE_NAME = "env";
-
-    private static final int DEFAULT_MEMORY_PAGES = 2048;
+    static final String ENV_MODULE_NAME = "env";
 
     /**
      * Parses the runtime version if both wasm custom sections ("runtime_apis" and "runtime_version") are present.
@@ -56,7 +55,7 @@ public class WasmSectionUtils {
 
         // Construct the runtime version partially uninitialized,
         // and then immediately set its apis we've read from the custom section.
-        RuntimeVersion version = new RuntimeVersionReader().read(new ScaleCodecReader(runtimeVersion.bytes()));
+        RuntimeVersion version = ScaleUtils.Decode.decode(runtimeVersion.bytes(), new RuntimeVersionReader());
         version.setApis(apiVersions);
 
         return version;
@@ -66,28 +65,35 @@ public class WasmSectionUtils {
      * Parses the import section of a wasm blob and extracts the "memory" import if present.
      *
      * @param wasmBinary the wasm blob
-     * @return the parsed {@link org.wasmer.ImportObject.MemoryImport} if present,
-     * a default one with 24 initial pages otherwise
+     * @return the parsed {@link ImportObject.MemoryImport} if present, null otherwise.
      */
+    @Nullable
     public ImportObject.MemoryImport parseMemoryFromBinary(byte[] wasmBinary) {
         Module moduleWithSections = toModuleWithSections(
             wasmBinary, SectionId.IMPORT, SectionId.MEMORY, SectionId.EXPORT);
-        int initialPagesLimit = DEFAULT_MEMORY_PAGES;
+        Integer initialPagesLimit = null;
+        boolean isShared = false;
 
         // Per Runtime spec only one memory should be available for each module.
         if (isMemorySectionValid(moduleWithSections.memorySection())
             && isExportSectionValid(moduleWithSections.exportSection())) {
-            initialPagesLimit = moduleWithSections.memorySection().getMemory(0).memoryLimits().initialPages();
+            MemoryLimits limits = moduleWithSections.memorySection().getMemory(0).memoryLimits();
+            initialPagesLimit = limits.initialPages();
+            isShared = limits.shared();
         } else if (moduleWithSections.importSection() != null) {
             Optional<Import> parsedMemoryImport = moduleWithSections.importSection().stream()
                 .filter(i -> i.name().equals(MEMORY_IMPORT_NAME))
                 .findFirst();
             if (parsedMemoryImport.isPresent()) {
-                initialPagesLimit = ((MemoryImport) parsedMemoryImport.get()).limits().initialPages();
+                MemoryLimits limits = ((MemoryImport) parsedMemoryImport.get()).limits();
+                initialPagesLimit = limits.initialPages();
+                isShared = limits.shared();
             }
         }
 
-        return new ImportObject.MemoryImport(ENV_MODULE_NAME, initialPagesLimit, false);
+        return initialPagesLimit != null
+            ? new ImportObject.MemoryImport(ENV_MODULE_NAME, initialPagesLimit, isShared)
+            : null;
     }
 
     private boolean isMemorySectionValid(@Nullable MemorySection memorySection) {

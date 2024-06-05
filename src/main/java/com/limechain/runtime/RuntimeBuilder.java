@@ -50,6 +50,8 @@ public class RuntimeBuilder {
     private static final byte[] ZSTD_PREFIX = new byte[]{82, -68, 83, 118, 70, -37, -114, 5};
     private static final int MAX_ZSTD_DECOMPRESSED_SIZE = 50 * 1024 * 1024;
 
+    private static final int DEFAULT_MEMORY_PAGES = 2048;
+
     // TODO: Do we want this implicit logic for building with the spring context to reside here (within the Builder)
     //  or delegate it somewhere else (user-site)?
 
@@ -138,7 +140,9 @@ public class RuntimeBuilder {
         List<ImportObject.FuncImport> functionImports = hostApi.getFunctionImports();
 
         List<ImportObject> imports = new ArrayList<>(functionImports);
-        imports.add(memory);
+        imports.add(memory != null
+            ? memory
+            : new ImportObject.MemoryImport(WasmSectionUtils.ENV_MODULE_NAME, DEFAULT_MEMORY_PAGES, false));
 
         // Instantiate the wasm module
         Instance instance = module.instantiate(Imports.from(imports, module));
