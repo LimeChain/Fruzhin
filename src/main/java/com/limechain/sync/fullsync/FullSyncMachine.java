@@ -60,7 +60,7 @@ public class FullSyncMachine {
         this.networkService.updateCurrentSelectedPeerWithNextBootnode();
 
         Hash256 lastFinelizedStateRoot = syncState.getStateRoot(); //to replace line 67
-        // Todo: fetch state of the latest finalized block and start executing blocks from there
+        // TODO: fetch state of the latest finalized block and start executing blocks from there
         // scrap the blockstate highest finalized header logic for now
 
         BlockHeader highestFinalizedHeader = blockState.getHighestFinalizedHeader();

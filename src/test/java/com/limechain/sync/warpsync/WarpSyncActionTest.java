@@ -133,14 +133,14 @@ class WarpSyncActionTest {
     void loadSavedRuntimeWhenValuesAvailableShouldBuildRuntimeCode() throws RuntimeCodeException {
         byte[][] merkleProof = new byte[][]{{1, 2}, {3, 4}};
         Object stateRootObject = mock(Object.class);
-        String stateRoot = "root";
+        String stateRootStr = "root";
         Hash256 stateRootHash = mock(Hash256.class);
         byte[] runtimeCode = new byte[]{1, 2};
         when(repository.find(DBConstants.RUNTIME_CODE)).thenReturn(Optional.of(runtimeCode));
 
         try (MockedStatic<Hash256> hashMock = mockStatic(Hash256.class);
              MockedStatic<TrieVerifier> staticVerifier = mockStatic(TrieVerifier.class)) {
-            hashMock.when(() -> Hash256.from(stateRoot)).thenReturn(stateRootHash);
+            hashMock.when(() -> Hash256.from(stateRootStr)).thenReturn(stateRootHash);
 
             warpSyncState.loadSavedRuntimeCode();
 

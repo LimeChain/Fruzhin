@@ -6,6 +6,7 @@ import com.limechain.constants.GenesisBlockHash;
 import com.limechain.network.protocol.grandpa.messages.commit.CommitMessage;
 import com.limechain.network.protocol.warp.dto.Block;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
+import com.limechain.storage.DBConstants;
 import com.limechain.storage.KVRepository;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.Getter;
@@ -15,13 +16,6 @@ import java.math.BigInteger;
 
 @Getter
 public class SyncState {
-
-    public static final String LAST_FINALIZED_BLOCK_NUMBER = "ss::lastFinalizedBlockNumber";
-    public static final String LAST_FINALIZED_BLOCK_HASH = "ss::lastFinalizedBlockHash";
-    public static final String AUTHORITY_SET = "ss::authoritySet";
-    public static final String LATEST_ROUND = "ss::latestRound";
-    public static final String STATE_ROOT = "ss::stateRoot";
-    public static final String SET_ID = "ss::setId";
 
     private final GenesisBlockHash genesisBlockHashCalculator;
     private final KVRepository<String, Object> repository;
@@ -45,23 +39,24 @@ public class SyncState {
     }
 
     private void loadPersistedState() {
-        this.lastFinalizedBlockNumber = (BigInteger) repository.find(LAST_FINALIZED_BLOCK_NUMBER).orElse(BigInteger.ZERO);
+        this.lastFinalizedBlockNumber =
+                (BigInteger) repository.find(DBConstants.LAST_FINALIZED_BLOCK_NUMBER).orElse(BigInteger.ZERO);
         this.lastFinalizedBlockHash = new Hash256(
-                (byte[]) repository.find(LAST_FINALIZED_BLOCK_HASH).orElse(genesisBlockHash.getBytes()));
-        this.authoritySet = (Authority[]) repository.find(AUTHORITY_SET).orElse(new Authority[0]);
-        this.latestRound = (BigInteger) repository.find(LATEST_ROUND).orElse(BigInteger.ONE);
-        byte[] stateRootBytes = (byte[]) repository.find(STATE_ROOT).orElse(null);
+                (byte[]) repository.find(DBConstants.LAST_FINALIZED_BLOCK_HASH).orElse(genesisBlockHash.getBytes()));
+        this.authoritySet = (Authority[]) repository.find(DBConstants.AUTHORITY_SET).orElse(new Authority[0]);
+        this.latestRound = (BigInteger) repository.find(DBConstants.LATEST_ROUND).orElse(BigInteger.ONE);
+        byte[] stateRootBytes = (byte[]) repository.find(DBConstants.STATE_ROOT).orElse(null);
         this.stateRoot = stateRootBytes != null ? new Hash256(stateRootBytes) : null;
-        this.setId = (BigInteger) repository.find(SET_ID).orElse(BigInteger.ZERO);
+        this.setId = (BigInteger) repository.find(DBConstants.SET_ID).orElse(BigInteger.ZERO);
     }
 
     public void persistState() {
-        repository.save(LAST_FINALIZED_BLOCK_NUMBER, lastFinalizedBlockNumber);
-        repository.save(LAST_FINALIZED_BLOCK_HASH, lastFinalizedBlockHash.getBytes());
-        repository.save(AUTHORITY_SET, authoritySet);
-        repository.save(LATEST_ROUND, latestRound);
-        repository.save(STATE_ROOT, stateRoot.getBytes());
-        repository.save(SET_ID, setId);
+        repository.save(DBConstants.LAST_FINALIZED_BLOCK_NUMBER, lastFinalizedBlockNumber);
+        repository.save(DBConstants.LAST_FINALIZED_BLOCK_HASH, lastFinalizedBlockHash.getBytes());
+        repository.save(DBConstants.AUTHORITY_SET, authoritySet);
+        repository.save(DBConstants.LATEST_ROUND, latestRound);
+        repository.save(DBConstants.STATE_ROOT, stateRoot.getBytes());
+        repository.save(DBConstants.SET_ID, setId);
     }
 
     public void finalizeHeader(BlockHeader header) {
