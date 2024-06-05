@@ -2,6 +2,7 @@ package com.limechain.sync.warpsync;
 
 import com.limechain.chain.lightsyncstate.Authority;
 import com.limechain.exception.global.RuntimeCodeException;
+import com.limechain.exception.trie.TrieDecoderException;
 import com.limechain.network.Network;
 import com.limechain.network.protocol.blockannounce.messages.BlockAnnounceMessage;
 import com.limechain.network.protocol.grandpa.messages.commit.CommitMessage;
@@ -27,6 +28,9 @@ import com.limechain.sync.warpsync.dto.AuthoritySetChange;
 import com.limechain.sync.warpsync.dto.GrandpaDigestMessageType;
 import com.limechain.sync.warpsync.scale.ForcedChangeReader;
 import com.limechain.sync.warpsync.scale.ScheduledChangeReader;
+import com.limechain.trie.decoded.Trie;
+import com.limechain.trie.decoded.TrieVerifier;
+import com.limechain.utils.LittleEndianUtils;
 import com.limechain.utils.StringUtils;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.types.Hash256;
@@ -141,6 +145,32 @@ public class WarpSyncState {
         scheduledRuntimeUpdateBlocks.remove(lastFinalizedBlockNumber);
     }
 
+    private static final byte[] CODE_KEY_BYTES =
+            LittleEndianUtils.convertBytes(StringUtils.hexToBytes(StringUtils.toHex(":code")));
+    /**
+     * Builds and returns the runtime code based on decoded proofs and state root hash.
+     *
+     * @param decodedProofs The decoded trie proofs.
+     * @param stateRoot     The state root hash.
+     * @return The runtime code.
+     * @throws RuntimeCodeException if an error occurs during the construction of the trie or retrieval of the code.
+     */
+    public byte[] buildRuntimeCode(byte[][] decodedProofs, Hash256 stateRoot) {
+        try {
+            Trie trie = TrieVerifier.buildTrie(decodedProofs, stateRoot.getBytes());
+            var code = trie.get(CODE_KEY_BYTES);
+            if (code == null) {
+                throw new RuntimeCodeException("Couldn't retrieve runtime code from trie");
+            }
+            //TODO Heap pages should be fetched from out storage
+            log.log(Level.INFO, "Runtime and heap pages downloaded");
+            return code;
+
+        } catch (TrieDecoderException e) {
+            throw new RuntimeCodeException("Couldn't build trie from proofs list: " + e.getMessage());
+        }
+    }
+
     /**
      * Update the runtime code and heap pages, by requesting the code field of the last finalized block, using the
      * Light Messages protocol.
@@ -160,7 +190,7 @@ public class WarpSyncState {
         byte[] proof = response.getRemoteReadResponse().getProof().toByteArray();
         byte[][] decodedProofs = decodeProof(proof);
 
-        this.runtimeCode = runtimeBuilder.buildRuntimeCode(decodedProofs, stateRoot);
+        this.runtimeCode = buildRuntimeCode(decodedProofs, stateRoot);
 
         saveRuntimeCode(runtimeCode);
     }

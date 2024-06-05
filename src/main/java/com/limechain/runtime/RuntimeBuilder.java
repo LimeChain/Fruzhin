@@ -2,8 +2,6 @@ package com.limechain.runtime;
 
 import com.github.luben.zstd.Zstd;
 import com.limechain.config.HostConfig;
-import com.limechain.exception.global.RuntimeCodeException;
-import com.limechain.exception.trie.TrieDecoderException;
 import com.limechain.network.Network;
 import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.rpc.server.AppBean;
@@ -21,11 +19,6 @@ import com.limechain.storage.offchain.OffchainStore;
 import com.limechain.storage.offchain.StorageKind;
 import com.limechain.trie.AccessorHolder;
 import com.limechain.trie.BlockTrieAccessor;
-import com.limechain.trie.decoded.Trie;
-import com.limechain.trie.decoded.TrieVerifier;
-import com.limechain.utils.LittleEndianUtils;
-import com.limechain.utils.StringUtils;
-import io.emeraldpay.polkaj.types.Hash256;
 import io.libp2p.core.Host;
 import lombok.extern.java.Log;
 import org.jetbrains.annotations.Nullable;
@@ -213,32 +206,5 @@ public class RuntimeBuilder {
         boolean isValidator
     ) {
         public static final Config EMPTY = new Config(null, null, null, null, false);
-    }
-
-    // TODO: Move this method somewhere else as it doesn't have to do with actually building a runtime instance
-    private static final byte[] CODE_KEY_BYTES =
-        LittleEndianUtils.convertBytes(StringUtils.hexToBytes(StringUtils.toHex(":code")));
-    /**
-     * Builds and returns the runtime code based on decoded proofs and state root hash.
-     *
-     * @param decodedProofs The decoded trie proofs.
-     * @param stateRoot     The state root hash.
-     * @return The runtime code.
-     * @throws RuntimeCodeException if an error occurs during the construction of the trie or retrieval of the code.
-     */
-    public byte[] buildRuntimeCode(byte[][] decodedProofs, Hash256 stateRoot) {
-        try {
-            Trie trie = TrieVerifier.buildTrie(decodedProofs, stateRoot.getBytes());
-            var code = trie.get(CODE_KEY_BYTES);
-            if (code == null) {
-                throw new RuntimeCodeException("Couldn't retrieve runtime code from trie");
-            }
-            //TODO Heap pages should be fetched from out storage
-            log.log(Level.INFO, "Runtime and heap pages downloaded");
-            return code;
-
-        } catch (TrieDecoderException e) {
-            throw new RuntimeCodeException("Couldn't build trie from proofs list: " + e.getMessage());
-        }
     }
 }
