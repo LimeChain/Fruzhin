@@ -65,8 +65,12 @@ public class SyncTest {
         int expectedConnectedNodes = 1;
         assertEquals(expectedConnectedNodes, connectedNodes);
 
-        var response = syncService.remoteBlockRequest(senderNode, senderNode.getAddressBook(), peerId, new BlockRequestDto(17, "cbd3e72e769652f804568a48889382edff4742074a7201309acfd1069e5de90a", null, SyncMessage.Direction.Ascending, 1));
-        ByteString expected = ByteString.copyFrom(new byte[]{-53, -45, -25, 46, 118, -106, 82, -8, 4, 86, -118, 72, -120, -109, -126, -19, -1, 71, 66, 7, 74, 114, 1, 48, -102, -49, -47, 6, -98, 93, -23, 10});
+        var response = syncService.remoteBlockRequest(senderNode, senderNode.getAddressBook(), peerId,
+                new BlockRequestDto(17, "cbd3e72e769652f804568a48889382edff4742074a7201309acfd1069e5de90a", null,
+                        SyncMessage.Direction.Ascending, 1));
+        ByteString expected = ByteString.copyFrom(
+                new byte[]{-53, -45, -25, 46, 118, -106, 82, -8, 4, 86, -118, 72, -120, -109, -126, -19, -1, 71, 66, 7,
+                        74, 114, 1, 48, -102, -49, -47, 6, -98, 93, -23, 10});
         assertNotNull(response);
         assertTrue(response.getBlocksCount() > 0);
 
@@ -81,31 +85,16 @@ public class SyncTest {
         int connectedNodes = kademliaService.connectBootNodes(receivers);
         int expectedConnectedNodes = 1;
         assertEquals(expectedConnectedNodes, connectedNodes);
-        var response = syncService.remoteBlockRequest(senderNode, senderNode.getAddressBook(), peerId, new BlockRequestDto(19, null,
-                15_030_299, SyncMessage.Direction.Ascending, 1));
-        ByteString expected = ByteString.copyFrom(new byte[]{-53, -45, -25, 46, 118, -106, 82, -8, 4, 86, -118, 72, -120, -109, -126, -19, -1, 71, 66, 7, 74, 114, 1, 48, -102, -49, -47, 6, -98, 93, -23, 10});
+        var response = syncService.remoteBlockRequest(senderNode, senderNode.getAddressBook(), peerId,
+                new BlockRequestDto(19, null,
+                        15_030_299, SyncMessage.Direction.Ascending, 1));
+        ByteString expected = ByteString.copyFrom(
+                new byte[]{-53, -45, -25, 46, 118, -106, 82, -8, 4, 86, -118, 72, -120, -109, -126, -19, -1, 71, 66, 7,
+                        74, 114, 1, 48, -102, -49, -47, 6, -98, 93, -23, 10});
         assertNotNull(response);
         assertTrue(response.getBlocksCount() > 0);
 
         assertEquals(expected, response.getBlocks(0).getHash());
     }
 
-    @Test
-    @Disabled("No response is received")
-    //TODO: See https://github.com/LimeChain/Fruzhin/issues/193
-    void remoteFunctions_return_correctData() {
-        var peerId = PeerId.fromBase58(PEER_ID);
-        var receivers = new String[]{PEER_URL + PEER_ID};
-
-        int connectedNodes = kademliaService.connectBootNodes(receivers);
-        int expectedConnectedNodes = 1;
-        assertEquals(expectedConnectedNodes, connectedNodes);
-
-        kademliaService.findNewPeers();
-
-        var response = syncService.remoteStateRequest(senderNode, senderNode.getAddressBook(), peerId,
-                "0x077dcf416ad8585e1438e5fb6be60d0137b67cc4b161fa153c3c709c8881e51c"
-        );
-        assertNotNull(response);
-    }
 }

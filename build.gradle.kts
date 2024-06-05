@@ -21,11 +21,12 @@ repositories {
 }
 
 dependencies {
-    implementation("net.openhft:zero-allocation-hashing:0.16")
+    implementation("net.openhft:zero-allocation-hashing:0.26ea0")
     implementation("org.rocksdb:rocksdbjni:9.2.1")
     compileOnly("org.projectlombok:lombok:1.18.32")
     implementation("org.projectlombok:lombok:1.18.32")
     implementation("org.web3j:crypto:4.12.0")
+    implementation("com.dylibso.chicory:wasm:0.0.10")
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.2")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.3")
@@ -50,7 +51,7 @@ dependencies {
 
     // Prometheus
     implementation("io.prometheus:prometheus-metrics-core:1.3.1")
-    implementation("io.prometheus:prometheus-metrics-instrumentation-jvm:1.3.0")
+    implementation("io.prometheus:prometheus-metrics-instrumentation-jvm:1.3.1")
     implementation("io.prometheus:prometheus-metrics-exporter-httpserver:1.3.1")
 
     // NOTE:
@@ -68,7 +69,7 @@ dependencies {
     implementation("com.github.LimeChain:jsonrpc4j:1.7.0")
 
     // Guava
-    implementation("com.google.guava:guava:33.2.0-jre")
+    implementation("com.google.guava:guava:33.2.1-jre")
 
     // Apache commons
     implementation("commons-io:commons-io:2.16.1")

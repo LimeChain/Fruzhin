@@ -12,6 +12,7 @@ import com.limechain.network.protocol.grandpa.GrandpaService;
 import com.limechain.network.protocol.lightclient.LightMessagesService;
 import com.limechain.network.protocol.lightclient.pb.LightClientMessage;
 import com.limechain.network.protocol.ping.Ping;
+import com.limechain.network.protocol.state.StateService;
 import com.limechain.network.protocol.sync.BlockRequestDto;
 import com.limechain.network.protocol.sync.SyncService;
 import com.limechain.network.protocol.sync.pb.SyncMessage.BlockResponse;
@@ -63,6 +64,7 @@ public class Network {
     private final String[] bootNodes;
     private final ConnectionManager connectionManager = ConnectionManager.getInstance();
     private SyncService syncService;
+    private StateService stateService;
     private LightMessagesService lightMessagesService;
     @Getter
     private KademliaService kademliaService;
@@ -121,6 +123,7 @@ public class Network {
         String warpProtocolId = ProtocolUtils.getWarpSyncProtocol(protocolId);
         String lightProtocolId = ProtocolUtils.getLightMessageProtocol(protocolId);
         String syncProtocolId = ProtocolUtils.getSyncProtocol(protocolId);
+        String stateProtocolId = ProtocolUtils.getStateProtocol(protocolId);
         String blockAnnounceProtocolId = ProtocolUtils.getBlockAnnounceProtocol(protocolId);
         String grandpaProtocolId = ProtocolUtils.getGrandpaProtocol(protocolId);
         String transactionsProtocolId = ProtocolUtils.getTransactionsProtocol(protocolId);
@@ -129,6 +132,7 @@ public class Network {
         lightMessagesService = new LightMessagesService(lightProtocolId);
         warpSyncService = new WarpSyncService(warpProtocolId);
         syncService = new SyncService(syncProtocolId);
+        stateService = new StateService(stateProtocolId);
         blockAnnounceService = new BlockAnnounceService(blockAnnounceProtocolId);
         grandpaService = new GrandpaService(grandpaProtocolId);
         ping = new Ping(pingProtocol, new PingProtocol());
@@ -218,7 +222,7 @@ public class Network {
     public void updateCurrentSelectedPeer() {
         if (connectionManager.getPeerIds().isEmpty()) return;
         this.currentSelectedPeer = connectionManager.getPeerIds().stream()
-            .skip(RANDOM.nextInt(connectionManager.getPeerIds().size())).findAny().orElse(null);
+                .skip(RANDOM.nextInt(connectionManager.getPeerIds().size())).findAny().orElse(null);
     }
 
     public String getPeerId() {
@@ -290,15 +294,15 @@ public class Network {
         // TODO: fields, hash, direction and maxBlocks values not verified
         // TODO: when debugging could not get a value returned
         return this.makeBlockRequest(
-            new BlockRequestDto(19, null, lastBlockNumber.intValue(), Direction.Ascending, 1));
+                new BlockRequestDto(19, null, lastBlockNumber.intValue(), Direction.Ascending, 1));
     }
 
     public BlockResponse makeBlockRequest(BlockRequestDto blockRequestDto) {
         return syncService.getProtocol().remoteBlockRequest(
-            this.host,
-            this.host.getAddressBook(),
-            this.currentSelectedPeer,
-            blockRequestDto
+                this.host,
+                this.host.getAddressBook(),
+                this.currentSelectedPeer,
+                blockRequestDto
         );
     }
 

@@ -11,7 +11,7 @@ import java.util.concurrent.CompletableFuture;
 import static java.util.Objects.isNull;
 
 public interface SyncController {
-    default <T, E> CompletableFuture<E> send(T req, Class<E> resClass){
+    default CompletableFuture<SyncMessage.BlockResponse> send(SyncMessage.BlockRequest req){
         throw new NotImplementedException("Method not implemented!");
     }
 
@@ -31,16 +31,6 @@ public interface SyncController {
             syncMessage = syncMessage.setNumber(ByteString.copyFrom(LittleEndianUtils.intTo32LEBytes(fromNumber)));
 
         var builtSyncMessage = syncMessage.build();
-        return send(builtSyncMessage, SyncMessage.BlockResponse.class);
+        return send(builtSyncMessage);
     }
-
-    default CompletableFuture<SyncMessage.StateResponse> sendStateRequest(String fromHash) {
-        SyncMessage.StateRequest build = SyncMessage.StateRequest
-                .newBuilder()
-                .setBlock(ByteString.copyFrom(fromHash.getBytes()))
-                .build();
-
-        return send(build, SyncMessage.StateResponse.class);
-    }
-
 }
