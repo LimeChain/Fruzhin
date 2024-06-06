@@ -17,7 +17,6 @@ import com.limechain.storage.crypto.KeyStore;
 import com.limechain.storage.offchain.OffchainStorages;
 import com.limechain.storage.offchain.OffchainStore;
 import com.limechain.storage.offchain.StorageKind;
-import com.limechain.trie.AccessorHolder;
 import com.limechain.trie.BlockTrieAccessor;
 import io.libp2p.core.Host;
 import lombok.extern.java.Log;
@@ -56,6 +55,10 @@ public class RuntimeBuilder {
      * @implNote Make sure the Spring context is properly initialized, as building the runtime this way relies on it.
      */
     public Runtime buildRuntime(byte[] code) {
+        return this.buildRuntime(code, (BlockTrieAccessor) null);
+    }
+
+    public Runtime buildRuntime(byte[] code, @Nullable BlockTrieAccessor blockTrieAccessor) {
         var nodeRole = AppBean.getBean(HostConfig.class).getNodeRole();
 
         var db = AppBean.getBean(KVRepository.class);
@@ -68,7 +71,6 @@ public class RuntimeBuilder {
         var offchainStorages = new OffchainStorages(localStorage, persistentStorage, baseStorage);
 
         var keyStore = AppBean.getBean(KeyStore.class);
-        var blockTrieAccessor = AccessorHolder.getInstance().getBlockTrieAccessor();
 
         Host host = AppBean.getBean(Network.class).getHost();
         var offchainNetworkState = new OffchainNetworkState(host.getPeerId(), host.listenAddresses());
