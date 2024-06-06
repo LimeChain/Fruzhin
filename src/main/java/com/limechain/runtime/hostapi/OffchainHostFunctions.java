@@ -197,7 +197,7 @@ public class OffchainHostFunctions implements PartialHostApi {
      */
     public RuntimePointerSize extOffchainNetworkState() {
         PeerId peerId = networkState.peerId();
-        List<Multiaddr> multiAddresses = networkState.multiAddresses();
+        List<Multiaddr> multiAddresses = networkState.listenAddresses();
 
         return sharedMemory.writeData(scaleEncodedOpaqueNetwork(peerId, multiAddresses));
     }
