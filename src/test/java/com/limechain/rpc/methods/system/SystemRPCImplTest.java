@@ -53,7 +53,7 @@ class SystemRPCImplTest {
 
     @Test
     void systemNodeRoles() {
-        when(systemInfo.getNodeRole()).thenReturn(NodeRole.LIGHT);
+        when(systemInfo.getRole()).thenReturn(NodeRole.LIGHT.name());
 
         assertArrayEquals(new String[]{"LIGHT"}, systemRPC.systemNodeRoles());
     }

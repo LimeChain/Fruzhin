@@ -1,6 +1,6 @@
 package com.limechain.network.protocol.blockannounce.messages;
 
-import com.limechain.config.SystemInfo;
+import com.limechain.config.HostConfig;
 import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.rpc.server.AppBean;
 import com.limechain.storage.block.SyncState;
@@ -17,13 +17,13 @@ public class BlockAnnounceHandshakeBuilder {
      */
     public BlockAnnounceHandshake getBlockAnnounceHandshake() {
         SyncState syncState = AppBean.getBean(SyncState.class);
-        SystemInfo systemInfo = AppBean.getBean(SystemInfo.class);
+        HostConfig hostConfig = AppBean.getBean(HostConfig.class);
 
         Hash256 genesisBlockHash = syncState.getGenesisBlockHash();
         Hash256 lastFinalizedBlockHash = syncState.getLastFinalizedBlockHash();
         BigInteger lastFinalizedBlockNumber = syncState.getLastFinalizedBlockNumber();
 
-        NodeRole nodeRole = systemInfo.getNodeRole();
+        NodeRole nodeRole = hostConfig.getNodeRole();
 
         Hash256 blockHash = lastFinalizedBlockHash == null
                 ? genesisBlockHash

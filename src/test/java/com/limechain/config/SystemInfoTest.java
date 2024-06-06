@@ -38,7 +38,7 @@ class SystemInfoTest {
         String expectedHostIdentity = "12D3KooWRHfNJwkKeSJWD28hYFyA18dcN9qU1JEzJJaguarDPS";
         BigInteger expectedHighestBlock = BigInteger.ZERO;
 
-        assertEquals(expectedRole, systemInfo.getNodeRole().name());
+        assertEquals(expectedRole, systemInfo.getRole());
         assertEquals(expectedChain, systemInfo.getChain());
         assertEquals(expectedDbPath, systemInfo.getDbPath());
         assertEquals(expectedHostIdentity, systemInfo.getHostIdentity());

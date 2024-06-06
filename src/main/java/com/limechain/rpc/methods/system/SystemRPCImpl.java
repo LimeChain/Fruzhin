@@ -83,7 +83,7 @@ public class SystemRPCImpl {
      * Returns the roles the node is running as.
      */
     public String[] systemNodeRoles() {
-        return new String[]{this.systemInfo.getNodeRole().name()};
+        return new String[]{this.systemInfo.getRole()};
     }
 
     /**

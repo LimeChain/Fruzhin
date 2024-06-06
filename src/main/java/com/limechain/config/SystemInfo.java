@@ -2,7 +2,6 @@ package com.limechain.config;
 
 import com.limechain.chain.Chain;
 import com.limechain.network.Network;
-import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.storage.block.SyncState;
 import lombok.Getter;
 import lombok.extern.java.Log;
@@ -18,7 +17,7 @@ import java.util.logging.Level;
 @Getter
 @Log
 public class SystemInfo {
-    private final NodeRole nodeRole;
+    private final String role;
     private final Chain chain;
     private final String dbPath;
     private final String hostIdentity;
@@ -29,7 +28,7 @@ public class SystemInfo {
     private final BigInteger highestBlock;
 
     public SystemInfo(HostConfig hostConfig, Network network, SyncState syncState) {
-        this.nodeRole = network.getNodeRole();
+        this.role = network.getNodeRole().name();
         this.chain = hostConfig.getChain();
         this.dbPath = hostConfig.getRocksDbPath();
         this.hostIdentity = network.getHost().getPeerId().toString();
@@ -52,7 +51,7 @@ public class SystemInfo {
         log.log(Level.INFO, pinEmoji + "Version: " + hostVersion);
         log.log(Level.INFO, clipboardEmoji + "Chain specification: " + chain.getValue());
         log.log(Level.INFO, labelEmoji + "Host name: " + hostName);
-        log.log(Level.INFO, authEmoji + "Role: " + nodeRole.name());
+        log.log(Level.INFO, authEmoji + "Role: " + role);
         log.log(Level.INFO, floppyEmoji + "Database: RocksDb at " + absoluteDbPath);
         log.log(Level.INFO, "Local node identity is: " + hostIdentity);
         log.log(Level.INFO, "Operating System: " + System.getProperty("os.name"));
