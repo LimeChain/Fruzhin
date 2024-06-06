@@ -4,8 +4,6 @@ import com.limechain.exception.global.ThreadInterruptedException;
 import com.limechain.exception.hostapi.InvalidArgumentException;
 import com.limechain.exception.hostapi.OffchainResponseWaitException;
 import com.limechain.exception.scale.ScaleEncodingException;
-import com.limechain.network.Network;
-import com.limechain.rpc.server.AppBean;
 import com.limechain.runtime.SharedMemory;
 import com.limechain.runtime.hostapi.dto.HttpErrorType;
 import com.limechain.runtime.hostapi.dto.HttpStatusCode;
@@ -198,9 +196,8 @@ public class OffchainHostFunctions implements PartialHostApi {
      * @see <a href=https://spec.polkadot.network/chap-host-api#defn-opaque-network-state>Opaque Network State</a>
      */
     public RuntimePointerSize extOffchainNetworkState() {
-        Network network = AppBean.getBean(Network.class);
-        PeerId peerId = network.getHost().getPeerId();
-        List<Multiaddr> multiAddresses = network.getHost().listenAddresses();
+        PeerId peerId = networkState.peerId();
+        List<Multiaddr> multiAddresses = networkState.multiAddresses();
 
         return sharedMemory.writeData(scaleEncodedOpaqueNetwork(peerId, multiAddresses));
     }
