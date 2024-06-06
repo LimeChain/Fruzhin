@@ -1,7 +1,7 @@
-package com.limechain.sync.warpsync.state;
+package com.limechain.sync.warpsync.action;
 
-import com.limechain.sync.warpsync.SyncedState;
 import com.limechain.sync.warpsync.WarpSyncMachine;
+import com.limechain.sync.warpsync.WarpSyncState;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -14,9 +14,9 @@ import static org.mockito.Mockito.verify;
 @ExtendWith(MockitoExtension.class)
 class RuntimeBuildStateTest {
     @InjectMocks
-    private RuntimeBuildState runtimeBuildState;
+    private RuntimeBuildAction runtimeBuildState;
     @Mock
-    private SyncedState syncedState;
+    private WarpSyncState warpSyncState;
     @Mock
     private WarpSyncMachine warpSyncMachine;
 
@@ -24,14 +24,14 @@ class RuntimeBuildStateTest {
     void nextSetsChainInformationBuildState() {
         runtimeBuildState.next(warpSyncMachine);
 
-        verify(warpSyncMachine).setWarpSyncState(any(ChainInformationBuildState.class));
+        verify(warpSyncMachine).setWarpSyncAction(any(ChainInformationBuildAction.class));
     }
 
     @Test
     void handleCallsSyncStateBuildRuntime() {
         runtimeBuildState.handle(warpSyncMachine);
 
-        verify(syncedState).buildRuntime(null);
+        verify(warpSyncState).buildRuntime();
     }
 
 }

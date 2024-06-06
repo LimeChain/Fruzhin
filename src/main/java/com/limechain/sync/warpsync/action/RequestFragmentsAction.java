@@ -1,9 +1,10 @@
-package com.limechain.sync.warpsync.state;
+package com.limechain.sync.warpsync.action;
 
 import com.limechain.exception.global.MissingObjectException;
 import com.limechain.network.protocol.warp.dto.WarpSyncResponse;
-import com.limechain.sync.warpsync.SyncedState;
+import com.limechain.rpc.server.AppBean;
 import com.limechain.sync.warpsync.WarpSyncMachine;
+import com.limechain.sync.warpsync.WarpSyncState;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.extern.java.Log;
 
@@ -12,15 +13,16 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 
 @Log
-public class RequestFragmentsState implements WarpSyncState {
+public class RequestFragmentsAction implements WarpSyncAction {
 
-    private final SyncedState syncedState = SyncedState.getInstance();
+    private final WarpSyncState warpSyncState;
     private final Hash256 blockHash;
     private WarpSyncResponse result;
     private Exception error;
 
-    public RequestFragmentsState(Hash256 blockHash) {
+    public RequestFragmentsAction(Hash256 blockHash) {
         this.blockHash = blockHash;
+        this.warpSyncState = AppBean.getBean(WarpSyncState.class);
     }
 
     @Override
@@ -30,16 +32,16 @@ public class RequestFragmentsState implements WarpSyncState {
             try {
                 // Wait a bit before retrying. The peer might've just connected and still not in address book
                 Thread.sleep(1000);
-                sync.setWarpSyncState(new RequestFragmentsState(blockHash));
+                sync.setWarpSyncAction(new RequestFragmentsAction(blockHash));
                 return;
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 log.log(Level.SEVERE, "Retry warp sync request fragment exception: "
-                        + e.getMessage(), e.getStackTrace());
+                                      + e.getMessage(), e.getStackTrace());
             }
         }
         if (this.result != null) {
-            sync.setWarpSyncState(new VerifyJustificationState());
+            sync.setWarpSyncAction(new VerifyJustificationAction());
             return;
         }
         log.log(Level.WARNING, "RequestFragmentsState.next() called without result or error set.");
@@ -65,12 +67,12 @@ public class RequestFragmentsState implements WarpSyncState {
             }
 
             log.log(Level.INFO, "Successfully received fragments from peer "
-                    + sync.getNetworkService().getCurrentSelectedPeer());
+                                + sync.getNetworkService().getCurrentSelectedPeer());
             if (resp.getFragments().length == 0) {
                 log.log(Level.WARNING, "No fragments received.");
                 return;
             }
-            syncedState.setWarpSyncFragmentsFinished(resp.isFinished());
+            warpSyncState.setWarpSyncFragmentsFinished(resp.isFinished());
             sync.setFragmentsQueue(new LinkedBlockingQueue<>(
                     Arrays.stream(resp.getFragments()).toList())
             );

@@ -19,9 +19,10 @@ import com.limechain.network.protocol.sync.pb.SyncMessage.BlockResponse;
 import com.limechain.network.protocol.transactions.TransactionsService;
 import com.limechain.network.protocol.warp.WarpSyncService;
 import com.limechain.network.protocol.warp.dto.WarpSyncResponse;
+import com.limechain.rpc.server.AppBean;
 import com.limechain.storage.DBConstants;
 import com.limechain.storage.KVRepository;
-import com.limechain.sync.warpsync.SyncedState;
+import com.limechain.sync.warpsync.WarpSyncState;
 import com.limechain.utils.Ed25519Utils;
 import com.limechain.utils.StringUtils;
 import io.ipfs.multiaddr.MultiAddress;
@@ -58,13 +59,11 @@ public class Network {
     private static final int HOST_PORT = 30333;
     private static final Random RANDOM = new Random();
     @Getter
-    private static Network network;
-    @Getter
     private final Chain chain;
     @Getter
     private final NodeRole nodeRole;
     private final String[] bootNodes;
-    private final ConnectionManager connectionManager = ConnectionManager.getInstance();
+    private final ConnectionManager connectionManager;
     private SyncService syncService;
     private StateService stateService;
     private LightMessagesService lightMessagesService;
@@ -99,6 +98,7 @@ public class Network {
         this.bootNodes = chainService.getChainSpec().getBootNodes();
         this.chain = hostConfig.getChain();
         this.nodeRole = hostConfig.getNodeRole();
+        this.connectionManager = ConnectionManager.getInstance();
         this.initializeProtocols(chainService, genesisBlockHash, hostConfig, repository, cliArgs);
     }
 
@@ -152,7 +152,7 @@ public class Network {
                 )
         );
 
-        if (nodeRole == NodeRole.FULL) {
+        if (nodeRole == NodeRole.AUTHORING) {
             hostBuilder.addProtocols(
                     List.of(
                             transactionsService.getProtocol()
@@ -361,7 +361,7 @@ public class Network {
 
     @Scheduled(fixedRate = 5, initialDelay = 5, timeUnit = TimeUnit.MINUTES)
     public void sendNeighbourMessages() {
-        if (!SyncedState.getInstance().isWarpSyncFinished()) {
+        if (!AppBean.getBean(WarpSyncState.class).isWarpSyncFinished()) {
             return;
         }
         connectionManager.getPeerIds().forEach(peerId -> grandpaService.sendNeighbourMessage(this.host, peerId));

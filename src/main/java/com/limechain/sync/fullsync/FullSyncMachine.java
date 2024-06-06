@@ -17,6 +17,7 @@ import com.limechain.runtime.Runtime;
 import com.limechain.runtime.RuntimeBuilder;
 import com.limechain.runtime.version.StateVersion;
 import com.limechain.storage.block.BlockState;
+import com.limechain.storage.block.SyncState;
 import com.limechain.sync.fullsync.inherents.InherentData;
 import com.limechain.sync.fullsync.inherents.scale.InherentDataWriter;
 import com.limechain.trie.AccessorHolder;
@@ -42,12 +43,14 @@ import java.util.List;
 @Log
 public class FullSyncMachine {
     private final Network networkService;
+    private final SyncState syncState;
     private final BlockState blockState = BlockState.getInstance();
     private final AccessorHolder accessorHolder = AccessorHolder.getInstance();
     private Runtime runtime = null;
 
-    public FullSyncMachine(final Network networkService) {
+    public FullSyncMachine(final Network networkService, final SyncState syncState) {
         this.networkService = networkService;
+        this.syncState = syncState;
     }
 
     public void start() {
@@ -55,6 +58,10 @@ public class FullSyncMachine {
         //  this.networkService.currentSelectedPeer is null,
         //  unless explicitly set via some of the "update..." methods
         this.networkService.updateCurrentSelectedPeerWithNextBootnode();
+
+        Hash256 lastFinelizedStateRoot = syncState.getStateRoot(); //to replace line 67
+        // TODO: fetch state of the latest finalized block and start executing blocks from there
+        // scrap the blockstate highest finalized header logic for now
 
         BlockHeader highestFinalizedHeader = blockState.getHighestFinalizedHeader();
         Hash256 stateRoot = highestFinalizedHeader.getStateRoot();

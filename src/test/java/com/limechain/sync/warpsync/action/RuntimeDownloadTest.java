@@ -1,5 +1,6 @@
-package com.limechain.sync.warpsync.state;
+package com.limechain.sync.warpsync.action;
 
+import com.limechain.exception.trie.TrieDecoderException;
 import com.limechain.network.kad.KademliaService;
 import com.limechain.network.protocol.lightclient.LightMessages;
 import com.limechain.network.protocol.lightclient.LightMessagesProtocol;
@@ -7,7 +8,6 @@ import com.limechain.network.protocol.lightclient.pb.LightClientMessage;
 import com.limechain.runtime.RuntimeBuilder;
 import com.limechain.trie.decoded.Trie;
 import com.limechain.trie.decoded.TrieVerifier;
-import com.limechain.exception.trie.TrieDecoderException;
 import com.limechain.utils.LittleEndianUtils;
 import com.limechain.utils.RandomGenerationUtils;
 import com.limechain.utils.StringUtils;

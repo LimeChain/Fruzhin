@@ -1,8 +1,9 @@
-package com.limechain.sync.warpsync.state;
+package com.limechain.sync.warpsync.action;
 
-import com.limechain.sync.warpsync.SyncedState;
-import com.limechain.sync.warpsync.WarpSyncMachine;
 import com.limechain.exception.global.RuntimeCodeException;
+import com.limechain.storage.block.SyncState;
+import com.limechain.sync.warpsync.WarpSyncMachine;
+import com.limechain.sync.warpsync.WarpSyncState;
 import io.emeraldpay.polkaj.types.Hash256;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,9 +27,11 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class RuntimeDownloadStateTest {
     @InjectMocks
-    private RuntimeDownloadState runtimeDownloadState;
+    private RuntimeDownloadAction runtimeDownloadState;
     @Mock
-    private SyncedState syncedState;
+    private WarpSyncState warpSyncState;
+    @Mock
+    private SyncState syncState;
     @Mock
     private WarpSyncMachine warpSyncMachine;
 
@@ -38,25 +41,25 @@ class RuntimeDownloadStateTest {
 
         runtimeDownloadState.next(warpSyncMachine);
 
-        verify(warpSyncMachine).setWarpSyncState(any(RuntimeBuildState.class));
+        verify(warpSyncMachine).setWarpSyncAction(any(RuntimeBuildAction.class));
     }
 
     @Test
     void nextWhenErrorShouldSetRequestFragmentState() {
         ReflectionTestUtils.setField(runtimeDownloadState, "error", mock(Exception.class));
         Hash256 blockHash = mock(Hash256.class);
-        when(syncedState.getLastFinalizedBlockHash()).thenReturn(blockHash);
+        when(syncState.getLastFinalizedBlockHash()).thenReturn(blockHash);
 
         List<Object> capturedArguments = new ArrayList<>();
-        try (MockedConstruction<RequestFragmentsState> stateMock = mockConstruction(RequestFragmentsState.class,
+        try (MockedConstruction<RequestFragmentsAction> stateMock = mockConstruction(RequestFragmentsAction.class,
                 (mock, context) -> capturedArguments.add(context.arguments().get(0)))) {
             runtimeDownloadState.next(warpSyncMachine);
 
             assertEquals(blockHash, capturedArguments.get(0));
             assertEquals(1, stateMock.constructed().size());
-            RequestFragmentsState constructedState = stateMock.constructed().get(0);
+            RequestFragmentsAction constructedState = stateMock.constructed().get(0);
 
-            verify(warpSyncMachine).setWarpSyncState(constructedState);
+            verify(warpSyncMachine).setWarpSyncAction(constructedState);
         }
     }
 
@@ -64,23 +67,23 @@ class RuntimeDownloadStateTest {
     void handleShouldTryToLoadSavedRuntime() throws RuntimeCodeException {
         runtimeDownloadState.handle(warpSyncMachine);
 
-        verify(syncedState).loadSavedRuntimeCode();
+        verify(warpSyncState).loadSavedRuntimeCode();
     }
 
     @Test
     void handleWhenLoadFailsShouldTryToUpdateRuntime() throws RuntimeCodeException {
-        doThrow(mock(RuntimeCodeException.class)).when(syncedState).loadSavedRuntimeCode();
+        doThrow(mock(RuntimeCodeException.class)).when(warpSyncState).loadSavedRuntimeCode();
 
         runtimeDownloadState.handle(warpSyncMachine);
 
-        verify(syncedState).updateRuntimeCode();
+        verify(warpSyncState).updateRuntimeCode();
     }
 
     @Test
     void handleUpdateRuntimeFailsShouldUpdateErrorField() throws RuntimeCodeException {
-        doThrow(mock(RuntimeCodeException.class)).when(syncedState).loadSavedRuntimeCode();
+        doThrow(mock(RuntimeCodeException.class)).when(warpSyncState).loadSavedRuntimeCode();
         RuntimeCodeException updateRuntimeCodeException = mock(RuntimeCodeException.class);
-        doThrow(updateRuntimeCodeException).when(syncedState).updateRuntimeCode();
+        doThrow(updateRuntimeCodeException).when(warpSyncState).updateRuntimeCode();
 
         runtimeDownloadState.handle(warpSyncMachine);
 
