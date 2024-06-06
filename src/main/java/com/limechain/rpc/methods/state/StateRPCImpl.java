@@ -262,7 +262,7 @@ public class StateRPCImpl {
     public Map<String, Object> stateGetReadProof(final List<String> keyHexList, final String blockHashHex) {
         final Hash256 blockHash = getHash256FromHex(blockHashHex);
 
-        final Hash256 blockStateRoot = blockState.getBlockStateRoot(blockHash);
+        final byte[] blockStateRoot = blockState.getBlockStateRoot(blockHash).getBytes();
         BlockTrieAccessor blockTrieAccessor = new BlockTrieAccessor(trieStorage, blockStateRoot);
 
         List<String> readProof = keyHexList
