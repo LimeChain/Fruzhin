@@ -1,9 +1,12 @@
 package com.limechain.sync.warpsync.action;
 
+import com.limechain.rpc.server.AppBean;
 import com.limechain.runtime.version.ApiVersion;
 import com.limechain.sync.warpsync.WarpSyncMachine;
 import com.limechain.sync.warpsync.WarpSyncState;
 import com.limechain.utils.HashUtils;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.extern.java.Log;
 
 import java.util.logging.Level;
@@ -12,8 +15,13 @@ import java.util.logging.Level;
  * Sets consensus protocol versions
  */
 @Log
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
 public class ChainInformationBuildAction implements WarpSyncAction {
-    private final WarpSyncState warpSyncState = WarpSyncState.getInstance();
+    private final WarpSyncState warpSyncState;
+
+    public ChainInformationBuildAction() {
+        warpSyncState = AppBean.getBean(WarpSyncState.class);
+    }
 
     @Override
     public void next(WarpSyncMachine sync) {

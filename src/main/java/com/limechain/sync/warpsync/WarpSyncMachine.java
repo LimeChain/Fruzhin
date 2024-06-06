@@ -41,12 +41,12 @@ public class WarpSyncMachine {
     private final SyncState syncState;
     private final List<Runnable> onFinishCallbacks;
 
-    public WarpSyncMachine(Network network, ChainService chainService, SyncState syncState) {
+    public WarpSyncMachine(Network network, ChainService chainService, SyncState syncState, WarpSyncState warpSyncState) {
         this.networkService = network;
         this.chainService = chainService;
         this.syncState = syncState;
 
-        this.warpState = WarpSyncState.getInstance();
+        this.warpState = warpSyncState;
         this.executor = Executors.newSingleThreadExecutor();
         this.scheduledAuthorityChanges = new PriorityQueue<>(Comparator.comparing(Pair::getValue0));
         this.chainInformation = new ChainInformation();

@@ -16,11 +16,14 @@ import com.limechain.network.protocol.grandpa.messages.neighbour.NeighbourMessag
 import com.limechain.network.protocol.grandpa.messages.neighbour.NeighbourMessageScaleWriter;
 import com.limechain.network.protocol.grandpa.messages.vote.VoteMessage;
 import com.limechain.network.protocol.grandpa.messages.vote.VoteMessageScaleReader;
+import com.limechain.rpc.server.AppBean;
 import com.limechain.sync.warpsync.WarpSyncState;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.libp2p.core.PeerId;
 import io.libp2p.core.Stream;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.extern.java.Log;
 
 import java.io.ByteArrayOutputStream;
@@ -31,13 +34,21 @@ import java.util.logging.Level;
  * Engine for handling transactions on GRANDPA streams.
  */
 @Log
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
 public class GrandpaEngine {
     private static final int HANDSHAKE_LENGTH = 1;
 
-    protected ConnectionManager connectionManager = ConnectionManager.getInstance();
-    protected WarpSyncState warpSyncState = WarpSyncState.getInstance();
-    protected NeighbourMessageBuilder neighbourMessageBuilder = new NeighbourMessageBuilder();
-    protected BlockAnnounceHandshakeBuilder handshakeBuilder = new BlockAnnounceHandshakeBuilder();
+    protected ConnectionManager connectionManager;
+    protected WarpSyncState warpSyncState;
+    protected NeighbourMessageBuilder neighbourMessageBuilder;
+    protected BlockAnnounceHandshakeBuilder handshakeBuilder;
+
+    public GrandpaEngine() {
+        connectionManager = ConnectionManager.getInstance();
+        warpSyncState = AppBean.getBean(WarpSyncState.class);
+        neighbourMessageBuilder = new NeighbourMessageBuilder();
+        handshakeBuilder = new BlockAnnounceHandshakeBuilder();
+    }
 
     /**
      * Handles an incoming request as follows:

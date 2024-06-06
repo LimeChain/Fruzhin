@@ -11,12 +11,15 @@ import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshake
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceMessageScaleReader;
 import com.limechain.network.protocol.warp.dto.Block;
 import com.limechain.network.protocol.warp.dto.BlockBody;
+import com.limechain.rpc.server.AppBean;
 import com.limechain.storage.block.BlockState;
 import com.limechain.sync.warpsync.WarpSyncState;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.libp2p.core.PeerId;
 import io.libp2p.core.Stream;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.extern.java.Log;
 
 import java.io.ByteArrayOutputStream;
@@ -25,11 +28,18 @@ import java.util.ArrayList;
 import java.util.logging.Level;
 
 @Log
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
 public class BlockAnnounceEngine {
     public static final int HANDSHAKE_LENGTH = 69;
-    protected ConnectionManager connectionManager = ConnectionManager.getInstance();
-    protected WarpSyncState warpSyncState = WarpSyncState.getInstance();
-    protected BlockAnnounceHandshakeBuilder handshakeBuilder = new BlockAnnounceHandshakeBuilder();
+    protected ConnectionManager connectionManager;
+    protected WarpSyncState warpSyncState;
+    protected BlockAnnounceHandshakeBuilder handshakeBuilder;
+
+    public BlockAnnounceEngine() {
+        connectionManager = ConnectionManager.getInstance();
+        warpSyncState = AppBean.getBean(WarpSyncState.class);
+        handshakeBuilder = new BlockAnnounceHandshakeBuilder();
+    }
 
     public void receiveRequest(byte[] msg, Stream stream) {
         PeerId peerId = stream.remotePeerId();

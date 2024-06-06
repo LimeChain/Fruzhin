@@ -74,8 +74,6 @@ public class WarpSyncState {
     private final Set<BigInteger> scheduledRuntimeUpdateBlocks;
     private final PriorityQueue<Pair<BigInteger, Authority[]>> scheduledAuthorityChanges;
 
-    @Getter
-    private static WarpSyncState instance;
 
     public WarpSyncState(SyncState syncState, Network network, KVRepository<String, Object> db) {
         this(syncState,
@@ -89,8 +87,6 @@ public class WarpSyncState {
     public WarpSyncState(SyncState syncState, Network network, KVRepository<String, Object> db,
                          RuntimeBuilder runtimeBuilder, Set<BigInteger> scheduledRuntimeUpdateBlocks,
                          PriorityQueue<Pair<BigInteger, Authority[]>> scheduledAuthorityChanges) {
-        WarpSyncState.instance = this;
-
         this.syncState = syncState;
         this.network = network;
         this.db = db;

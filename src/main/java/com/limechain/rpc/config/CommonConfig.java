@@ -82,14 +82,15 @@ public class CommonConfig {
     }
 
     @Bean
-    public WarpSyncState warpSyncMachine(Network network, SyncState syncState,
-                                         KVRepository<String, Object> repository) {
+    public WarpSyncState warpSyncState(Network network, SyncState syncState,
+                                       KVRepository<String, Object> repository) {
         return new WarpSyncState(syncState, network, repository);
     }
 
     @Bean
-    public WarpSyncMachine warpSyncMachine(Network network, ChainService chainService, SyncState syncState) {
-        return new WarpSyncMachine(network, chainService, syncState);
+    public WarpSyncMachine warpSyncMachine(Network network, ChainService chainService, SyncState syncState,
+                                           WarpSyncState warpSyncState) {
+        return new WarpSyncMachine(network, chainService, syncState, warpSyncState);
     }
 
     @Bean

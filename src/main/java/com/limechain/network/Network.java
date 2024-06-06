@@ -19,6 +19,7 @@ import com.limechain.network.protocol.sync.pb.SyncMessage.BlockResponse;
 import com.limechain.network.protocol.transactions.TransactionsService;
 import com.limechain.network.protocol.warp.WarpSyncService;
 import com.limechain.network.protocol.warp.dto.WarpSyncResponse;
+import com.limechain.rpc.server.AppBean;
 import com.limechain.storage.DBConstants;
 import com.limechain.storage.KVRepository;
 import com.limechain.sync.warpsync.WarpSyncState;
@@ -360,7 +361,7 @@ public class Network {
 
     @Scheduled(fixedRate = 5, initialDelay = 5, timeUnit = TimeUnit.MINUTES)
     public void sendNeighbourMessages() {
-        if (!WarpSyncState.getInstance().isWarpSyncFinished()) {
+        if (!AppBean.getBean(WarpSyncState.class).isWarpSyncFinished()) {
             return;
         }
         connectionManager.getPeerIds().forEach(peerId -> grandpaService.sendNeighbourMessage(this.host, peerId));
