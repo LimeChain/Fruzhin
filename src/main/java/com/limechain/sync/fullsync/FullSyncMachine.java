@@ -23,6 +23,7 @@ import com.limechain.trie.BlockTrieAccessor;
 import com.limechain.trie.structure.nibble.Nibbles;
 import com.limechain.utils.scale.ScaleUtils;
 import com.limechain.utils.scale.readers.PairReader;
+import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.reader.ListReader;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.Getter;
@@ -129,9 +130,10 @@ public class FullSyncMachine {
         var encodedHeader = blockData.getHeader().toByteArray();
         BlockHeader blockHeader = ScaleUtils.Decode.decode(encodedHeader, new BlockHeaderReader());
 
-        // Protobuf decode the block body and scale encode it
+        // Protobuf decode the block body
         List<Extrinsics> extrinsicsList = blockData.getBodyList().stream()
-            .map(bs -> new Extrinsics(bs.toByteArray()))
+            .map(bs -> ScaleUtils.Decode.decode(bs.toByteArray(), ScaleCodecReader::readByteArray))
+            .map(Extrinsics::new)
             .toList();
 
         BlockBody blockBody = new BlockBody(extrinsicsList);
