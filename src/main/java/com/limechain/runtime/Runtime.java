@@ -23,8 +23,7 @@ import java.util.logging.Level;
 @Log
 @AllArgsConstructor(access = AccessLevel.PACKAGE)
 public class Runtime {
-    // TODO: Figure out whether we'll actually need this field
-    Module module; // used to open/close all of its own instances
+    Module module;
     Context context;
     Instance instance;
 
@@ -123,9 +122,6 @@ public class Runtime {
      * Closes the underlying instance.
      */
     public void close() {
-        // TODO:
-        //  We're not sure whether we should also close the module.
-        //  That's what Gossamer does though, but their wasm runtime could be doing things differently underneath.
         this.module.close();
         this.instance.close();
     }
