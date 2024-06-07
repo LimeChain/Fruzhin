@@ -13,7 +13,7 @@ import com.limechain.network.protocol.warp.dto.HeaderDigest;
 import com.limechain.network.protocol.warp.scale.reader.BlockHeaderReader;
 import com.limechain.rpc.server.AppBean;
 import com.limechain.runtime.Runtime;
-import com.limechain.runtime.RuntimeBuilder;
+import com.limechain.runtime.builder.RuntimeBuilder;
 import com.limechain.runtime.version.StateVersion;
 import com.limechain.storage.block.BlockState;
 import com.limechain.storage.block.SyncState;
@@ -45,6 +45,7 @@ public class FullSyncMachine {
     private final SyncState syncState;
     private final BlockState blockState = BlockState.getInstance();
     private final TrieStorage trieStorage = AppBean.getBean(TrieStorage.class);
+    private final RuntimeBuilder runtimeBuilder = AppBean.getBean(RuntimeBuilder.class);
     private Runtime runtime = null;
 
     public FullSyncMachine(final Network networkService, final SyncState syncState) {
@@ -187,10 +188,10 @@ public class FullSyncMachine {
         }
     }
 
-    private static Runtime buildRuntimeFromState(BlockTrieAccessor blockTrieAccessor) {
+    private Runtime buildRuntimeFromState(BlockTrieAccessor blockTrieAccessor) {
         return blockTrieAccessor
                 .find(Nibbles.fromBytes(":code".getBytes()))
-                .map(wasm -> new RuntimeBuilder().buildRuntime(wasm, blockTrieAccessor))
+                .map(wasm -> runtimeBuilder.buildRuntime(wasm, blockTrieAccessor))
                 .orElseThrow(() -> new RuntimeException("Runtime code not found in the trie"));
     }
 

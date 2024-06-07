@@ -9,6 +9,7 @@ import com.limechain.config.SystemInfo;
 import com.limechain.constants.GenesisBlockHash;
 import com.limechain.network.Network;
 import com.limechain.rpc.server.UnsafeInterceptor;
+import com.limechain.runtime.builder.RuntimeBuilder;
 import com.limechain.storage.DBInitializer;
 import com.limechain.storage.KVRepository;
 import com.limechain.storage.block.SyncState;
@@ -83,8 +84,8 @@ public class CommonConfig {
 
     @Bean
     public WarpSyncState warpSyncState(Network network, SyncState syncState,
-                                       KVRepository<String, Object> repository) {
-        return new WarpSyncState(syncState, network, repository);
+                                       KVRepository<String, Object> repository, RuntimeBuilder runtimeBuilder) {
+        return new WarpSyncState(syncState, network, repository, runtimeBuilder);
     }
 
     @Bean

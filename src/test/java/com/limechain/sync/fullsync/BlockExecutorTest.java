@@ -9,10 +9,11 @@ import com.limechain.network.protocol.warp.dto.Extrinsics;
 import com.limechain.network.protocol.warp.dto.HeaderDigest;
 import com.limechain.network.protocol.warp.scale.reader.HeaderDigestReader;
 import com.limechain.runtime.Runtime;
-import com.limechain.runtime.RuntimeBuilder;
+import com.limechain.runtime.RuntimeFactory;
 import com.limechain.runtime.version.StateVersion;
 import com.limechain.storage.KVRepository;
 import com.limechain.storage.trie.TrieStorage;
+import com.limechain.sync.fullsync.inherents.InherentData;
 import com.limechain.trie.BlockTrieAccessor;
 import com.limechain.trie.TrieStructureFactory;
 import com.limechain.utils.StringUtils;
@@ -51,9 +52,9 @@ class BlockExecutorTest {
         BlockTrieAccessor trieAccessor = new BlockTrieAccessor(trieStorage, genesisStateRoot); // instantiate a block trie accessor with the trieStorage specified for the genesis block
 
         // Package all dependencies into the expected configuration for the runtime builder
-        var cfg = new RuntimeBuilder.Config(trieAccessor, null, null, null, false);
+        var cfg = new RuntimeFactory.Config(trieAccessor, null, null, null, false);
 
-        Runtime genesisRuntime = new RuntimeBuilder().buildRuntime(runtimeByteCode, cfg);
+        Runtime genesisRuntime = RuntimeFactory.buildRuntime(runtimeByteCode, cfg);
 
         // Get the first block of kusama
         Block block = getKusamaFirstBlock();

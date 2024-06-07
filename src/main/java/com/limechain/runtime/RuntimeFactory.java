@@ -1,10 +1,6 @@
 package com.limechain.runtime;
 
 import com.github.luben.zstd.Zstd;
-import com.limechain.config.HostConfig;
-import com.limechain.network.Network;
-import com.limechain.network.protocol.blockannounce.NodeRole;
-import com.limechain.rpc.server.AppBean;
 import com.limechain.runtime.allocator.FreeingBumpHeapAllocator;
 import com.limechain.runtime.hostapi.DefaultHostApi;
 import com.limechain.runtime.hostapi.HostApi;
@@ -12,13 +8,9 @@ import com.limechain.runtime.hostapi.WasmExports;
 import com.limechain.runtime.hostapi.dto.OffchainNetworkState;
 import com.limechain.runtime.memory.WasmMemory;
 import com.limechain.runtime.version.RuntimeVersion;
-import com.limechain.storage.KVRepository;
 import com.limechain.storage.crypto.KeyStore;
 import com.limechain.storage.offchain.OffchainStorages;
-import com.limechain.storage.offchain.OffchainStore;
-import com.limechain.storage.offchain.StorageKind;
 import com.limechain.trie.BlockTrieAccessor;
-import io.libp2p.core.Host;
 import lombok.extern.java.Log;
 import org.jetbrains.annotations.Nullable;
 import org.wasmer.ImportObject;
@@ -34,57 +26,14 @@ import java.util.function.Function;
 import java.util.logging.Level;
 
 /**
- * A builder for runtime instances by provided bytecode source.
- * This is the public interface for constructing {@link Runtime} instances.
+ * Builds a runtime instance with an explicit context configuration.
  */
 @Log
-public class RuntimeBuilder {
+public class RuntimeFactory {
     private static final byte[] ZSTD_PREFIX = new byte[]{82, -68, 83, 118, 70, -37, -114, 5};
     private static final int MAX_ZSTD_DECOMPRESSED_SIZE = 50 * 1024 * 1024;
 
     private static final int DEFAULT_MEMORY_PAGES = 2048;
-
-    // TODO: Do we want this implicit logic for building with the spring context to reside here (within the Builder)
-    //  or delegate it somewhere else (user-site)?
-
-    /**
-     * Builds and returns a ready-to-execute `Runtime` with dependencies from the global Spring context.
-     *
-     * @param code the runtime wasm bytecode
-     * @return a ready to execute `Runtime` instance
-     * @implNote Make sure the Spring context is properly initialized, as building the runtime this way relies on it.
-     */
-    public Runtime buildRuntime(byte[] code) {
-        return this.buildRuntime(code, (BlockTrieAccessor) null);
-    }
-
-    public Runtime buildRuntime(byte[] code, @Nullable BlockTrieAccessor blockTrieAccessor) {
-        var nodeRole = AppBean.getBean(HostConfig.class).getNodeRole();
-
-        var db = AppBean.getBean(KVRepository.class);
-        var localStorage = new OffchainStore(db, StorageKind.LOCAL);
-        var persistentStorage = new OffchainStore(db, StorageKind.PERSISTENT);
-        // TODO:
-        //  This shouldn't be like that: base storage (for offchain_index api) is not the same as persistent storage.
-        //  Figure out the right approach, when it becomes relevant.
-        var baseStorage = persistentStorage;
-        var offchainStorages = new OffchainStorages(localStorage, persistentStorage, baseStorage);
-
-        var keyStore = AppBean.getBean(KeyStore.class);
-
-        Host host = AppBean.getBean(Network.class).getHost();
-        var offchainNetworkState = new OffchainNetworkState(host.getPeerId(), host.listenAddresses());
-
-        RuntimeBuilder.Config cfg = new RuntimeBuilder.Config(
-            blockTrieAccessor,
-            keyStore,
-            offchainStorages,
-            offchainNetworkState,
-            nodeRole == NodeRole.AUTHORING
-        );
-
-        return this.buildRuntime(code, cfg);
-    }
 
     /**
      * Builds and returns a ready-to-execute `Runtime` with an explicit context configuration.
@@ -93,8 +42,8 @@ public class RuntimeBuilder {
      * @param config an explicit configuration of necessary dependencies
      * @return a ready to execute `Runtime` instance
      */
-    public Runtime buildRuntime(byte[] code, Config config) {
-        return this.buildRuntime(code, config, DefaultHostApi::new);
+    public static Runtime buildRuntime(byte[] code, Config config) {
+        return buildRuntime(code, config, DefaultHostApi::new);
     }
 
     /**
@@ -111,7 +60,7 @@ public class RuntimeBuilder {
      * It is minimally contractually binding to construct a {@link HostApi},
      * but you can choose to either use it or not.
      */
-    public Runtime buildRuntime(byte[] code, Config config, Function<Context, HostApi> hostApiProvider) {
+    public static Runtime buildRuntime(byte[] code, Config config, Function<Context, HostApi> hostApiProvider) {
         byte[] wasmBinary = zstDecompressIfNecessary(code);
 
         Module module = new Module(wasmBinary);
@@ -131,13 +80,11 @@ public class RuntimeBuilder {
         HostApi hostApi = hostApiProvider.apply(context);
 
         // Build the imports
-        ImportObject.MemoryImport memory = WasmSectionUtils.parseMemoryFromBinary(wasmBinary);
+        ImportObject.MemoryImport memoryImport = buildMemoryImport(wasmBinary);
         List<ImportObject.FuncImport> functionImports = hostApi.getFunctionImports();
 
         List<ImportObject> imports = new ArrayList<>(functionImports);
-        imports.add(memory != null
-            ? memory
-            : new ImportObject.MemoryImport(WasmSectionUtils.ENV_MODULE_NAME, DEFAULT_MEMORY_PAGES, false));
+        imports.add(memoryImport);
 
         // Instantiate the wasm module
         Instance instance = module.instantiate(Imports.from(imports, module));
@@ -160,7 +107,7 @@ public class RuntimeBuilder {
         return runtime;
     }
 
-    private byte[] zstDecompressIfNecessary(byte[] code) {
+    private static byte[] zstDecompressIfNecessary(byte[] code) {
         byte[] wasmBinaryPrefix = Arrays.copyOfRange(code, 0, 8);
         if (Arrays.equals(wasmBinaryPrefix, ZSTD_PREFIX)) {
             return Zstd.decompress(
@@ -172,7 +119,19 @@ public class RuntimeBuilder {
         return code;
     }
 
-    private void cacheRuntimeVersion(byte[] wasmBinary, Runtime runtime, Context context) {
+    private static ImportObject.MemoryImport buildMemoryImport(byte[] wasmBinary) {
+        // Attempt to parse memory needs from the raw binary source
+        ImportObject.MemoryImport memoryImport = WasmSectionUtils.parseMemoryFromBinary(wasmBinary);
+
+        // If no information could be found, build the default import
+        if (memoryImport == null) {
+            memoryImport = new ImportObject.MemoryImport(WasmSectionUtils.ENV_MODULE_NAME, DEFAULT_MEMORY_PAGES, false);
+        }
+
+        return memoryImport;
+    }
+
+    private static void cacheRuntimeVersion(byte[] wasmBinary, Runtime runtime, Context context) {
         // Attempt parsing the runtime version from custom sections
         RuntimeVersion runtimeVersion = WasmSectionUtils.parseRuntimeVersionFromBinary(wasmBinary);
 

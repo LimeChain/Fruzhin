@@ -18,7 +18,7 @@ import com.limechain.network.protocol.warp.dto.Justification;
 import com.limechain.network.protocol.warp.scale.reader.BlockHeaderReader;
 import com.limechain.network.protocol.warp.scale.reader.JustificationReader;
 import com.limechain.runtime.Runtime;
-import com.limechain.runtime.RuntimeBuilder;
+import com.limechain.runtime.builder.RuntimeBuilder;
 import com.limechain.storage.DBConstants;
 import com.limechain.storage.KVRepository;
 import com.limechain.storage.block.SyncState;
@@ -75,11 +75,11 @@ public class WarpSyncState {
     private final PriorityQueue<Pair<BigInteger, Authority[]>> scheduledAuthorityChanges;
 
 
-    public WarpSyncState(SyncState syncState, Network network, KVRepository<String, Object> db) {
+    public WarpSyncState(SyncState syncState, Network network, KVRepository<String, Object> db, RuntimeBuilder runtimeBuilder) {
         this(syncState,
                 network,
                 db,
-                new RuntimeBuilder(),
+                runtimeBuilder,
                 new HashSet<>(),
                 new PriorityQueue<>(Comparator.comparing(Pair::getValue0)));
     }
