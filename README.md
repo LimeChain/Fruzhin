@@ -40,21 +40,6 @@ If you have multiple java version installed please make sure you're using 21:
 export JAVA_HOME=`/usr/libexec/java_home -v 21`
 ```
 
-### Wasmer-Java dylib setup
-
-```
-Note: This step will be automated in the future
-```
-
-Apple silicon users can skip this step.
-For now, you will have to manually grab the compiled `wasmer-java` dynamic library
-file from the subfolder under `./wasmer-setup` corresponding to your architecture type.
-Copy the file to the Java `Extensions` folder:
-
-```
-/Library/Java/Extensions
-```
-
 ### Build
 
 ```bash
