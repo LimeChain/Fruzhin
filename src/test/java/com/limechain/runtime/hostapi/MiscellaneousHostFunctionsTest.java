@@ -66,7 +66,6 @@ class MiscellaneousHostFunctionsTest {
     }
 
     @Test
-    @Disabled("Does not work in github actions")
     void runtimeVersionV1() throws IOException {
         byte[] wasmRuntime = Files.readAllBytes(Paths.get("src","test","resources","runtime.wasm"));
         byte[] runtimeData = Files.readAllBytes(Paths.get("src","test","resources","runtime.data"));

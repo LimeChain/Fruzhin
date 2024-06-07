@@ -96,7 +96,6 @@ class WasmSectionUtilsTest {
     }
 
     @Test
-    @Disabled("Broken in CI due to the wasmer-java native lib. Works locally.")
     void test_parseMemoryFromBinary_memory_export() throws IOException {
         ImportObject.MemoryImport expected = new ImportObject.MemoryImport(WasmSectionUtils.ENV_MODULE_NAME,
             24, false);
@@ -108,7 +107,6 @@ class WasmSectionUtilsTest {
     }
 
     @Test
-    @Disabled("Broken in CI due to the wasmer-java native lib. Works locally.")
     void test_parseMemoryFromBinary_import() throws IOException {
         ImportObject.MemoryImport expected = new ImportObject.MemoryImport(WasmSectionUtils.ENV_MODULE_NAME,
             83, false);
@@ -120,7 +118,6 @@ class WasmSectionUtilsTest {
     }
 
     @Test
-    @Disabled("Broken in CI due to the wasmer-java native lib. Works locally.")
     void test_parseMemoryFromBinary_null() throws IOException {
         ImportObject.MemoryImport result = WasmSectionUtils.parseMemoryFromBinary(
             getTestWasmBytes(WASM_FILE_WITHOUT_MEMORY));
