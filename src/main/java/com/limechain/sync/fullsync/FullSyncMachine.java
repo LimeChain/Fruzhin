@@ -1,9 +1,7 @@
 package com.limechain.sync.fullsync;
 
-import com.google.protobuf.ByteString;
 import com.limechain.exception.sync.BlockExecutionException;
 import com.limechain.network.Network;
-import com.limechain.network.protocol.blockannounce.scale.BlockHeaderScaleWriter;
 import com.limechain.network.protocol.sync.BlockRequestDto;
 import com.limechain.network.protocol.sync.pb.SyncMessage;
 import com.limechain.network.protocol.warp.dto.Block;
@@ -13,17 +11,19 @@ import com.limechain.network.protocol.warp.dto.DigestType;
 import com.limechain.network.protocol.warp.dto.Extrinsics;
 import com.limechain.network.protocol.warp.dto.HeaderDigest;
 import com.limechain.network.protocol.warp.scale.reader.BlockHeaderReader;
+import com.limechain.rpc.server.AppBean;
 import com.limechain.runtime.Runtime;
-import com.limechain.runtime.RuntimeBuilder;
+import com.limechain.runtime.builder.RuntimeBuilder;
 import com.limechain.runtime.version.StateVersion;
 import com.limechain.storage.block.BlockState;
+import com.limechain.storage.block.SyncState;
+import com.limechain.storage.trie.TrieStorage;
 import com.limechain.sync.fullsync.inherents.InherentData;
-import com.limechain.sync.fullsync.inherents.scale.InherentDataWriter;
-import com.limechain.trie.AccessorHolder;
+import com.limechain.trie.BlockTrieAccessor;
 import com.limechain.trie.structure.nibble.Nibbles;
 import com.limechain.utils.scale.ScaleUtils;
 import com.limechain.utils.scale.readers.PairReader;
-import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
+import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.reader.ListReader;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.Getter;
@@ -42,12 +42,15 @@ import java.util.List;
 @Log
 public class FullSyncMachine {
     private final Network networkService;
+    private final SyncState syncState;
     private final BlockState blockState = BlockState.getInstance();
-    private final AccessorHolder accessorHolder = AccessorHolder.getInstance();
+    private final TrieStorage trieStorage = AppBean.getBean(TrieStorage.class);
+    private final RuntimeBuilder runtimeBuilder = AppBean.getBean(RuntimeBuilder.class);
     private Runtime runtime = null;
 
-    public FullSyncMachine(final Network networkService) {
+    public FullSyncMachine(final Network networkService, final SyncState syncState) {
         this.networkService = networkService;
+        this.syncState = syncState;
     }
 
     public void start() {
@@ -56,30 +59,37 @@ public class FullSyncMachine {
         //  unless explicitly set via some of the "update..." methods
         this.networkService.updateCurrentSelectedPeerWithNextBootnode();
 
+        Hash256 lastFinelizedStateRoot = syncState.getStateRoot(); //to replace line 67
+        // TODO: fetch state of the latest finalized block and start executing blocks from there
+        // scrap the blockstate highest finalized header logic for now
+
         BlockHeader highestFinalizedHeader = blockState.getHighestFinalizedHeader();
         Hash256 stateRoot = highestFinalizedHeader.getStateRoot();
-        accessorHolder.setToStateRoot(stateRoot.getBytes());
 
-        byte[] calculatedMerkleRoot = accessorHolder.getBlockTrieAccessor().getMerkleRoot(StateVersion.V0);
+        BlockTrieAccessor blockTrieAccessor = new BlockTrieAccessor(trieStorage, stateRoot.getBytes());
+
+        byte[] calculatedMerkleRoot = blockTrieAccessor.getMerkleRoot(StateVersion.V0);
         if (!stateRoot.equals(new Hash256(calculatedMerkleRoot))) {
             log.info("State root is not equal to the one in the trie, cannot start full sync");
             return;
         }
 
-        runtime = getRuntimeFromState();
+        runtime = buildRuntimeFromState(blockTrieAccessor);
         blockState.storeRuntime(highestFinalizedHeader.getHash(), runtime);
 
         int startNumber = highestFinalizedHeader
                 .getBlockNumber()
                 .add(BigInteger.ONE)
                 .intValue();
+
         int blocksToFetch = 100;
-        List<SyncMessage.BlockData> receivedBlockDatas = getBlocks(startNumber, blocksToFetch);
-        while (!receivedBlockDatas.isEmpty()) {
-            executeBlocks(receivedBlockDatas);
+        List<Block> receivedBlocks = requestBlocks(startNumber, blocksToFetch);
+
+        while (!receivedBlocks.isEmpty()) {
+            executeBlocks(receivedBlocks, blockTrieAccessor);
             log.info("Executed blocks from " + startNumber + " to " + (startNumber + blocksToFetch));
             startNumber += blocksToFetch;
-            receivedBlockDatas = getBlocks(startNumber, blocksToFetch);
+            receivedBlocks = requestBlocks(startNumber, blocksToFetch);
         }
     }
 
@@ -90,7 +100,7 @@ public class FullSyncMachine {
      * @param amount The number of blocks to fetch.
      * @return A list of BlockData received from the network.
      */
-    private List<SyncMessage.BlockData> getBlocks(int start, int amount) {
+    private List<Block> requestBlocks(int start, int amount) {
         try {
             final int HEADER = 0b0000_0001;
             final int BODY = 0b0000_0010;
@@ -103,13 +113,33 @@ public class FullSyncMachine {
                     amount
             ));
 
-            // Get the block from the list of responses:
-            return response.getBlocksList();
+            List<SyncMessage.BlockData> blockDatas = response.getBlocksList();
+
+            return blockDatas.stream()
+                .map(FullSyncMachine::protobufDecodeBlock)
+                .toList();
         } catch (Exception ex) {
             log.info("Error while fetching blocks, trying to fetch again");
             this.networkService.updateCurrentSelectedPeerWithNextBootnode();
-            return getBlocks(start, amount);
+            return requestBlocks(start, amount);
         }
+    }
+
+    // TODO: This method doesn't belong in this class. Move when appropriate.
+    private static Block protobufDecodeBlock(SyncMessage.BlockData blockData) {
+        // Decode the block header
+        var encodedHeader = blockData.getHeader().toByteArray();
+        BlockHeader blockHeader = ScaleUtils.Decode.decode(encodedHeader, new BlockHeaderReader());
+
+        // Protobuf decode the block body
+        List<Extrinsics> extrinsicsList = blockData.getBodyList().stream()
+            .map(bs -> ScaleUtils.Decode.decode(bs.toByteArray(), ScaleCodecReader::readByteArray))
+            .map(Extrinsics::new)
+            .toList();
+
+        BlockBody blockBody = new BlockBody(extrinsicsList);
+
+        return new Block(blockHeader, blockBody);
     }
 
     /**
@@ -117,68 +147,61 @@ public class FullSyncMachine {
      *
      * @param receivedBlockDatas A list of BlockData to execute.
      */
-    private void executeBlocks(List<SyncMessage.BlockData> receivedBlockDatas) {
-        for (SyncMessage.BlockData blockData : receivedBlockDatas) {
-            // Protobuf decode the block header
-            var encodedHeader = blockData.getHeader().toByteArray();
-            BlockHeader blockHeader = ScaleUtils.Decode.decode(encodedHeader, new BlockHeaderReader());
-            log.fine("Block number to be executed is " + blockHeader.getBlockNumber());
-            byte[] encodedUnsealedHeader =
-                    ScaleUtils.Encode.encode(BlockHeaderScaleWriter.getInstance()::writeUnsealed, blockHeader);
+    private void executeBlocks(List<Block> receivedBlockDatas, BlockTrieAccessor blockTrieAccessor) {
+        for (Block block : receivedBlockDatas) {
+            log.fine("Block number to be executed is " + block.getHeader().getBlockNumber());
 
-            // Protobuf decode the block body and scale encode it
-            var extrinsincs = blockData.getBodyList();
-            var encodedBody = ScaleUtils.Encode.encodeAsList(
-                    ScaleCodecWriter::writeByteArray,
-                    () -> extrinsincs.stream().map(ByteString::toByteArray).iterator()
-            );
+            blockState.addBlock(block);
 
-            List<Extrinsics> extrinsicsList =
-                    extrinsincs.stream().map(ByteString::toByteArray).map(Extrinsics::new).toList();
-            blockState.addBlock(new Block(blockHeader, new BlockBody(extrinsicsList)));
-
-            // Construct the parameter for executing the block
-            byte[] executeBlockParameter = ArrayUtils.addAll(encodedUnsealedHeader, encodedBody);
-
-            // Call BlockBuilder_check_inherents to check the inherents of the block
-            var args = getCheckInherentsParameter(executeBlockParameter);
-            byte[] checkInherentsOutput = runtime.call("BlockBuilder_check_inherents", args);
-
-            // Check if the block is good to execute based on the output of BlockBuilder_check_inherents
-            boolean goodToExecute = isBlockGoodToExecute(checkInherentsOutput);
+            // Check the block for valid inherents
+            // NOTE: This is only relevant for block production.
+            //  We will need this functionality in near future,
+            //  but we don't need it when importing blocks for the full sync.
+            boolean goodToExecute = this.checkInherents(block);
 
             log.fine("Block is good to execute: " + goodToExecute);
 
-            if (goodToExecute) {
-                runtime.call("Core_execute_block", executeBlockParameter);
-                log.fine("Block executed successfully");
-
-                // Persist the updates to the trie structure
-                AccessorHolder.getInstance().getBlockTrieAccessor().persistUpdates();
-                blockState.setFinalizedHash(blockHeader.getHash(), BigInteger.ZERO, BigInteger.ZERO);
-
-                if (Arrays.stream(blockHeader.getDigest())
-                        .map(HeaderDigest::getType)
-                        .anyMatch(type -> type.equals(DigestType.RUN_ENV_UPDATED))) {
-                    log.info("Runtime updated, updating the runtime code");
-                    runtime = getRuntimeFromState();
-                    blockState.storeRuntime(blockHeader.getHash(), runtime);
-                }
-
-            } else {
+            if (!goodToExecute) {
                 log.fine("Block not executed");
                 throw new BlockExecutionException();
+            }
+
+            // Actually execute the block and persist changes
+            runtime.executeBlock(block);
+            log.fine("Block executed successfully");
+
+            // Persist the updates to the trie structure
+            blockTrieAccessor.persistUpdates();
+
+            BlockHeader blockHeader = block.getHeader();
+            blockState.setFinalizedHash(blockHeader.getHash(), BigInteger.ZERO, BigInteger.ZERO);
+
+            boolean blockUpdatedRuntime = Arrays.stream(blockHeader.getDigest())
+                .map(HeaderDigest::getType)
+                .anyMatch(type -> type.equals(DigestType.RUN_ENV_UPDATED));
+
+            if (blockUpdatedRuntime) {
+                log.info("Runtime updated, updating the runtime code");
+                runtime = buildRuntimeFromState(blockTrieAccessor);
+                blockState.storeRuntime(blockHeader.getHash(), runtime);
             }
         }
     }
 
-    private static Runtime getRuntimeFromState() {
-        return AccessorHolder
-                .getInstance()
-                .getBlockTrieAccessor()
+    private Runtime buildRuntimeFromState(BlockTrieAccessor blockTrieAccessor) {
+        return blockTrieAccessor
                 .find(Nibbles.fromBytes(":code".getBytes()))
-                .map(new RuntimeBuilder()::buildRuntime)
+                .map(wasm -> runtimeBuilder.buildRuntime(wasm, blockTrieAccessor))
                 .orElseThrow(() -> new RuntimeException("Runtime code not found in the trie"));
+    }
+
+    private boolean checkInherents(Block block) {
+        // Call BlockBuilder_check_inherents to check the inherents of the block
+        InherentData inherents = new InherentData(System.currentTimeMillis());
+        byte[] checkInherentsOutput = runtime.checkInherents(block, inherents);
+
+        // Check if the block is good to execute based on the output of BlockBuilder_check_inherents
+        return isBlockGoodToExecute(checkInherentsOutput);
     }
 
     /**
@@ -189,13 +212,13 @@ public class FullSyncMachine {
      */
     private static boolean isBlockGoodToExecute(byte[] checkInherentsOutput) {
         var data = ScaleUtils.Decode.decode(
-                ArrayUtils.subarray(checkInherentsOutput, 2, checkInherentsOutput.length),
-                new ListReader<>(
-                        new PairReader<>(
-                                scr -> new String(scr.readByteArray(8)),
-                                scr -> new String(scr.readByteArray())
-                        )
+            ArrayUtils.subarray(checkInherentsOutput, 2, checkInherentsOutput.length),
+            new ListReader<>(
+                new PairReader<>(
+                    scr -> new String(scr.readByteArray(8)),
+                    scr -> new String(scr.readByteArray())
                 )
+            )
         );
 
         boolean goodToExecute;
@@ -209,28 +232,5 @@ public class FullSyncMachine {
             goodToExecute = true;
         }
         return goodToExecute;
-    }
-
-    /**
-     * Constructs the parameter for calling BlockBuilder_check_inherents.
-     *
-     * @param executeBlockParameter The parameter for executing the block.
-     * @return The parameter for checking inherents.
-     */
-    public static byte[] getCheckInherentsParameter(byte[] executeBlockParameter) {
-        // The first param is executeBlockParameter
-        // The second param of `BlockBuilder_check_inherents` is a SCALE-encoded list of
-        // tuples containing an "inherent identifier" (`[u8; 8]`) and a value (`Vec<u8>`).
-        return ArrayUtils.addAll(executeBlockParameter, getInherentDataParameter());
-    }
-
-    /**
-     * Constructs the parameter for inherent data.
-     *
-     * @return The parameter for inherent data.
-     */
-    public static byte[] getInherentDataParameter() {
-        long millis = System.currentTimeMillis();
-        return ScaleUtils.Encode.encode(new InherentDataWriter(), new InherentData(millis));
     }
 }

@@ -1,8 +1,9 @@
 package com.limechain.runtime.hostapi;
 
 import com.limechain.exception.scale.ScaleEncodingException;
+import com.limechain.runtime.Runtime;
+import com.limechain.runtime.RuntimeFactory;
 import com.limechain.runtime.SharedMemory;
-import com.limechain.runtime.RuntimeBuilder;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import com.limechain.runtime.version.scale.RuntimeVersionWriter;
 import com.limechain.utils.scale.ScaleUtils;
@@ -109,10 +110,8 @@ public class MiscellaneousHostFunctions implements PartialHostApi {
         byte[] versionOption;
 
         try {
-            byte[] runtimeVersionData =
-                ScaleUtils.Encode.encode(
-                    new RuntimeVersionWriter(),
-                    new RuntimeBuilder().buildRuntime(wasmBlob).getVersion());
+            Runtime runtime = RuntimeFactory.buildRuntime(wasmBlob, RuntimeFactory.Config.EMPTY);
+            byte[] runtimeVersionData = ScaleUtils.Encode.encode(new RuntimeVersionWriter(), runtime.getVersion());
 
             versionOption = scaleEncodedOption(runtimeVersionData);
         } catch (UnsatisfiedLinkError e) {

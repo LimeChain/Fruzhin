@@ -11,3 +11,6 @@
 - Revisit the conversations on the VRF proofs PR from within PolkaJ's Schnorrkel wrapper [here](https://github.com/LimeChain/polkaj/pull/2). Goal: we're waiting for potential upgrade of `robusta` to a newer jni to refine the ugly hacks in our solution. More details in the PR conversation.
 - Make `wasmer-java` load the native libraries as dynamic libs and remove the need for manual intervention for the user from [the README](https://github.com/LimeChain/Fruzhin/blob/dev/README.md#wasmer-java-dylib-setup). In other words, add the mentioned "automation later" :D
 I'd suggest a similar approach to what's in `polkaj-schnorrkel`, still not ideal for the dev, but definitely better for the user.
+- Runtime binding to context. For now, this happens on construction of the `Runtime`, which means that we bind to the context at the same time we want to build the `byte[]` source.
+  An alternative to that would be to delay the injection of the context, e.g. whenever we make a `call`.
+  See the discussion [here](https://github.com/LimeChain/Fruzhin/pull/456#discussion_r1622198967)

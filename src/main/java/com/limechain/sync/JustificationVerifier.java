@@ -2,19 +2,17 @@ package com.limechain.sync;
 
 import com.limechain.chain.lightsyncstate.Authority;
 import com.limechain.network.protocol.warp.dto.Precommit;
-import com.limechain.sync.warpsync.SyncedState;
+import com.limechain.rpc.server.AppBean;
+import com.limechain.runtime.hostapi.dto.Key;
+import com.limechain.runtime.hostapi.dto.VerifySignature;
+import com.limechain.storage.block.SyncState;
+import com.limechain.utils.Ed25519Utils;
 import com.limechain.utils.LittleEndianUtils;
 import com.limechain.utils.StringUtils;
-import io.emeraldpay.polkaj.scaletypes.Extrinsic;
 import io.emeraldpay.polkaj.types.Hash256;
-import io.emeraldpay.polkaj.types.Hash512;
-import io.libp2p.crypto.keys.Ed25519PublicKey;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.java.Log;
-import org.bouncycastle.crypto.params.Ed25519PublicKeyParameters;
-import org.bouncycastle.crypto.signers.Ed25519Signer;
-import org.bouncycastle.util.encoders.Hex;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -29,9 +27,9 @@ import java.util.stream.Collectors;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class JustificationVerifier {
     public static boolean verify(Precommit[] precommits, BigInteger round) {
-        SyncedState syncedState = SyncedState.getInstance();
-        Authority[] authorities = syncedState.getAuthoritySet();
-        BigInteger authoritiesSetId = syncedState.getSetId();
+        SyncState syncState = AppBean.getBean(SyncState.class);
+        Authority[] authorities = syncState.getAuthoritySet();
+        BigInteger authoritiesSetId = syncState.getSetId();
 
         // Implementation from: https://github.com/smol-dot/smoldot
         // lib/src/finality/justification/verify.rs
@@ -43,6 +41,7 @@ public class JustificationVerifier {
         Set<Hash256> seenPublicKeys = new HashSet<>();
         Set<Hash256> authorityKeys = Arrays.stream(authorities)
                 .map(Authority::getPublicKey)
+                .map(Hash256::new)
                 .collect(Collectors.toSet());
 
         for (Precommit precommit : precommits) {
@@ -109,22 +108,9 @@ public class JustificationVerifier {
     }
 
     public static boolean verifySignature(String publicKeyHex, String signatureHex, byte[] data) {
-        byte[] publicKeyBytes = Hex.decode(publicKeyHex.substring(2));
-        byte[] signatureBytes = Hex.decode(signatureHex.substring(2));
-        Ed25519PublicKeyParameters publicKeyParams = new Ed25519PublicKeyParameters(publicKeyBytes, 0);
-        Ed25519Signer verifier = new Ed25519Signer();
-        verifier.init(false, publicKeyParams);
-        verifier.update(data, 0, data.length);
+        byte[] publicKeyBytes = StringUtils.hexToBytes(publicKeyHex);
+        byte[] signatureBytes = StringUtils.hexToBytes(signatureHex);
 
-        Ed25519PublicKey publicKey =
-                new Ed25519PublicKey(publicKeyParams);
-        Extrinsic.ED25519Signature signature = new Extrinsic.ED25519Signature(Hash512.from(signatureHex));
-
-        boolean isValid = verifier.verifySignature(signatureBytes);
-        boolean result = publicKey.verify(data, signature.getValue().getBytes());
-        if (!result) {
-            log.log(Level.WARNING, "Invalid signature");
-        }
-        return isValid;
+        return Ed25519Utils.verifySignature(new VerifySignature(signatureBytes, data, publicKeyBytes, Key.ED25519));
     }
 }

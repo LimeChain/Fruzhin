@@ -4,15 +4,14 @@ import com.limechain.exception.global.ThreadInterruptedException;
 import com.limechain.exception.hostapi.InvalidArgumentException;
 import com.limechain.exception.hostapi.OffchainResponseWaitException;
 import com.limechain.exception.scale.ScaleEncodingException;
-import com.limechain.network.Network;
 import com.limechain.runtime.SharedMemory;
+import com.limechain.runtime.hostapi.dto.HttpErrorType;
+import com.limechain.runtime.hostapi.dto.HttpStatusCode;
+import com.limechain.runtime.hostapi.dto.InvalidRequestId;
 import com.limechain.runtime.hostapi.dto.OffchainNetworkState;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import com.limechain.storage.offchain.BasicStorage;
 import com.limechain.storage.offchain.OffchainStorages;
-import com.limechain.runtime.hostapi.dto.HttpErrorType;
-import com.limechain.runtime.hostapi.dto.HttpStatusCode;
-import com.limechain.runtime.hostapi.dto.InvalidRequestId;
 import com.limechain.utils.scale.ScaleUtils;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
@@ -197,9 +196,8 @@ public class OffchainHostFunctions implements PartialHostApi {
      * @see <a href=https://spec.polkadot.network/chap-host-api#defn-opaque-network-state>Opaque Network State</a>
      */
     public RuntimePointerSize extOffchainNetworkState() {
-        Network network = Network.getNetwork();
-        PeerId peerId = network.getHost().getPeerId();
-        List<Multiaddr> multiAddresses = network.getHost().listenAddresses();
+        PeerId peerId = networkState.peerId();
+        List<Multiaddr> multiAddresses = networkState.listenAddresses();
 
         return sharedMemory.writeData(scaleEncodedOpaqueNetwork(peerId, multiAddresses));
     }

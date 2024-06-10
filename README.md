@@ -26,13 +26,7 @@ cd Fruzhin
 
 ### Java Version
 
-Fruzhin only works
-with [Java 21 Coretto](https://docs.aws.amazon.com/corretto/latest/corretto-21-ug/downloads-list.html). Using any other
-version may cause "cannot calculate secret" errors when running the node:
-
-```
-org.bouncycastle.tls.crypto.TlsCryptoException: cannot calculate secret
-```
+Fruzhin only works with Java 21. 
 
 If you have multiple java version installed please make sure you're using 21:
 

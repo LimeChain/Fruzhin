@@ -24,6 +24,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.logging.Level;
 
+/**
+ * A wrapper around a KVRepository that provides a public interface for trie-related DB queries.
+ */
 @Log
 @AllArgsConstructor
 public class TrieStorage {

@@ -1,7 +1,7 @@
 package com.limechain.network.protocol.blockannounce;
 
 import com.limechain.network.kad.KademliaService;
-import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshake;
+import com.limechain.network.protocol.blockannounce.messages.BlockAnnounceHandshake;
 import com.limechain.utils.RandomGenerationUtils;
 import io.emeraldpay.polkaj.types.Hash256;
 import io.ipfs.multiaddr.MultiAddress;

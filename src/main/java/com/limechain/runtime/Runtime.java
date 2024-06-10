@@ -1,10 +1,18 @@
 package com.limechain.runtime;
 
+import com.limechain.network.protocol.blockannounce.scale.BlockHeaderScaleWriter;
+import com.limechain.network.protocol.warp.dto.Block;
+import com.limechain.network.protocol.warp.scale.writer.BlockBodyWriter;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import com.limechain.runtime.version.RuntimeVersion;
 import com.limechain.runtime.version.scale.RuntimeVersionReader;
+import com.limechain.sync.fullsync.inherents.InherentData;
+import com.limechain.sync.fullsync.inherents.scale.InherentDataWriter;
 import com.limechain.utils.scale.ScaleUtils;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.extern.java.Log;
+import org.apache.commons.lang3.ArrayUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.wasmer.Instance;
@@ -13,55 +21,36 @@ import org.wasmer.Module;
 import java.util.logging.Level;
 
 @Log
+@AllArgsConstructor(access = AccessLevel.PACKAGE)
 public class Runtime {
-    // TODO: Figure out whether we'll actually need this field
-    Module module; // used to open/close all of its own instances
+    Module module;
     Context context;
     Instance instance;
 
-    // TODO: Reconsider whether `Context` should be a constructor argument or (dependency injected)
-    //                       OR an argument of `Runtime::call()` (dependency parameterized)
-    //  The former necessitates the explicit passing of a context for every build of the runtime
-    //      (we can't build the underlying module only - we always instantiate and tie the instance to the context)
-    //    - In more lightweight cases (i.e. only build to fetch the version), we'll have to explicitly provide a "partial" context;
-    //      "partial" meaning with some of the services inside being null (or partially implemented)
-    //      since we know they are not going to be used
-    //  The latter necessitates the explicit re-instantiating of the underlying `org.wasmer.Instance`
-    //      for each RuntimeAPI call (they do that in Gossamer),
-    //      but allows for easy caching of the compiled wasm module (thus we can pass that around, e.g. in the BlockState)
-    //      and instantiate with a context only when invocation is necessary.
-    //      This might prove more fitting, for example,
-    //      when executing consecutive blocks (between which there's no runtime updates)
-    //      without rebuilding the module and by only changing the context...
-    Runtime(Module module, Context context, Instance instance) {
-        this.module = module;
-        this.context = context;
-        this.instance = instance;
-    }
-
     /**
      * Calls an exported runtime function with no parameters.
-     * @param functionName the name of the function
+     * @param function the name Runtime function to call
      * @return the SCALE encoded response
      */
     @Nullable
-    public byte[] call(String functionName) {
-        return callInner(functionName, new RuntimePointerSize(0, 0));
+    public byte[] call(RuntimeEndpoint function) {
+        return callInner(function, new RuntimePointerSize(0, 0));
     }
 
     /**
      * Calls an exported runtime function with parameters.
-     * @param functionName the name of the function
+     * @param function the name Runtime function to call
      * @param parameter the SCALE encoded tuple of parameters
      * @return the SCALE encoded response
      */
     @Nullable
-    public byte[] call(String functionName, @NotNull byte[] parameter) {
-        return callInner(functionName, context.getSharedMemory().writeData(parameter));
+    public byte[] call(RuntimeEndpoint function, @NotNull byte[] parameter) {
+        return callInner(function, context.getSharedMemory().writeData(parameter));
     }
 
     @Nullable
-    private byte[] callInner(String functionName, RuntimePointerSize parameterPtrSize) {
+    private byte[] callInner(RuntimeEndpoint function, RuntimePointerSize parameterPtrSize) {
+        String functionName = function.getName();
         log.log(Level.FINE, "Making a runtime call: " + functionName);
         Object[] response = instance.exports.getFunction(functionName)
             .apply(parameterPtrSize.pointer(), parameterPtrSize.size());
@@ -83,16 +72,56 @@ public class Runtime {
     }
 
     RuntimeVersion callCoreVersion() {
-        return ScaleUtils.Decode.decode(this.call("Core_version"), new RuntimeVersionReader());
+        return ScaleUtils.Decode.decode(this.call(RuntimeEndpoint.CORE_VERSION), new RuntimeVersionReader());
+    }
+
+    /**
+     * Executes the block by calling `Core_execute_block`.
+     * @param block the block to execute
+     * @return the SCALE encoded result of the runtime call
+     */
+    public byte[] executeBlock(Block block) {
+        byte[] param = serializeExecuteBlockParameter(block);
+        return this.call(RuntimeEndpoint.CORE_EXECUTE_BLOCK, param);
+    }
+
+    private static byte[] serializeExecuteBlockParameter(Block block) {
+        byte[] encodedUnsealedHeader = ScaleUtils.Encode.encode(
+            BlockHeaderScaleWriter.getInstance()::writeUnsealed,
+            block.getHeader()
+        );
+        byte[] encodedBody = ScaleUtils.Encode.encode(BlockBodyWriter.getInstance(), block.getBody());
+
+        return ArrayUtils.addAll(encodedUnsealedHeader, encodedBody);
+    }
+
+    /**
+     * Checks whether the provided inherents are valid for the block by calling `BlockBuilder_Check_inherents
+     * @param block the block to check against
+     * @param inherentData inherents to check for validity
+     * @return the SCALE encoded result of the runtime call
+     */
+    public byte[] checkInherents(Block block, InherentData inherentData) {
+        byte[] param = serializeCheckInherentsParameter(block, inherentData);
+        return this.call(RuntimeEndpoint.BLOCKBUILDER_CHECK_INHERENTS, param);
+    }
+
+    private byte[] serializeCheckInherentsParameter(Block block, InherentData inherentData) {
+        // The first param is executeBlockParameter
+        byte[] executeBlockParameter = serializeExecuteBlockParameter(block);
+
+        // The second param of `BlockBuilder_check_inherents` is the SCALE-encoded InherentData:
+        // a SCALE-encoded list of tuples containing an "inherent identifier" (`[u8; 8]`) and a value (`Vec<u8>`).
+        byte[] scaleEncodedInherentData = ScaleUtils.Encode.encode(new InherentDataWriter(), inherentData);
+
+        // We simply concat them both
+        return ArrayUtils.addAll(executeBlockParameter, scaleEncodedInherentData);
     }
 
     /**
      * Closes the underlying instance.
      */
     public void close() {
-        // TODO:
-        //  We're not sure whether we should also close the module.
-        //  That's what Gossamer does though, but their wasm runtime could be doing things differently underneath.
         this.module.close();
         this.instance.close();
     }
