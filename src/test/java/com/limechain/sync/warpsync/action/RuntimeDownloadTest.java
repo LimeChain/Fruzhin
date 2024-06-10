@@ -5,7 +5,7 @@ import com.limechain.network.kad.KademliaService;
 import com.limechain.network.protocol.lightclient.LightMessages;
 import com.limechain.network.protocol.lightclient.LightMessagesProtocol;
 import com.limechain.network.protocol.lightclient.pb.LightClientMessage;
-import com.limechain.runtime.RuntimeBuilder;
+import com.limechain.runtime.RuntimeFactory;
 import com.limechain.trie.decoded.Trie;
 import com.limechain.trie.decoded.TrieVerifier;
 import com.limechain.utils.LittleEndianUtils;
@@ -94,7 +94,7 @@ class RuntimeDownloadTest {
             assertNotNull(code);
 
             //Build runtime
-            new RuntimeBuilder().buildRuntime(code);
+            RuntimeFactory.buildRuntime(code, RuntimeFactory.Config.EMPTY);
 
             log.log(Level.INFO, "Runtime and heap pages downloaded");
         } catch (UnsatisfiedLinkError e) {

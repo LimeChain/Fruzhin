@@ -8,7 +8,7 @@ import lombok.Getter;
  * ChildTrieAccessor provides access to a child trie within a parent trie structure.
  * It extends TrieAccessor and inherits its functionalities for key-value storage and retrieval.
  */
-public class ChildTrieAccessor extends TrieAccessor {
+public final class ChildTrieAccessor extends TrieAccessor {
 
     private final TrieAccessor parentTrie;
     @Getter

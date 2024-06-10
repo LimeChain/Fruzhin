@@ -2,6 +2,7 @@ package com.limechain.rpc.methods.state;
 
 import com.limechain.rpc.methods.state.dto.StorageChangeSet;
 import com.limechain.runtime.Runtime;
+import com.limechain.runtime.RuntimeEndpoint;
 import com.limechain.storage.block.BlockState;
 import com.limechain.storage.trie.TrieStorage;
 import com.limechain.trie.BlockTrieAccessor;
@@ -182,7 +183,7 @@ public class StateRPCImpl {
         final Hash256 blockHash = getHash256FromHex(blockHashHex);
 
         final Runtime runtime = blockState.getRuntime(blockHash);
-        byte[] metadataBytes = runtime.call("Metadata_metadata");
+        byte[] metadataBytes = runtime.call(RuntimeEndpoint.METADATA_METADATA);
 
         return StringUtils.toHexWithPrefix(metadataBytes);
     }
@@ -261,7 +262,7 @@ public class StateRPCImpl {
     public Map<String, Object> stateGetReadProof(final List<String> keyHexList, final String blockHashHex) {
         final Hash256 blockHash = getHash256FromHex(blockHashHex);
 
-        final Hash256 blockStateRoot = blockState.getBlockStateRoot(blockHash);
+        final byte[] blockStateRoot = blockState.getBlockStateRoot(blockHash).getBytes();
         BlockTrieAccessor blockTrieAccessor = new BlockTrieAccessor(trieStorage, blockStateRoot);
 
         List<String> readProof = keyHexList

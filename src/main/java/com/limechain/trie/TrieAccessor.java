@@ -20,7 +20,8 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @AllArgsConstructor
-public class TrieAccessor implements KVRepository<Nibbles, byte[]> {
+public abstract sealed class TrieAccessor implements KVRepository<Nibbles, byte[]>
+    permits BlockTrieAccessor, ChildTrieAccessor {
 
     public static final String TRANSACTIONS_NOT_SUPPORTED = "Block Trie Accessor does not support transactions.";
 
@@ -31,7 +32,7 @@ public class TrieAccessor implements KVRepository<Nibbles, byte[]> {
     private TrieStructure<NodeData> initialTrie;
     private List<TrieNodeIndex> updates;
 
-    public TrieAccessor(TrieStorage trieStorage, byte[] mainTrieRoot) {
+    TrieAccessor(TrieStorage trieStorage, byte[] mainTrieRoot) {
         this.trieStorage = trieStorage;
         this.mainTrieRoot = mainTrieRoot;
 
