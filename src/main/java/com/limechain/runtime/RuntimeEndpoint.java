@@ -4,11 +4,12 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 /**
- * Holds all Runtime API endpoints' names.
+ * Used to identify runtime API endpoints by their names as listed in the spec.
+ * @see <a href="https://spec.polkadot.network/chap-runtime-api">the spec</a>
  */
+// NOTE: Add here whatever endpoints necessary during development.
 @Getter
 @AllArgsConstructor
-// TODO: Define all endpoints
 public enum RuntimeEndpoint {
     CORE_EXECUTE_BLOCK("Core_execute_block"),
     CORE_VERSION("Core_version"),
