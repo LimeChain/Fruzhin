@@ -32,7 +32,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 //@formatter:off
 @Log
-@Disabled("Broken in CI due to the wasmer-java native lib. Works locally.")
 class BlockExecutorTest {
     @Test
     void kusamaFirstBlock() throws IOException {

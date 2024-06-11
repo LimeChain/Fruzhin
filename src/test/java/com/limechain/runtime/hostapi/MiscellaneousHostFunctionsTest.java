@@ -4,7 +4,6 @@ import com.limechain.rpc.server.AppBean;
 import com.limechain.runtime.SharedMemory;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import com.limechain.storage.crypto.KeyStore;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -66,7 +65,6 @@ class MiscellaneousHostFunctionsTest {
     }
 
     @Test
-    @Disabled("Does not work in github actions")
     void runtimeVersionV1() throws IOException {
         byte[] wasmRuntime = Files.readAllBytes(Paths.get("src","test","resources","runtime.wasm"));
         byte[] runtimeData = Files.readAllBytes(Paths.get("src","test","resources","runtime.data"));
