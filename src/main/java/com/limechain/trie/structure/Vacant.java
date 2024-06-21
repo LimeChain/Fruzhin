@@ -13,6 +13,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.IntStream;
 
+@SuppressWarnings({"unused", "java:S1119"})
 public final class Vacant<T> extends Entry<T> {
     /**
      * How many children a node has.
