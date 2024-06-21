@@ -341,6 +341,7 @@ public final class Vacant<T> extends Entry<T> {
              * @param userData the userData held by the storage node
              * @return a StorageNodeHandle to the freshly inserted node
              */
+            @Override
             public StorageNodeHandle<T> insert(T userData, StateVersion stateVersion) {
                 int newNodePartialKeyLen = this.partialKey.size();
                 int newNodeIndex = this.trieStructure.nodes.add(new TrieNode<>(
@@ -432,6 +433,7 @@ public final class Vacant<T> extends Entry<T> {
              * @param storageUserData the userData held by the storage node
              * @return a StorageNodeHandle to the freshly inserted storage node
              */
+            @Override
             public StorageNodeHandle<T> insert(T storageUserData, StateVersion stateVersion) {
                 return this.insert(storageUserData, null, stateVersion);
             }
