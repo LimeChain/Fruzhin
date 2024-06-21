@@ -58,7 +58,6 @@ public class TrieStructureFactory {
      * Calculates the Merkle values for all nodes in the trie and sets them.
      *
      * @param trie         The TrieStructure for which Merkle values are calculated.
-     * @param stateVersion The state version used for constructing the storage values.
      * @param hashFunction The hash function used for calculating Merkle values.
      */
     public void calculateMerkleValues(TrieStructure<NodeData> trie, UnaryOperator<byte[]> hashFunction) {
