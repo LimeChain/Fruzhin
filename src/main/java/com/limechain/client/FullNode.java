@@ -1,12 +1,9 @@
 package com.limechain.client;
 
-import com.google.protobuf.ByteString;
 import com.limechain.cli.CliArguments;
 import com.limechain.constants.GenesisBlockHash;
 import com.limechain.network.Network;
 import com.limechain.rpc.server.AppBean;
-import com.limechain.runtime.RuntimeFactory;
-import com.limechain.runtime.version.StateVersion;
 import com.limechain.storage.KVRepository;
 import com.limechain.storage.block.BlockState;
 import com.limechain.storage.block.BlockStateHelper;
@@ -85,13 +82,8 @@ public class FullNode implements HostNode {
             BlockState.getInstance().initialize(db,
                 genesisBlockHash.getGenesisBlockHeader()); //Initialize BlockState from genesis block
 
-            StateVersion stateVersion = RuntimeFactory.buildRuntime(
-                genesisBlockHash.getGenesisStorage().get(ByteString.copyFrom(":code".getBytes())).toByteArray(),
-                RuntimeFactory.Config.EMPTY
-            ).getVersion().getStateVersion();
-
             TrieStructure<NodeData> trie = genesisBlockHash.getGenesisTrie();
-            trieStorage.insertTrieStorage(trie, stateVersion);
+            trieStorage.insertTrieStorage(trie);
         }
     }
 

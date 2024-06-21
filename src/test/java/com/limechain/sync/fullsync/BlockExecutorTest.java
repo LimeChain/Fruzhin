@@ -39,13 +39,13 @@ class BlockExecutorTest {
         ChainSpec chainSpec = ChainSpec.newFromJSON("genesis/ksmcc3.json");
         var genesisStorage = chainSpec.getGenesis().getTop();
         var runtimeByteCode = genesisStorage.get(ByteString.copyFrom(":code".getBytes())).toByteArray();
-        var genesisTrie = TrieStructureFactory.buildFromKVPs(genesisStorage, StateVersion.V0);
+        var genesisTrie = TrieStructureFactory.buildFromKVPs(genesisStorage);
 
         // Define dependencies for the execution context
         KVRepository<String, Object> db = new InMemoryDB(); // initialize a DB
 
         TrieStorage trieStorage = new TrieStorage(db); // inject it into a trie storage
-        trieStorage.insertTrieStorage(genesisTrie, StateVersion.V0); // populate with the genesis trie
+        trieStorage.insertTrieStorage(genesisTrie); // populate with the genesis trie
 
         final byte[] genesisStateRoot = genesisTrie.getRootNode().get().getUserData().getMerkleValue();
         BlockTrieAccessor trieAccessor = new BlockTrieAccessor(trieStorage, genesisStateRoot); // instantiate a block trie accessor with the trieStorage specified for the genesis block
