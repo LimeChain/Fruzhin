@@ -94,7 +94,6 @@ public class TrieStructureFactory {
             boolean updated = recalculateAndSetMerkleValue(nodeHandle, stateVersion, hashFunction);
             if (updated) {
                 updatedNodes.add(index);
-
             }
         }
         return updatedNodes;
