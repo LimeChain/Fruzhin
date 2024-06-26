@@ -9,15 +9,7 @@ import com.limechain.trie.structure.node.Remove;
 import com.limechain.trie.structure.node.TrieNodeChange;
 import lombok.RequiredArgsConstructor;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 
 /**
  * This class serves the purpose of a container for the changes that a block performs on the storage during execution.
@@ -80,9 +72,9 @@ public class TrieChanges<T> {
                     newStorageValue = diffEntry.get().value();
                 }
 
-                change = new InsertUpdate(pendingInsertUpdate.getNewMerkleValue(),
-                    pendingInsertUpdate.getChildrenMerkleValues(),
-                    pendingInsertUpdate.getPartialKey(),
+                change = new InsertUpdate(pendingInsertUpdate.newMerkleValue(),
+                    pendingInsertUpdate.childrenMerkleValues(),
+                    pendingInsertUpdate.partialKey(),
                     newStorageValue);
             } else {
                 continue;
@@ -119,6 +111,28 @@ public class TrieChanges<T> {
                 if (cmp != 0) return cmp;
             }
             return Integer.compare(a.length, b.length);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            TrieKey trieKey = (TrieKey) o;
+            return Objects.equals(keyPath, trieKey.keyPath)
+                && Objects.deepEquals(trieIdentifier, trieKey.trieIdentifier);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(Arrays.hashCode(trieIdentifier), keyPath);
+        }
+
+        @Override
+        public String toString() {
+            return "TrieKey{" +
+                "trieIdentifier=" + Arrays.toString(trieIdentifier) +
+                ", keyPath=" + keyPath +
+                '}';
         }
     }
 }

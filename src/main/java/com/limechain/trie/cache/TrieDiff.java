@@ -4,8 +4,10 @@ import com.limechain.trie.structure.nibble.Nibbles;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.stream.Stream;
@@ -14,6 +16,7 @@ import java.util.stream.Stream;
  * Container used to cache the difference between two versions of a trie. For example this can be used when the runtime
  * edits the storage via host api calls, block execution, etc. The aim of this is to lower the number of expensive
  * operations towards an on disk merkle trie.
+ *
  * @param <T> class type of additionally stored user data.
  */
 @RequiredArgsConstructor
@@ -72,5 +75,26 @@ public class TrieDiff<T> {
     }
 
     public record TrieDiffEntry<T>(@Nullable byte[] value, T userData) {
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            TrieDiffEntry<?> that = (TrieDiffEntry<?>) o;
+            return Objects.equals(userData, that.userData) && Objects.deepEquals(value, that.value);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(Arrays.hashCode(value), userData);
+        }
+
+        @Override
+        public String toString() {
+            return "TrieDiffEntry{" +
+                "value=" + Arrays.toString(value) +
+                ", userData=" + userData +
+                '}';
+        }
     }
 }

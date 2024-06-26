@@ -1,4 +1,4 @@
 package com.limechain.trie.structure.node;
 
-public final class Remove extends TrieNodeChange {
+public record Remove() implements TrieNodeChange {
 }
