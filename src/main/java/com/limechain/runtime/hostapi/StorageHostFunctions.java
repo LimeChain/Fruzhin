@@ -3,9 +3,9 @@ package com.limechain.runtime.hostapi;
 import com.limechain.exception.scale.ScaleEncodingException;
 import com.limechain.runtime.SharedMemory;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
-import com.limechain.trie.BlockTrieAccessor;
 import com.limechain.runtime.version.StateVersion;
 import com.limechain.storage.DeleteByPrefixResult;
+import com.limechain.trie.BlockTrieAccessor;
 import com.limechain.trie.structure.nibble.Nibbles;
 import com.limechain.trie.structure.nibble.NibblesUtils;
 import com.limechain.utils.scale.ScaleUtils;
@@ -302,7 +302,7 @@ public class StorageHostFunctions implements PartialHostApi {
      */
     public RuntimePointerSize extStorageRootVersion1() {
         log.fine("extStorageRootVersion1");
-        byte[] rootHash = blockTrieAccessor.getMerkleRoot(StateVersion.V0);
+        byte[] rootHash = blockTrieAccessor.getMerkleRoot(null);
 
         return sharedMemory.writeData(rootHash);
     }

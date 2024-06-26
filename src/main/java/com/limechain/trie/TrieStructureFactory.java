@@ -27,7 +27,7 @@ public class TrieStructureFactory {
     /**
      * Build the trie structure from the provided key-value pairs, then calculates the merkle values and sets them.
      *
-     * @param entries      - the key-value pairs that make up the actual data being stored
+     * @param entries - the key-value pairs that make up the actual data being stored
      * @return - a TrieStructure with calculated merkle values
      */
     public TrieStructure<NodeData> buildFromKVPs(Map<ByteString, ByteString> entries) {
@@ -116,7 +116,8 @@ public class TrieStructureFactory {
             userData = new NodeData(null);
         }
 
-        StorageValue storageValue = constructStorageValue(userData.getValue(), stateVersion);
+        StorageValue storageValue = constructStorageValue(userData.getValue(),
+                stateVersion != null ? stateVersion : StateVersion.fromInt(nodeHandle.getStateVersion()));
         DecodedNode<List<Byte>> decoded = new DecodedNode<>(
                 getChildrenValues(nodeHandle),
                 nodeHandle.getPartialKey(),
