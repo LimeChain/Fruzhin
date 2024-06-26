@@ -56,21 +56,6 @@ class InMemoryDB implements KVRepository<String, Object> {
     }
 
     @Override
-    public void startTransaction() {
-
-    }
-
-    @Override
-    public void rollbackTransaction() {
-
-    }
-
-    @Override
-    public void commitTransaction() {
-
-    }
-
-    @Override
     public void closeConnection() {
 
     }

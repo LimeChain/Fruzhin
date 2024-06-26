@@ -172,21 +172,6 @@ public class DBRepository implements KVRepository<String, Object> {
         return Optional.ofNullable(nextKey);
     }
 
-    @Override
-    public void startTransaction() {
-        //TODO: implement
-    }
-
-    @Override
-    public void rollbackTransaction() {
-        //TODO: implement
-    }
-
-    @Override
-    public void commitTransaction() {
-        //TODO: implement
-    }
-
     public synchronized void closeConnection() {
         this.db.close();
     }

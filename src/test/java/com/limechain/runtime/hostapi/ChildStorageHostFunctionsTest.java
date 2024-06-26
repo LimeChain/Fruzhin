@@ -69,7 +69,7 @@ class ChildStorageHostFunctionsTest {
 
         childStorageHostFunctions.extDefaultChildStorageSetVersion1(childStorageKeyPointer, keyPointer, valuePointer);
 
-        verify(childTrieAccessor).save(key, valueBytes);
+        verify(childTrieAccessor).upsertNode(key, valueBytes);
     }
 
     @Test
@@ -77,7 +77,7 @@ class ChildStorageHostFunctionsTest {
         when(sharedMemory.readData(childStorageKeyPointer)).thenReturn(childStorageKeyBytes);
         when(sharedMemory.readData(keyPointer)).thenReturn(keyBytes);
         when(repository.getChildTrie(childStorageKey)).thenReturn(childTrieAccessor);
-        when(childTrieAccessor.find(key)).thenReturn(Optional.of(valueBytes));
+        when(childTrieAccessor.findStorageValue(key)).thenReturn(Optional.of(valueBytes));
         when(sharedMemory.writeData(toOption(valueBytes))).thenReturn(resultPointer);
 
         RuntimePointerSize result = childStorageHostFunctions
@@ -91,7 +91,7 @@ class ChildStorageHostFunctionsTest {
         when(sharedMemory.readData(childStorageKeyPointer)).thenReturn(childStorageKeyBytes);
         when(sharedMemory.readData(keyPointer)).thenReturn(keyBytes);
         when(repository.getChildTrie(childStorageKey)).thenReturn(childTrieAccessor);
-        when(childTrieAccessor.find(key)).thenReturn(Optional.empty());
+        when(childTrieAccessor.findStorageValue(key)).thenReturn(Optional.empty());
         when(sharedMemory.writeData(emptyOption)).thenReturn(resultPointer);
 
         RuntimePointerSize result = childStorageHostFunctions.extDefaultChildStorageGetVersion1(
@@ -106,7 +106,7 @@ class ChildStorageHostFunctionsTest {
         when(sharedMemory.readData(childStorageKeyPointer)).thenReturn(childStorageKeyBytes);
         when(sharedMemory.readData(keyPointer)).thenReturn(keyBytes);
         when(repository.getChildTrie(childStorageKey)).thenReturn(childTrieAccessor);
-        when(childTrieAccessor.find(key)).thenReturn(Optional.of(valueBytes));
+        when(childTrieAccessor.findStorageValue(key)).thenReturn(Optional.of(valueBytes));
         when(sharedMemory.writeData(scaleEncodedOptionSize)).thenReturn(resultPointer);
         doNothing().when(sharedMemory).writeData(any(), any());
 
@@ -122,7 +122,7 @@ class ChildStorageHostFunctionsTest {
         when(sharedMemory.readData(childStorageKeyPointer)).thenReturn(childStorageKeyBytes);
         when(sharedMemory.readData(keyPointer)).thenReturn(keyBytes);
         when(repository.getChildTrie(childStorageKey)).thenReturn(childTrieAccessor);
-        when(childTrieAccessor.find(key)).thenReturn(Optional.empty());
+        when(childTrieAccessor.findStorageValue(key)).thenReturn(Optional.empty());
         when(sharedMemory.writeData(emptyOption)).thenReturn(resultPointer);
 
         RuntimePointerSize result = childStorageHostFunctions
@@ -138,7 +138,7 @@ class ChildStorageHostFunctionsTest {
         when(sharedMemory.readData(childStorageKeyPointer)).thenReturn(childStorageKeyBytes);
         when(sharedMemory.readData(keyPointer)).thenReturn(keyBytes);
         when(repository.getChildTrie(childStorageKey)).thenReturn(childTrieAccessor);
-        when(childTrieAccessor.find(key)).thenReturn(Optional.of(valueBytes));
+        when(childTrieAccessor.findStorageValue(key)).thenReturn(Optional.of(valueBytes));
         when(sharedMemory.writeData(scaleEncodedOptionSize)).thenReturn(resultPointer);
 
         RuntimePointerSize result = childStorageHostFunctions
@@ -156,7 +156,7 @@ class ChildStorageHostFunctionsTest {
 
         childStorageHostFunctions.extDefaultChildStorageClearVersion1(childStorageKeyPointer, keyPointer);
 
-        verify(childTrieAccessor).delete(key);
+        verify(childTrieAccessor).deleteNode(key);
     }
 
     @Test
@@ -164,7 +164,7 @@ class ChildStorageHostFunctionsTest {
         when(sharedMemory.readData(childStorageKeyPointer)).thenReturn(childStorageKeyBytes);
         when(sharedMemory.readData(keyPointer)).thenReturn(keyBytes);
         when(repository.getChildTrie(childStorageKey)).thenReturn(childTrieAccessor);
-        when(childTrieAccessor.find(key)).thenReturn(Optional.of(valueBytes));
+        when(childTrieAccessor.findStorageValue(key)).thenReturn(Optional.of(valueBytes));
 
         int result = childStorageHostFunctions.extDefaultChildStorageExistsVersion1(
                 childStorageKeyPointer, keyPointer);
@@ -177,7 +177,7 @@ class ChildStorageHostFunctionsTest {
         when(sharedMemory.readData(childStorageKeyPointer)).thenReturn(childStorageKeyBytes);
         when(sharedMemory.readData(keyPointer)).thenReturn(keyBytes);
         when(repository.getChildTrie(childStorageKey)).thenReturn(childTrieAccessor);
-        when(childTrieAccessor.find(key)).thenReturn(Optional.empty());
+        when(childTrieAccessor.findStorageValue(key)).thenReturn(Optional.empty());
 
         int result = childStorageHostFunctions
                 .extDefaultChildStorageExistsVersion1(childStorageKeyPointer, keyPointer);
@@ -193,7 +193,7 @@ class ChildStorageHostFunctionsTest {
 
         childStorageHostFunctions.extDefaultChildStorageClearPrefixVersion1(childStorageKeyPointer, keyPointer);
 
-        verify(childTrieAccessor).deleteByPrefix(key, null);
+        verify(childTrieAccessor).deleteMultipleNodesByPrefix(key, null);
     }
 
     @Test
@@ -206,7 +206,7 @@ class ChildStorageHostFunctionsTest {
         when(sharedMemory.readData(keyPointer)).thenReturn(keyBytes);
         when(sharedMemory.readData(limitPointer)).thenReturn(encodedLimit);
         when(repository.getChildTrie(childStorageKey)).thenReturn(childTrieAccessor);
-        when(childTrieAccessor.deleteByPrefix(key, 2L)).thenReturn(new DeleteByPrefixResult(2, false));
+        when(childTrieAccessor.deleteMultipleNodesByPrefix(key, 2L)).thenReturn(new DeleteByPrefixResult(2, false));
         when(sharedMemory.writeData(encodedResult)).thenReturn(resultPointer);
 
         RuntimePointerSize result = childStorageHostFunctions
@@ -224,7 +224,7 @@ class ChildStorageHostFunctionsTest {
         when(sharedMemory.readData(keyPointer)).thenReturn(keyBytes);
         when(sharedMemory.readData(limitPointer)).thenReturn(encodedLimit);
         when(repository.getChildTrie(childStorageKey)).thenReturn(childTrieAccessor);
-        when(childTrieAccessor.deleteByPrefix(key, 4L)).thenReturn(new DeleteByPrefixResult(3, true));
+        when(childTrieAccessor.deleteMultipleNodesByPrefix(key, 4L)).thenReturn(new DeleteByPrefixResult(3, true));
         when(sharedMemory.writeData(encodedResult)).thenReturn(resultPointer);
 
         RuntimePointerSize result = childStorageHostFunctions

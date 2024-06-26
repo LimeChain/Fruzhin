@@ -64,21 +64,6 @@ public interface KVRepository<K, V> {
     Optional<K> getNextKey(K key);
 
     /**
-     * Starts a DB transaction, that can later be committed or rolled back
-     */
-    void startTransaction();
-
-    /**
-     * Rollbacks an active DB transaction, discarding changes.
-     */
-    void rollbackTransaction();
-
-    /**
-     * Commits an active DB transaction, persisting changes.
-     */
-    void commitTransaction();
-
-    /**
      * Closes the connection to the DB
      */
     void closeConnection();
