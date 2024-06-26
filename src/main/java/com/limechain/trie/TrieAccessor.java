@@ -12,7 +12,6 @@ import com.limechain.trie.structure.nibble.Nibble;
 import com.limechain.trie.structure.nibble.Nibbles;
 import com.limechain.utils.HashUtils;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
 import lombok.Setter;
 
 import java.util.HashMap;
@@ -33,7 +32,6 @@ public abstract sealed class TrieAccessor implements KVRepository<Nibbles, byte[
     protected byte[] mainTrieRoot;
 
     private final Map<Nibbles, ChildTrieAccessor> loadedChildTries;
-    @Getter
     private TrieStructure<NodeData> initialTrie;
     private List<TrieNodeIndex> updates;
 
