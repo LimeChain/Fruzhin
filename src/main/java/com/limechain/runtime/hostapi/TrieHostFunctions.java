@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
 @Log
 public class TrieHostFunctions implements PartialHostApi {
     static final int TRIE_ROOT_HASH_BYTE_LEN = 32;
+    public static final StateVersion STATE_VERSION_V0 = StateVersion.V0;
 
     private final SharedMemory sharedMemory;
 
@@ -63,7 +64,7 @@ public class TrieHostFunctions implements PartialHostApi {
 
         List<Pair<byte[], byte[]>> kvps = argParser.parseKeyValuePairs(0);
 
-        byte[] trieRoot = new TrieRootCalculator(HashFunction.BLAKE2B, StateVersion.V0).trieRoot(kvps);
+        byte[] trieRoot = new TrieRootCalculator(HashFunction.BLAKE2B, STATE_VERSION_V0).trieRoot(kvps);
 
         return sharedMemory.writeData(trieRoot).pointer();
     }
@@ -86,7 +87,7 @@ public class TrieHostFunctions implements PartialHostApi {
 
         List<byte[]> values = argParser.parseOrderedValues(0);
 
-        byte[] trieRoot = new TrieRootCalculator(HashFunction.BLAKE2B, StateVersion.V0).orderedTrieRoot(values);
+        byte[] trieRoot = new TrieRootCalculator(HashFunction.BLAKE2B, STATE_VERSION_V0).orderedTrieRoot(values);
 
         return sharedMemory.writeData(trieRoot).pointer();
     }
@@ -109,7 +110,7 @@ public class TrieHostFunctions implements PartialHostApi {
 
         List<Pair<byte[], byte[]>> kvps = argParser.parseKeyValuePairs(0);
 
-        byte[] trieRoot = new TrieRootCalculator(HashFunction.KECCAK256, StateVersion.V0).trieRoot(kvps);
+        byte[] trieRoot = new TrieRootCalculator(HashFunction.KECCAK256, STATE_VERSION_V0).trieRoot(kvps);
 
         return sharedMemory.writeData(trieRoot).pointer();
     }
@@ -132,7 +133,7 @@ public class TrieHostFunctions implements PartialHostApi {
 
         List<byte[]> values = argParser.parseOrderedValues(0);
 
-        byte[] trieRoot = new TrieRootCalculator(HashFunction.KECCAK256, StateVersion.V0).orderedTrieRoot(values);
+        byte[] trieRoot = new TrieRootCalculator(HashFunction.KECCAK256, STATE_VERSION_V0).orderedTrieRoot(values);
 
         return sharedMemory.writeData(trieRoot).pointer();
     }
@@ -156,7 +157,7 @@ public class TrieHostFunctions implements PartialHostApi {
         byte[][] encodedProofNodes = argParser.parseProofNodes(1);
         byte[] key = argParser.getDataFromMemory(2);
         byte[] value = argParser.getDataFromMemory(3);
-        StateVersion stateVersion = StateVersion.V0;
+        StateVersion stateVersion = STATE_VERSION_V0;
         HashFunction hashFunction = HashFunction.BLAKE2B;
 
         boolean verified = verifyProof(hashFunction, stateVersion, trieRoot, encodedProofNodes, key, value);
@@ -184,7 +185,7 @@ public class TrieHostFunctions implements PartialHostApi {
         byte[][] encodedProofNodes = argParser.parseProofNodes(1);
         byte[] key = argParser.getDataFromMemory(2);
         byte[] value = argParser.getDataFromMemory(3);
-        StateVersion stateVersion = StateVersion.V0;
+        StateVersion stateVersion = STATE_VERSION_V0;
         HashFunction hashFunction = HashFunction.KECCAK256;
 
         boolean verified = verifyProof(hashFunction, stateVersion, trieRoot, encodedProofNodes, key, value);
