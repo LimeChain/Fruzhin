@@ -63,7 +63,9 @@ public class TrieChanges<T> {
 
             if (pendingChange instanceof PendingRemove) {
                 change = new Remove();
-            } else if (pendingChange instanceof PendingInsertUpdate pendingInsertUpdate) {
+            } else if (pendingChange instanceof PendingInsertUpdate(byte[] merkle,
+                                                                    Nibbles pk,
+                                                                    List<byte[]> childMerkles)) {
                 Optional<TrieDiff.TrieDiffEntry<T>> diffEntry = trieDiffs.get(key.trieIdentifier)
                     .diffGet(key.keyPath);
 
@@ -72,10 +74,7 @@ public class TrieChanges<T> {
                     newStorageValue = diffEntry.get().value();
                 }
 
-                change = new InsertUpdate(pendingInsertUpdate.newMerkleValue(),
-                    pendingInsertUpdate.childrenMerkleValues(),
-                    pendingInsertUpdate.partialKey(),
-                    newStorageValue);
+                change = new InsertUpdate(merkle, childMerkles, pk, newStorageValue);
             } else {
                 continue;
             }
