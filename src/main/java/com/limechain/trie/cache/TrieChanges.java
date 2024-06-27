@@ -9,7 +9,17 @@ import com.limechain.trie.structure.node.Remove;
 import com.limechain.trie.structure.node.TrieNodeChange;
 import lombok.RequiredArgsConstructor;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.Objects;
+import java.util.Arrays;
 
 /**
  * This class serves the purpose of a container for the changes that a block performs on the storage during execution.
@@ -63,9 +73,11 @@ public class TrieChanges<T> {
 
             if (pendingChange instanceof PendingRemove) {
                 change = new Remove();
-            } else if (pendingChange instanceof PendingInsertUpdate(byte[] merkle,
-                                                                    Nibbles pk,
-                                                                    List<byte[]> childMerkles)) {
+            } else if (pendingChange instanceof PendingInsertUpdate(
+                byte[] merkle,
+                List<byte[]> childMerkles,
+                Nibbles pk
+            )) {
                 Optional<TrieDiff.TrieDiffEntry<T>> diffEntry = trieDiffs.get(key.trieIdentifier)
                     .diffGet(key.keyPath);
 

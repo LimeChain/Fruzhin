@@ -6,8 +6,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-public record PendingInsertUpdate(byte[] newMerkleValue, Nibbles partialKey,
-                                  List<byte[]> childrenMerkleValues) implements PendingTrieNodeChange {
+public record PendingInsertUpdate(byte[] newMerkleValue, List<byte[]> childrenMerkleValues,
+                                  Nibbles partialKey) implements PendingTrieNodeChange {
 
     @Override
     public boolean equals(Object o) {

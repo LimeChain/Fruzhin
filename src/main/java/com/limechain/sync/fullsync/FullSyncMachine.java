@@ -171,7 +171,7 @@ public class FullSyncMachine {
             log.fine("Block executed successfully");
 
             // Persist the updates to the trie structure
-            blockTrieAccessor.persistUpdates();
+            blockTrieAccessor.persistChanges();
 
             BlockHeader blockHeader = block.getHeader();
             blockState.setFinalizedHash(blockHeader.getHash(), BigInteger.ZERO, BigInteger.ZERO);
@@ -190,7 +190,7 @@ public class FullSyncMachine {
 
     private Runtime buildRuntimeFromState(BlockTrieAccessor blockTrieAccessor) {
         return blockTrieAccessor
-                .find(Nibbles.fromBytes(":code".getBytes()))
+                .findStorageValue(Nibbles.fromBytes(":code".getBytes()))
                 .map(wasm -> runtimeBuilder.buildRuntime(wasm, blockTrieAccessor))
                 .orElseThrow(() -> new RuntimeException("Runtime code not found in the trie"));
     }
