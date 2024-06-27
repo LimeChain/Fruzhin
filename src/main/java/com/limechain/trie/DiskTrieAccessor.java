@@ -1,11 +1,16 @@
 package com.limechain.trie;
 
 import com.limechain.storage.DeleteByPrefixResult;
+import com.limechain.storage.trie.TrieStorage;
 import com.limechain.trie.structure.nibble.Nibbles;
 
 import java.util.Optional;
 
-public final class DiskTrieAccessor implements TrieAccessor {
+public final class DiskTrieAccessor extends TrieAccessor {
+
+    public DiskTrieAccessor(TrieStorage trieStorage, byte[] mainTrieRoot) {
+        super(trieStorage, mainTrieRoot);
+    }
 
     @Override
     public void upsertNode(Nibbles key, byte[] value) {

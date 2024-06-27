@@ -10,30 +10,26 @@ import com.limechain.trie.structure.database.NodeData;
 import com.limechain.trie.structure.nibble.Nibble;
 import com.limechain.trie.structure.nibble.Nibbles;
 import com.limechain.utils.HashUtils;
-import lombok.AllArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@AllArgsConstructor
-public abstract sealed class MemoryTrieAccessor implements TrieAccessor
+public abstract sealed class MemoryTrieAccessor extends TrieAccessor
     permits BlockTrieAccessor, ChildTrieAccessor {
 
-    protected final TrieStorage trieStorage;
-    protected byte[] mainTrieRoot;
-
     private final Map<Nibbles, ChildTrieAccessor> loadedChildTries;
-    private TrieStructure<NodeData> initialTrie;
+    private final TrieStructure<NodeData> initialTrie;
     private List<TrieNodeIndex> updates;
 
     MemoryTrieAccessor(TrieStorage trieStorage, byte[] mainTrieRoot) {
-        this.trieStorage = trieStorage;
-        this.mainTrieRoot = mainTrieRoot;
+        super(trieStorage, mainTrieRoot);
 
         this.loadedChildTries = new HashMap<>();
+        this.updates = new ArrayList<>();
         this.initialTrie = trieStorage.loadTrieStructure(mainTrieRoot);
     }
 

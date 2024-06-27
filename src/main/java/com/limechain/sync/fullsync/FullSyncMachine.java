@@ -78,9 +78,9 @@ public class FullSyncMachine {
         blockState.storeRuntime(highestFinalizedHeader.getHash(), runtime);
 
         int startNumber = highestFinalizedHeader
-                .getBlockNumber()
-                .add(BigInteger.ONE)
-                .intValue();
+            .getBlockNumber()
+            .add(BigInteger.ONE)
+            .intValue();
 
         int blocksToFetch = 100;
         List<Block> receivedBlocks = requestBlocks(startNumber, blocksToFetch);
@@ -106,11 +106,11 @@ public class FullSyncMachine {
             final int BODY = 0b0000_0010;
             final int JUSTIFICATION = 0b0001_0000;
             SyncMessage.BlockResponse response = networkService.makeBlockRequest(new BlockRequestDto(
-                    HEADER | BODY | JUSTIFICATION,
-                    null, // no hash, number instead
-                    start,
-                    SyncMessage.Direction.Ascending,
-                    amount
+                HEADER | BODY | JUSTIFICATION,
+                null, // no hash, number instead
+                start,
+                SyncMessage.Direction.Ascending,
+                amount
             ));
 
             List<SyncMessage.BlockData> blockDatas = response.getBlocksList();
