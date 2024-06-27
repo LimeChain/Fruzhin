@@ -13,7 +13,7 @@ import java.util.Optional;
  * {@link MemoryTrieAccessor} - an in-memory trie implementation.<br>
  * {@link DiskTrieAccessor} - an on-disk trie implementation.
  */
-public sealed abstract class TrieAccessor permits MemoryTrieAccessor, DiskTrieAccessor {
+public abstract sealed class TrieAccessor permits MemoryTrieAccessor, DiskTrieAccessor {
 
     private static final String TRANSACTIONS_NOT_SUPPORTED = "Block Trie Accessor does not support transactions.";
 
@@ -22,7 +22,7 @@ public sealed abstract class TrieAccessor permits MemoryTrieAccessor, DiskTrieAc
     @Setter
     protected StateVersion currentStateVersion;
 
-    public TrieAccessor(TrieStorage trieStorage, byte[] mainTrieRoot) {
+    protected TrieAccessor(TrieStorage trieStorage, byte[] mainTrieRoot) {
         this.trieStorage = trieStorage;
         this.mainTrieRoot = mainTrieRoot;
     }
