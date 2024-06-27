@@ -48,7 +48,7 @@ public abstract sealed class MemoryTrieAccessor extends TrieAccessor
     @Override
     public void upsertNode(Nibbles key, byte[] value) {
         NodeData nodeData = new NodeData(value);
-        initialTrie.insertNode(key, nodeData);
+        initialTrie.insertNode(key, nodeData, currentStateVersion);
     }
 
     @Override
@@ -128,7 +128,7 @@ public abstract sealed class MemoryTrieAccessor extends TrieAccessor
         for (ChildTrieAccessor value : loadedChildTries.values()) value.persistChanges();
         loadedChildTries.clear();
 
-        trieStorage.updateTrieStorage(initialTrie, updates, StateVersion.V0);
+        trieStorage.updateTrieStorage(initialTrie, updates);
     }
 
     /**

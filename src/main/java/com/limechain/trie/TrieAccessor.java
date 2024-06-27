@@ -1,9 +1,10 @@
 package com.limechain.trie;
 
+import com.limechain.runtime.version.StateVersion;
 import com.limechain.storage.DeleteByPrefixResult;
 import com.limechain.storage.trie.TrieStorage;
 import com.limechain.trie.structure.nibble.Nibbles;
-import lombok.AllArgsConstructor;
+import lombok.Setter;
 
 import java.util.Optional;
 
@@ -12,13 +13,19 @@ import java.util.Optional;
  * {@link MemoryTrieAccessor} - an in-memory trie implementation.<br>
  * {@link DiskTrieAccessor} - an on-disk trie implementation.
  */
-@AllArgsConstructor
 public sealed abstract class TrieAccessor permits MemoryTrieAccessor, DiskTrieAccessor {
 
     private static final String TRANSACTIONS_NOT_SUPPORTED = "Block Trie Accessor does not support transactions.";
 
     protected final TrieStorage trieStorage;
     protected byte[] mainTrieRoot;
+    @Setter
+    protected StateVersion currentStateVersion;
+
+    public TrieAccessor(TrieStorage trieStorage, byte[] mainTrieRoot) {
+        this.trieStorage = trieStorage;
+        this.mainTrieRoot = mainTrieRoot;
+    }
 
     /**
      * Updates/Inserts a node in the trie implementation.
