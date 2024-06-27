@@ -459,8 +459,6 @@ public final class Vacant<T> extends Entry<T> {
                         this.branchParent,
                         this.branchPartialKey,
                         // NOTE: Crucial mutability moment, this has to be a copy of the array.
-                        //  I'll never get those three hours of my life back :)
-                        //  Manage your ownership, kids.
                         ArrayUtils.clone(this.branchChildrenIndices),
                         false,
                         branchUserData,
