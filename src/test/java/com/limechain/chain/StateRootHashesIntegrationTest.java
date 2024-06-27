@@ -1,7 +1,6 @@
 package com.limechain.chain;
 
 import com.limechain.chain.spec.ChainSpec;
-import com.limechain.runtime.version.StateVersion;
 import com.limechain.trie.TrieStructureFactory;
 import org.apache.tomcat.util.buf.HexUtils;
 import org.junit.jupiter.api.Test;
@@ -29,7 +28,7 @@ class StateRootHashesIntegrationTest {
             ChainSpec chainSpec = ChainSpec.newFromJSON(chainSpecPath);
             var top = chainSpec.getGenesis().getTop();
 
-            var trie = TrieStructureFactory.buildFromKVPs(top, StateVersion.V0);
+            var trie = TrieStructureFactory.buildFromKVPs(top);
             var root = trie.getRootNode().get();
             var rootHash = HexUtils.toHexString(Objects.requireNonNull(root.getUserData()).getMerkleValue());
 

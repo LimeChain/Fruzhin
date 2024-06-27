@@ -20,7 +20,7 @@ import java.util.Objects;
  */
 public record InsertTrieNode(boolean isBranch, byte[] storageValue, byte[] merkleValue,
                              List<byte[]> childrenMerkleValues,
-                             Nibbles partialKeyNibbles, boolean isReferenceValue) {
+                             Nibbles partialKeyNibbles, boolean isReferenceValue, int stateVersion) {
 
     @Override
     public boolean equals(Object obj) {
@@ -32,13 +32,14 @@ public record InsertTrieNode(boolean isBranch, byte[] storageValue, byte[] merkl
                Arrays.equals(this.merkleValue, that.merkleValue) &&
                Objects.equals(this.childrenMerkleValues, that.childrenMerkleValues) &&
                Objects.equals(this.partialKeyNibbles, that.partialKeyNibbles) &&
-               this.isReferenceValue == that.isReferenceValue;
+               this.isReferenceValue == that.isReferenceValue &&
+               this.stateVersion == that.stateVersion;
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(Arrays.hashCode(storageValue), Arrays.hashCode(merkleValue), childrenMerkleValues,
-                partialKeyNibbles, isReferenceValue);
+                partialKeyNibbles, isReferenceValue, stateVersion);
     }
 
     @Override
@@ -49,6 +50,7 @@ public record InsertTrieNode(boolean isBranch, byte[] storageValue, byte[] merkl
                "merkleValue=" + Arrays.toString(merkleValue) + ", " +
                "childrenMerkleValues=" + childrenMerkleValues + ", " +
                "partialKeyNibbles=" + partialKeyNibbles + ", " +
+               "stateVersion=" + stateVersion + ", " +
                "isReferenceValue=" + isReferenceValue + ']';
     }
 }

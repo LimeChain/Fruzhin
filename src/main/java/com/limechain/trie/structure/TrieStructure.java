@@ -1,6 +1,7 @@
 package com.limechain.trie.structure;
 
 import com.limechain.exception.trie.InvalidSlabIndexException;
+import com.limechain.runtime.version.StateVersion;
 import com.limechain.trie.structure.nibble.Nibble;
 import com.limechain.trie.structure.nibble.Nibbles;
 import com.limechain.trie.structure.nibble.NibblesCollector;
@@ -101,12 +102,12 @@ public class TrieStructure<T> {
      * @param nodeData data to insert
      * @implSpec if a storage value is already present for the given key, it will be overwritten
      */
-    public void insertBranch(Nibbles key, T nodeData) {
+    public void insertBranch(Nibbles key, T nodeData, StateVersion stateVersion) {
         switch (node(key)) {
             case Vacant<T> vacant -> {
                 StorageNodeHandle<T> nodeHandle = vacant
                         .prepareInsert()
-                        .insert(nodeData);
+                        .insert(nodeData, stateVersion);
                 nodeHandle.convertToBranchNode();
             }
             case BranchNodeHandle<T> branchNodeHandle -> {
@@ -126,11 +127,11 @@ public class TrieStructure<T> {
      * @param nodeData data to insert
      * @implSpec if a storage value is already present for the given key, it will be overwritten
      */
-    public void insertNode(Nibbles key, T nodeData) {
+    public void insertNode(Nibbles key, T nodeData, StateVersion stateVersion) {
         switch (node(key)) {
             case Vacant<T> vacant -> vacant
                     .prepareInsert()
-                    .insert(nodeData);
+                    .insert(nodeData, stateVersion);
             case BranchNodeHandle<T> branchNodeHandle -> {
                 branchNodeHandle.setUserData(nodeData);
                 branchNodeHandle.convertToStorageNode();

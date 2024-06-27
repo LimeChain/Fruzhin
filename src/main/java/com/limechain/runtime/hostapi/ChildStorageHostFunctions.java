@@ -18,8 +18,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import static com.limechain.runtime.hostapi.StorageHostFunctions.scaleEncodedOption;
 import static com.limechain.runtime.hostapi.PartialHostApi.newImportObjectPair;
+import static com.limechain.runtime.hostapi.StorageHostFunctions.scaleEncodedOption;
 
 /**
  * Implementations of the Child storage HostAPI functions
@@ -92,7 +92,7 @@ public class ChildStorageHostFunctions implements PartialHostApi {
             newImportObjectPair(Endpoint.ext_default_child_storage_root_version_1, argv -> {
                 return extDefaultChildStorageRoot(
                     new RuntimePointerSize(argv.get(0)),
-                    StateVersion.V0
+                    null
                 ).pointerSize();
             }),
             newImportObjectPair(Endpoint.ext_default_child_storage_root_version_2, argv -> {

@@ -261,7 +261,7 @@ public class TrieHostFunctions implements PartialHostApi {
 
         private byte[] trieRoot(Map<ByteString, ByteString> entries) {
             var trie = TrieStructureFactory.buildTrieStructure(entries);
-            TrieStructureFactory.calculateMerkleValues(trie, stateVersion, hashFunction.getFunction());
+            TrieStructureFactory.calculateMerkleValues(trie, hashFunction.getFunction());
             return trie.getRootNode().map(NodeHandle::getUserData).map(NodeData::getMerkleValue)
                     .orElse(hashFunction.getEmptyTrieHash());
         }

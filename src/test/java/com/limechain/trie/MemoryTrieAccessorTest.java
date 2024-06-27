@@ -27,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @ExtendWith(MockitoExtension.class)
 @Disabled
 class MemoryTrieAccessorTest {
+    public static final StateVersion STATE_VERSION_0 = StateVersion.V0;
     @Spy
     private TrieStructure<NodeData> partialTrie;
 
@@ -42,21 +43,21 @@ class MemoryTrieAccessorTest {
     private MemoryTrieAccessor trieAccessor;
 
     private final List<StorageNode> initStorageNodes = List.of(
-            new StorageNode(Nibbles.fromHexString("a1b"), new NodeData(new byte[] { 1, 2, 3 })),
-            new StorageNode(Nibbles.fromHexString("a813f"), new NodeData(new byte[] { 1, 4, 8 })),
-            new StorageNode(Nibbles.fromHexString("ab2"), new NodeData(new byte[] { 6, 2, 5 })),
-            new StorageNode(Nibbles.fromHexString("a81"), new NodeData(new byte[] { 6, 2, 5 }))
+            new StorageNode(Nibbles.fromHexString("a1b"), new NodeData(new byte[]{1, 2, 3})),
+            new StorageNode(Nibbles.fromHexString("a813f"), new NodeData(new byte[]{1, 4, 8})),
+            new StorageNode(Nibbles.fromHexString("ab2"), new NodeData(new byte[]{6, 2, 5})),
+            new StorageNode(Nibbles.fromHexString("a81"), new NodeData(new byte[]{6, 2, 5}))
     );
 
     private final StorageNode lonelyChild =
-            new StorageNode(Nibbles.fromHexString("a1b1111"), new NodeData(new byte[]{ 12, 13, 14}));
+            new StorageNode(Nibbles.fromHexString("a1b1111"), new NodeData(new byte[]{12, 13, 14}));
 
     @BeforeEach
     void setup() {
         fullTrie = new TrieStructure<>();
-        initStorageNodes.forEach(node -> fullTrie.insertNode(node.key(), node.nodeData()));
-        fullTrie.insertNode(lonelyChild.key(), lonelyChild.nodeData());
-        TrieStructureFactory.calculateMerkleValues(fullTrie, StateVersion.V0, HashUtils::hashWithBlake2b);
+        initStorageNodes.forEach(node -> fullTrie.insertNode(node.key(), node.nodeData(), STATE_VERSION_0));
+        fullTrie.insertNode(lonelyChild.key(), lonelyChild.nodeData(), STATE_VERSION_0);
+        TrieStructureFactory.calculateMerkleValues(fullTrie, HashUtils::hashWithBlake2b);
         fullTrie.streamOrdered()
                 .map(index -> fullTrie.nodeHandleAtIndex(index))
                 .filter(NodeHandle::hasStorageValue)
@@ -69,7 +70,7 @@ class MemoryTrieAccessorTest {
                     partialTrie.insertNode(key, new NodeData(
                             key.equals(lonelyChild.key()) ? null : userData.getValue(),
                             userData.getMerkleValue()
-                    ));
+                    ), STATE_VERSION_0);
                 });
     }
 
@@ -85,7 +86,7 @@ class MemoryTrieAccessorTest {
     @Test
     void save() {
         Nibbles key = Nibbles.fromHexString("abcde");
-        byte[] value = new byte[] { 17, 1, 62};
+        byte[] value = new byte[]{17, 1, 62};
         trieAccessor.upsertNode(key, value);
 
         byte[] result = Objects.requireNonNull(partialTrie.node(key).asNodeHandle().getUserData()).getValue();
@@ -94,31 +95,31 @@ class MemoryTrieAccessorTest {
 
     @Test
     void merkle() {
-        byte[] result = trieAccessor.getMerkleRoot(StateVersion.V0);
-        assertArrayEquals(fullTrieMerkleRoot() ,result);
+        byte[] result = trieAccessor.getMerkleRoot(STATE_VERSION_0);
+        assertArrayEquals(fullTrieMerkleRoot(), result);
     }
 
     @Test
     void merkleRootAfterAddLeafNode() {
-        addNode(Nibbles.fromHexString("ab2aa"), new byte[] { 6, 2, 5 });
+        addNode(Nibbles.fromHexString("ab2aa"), new byte[]{6, 2, 5});
 
-        byte[] result = trieAccessor.getMerkleRoot(StateVersion.V0);
+        byte[] result = trieAccessor.getMerkleRoot(STATE_VERSION_0);
 
-        assertArrayEquals(fullTrieMerkleRoot() ,result);
+        assertArrayEquals(fullTrieMerkleRoot(), result);
     }
 
     @Test
     void merkleRootAfterAddBranchNode() {
-        addNode(Nibbles.fromHexString("a1"), new byte[] { 2, 5, 9, 1 });
-        addNode(Nibbles.fromHexString("a"), new byte[] { 72, 5, 11, 1 });
+        addNode(Nibbles.fromHexString("a1"), new byte[]{2, 5, 9, 1});
+        addNode(Nibbles.fromHexString("a"), new byte[]{72, 5, 11, 1});
 
-        byte[] result = trieAccessor.getMerkleRoot(StateVersion.V0);
+        byte[] result = trieAccessor.getMerkleRoot(STATE_VERSION_0);
 
-        assertArrayEquals(fullTrieMerkleRoot() ,result);
+        assertArrayEquals(fullTrieMerkleRoot(), result);
     }
 
     private void addNode(Nibbles key, byte[] value) {
-        fullTrie.insertNode(key, new NodeData(value));
+        fullTrie.insertNode(key, new NodeData(value), STATE_VERSION_0);
         trieAccessor.upsertNode(key, value);
     }
 
@@ -126,9 +127,9 @@ class MemoryTrieAccessorTest {
     void merkleRootAfterDelete() {
         removeNode(Nibbles.fromHexString("a81"));
 
-        byte[] result = trieAccessor.getMerkleRoot(StateVersion.V0);
+        byte[] result = trieAccessor.getMerkleRoot(STATE_VERSION_0);
 
-        assertArrayEquals(fullTrieMerkleRoot() ,result);
+        assertArrayEquals(fullTrieMerkleRoot(), result);
     }
 
     private void removeNode(Nibbles key) {
@@ -137,7 +138,7 @@ class MemoryTrieAccessorTest {
     }
 
     private byte[] fullTrieMerkleRoot() {
-        TrieStructureFactory.calculateMerkleValues(fullTrie, StateVersion.V0, HashUtils::hashWithBlake2b);
+        TrieStructureFactory.calculateMerkleValues(fullTrie, HashUtils::hashWithBlake2b);
         return fullTrie.getRootNode()
                 .map(NodeHandle::getUserData)
                 .map(NodeData::getMerkleValue)

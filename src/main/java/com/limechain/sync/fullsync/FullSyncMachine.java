@@ -68,13 +68,16 @@ public class FullSyncMachine {
 
         BlockTrieAccessor blockTrieAccessor = new BlockTrieAccessor(trieStorage, stateRoot.getBytes());
 
-        byte[] calculatedMerkleRoot = blockTrieAccessor.getMerkleRoot(StateVersion.V0);
+        runtime = buildRuntimeFromState(blockTrieAccessor);
+        StateVersion runtimeStateVersion = runtime.getVersion().getStateVersion();
+        blockTrieAccessor.setCurrentStateVersion(runtimeStateVersion);
+
+        byte[] calculatedMerkleRoot = blockTrieAccessor.getMerkleRoot(runtimeStateVersion);
         if (!stateRoot.equals(new Hash256(calculatedMerkleRoot))) {
             log.info("State root is not equal to the one in the trie, cannot start full sync");
             return;
         }
 
-        runtime = buildRuntimeFromState(blockTrieAccessor);
         blockState.storeRuntime(highestFinalizedHeader.getHash(), runtime);
 
         int startNumber = highestFinalizedHeader
@@ -183,6 +186,7 @@ public class FullSyncMachine {
             if (blockUpdatedRuntime) {
                 log.info("Runtime updated, updating the runtime code");
                 runtime = buildRuntimeFromState(blockTrieAccessor);
+                blockTrieAccessor.setCurrentStateVersion(runtime.getVersion().getStateVersion());
                 blockState.storeRuntime(blockHeader.getHash(), runtime);
             }
         }
