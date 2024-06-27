@@ -1,5 +1,6 @@
 package com.limechain.trie.structure;
 
+import com.limechain.runtime.version.StateVersion;
 import com.limechain.trie.structure.nibble.Nibble;
 import com.limechain.trie.structure.nibble.Nibbles;
 import lombok.AllArgsConstructor;
@@ -47,6 +48,8 @@ class TrieNode<T> {
      */
     @Nullable
     T userData;
+
+    StateVersion stateVersion;
 
     /**
      * @return the lexicographically first ('0' to 'f') child node's index, Optional.empty() if no children.

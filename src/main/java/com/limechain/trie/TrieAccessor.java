@@ -12,6 +12,7 @@ import com.limechain.trie.structure.nibble.Nibble;
 import com.limechain.trie.structure.nibble.Nibbles;
 import com.limechain.utils.HashUtils;
 import lombok.AllArgsConstructor;
+import lombok.Setter;
 
 import java.util.HashMap;
 import java.util.List;
@@ -26,6 +27,8 @@ public abstract sealed class TrieAccessor implements KVRepository<Nibbles, byte[
     public static final String TRANSACTIONS_NOT_SUPPORTED = "Block Trie Accessor does not support transactions.";
 
     protected final TrieStorage trieStorage;
+    @Setter
+    protected StateVersion currentStateVersion;
     protected byte[] mainTrieRoot;
 
     private final Map<Nibbles, ChildTrieAccessor> loadedChildTries;
@@ -62,7 +65,7 @@ public abstract sealed class TrieAccessor implements KVRepository<Nibbles, byte[
     @Override
     public boolean save(Nibbles key, byte[] value) {
         NodeData nodeData = new NodeData(value);
-        initialTrie.insertNode(key, nodeData);
+        initialTrie.insertNode(key, nodeData, currentStateVersion);
         return true;
     }
 
@@ -148,7 +151,7 @@ public abstract sealed class TrieAccessor implements KVRepository<Nibbles, byte[
         for (ChildTrieAccessor value : loadedChildTries.values()) value.persistUpdates();
         loadedChildTries.clear();
 
-        trieStorage.updateTrieStorage(initialTrie, updates, StateVersion.V0);
+        trieStorage.updateTrieStorage(initialTrie, updates);
     }
 
     @Override

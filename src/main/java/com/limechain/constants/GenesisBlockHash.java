@@ -4,7 +4,6 @@ import com.google.protobuf.ByteString;
 import com.limechain.chain.ChainService;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.network.protocol.warp.dto.HeaderDigest;
-import com.limechain.runtime.version.StateVersion;
 import com.limechain.trie.TrieStructureFactory;
 import com.limechain.trie.structure.NodeHandle;
 import com.limechain.trie.structure.TrieStructure;
@@ -80,7 +79,7 @@ public class GenesisBlockHash {
      * @return The genesis trie structure.
      */
     private TrieStructure<NodeData> buildGenesisTrie(Map<ByteString, ByteString> genesisStorage) {
-        return TrieStructureFactory.buildFromKVPs(genesisStorage, StateVersion.V0);
+        return TrieStructureFactory.buildFromKVPs(genesisStorage);
     }
 
     /**

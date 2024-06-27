@@ -13,7 +13,6 @@ import com.limechain.runtime.RuntimeFactory;
 import com.limechain.runtime.version.StateVersion;
 import com.limechain.storage.KVRepository;
 import com.limechain.storage.trie.TrieStorage;
-import com.limechain.sync.fullsync.inherents.InherentData;
 import com.limechain.trie.BlockTrieAccessor;
 import com.limechain.trie.TrieStructureFactory;
 import com.limechain.utils.StringUtils;
@@ -21,7 +20,6 @@ import com.limechain.utils.scale.ScaleUtils;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.extern.java.Log;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -39,16 +37,17 @@ class BlockExecutorTest {
         ChainSpec chainSpec = ChainSpec.newFromJSON("genesis/ksmcc3.json");
         var genesisStorage = chainSpec.getGenesis().getTop();
         var runtimeByteCode = genesisStorage.get(ByteString.copyFrom(":code".getBytes())).toByteArray();
-        var genesisTrie = TrieStructureFactory.buildFromKVPs(genesisStorage, StateVersion.V0);
+        var genesisTrie = TrieStructureFactory.buildFromKVPs(genesisStorage);
 
         // Define dependencies for the execution context
         KVRepository<String, Object> db = new InMemoryDB(); // initialize a DB
 
         TrieStorage trieStorage = new TrieStorage(db); // inject it into a trie storage
-        trieStorage.insertTrieStorage(genesisTrie, StateVersion.V0); // populate with the genesis trie
+        trieStorage.insertTrieStorage(genesisTrie); // populate with the genesis trie
 
         final byte[] genesisStateRoot = genesisTrie.getRootNode().get().getUserData().getMerkleValue();
         BlockTrieAccessor trieAccessor = new BlockTrieAccessor(trieStorage, genesisStateRoot); // instantiate a block trie accessor with the trieStorage specified for the genesis block
+        trieAccessor.setCurrentStateVersion(StateVersion.V0);
 
         // Package all dependencies into the expected configuration for the runtime builder
         var cfg = new RuntimeFactory.Config(trieAccessor, null, null, null, false);

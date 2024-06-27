@@ -323,11 +323,10 @@ public class TrieStorage {
      * the specified state version for compatibility.
      *
      * @param trie         The trie to serialize and save.
-     * @param stateVersion The state version to use for serialization.
      */
-    public void insertTrieStorage(TrieStructure<NodeData> trie, StateVersion stateVersion) {
+    public void insertTrieStorage(TrieStructure<NodeData> trie) {
         List<InsertTrieNode> dbSerializedTrieNodes = InsertTrieBuilder.build(trie);
-        saveTrieNodes(dbSerializedTrieNodes, stateVersion);
+        saveTrieNodes(dbSerializedTrieNodes);
     }
 
     /**
@@ -335,24 +334,21 @@ public class TrieStorage {
      *
      * @param trie         The trie to serialize and save.
      * @param nodes        Only the nodes specified in the list will be saved.
-     * @param stateVersion The state version to use for serialization.
      */
-    public void updateTrieStorage(TrieStructure<NodeData> trie, List<TrieNodeIndex> nodes, StateVersion stateVersion) {
+    public void updateTrieStorage(TrieStructure<NodeData> trie, List<TrieNodeIndex> nodes) {
         List<InsertTrieNode> dbSerializedTrieNodes = InsertTrieBuilder.build(trie, nodes);
-        saveTrieNodes(dbSerializedTrieNodes, stateVersion);
+        saveTrieNodes(dbSerializedTrieNodes);
     }
 
     /**
      * Inserts trie nodes into the key-value repository.
      *
      * @param insertTrieNodes The list of trie nodes to be inserted.
-     * @param stateVersion    The version number of the trie entries.
      */
-    private void saveTrieNodes(final List<InsertTrieNode> insertTrieNodes,
-                               final StateVersion stateVersion) {
+    private void saveTrieNodes(final List<InsertTrieNode> insertTrieNodes) {
         try {
             for (InsertTrieNode trieNode : insertTrieNodes) {
-                insertTrieNodeStorage(trieNode, stateVersion);
+                insertTrieNodeStorage(trieNode);
             }
         } catch (Exception e) {
             log.log(Level.SEVERE, "Failed to insert trie structure to db storage", e);
@@ -365,10 +361,8 @@ public class TrieStorage {
      * The storage data is represented by a {@link TrieNodeData} object, which is serialized and saved to the repository.
      *
      * @param trieNode     The trie node whose storage data is to be inserted.
-     * @param stateVersion The version of the state, affecting how the storage value is interpreted.
      */
-    private void insertTrieNodeStorage(InsertTrieNode trieNode,
-                                       StateVersion stateVersion) {
+    private void insertTrieNodeStorage(InsertTrieNode trieNode) {
         String key = TRIE_NODE_PREFIX + new String(trieNode.merkleValue());
 
         List<byte[]> childrenMerkleValues = trieNode.childrenMerkleValues();
@@ -379,7 +373,7 @@ public class TrieStorage {
             childrenMerkleValues,
             trieNode.isReferenceValue() ? null : trieNode.storageValue(),
             trieNode.isReferenceValue() ? trieNode.storageValue() : null,
-            (byte) stateVersion.asInt());
+            (byte) trieNode.stateVersion());
 
         db.save(key, storageValue);
     }
@@ -424,14 +418,15 @@ public class TrieStorage {
         // utilising our knowledge of which node has a storage value anywhere in our algorithm, which is a grand
         // coincidence.
 
+        StateVersion stateVersion = StateVersion.fromInt(currentNodeData.getEntriesVersion());
         if (currentNodeData.isBranchNode()) {
-            trie.insertBranch(currentPath, new NodeData(null, merkleValue));
+            trie.insertBranch(currentPath, new NodeData(null, merkleValue), stateVersion);
         } else {
             byte[] value =
                 currentNodeData.getValue() == null
                     ? currentNodeData.getTrieRootRef()
                     : currentNodeData.getValue();
-            trie.insertNode(currentPath, new NodeData(value, merkleValue));
+            trie.insertNode(currentPath, new NodeData(value, merkleValue), stateVersion);
         }
 
         // Recursively load children and construct the trie

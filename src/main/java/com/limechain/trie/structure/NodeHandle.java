@@ -119,4 +119,8 @@ public abstract sealed class NodeHandle<T> extends Entry<T> permits StorageNodeH
             ? StorageNodeHandle::new
             : BranchNodeHandle::new;
     }
+
+    public int getStateVersion() {
+        return this.trieStructure.getNodeAtIndexInner(this.rawNodeIndex).stateVersion.asInt();
+    }
 }
