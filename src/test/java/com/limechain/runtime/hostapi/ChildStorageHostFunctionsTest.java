@@ -5,7 +5,7 @@ import com.limechain.runtime.SharedMemory;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import com.limechain.storage.DeleteByPrefixResult;
 import com.limechain.trie.BlockTrieAccessor;
-import com.limechain.trie.ChildTrieAccessor;
+import com.limechain.trie.MemoryChildTrieAccessor;
 import com.limechain.trie.structure.nibble.Nibbles;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -50,7 +50,7 @@ class ChildStorageHostFunctionsTest {
     private BlockTrieAccessor repository;
 
     @Mock
-    private ChildTrieAccessor childTrieAccessor;
+    private MemoryChildTrieAccessor childTrieAccessor;
 
     private final byte[] keyBytes = new byte[]{1, 2, 3};
     private final Nibbles key = Nibbles.fromBytes(keyBytes);

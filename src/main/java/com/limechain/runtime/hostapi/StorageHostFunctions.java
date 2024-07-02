@@ -254,7 +254,7 @@ public class StorageHostFunctions implements PartialHostApi {
         if (sequence == null) {
             ByteArrayOutputStream buf = new ByteArrayOutputStream();
             try (ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
-                writer.writeCompact( 1);
+                writer.writeCompact(1);
                 writer.writeByteArray(valueToAppend);
             } catch (IOException e) {
                 throw new ScaleEncodingException(e);
@@ -269,7 +269,7 @@ public class StorageHostFunctions implements PartialHostApi {
         } catch (IndexOutOfBoundsException e) {
             ByteArrayOutputStream buf = new ByteArrayOutputStream();
             try (ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
-                writer.writeCompact( 1);
+                writer.writeCompact(1);
                 writer.writeByteArray(valueToAppend);
             } catch (IOException ez) {
                 throw new ScaleEncodingException(e);
@@ -345,9 +345,9 @@ public class StorageHostFunctions implements PartialHostApi {
 
         Nibbles key = Nibbles.fromBytes(sharedMemory.readData(keyPointer));
         byte[] nextKey = blockTrieAccessor.getNextKey(key)
-                .map(NibblesUtils::toBytesAppending)
-                .map(this::asByteArray)
-                .orElse(null);
+            .map(NibblesUtils::toBytesAppending)
+            .map(this::asByteArray)
+            .orElse(null);
 
         return sharedMemory.writeData(scaleEncodedOption(nextKey));
     }

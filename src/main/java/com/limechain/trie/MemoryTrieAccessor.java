@@ -12,37 +12,21 @@ import com.limechain.trie.structure.nibble.Nibbles;
 import com.limechain.utils.HashUtils;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract sealed class MemoryTrieAccessor extends TrieAccessor
-    permits BlockTrieAccessor, ChildTrieAccessor {
+    permits BlockTrieAccessor, MemoryChildTrieAccessor {
 
-    private final Map<Nibbles, ChildTrieAccessor> loadedChildTries;
     private final TrieStructure<NodeData> initialTrie;
     private List<TrieNodeIndex> updates;
 
     MemoryTrieAccessor(TrieStorage trieStorage, byte[] mainTrieRoot) {
         super(trieStorage, mainTrieRoot);
 
-        this.loadedChildTries = new HashMap<>();
         this.updates = new ArrayList<>();
         this.initialTrie = trieStorage.loadTrieStructure(mainTrieRoot);
-    }
-
-    /**
-     * Retrieves the child trie accessor for the given key.
-     *
-     * @param key The key corresponding to the child trie accessor.
-     * @return The ChildTrieAccessor for the specified key.
-     */
-    public ChildTrieAccessor getChildTrie(Nibbles key) {
-        Nibbles trieKey = Nibbles.fromBytes(":child_storage:default:".getBytes()).addAll(key);
-        byte[] merkleRoot = findStorageValue(trieKey).orElse(null);
-        return loadedChildTries.computeIfAbsent(trieKey, k -> new ChildTrieAccessor(this.trieStorage, this, trieKey, merkleRoot));
     }
 
     @Override
@@ -90,7 +74,6 @@ public abstract sealed class MemoryTrieAccessor extends TrieAccessor
         } else {
             initialTrie.deleteInternalNodeAt(nodeHandle.getFullKey());
         }
-
         return new DeleteByPrefixResult(deleted.get(), true);
     }
 
@@ -125,10 +108,19 @@ public abstract sealed class MemoryTrieAccessor extends TrieAccessor
 
     @Override
     public void persistChanges() {
-        for (ChildTrieAccessor value : loadedChildTries.values()) value.persistChanges();
+        for (TrieAccessor value : loadedChildTries.values()) value.persistChanges();
         loadedChildTries.clear();
 
         trieStorage.updateTrieStorage(initialTrie, updates);
+    }
+
+    @Override
+    public MemoryChildTrieAccessor getChildTrie(Nibbles key) {
+        Nibbles trieKey = Nibbles.fromBytes(":child_storage:default:".getBytes()).addAll(key);
+        byte[] merkleRoot = findStorageValue(trieKey).orElse(null);
+
+        return (MemoryChildTrieAccessor) loadedChildTries.computeIfAbsent(
+            trieKey, k -> new MemoryChildTrieAccessor(trieStorage, this, trieKey, merkleRoot));
     }
 
     /**
@@ -138,13 +130,13 @@ public abstract sealed class MemoryTrieAccessor extends TrieAccessor
      * @return The Merkle root hash.
      */
     public byte[] getMerkleRoot(StateVersion version) {
-        this.updates = TrieStructureFactory.recalculateMerkleValues(initialTrie, version, HashUtils::hashWithBlake2b);
+        updates = TrieStructureFactory.recalculateMerkleValues(initialTrie, version, HashUtils::hashWithBlake2b);
 
-        this.mainTrieRoot = initialTrie.getRootNode()
+        mainTrieRoot = initialTrie.getRootNode()
             .map(NodeHandle::getUserData)
             .map(NodeData::getMerkleValue)
             .orElseThrow();
 
-        return this.mainTrieRoot;
+        return mainTrieRoot;
     }
 }

@@ -6,6 +6,8 @@ import com.limechain.storage.trie.TrieStorage;
 import com.limechain.trie.structure.nibble.Nibbles;
 import lombok.Setter;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -18,6 +20,7 @@ public abstract sealed class TrieAccessor permits MemoryTrieAccessor, DiskTrieAc
     private static final String TRANSACTIONS_NOT_SUPPORTED = "Block Trie Accessor does not support transactions.";
 
     protected final TrieStorage trieStorage;
+    protected final Map<Nibbles, TrieAccessor> loadedChildTries;
     protected byte[] mainTrieRoot;
     @Setter
     protected StateVersion currentStateVersion;
@@ -25,6 +28,7 @@ public abstract sealed class TrieAccessor permits MemoryTrieAccessor, DiskTrieAc
     protected TrieAccessor(TrieStorage trieStorage, byte[] mainTrieRoot) {
         this.trieStorage = trieStorage;
         this.mainTrieRoot = mainTrieRoot;
+        this.loadedChildTries = new HashMap<>();
     }
 
     /**
@@ -73,6 +77,13 @@ public abstract sealed class TrieAccessor permits MemoryTrieAccessor, DiskTrieAc
      */
     abstract void persistChanges();
 
+    /**
+     * Retrieves the child trie accessor for the given key.
+     *
+     * @param key The key corresponding to the child trie accessor.
+     * @return The TrieAccessor of a child trie for the specified key.
+     */
+    abstract TrieAccessor getChildTrie(Nibbles key);
 
     /**
      * Starts a transaction, that can later be committed or rolled back

@@ -261,7 +261,7 @@ public class TrieStorage {
         }
 
         List<Nibbles> matchingKeys = new ArrayList<>();
-        collectKeysWithPrefix(rootNode, Nibbles.EMPTY, prefix, startKey, limit, matchingKeys, new boolean[] {false});
+        collectKeysWithPrefix(rootNode, Nibbles.EMPTY, prefix, startKey, limit, matchingKeys, new boolean[]{false});
         return matchingKeys;
     }
 
@@ -322,7 +322,7 @@ public class TrieStorage {
      * Serializes the given trie into a format suitable for storage and persists it using
      * the specified state version for compatibility.
      *
-     * @param trie         The trie to serialize and save.
+     * @param trie The trie to serialize and save.
      */
     public void insertTrieStorage(TrieStructure<NodeData> trie) {
         List<InsertTrieNode> dbSerializedTrieNodes = InsertTrieBuilder.build(trie);
@@ -332,8 +332,8 @@ public class TrieStorage {
     /**
      * Saves only specified nodes from the trie structure to storage.
      *
-     * @param trie         The trie to serialize and save.
-     * @param nodes        Only the nodes specified in the list will be saved.
+     * @param trie  The trie to serialize and save.
+     * @param nodes Only the nodes specified in the list will be saved.
      */
     public void updateTrieStorage(TrieStructure<NodeData> trie, List<TrieNodeIndex> nodes) {
         List<InsertTrieNode> dbSerializedTrieNodes = InsertTrieBuilder.build(trie, nodes);
@@ -360,7 +360,7 @@ public class TrieStorage {
      * <p>
      * The storage data is represented by a {@link TrieNodeData} object, which is serialized and saved to the repository.
      *
-     * @param trieNode     The trie node whose storage data is to be inserted.
+     * @param trieNode The trie node whose storage data is to be inserted.
      */
     private void insertTrieNodeStorage(InsertTrieNode trieNode) {
         String key = TRIE_NODE_PREFIX + new String(trieNode.merkleValue());

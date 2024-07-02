@@ -5,7 +5,7 @@ import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import com.limechain.runtime.version.StateVersion;
 import com.limechain.storage.DeleteByPrefixResult;
 import com.limechain.trie.BlockTrieAccessor;
-import com.limechain.trie.ChildTrieAccessor;
+import com.limechain.trie.MemoryChildTrieAccessor;
 import com.limechain.trie.structure.nibble.Nibbles;
 import com.limechain.trie.structure.nibble.NibblesUtils;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
@@ -131,7 +131,7 @@ public class ChildStorageHostFunctions implements PartialHostApi {
         Nibbles childStorageKey = Nibbles.fromBytes(sharedMemory.readData(childStorageKeyPointer));
         Nibbles key = Nibbles.fromBytes(sharedMemory.readData(keyPointer));
 
-        ChildTrieAccessor childTrie = blockTrieAccessor.getChildTrie(childStorageKey);
+        MemoryChildTrieAccessor childTrie = blockTrieAccessor.getChildTrie(childStorageKey);
 
         byte[] value = childTrie.findStorageValue(key).orElse(null);
 
@@ -164,7 +164,7 @@ public class ChildStorageHostFunctions implements PartialHostApi {
         Nibbles key = Nibbles.fromBytes(sharedMemory.readData(keyPointer));
         byte[] value = sharedMemory.readData(valuePointer);
 
-        ChildTrieAccessor childTrie = blockTrieAccessor.getChildTrie(childStorageKey);
+        MemoryChildTrieAccessor childTrie = blockTrieAccessor.getChildTrie(childStorageKey);
         childTrie.upsertNode(key, value);
     }
 
@@ -181,7 +181,7 @@ public class ChildStorageHostFunctions implements PartialHostApi {
         Nibbles childStorageKey = Nibbles.fromBytes(sharedMemory.readData(childStorageKeyPointer));
         Nibbles key = Nibbles.fromBytes(sharedMemory.readData(keyPointer));
 
-        ChildTrieAccessor childTrie = blockTrieAccessor.getChildTrie(childStorageKey);
+        MemoryChildTrieAccessor childTrie = blockTrieAccessor.getChildTrie(childStorageKey);
         childTrie.deleteNode(key);
     }
 
@@ -198,7 +198,7 @@ public class ChildStorageHostFunctions implements PartialHostApi {
         Nibbles childStorageKey = Nibbles.fromBytes(sharedMemory.readData(childStorageKeyPointer));
         Nibbles prefix = Nibbles.fromBytes(sharedMemory.readData(prefixPointer));
 
-        ChildTrieAccessor childTrie = blockTrieAccessor.getChildTrie(childStorageKey);
+        MemoryChildTrieAccessor childTrie = blockTrieAccessor.getChildTrie(childStorageKey);
         childTrie.deleteMultipleNodesByPrefix(prefix, null);
     }
 
@@ -225,7 +225,7 @@ public class ChildStorageHostFunctions implements PartialHostApi {
         byte[] limitBytes = sharedMemory.readData(limitPointer);
         Long limit = new ScaleCodecReader(limitBytes).readOptional(ScaleCodecReader.UINT32).orElse(null);
 
-        ChildTrieAccessor childTrie = blockTrieAccessor.getChildTrie(childStorageKey);
+        MemoryChildTrieAccessor childTrie = blockTrieAccessor.getChildTrie(childStorageKey);
         DeleteByPrefixResult result = childTrie.deleteMultipleNodesByPrefix(prefix, limit);
 
         return sharedMemory.writeData(result.scaleEncoded());
@@ -245,7 +245,7 @@ public class ChildStorageHostFunctions implements PartialHostApi {
         Nibbles childStorageKey = Nibbles.fromBytes(sharedMemory.readData(childStorageKeyPointer));
         Nibbles key = Nibbles.fromBytes(sharedMemory.readData(keyPointer));
 
-        ChildTrieAccessor childTrie = blockTrieAccessor.getChildTrie(childStorageKey);
+        MemoryChildTrieAccessor childTrie = blockTrieAccessor.getChildTrie(childStorageKey);
         return childTrie.findStorageValue(key).isPresent() ? 1 : 0;
     }
 
@@ -263,8 +263,8 @@ public class ChildStorageHostFunctions implements PartialHostApi {
         Nibbles childStorageKey = Nibbles.fromBytes(sharedMemory.readData(childStorageKeyPointer));
         Nibbles key = Nibbles.fromBytes(sharedMemory.readData(keyPointer));
 
-        ChildTrieAccessor childTrie = blockTrieAccessor.getChildTrie(childStorageKey);
-        byte[] value =  childTrie.findStorageValue(key).orElse(null);
+        MemoryChildTrieAccessor childTrie = blockTrieAccessor.getChildTrie(childStorageKey);
+        byte[] value = childTrie.findStorageValue(key).orElse(null);
 
         return sharedMemory.writeData(scaleEncodedOption(value));
     }
@@ -284,12 +284,12 @@ public class ChildStorageHostFunctions implements PartialHostApi {
         Nibbles childStorageKey = Nibbles.fromBytes(sharedMemory.readData(childStorageKeyPointer));
         Nibbles key = Nibbles.fromBytes(sharedMemory.readData(keyPointer));
 
-        ChildTrieAccessor childTrie = blockTrieAccessor.getChildTrie(childStorageKey);
+        MemoryChildTrieAccessor childTrie = blockTrieAccessor.getChildTrie(childStorageKey);
 
         byte[] nextKey = childTrie.getNextKey(key)
-                .map(NibblesUtils::toBytesAppending)
-                .map(this::asByteArray)
-                .orElse(null);
+            .map(NibblesUtils::toBytesAppending)
+            .map(this::asByteArray)
+            .orElse(null);
 
         return sharedMemory.writeData(scaleEncodedOption(nextKey));
     }
@@ -312,7 +312,7 @@ public class ChildStorageHostFunctions implements PartialHostApi {
         log.fine("extDefaultChildStorageRootVersion1");
 
         Nibbles childStorageKey = Nibbles.fromBytes(sharedMemory.readData(childStorageKeyPointer));
-        ChildTrieAccessor childTrie = blockTrieAccessor.getChildTrie(childStorageKey);
+        MemoryChildTrieAccessor childTrie = blockTrieAccessor.getChildTrie(childStorageKey);
 
         byte[] rootHash = childTrie.getMerkleRoot(v0);
 
@@ -328,7 +328,7 @@ public class ChildStorageHostFunctions implements PartialHostApi {
         log.fine("extDefaultChildStorageKillVersion1");
 
         Nibbles childStorageKey = Nibbles.fromBytes(sharedMemory.readData(childStorageKeyPointer));
-        ChildTrieAccessor childTrie = blockTrieAccessor.getChildTrie(childStorageKey);
+        MemoryChildTrieAccessor childTrie = blockTrieAccessor.getChildTrie(childStorageKey);
         blockTrieAccessor.deleteNode(childTrie.getChildTrieKey());
     }
 
@@ -347,7 +347,7 @@ public class ChildStorageHostFunctions implements PartialHostApi {
         byte[] limitBytes = sharedMemory.readData(limitPointer);
         Long limit = new ScaleCodecReader(limitBytes).readOptional(ScaleCodecReader.UINT32).orElse(null);
 
-        ChildTrieAccessor childTrie = blockTrieAccessor.getChildTrie(childStorageKey);
+        MemoryChildTrieAccessor childTrie = blockTrieAccessor.getChildTrie(childStorageKey);
         DeleteByPrefixResult result = childTrie.deleteMultipleNodesByPrefix(Nibbles.EMPTY, limit);
 
         return sharedMemory.writeData(result.scaleEncoded());

@@ -1,7 +1,7 @@
 package com.limechain.trie.structure.node;
 
 import com.limechain.trie.structure.nibble.Nibbles;
-import jakarta.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
