@@ -75,7 +75,10 @@ public abstract sealed class TrieAccessor permits MemoryTrieAccessor, DiskTrieAc
     /**
      * Persists the accumulated changes to the underlying database storage.
      */
-    abstract void persistChanges();
+    void persistChanges() {
+        for (TrieAccessor value : loadedChildTries.values()) value.persistChanges();
+        loadedChildTries.clear();
+    }
 
     /**
      * Retrieves the child trie accessor for the given key.

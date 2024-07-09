@@ -108,9 +108,7 @@ public abstract sealed class MemoryTrieAccessor extends TrieAccessor
 
     @Override
     public void persistChanges() {
-        for (TrieAccessor value : loadedChildTries.values()) value.persistChanges();
-        loadedChildTries.clear();
-
+        super.persistChanges();
         trieStorage.updateTrieStorage(initialTrie, updates);
     }
 

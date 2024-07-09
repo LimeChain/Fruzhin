@@ -52,6 +52,7 @@ public sealed class DiskTrieAccessor extends TrieAccessor permits DiskChildTrieA
 
     @Override
     public void persistChanges() {
+        super.persistChanges();
         trieChanges = TrieChanges.empty();
     }
 
