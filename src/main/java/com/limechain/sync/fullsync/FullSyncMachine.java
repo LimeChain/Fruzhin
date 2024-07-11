@@ -69,11 +69,14 @@ public class FullSyncMachine {
         Hash256 stateRoot = syncState.getStateRoot();
         Hash256 lastFinalizedBlockHash = syncState.getLastFinalizedBlockHash();
 
-        if (!trieStorage.merkleValueExists(stateRoot)) {
-            loadStateAtBlockFromPeer(lastFinalizedBlockHash);
-        }
+        BlockTrieAccessor blockTrieAccessor;
 
-        BlockTrieAccessor blockTrieAccessor = new BlockTrieAccessor(trieStorage, stateRoot.getBytes());
+        if (trieStorage.merkleValueExists(stateRoot)) {
+            blockTrieAccessor = new BlockTrieAccessor(trieStorage, stateRoot.getBytes());
+        } else {
+            TrieStructure<NodeData> trieStructure = loadStateAtBlockFromPeer(lastFinalizedBlockHash);
+            blockTrieAccessor = new BlockTrieAccessor(trieStorage, stateRoot.getBytes(), trieStructure);
+        }
 
         runtime = buildRuntimeFromState(blockTrieAccessor);
         StateVersion runtimeStateVersion = runtime.getVersion().getStateVersion();
@@ -102,13 +105,16 @@ public class FullSyncMachine {
         }
     }
 
-    private void loadStateAtBlockFromPeer(Hash256 lastFinalizedBlockHash) {
+    private TrieStructure<NodeData> loadStateAtBlockFromPeer(Hash256 lastFinalizedBlockHash) {
+        log.info("Loading state at block from peer");
         Map<ByteString, ByteString> kvps = makeStateRequest(lastFinalizedBlockHash);
 
         TrieStructure<NodeData> trieStructure = TrieStructureFactory.buildFromKVPs(kvps);
         trieStorage.insertTrieStorage(trieStructure);
+        log.info("State at block loaded from peer");
 
         kvps.clear();
+        return trieStructure;
     }
 
     private Map<ByteString, ByteString> makeStateRequest(Hash256 lastFinalizedBlockHash) {
@@ -164,7 +170,9 @@ public class FullSyncMachine {
                     .toList();
         } catch (Exception ex) {
             log.info("Error while fetching blocks, trying to fetch again");
-            this.networkService.updateCurrentSelectedPeerWithNextBootnode();
+            if (!this.networkService.updateCurrentSelectedPeerWithNextBootnode()) {
+                this.networkService.updateCurrentSelectedPeer();
+            }
             return requestBlocks(start, amount);
         }
     }
@@ -222,9 +230,9 @@ public class FullSyncMachine {
             blockTrieAccessor.persistUpdates();
 
             BlockHeader blockHeader = block.getHeader();
-            try{
+            try {
                 blockState.setFinalizedHash(blockHeader.getHash(), BigInteger.ZERO, BigInteger.ZERO);
-            }catch (BlockNodeNotFoundException ignored){
+            } catch (BlockNodeNotFoundException ignored) {
                 //ignored
             }
 

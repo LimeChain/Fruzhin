@@ -45,6 +45,14 @@ public abstract sealed class TrieAccessor implements KVRepository<Nibbles, byte[
         this.initialTrie = trieStorage.loadTrieStructure(mainTrieRoot);
     }
 
+    TrieAccessor(TrieStorage trieStorage, byte[] mainTrieRoot, TrieStructure<NodeData> trieStructure) {
+        this.trieStorage = trieStorage;
+        this.mainTrieRoot = mainTrieRoot;
+
+        this.loadedChildTries = new HashMap<>();
+        this.initialTrie = trieStructure;
+    }
+
     /**
      * Retrieves the child trie accessor for the given key.
      *
