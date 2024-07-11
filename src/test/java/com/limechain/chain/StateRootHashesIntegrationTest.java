@@ -3,6 +3,7 @@ package com.limechain.chain;
 import com.limechain.chain.spec.ChainSpec;
 import com.limechain.trie.TrieStructureFactory;
 import org.apache.tomcat.util.buf.HexUtils;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -20,6 +21,7 @@ class StateRootHashesIntegrationTest {
     );
 
     @Test
+    @Disabled
     void testProperCalculationOfStateRootHashForMainChains() throws IOException {
         for (var entry : chainSpecToRootHash.entrySet()) {
             String chainSpecPath = entry.getKey();

@@ -1,5 +1,6 @@
 package com.limechain.network.protocol.state;
 
+import com.google.protobuf.ByteString;
 import com.limechain.exception.global.ExecutionFailedException;
 import com.limechain.exception.global.ThreadInterruptedException;
 import com.limechain.network.StrictProtocolBinding;
@@ -22,12 +23,12 @@ public class StateMessages extends StrictProtocolBinding<StateController> {
     }
 
     public SyncMessage.StateResponse remoteStateRequest(Host us, AddressBook addrs, PeerId peer,
-                                                        String blockHash) {
+                                                        String blockHash, ByteString after) {
         try {
             StateController controller = dialPeer(us, peer, addrs);
 
             return controller
-                    .sendStateRequest(StringUtils.remove0xPrefix(blockHash))
+                    .sendStateRequest(StringUtils.remove0xPrefix(blockHash), after)
                     .get(10, TimeUnit.SECONDS);
         } catch (ExecutionException | TimeoutException | IllegalStateException e) {
             log.log(Level.SEVERE, "Error while sending remote state: ", e);

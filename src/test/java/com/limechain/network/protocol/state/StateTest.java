@@ -1,5 +1,6 @@
 package com.limechain.network.protocol.state;
 
+import com.google.protobuf.ByteString;
 import com.limechain.network.kad.KademliaService;
 import com.limechain.network.protocol.sync.pb.SyncMessage;
 import com.limechain.utils.RandomGenerationUtils;
@@ -66,7 +67,7 @@ public class StateTest {
 
         SyncMessage.StateResponse response =
                 stateService.remoteStateRequest(senderNode, senderNode.getAddressBook(), peerId,
-                        "0xc430332fe17cedb79ae58387ad883f369fb1028683680db0b12ba60248769f6c"
+                        "0xc430332fe17cedb79ae58387ad883f369fb1028683680db0b12ba60248769f6c", ByteString.EMPTY
                 );
 
         assertNotNull(response);

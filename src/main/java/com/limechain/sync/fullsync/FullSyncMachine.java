@@ -1,5 +1,7 @@
 package com.limechain.sync.fullsync;
 
+import com.google.protobuf.ByteString;
+import com.limechain.exception.storage.BlockNodeNotFoundException;
 import com.limechain.exception.sync.BlockExecutionException;
 import com.limechain.network.Network;
 import com.limechain.network.protocol.sync.BlockRequestDto;
@@ -20,6 +22,9 @@ import com.limechain.storage.block.SyncState;
 import com.limechain.storage.trie.TrieStorage;
 import com.limechain.sync.fullsync.inherents.InherentData;
 import com.limechain.trie.BlockTrieAccessor;
+import com.limechain.trie.TrieStructureFactory;
+import com.limechain.trie.structure.TrieStructure;
+import com.limechain.trie.structure.database.NodeData;
 import com.limechain.trie.structure.nibble.Nibbles;
 import com.limechain.utils.scale.ScaleUtils;
 import com.limechain.utils.scale.readers.PairReader;
@@ -32,7 +37,9 @@ import org.apache.commons.lang3.ArrayUtils;
 
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * FullSyncMachine is responsible for executing full synchronization of blocks.
@@ -59,12 +66,12 @@ public class FullSyncMachine {
         //  unless explicitly set via some of the "update..." methods
         this.networkService.updateCurrentSelectedPeerWithNextBootnode();
 
-        Hash256 lastFinelizedStateRoot = syncState.getStateRoot(); //to replace line 67
-        // TODO: fetch state of the latest finalized block and start executing blocks from there
-        // scrap the blockstate highest finalized header logic for now
+        Hash256 stateRoot = syncState.getStateRoot();
+        Hash256 lastFinalizedBlockHash = syncState.getLastFinalizedBlockHash();
 
-        BlockHeader highestFinalizedHeader = blockState.getHighestFinalizedHeader();
-        Hash256 stateRoot = highestFinalizedHeader.getStateRoot();
+        if (!trieStorage.merkleValueExists(stateRoot)) {
+            loadStateAtBlockFromPeer(lastFinalizedBlockHash);
+        }
 
         BlockTrieAccessor blockTrieAccessor = new BlockTrieAccessor(trieStorage, stateRoot.getBytes());
 
@@ -78,10 +85,9 @@ public class FullSyncMachine {
             return;
         }
 
-        blockState.storeRuntime(highestFinalizedHeader.getHash(), runtime);
+        blockState.storeRuntime(lastFinalizedBlockHash, runtime);
 
-        int startNumber = highestFinalizedHeader
-                .getBlockNumber()
+        int startNumber = syncState.getLastFinalizedBlockNumber()
                 .add(BigInteger.ONE)
                 .intValue();
 
@@ -89,10 +95,40 @@ public class FullSyncMachine {
         List<Block> receivedBlocks = requestBlocks(startNumber, blocksToFetch);
 
         while (!receivedBlocks.isEmpty()) {
-            executeBlocks(receivedBlocks, blockTrieAccessor);
+            try{
+                executeBlocks(receivedBlocks, blockTrieAccessor);
+            }catch (Exception ex){
+                System.out.println(ex);
+            }
             log.info("Executed blocks from " + startNumber + " to " + (startNumber + blocksToFetch));
             startNumber += blocksToFetch;
             receivedBlocks = requestBlocks(startNumber, blocksToFetch);
+        }
+    }
+
+    private void loadStateAtBlockFromPeer(Hash256 lastFinalizedBlockHash) {
+        Map<ByteString, ByteString> kvps = new HashMap<>();
+
+        makeStateRequest(lastFinalizedBlockHash, kvps, ByteString.EMPTY);
+
+        TrieStructure<NodeData> trieStructure = TrieStructureFactory.buildFromKVPs(kvps);
+        trieStorage.insertTrieStorage(trieStructure);
+
+        kvps.clear();
+    }
+
+    private void makeStateRequest(Hash256 lastFinalizedBlockHash, Map<ByteString, ByteString> kvps, ByteString start) {
+        SyncMessage.StateResponse response = networkService.makeStateRequest(lastFinalizedBlockHash.toString(), start);
+
+        for (SyncMessage.KeyValueStateEntry keyValueStateEntry : response.getEntriesList()) {
+            for (SyncMessage.StateEntry stateEntry : keyValueStateEntry.getEntriesList()) {
+                kvps.put(stateEntry.getKey(), stateEntry.getValue());
+            }
+        }
+        SyncMessage.KeyValueStateEntry lastEntry = response.getEntriesList().getLast();
+        if(!lastEntry.getComplete()){
+            makeStateRequest(lastFinalizedBlockHash, kvps,
+                    lastEntry.getEntriesList().getLast().getKey());
         }
     }
 
@@ -119,8 +155,8 @@ public class FullSyncMachine {
             List<SyncMessage.BlockData> blockDatas = response.getBlocksList();
 
             return blockDatas.stream()
-                .map(FullSyncMachine::protobufDecodeBlock)
-                .toList();
+                    .map(FullSyncMachine::protobufDecodeBlock)
+                    .toList();
         } catch (Exception ex) {
             log.info("Error while fetching blocks, trying to fetch again");
             this.networkService.updateCurrentSelectedPeerWithNextBootnode();
@@ -136,9 +172,9 @@ public class FullSyncMachine {
 
         // Protobuf decode the block body
         List<Extrinsics> extrinsicsList = blockData.getBodyList().stream()
-            .map(bs -> ScaleUtils.Decode.decode(bs.toByteArray(), ScaleCodecReader::readByteArray))
-            .map(Extrinsics::new)
-            .toList();
+                .map(bs -> ScaleUtils.Decode.decode(bs.toByteArray(), ScaleCodecReader::readByteArray))
+                .map(Extrinsics::new)
+                .toList();
 
         BlockBody blockBody = new BlockBody(extrinsicsList);
 
@@ -154,7 +190,9 @@ public class FullSyncMachine {
         for (Block block : receivedBlockDatas) {
             log.fine("Block number to be executed is " + block.getHeader().getBlockNumber());
 
-            blockState.addBlock(block);
+            try{
+                blockState.addBlock(block);
+            }catch (BlockNodeNotFoundException ignored){}
 
             // Check the block for valid inherents
             // NOTE: This is only relevant for block production.
@@ -180,8 +218,8 @@ public class FullSyncMachine {
             blockState.setFinalizedHash(blockHeader.getHash(), BigInteger.ZERO, BigInteger.ZERO);
 
             boolean blockUpdatedRuntime = Arrays.stream(blockHeader.getDigest())
-                .map(HeaderDigest::getType)
-                .anyMatch(type -> type.equals(DigestType.RUN_ENV_UPDATED));
+                    .map(HeaderDigest::getType)
+                    .anyMatch(type -> type.equals(DigestType.RUN_ENV_UPDATED));
 
             if (blockUpdatedRuntime) {
                 log.info("Runtime updated, updating the runtime code");
@@ -216,13 +254,13 @@ public class FullSyncMachine {
      */
     private static boolean isBlockGoodToExecute(byte[] checkInherentsOutput) {
         var data = ScaleUtils.Decode.decode(
-            ArrayUtils.subarray(checkInherentsOutput, 2, checkInherentsOutput.length),
-            new ListReader<>(
-                new PairReader<>(
-                    scr -> new String(scr.readByteArray(8)),
-                    scr -> new String(scr.readByteArray())
+                ArrayUtils.subarray(checkInherentsOutput, 2, checkInherentsOutput.length),
+                new ListReader<>(
+                        new PairReader<>(
+                                scr -> new String(scr.readByteArray(8)),
+                                scr -> new String(scr.readByteArray())
+                        )
                 )
-            )
         );
 
         boolean goodToExecute;

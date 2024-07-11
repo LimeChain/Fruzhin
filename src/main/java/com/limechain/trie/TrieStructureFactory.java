@@ -31,7 +31,7 @@ public class TrieStructureFactory {
      * @return - a TrieStructure with calculated merkle values
      */
     public TrieStructure<NodeData> buildFromKVPs(Map<ByteString, ByteString> entries) {
-        TrieStructure<NodeData> trie = buildTrieStructure(entries);
+        TrieStructure<NodeData> trie = buildTrieStructure(entries, StateVersion.V1);
         calculateMerkleValues(trie, HashUtils::hashWithBlake2b);
         return trie;
     }
@@ -42,13 +42,13 @@ public class TrieStructureFactory {
      * @param mainStorage The key-value pairs to be inserted into the trie.
      * @return A TrieStructure containing the inserted key-value pairs.
      */
-    public TrieStructure<NodeData> buildTrieStructure(Map<ByteString, ByteString> mainStorage) {
+    public TrieStructure<NodeData> buildTrieStructure(Map<ByteString, ByteString> mainStorage, StateVersion version) {
         TrieStructure<NodeData> trie = new TrieStructure<>();
 
         for (var entry : mainStorage.entrySet()) {
             Nibbles key = Nibbles.fromBytes(entry.getKey().toByteArray());
             byte[] value = entry.getValue().toByteArray();
-            trie.insertNode(key, new NodeData(value), StateVersion.V0);
+            trie.insertNode(key, new NodeData(value), version);
         }
 
         return trie;

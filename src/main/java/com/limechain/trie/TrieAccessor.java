@@ -185,25 +185,24 @@ public abstract sealed class TrieAccessor implements KVRepository<Nibbles, byte[
 
     @Override
     public void startTransaction() {
-        throw new UnsupportedOperationException(TRANSACTIONS_NOT_SUPPORTED);
+//        throw new UnsupportedOperationException(TRANSACTIONS_NOT_SUPPORTED);
 
     }
 
     @Override
     public void rollbackTransaction() {
-        throw new UnsupportedOperationException(TRANSACTIONS_NOT_SUPPORTED);
+//        throw new UnsupportedOperationException(TRANSACTIONS_NOT_SUPPORTED);
 
     }
 
     @Override
     public void commitTransaction() {
-        throw new UnsupportedOperationException(TRANSACTIONS_NOT_SUPPORTED);
-
+//        throw new UnsupportedOperationException(TRANSACTIONS_NOT_SUPPORTED);
     }
 
     @Override
     public void closeConnection() {
-        throw new UnsupportedOperationException(TRANSACTIONS_NOT_SUPPORTED);
+//        throw new UnsupportedOperationException(TRANSACTIONS_NOT_SUPPORTED);
     }
 
     /**

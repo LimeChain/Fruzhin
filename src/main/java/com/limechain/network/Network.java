@@ -1,5 +1,6 @@
 package com.limechain.network;
 
+import com.google.protobuf.ByteString;
 import com.limechain.chain.Chain;
 import com.limechain.chain.ChainService;
 import com.limechain.cli.CliArguments;
@@ -15,6 +16,7 @@ import com.limechain.network.protocol.ping.Ping;
 import com.limechain.network.protocol.state.StateService;
 import com.limechain.network.protocol.sync.BlockRequestDto;
 import com.limechain.network.protocol.sync.SyncService;
+import com.limechain.network.protocol.sync.pb.SyncMessage;
 import com.limechain.network.protocol.sync.pb.SyncMessage.BlockResponse;
 import com.limechain.network.protocol.transactions.TransactionsService;
 import com.limechain.network.protocol.warp.WarpSyncService;
@@ -147,6 +149,7 @@ public class Network {
                         lightMessagesService.getProtocol(),
                         warpSyncService.getProtocol(),
                         syncService.getProtocol(),
+                        stateService.getProtocol(),
                         blockAnnounceService.getProtocol(),
                         grandpaService.getProtocol()
                 )
@@ -305,6 +308,16 @@ public class Network {
                 this.host.getAddressBook(),
                 this.currentSelectedPeer,
                 blockRequestDto
+        );
+    }
+
+    public SyncMessage.StateResponse makeStateRequest(String blockHash, ByteString after) {
+        return stateService.getProtocol().remoteStateRequest(
+                this.host,
+                this.host.getAddressBook(),
+                this.currentSelectedPeer,
+                blockHash,
+                after
         );
     }
 

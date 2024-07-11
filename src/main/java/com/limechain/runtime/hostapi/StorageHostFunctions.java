@@ -172,7 +172,9 @@ public class StorageHostFunctions implements PartialHostApi {
         int size = 0;
         if (offset <= value.length) {
             size = value.length - offset;
-            sharedMemory.writeData(Arrays.copyOfRange(value, offset, value.length), valueOutPointer);
+            byte[] data = Arrays.copyOfRange(value, offset, value.length);
+
+            sharedMemory.writeData(data, valueOutPointer);
         }
 
         return sharedMemory.writeData(scaleEncodedOption(size));
@@ -315,7 +317,6 @@ public class StorageHostFunctions implements PartialHostApi {
      */
     public RuntimePointerSize extStorageRootVersion2(int version) {
         log.fine("extStorageRootVersion2");
-
         byte[] rootHash = blockTrieAccessor.getMerkleRoot(StateVersion.fromInt(version));
 
         return sharedMemory.writeData(rootHash);

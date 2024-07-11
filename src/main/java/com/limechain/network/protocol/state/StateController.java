@@ -12,11 +12,12 @@ public interface StateController {
         throw new NotImplementedException("Method not implemented!");
     }
 
-    default CompletableFuture<SyncMessage.StateResponse> sendStateRequest(String fromHash) {
+    default CompletableFuture<SyncMessage.StateResponse> sendStateRequest(String fromHash, ByteString after) {
         SyncMessage.StateRequest build = SyncMessage.StateRequest
                 .newBuilder()
                 .setBlock(ByteString.fromHex(fromHash))
                 .setNoProof(true)
+                .setStart(0, after)
                 .build();
 
         return send(build);
