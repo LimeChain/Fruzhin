@@ -13,6 +13,7 @@ import com.limechain.trie.structure.nibble.Nibbles;
 import com.limechain.utils.HashUtils;
 import lombok.AllArgsConstructor;
 import lombok.Setter;
+import lombok.extern.java.Log;
 
 import java.util.HashMap;
 import java.util.List;
@@ -21,10 +22,11 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @AllArgsConstructor
+@Log
 public abstract sealed class TrieAccessor implements KVRepository<Nibbles, byte[]>
     permits BlockTrieAccessor, ChildTrieAccessor {
 
-    public static final String TRANSACTIONS_NOT_SUPPORTED = "Block Trie Accessor does not support transactions.";
+    public static final String TRANSACTIONS_NOT_SUPPORTED = "Trie Accessor does not support transactions.";
 
     protected final TrieStorage trieStorage;
     @Setter
@@ -185,24 +187,23 @@ public abstract sealed class TrieAccessor implements KVRepository<Nibbles, byte[
 
     @Override
     public void startTransaction() {
-//        throw new UnsupportedOperationException(TRANSACTIONS_NOT_SUPPORTED);
-
+        log.fine("Start transaction method is called" + TRANSACTIONS_NOT_SUPPORTED);
     }
 
     @Override
     public void rollbackTransaction() {
-//        throw new UnsupportedOperationException(TRANSACTIONS_NOT_SUPPORTED);
+        log.fine("Rollback transaction method is called" + TRANSACTIONS_NOT_SUPPORTED);
 
     }
 
     @Override
     public void commitTransaction() {
-//        throw new UnsupportedOperationException(TRANSACTIONS_NOT_SUPPORTED);
+        log.fine("Commit transaction method is called" + TRANSACTIONS_NOT_SUPPORTED);
     }
 
     @Override
     public void closeConnection() {
-//        throw new UnsupportedOperationException(TRANSACTIONS_NOT_SUPPORTED);
+        log.fine("Close transaction method is called" + TRANSACTIONS_NOT_SUPPORTED);
     }
 
     /**

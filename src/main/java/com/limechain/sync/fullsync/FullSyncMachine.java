@@ -95,11 +95,7 @@ public class FullSyncMachine {
         List<Block> receivedBlocks = requestBlocks(startNumber, blocksToFetch);
 
         while (!receivedBlocks.isEmpty()) {
-            try{
-                executeBlocks(receivedBlocks, blockTrieAccessor);
-            }catch (Exception ex){
-                System.out.println(ex);
-            }
+            executeBlocks(receivedBlocks, blockTrieAccessor);
             log.info("Executed blocks from " + startNumber + " to " + (startNumber + blocksToFetch));
             startNumber += blocksToFetch;
             receivedBlocks = requestBlocks(startNumber, blocksToFetch);
@@ -126,7 +122,7 @@ public class FullSyncMachine {
             }
         }
         SyncMessage.KeyValueStateEntry lastEntry = response.getEntriesList().getLast();
-        if(!lastEntry.getComplete()){
+        if (!lastEntry.getComplete()) {
             makeStateRequest(lastFinalizedBlockHash, kvps,
                     lastEntry.getEntriesList().getLast().getKey());
         }
@@ -190,9 +186,11 @@ public class FullSyncMachine {
         for (Block block : receivedBlockDatas) {
             log.fine("Block number to be executed is " + block.getHeader().getBlockNumber());
 
-            try{
+            try {
                 blockState.addBlock(block);
-            }catch (BlockNodeNotFoundException ignored){}
+            } catch (BlockNodeNotFoundException ignored) {
+                //todo: currently ignored
+            }
 
             // Check the block for valid inherents
             // NOTE: This is only relevant for block production.
