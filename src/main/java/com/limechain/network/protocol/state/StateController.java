@@ -17,7 +17,7 @@ public interface StateController {
                 .newBuilder()
                 .setBlock(ByteString.fromHex(fromHash))
                 .setNoProof(true)
-                .setStart(0, after)
+                .addStart(after)
                 .build();
 
         return send(build);
