@@ -20,7 +20,6 @@ import com.limechain.utils.scale.ScaleUtils;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.extern.java.Log;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -33,7 +32,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @Log
 class BlockExecutorTest {
     @Test
-    @Disabled
     void kusamaFirstBlock() throws IOException {
         // Build the genesis state trie
         ChainSpec chainSpec = ChainSpec.newFromJSON("genesis/ksmcc3.json");
