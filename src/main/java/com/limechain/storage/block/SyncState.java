@@ -76,6 +76,7 @@ public class SyncState {
                 this.lastFinalizedBlockNumber = commitMessage.getVote().getBlockNumber();
             }
         } catch (HeaderNotFoundException ignored) {
+            //TODO: Ignored for now
         }
     }
 
