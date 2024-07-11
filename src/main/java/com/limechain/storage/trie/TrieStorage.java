@@ -103,8 +103,8 @@ public class TrieStorage {
     }
 
 
-    public boolean merkleValueExists(Hash256 lastFinelizedStateRoot) {
-        return getTrieNodeFromMerkleValue(lastFinelizedStateRoot.getBytes()) != null;
+    public boolean merkleValueExists(Hash256 lastFinalizedStateRoot) {
+        return getTrieNodeFromMerkleValue(lastFinalizedStateRoot.getBytes()) != null;
     }
 
     /**

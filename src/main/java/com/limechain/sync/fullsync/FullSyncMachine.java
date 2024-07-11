@@ -103,9 +103,7 @@ public class FullSyncMachine {
     }
 
     private void loadStateAtBlockFromPeer(Hash256 lastFinalizedBlockHash) {
-        Map<ByteString, ByteString> kvps = new HashMap<>();
-
-        makeStateRequest(lastFinalizedBlockHash, kvps, ByteString.EMPTY);
+        Map<ByteString, ByteString> kvps = makeStateRequest(lastFinalizedBlockHash);
 
         TrieStructure<NodeData> trieStructure = TrieStructureFactory.buildFromKVPs(kvps);
         trieStorage.insertTrieStorage(trieStructure);
@@ -113,19 +111,30 @@ public class FullSyncMachine {
         kvps.clear();
     }
 
-    private void makeStateRequest(Hash256 lastFinalizedBlockHash, Map<ByteString, ByteString> kvps, ByteString start) {
-        SyncMessage.StateResponse response = networkService.makeStateRequest(lastFinalizedBlockHash.toString(), start);
+    private Map<ByteString, ByteString> makeStateRequest(Hash256 lastFinalizedBlockHash) {
+        Map<ByteString, ByteString> kvps = new HashMap<>();
 
-        for (SyncMessage.KeyValueStateEntry keyValueStateEntry : response.getEntriesList()) {
-            for (SyncMessage.StateEntry stateEntry : keyValueStateEntry.getEntriesList()) {
-                kvps.put(stateEntry.getKey(), stateEntry.getValue());
+        ByteString start = ByteString.EMPTY;
+
+        while (true) {
+            SyncMessage.StateResponse response =
+                    networkService.makeStateRequest(lastFinalizedBlockHash.toString(), start);
+
+            for (SyncMessage.KeyValueStateEntry keyValueStateEntry : response.getEntriesList()) {
+                for (SyncMessage.StateEntry stateEntry : keyValueStateEntry.getEntriesList()) {
+                    kvps.put(stateEntry.getKey(), stateEntry.getValue());
+                }
+            }
+
+            SyncMessage.KeyValueStateEntry lastEntry = response.getEntriesList().getLast();
+            if (!lastEntry.getComplete()) {
+                start = lastEntry.getEntriesList().getLast().getKey();
+            } else {
+                break;
             }
         }
-        SyncMessage.KeyValueStateEntry lastEntry = response.getEntriesList().getLast();
-        if (!lastEntry.getComplete()) {
-            makeStateRequest(lastFinalizedBlockHash, kvps,
-                    lastEntry.getEntriesList().getLast().getKey());
-        }
+
+        return kvps;
     }
 
     /**
@@ -213,7 +222,11 @@ public class FullSyncMachine {
             blockTrieAccessor.persistUpdates();
 
             BlockHeader blockHeader = block.getHeader();
-            blockState.setFinalizedHash(blockHeader.getHash(), BigInteger.ZERO, BigInteger.ZERO);
+            try{
+                blockState.setFinalizedHash(blockHeader.getHash(), BigInteger.ZERO, BigInteger.ZERO);
+            }catch (BlockNodeNotFoundException ignored){
+                //ignored
+            }
 
             boolean blockUpdatedRuntime = Arrays.stream(blockHeader.getDigest())
                     .map(HeaderDigest::getType)
