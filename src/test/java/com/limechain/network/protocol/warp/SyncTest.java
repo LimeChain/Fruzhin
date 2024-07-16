@@ -44,7 +44,7 @@ class SyncTest {
 
             kademliaService.connectBootNodes(receivers);
 
-            var response = warpSync.warpSyncRequest(senderNode, senderNode.getAddressBook(), peerId,
+            var response = warpSync.warpSyncRequest(senderNode, peerId,
                     "0xb3a0f1e3c06de74c9aedb3e4b129b570f778dd82005b2a84177dfb8a1b3751d0"
             );
             assertNotNull(response);

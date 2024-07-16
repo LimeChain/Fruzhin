@@ -48,7 +48,6 @@ class LightMessagesTest {
 
             LightClientMessage.Response response = lightMessages.remoteReadRequest(
                     senderNode,
-                    kademliaService.getProtocol().getAddressBook(),
                     peerId,
                     "202d85e7911b81e7e704be791b6a2147dc37b571bd311abe5dbf6ab3860dc4b8",
                     new String[]{"9c5d795d0297be56027a4b2464e333979c5d795d0297be56027a4b2464e333977a2dce72ec5f24ed58baf131ea24762f3947ac46"}

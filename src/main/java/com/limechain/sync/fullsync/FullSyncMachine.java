@@ -123,8 +123,15 @@ public class FullSyncMachine {
         ByteString start = ByteString.EMPTY;
 
         while (true) {
-            SyncMessage.StateResponse response =
-                    networkService.makeStateRequest(lastFinalizedBlockHash.toString(), start);
+            final SyncMessage.StateResponse response;
+            try {
+                response = networkService.makeStateRequest(lastFinalizedBlockHash.toString(), start);
+            } catch (Exception ex) {
+                if (!this.networkService.updateCurrentSelectedPeerWithNextBootnode()) {
+                    this.networkService.updateCurrentSelectedPeer();
+                }
+                continue;
+            }
 
             for (SyncMessage.KeyValueStateEntry keyValueStateEntry : response.getEntriesList()) {
                 for (SyncMessage.StateEntry stateEntry : keyValueStateEntry.getEntriesList()) {
@@ -205,8 +212,8 @@ public class FullSyncMachine {
 
             try {
                 blockState.addBlock(block);
-            } catch (BlockNodeNotFoundException ignored) {
-                //todo: currently ignored
+            } catch (BlockNodeNotFoundException ex) {
+                log.fine("Executing block with number " + block.getHeader().getBlockNumber() + " which has no parent in block state.");
             }
 
             // Check the block for valid inherents
@@ -233,7 +240,7 @@ public class FullSyncMachine {
             try {
                 blockState.setFinalizedHash(blockHeader.getHash(), BigInteger.ZERO, BigInteger.ZERO);
             } catch (BlockNodeNotFoundException ignored) {
-                //ignored
+                log.fine("Executing block with number " + block.getHeader().getBlockNumber() + " which has no parent in block state.");
             }
 
             boolean blockUpdatedRuntime = Arrays.stream(blockHeader.getDigest())

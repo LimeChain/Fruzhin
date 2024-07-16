@@ -305,7 +305,6 @@ public class Network {
     public BlockResponse makeBlockRequest(BlockRequestDto blockRequestDto) {
         return syncService.getProtocol().remoteBlockRequest(
                 this.host,
-                this.host.getAddressBook(),
                 this.currentSelectedPeer,
                 blockRequestDto
         );
@@ -314,7 +313,6 @@ public class Network {
     public SyncMessage.StateResponse makeStateRequest(String blockHash, ByteString after) {
         return stateService.getProtocol().remoteStateRequest(
                 this.host,
-                this.host.getAddressBook(),
                 this.currentSelectedPeer,
                 blockHash,
                 after
@@ -326,7 +324,6 @@ public class Network {
 
         return this.warpSyncService.getProtocol().warpSyncRequest(
                 this.host,
-                this.host.getAddressBook(),
                 this.currentSelectedPeer,
                 blockHash);
     }
@@ -336,7 +333,6 @@ public class Network {
 
         return this.lightMessagesService.getProtocol().remoteReadRequest(
                 this.host,
-                this.host.getAddressBook(),
                 this.currentSelectedPeer,
                 blockHash,
                 keys);

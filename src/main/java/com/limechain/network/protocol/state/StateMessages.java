@@ -6,7 +6,6 @@ import com.limechain.exception.global.ThreadInterruptedException;
 import com.limechain.network.StrictProtocolBinding;
 import com.limechain.network.protocol.sync.pb.SyncMessage;
 import com.limechain.utils.StringUtils;
-import io.libp2p.core.AddressBook;
 import io.libp2p.core.Host;
 import io.libp2p.core.PeerId;
 import lombok.extern.java.Log;
@@ -22,10 +21,10 @@ public class StateMessages extends StrictProtocolBinding<StateController> {
         super(protocolId, protocol);
     }
 
-    public SyncMessage.StateResponse remoteStateRequest(Host us, AddressBook addrs, PeerId peer,
+    public SyncMessage.StateResponse remoteStateRequest(Host us, PeerId peer,
                                                         String blockHash, ByteString after) {
         try {
-            StateController controller = dialPeer(us, peer, addrs);
+            StateController controller = dialPeer(us, peer, us.getAddressBook());
 
             return controller
                     .sendStateRequest(StringUtils.remove0xPrefix(blockHash), after)

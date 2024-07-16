@@ -66,7 +66,7 @@ public class StateTest {
         assertEquals(expectedConnectedNodes, connectedNodes);
 
         SyncMessage.StateResponse response =
-                stateService.remoteStateRequest(senderNode, senderNode.getAddressBook(), peerId,
+                stateService.remoteStateRequest(senderNode, peerId,
                         "0xc430332fe17cedb79ae58387ad883f369fb1028683680db0b12ba60248769f6c", ByteString.EMPTY
                 );
 

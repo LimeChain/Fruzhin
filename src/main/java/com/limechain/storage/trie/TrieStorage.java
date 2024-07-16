@@ -101,8 +101,7 @@ public class TrieStorage {
 
         return (TrieNodeData) encodedChild.orElse(null);
     }
-
-
+    
     public boolean merkleValueExists(Hash256 lastFinalizedStateRoot) {
         return getTrieNodeFromMerkleValue(lastFinalizedStateRoot.getBytes()) != null;
     }

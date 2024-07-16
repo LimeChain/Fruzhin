@@ -63,7 +63,6 @@ class RuntimeDownloadTest {
             //Block must not be older than 256 than the latest block
             LightClientMessage.Response response = lightMessages.remoteReadRequest(
                     senderNode,
-                    kademliaService.getHost().getAddressBook(),
                     peerId,
                     "0x8aa206d2dc0386ac0c6e1c4033f2445f209d14b9a11861d6eda4787651705231",
                     new String[]{StringUtils.toHex(":code")}

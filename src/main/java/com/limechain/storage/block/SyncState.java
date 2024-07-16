@@ -12,10 +12,12 @@ import com.limechain.storage.KVRepository;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.java.Log;
 
 import java.math.BigInteger;
 
 @Getter
+@Log
 public class SyncState {
 
     private final GenesisBlockHash genesisBlockHashCalculator;
@@ -76,7 +78,7 @@ public class SyncState {
                 this.lastFinalizedBlockNumber = commitMessage.getVote().getBlockNumber();
             }
         } catch (HeaderNotFoundException ignored) {
-            //TODO: Ignored for now
+            log.fine("Received commit message for a block that is not in the block store");
         }
     }
 

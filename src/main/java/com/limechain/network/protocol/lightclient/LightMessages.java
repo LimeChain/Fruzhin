@@ -43,11 +43,11 @@ public class LightMessages extends StrictProtocolBinding<LightMessagesController
         }
     }
 
-    public LightClientMessage.Response remoteReadRequest(Host us, AddressBook addrs, PeerId peer,
+    public LightClientMessage.Response remoteReadRequest(Host us, PeerId peer,
                                                          String blockHash,
                                                          String[] hexKeys) {
         try {
-            LightMessagesController controller = dialPeer(us, peer, addrs);
+            LightMessagesController controller = dialPeer(us, peer, us.getAddressBook());
             LightClientMessage.Response resp = controller.remoteReadRequest(
                             StringUtils.remove0xPrefix(blockHash),
                             hexKeys)
