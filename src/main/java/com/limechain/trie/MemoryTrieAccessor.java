@@ -29,6 +29,12 @@ public abstract sealed class MemoryTrieAccessor extends TrieAccessor
         this.initialTrie = trieStorage.loadTrieStructure(mainTrieRoot);
     }
 
+    MemoryTrieAccessor(TrieStorage trieStorage, byte[] mainTrieRoot, TrieStructure<NodeData> trieStructure) {
+        super(trieStorage, mainTrieRoot);
+
+        this.initialTrie = trieStructure;
+    }
+
     @Override
     public void upsertNode(Nibbles key, byte[] value) {
         NodeData nodeData = new NodeData(value);

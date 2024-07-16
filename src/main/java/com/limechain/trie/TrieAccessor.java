@@ -33,14 +33,6 @@ public abstract sealed class TrieAccessor permits MemoryTrieAccessor, DiskTrieAc
         this.loadedChildTries = new HashMap<>();
     }
 
-    TrieAccessor(TrieStorage trieStorage, byte[] mainTrieRoot, TrieStructure<NodeData> trieStructure) {
-        this.trieStorage = trieStorage;
-        this.mainTrieRoot = mainTrieRoot;
-
-        this.loadedChildTries = new HashMap<>();
-        this.initialTrie = trieStructure;
-    }
-
     /**
      * Updates/Inserts a node in the trie implementation.
      *
