@@ -5,6 +5,7 @@ import com.limechain.storage.DeleteByPrefixResult;
 import com.limechain.storage.trie.TrieStorage;
 import com.limechain.trie.structure.nibble.Nibbles;
 import lombok.Setter;
+import lombok.extern.java.Log;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -15,9 +16,10 @@ import java.util.Optional;
  * {@link MemoryTrieAccessor} - an in-memory trie implementation.<br>
  * {@link DiskTrieAccessor} - an on-disk trie implementation.
  */
+@Log
 public abstract sealed class TrieAccessor permits MemoryTrieAccessor, DiskTrieAccessor {
 
-    private static final String TRANSACTIONS_NOT_SUPPORTED = "Block Trie Accessor does not support transactions.";
+    private static final String TRANSACTIONS_NOT_SUPPORTED = "Trie Accessor does not support transactions.";
 
     protected final TrieStorage trieStorage;
     protected final Map<Nibbles, TrieAccessor> loadedChildTries;
@@ -29,6 +31,14 @@ public abstract sealed class TrieAccessor permits MemoryTrieAccessor, DiskTrieAc
         this.trieStorage = trieStorage;
         this.mainTrieRoot = mainTrieRoot;
         this.loadedChildTries = new HashMap<>();
+    }
+
+    TrieAccessor(TrieStorage trieStorage, byte[] mainTrieRoot, TrieStructure<NodeData> trieStructure) {
+        this.trieStorage = trieStorage;
+        this.mainTrieRoot = mainTrieRoot;
+
+        this.loadedChildTries = new HashMap<>();
+        this.initialTrie = trieStructure;
     }
 
     /**
@@ -92,20 +102,20 @@ public abstract sealed class TrieAccessor permits MemoryTrieAccessor, DiskTrieAc
      * Starts a transaction, that can later be committed or rolled back
      */
     public void startTransaction() {
-        throw new UnsupportedOperationException(TRANSACTIONS_NOT_SUPPORTED);
+        log.fine("Start transaction method is called" + TRANSACTIONS_NOT_SUPPORTED);
     }
 
     /**
      * Rollbacks an active transaction, discarding changes.
      */
     public void rollbackTransaction() {
-        throw new UnsupportedOperationException(TRANSACTIONS_NOT_SUPPORTED);
+        log.fine("Rollback transaction method is called" + TRANSACTIONS_NOT_SUPPORTED);
     }
 
     /**
      * Commits an active transaction, persisting changes.
      */
     public void commitTransaction() {
-        throw new UnsupportedOperationException(TRANSACTIONS_NOT_SUPPORTED);
+        log.fine("Commit transaction method is called" + TRANSACTIONS_NOT_SUPPORTED);
     }
 }

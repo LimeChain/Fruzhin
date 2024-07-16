@@ -105,7 +105,7 @@ class TrieHostFunctionsTest {
 
         try (MockedStatic<TrieStructureFactory> mockedTSF = Mockito.mockStatic(TrieStructureFactory.class)) {
             mockedTSF
-                .when(() -> TrieStructureFactory.buildTrieStructure(any()))
+                .when(() -> TrieStructureFactory.buildTrieStructure(any(), any()))
                 .thenReturn(trieMock);
 
             // Call the actual function

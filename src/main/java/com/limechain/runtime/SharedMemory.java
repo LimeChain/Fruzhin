@@ -1,7 +1,7 @@
 package com.limechain.runtime;
 
-import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import com.limechain.runtime.allocator.Allocator;
+import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import com.limechain.runtime.memory.Memory;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -55,7 +55,7 @@ public class SharedMemory {
     public void writeData(byte[] data, RuntimePointerSize runtimePointerSize) {
         ByteBuffer memoryBuffer = memory.buffer();
         memoryBuffer.position(runtimePointerSize.pointer());
-        memoryBuffer.put(data, 0, runtimePointerSize.size());
+        memoryBuffer.put(data, 0, Math.min(data.length, runtimePointerSize.size()));
     }
 
     /**

@@ -244,7 +244,7 @@ public class TrieHostFunctions implements PartialHostApi {
         public byte[] trieRoot(List<Pair<byte[], byte[]>> entries) {
             Map<ByteString, ByteString> entriesMap = entries.stream().collect(
                     Collectors.toMap(p -> ByteString.copyFrom(p.getValue0()), p -> ByteString.copyFrom(p.getValue1())));
-            return trieRoot(entriesMap);
+            return trieRoot(entriesMap, stateVersion);
         }
 
         public byte[] orderedTrieRoot(List<byte[]> values) {
@@ -256,11 +256,11 @@ public class TrieHostFunctions implements PartialHostApi {
                 entries.put(ByteString.copyFrom(key), ByteString.copyFrom(value));
             }
 
-            return trieRoot(entries);
+            return trieRoot(entries, stateVersion);
         }
 
-        private byte[] trieRoot(Map<ByteString, ByteString> entries) {
-            var trie = TrieStructureFactory.buildTrieStructure(entries);
+        private byte[] trieRoot(Map<ByteString, ByteString> entries, StateVersion stateVersion) {
+            var trie = TrieStructureFactory.buildTrieStructure(entries, stateVersion);
             TrieStructureFactory.calculateMerkleValues(trie, hashFunction.getFunction());
             return trie.getRootNode().map(NodeHandle::getUserData).map(NodeData::getMerkleValue)
                     .orElse(hashFunction.getEmptyTrieHash());

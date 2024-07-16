@@ -2,7 +2,7 @@ plugins {
     id("java")
     id("io.freefair.lombok") version "8.6"
     id("org.springframework.boot") version "3.2.7"
-    id("io.spring.dependency-management") version "1.1.5"
+    id("io.spring.dependency-management") version "1.1.6"
     id("application")
 }
 
@@ -22,13 +22,13 @@ repositories {
 
 dependencies {
     implementation("net.openhft:zero-allocation-hashing:0.26ea0")
-    implementation("org.rocksdb:rocksdbjni:9.2.1")
-    compileOnly("org.projectlombok:lombok:1.18.32")
-    implementation("org.projectlombok:lombok:1.18.32")
+    implementation("org.rocksdb:rocksdbjni:9.4.0")
+    compileOnly("org.projectlombok:lombok:1.18.34")
+    implementation("org.projectlombok:lombok:1.18.34")
     implementation("org.web3j:crypto:4.12.0")
     implementation("com.dylibso.chicory:wasm:0.0.10")
 
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.2")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.3")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.3")
     testImplementation("org.mockito:mockito-core:5.12.0")
 
@@ -44,7 +44,7 @@ dependencies {
     // Websockets
     implementation("org.springframework.boot:spring-boot-starter-websocket")
 
-    implementation("org.java-websocket:Java-WebSocket:1.5.6")
+    implementation("org.java-websocket:Java-WebSocket:1.5.7")
     implementation("org.javatuples:javatuples:1.2")
 
     implementation("com.github.luben:zstd-jni:1.5.6-3")

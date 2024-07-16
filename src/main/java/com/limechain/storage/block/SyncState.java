@@ -3,6 +3,7 @@ package com.limechain.storage.block;
 import com.limechain.chain.lightsyncstate.Authority;
 import com.limechain.chain.lightsyncstate.LightSyncState;
 import com.limechain.constants.GenesisBlockHash;
+import com.limechain.exception.storage.HeaderNotFoundException;
 import com.limechain.network.protocol.grandpa.messages.commit.CommitMessage;
 import com.limechain.network.protocol.warp.dto.Block;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
@@ -11,10 +12,12 @@ import com.limechain.storage.KVRepository;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.java.Log;
 
 import java.math.BigInteger;
 
 @Getter
+@Log
 public class SyncState {
 
     private final GenesisBlockHash genesisBlockHashCalculator;
@@ -46,7 +49,8 @@ public class SyncState {
         this.authoritySet = (Authority[]) repository.find(DBConstants.AUTHORITY_SET).orElse(new Authority[0]);
         this.latestRound = (BigInteger) repository.find(DBConstants.LATEST_ROUND).orElse(BigInteger.ONE);
         byte[] stateRootBytes = (byte[]) repository.find(DBConstants.STATE_ROOT).orElse(null);
-        this.stateRoot = stateRootBytes != null ? new Hash256(stateRootBytes) : null;
+        this.stateRoot = stateRootBytes != null ? new Hash256(stateRootBytes) : genesisBlockHashCalculator
+                .getGenesisBlockHeader().getStateRoot();
         this.setId = (BigInteger) repository.find(DBConstants.SET_ID).orElse(BigInteger.ZERO);
     }
 
@@ -66,11 +70,15 @@ public class SyncState {
     }
 
     public void finalizedCommitMessage(CommitMessage commitMessage) {
-        this.lastFinalizedBlockHash = commitMessage.getVote().getBlockHash();
-        this.lastFinalizedBlockNumber = commitMessage.getVote().getBlockNumber();
-        Block blockByHash = BlockState.getInstance().getBlockByHash(commitMessage.getVote().getBlockHash());
-        if (blockByHash != null) {
-            this.stateRoot = blockByHash.getHeader().getStateRoot();
+        try {
+            Block blockByHash = BlockState.getInstance().getBlockByHash(commitMessage.getVote().getBlockHash());
+            if (blockByHash != null) {
+                this.stateRoot = blockByHash.getHeader().getStateRoot();
+                this.lastFinalizedBlockHash = commitMessage.getVote().getBlockHash();
+                this.lastFinalizedBlockNumber = commitMessage.getVote().getBlockNumber();
+            }
+        } catch (HeaderNotFoundException ignored) {
+            log.fine("Received commit message for a block that is not in the block store");
         }
     }
 

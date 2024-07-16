@@ -4,7 +4,6 @@ import com.limechain.exception.global.ExecutionFailedException;
 import com.limechain.exception.global.ThreadInterruptedException;
 import com.limechain.network.StrictProtocolBinding;
 import com.limechain.network.protocol.sync.pb.SyncMessage;
-import io.libp2p.core.AddressBook;
 import io.libp2p.core.Host;
 import io.libp2p.core.PeerId;
 import lombok.extern.java.Log;
@@ -20,10 +19,10 @@ public class SyncMessages extends StrictProtocolBinding<SyncController> {
         super(protocolId, protocol);
     }
 
-    public SyncMessage.BlockResponse remoteBlockRequest(Host us, AddressBook addrs, PeerId peer,
+    public SyncMessage.BlockResponse remoteBlockRequest(Host us, PeerId peer,
                                                         BlockRequestDto blockRequest) {
         try {
-            SyncController controller = dialPeer(us, peer, addrs);
+            SyncController controller = dialPeer(us, peer, us.getAddressBook());
             SyncMessage.BlockResponse response = controller
                     .sendBlockRequest(blockRequest.getFields(), blockRequest.getHash(), blockRequest.getNumber(),
                             blockRequest.getDirection(), blockRequest.getMaxBlocks())
