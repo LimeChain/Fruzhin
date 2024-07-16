@@ -65,7 +65,7 @@ public class SyncTest {
         int expectedConnectedNodes = 1;
         assertEquals(expectedConnectedNodes, connectedNodes);
 
-        var response = syncService.remoteBlockRequest(senderNode, senderNode.getAddressBook(), peerId,
+        var response = syncService.remoteBlockRequest(senderNode, peerId,
                 new BlockRequestDto(17, "cbd3e72e769652f804568a48889382edff4742074a7201309acfd1069e5de90a", null,
                         SyncMessage.Direction.Ascending, 1));
         ByteString expected = ByteString.copyFrom(
@@ -85,7 +85,7 @@ public class SyncTest {
         int connectedNodes = kademliaService.connectBootNodes(receivers);
         int expectedConnectedNodes = 1;
         assertEquals(expectedConnectedNodes, connectedNodes);
-        var response = syncService.remoteBlockRequest(senderNode, senderNode.getAddressBook(), peerId,
+        var response = syncService.remoteBlockRequest(senderNode, peerId,
                 new BlockRequestDto(19, null,
                         15_030_299, SyncMessage.Direction.Ascending, 1));
         ByteString expected = ByteString.copyFrom(

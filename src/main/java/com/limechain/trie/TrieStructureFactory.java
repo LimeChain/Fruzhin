@@ -4,6 +4,8 @@ import com.google.common.collect.Lists;
 import com.google.common.primitives.Bytes;
 import com.google.protobuf.ByteString;
 import com.limechain.exception.trie.TrieBuildException;
+import com.limechain.runtime.Runtime;
+import com.limechain.runtime.RuntimeFactory;
 import com.limechain.runtime.version.StateVersion;
 import com.limechain.trie.dto.node.DecodedNode;
 import com.limechain.trie.dto.node.StorageValue;
@@ -13,6 +15,7 @@ import com.limechain.trie.structure.TrieStructure;
 import com.limechain.trie.structure.database.NodeData;
 import com.limechain.trie.structure.nibble.Nibbles;
 import com.limechain.utils.HashUtils;
+import com.limechain.utils.StringUtils;
 import lombok.experimental.UtilityClass;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,24 +34,39 @@ public class TrieStructureFactory {
      * @return - a TrieStructure with calculated merkle values
      */
     public TrieStructure<NodeData> buildFromKVPs(Map<ByteString, ByteString> entries) {
-        TrieStructure<NodeData> trie = buildTrieStructure(entries);
+        StateVersion stateVersion = getRuntimeStateVersion(entries);
+
+        TrieStructure<NodeData> trie = buildTrieStructure(entries, stateVersion);
         calculateMerkleValues(trie, HashUtils::hashWithBlake2b);
         return trie;
+    }
+
+    /**
+     * Retrieves the state version from the runtime code in the entries.
+     *
+     * @param entries the key-value pairs containing the runtime code
+     * @return the state version
+     */
+    private static StateVersion getRuntimeStateVersion(Map<ByteString, ByteString> entries) {
+        ByteString runtimeCode = entries.get(ByteString.fromHex(StringUtils.toHex(":code")));
+        Runtime runtime = RuntimeFactory.buildRuntime(runtimeCode.toByteArray(), RuntimeFactory.Config.EMPTY);
+        return runtime.getVersion().getStateVersion();
     }
 
     /**
      * Builds a TrieStructure from the provided key-value pairs.
      *
      * @param mainStorage The key-value pairs to be inserted into the trie.
+     * @param version     The state version used for constructing the trie nodes.
      * @return A TrieStructure containing the inserted key-value pairs.
      */
-    public TrieStructure<NodeData> buildTrieStructure(Map<ByteString, ByteString> mainStorage) {
+    public TrieStructure<NodeData> buildTrieStructure(Map<ByteString, ByteString> mainStorage, StateVersion version) {
         TrieStructure<NodeData> trie = new TrieStructure<>();
 
         for (var entry : mainStorage.entrySet()) {
             Nibbles key = Nibbles.fromBytes(entry.getKey().toByteArray());
             byte[] value = entry.getValue().toByteArray();
-            trie.insertNode(key, new NodeData(value), StateVersion.V0);
+            trie.insertNode(key, new NodeData(value), version);
         }
 
         return trie;

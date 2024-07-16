@@ -101,6 +101,10 @@ public class TrieStorage {
 
         return (TrieNodeData) encodedChild.orElse(null);
     }
+    
+    public boolean merkleValueExists(Hash256 lastFinalizedStateRoot) {
+        return getTrieNodeFromMerkleValue(lastFinalizedStateRoot.getBytes()) != null;
+    }
 
     /**
      * Finds the next key in the trie that is lexicographically greater than a given prefix.
