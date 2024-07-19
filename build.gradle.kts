@@ -80,3 +80,7 @@ tasks.getByName<Test>("test") {
     useJUnitPlatform()
     jvmArgs("-Dnet.bytebuddy.experimental=true")
 }
+
+tasks.getByName<Jar>("jar") {
+    enabled = false //To remove the build/libs/Fruzhin-ver-plain.jar
+}
