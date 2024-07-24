@@ -1,9 +1,0 @@
-[relaychain]
-chain = "westend-local"
-default_command = "java -jar build/libs/fruzhin-0.1.0.jar"
-default_args = ["-n westend -dbc --node-mode light"]
-chain_spec_path = "genesis/westend-raw.json"
-
-[[relaychain.nodes]]
-name = "alice"
-validator = false

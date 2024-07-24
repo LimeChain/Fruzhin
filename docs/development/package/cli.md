@@ -19,7 +19,6 @@ The `Cli` class serves as the core component for handling command-line inputs. I
 - **Node Key**: Enables the setting of a node key for network communication.
 - **RPC Configuration**: Users can configure RPC settings, including public RPC access and the methods exposed via RPC.
 - **Synchronization Mode**: Allows specifying the synchronization mode (e.g., full sync, warp sync) for the node.
-- **Prometheus Port**: Configures the port for Prometheus metrics export.
 
 ### CliArguments.java
 

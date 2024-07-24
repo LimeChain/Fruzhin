@@ -19,7 +19,6 @@
     - **[constants/](package/constants.md)**: Holds constant values utilized throughout the project.
     - **[exception/](package/exception.md)**: Custom exception classes for blockchain operations and validations.
     - **[network/](package/network.md)**: Manages network connections, protocols, and data transfers.
-    - **prometheus/**: Prometheus integration for monitoring.
     - **[rpc/](package/rpc.md)**: Classes for Remote Procedure Call (RPC) communications between nodes.
     - **[runtime/](package/runtime.md)**: Manages the blockchain runtime environment and interactions with WebAssembly (WASM).
     - **[storage/](package/storage.md)**: Data storage and database interaction functionality.

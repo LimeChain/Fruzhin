@@ -1,6 +1,0 @@
-Description: Block execution
-Network: ./0003-block-execution.toml
-Creds: config
-
-# metrics
-alice: log line matches "Block number to be executed is 120" within 30 seconds

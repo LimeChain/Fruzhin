@@ -11,7 +11,7 @@ The `HostConfig` class serves as a central configuration hub, aggregating settin
 - **Database Path Configuration**: Specifies the file path for the node's database, facilitating data persistence.
 - **Blockchain Network Selection**: Determines the blockchain network (e.g., Polkadot, Kusama, Westend, Local) the node will connect to and operate within.
 - **Node Role Determination**: Defines the role of the node within the network, such as a full node or a light client, influencing its operational scope.
-- **RPC and Prometheus Configuration**: Manages RPC node address settings and configures the port for Prometheus metrics exporting, enhancing node monitoring and interaction capabilities.
+- **RPC Configuration**: Manages RPC node address settings.
 - **Dynamic Genesis Path Resolution**: Dynamically resolves the path to the genesis file based on the configured blockchain network, ensuring correct initialization parameters.
 
 ### Usage:

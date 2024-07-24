@@ -32,7 +32,6 @@ public class HostConfig {
     private final Chain chain;
     private final NodeRole nodeRole;
     private final String rpcNodeAddress;
-    private final int prometheusPort;
 
     /**
      * Recreate the DB
@@ -72,8 +71,6 @@ public class HostConfig {
             case KUSAMA -> RpcConstants.KUSAMA_WS_RPC;
             case WESTEND -> RpcConstants.WESTEND_WS_RPC;
         };
-
-        this.prometheusPort = cliArguments.prometheusPort();
 
         log.log(Level.INFO, String.format("✅️Loaded app config for chain %s%n", chain));
     }
