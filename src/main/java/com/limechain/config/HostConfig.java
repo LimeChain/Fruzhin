@@ -4,7 +4,6 @@ import com.limechain.chain.Chain;
 import com.limechain.cli.CliArguments;
 import com.limechain.constants.RpcConstants;
 import com.limechain.exception.misc.InvalidChainException;
-import com.limechain.exception.misc.InvalidNodeRoleException;
 import com.limechain.network.protocol.blockannounce.NodeRole;
 import lombok.Getter;
 import lombok.extern.java.Log;
@@ -60,11 +59,7 @@ public class HostConfig {
                 .ofNullable(network.isEmpty() ? WESTEND : fromString(network))
                 .orElseThrow(() -> new InvalidChainException(String.format("\"%s\" is not a valid chain.", network)));
 
-        this.nodeRole = Optional
-                .ofNullable(NodeRole.fromString(cliArguments.nodeRole()))
-                .orElseThrow(() ->
-                        new InvalidNodeRoleException(
-                                String.format("\"%s\" is not a valid node role.", cliArguments.nodeRole())));
+        this.nodeRole = NodeRole.LIGHT;
 
         this.rpcNodeAddress = switch (chain) {
             case POLKADOT, LOCAL -> RpcConstants.POLKADOT_WS_RPC;

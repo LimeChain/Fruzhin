@@ -1,6 +1,5 @@
 package com.limechain;
 
-import com.limechain.client.FullNode;
 import com.limechain.client.HostNode;
 import com.limechain.client.LightClient;
 import com.limechain.config.HostConfig;
@@ -28,11 +27,9 @@ public class Main {
         HostNode client;
 
         switch (nodeRole) {
-            case FULL -> client = new FullNode();
             case LIGHT -> client = new LightClient();
             case NONE -> {
                 // This shouldn't happen.
-                // TODO: don't use this enum for the CLI NodeRole option
                 return;
             }
             default -> {

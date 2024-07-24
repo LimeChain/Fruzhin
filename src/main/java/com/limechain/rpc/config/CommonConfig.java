@@ -5,14 +5,10 @@ import com.limechain.cli.Cli;
 import com.limechain.cli.CliArguments;
 import com.limechain.config.HostConfig;
 import com.limechain.config.SystemInfo;
-import com.limechain.constants.GenesisBlockHash;
 import com.limechain.network.Network;
-import com.limechain.runtime.builder.RuntimeBuilder;
 import com.limechain.storage.DBInitializer;
 import com.limechain.storage.KVRepository;
 import com.limechain.storage.block.SyncState;
-import com.limechain.storage.trie.TrieStorage;
-import com.limechain.sync.fullsync.FullSyncMachine;
 import com.limechain.sync.warpsync.WarpSyncMachine;
 import com.limechain.sync.warpsync.WarpSyncState;
 import org.springframework.boot.ApplicationArguments;
@@ -44,18 +40,13 @@ public class CommonConfig {
     }
 
     @Bean
-    public TrieStorage trieStorage(KVRepository<String, Object> repository) {
-        return new TrieStorage(repository);
-    }
-
-    @Bean
     public ChainService chainService(HostConfig hostConfig, KVRepository<String, Object> repository) {
         return new ChainService(hostConfig, repository);
     }
 
     @Bean
-    public SyncState syncState(GenesisBlockHash genesisBlockHash, KVRepository<String, Object> repository) {
-        return new SyncState(genesisBlockHash, repository);
+    public SyncState syncState(KVRepository<String, Object> repository) {
+        return new SyncState(repository);
     }
 
     @Bean
@@ -65,30 +56,20 @@ public class CommonConfig {
 
     @Bean
     public Network network(ChainService chainService, HostConfig hostConfig, KVRepository<String, Object> repository,
-                           CliArguments cliArgs, GenesisBlockHash genesisBlockHash) {
-        return new Network(chainService, hostConfig, repository, cliArgs, genesisBlockHash);
+                           CliArguments cliArgs) {
+        return new Network(chainService, hostConfig, repository, cliArgs);
     }
 
     @Bean
     public WarpSyncState warpSyncState(Network network, SyncState syncState,
-                                       KVRepository<String, Object> repository, RuntimeBuilder runtimeBuilder) {
-        return new WarpSyncState(syncState, network, repository, runtimeBuilder);
+                                       KVRepository<String, Object> repository) {
+        return new WarpSyncState(syncState, network, repository);
     }
 
     @Bean
     public WarpSyncMachine warpSyncMachine(Network network, ChainService chainService, SyncState syncState,
                                            WarpSyncState warpSyncState) {
         return new WarpSyncMachine(network, chainService, syncState, warpSyncState);
-    }
-
-    @Bean
-    public FullSyncMachine fullSyncMachine(Network network, SyncState syncState) {
-        return new FullSyncMachine(network, syncState);
-    }
-
-    @Bean
-    public GenesisBlockHash genesisBlockHash(ChainService chainService) {
-        return new GenesisBlockHash(chainService);
     }
 
 }

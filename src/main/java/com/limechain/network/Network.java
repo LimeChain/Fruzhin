@@ -5,7 +5,6 @@ import com.limechain.chain.Chain;
 import com.limechain.chain.ChainService;
 import com.limechain.cli.CliArguments;
 import com.limechain.config.HostConfig;
-import com.limechain.constants.GenesisBlockHash;
 import com.limechain.network.kad.KademliaService;
 import com.limechain.network.protocol.blockannounce.BlockAnnounceService;
 import com.limechain.network.protocol.blockannounce.NodeRole;
@@ -96,15 +95,15 @@ public class Network {
      * @param genesisBlockHash genesis block hash
      */
     public Network(ChainService chainService, HostConfig hostConfig, KVRepository<String, Object> repository,
-                   CliArguments cliArgs, GenesisBlockHash genesisBlockHash) {
+                   CliArguments cliArgs) {
         this.bootNodes = chainService.getChainSpec().getBootNodes();
         this.chain = hostConfig.getChain();
         this.nodeRole = hostConfig.getNodeRole();
         this.connectionManager = ConnectionManager.getInstance();
-        this.initializeProtocols(chainService, genesisBlockHash, hostConfig, repository, cliArgs);
+        this.initializeProtocols(chainService, hostConfig, repository, cliArgs);
     }
 
-    private void initializeProtocols(ChainService chainService, GenesisBlockHash genesisBlockHash,
+    private void initializeProtocols(ChainService chainService,
                                      HostConfig hostConfig,
                                      KVRepository<String, Object> repository, CliArguments cliArgs) {
         boolean isLocalEnabled = hostConfig.getChain() == Chain.LOCAL;
@@ -120,17 +119,14 @@ public class Network {
 
         String pingProtocol = ProtocolUtils.PING_PROTOCOL;
         String chainId = chainService.getChainSpec().getProtocolId();
-        String protocolId = cliArgs.noLegacyProtocols()
-                ? StringUtils.remove0xPrefix(genesisBlockHash.getGenesisHash().toString())
-                : chainId;
         String kadProtocolId = ProtocolUtils.getKadProtocol(chainId);
-        String warpProtocolId = ProtocolUtils.getWarpSyncProtocol(protocolId);
-        String lightProtocolId = ProtocolUtils.getLightMessageProtocol(protocolId);
-        String syncProtocolId = ProtocolUtils.getSyncProtocol(protocolId);
-        String stateProtocolId = ProtocolUtils.getStateProtocol(protocolId);
-        String blockAnnounceProtocolId = ProtocolUtils.getBlockAnnounceProtocol(protocolId);
-        String grandpaProtocolId = ProtocolUtils.getGrandpaProtocol(protocolId);
-        String transactionsProtocolId = ProtocolUtils.getTransactionsProtocol(protocolId);
+        String warpProtocolId = ProtocolUtils.getWarpSyncProtocol(chainId);
+        String lightProtocolId = ProtocolUtils.getLightMessageProtocol(chainId);
+        String syncProtocolId = ProtocolUtils.getSyncProtocol(chainId);
+        String stateProtocolId = ProtocolUtils.getStateProtocol(chainId);
+        String blockAnnounceProtocolId = ProtocolUtils.getBlockAnnounceProtocol(chainId);
+        String grandpaProtocolId = ProtocolUtils.getGrandpaProtocol(chainId);
+        String transactionsProtocolId = ProtocolUtils.getTransactionsProtocol(chainId);
 
         kademliaService = new KademliaService(kadProtocolId, hostId, isLocalEnabled, clientMode);
         lightMessagesService = new LightMessagesService(lightProtocolId);

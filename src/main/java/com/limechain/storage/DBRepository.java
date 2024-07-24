@@ -1,7 +1,6 @@
 package com.limechain.storage;
 
 import com.limechain.exception.storage.DBException;
-import com.limechain.trie.structure.nibble.Nibbles;
 import com.limechain.utils.ByteArrayUtils;
 import lombok.extern.java.Log;
 import org.apache.commons.io.FileUtils;
@@ -103,7 +102,6 @@ public class DBRepository implements KVRepository<String, Object> {
                     e.getMessage())
             );
         }
-        log.fine(String.format("finding key '%s' returns '%s'", Nibbles.fromBytes(key.getBytes()), value));
         return Optional.ofNullable(value);
     }
 

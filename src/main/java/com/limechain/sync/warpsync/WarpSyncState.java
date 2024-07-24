@@ -1,13 +1,10 @@
 package com.limechain.sync.warpsync;
 
 import com.limechain.chain.lightsyncstate.Authority;
-import com.limechain.exception.global.RuntimeCodeException;
-import com.limechain.exception.trie.TrieDecoderException;
 import com.limechain.network.Network;
 import com.limechain.network.protocol.blockannounce.messages.BlockAnnounceMessage;
 import com.limechain.network.protocol.grandpa.messages.commit.CommitMessage;
 import com.limechain.network.protocol.grandpa.messages.neighbour.NeighbourMessage;
-import com.limechain.network.protocol.lightclient.pb.LightClientMessage;
 import com.limechain.network.protocol.sync.pb.SyncMessage.BlockData;
 import com.limechain.network.protocol.sync.pb.SyncMessage.BlockResponse;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
@@ -17,9 +14,6 @@ import com.limechain.network.protocol.warp.dto.HeaderDigest;
 import com.limechain.network.protocol.warp.dto.Justification;
 import com.limechain.network.protocol.warp.scale.reader.BlockHeaderReader;
 import com.limechain.network.protocol.warp.scale.reader.JustificationReader;
-import com.limechain.runtime.Runtime;
-import com.limechain.runtime.builder.RuntimeBuilder;
-import com.limechain.storage.DBConstants;
 import com.limechain.storage.KVRepository;
 import com.limechain.storage.block.SyncState;
 import com.limechain.sync.JustificationVerifier;
@@ -27,12 +21,7 @@ import com.limechain.sync.warpsync.dto.AuthoritySetChange;
 import com.limechain.sync.warpsync.dto.GrandpaDigestMessageType;
 import com.limechain.sync.warpsync.scale.ForcedChangeReader;
 import com.limechain.sync.warpsync.scale.ScheduledChangeReader;
-import com.limechain.trie.decoded.Trie;
-import com.limechain.trie.decoded.TrieVerifier;
-import com.limechain.utils.LittleEndianUtils;
-import com.limechain.utils.StringUtils;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
-import io.emeraldpay.polkaj.types.Hash256;
 import io.libp2p.core.PeerId;
 import lombok.Getter;
 import lombok.Setter;
@@ -58,39 +47,29 @@ public class WarpSyncState {
     private final Network network;
     private final KVRepository<String, Object> db;
 
-    public static final String CODE_KEY = StringUtils.toHex(":code");
-
     @Getter
     private boolean warpSyncFragmentsFinished;
     @Getter
     private boolean warpSyncFinished;
 
-    @Getter
-    private Runtime runtime;
-    @Getter
-    private byte[] runtimeCode;
-
-    protected final RuntimeBuilder runtimeBuilder;
     private final Set<BigInteger> scheduledRuntimeUpdateBlocks;
     private final PriorityQueue<Pair<BigInteger, Authority[]>> scheduledAuthorityChanges;
 
 
-    public WarpSyncState(SyncState syncState, Network network, KVRepository<String, Object> db, RuntimeBuilder runtimeBuilder) {
+    public WarpSyncState(SyncState syncState, Network network, KVRepository<String, Object> db) {
         this(syncState,
                 network,
                 db,
-                runtimeBuilder,
                 new HashSet<>(),
                 new PriorityQueue<>(Comparator.comparing(Pair::getValue0)));
     }
 
     public WarpSyncState(SyncState syncState, Network network, KVRepository<String, Object> db,
-                         RuntimeBuilder runtimeBuilder, Set<BigInteger> scheduledRuntimeUpdateBlocks,
+                         Set<BigInteger> scheduledRuntimeUpdateBlocks,
                          PriorityQueue<Pair<BigInteger, Authority[]>> scheduledAuthorityChanges) {
         this.syncState = syncState;
         this.network = network;
         this.db = db;
-        this.runtimeBuilder = runtimeBuilder;
         this.scheduledRuntimeUpdateBlocks = scheduledRuntimeUpdateBlocks;
         this.scheduledAuthorityChanges = scheduledAuthorityChanges;
     }
@@ -150,102 +129,6 @@ public class WarpSyncState {
         syncState.finalizedCommitMessage(commitMessage);
 
         log.log(Level.INFO, "Reached block #" + lastFinalizedBlockNumber);
-        if (warpSyncFinished && scheduledRuntimeUpdateBlocks.contains(lastFinalizedBlockNumber)) {
-            new Thread(this::updateRuntime).start();
-        }
-    }
-
-    private void updateRuntime() {
-        updateRuntimeCode();
-        buildRuntime();
-        BigInteger lastFinalizedBlockNumber = syncState.getLastFinalizedBlockNumber();
-        scheduledRuntimeUpdateBlocks.remove(lastFinalizedBlockNumber);
-    }
-
-    private static final byte[] CODE_KEY_BYTES =
-            LittleEndianUtils.convertBytes(StringUtils.hexToBytes(StringUtils.toHex(":code")));
-
-    /**
-     * Builds and returns the runtime code based on decoded proofs and state root hash.
-     *
-     * @param decodedProofs The decoded trie proofs.
-     * @param stateRoot     The state root hash.
-     * @return The runtime code.
-     * @throws RuntimeCodeException if an error occurs during the construction of the trie or retrieval of the code.
-     */
-    public byte[] buildRuntimeCode(byte[][] decodedProofs, Hash256 stateRoot) {
-        try {
-            Trie trie = TrieVerifier.buildTrie(decodedProofs, stateRoot.getBytes());
-            var code = trie.get(CODE_KEY_BYTES);
-            if (code == null) {
-                throw new RuntimeCodeException("Couldn't retrieve runtime code from trie");
-            }
-            //TODO Heap pages should be fetched from out storage
-            log.log(Level.INFO, "Runtime and heap pages downloaded");
-            return code;
-
-        } catch (TrieDecoderException e) {
-            throw new RuntimeCodeException("Couldn't build trie from proofs list: " + e.getMessage());
-        }
-    }
-
-    /**
-     * Update the runtime code and heap pages, by requesting the code field of the last finalized block, using the
-     * Light Messages protocol.
-     */
-    public void updateRuntimeCode() {
-        Hash256 lastFinalizedBlockHash = syncState.getLastFinalizedBlockHash();
-        Hash256 stateRoot = syncState.getStateRoot();
-
-        LightClientMessage.Response response = network.makeRemoteReadRequest(
-                lastFinalizedBlockHash.toString(),
-                new String[]{CODE_KEY}
-        );
-
-        byte[] proof = response.getRemoteReadResponse().getProof().toByteArray();
-        byte[][] decodedProofs = decodeProof(proof);
-
-        this.runtimeCode = buildRuntimeCode(decodedProofs, stateRoot);
-
-        saveRuntimeCode(runtimeCode);
-    }
-
-    private byte[][] decodeProof(byte[] proof) {
-        ScaleCodecReader reader = new ScaleCodecReader(proof);
-        int size = reader.readCompactInt();
-        byte[][] decodedProofs = new byte[size][];
-
-        for (int i = 0; i < size; ++i) {
-            decodedProofs[i] = reader.readByteArray();
-        }
-        return decodedProofs;
-    }
-
-    private void saveRuntimeCode(byte[] runtimeCode) {
-        db.save(DBConstants.RUNTIME_CODE, runtimeCode);
-    }
-
-    /**
-     * Build the runtime from the available runtime code.
-     */
-    public void buildRuntime() {
-        try {
-            runtime = runtimeBuilder.buildRuntime(runtimeCode);
-        } catch (UnsatisfiedLinkError e) {
-            log.log(Level.SEVERE, "Error loading wasm module");
-            log.log(Level.SEVERE, e.getMessage(), e.getStackTrace());
-        } catch (Exception e) {
-            log.log(Level.SEVERE, "Error building runtime");
-            log.log(Level.SEVERE, e.getMessage(), e.getStackTrace());
-        }
-    }
-
-    /**
-     * Load a saved runtime from database
-     */
-    public void loadSavedRuntimeCode() {
-        this.runtimeCode = (byte[]) db.find(DBConstants.RUNTIME_CODE)
-                .orElseThrow(() -> new RuntimeCodeException("No available runtime code"));
     }
 
     /**

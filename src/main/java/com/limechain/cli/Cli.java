@@ -2,9 +2,7 @@ package com.limechain.cli;
 
 import com.limechain.chain.Chain;
 import com.limechain.exception.misc.CliArgsParseException;
-import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.storage.DBInitializer;
-import com.limechain.sync.SyncMode;
 import lombok.Getter;
 import lombok.extern.java.Log;
 import org.apache.commons.cli.CommandLine;
@@ -14,7 +12,6 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -28,9 +25,6 @@ public class Cli {
     public static final String DB_PATH = "db-path";
     public static final String NODE_KEY = "node-key";
     private static final String DB_RECREATE = "db-recreate";
-    private static final String NODE_MODE = "node-mode";
-    private static final String NO_LEGACY_PROTOCOLS = "no-legacy-protocols";
-    private static final String SYNC_MODE = "sync-mode";
     private static final String CHAIN = "chain";
     private static final String NAME = "name";
     private static final String CORS = "rpc-cors";
@@ -51,24 +45,6 @@ public class Cli {
     }
 
     /**
-     * Parses the sync mode from command line arguments.
-     * <p>
-     * Defaults to "warp" if not specified. Throws an exception for invalid values.
-     *
-     * @param cmd Command line arguments.
-     * @return The selected sync mode.
-     * @throws CliArgsParseException for invalid sync mode values.
-     */
-    @NotNull
-    private static SyncMode parseSyncMode(CommandLine cmd) {
-        try {
-            return SyncMode.valueOf(cmd.getOptionValue(SYNC_MODE, "warp").toUpperCase());
-        } catch (IllegalArgumentException e) {
-            throw new CliArgsParseException("Invalid sync mode provided, valid values - WARP or FULL", e);
-        }
-    }
-
-    /**
      * Parses node launch arguments.
      *
      * @param args launch arguments coming from the console
@@ -86,11 +62,8 @@ public class Cli {
             String nodeKey = cmd.getOptionValue(NODE_KEY);
             // TODO: separation of enums; this NodeRole enum is used for blockannounce
             //       what does running the node in NodeMode NONE mean?
-            String nodeMode = cmd.getOptionValue(NODE_MODE, NodeRole.FULL.toString());
-            boolean noLgacyProtocols = cmd.hasOption(NO_LEGACY_PROTOCOLS);
-            SyncMode syncMode = parseSyncMode(cmd);
 
-            return new CliArguments(network, dbPath, dbRecreate, nodeKey, nodeMode, noLgacyProtocols, syncMode);
+            return new CliArguments(network, dbPath, dbRecreate, nodeKey);
         } catch (ParseException e) {
             formatter.printHelp("Specify the network name - " + String.join(", ", validChains), options);
             throw new CliArgsParseException("Failed to parse cli arguments", e);
@@ -108,12 +81,6 @@ public class Cli {
         Option dbPathOption = new Option(null, DB_PATH, true, "\nRocksDB path");
         Option dbClean = new Option("dbc", DB_RECREATE, false, "\nClean the DB");
         Option nodeKey = new Option(null, NODE_KEY, true, "\nHEX for secret Ed25519 key");
-        Option nodeMode = new Option("mode", NODE_MODE, true, "\nNode mode (light/full). " +
-                "Full by default.");
-        Option noLegacyProtocols = new Option(null, NO_LEGACY_PROTOCOLS, false,
-                "\nDoesn't use legacy protocols if set");
-        Option syncMode = new Option(null, SYNC_MODE, true,
-                "\nSync mode (warp/full) - warp by default");
 
         Option chain = new Option(null, CHAIN, true, "");
         Option name = new Option(null, NAME, true, "");
@@ -128,9 +95,6 @@ public class Cli {
         dbPathOption.setRequired(false);
         dbClean.setRequired(false);
         nodeKey.setRequired(false);
-        nodeMode.setRequired(false);
-        noLegacyProtocols.setRequired(false);
-        syncMode.setRequired(false);
 
         chain.setRequired(false);
         name.setRequired(false);
@@ -145,9 +109,6 @@ public class Cli {
         result.addOption(dbPathOption);
         result.addOption(dbClean);
         result.addOption(nodeKey);
-        result.addOption(nodeMode);
-        result.addOption(noLegacyProtocols);
-        result.addOption(syncMode);
 
         result.addOption(chain);
         result.addOption(name);

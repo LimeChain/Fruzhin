@@ -1,10 +1,8 @@
 package com.limechain.sync.warpsync.action;
 
 import com.limechain.rpc.server.AppBean;
-import com.limechain.runtime.version.ApiVersion;
 import com.limechain.sync.warpsync.WarpSyncMachine;
 import com.limechain.sync.warpsync.WarpSyncState;
-import com.limechain.utils.HashUtils;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.extern.java.Log;
@@ -31,17 +29,6 @@ public class ChainInformationBuildAction implements WarpSyncAction {
 
     @Override
     public void handle(WarpSyncMachine sync) {
-        byte[][] hashedApiVersions = new byte[][]{
-                HashUtils.hashWithBlake2bToLength("AuraApi".getBytes(), ApiVersion.NAME_HASH_LENGTH),
-                HashUtils.hashWithBlake2bToLength("BabeApi".getBytes(), ApiVersion.NAME_HASH_LENGTH),
-                HashUtils.hashWithBlake2bToLength("GrandpaApi".getBytes(), ApiVersion.NAME_HASH_LENGTH)
-        };
-        sync.getChainInformation().setRuntimeAuraVersion(
-                warpSyncState.getRuntime().getVersion().getApis().getApiVersion(hashedApiVersions[0]));
-        sync.getChainInformation().setRuntimeBabeVersion(
-                warpSyncState.getRuntime().getVersion().getApis().getApiVersion(hashedApiVersions[1]));
-        sync.getChainInformation().setRuntimeGrandpaVersion(
-                warpSyncState.getRuntime().getVersion().getApis().getApiVersion(hashedApiVersions[2]));
         log.log(Level.INFO, "Aura Api version: " + sync.getChainInformation().getRuntimeAuraVersion()
                             + " Babe api version: " + sync.getChainInformation().getRuntimeBabeVersion() +
                             " Grandpa Api Version: " + sync.getChainInformation().getRuntimeGrandpaVersion());

@@ -18,12 +18,9 @@ repositories {
 }
 
 dependencies {
-    implementation("net.openhft:zero-allocation-hashing:0.26ea0")
     implementation("org.rocksdb:rocksdbjni:9.4.0")
     compileOnly("org.projectlombok:lombok:1.18.34")
     implementation("org.projectlombok:lombok:1.18.34")
-    implementation("org.web3j:crypto:4.12.0")
-    implementation("com.dylibso.chicory:wasm:0.0.12")
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.3")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.3")
@@ -42,8 +39,6 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-websocket")
 
     implementation("org.javatuples:javatuples:1.2")
-
-    implementation("com.github.luben:zstd-jni:1.5.6-4")
 
     // NOTE:
     //  We implicitly rely on Nabu's transitive dependency on Netty's public interfaces.

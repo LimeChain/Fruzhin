@@ -30,6 +30,5 @@ public class RuntimeBuildAction implements WarpSyncAction {
 
     @Override
     public void handle(WarpSyncMachine sync) {
-        warpSyncState.buildRuntime();
     }
 }

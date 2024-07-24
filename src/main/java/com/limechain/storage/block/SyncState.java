@@ -5,7 +5,6 @@ import com.limechain.chain.lightsyncstate.LightSyncState;
 import com.limechain.constants.GenesisBlockHash;
 import com.limechain.exception.storage.HeaderNotFoundException;
 import com.limechain.network.protocol.grandpa.messages.commit.CommitMessage;
-import com.limechain.network.protocol.warp.dto.Block;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.storage.DBConstants;
 import com.limechain.storage.KVRepository;
@@ -20,7 +19,6 @@ import java.math.BigInteger;
 @Log
 public class SyncState {
 
-    private final GenesisBlockHash genesisBlockHashCalculator;
     private final KVRepository<String, Object> repository;
     private BigInteger lastFinalizedBlockNumber;
     private final BigInteger startingBlock;
@@ -29,12 +27,10 @@ public class SyncState {
     @Setter
     private Authority[] authoritySet;
     private BigInteger latestRound;
-    private Hash256 stateRoot;
     private BigInteger setId;
 
-    public SyncState(GenesisBlockHash genesisBlockHashCalculator, KVRepository<String, Object> repository) {
-        this.genesisBlockHashCalculator = genesisBlockHashCalculator;
-        this.genesisBlockHash = genesisBlockHashCalculator.getGenesisHash();
+    public SyncState(KVRepository<String, Object> repository) {
+        this.genesisBlockHash = GenesisBlockHash.POLKADOT;
         this.repository = repository;
 
         loadPersistedState();
@@ -48,9 +44,6 @@ public class SyncState {
                 (byte[]) repository.find(DBConstants.LAST_FINALIZED_BLOCK_HASH).orElse(genesisBlockHash.getBytes()));
         this.authoritySet = (Authority[]) repository.find(DBConstants.AUTHORITY_SET).orElse(new Authority[0]);
         this.latestRound = (BigInteger) repository.find(DBConstants.LATEST_ROUND).orElse(BigInteger.ONE);
-        byte[] stateRootBytes = (byte[]) repository.find(DBConstants.STATE_ROOT).orElse(null);
-        this.stateRoot = stateRootBytes != null ? new Hash256(stateRootBytes) : genesisBlockHashCalculator
-                .getGenesisBlockHeader().getStateRoot();
         this.setId = (BigInteger) repository.find(DBConstants.SET_ID).orElse(BigInteger.ZERO);
     }
 
@@ -59,24 +52,18 @@ public class SyncState {
         repository.save(DBConstants.LAST_FINALIZED_BLOCK_HASH, lastFinalizedBlockHash.getBytes());
         repository.save(DBConstants.AUTHORITY_SET, authoritySet);
         repository.save(DBConstants.LATEST_ROUND, latestRound);
-        repository.save(DBConstants.STATE_ROOT, stateRoot.getBytes());
         repository.save(DBConstants.SET_ID, setId);
     }
 
     public void finalizeHeader(BlockHeader header) {
         this.lastFinalizedBlockNumber = header.getBlockNumber();
         this.lastFinalizedBlockHash = header.getHash();
-        this.stateRoot = header.getStateRoot();
     }
 
     public void finalizedCommitMessage(CommitMessage commitMessage) {
         try {
-            Block blockByHash = BlockState.getInstance().getBlockByHash(commitMessage.getVote().getBlockHash());
-            if (blockByHash != null) {
-                this.stateRoot = blockByHash.getHeader().getStateRoot();
-                this.lastFinalizedBlockHash = commitMessage.getVote().getBlockHash();
-                this.lastFinalizedBlockNumber = commitMessage.getVote().getBlockNumber();
-            }
+            this.lastFinalizedBlockHash = commitMessage.getVote().getBlockHash();
+            this.lastFinalizedBlockNumber = commitMessage.getVote().getBlockNumber();
         } catch (HeaderNotFoundException ignored) {
             log.fine("Received commit message for a block that is not in the block store");
         }
@@ -97,4 +84,7 @@ public class SyncState {
         finalizeHeader(initState.getFinalizedBlockHeader());
     }
 
+    public String getStateRoot() {
+        return null;
+    }
 }
