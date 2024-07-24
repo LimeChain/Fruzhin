@@ -13,5 +13,5 @@ import com.limechain.sync.SyncMode;
  * @param syncMode          the sync mode
  */
 public record CliArguments(String network, String dbPath, boolean dbRecreate, String nodeKey, String nodeRole,
-                           boolean noLegacyProtocols, SyncMode syncMode, boolean unsafeRpcEnabled) {
+                           boolean noLegacyProtocols, SyncMode syncMode) {
 }

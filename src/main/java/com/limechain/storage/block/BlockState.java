@@ -12,7 +12,6 @@ import com.limechain.network.protocol.warp.dto.BlockBody;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.network.protocol.warp.scale.reader.BlockBodyReader;
 import com.limechain.network.protocol.warp.scale.writer.BlockBodyWriter;
-import com.limechain.rpc.subscriptions.chainsub.ChainSub;
 import com.limechain.runtime.Runtime;
 import com.limechain.storage.DBConstants;
 import com.limechain.storage.KVRepository;
@@ -361,9 +360,6 @@ public class BlockState {
         // Add block to blocktree
         blockTree.addBlock(block.getHeader(), arrivalTime);
 
-        if (!unfinalizedBlocks.containsKey(block.getHeader().getHash())) {
-            ChainSub.getInstance().notifyNewChainHead(block.getHeader());
-        }
         // Store block in unfinalized blocks
         unfinalizedBlocks.put(block.getHeader().getHash(), block);
     }
@@ -897,7 +893,6 @@ public class BlockState {
 
             // Delete from the unfinalizedBlockMap and delete reference to in-memory trie
             unfinalizedBlocks.remove(subchainHash);
-            ChainSub.getInstance().notifyFinalizedChainHead(block.getHeader());
 
             // Prune all the subchain hashes state trie from memory
             // but keep the state trie from the current finalized block

@@ -1,6 +1,5 @@
 package com.limechain.rpc.config;
 
-import com.googlecode.jsonrpc4j.spring.AutoJsonRpcServiceImplExporter;
 import com.limechain.chain.ChainService;
 import com.limechain.cli.Cli;
 import com.limechain.cli.CliArguments;
@@ -8,7 +7,6 @@ import com.limechain.config.HostConfig;
 import com.limechain.config.SystemInfo;
 import com.limechain.constants.GenesisBlockHash;
 import com.limechain.network.Network;
-import com.limechain.rpc.server.UnsafeInterceptor;
 import com.limechain.runtime.builder.RuntimeBuilder;
 import com.limechain.storage.DBInitializer;
 import com.limechain.storage.KVRepository;
@@ -22,23 +20,12 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
-import java.util.List;
-
 /**
  * Spring configuration class used to instantiate beans.
  */
 @Configuration
 @EnableScheduling
 public class CommonConfig {
-    @Bean
-    public static AutoJsonRpcServiceImplExporter autoJsonRpcServiceImplExporter() {
-        final var jsonService = new AutoJsonRpcServiceImplExporter();
-
-        jsonService.setInterceptorList(List.of(new UnsafeInterceptor()));
-        jsonService.setAllowLessParams(true);
-
-        return jsonService;
-    }
 
     @Bean
     public CliArguments cliArgs(ApplicationArguments arguments) {

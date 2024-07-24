@@ -41,7 +41,6 @@ dependencies {
     // Websockets
     implementation("org.springframework.boot:spring-boot-starter-websocket")
 
-    implementation("org.java-websocket:Java-WebSocket:1.5.7")
     implementation("org.javatuples:javatuples:1.2")
 
     implementation("com.github.luben:zstd-jni:1.5.6-4")
@@ -56,9 +55,6 @@ dependencies {
     // Nabu
 //    implementation("com.github.LimeChain:nabu:master-SNAPSHOT") // Uncomment for "most-recent on the master branch"
     implementation("com.github.LimeChain:nabu:0.7.8")
-
-    //JSON-RPC
-    implementation("com.github.LimeChain:jsonrpc4j:1.7.0")
 
     // Guava
     implementation("com.google.guava:guava:33.2.1-jre")

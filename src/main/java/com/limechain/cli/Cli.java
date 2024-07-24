@@ -3,7 +3,6 @@ package com.limechain.cli;
 import com.limechain.chain.Chain;
 import com.limechain.exception.misc.CliArgsParseException;
 import com.limechain.network.protocol.blockannounce.NodeRole;
-import com.limechain.rpc.config.RpcMethods;
 import com.limechain.storage.DBInitializer;
 import com.limechain.sync.SyncMode;
 import lombok.Getter;
@@ -28,8 +27,6 @@ public class Cli {
     public static final String NETWORK = "network";
     public static final String DB_PATH = "db-path";
     public static final String NODE_KEY = "node-key";
-    public static final String PUBLIC_RPC = "public-rpc";
-    public static final String RPC_METHODS = "rpc-methods";
     private static final String DB_RECREATE = "db-recreate";
     private static final String NODE_MODE = "node-mode";
     private static final String NO_LEGACY_PROTOCOLS = "no-legacy-protocols";
@@ -37,7 +34,6 @@ public class Cli {
     private static final String CHAIN = "chain";
     private static final String NAME = "name";
     private static final String CORS = "rpc-cors";
-    private static final String UNSAFE_RPC_EXTERNAL = "unsafe-rpc-external";
     private static final String NO_MDNS = "no-mdns";
     private static final String NO_TELEMETRY = "no-telemetry";
     private static final String RPC_PORT = "rpc-port";
@@ -73,24 +69,6 @@ public class Cli {
     }
 
     /**
-     * Parses the RPC methods setting from command line arguments.
-     * <p>
-     * Defaults to "auto" if not specified. Throws an exception for invalid values.
-     *
-     * @param cmd Command line arguments.
-     * @return The selected RPC methods setting.
-     * @throws CliArgsParseException for invalid RPC methods values.
-     */
-    @NotNull
-    private static RpcMethods parseRpcMethods(CommandLine cmd) {
-        try {
-            return RpcMethods.valueOf(cmd.getOptionValue(RPC_METHODS, "auto").toUpperCase());
-        } catch (IllegalArgumentException e) {
-            throw new CliArgsParseException("Invalid rpc methods provided, valid values - AUTO, SAFE, UNSAFE", e);
-        }
-    }
-
-    /**
      * Parses node launch arguments.
      *
      * @param args launch arguments coming from the console
@@ -111,12 +89,8 @@ public class Cli {
             String nodeMode = cmd.getOptionValue(NODE_MODE, NodeRole.FULL.toString());
             boolean noLgacyProtocols = cmd.hasOption(NO_LEGACY_PROTOCOLS);
             SyncMode syncMode = parseSyncMode(cmd);
-            RpcMethods rpcMethods = parseRpcMethods(cmd);
-            boolean isPublic = cmd.hasOption(PUBLIC_RPC);
 
-            boolean unsafeEnabled = isPublic ? rpcMethods == RpcMethods.UNSAFE : rpcMethods != RpcMethods.SAFE;
-            return new CliArguments(network, dbPath, dbRecreate, nodeKey, nodeMode, noLgacyProtocols, syncMode,
-                    unsafeEnabled);
+            return new CliArguments(network, dbPath, dbRecreate, nodeKey, nodeMode, noLgacyProtocols, syncMode);
         } catch (ParseException e) {
             formatter.printHelp("Specify the network name - " + String.join(", ", validChains), options);
             throw new CliArgsParseException("Failed to parse cli arguments", e);
@@ -140,24 +114,10 @@ public class Cli {
                 "\nDoesn't use legacy protocols if set");
         Option syncMode = new Option(null, SYNC_MODE, true,
                 "\nSync mode (warp/full) - warp by default");
-        Option publicRpc = new Option(null, PUBLIC_RPC, false,
-                "\nListen to all RPC interfaces (by default only local interface is listened on).");
-        Option rpcMethods = new Option(null, RPC_METHODS, false, """
-                                
-                RPC methods to expose.
-
-                [default: auto]
-
-                Possible values:
-                - auto:   Expose every RPC method only when RPC is listening on
-                  `localhost`, otherwise serve only safe RPC methods
-                - safe:   Allow only a safe subset of RPC methods
-                - unsafe: Expose every RPC method (even potentially unsafe ones)""");
 
         Option chain = new Option(null, CHAIN, true, "");
         Option name = new Option(null, NAME, true, "");
         Option cors = new Option(null, CORS, false, "");
-        Option unsafeRpcExternal = new Option(null, UNSAFE_RPC_EXTERNAL, false, "");
         Option noMdns = new Option(null, NO_MDNS, false, "");
         Option noTelemetry = new Option(null, NO_TELEMETRY, false, "");
         Option rpcPort = new Option(null, RPC_PORT, true, "");
@@ -171,13 +131,10 @@ public class Cli {
         nodeMode.setRequired(false);
         noLegacyProtocols.setRequired(false);
         syncMode.setRequired(false);
-        publicRpc.setRequired(false);
-        rpcMethods.setRequired(false);
 
         chain.setRequired(false);
         name.setRequired(false);
         cors.setRequired(false);
-        unsafeRpcExternal.setRequired(false);
         noMdns.setRequired(false);
         noTelemetry.setRequired(false);
         rpcPort.setRequired(false);
@@ -191,13 +148,10 @@ public class Cli {
         result.addOption(nodeMode);
         result.addOption(noLegacyProtocols);
         result.addOption(syncMode);
-        result.addOption(publicRpc);
-        result.addOption(rpcMethods);
 
         result.addOption(chain);
         result.addOption(name);
         result.addOption(cors);
-        result.addOption(unsafeRpcExternal);
         result.addOption(noMdns);
         result.addOption(noTelemetry);
         result.addOption(rpcPort);
