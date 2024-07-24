@@ -1,7 +1,5 @@
 package com.limechain.rpc.server;
 
-import com.limechain.rpc.config.CommonConfig;
-
 public class RpcApp {
 
     /**

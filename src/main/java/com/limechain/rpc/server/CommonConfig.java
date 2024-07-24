@@ -1,4 +1,4 @@
-package com.limechain.rpc.config;
+package com.limechain.rpc.server;
 
 import com.limechain.chain.ChainService;
 import com.limechain.config.HostConfig;

@@ -5,12 +5,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.google.protobuf.ByteString;
 import com.limechain.utils.StringUtils;
-import lombok.Getter;
-import org.apache.tomcat.util.buf.HexUtils;
+import org.bouncycastle.util.encoders.Hex;
 
 import java.io.Serializable;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -30,7 +28,7 @@ public class Genesis implements Serializable {
     @JsonGetter("top")
     private Map<String, String> jsonGetTop() {
         Function<ByteString, String> serializer =
-            bs -> "0x" + HexUtils.toHexString(bs.toByteArray());
+            bs -> "0x" + Hex.toHexString(bs.toByteArray());
 
         return this.top.entrySet().stream().collect(Collectors.toMap(
             e -> serializer.apply(e.getKey()),

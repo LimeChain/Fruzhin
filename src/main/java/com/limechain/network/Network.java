@@ -16,7 +16,6 @@ import com.limechain.network.protocol.sync.BlockRequestDto;
 import com.limechain.network.protocol.sync.SyncService;
 import com.limechain.network.protocol.sync.pb.SyncMessage;
 import com.limechain.network.protocol.sync.pb.SyncMessage.BlockResponse;
-import com.limechain.network.protocol.transactions.TransactionsService;
 import com.limechain.network.protocol.warp.WarpSyncService;
 import com.limechain.network.protocol.warp.dto.WarpSyncResponse;
 import com.limechain.rpc.server.AppBean;
@@ -35,14 +34,11 @@ import lombok.Getter;
 import lombok.extern.java.Log;
 import org.peergos.HostBuilder;
 import org.peergos.protocol.IdentifyBuilder;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
 import static com.limechain.network.kad.KademliaService.REPLICATION;
@@ -51,7 +47,6 @@ import static com.limechain.network.protocol.sync.pb.SyncMessage.Direction;
 /**
  * A Network class that handles all peer connections and Kademlia
  */
-@Component
 @Log
 public class Network {
     public static final String LOCAL_IPV4_TCP_ADDRESS = "/ip4/127.0.0.1/tcp/";
@@ -70,7 +65,6 @@ public class Network {
     private KademliaService kademliaService;
     private BlockAnnounceService blockAnnounceService;
     private GrandpaService grandpaService;
-    private TransactionsService transactionsService;
     private Ping ping;
     @Getter
     private PeerId currentSelectedPeer;
@@ -131,7 +125,6 @@ public class Network {
         blockAnnounceService = new BlockAnnounceService(blockAnnounceProtocolId);
         grandpaService = new GrandpaService(grandpaProtocolId);
         ping = new Ping(pingProtocol, new PingProtocol());
-        transactionsService = new TransactionsService(transactionsProtocolId);
 
         hostBuilder.addProtocols(
                 List.of(
@@ -145,14 +138,6 @@ public class Network {
                         grandpaService.getProtocol()
                 )
         );
-
-        if (nodeRole == NodeRole.AUTHORING) {
-            hostBuilder.addProtocols(
-                    List.of(
-                            transactionsService.getProtocol()
-                    )
-            );
-        }
 
         this.host = hostBuilder.build();
         IdentifyBuilder.addIdentifyProtocol(this.host);
@@ -229,7 +214,7 @@ public class Network {
      * Logs the number of connected peers excluding boot nodes
      * By default Spring Boot uses a thread pool of size 1, so each call will be executed one at a time.
      */
-    @Scheduled(fixedDelay = 10, timeUnit = TimeUnit.SECONDS)
+//    @Scheduled(fixedDelay = 10, timeUnit = TimeUnit.SECONDS)
     public void findPeers() {
         if (!started) {
             return;
@@ -251,7 +236,7 @@ public class Network {
         log.log(Level.INFO, String.format("Connected peers: %s", getPeersCount()));
     }
 
-    @Scheduled(fixedDelay = 1, timeUnit = TimeUnit.MINUTES)
+//    @Scheduled(fixedDelay = 1, timeUnit = TimeUnit.MINUTES)
     public void pingPeers() {
         // TODO: This needs to by synchronized with the findPeers method
         if (getPeersCount() == 0) {
@@ -349,14 +334,12 @@ public class Network {
         ).start();
     }
 
-    @Scheduled(fixedRate = 5, initialDelay = 5, timeUnit = TimeUnit.MINUTES)
+//    @Scheduled(fixedRate = 5, initialDelay = 5, timeUnit = TimeUnit.MINUTES)
     public void sendNeighbourMessages() {
         if (!AppBean.getBean(WarpSyncState.class).isWarpSyncFinished()) {
             return;
         }
         connectionManager.getPeerIds().forEach(peerId -> grandpaService.sendNeighbourMessage(this.host, peerId));
-        connectionManager.getPeerIds().forEach(peerId ->
-                transactionsService.sendTransactionsMessage(this.host, peerId));
     }
 
     public void sendNeighbourMessage(PeerId peerId) {

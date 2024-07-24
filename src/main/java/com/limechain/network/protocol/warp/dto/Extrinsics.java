@@ -4,7 +4,7 @@ import com.limechain.exception.scale.ScaleEncodingException;
 import com.limechain.utils.HashUtils;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import lombok.Data;
-import org.apache.tomcat.util.buf.HexUtils;
+import org.bouncycastle.util.encoders.Hex;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -16,7 +16,7 @@ public class Extrinsics {
 
     @Override
     public String toString() {
-        return HexUtils.toHexString(extrinsic);
+        return Hex.toHexString(extrinsic);
     }
 
     public byte[] getHash() {

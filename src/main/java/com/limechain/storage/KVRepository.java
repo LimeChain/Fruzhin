@@ -1,7 +1,5 @@
 package com.limechain.storage;
 
-import org.springframework.lang.Nullable;
-
 import java.util.List;
 import java.util.Optional;
 
@@ -53,7 +51,7 @@ public interface KVRepository<K, V> {
      * @param limit maximum entries to delete
      * @return how many entries were deleted and if all were deleted
      */
-    DeleteByPrefixResult deleteByPrefix(K prefix, @Nullable Long limit);
+    DeleteByPrefixResult deleteByPrefix(K prefix, Long limit);
 
     /**
      * Tries to find the next key after a given key in the DB

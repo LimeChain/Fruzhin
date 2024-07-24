@@ -4,14 +4,15 @@ import com.limechain.exception.storage.DBException;
 import com.limechain.utils.ByteArrayUtils;
 import lombok.extern.java.Log;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.SerializationUtils;
 import org.rocksdb.Options;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
-import org.springframework.util.SerializationUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -77,7 +78,7 @@ public class DBRepository implements KVRepository<String, Object> {
     public synchronized boolean save(String key, Object value) {
         log.log(Level.FINE, String.format("saving value '%s' with key '%s'", value, key));
         try {
-            db.put(key.getBytes(UTF_8), SerializationUtils.serialize(value));
+            db.put(key.getBytes(UTF_8), SerializationUtils.serialize((Serializable) value));
         } catch (RocksDBException e) {
             log.log(Level.WARNING,
                     String.format("Error saving entry. Cause: '%s', message: '%s'", e.getCause(), e.getMessage()));

@@ -6,7 +6,6 @@ import com.limechain.exception.misc.InvalidChainException;
 import com.limechain.network.protocol.blockannounce.NodeRole;
 import lombok.Getter;
 import lombok.extern.java.Log;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.util.Optional;
 import java.util.logging.Level;
@@ -27,18 +26,10 @@ public class HostConfig {
     private final NodeRole nodeRole;
     private final String rpcNodeAddress;
 
-    // TODO:
-    //  Think about how to avoid the need for this (reordering in the bean initialization necessary).
-    //  we can use the autowired org.springframework.core.env.Environment to dynamically load properties
-    //  but it's not yet available during construction of this bean.
-    @Value("${genesis.path.polkadot}")
-    private String polkadotGenesisPath;
-    @Value("${genesis.path.kusama}")
-    private String kusamaGenesisPath;
-    @Value("${genesis.path.westend}")
-    private String westendGenesisPath;
-    @Value("${genesis.path.local}")
-    private String localGenesisPath;
+    private String polkadotGenesisPath = "genesis/polkadot.json";
+    private String kusamaGenesisPath = "genesis/kusama.json";
+    private String westendGenesisPath = "genesis/westend.json";
+    private String localGenesisPath = "genesis/local.json";
 
     public HostConfig() {
         String network = "polkadot";

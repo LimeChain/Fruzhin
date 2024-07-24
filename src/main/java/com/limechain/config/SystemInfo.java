@@ -5,7 +5,6 @@ import com.limechain.network.Network;
 import com.limechain.storage.block.SyncState;
 import lombok.Getter;
 import lombok.extern.java.Log;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.math.BigInteger;
 import java.util.logging.Level;
@@ -19,10 +18,8 @@ public class SystemInfo {
     private final String role;
     private final Chain chain;
     private final String hostIdentity;
-    @Value("${host.name}")
-    private String hostName;
-    @Value("${host.version}")
-    private String hostVersion;
+    private String hostName = "Fruzhin";
+    private String hostVersion = "0.0.1";
     private final BigInteger highestBlock;
 
     public SystemInfo(HostConfig hostConfig, Network network, SyncState syncState) {

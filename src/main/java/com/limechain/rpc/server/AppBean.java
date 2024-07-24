@@ -1,6 +1,5 @@
 package com.limechain.rpc.server;
 
-import com.limechain.rpc.config.CommonConfig;
 import lombok.extern.java.Log;
 
 /**

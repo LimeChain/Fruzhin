@@ -2,7 +2,7 @@ package com.limechain.utils;
 
 import com.google.protobuf.ByteString;
 import lombok.experimental.UtilityClass;
-import org.apache.tomcat.util.buf.HexUtils;
+import org.bouncycastle.util.encoders.Hex;
 
 import java.security.InvalidParameterException;
 import java.util.regex.Pattern;
@@ -75,6 +75,6 @@ public class StringUtils {
      * @return the "0x" prefixed hexadecimal string
      */
     public static String toHexWithPrefix(byte[] bytes) {
-        return HEX_PREFIX + HexUtils.toHexString(bytes);
+        return HEX_PREFIX + Hex.toHexString(bytes);
     }
 }
