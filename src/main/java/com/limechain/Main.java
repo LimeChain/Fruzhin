@@ -18,7 +18,7 @@ public class Main {
     public static void main(String[] args) throws IOException {
         // Instantiate and start the spring application, so we get the global context
         RpcApp rpcApp = new RpcApp();
-        rpcApp.start(args);
+        rpcApp.start();
 
         HostConfig hostConfig = AppBean.getBean(HostConfig.class);
 
@@ -44,9 +44,6 @@ public class Main {
         log.log(Level.INFO, "\uD83D\uDE80Started {0} client!", nodeRole);
 
         Signal.handle(new Signal("INT"), signal -> {
-            rpcApp.stop(); // NOTE: rpcApp is responsible for stopping everything that could've been started
-
-            // TODO: Maybe think of another place to hold the logic below
             log.log(Level.INFO, "\uD83D\uDED1Stopped {0} client!", nodeRole);
             System.exit(0);
         });
