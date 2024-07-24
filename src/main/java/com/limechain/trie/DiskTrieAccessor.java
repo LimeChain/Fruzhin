@@ -2,42 +2,42 @@ package com.limechain.trie;
 
 import com.limechain.storage.DeleteByPrefixResult;
 import com.limechain.storage.trie.TrieStorage;
-import com.limechain.trie.cache.TrieChanges;
-import com.limechain.trie.structure.database.NodeData;
 import com.limechain.trie.structure.nibble.Nibbles;
 
 import java.util.Optional;
 
 public sealed class DiskTrieAccessor extends TrieAccessor permits DiskChildTrieAccessor {
 
-    private TrieChanges<NodeData> trieChanges;
+    private final DiskTrieService diskTrieService;
 
     public DiskTrieAccessor(TrieStorage trieStorage, byte[] mainTrieRoot) {
         super(trieStorage, mainTrieRoot);
 
-        this.trieChanges = TrieChanges.empty();
+        this.diskTrieService = new DiskTrieService(trieStorage);
     }
 
     @Override
     public void upsertNode(Nibbles key, byte[] value) {
-        NodeData nodeData = new NodeData(value);
-        trieChanges.diffInsert(key, value, nodeData);
+//        diskTrieService.upsertNode(mainTrieRoot, key, value);
     }
 
     @Override
     public void deleteNode(Nibbles key) {
-        trieChanges.diffInsertErase(key, null);
+//        trieChanges.diffInsertErase(key, null);
     }
 
     @Override
     public Optional<byte[]> findStorageValue(Nibbles key) {
-        Optional<byte[]> result = trieChanges.trieDiffGet(key);
-        if (result.isEmpty()) {
-            result = trieStorage.getByKeyFromMerkle(mainTrieRoot, key)
-                .flatMap(nodeDta -> Optional.ofNullable(nodeDta.getValue()));
-        }
+//        // TODO 437 this is wrong. If we have a deletion cache will return empty optional.
+//        Optional<byte[]> result = trieChanges.trieDiffGet(key);
+//        if (result.isEmpty()) {
+//            result = trieStorage.getByKeyFromMerkle(mainTrieRoot, key)
+//                .flatMap(nodeDta -> Optional.ofNullable(nodeDta.getValue()));
+//        }
+//
+//        return result;\
 
-        return result;
+        return null;
     }
 
     @Override
@@ -53,15 +53,16 @@ public sealed class DiskTrieAccessor extends TrieAccessor permits DiskChildTrieA
     @Override
     public void persistChanges() {
         super.persistChanges();
-        trieChanges = TrieChanges.empty();
+//        trieChanges = TrieChanges.empty();
     }
 
     @Override
     public DiskChildTrieAccessor getChildTrie(Nibbles key) {
-        Nibbles trieKey = Nibbles.fromBytes(":child_storage:default:".getBytes()).addAll(key);
-        byte[] merkleRoot = findStorageValue(trieKey).orElse(null);
+        return (DiskChildTrieAccessor) super.getChildTrie(key);
+    }
 
-        return (DiskChildTrieAccessor) loadedChildTries.computeIfAbsent(
-            trieKey, k -> new DiskChildTrieAccessor(trieStorage, this, trieKey, merkleRoot));
+    @Override
+    public DiskChildTrieAccessor createChildTrie(Nibbles trieKey, byte[] merkleRoot) {
+        return new DiskChildTrieAccessor(trieStorage, this, trieKey, merkleRoot);
     }
 }

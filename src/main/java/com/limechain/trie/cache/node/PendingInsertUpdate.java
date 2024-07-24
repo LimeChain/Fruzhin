@@ -1,13 +1,18 @@
 package com.limechain.trie.cache.node;
 
+import com.limechain.runtime.version.StateVersion;
 import com.limechain.trie.structure.nibble.Nibbles;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-public record PendingInsertUpdate(byte[] newMerkleValue, List<byte[]> childrenMerkleValues,
-                                  Nibbles partialKey) implements PendingTrieNodeChange {
+public record PendingInsertUpdate(byte[] newMerkleValue,
+                                  List<byte[]> childrenMerkleValues,
+                                  Nibbles partialKey,
+                                  StateVersion stateVersion,
+                                  @Nullable byte[] value) implements PendingTrieNodeChange {
 
     @Override
     public boolean equals(Object o) {

@@ -88,7 +88,15 @@ public abstract sealed class TrieAccessor permits MemoryTrieAccessor, DiskTrieAc
      * @param key The key corresponding to the child trie accessor.
      * @return The TrieAccessor of a child trie for the specified key.
      */
-    abstract TrieAccessor getChildTrie(Nibbles key);
+    public TrieAccessor getChildTrie(Nibbles key) {
+        Nibbles trieKey = Nibbles.fromBytes(":child_storage:default:".getBytes()).addAll(key);
+        byte[] merkleRoot = findStorageValue(trieKey).orElse(null);
+
+        return loadedChildTries.computeIfAbsent(
+            trieKey, k -> createChildTrie(trieKey, merkleRoot));
+    }
+
+    protected abstract TrieAccessor createChildTrie(Nibbles trieKey, byte[] merkleRoot);
 
     /**
      * Starts a transaction, that can later be committed or rolled back

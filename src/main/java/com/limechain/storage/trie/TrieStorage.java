@@ -96,12 +96,13 @@ public class TrieStorage {
         return getNodeFromDb(childMerkleValue, remainder.drop(1));
     }
 
-    private TrieNodeData getTrieNodeFromMerkleValue(@NotNull byte[] childMerkleValue) {
+    @Nullable
+    public TrieNodeData getTrieNodeFromMerkleValue(@NotNull byte[] childMerkleValue) {
         Optional<Object> encodedChild = db.find(TRIE_NODE_PREFIX + new String(childMerkleValue));
 
         return (TrieNodeData) encodedChild.orElse(null);
     }
-    
+
     public boolean merkleValueExists(Hash256 lastFinalizedStateRoot) {
         return getTrieNodeFromMerkleValue(lastFinalizedStateRoot.getBytes()) != null;
     }
