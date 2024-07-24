@@ -24,9 +24,6 @@ dependencies {
 
     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
 
-    implementation("org.springframework.boot:spring-boot-starter-web")
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
-
     implementation("org.javatuples:javatuples:1.2")
 
     implementation("com.github.LimeChain:nabu:0.7.8")
