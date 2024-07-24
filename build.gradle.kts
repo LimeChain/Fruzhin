@@ -3,11 +3,8 @@ plugins {
     id("io.freefair.lombok") version "8.6"
     id("org.springframework.boot") version "3.2.8"
     id("io.spring.dependency-management") version "1.1.6"
-    id("application")
-}
-
-application {
-    mainClass.set("com.limechain.Main")
+    id("war")
+    id("org.teavm") version "0.9.2"
 }
 
 group = "com.limechain"
@@ -74,6 +71,8 @@ dependencies {
     // Apache commons
     implementation("commons-io:commons-io:2.16.1")
 
+    implementation("org.teavm:teavm-jso-apis:0.9.2")
+
 }
 
 tasks.getByName<Test>("test") {
@@ -83,4 +82,10 @@ tasks.getByName<Test>("test") {
 
 tasks.getByName<Jar>("jar") {
     enabled = false //To remove the build/libs/Fruzhin-ver-plain.jar
+}
+
+teavm.js {
+    addedToWebApp = true
+    mainClass = "com.limechain.Main"
+    targetFileName = "fruzhin.js"
 }
