@@ -1,8 +1,5 @@
 package com.limechain.chain.spec;
 
-import com.fasterxml.jackson.annotation.JsonGetter;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonSetter;
 import com.google.protobuf.ByteString;
 import com.limechain.utils.StringUtils;
 import org.bouncycastle.util.encoders.Hex;
@@ -16,7 +13,7 @@ import java.util.stream.Collectors;
 /**
  * Contains the parsed genesis (main and child storage data) from the chain spec.
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
+//@JsonInclude(JsonInclude.Include.NON_NULL)
 public class Genesis implements Serializable {
     private Map<ByteString, ByteString> top;
 
@@ -25,7 +22,7 @@ public class Genesis implements Serializable {
     //  as very few chains have them in the genesis file.
     //  Something like:  `private Map<ByteString, ...?> childrenDefault`
 
-    @JsonGetter("top")
+//    @JsonGetter("top")
     private Map<String, String> jsonGetTop() {
         Function<ByteString, String> serializer =
             bs -> "0x" + Hex.toHexString(bs.toByteArray());
@@ -36,7 +33,7 @@ public class Genesis implements Serializable {
         ));
     }
 
-    @JsonSetter("top")
+//    @JsonSetter("top")
     private void jsonSetTop(Map<String, String> deserializedTop) {
         Function<String, ByteString> parser =
             hex -> ByteString.fromHex(StringUtils.remove0xPrefix(hex));

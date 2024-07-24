@@ -25,7 +25,8 @@ dependencies {
     implementation("org.javatuples:javatuples:1.2")
 
     implementation("com.github.LimeChain:nabu:0.7.8")
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.17.2")
+//    implementation("com.fasterxml.jackson.core:jackson-databind:2.17.2")
+
     implementation("org.teavm:teavm-jso-apis:0.9.2")
 
 }

@@ -1,7 +1,5 @@
 package com.limechain.chain.spec;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.io.Serializable;
 
 /**
@@ -9,12 +7,12 @@ import java.io.Serializable;
  * (as per <a href="https://spec.polkadot.network/id-cryptography-encoding#section-chainspec">the spec</a>).
  */
 public enum ChainType implements Serializable {
-    @JsonProperty("Live")
+//    @JsonProperty("Live")
     LIVE,
 
-    @JsonProperty("Development")
+//    @JsonProperty("Development")
     DEVELOPMENT,
 
-    @JsonProperty("Local")
+//    @JsonProperty("Local")
     LOCAL
 }

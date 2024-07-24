@@ -1,10 +1,7 @@
 package com.limechain.chain.spec;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Map;
@@ -18,7 +15,7 @@ public class ChainSpec implements Serializable {
     private String id;
     private ChainType chainType;
     private String[] bootNodes;
-    private TelemetryEndpoint[] telemetryEndpoints;
+//    private TelemetryEndpoint[] telemetryEndpoints;
     private String protocolId;
     private Genesis genesis;
     private Map<String, PropertyValue> properties;
@@ -36,10 +33,11 @@ public class ChainSpec implements Serializable {
      */
     public static ChainSpec newFromJSON(String pathToChainSpecJSON) throws IOException {
         final boolean failOnUnknownProperties = false;
-        ObjectMapper objectMapper = new ObjectMapper()
-            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, failOnUnknownProperties);
-        var file = new File(pathToChainSpecJSON);
+//        ObjectMapper objectMapper = new ObjectMapper()
+//            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, failOnUnknownProperties);
+//        var file = new File(pathToChainSpecJSON);
 
-        return objectMapper.readValue(file, ChainSpec.class);
+//        return objectMapper.readValue(file, ChainSpec.class);
+        return null;
     }
 }
