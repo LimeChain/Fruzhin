@@ -1,6 +1,6 @@
 package com.limechain.runtime;
 
-import com.dylibso.chicory.log.SystemLogger;
+import com.dylibso.chicory.log.Logger;
 import com.dylibso.chicory.wasm.Module;
 import com.dylibso.chicory.wasm.Parser;
 import com.dylibso.chicory.wasm.types.Export;
@@ -40,10 +40,10 @@ public class WasmSectionUtils {
     public RuntimeVersion parseRuntimeVersionFromBinary(byte[] wasmBinary) {
         Module moduleWithCustomSections = toModuleWithSections(wasmBinary, SectionId.CUSTOM);
 
-        UnknownCustomSection runtimeApis = (UnknownCustomSection) moduleWithCustomSections
-            .customSection(RUNTIME_APIS_SECTION_NAME);
-        UnknownCustomSection runtimeVersion = (UnknownCustomSection) moduleWithCustomSections
-            .customSection(RUNTIME_VERSION_SECTION_NAME);
+        UnknownCustomSection runtimeApis =
+                (UnknownCustomSection) moduleWithCustomSections.customSection(RUNTIME_APIS_SECTION_NAME);
+        UnknownCustomSection runtimeVersion =
+                (UnknownCustomSection) moduleWithCustomSections.customSection(RUNTIME_VERSION_SECTION_NAME);
 
         // If we're missing any of the two custom sections, fallback to `Core_runtime`
         if (Objects.isNull(runtimeApis) || Objects.isNull(runtimeVersion)) {
@@ -69,21 +69,21 @@ public class WasmSectionUtils {
      */
     @Nullable
     public ImportObject.MemoryImport parseMemoryFromBinary(byte[] wasmBinary) {
-        Module moduleWithSections = toModuleWithSections(
-            wasmBinary, SectionId.IMPORT, SectionId.MEMORY, SectionId.EXPORT);
+        Module moduleWithSections =
+                toModuleWithSections(wasmBinary, SectionId.IMPORT, SectionId.MEMORY, SectionId.EXPORT);
         Integer initialPagesLimit = null;
         boolean isShared = false;
 
         // Per Runtime spec only one memory should be available for each module.
-        if (isMemorySectionValid(moduleWithSections.memorySection())
-            && isExportSectionValid(moduleWithSections.exportSection())) {
+        if (isMemorySectionValid(moduleWithSections.memorySection()) &&
+            isExportSectionValid(moduleWithSections.exportSection())) {
             MemoryLimits limits = moduleWithSections.memorySection().getMemory(0).memoryLimits();
             initialPagesLimit = limits.initialPages();
             isShared = limits.shared();
         } else if (moduleWithSections.importSection() != null) {
-            Optional<Import> parsedMemoryImport = moduleWithSections.importSection().stream()
-                .filter(i -> i.name().equals(MEMORY_IMPORT_NAME))
-                .findFirst();
+            Optional<Import> parsedMemoryImport =
+                    moduleWithSections.importSection().stream().filter(i -> i.name().equals(MEMORY_IMPORT_NAME))
+                            .findFirst();
             if (parsedMemoryImport.isPresent()) {
                 MemoryLimits limits = ((MemoryImport) parsedMemoryImport.get()).limits();
                 initialPagesLimit = limits.initialPages();
@@ -91,9 +91,8 @@ public class WasmSectionUtils {
             }
         }
 
-        return initialPagesLimit != null
-            ? new ImportObject.MemoryImport(ENV_MODULE_NAME, initialPagesLimit, isShared)
-            : null;
+        return initialPagesLimit != null ? new ImportObject.MemoryImport(ENV_MODULE_NAME, initialPagesLimit, isShared) :
+                null;
     }
 
     private boolean isMemorySectionValid(@Nullable MemorySection memorySection) {
@@ -116,11 +115,42 @@ public class WasmSectionUtils {
     }
 
     private Module toModuleWithSections(byte[] wasmBinary, int... sectionIds) {
-        Parser parser = new Parser(new SystemLogger());
+        Parser parser = new Parser(new ChicoryLogger());
         for (int sectionId : sectionIds) {
             parser.includeSection(sectionId);
         }
 
         return parser.parseModule(new ByteArrayInputStream(wasmBinary));
+    }
+
+    static class ChicoryLogger implements Logger {
+
+        private static final System.Logger LOGGER = System.getLogger("com.dylibso.chicory.wasm");
+
+        @Override
+        public void log(Level level, String msg, Throwable throwable) {
+            if (isLoggable(level)) {
+                System.Logger.Level sll = this.toSystemLoggerLevel(level);
+                LOGGER.log(sll, msg, throwable);
+            }
+        }
+
+        public boolean isLoggable(com.dylibso.chicory.log.Logger.Level level) {
+            return this.toSystemLoggerLevel(level) != null;
+        }
+
+        System.Logger.Level toSystemLoggerLevel(com.dylibso.chicory.log.Logger.Level level) {
+            switch (level) {
+                case TRACE:
+                    return System.Logger.Level.TRACE;
+                case WARNING:
+                    return System.Logger.Level.WARNING;
+                case ERROR:
+                    return System.Logger.Level.ERROR;
+                default:
+                    return null;
+            }
+        }
+
     }
 }

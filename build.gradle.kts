@@ -1,7 +1,7 @@
 plugins {
     id("java")
     id("io.freefair.lombok") version "8.6"
-    id("org.springframework.boot") version "3.2.7"
+    id("org.springframework.boot") version "3.2.8"
     id("io.spring.dependency-management") version "1.1.6"
     id("application")
 }
@@ -26,7 +26,7 @@ dependencies {
     compileOnly("org.projectlombok:lombok:1.18.34")
     implementation("org.projectlombok:lombok:1.18.34")
     implementation("org.web3j:crypto:4.12.0")
-    implementation("com.dylibso.chicory:wasm:0.0.10")
+    implementation("com.dylibso.chicory:wasm:0.0.12")
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.3")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.3")
@@ -47,7 +47,7 @@ dependencies {
     implementation("org.java-websocket:Java-WebSocket:1.5.7")
     implementation("org.javatuples:javatuples:1.2")
 
-    implementation("com.github.luben:zstd-jni:1.5.6-3")
+    implementation("com.github.luben:zstd-jni:1.5.6-4")
 
     // Prometheus
     implementation("io.prometheus:prometheus-metrics-core:1.3.1")
@@ -79,4 +79,8 @@ dependencies {
 tasks.getByName<Test>("test") {
     useJUnitPlatform()
     jvmArgs("-Dnet.bytebuddy.experimental=true")
+}
+
+tasks.getByName<Jar>("jar") {
+    enabled = false //To remove the build/libs/Fruzhin-ver-plain.jar
 }
