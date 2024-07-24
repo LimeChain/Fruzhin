@@ -52,6 +52,19 @@ java -jar build/libs/Fruzhin-0.1.0.jar -n polkadot --node-mode full --sync-mode 
 - `--node-mode` could be `full` or `light`
 - `--sync-mode` could be `full` or `warp`
 
+
+## Get docker image
+
+```bash
+  docker image pull limechain/fruzhin
+  docker volume create rocksdb
+  ```
+
+### Run Fruzhin on docker
+```bash
+  docker run -d -v rocksdb:/usr/app/rocks-db limechain/fruzhin -n polkadot --node-mode full --sync-mode full
+```
+
 ### Local development
 In order to use the Fruzhin node for local development you will first need to start another node that would serve as a
 peer. 
