@@ -1,7 +1,5 @@
 package com.limechain.utils;
 
-import io.libp2p.core.crypto.PrivKey;
-import io.libp2p.crypto.keys.Ed25519Kt;
 import io.libp2p.crypto.keys.Ed25519PrivateKey;
 import lombok.experimental.UtilityClass;
 import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters;
@@ -30,17 +28,5 @@ public class Ed25519Utils {
         final Ed25519PrivateKeyParameters parameters = new Ed25519PrivateKeyParameters(keyData);
 
         return new Ed25519PrivateKey(parameters);
-    }
-
-    /**
-     * Signs message with Ed25519 private key
-     * @param privateKey 32 bytes Ed25519 private key
-     * @param message message to be signed
-     * @return 64 bytes signature
-     */
-    public static byte[] signMessage(final byte[] privateKey, final byte[] message) {
-        if (privateKey == null) return null;
-        PrivKey privKey = Ed25519Kt.unmarshalEd25519PrivateKey(privateKey);
-        return privKey.sign(message);
     }
 }
