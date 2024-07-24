@@ -8,7 +8,6 @@ import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Value;
 
 import java.math.BigInteger;
-import java.nio.file.FileSystems;
 import java.util.logging.Level;
 
 /**
@@ -19,7 +18,6 @@ import java.util.logging.Level;
 public class SystemInfo {
     private final String role;
     private final Chain chain;
-    private final String dbPath;
     private final String hostIdentity;
     @Value("${host.name}")
     private String hostName;
@@ -30,7 +28,6 @@ public class SystemInfo {
     public SystemInfo(HostConfig hostConfig, Network network, SyncState syncState) {
         this.role = network.getNodeRole().name();
         this.chain = hostConfig.getChain();
-        this.dbPath = hostConfig.getRocksDbPath();
         this.hostIdentity = network.getHost().getPeerId().toString();
         this.highestBlock = syncState.getLastFinalizedBlockNumber();
     }
@@ -44,15 +41,12 @@ public class SystemInfo {
         String clipboardEmoji = new String(Character.toChars(0x1F4CB));
         String labelEmoji = new String(Character.toChars(0x1F3F7));
         String authEmoji = new String(Character.toChars(0x1F464));
-        String floppyEmoji = new String(Character.toChars(0x1F4BE));
-        String absoluteDbPath = FileSystems.getDefault().getPath(dbPath).normalize().toAbsolutePath().toString();
 
         log.log(Level.INFO, lemonEmoji + "LimeChain Fruzhin");
         log.log(Level.INFO, pinEmoji + "Version: " + hostVersion);
         log.log(Level.INFO, clipboardEmoji + "Chain specification: " + chain.getValue());
         log.log(Level.INFO, labelEmoji + "Host name: " + hostName);
         log.log(Level.INFO, authEmoji + "Role: " + role);
-        log.log(Level.INFO, floppyEmoji + "Database: RocksDb at " + absoluteDbPath);
         log.log(Level.INFO, "Local node identity is: " + hostIdentity);
         log.log(Level.INFO, "Operating System: " + System.getProperty("os.name"));
         log.log(Level.INFO, "CPU architecture: " + System.getProperty("os.arch"));

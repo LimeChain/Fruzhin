@@ -1,7 +1,6 @@
 package com.limechain.config;
 
 import com.limechain.chain.Chain;
-import com.limechain.cli.CliArguments;
 import com.limechain.constants.RpcConstants;
 import com.limechain.exception.misc.InvalidChainException;
 import com.limechain.network.protocol.blockannounce.NodeRole;
@@ -22,20 +21,11 @@ import static com.limechain.chain.Chain.fromString;
 @Getter
 public class HostConfig {
     /**
-     * File path under which the DB will be created
-     */
-    private final String rocksDbPath;
-    /**
      * Chain the Host is running on
      */
     private final Chain chain;
     private final NodeRole nodeRole;
     private final String rpcNodeAddress;
-
-    /**
-     * Recreate the DB
-     */
-    private final boolean dbRecreate;
 
     // TODO:
     //  Think about how to avoid the need for this (reordering in the bean initialization necessary).
@@ -50,11 +40,8 @@ public class HostConfig {
     @Value("${genesis.path.local}")
     private String localGenesisPath;
 
-    public HostConfig(CliArguments cliArguments) {
-        this.rocksDbPath = cliArguments.dbPath();
-        this.dbRecreate = cliArguments.dbRecreate();
-
-        String network = cliArguments.network();
+    public HostConfig() {
+        String network = "polkadot";
         this.chain = Optional
                 .ofNullable(network.isEmpty() ? WESTEND : fromString(network))
                 .orElseThrow(() -> new InvalidChainException(String.format("\"%s\" is not a valid chain.", network)));

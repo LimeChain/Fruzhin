@@ -32,14 +32,9 @@ public class DBInitializer {
      * @param dbRecreate flag for recreating the database for current chain
      * @return connection to the DB
      */
-    public static DBRepository initialize(String path, Chain chain, boolean dbRecreate) {
-        if (INSTANCES.containsKey(path)) {
-            return INSTANCES.get(path);
-        }
+    public static DBRepository initialize(Chain chain) {
 
-        DBRepository repo = new DBRepository(path, chain.getValue(), dbRecreate);
-        INSTANCES.put(path, repo);
-        return repo;
+        return null;
     }
 
     /**

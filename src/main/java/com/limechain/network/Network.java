@@ -3,7 +3,6 @@ package com.limechain.network;
 import com.google.protobuf.ByteString;
 import com.limechain.chain.Chain;
 import com.limechain.chain.ChainService;
-import com.limechain.cli.CliArguments;
 import com.limechain.config.HostConfig;
 import com.limechain.network.kad.KademliaService;
 import com.limechain.network.protocol.blockannounce.BlockAnnounceService;
@@ -25,7 +24,6 @@ import com.limechain.storage.DBConstants;
 import com.limechain.storage.KVRepository;
 import com.limechain.sync.warpsync.WarpSyncState;
 import com.limechain.utils.Ed25519Utils;
-import com.limechain.utils.StringUtils;
 import io.ipfs.multiaddr.MultiAddress;
 import io.ipfs.multihash.Multihash;
 import io.libp2p.core.Host;
@@ -91,21 +89,18 @@ public class Network {
      * @param chainService     chain specification information containing boot nodes
      * @param hostConfig       host configuration containing current network
      * @param repository       database repository
-     * @param cliArgs          command line arguments
-     * @param genesisBlockHash genesis block hash
      */
-    public Network(ChainService chainService, HostConfig hostConfig, KVRepository<String, Object> repository,
-                   CliArguments cliArgs) {
+    public Network(ChainService chainService, HostConfig hostConfig, KVRepository<String, Object> repository) {
         this.bootNodes = chainService.getChainSpec().getBootNodes();
         this.chain = hostConfig.getChain();
         this.nodeRole = hostConfig.getNodeRole();
         this.connectionManager = ConnectionManager.getInstance();
-        this.initializeProtocols(chainService, hostConfig, repository, cliArgs);
+        this.initializeProtocols(chainService, hostConfig, repository);
     }
 
     private void initializeProtocols(ChainService chainService,
                                      HostConfig hostConfig,
-                                     KVRepository<String, Object> repository, CliArguments cliArgs) {
+                                     KVRepository<String, Object> repository) {
         boolean isLocalEnabled = hostConfig.getChain() == Chain.LOCAL;
         boolean clientMode = true;
 
@@ -113,7 +108,7 @@ public class Network {
                 .listen(List.of(new MultiAddress(LOCAL_IPV4_TCP_ADDRESS + HOST_PORT)));
 
         // The peerId is generated from the privateKey of the node
-        hostBuilder.setPrivKey(loadPrivateKeyFromDB(repository, cliArgs));
+        hostBuilder.setPrivKey(loadPrivateKeyFromDB(repository));
         log.info("Current peerId " + hostBuilder.getPeerId().toString());
         Multihash hostId = Multihash.deserialize(hostBuilder.getPeerId().getBytes());
 
@@ -164,18 +159,8 @@ public class Network {
         kademliaService.setHost(host);
     }
 
-    private Ed25519PrivateKey loadPrivateKeyFromDB(KVRepository<String, Object> repository, CliArguments cliArgs) {
+    private Ed25519PrivateKey loadPrivateKeyFromDB(KVRepository<String, Object> repository) {
         Ed25519PrivateKey privateKey;
-
-        if (cliArgs.nodeKey() != null && !cliArgs.nodeKey().isBlank()) {
-            try {
-                privateKey = Ed25519Utils.loadPrivateKey(StringUtils.hexToBytes(cliArgs.nodeKey()));
-                log.log(Level.INFO, "PeerId loaded from arguments!");
-                return privateKey;
-            } catch (IllegalArgumentException ex) {
-                log.severe("Provided secret key hex is invalid!");
-            }
-        }
 
         Optional<Object> peerIdKeyBytes = repository.find(DBConstants.PEER_ID);
         if (peerIdKeyBytes.isPresent()) {

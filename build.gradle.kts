@@ -22,14 +22,6 @@ dependencies {
     compileOnly("org.projectlombok:lombok:1.18.34")
     implementation("org.projectlombok:lombok:1.18.34")
 
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.3")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.3")
-    testImplementation("org.mockito:mockito-core:5.12.0")
-
-    // CLI
-    implementation("commons-cli:commons-cli:1.8.0")
-
-    // TODO: Publish imported packages to mvnrepository and import them
     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
 
     implementation("org.springframework.boot:spring-boot-starter-web")

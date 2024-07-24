@@ -1,8 +1,6 @@
 package com.limechain.rpc.config;
 
 import com.limechain.chain.ChainService;
-import com.limechain.cli.Cli;
-import com.limechain.cli.CliArguments;
 import com.limechain.config.HostConfig;
 import com.limechain.config.SystemInfo;
 import com.limechain.network.Network;
@@ -11,7 +9,6 @@ import com.limechain.storage.KVRepository;
 import com.limechain.storage.block.SyncState;
 import com.limechain.sync.warpsync.WarpSyncMachine;
 import com.limechain.sync.warpsync.WarpSyncState;
-import org.springframework.boot.ApplicationArguments;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -24,19 +21,13 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 public class CommonConfig {
 
     @Bean
-    public CliArguments cliArgs(ApplicationArguments arguments) {
-        return new Cli().parseArgs(arguments.getSourceArgs());
-    }
-
-    @Bean
-    public HostConfig hostConfig(CliArguments cliArgs) {
-        return new HostConfig(cliArgs);
+    public HostConfig hostConfig() {
+        return new HostConfig();
     }
 
     @Bean
     public KVRepository<String, Object> repository(HostConfig hostConfig) {
-        return DBInitializer.initialize(hostConfig.getRocksDbPath(),
-                hostConfig.getChain(), hostConfig.isDbRecreate());
+        return DBInitializer.initialize(hostConfig.getChain());
     }
 
     @Bean
@@ -55,9 +46,8 @@ public class CommonConfig {
     }
 
     @Bean
-    public Network network(ChainService chainService, HostConfig hostConfig, KVRepository<String, Object> repository,
-                           CliArguments cliArgs) {
-        return new Network(chainService, hostConfig, repository, cliArgs);
+    public Network network(ChainService chainService, HostConfig hostConfig, KVRepository<String, Object> repository) {
+        return new Network(chainService, hostConfig, repository);
     }
 
     @Bean
