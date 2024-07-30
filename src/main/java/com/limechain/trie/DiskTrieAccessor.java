@@ -1,5 +1,6 @@
 package com.limechain.trie;
 
+import com.limechain.runtime.version.StateVersion;
 import com.limechain.storage.DeleteByPrefixResult;
 import com.limechain.storage.trie.TrieStorage;
 import com.limechain.trie.structure.nibble.Nibbles;
@@ -13,47 +14,38 @@ public sealed class DiskTrieAccessor extends TrieAccessor permits DiskChildTrieA
     public DiskTrieAccessor(TrieStorage trieStorage, byte[] mainTrieRoot) {
         super(trieStorage, mainTrieRoot);
 
-        this.diskTrieService = new DiskTrieService(trieStorage);
+        this.diskTrieService = new DiskTrieService(trieStorage, mainTrieRoot);
     }
 
     @Override
     public void upsertNode(Nibbles key, byte[] value) {
-//        diskTrieService.upsertNode(mainTrieRoot, key, value);
+        diskTrieService.upsertNode(key, value, currentStateVersion);
     }
 
     @Override
     public void deleteNode(Nibbles key) {
-//        trieChanges.diffInsertErase(key, null);
+        diskTrieService.deleteStorageNode(key);
     }
 
     @Override
     public Optional<byte[]> findStorageValue(Nibbles key) {
-//        // TODO 437 this is wrong. If we have a deletion cache will return empty optional.
-//        Optional<byte[]> result = trieChanges.trieDiffGet(key);
-//        if (result.isEmpty()) {
-//            result = trieStorage.getByKeyFromMerkle(mainTrieRoot, key)
-//                .flatMap(nodeDta -> Optional.ofNullable(nodeDta.getValue()));
-//        }
-//
-//        return result;\
-
-        return null;
+        return diskTrieService.findStorageValue(key);
     }
 
     @Override
     public DeleteByPrefixResult deleteMultipleNodesByPrefix(Nibbles prefix, Long limit) {
-        return null;
+        return diskTrieService.deleteMultipleNodesByPrefix(prefix, limit);
     }
 
     @Override
     public Optional<Nibbles> getNextKey(Nibbles key) {
-        return Optional.empty();
+        return diskTrieService.getNextKey(key);
     }
 
     @Override
     public void persistChanges() {
         super.persistChanges();
-//        trieChanges = TrieChanges.empty();
+        diskTrieService.persistChanges();
     }
 
     @Override
@@ -64,5 +56,12 @@ public sealed class DiskTrieAccessor extends TrieAccessor permits DiskChildTrieA
     @Override
     public DiskChildTrieAccessor createChildTrie(Nibbles trieKey, byte[] merkleRoot) {
         return new DiskChildTrieAccessor(trieStorage, this, trieKey, merkleRoot);
+    }
+
+    public byte[] getMerkleRoot(StateVersion version) {
+        if (version != null && !currentStateVersion.equals(version)) {
+            throw new IllegalStateException("Trie state version must match runtime call one.");
+        }
+        return diskTrieService.getMerkleRoot();
     }
 }

@@ -11,7 +11,7 @@ import com.limechain.storage.crypto.KeyStore;
 import com.limechain.storage.offchain.OffchainStorages;
 import com.limechain.storage.offchain.OffchainStore;
 import com.limechain.storage.offchain.StorageKind;
-import com.limechain.trie.BlockTrieAccessor;
+import com.limechain.trie.TrieAccessor;
 import io.libp2p.core.Host;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.Nullable;
@@ -47,10 +47,10 @@ public class RuntimeBuilder {
      * Builds a ready-to-execute `Runtime` with dependencies from the global Spring context.
      *
      * @param code              the runtime wasm bytecode
-     * @param blockTrieAccessor provides access to the trie storage for a given block
+     * @param trieAccessor provides access to the trie storage for a given block
      * @return a ready to execute `Runtime` instance
      */
-    public Runtime buildRuntime(byte[] code, @Nullable BlockTrieAccessor blockTrieAccessor) {
+    public Runtime buildRuntime(byte[] code, @Nullable TrieAccessor trieAccessor) {
         var localStorage = new OffchainStore(db, StorageKind.LOCAL);
         var persistentStorage = new OffchainStore(db, StorageKind.PERSISTENT);
         // TODO:
@@ -66,7 +66,7 @@ public class RuntimeBuilder {
         boolean isValidator = nodeRole == NodeRole.AUTHORING;
 
         RuntimeFactory.Config cfg = new RuntimeFactory.Config(
-            blockTrieAccessor,
+            trieAccessor,
             keyStore,
             offchainStorages,
             offchainNetworkState,

@@ -5,14 +5,12 @@ import com.limechain.trie.cache.node.PendingTrieNodeChange;
 import com.limechain.trie.structure.nibble.Nibble;
 import com.limechain.trie.structure.nibble.Nibbles;
 import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.stream.Stream;
@@ -28,7 +26,8 @@ public class TrieChanges {
     /**
      * Holds data for node changes identified by their path.
      */
-    public final TreeMap<Nibbles, PendingTrieNodeChange> changes;
+    @Getter
+    private final TreeMap<Nibbles, PendingTrieNodeChange> changes;
 
     public static TrieChanges empty() {
         return new TrieChanges(new TreeMap<>());

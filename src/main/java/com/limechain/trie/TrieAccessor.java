@@ -39,22 +39,14 @@ public abstract sealed class TrieAccessor permits MemoryTrieAccessor, DiskTrieAc
      * @param key   The key to save.
      * @param value The value to save.
      */
-    abstract void upsertNode(Nibbles key, byte[] value);
+    public abstract void upsertNode(Nibbles key, byte[] value);
 
     /**
      * Deletes the value associated with the given key from the trie implementation.
      *
      * @param key The key to delete.
      */
-    abstract void deleteNode(Nibbles key);
-
-    /**
-     * Finds the value associated with the given key in the trie implementation.
-     *
-     * @param key The key to search for.
-     * @return An Optional containing the value if found, or empty otherwise.
-     */
-    abstract Optional<byte[]> findStorageValue(Nibbles key);
+    public abstract void deleteNode(Nibbles key);
 
     /**
      * Deletes nodes in the trie implementation that match the given prefix.
@@ -63,7 +55,15 @@ public abstract sealed class TrieAccessor permits MemoryTrieAccessor, DiskTrieAc
      * @param limit  The maximum number of keys to delete.
      * @return A DeleteByPrefixResult indicating the number of keys deleted and whether all keys were deleted.
      */
-    abstract DeleteByPrefixResult deleteMultipleNodesByPrefix(Nibbles prefix, Long limit);
+    public abstract DeleteByPrefixResult deleteMultipleNodesByPrefix(Nibbles prefix, Long limit);
+
+    /**
+     * Finds the value associated with the given key in the trie implementation.
+     *
+     * @param key The key to search for.
+     * @return An Optional containing the value if found, or empty otherwise.
+     */
+    public abstract Optional<byte[]> findStorageValue(Nibbles key);
 
     /**
      * Finds the smallest key in the Trie that is lexicographically greater than the given one.
@@ -72,15 +72,17 @@ public abstract sealed class TrieAccessor permits MemoryTrieAccessor, DiskTrieAc
      * @return an {@code Optional<Nibbles>} containing the next greater key if found,
      * otherwise an empty {@code Optional}.
      */
-    abstract Optional<Nibbles> getNextKey(Nibbles key);
+    public abstract Optional<Nibbles> getNextKey(Nibbles key);
 
     /**
-     * Persists the accumulated changes to the underlying database storage.
+     * Retrieves the Merkle root hash of the trie with the specified state version.
+     *
+     * @param version The state version.
+     * @return The Merkle root hash.
      */
-    void persistChanges() {
-        for (TrieAccessor value : loadedChildTries.values()) value.persistChanges();
-        loadedChildTries.clear();
-    }
+    public abstract byte[] getMerkleRoot(StateVersion version);
+
+    protected abstract TrieAccessor createChildTrie(Nibbles trieKey, byte[] merkleRoot);
 
     /**
      * Retrieves the child trie accessor for the given key.
@@ -96,7 +98,13 @@ public abstract sealed class TrieAccessor permits MemoryTrieAccessor, DiskTrieAc
             trieKey, k -> createChildTrie(trieKey, merkleRoot));
     }
 
-    protected abstract TrieAccessor createChildTrie(Nibbles trieKey, byte[] merkleRoot);
+    /**
+     * Persists the accumulated changes to the underlying database storage.
+     */
+    public void persistChanges() {
+        for (TrieAccessor value : loadedChildTries.values()) value.persistChanges();
+        loadedChildTries.clear();
+    }
 
     /**
      * Starts a transaction, that can later be committed or rolled back

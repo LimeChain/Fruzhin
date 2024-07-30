@@ -5,7 +5,7 @@ import com.limechain.runtime.SharedMemory;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import com.limechain.runtime.version.StateVersion;
 import com.limechain.storage.DeleteByPrefixResult;
-import com.limechain.trie.BlockTrieAccessor;
+import com.limechain.trie.TrieAccessor;
 import com.limechain.trie.structure.nibble.Nibbles;
 import com.limechain.trie.structure.nibble.NibblesUtils;
 import com.limechain.utils.scale.ScaleUtils;
@@ -35,7 +35,7 @@ import static com.limechain.runtime.hostapi.PartialHostApi.newImportObjectPair;
 @AllArgsConstructor(access = AccessLevel.PACKAGE)
 public class StorageHostFunctions implements PartialHostApi {
     private final SharedMemory sharedMemory;
-    private final BlockTrieAccessor blockTrieAccessor;
+    private final TrieAccessor trieAccessor;
 
     public static byte[] scaleEncodedOption(int data) {
         return ScaleUtils.Encode.encodeOptional(ScaleCodecWriter::writeUint32, data);
@@ -126,7 +126,7 @@ public class StorageHostFunctions implements PartialHostApi {
         log.fine("key: " + key);
         log.fine("value: " + Arrays.toString(value));
         log.fine("");
-        blockTrieAccessor.upsertNode(key, value);
+        trieAccessor.upsertNode(key, value);
     }
 
     /**
@@ -137,7 +137,7 @@ public class StorageHostFunctions implements PartialHostApi {
      */
     public RuntimePointerSize extStorageGetVersion1(RuntimePointerSize keyPointer) {
         Nibbles key = Nibbles.fromBytes(sharedMemory.readData(keyPointer));
-        byte[] value = blockTrieAccessor.findStorageValue(key).orElse(null);
+        byte[] value = trieAccessor.findStorageValue(key).orElse(null);
 
         log.fine("");
         log.fine("extStorageGetVersion1");
@@ -163,7 +163,7 @@ public class StorageHostFunctions implements PartialHostApi {
                                                      int offset) {
         log.fine("extStorageReadVersion1");
         Nibbles key = Nibbles.fromBytes(sharedMemory.readData(keyPointer));
-        byte[] value = blockTrieAccessor.findStorageValue(key).orElse(null);
+        byte[] value = trieAccessor.findStorageValue(key).orElse(null);
 
         if (value == null) {
             return sharedMemory.writeData(scaleEncodedOption(null));
@@ -188,7 +188,7 @@ public class StorageHostFunctions implements PartialHostApi {
     public void extStorageClearVersion1(RuntimePointerSize keyPointer) {
         log.fine("extStorageClearVersion1");
         Nibbles key = Nibbles.fromBytes(sharedMemory.readData(keyPointer));
-        blockTrieAccessor.deleteNode(key);
+        trieAccessor.deleteNode(key);
     }
 
     /**
@@ -200,7 +200,7 @@ public class StorageHostFunctions implements PartialHostApi {
     public int extStorageExistsVersion1(RuntimePointerSize keyPointer) {
         log.fine("extStorageExistsVersion1");
         Nibbles key = Nibbles.fromBytes(sharedMemory.readData(keyPointer));
-        return blockTrieAccessor.findStorageValue(key).isPresent() ? 1 : 0;
+        return trieAccessor.findStorageValue(key).isPresent() ? 1 : 0;
     }
 
     /**
@@ -211,7 +211,7 @@ public class StorageHostFunctions implements PartialHostApi {
     public void extStorageClearPrefixVersion1(RuntimePointerSize prefixPointer) {
         log.fine("extStorageClearPrefixVersion1");
         Nibbles prefix = Nibbles.fromBytes(sharedMemory.readData(prefixPointer));
-        blockTrieAccessor.deleteMultipleNodesByPrefix(prefix, null);
+        trieAccessor.deleteMultipleNodesByPrefix(prefix, null);
     }
 
     /**
@@ -233,7 +233,7 @@ public class StorageHostFunctions implements PartialHostApi {
         byte[] limitBytes = sharedMemory.readData(limitPointer);
         Long limit = new ScaleCodecReader(limitBytes).readOptional(ScaleCodecReader.UINT32).orElse(null);
 
-        DeleteByPrefixResult result = blockTrieAccessor.deleteMultipleNodesByPrefix(prefix, limit);
+        DeleteByPrefixResult result = trieAccessor.deleteMultipleNodesByPrefix(prefix, limit);
 
         return sharedMemory.writeData(result.scaleEncoded());
     }
@@ -250,7 +250,7 @@ public class StorageHostFunctions implements PartialHostApi {
         log.fine("extStorageAppendVersion1");
 
         Nibbles key = Nibbles.fromBytes(sharedMemory.readData(keyPointer));
-        byte[] sequence = blockTrieAccessor.findStorageValue(key).orElse(null);
+        byte[] sequence = trieAccessor.findStorageValue(key).orElse(null);
         byte[] valueToAppend = sharedMemory.readData(valuePointer);
 
         if (sequence == null) {
@@ -261,7 +261,7 @@ public class StorageHostFunctions implements PartialHostApi {
             } catch (IOException e) {
                 throw new ScaleEncodingException(e);
             }
-            blockTrieAccessor.upsertNode(key, buf.toByteArray());
+            trieAccessor.upsertNode(key, buf.toByteArray());
             return;
         }
 
@@ -276,7 +276,7 @@ public class StorageHostFunctions implements PartialHostApi {
             } catch (IOException ez) {
                 throw new ScaleEncodingException(e);
             }
-            blockTrieAccessor.upsertNode(key, buf.toByteArray());
+            trieAccessor.upsertNode(key, buf.toByteArray());
             return;
         }
 
@@ -294,7 +294,7 @@ public class StorageHostFunctions implements PartialHostApi {
         } catch (IOException e) {
             throw new ScaleEncodingException(e);
         }
-        blockTrieAccessor.upsertNode(key, buf.toByteArray());
+        trieAccessor.upsertNode(key, buf.toByteArray());
     }
 
     /**
@@ -304,7 +304,7 @@ public class StorageHostFunctions implements PartialHostApi {
      */
     public RuntimePointerSize extStorageRootVersion1() {
         log.fine("extStorageRootVersion1");
-        byte[] rootHash = blockTrieAccessor.getMerkleRoot(null);
+        byte[] rootHash = trieAccessor.getMerkleRoot(null);
 
         return sharedMemory.writeData(rootHash);
     }
@@ -317,7 +317,7 @@ public class StorageHostFunctions implements PartialHostApi {
      */
     public RuntimePointerSize extStorageRootVersion2(int version) {
         log.fine("extStorageRootVersion2");
-        byte[] rootHash = blockTrieAccessor.getMerkleRoot(StateVersion.fromInt(version));
+        byte[] rootHash = trieAccessor.getMerkleRoot(StateVersion.fromInt(version));
 
         return sharedMemory.writeData(rootHash);
     }
@@ -345,7 +345,7 @@ public class StorageHostFunctions implements PartialHostApi {
         log.fine("extStorageNextKeyVersion1");
 
         Nibbles key = Nibbles.fromBytes(sharedMemory.readData(keyPointer));
-        byte[] nextKey = blockTrieAccessor.getNextKey(key)
+        byte[] nextKey = trieAccessor.getNextKey(key)
             .map(NibblesUtils::toBytesAppending)
             .map(this::asByteArray)
             .orElse(null);
@@ -369,7 +369,7 @@ public class StorageHostFunctions implements PartialHostApi {
      */
     public void extStorageStartTransactionVersion1() {
         log.fine("extStorageStartTransactionVersion1");
-        blockTrieAccessor.startTransaction();
+        trieAccessor.startTransaction();
     }
 
     /**
@@ -377,7 +377,7 @@ public class StorageHostFunctions implements PartialHostApi {
      * Any changes made during that transaction are discarded. It’s legal to call this function multiple times in a row.
      */
     public void extStorageRollbackTransactionVersion1() {
-        blockTrieAccessor.rollbackTransaction();
+        trieAccessor.rollbackTransaction();
     }
 
     /**
@@ -386,6 +386,6 @@ public class StorageHostFunctions implements PartialHostApi {
      * It’s legal to call this function multiple times in a row.
      */
     public void extStorageCommitTransactionVersion1() {
-        blockTrieAccessor.commitTransaction();
+        trieAccessor.commitTransaction();
     }
 }

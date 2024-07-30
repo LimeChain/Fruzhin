@@ -21,7 +21,8 @@ import com.limechain.storage.block.BlockState;
 import com.limechain.storage.block.SyncState;
 import com.limechain.storage.trie.TrieStorage;
 import com.limechain.sync.fullsync.inherents.InherentData;
-import com.limechain.trie.BlockTrieAccessor;
+import com.limechain.trie.DiskTrieAccessor;
+import com.limechain.trie.TrieAccessor;
 import com.limechain.trie.TrieStructureFactory;
 import com.limechain.trie.structure.TrieStructure;
 import com.limechain.trie.structure.database.NodeData;
@@ -69,20 +70,17 @@ public class FullSyncMachine {
         Hash256 stateRoot = syncState.getStateRoot();
         Hash256 lastFinalizedBlockHash = syncState.getLastFinalizedBlockHash();
 
-        BlockTrieAccessor blockTrieAccessor;
+        DiskTrieAccessor trieAccessor = new DiskTrieAccessor(trieStorage, stateRoot.getBytes());
 
-        if (trieStorage.merkleValueExists(stateRoot)) {
-            blockTrieAccessor = new BlockTrieAccessor(trieStorage, stateRoot.getBytes());
-        } else {
-            TrieStructure<NodeData> trieStructure = loadStateAtBlockFromPeer(lastFinalizedBlockHash);
-            blockTrieAccessor = new BlockTrieAccessor(trieStorage, stateRoot.getBytes(), trieStructure);
+        if (!trieStorage.merkleValueExists(stateRoot)) {
+            loadStateAtBlockFromPeer(lastFinalizedBlockHash);
         }
 
-        runtime = buildRuntimeFromState(blockTrieAccessor);
+        runtime = buildRuntimeFromState(trieAccessor);
         StateVersion runtimeStateVersion = runtime.getVersion().getStateVersion();
-        blockTrieAccessor.setCurrentStateVersion(runtimeStateVersion);
+        trieAccessor.setCurrentStateVersion(runtimeStateVersion);
 
-        byte[] calculatedMerkleRoot = blockTrieAccessor.getMerkleRoot(runtimeStateVersion);
+        byte[] calculatedMerkleRoot = trieAccessor.getMerkleRoot(runtimeStateVersion);
         if (!stateRoot.equals(new Hash256(calculatedMerkleRoot))) {
             log.info("State root is not equal to the one in the trie, cannot start full sync");
             return;
@@ -98,7 +96,7 @@ public class FullSyncMachine {
         List<Block> receivedBlocks = requestBlocks(startNumber, blocksToFetch);
 
         while (!receivedBlocks.isEmpty()) {
-            executeBlocks(receivedBlocks, blockTrieAccessor);
+            executeBlocks(receivedBlocks, trieAccessor);
             log.info("Executed blocks from " + startNumber + " to " + (startNumber + blocksToFetch));
             startNumber += blocksToFetch;
             receivedBlocks = requestBlocks(startNumber, blocksToFetch);
@@ -173,8 +171,8 @@ public class FullSyncMachine {
             List<SyncMessage.BlockData> blockDatas = response.getBlocksList();
 
             return blockDatas.stream()
-                    .map(FullSyncMachine::protobufDecodeBlock)
-                    .toList();
+                .map(FullSyncMachine::protobufDecodeBlock)
+                .toList();
         } catch (Exception ex) {
             log.info("Error while fetching blocks, trying to fetch again");
             if (!this.networkService.updateCurrentSelectedPeerWithNextBootnode()) {
@@ -192,9 +190,9 @@ public class FullSyncMachine {
 
         // Protobuf decode the block body
         List<Extrinsics> extrinsicsList = blockData.getBodyList().stream()
-                .map(bs -> ScaleUtils.Decode.decode(bs.toByteArray(), ScaleCodecReader::readByteArray))
-                .map(Extrinsics::new)
-                .toList();
+            .map(bs -> ScaleUtils.Decode.decode(bs.toByteArray(), ScaleCodecReader::readByteArray))
+            .map(Extrinsics::new)
+            .toList();
 
         BlockBody blockBody = new BlockBody(extrinsicsList);
 
@@ -206,7 +204,7 @@ public class FullSyncMachine {
      *
      * @param receivedBlockDatas A list of BlockData to execute.
      */
-    private void executeBlocks(List<Block> receivedBlockDatas, BlockTrieAccessor blockTrieAccessor) {
+    private void executeBlocks(List<Block> receivedBlockDatas, TrieAccessor trieAccessor) {
         for (Block block : receivedBlockDatas) {
             log.fine("Block number to be executed is " + block.getHeader().getBlockNumber());
 
@@ -234,7 +232,7 @@ public class FullSyncMachine {
             log.fine("Block executed successfully");
 
             // Persist the updates to the trie structure
-            blockTrieAccessor.persistChanges();
+            trieAccessor.persistChanges();
 
             BlockHeader blockHeader = block.getHeader();
             try {
@@ -244,23 +242,23 @@ public class FullSyncMachine {
             }
 
             boolean blockUpdatedRuntime = Arrays.stream(blockHeader.getDigest())
-                    .map(HeaderDigest::getType)
-                    .anyMatch(type -> type.equals(DigestType.RUN_ENV_UPDATED));
+                .map(HeaderDigest::getType)
+                .anyMatch(type -> type.equals(DigestType.RUN_ENV_UPDATED));
 
             if (blockUpdatedRuntime) {
                 log.info("Runtime updated, updating the runtime code");
-                runtime = buildRuntimeFromState(blockTrieAccessor);
-                blockTrieAccessor.setCurrentStateVersion(runtime.getVersion().getStateVersion());
+                runtime = buildRuntimeFromState(trieAccessor);
+                trieAccessor.setCurrentStateVersion(runtime.getVersion().getStateVersion());
                 blockState.storeRuntime(blockHeader.getHash(), runtime);
             }
         }
     }
 
-    private Runtime buildRuntimeFromState(BlockTrieAccessor blockTrieAccessor) {
-        return blockTrieAccessor
-                .findStorageValue(Nibbles.fromBytes(":code".getBytes()))
-                .map(wasm -> runtimeBuilder.buildRuntime(wasm, blockTrieAccessor))
-                .orElseThrow(() -> new RuntimeException("Runtime code not found in the trie"));
+    private Runtime buildRuntimeFromState(TrieAccessor trieAccessor) {
+        return trieAccessor
+            .findStorageValue(Nibbles.fromBytes(":code".getBytes()))
+            .map(wasm -> runtimeBuilder.buildRuntime(wasm, trieAccessor))
+            .orElseThrow(() -> new RuntimeException("Runtime code not found in the trie"));
     }
 
     private boolean checkInherents(Block block) {
@@ -280,13 +278,13 @@ public class FullSyncMachine {
      */
     private static boolean isBlockGoodToExecute(byte[] checkInherentsOutput) {
         var data = ScaleUtils.Decode.decode(
-                ArrayUtils.subarray(checkInherentsOutput, 2, checkInherentsOutput.length),
-                new ListReader<>(
-                        new PairReader<>(
-                                scr -> new String(scr.readByteArray(8)),
-                                scr -> new String(scr.readByteArray())
-                        )
+            ArrayUtils.subarray(checkInherentsOutput, 2, checkInherentsOutput.length),
+            new ListReader<>(
+                new PairReader<>(
+                    scr -> new String(scr.readByteArray(8)),
+                    scr -> new String(scr.readByteArray())
                 )
+            )
         );
 
         boolean goodToExecute;

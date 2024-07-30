@@ -2,6 +2,7 @@ package com.limechain.storage.trie;
 
 import com.limechain.runtime.version.StateVersion;
 import com.limechain.storage.KVRepository;
+import com.limechain.trie.cache.node.PendingInsertUpdate;
 import com.limechain.trie.dto.node.StorageNode;
 import com.limechain.trie.structure.TrieNodeIndex;
 import com.limechain.trie.structure.TrieStructure;
@@ -20,9 +21,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 /**
  * A wrapper around a KVRepository that provides a public interface for trie-related DB queries.
@@ -381,6 +384,33 @@ public class TrieStorage {
             (byte) trieNode.stateVersion());
 
         db.save(key, storageValue);
+    }
+
+    /**
+     * Inserts trie nodes storage data into the key-value repository in a batch manner.
+     * <p>
+     * The storage data is represented by a {@link TrieNodeData} object, which is serialized and saved to the repository.
+     *
+     * @param pendingUpdates The pending node updates mapped by their full keys whose storage data is to be inserted.
+     */
+    public void insertTrieNodeStorageBatch(Map<Nibbles, PendingInsertUpdate> pendingUpdates) {
+        Map<String, Object> nodesMap = pendingUpdates.entrySet().stream()
+            .collect(Collectors.toMap(e -> TRIE_NODE_PREFIX + new String(e.getValue().newMerkleValue()),
+                (e) -> {
+                    boolean isReferenceValue = e.getKey()
+                        .startsWith(Nibbles.fromBytes(":child_storage:".getBytes()));
+                    PendingInsertUpdate update = e.getValue();
+
+                    return new TrieNodeData(
+                        update.value() == null,
+                        update.partialKey(),
+                        update.childrenMerkleValues(),
+                        isReferenceValue ? null : update.value(),
+                        isReferenceValue ? update.value() : null,
+                        (byte) update.stateVersion().asInt());
+                }));
+
+        db.saveBatch(nodesMap);
     }
 
     /**

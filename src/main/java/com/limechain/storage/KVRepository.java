@@ -3,6 +3,7 @@ package com.limechain.storage;
 import org.springframework.lang.Nullable;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -20,6 +21,11 @@ public interface KVRepository<K, V> {
      * @return whether the save operation was successful
      */
     boolean save(K key, V value);
+
+    /**
+     * @param kvMap a map of all the key value pairs
+     */
+    void saveBatch(Map<K, V> kvMap);
 
     /**
      * Tries to find a value for a given key in the DB
