@@ -80,7 +80,7 @@ public class TrieChanges {
             .toList();
     }
 
-    // TODO 437 optimize so that it doesn't traverse until end of map if missing
+    // TODO optimize so that it doesn't traverse until end of map if missing
     public Optional<PendingInsertUpdate> getChildByIndex(Nibbles parentKey, Nibble childIndex) {
         Nibbles parentKeyWithChildIndex = parentKey.add(childIndex);
         return changes.tailMap(parentKey, false).entrySet().stream()
