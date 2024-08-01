@@ -461,15 +461,15 @@ public class DiskTrieService {
 
                 TraversedNode node = found.getFoundNode();
 
-                for (Nibble nibble : Nibbles.ALL) {
-                    byte[] childMerkle = node.getChildrenMerkleValues().get(nibble.asInt());
+                Nibbles.ALL.forEach(n -> {
+                    byte[] childMerkle = node.getChildrenMerkleValues().get(n.asInt());
                     // If there is a child at given nibble we continue with recursive deletion.
                     if (childMerkle != null) {
                         Optional<PendingTrieNodeChange> recursionResult = executeRecursiveDeletion(
-                            node.getFullKey(), nibble, childMerkle, limit, deleted);
+                            node.getFullKey(), n, childMerkle, limit, deleted);
                         // If recursion returns a non-empty optional there have been changes during execution.
                         recursionResult.ifPresent(r -> {
-                            node.getChildrenMerkleValues().set(nibble.asInt(),
+                            node.getChildrenMerkleValues().set(n.asInt(),
                                 r instanceof PendingInsertUpdate c
                                     // If last change is an update set the new child merkle.
                                     ? c.newMerkleValue()
@@ -477,7 +477,7 @@ public class DiskTrieService {
                                     : null);
                         });
                     }
-                }
+                });
 
                 if (limit != null && deleted.get() >= limit) {
                     return new DeleteByPrefixResult(deleted.get(), false);
