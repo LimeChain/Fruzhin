@@ -16,24 +16,24 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
-public class TrieChangesTest {
+class TrieChangesTest {
 
     private TrieChanges trieChanges;
     private TreeMap<Nibbles, PendingTrieNodeChange> changes;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         trieChanges = TrieChanges.empty();
         changes = trieChanges.getChanges();
     }
 
     @Test
-    public void testGetRoot_Empty() {
+    void testGetRoot_Empty() {
         assertEquals(Optional.empty(), trieChanges.getRoot());
     }
 
     @Test
-    public void testGetRoot_NonEmpty() {
+    void testGetRoot_NonEmpty() {
         Nibbles key = Nibbles.fromBytes("root".getBytes());
         PendingInsertUpdate rootChange = mock(PendingInsertUpdate.class);
         changes.put(key, rootChange);
@@ -44,7 +44,7 @@ public class TrieChangesTest {
     }
 
     @Test
-    public void testGetEntriesInKeyPath_NoClassFilter() {
+    void testGetEntriesInKeyPath_NoClassFilter() {
         Nibbles key1 = Nibbles.fromHexString("1234");
         Nibbles key2 = Nibbles.fromHexString("12345678");
         PendingTrieNodeChange update1 = mock(PendingTrieNodeChange.class);
@@ -60,7 +60,7 @@ public class TrieChangesTest {
     }
 
     @Test
-    public void testGetEntriesInKeyPath_WithClassFilter() {
+    void testGetEntriesInKeyPath_WithClassFilter() {
         Nibbles key1 = Nibbles.fromHexString("1234");
         Nibbles key2 = Nibbles.fromHexString("12345678");
         PendingInsertUpdate update1 = mock(PendingInsertUpdate.class);
@@ -75,7 +75,7 @@ public class TrieChangesTest {
     }
 
     @Test
-    public void testGetChildByIndex_NotFound() {
+    void testGetChildByIndex_NotFound() {
         Nibbles parentKey = Nibbles.fromHexString("123");
         Nibble childIndex = Nibble.fromAsciiHexDigit('4');
 
@@ -83,7 +83,7 @@ public class TrieChangesTest {
     }
 
     @Test
-    public void testGetChildByIndex_Found() {
+    void testGetChildByIndex_Found() {
         Nibbles parentKey = Nibbles.fromHexString("123");
         Nibble childIndex = Nibble.fromAsciiHexDigit('4');
         Nibbles childKey = parentKey.add(childIndex);

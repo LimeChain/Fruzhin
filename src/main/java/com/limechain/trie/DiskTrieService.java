@@ -40,6 +40,8 @@ import java.util.stream.IntStream;
 @Log
 public class DiskTrieService {
 
+    public static final String UNFINISHED_TRAVERSAL_ERROR =
+        "Traversal result cannot be unfinished at this point in the logic";
     private final TrieStorage trieStorage;
     private final TrieChanges trieChanges;
 
@@ -68,7 +70,7 @@ public class DiskTrieService {
                     ? Optional.ofNullable(update.value())
                     : Optional.empty())
             .orElseGet(() -> traverseTrie(trieMerkleRoot, key) instanceof TraversalResult.Found found
-                ? Optional.ofNullable(found.getFound().getValue())
+                ? Optional.ofNullable(found.getFoundNode().getValue())
                 : Optional.empty());
     }
 
@@ -134,7 +136,7 @@ public class DiskTrieService {
                     new NodeInsertionData(key,
                         storageValue, stateVersion, notFound.getClosestAncestor().orElse(null))));
             case TraversalResult.Found found -> {
-                TraversedNode foundNode = found.getFound();
+                TraversedNode foundNode = found.getFoundNode();
 
                 assert key.equals(foundNode.getFullKey())
                     : "Found node in traversal result should have the same key path as the sought key";
@@ -147,8 +149,7 @@ public class DiskTrieService {
                     foundNode.getParent() == null
                 ));
             }
-            case TraversalResult.Unfinished ignored ->
-                throw new IllegalStateException("Traversal result cannot be unfinished at this point in the logic");
+            case TraversalResult.Unfinished ignored -> throw new IllegalStateException(UNFINISHED_TRAVERSAL_ERROR);
         }
 
         Map.Entry<Nibbles, PendingTrieNodeChange> closestSuccessor = executionUpdates.firstEntry();
@@ -442,7 +443,7 @@ public class DiskTrieService {
 
         switch (traversalResult) {
             case TraversalResult.Found found -> {
-                TreeMap<Nibbles, PendingTrieNodeChange> executionUpdates = executeDeletion(found.getFound());
+                TreeMap<Nibbles, PendingTrieNodeChange> executionUpdates = executeDeletion(found.getFoundNode());
                 trieChanges.updateCache(mergeDeletionUpdatesWithTraversed(
                     executionUpdates, traversalResult.traversedNodes));
             }
@@ -459,7 +460,7 @@ public class DiskTrieService {
             case TraversalResult.Found found -> {
                 AtomicInteger deleted = new AtomicInteger(0);
 
-                TraversedNode node = found.getFound();
+                TraversedNode node = found.getFoundNode();
 
                 for (Nibble nibble : Nibbles.ALL) {
                     byte[] childMerkle = node.getChildrenMerkleValues().get(nibble.asInt());
@@ -468,15 +469,14 @@ public class DiskTrieService {
                         Optional<PendingTrieNodeChange> recursionResult = executeRecursiveDeletion(
                             node.getFullKey(), nibble, childMerkle, limit, deleted);
                         // If recursion returns a non-empty optional there have been changes during execution.
-                        if (recursionResult.isPresent()) {
-                            PendingTrieNodeChange change = recursionResult.get();
+                        recursionResult.ifPresent(r -> {
                             node.getChildrenMerkleValues().set(nibble.asInt(),
-                                change instanceof PendingInsertUpdate c
+                                r instanceof PendingInsertUpdate c
                                     // If last change is an update set the new child merkle.
                                     ? c.newMerkleValue()
                                     // If it's a deletion set to null.
                                     : null);
-                        }
+                        });
                     }
                 }
 
@@ -526,15 +526,14 @@ public class DiskTrieService {
             if (childMerkleInner != null) {
                 recursionResult = executeRecursiveDeletion(foundNodeFullKey, nibble, childMerkleInner, limit, deleted);
                 // If recursion returns a non-empty optional there have been changes during execution.
-                if (recursionResult.isPresent()) {
-                    PendingTrieNodeChange change = recursionResult.get();
+                recursionResult.ifPresent(r -> {
                     foundNodeChildrenCopy.set(nibble.asInt(),
-                        change instanceof PendingInsertUpdate c
+                        r instanceof PendingInsertUpdate c
                             // If last change is an update set the new child merkle.
                             ? c.newMerkleValue()
                             // If it's a deletion set to null.
                             : null);
-                }
+                });
             }
         }
 
@@ -1049,12 +1048,12 @@ public class DiskTrieService {
          */
         @Getter
         private static final class Found extends DiskTrieService.TraversalResult {
-            private final TraversedNode found;
+            private final TraversedNode foundNode;
 
             private Found(List<TraversedNode> traversedNodes, TraversedNode found) {
                 super(traversedNodes);
 
-                this.found = found;
+                this.foundNode = found;
             }
         }
 
@@ -1089,7 +1088,7 @@ public class DiskTrieService {
                     switch (finishedTraversal) {
                         case Found found -> {
                             TraversedNode child = found.getTraversedNodes().isEmpty()
-                                ? found.getFound()
+                                ? found.getFoundNode()
                                 : found.getTraversedNodes().getFirst();
                             child.setParent(parent);
                         }
@@ -1107,7 +1106,7 @@ public class DiskTrieService {
                 getTraversedNodes().addAll(finishedTraversal.getTraversedNodes());
 
                 return finishedTraversal instanceof Found f
-                    ? new Found(getTraversedNodes(), f.getFound())
+                    ? new Found(getTraversedNodes(), f.getFoundNode())
                     : new NotFound(getTraversedNodes());
             }
         }
