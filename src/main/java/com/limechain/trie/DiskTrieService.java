@@ -125,6 +125,15 @@ public class DiskTrieService {
         return Optional.empty();
     }
 
+    /**
+     * This method either inserts a new node into the trie or updates and existing storage value. The operation that
+     * is executed depends on the {@link TraversalResult} at the start of the method. A {@link TraversalResult.Found}
+     * results in an update, whereas a {@link TraversalResult.NotFound} executes an insert.
+     *
+     * @param key          the key path that we insert/update.
+     * @param storageValue the new storage value that is to be inserted/updated.
+     * @param stateVersion the new state version of the node.
+     */
     public void upsertNode(Nibbles key, byte[] storageValue, StateVersion stateVersion) {
         TreeMap<Nibbles, PendingTrieNodeChange> executionUpdates = new TreeMap<>();
 
@@ -438,6 +447,11 @@ public class DiskTrieService {
         return null;
     }
 
+    /**
+     * This method deletes the node at the specified key path if found.
+     *
+     * @param key the key path that we want to delete.
+     */
     public void deleteStorageNode(Nibbles key) {
         TraversalResult traversalResult = traverseTrie(trieMerkleRoot, key);
 
@@ -452,6 +466,14 @@ public class DiskTrieService {
         }
     }
 
+    /**
+     * This method deleted nodes recursively starting from nodes with the biggest depth, which match the prefix.
+     *
+     * @param prefix the key path prefix that nodes should match if they are to be deleted.
+     * @param limit  the maximum number of nodes to delete before returning a result.
+     * @return A {@link DeleteByPrefixResult} which shows the number of deleted nodes and if all matching nodes are
+     * removed.
+     */
     public DeleteByPrefixResult deleteMultipleNodesByPrefix(Nibbles prefix, Long limit) {
         TraversalResult traversalResult = traverseTrie(trieMerkleRoot, prefix);
 
@@ -712,12 +734,25 @@ public class DiskTrieService {
         return null;
     }
 
+    /**
+     * This method persists the changes from the cache layer to the disk. It also clears the cache.
+     */
     public void persistChanges() {
         trieStorage.insertTrieNodeStorageBatch(trieChanges.getChanges().entrySet().stream()
             .filter(e -> e.getValue() instanceof PendingInsertUpdate)
             .collect(Collectors.toMap(Map.Entry::getKey, e -> (PendingInsertUpdate) e.getValue())));
 
         trieChanges.clear();
+    }
+
+    /**
+     * Returns the current calculated trie root merkle.
+     *
+     * @return a byte array of the merkle root.
+     */
+    public byte[] getMerkleRoot() {
+        trieChanges.getRoot().ifPresent(r -> trieMerkleRoot = r.newMerkleValue());
+        return trieMerkleRoot;
     }
 
     /**
@@ -1002,11 +1037,6 @@ public class DiskTrieService {
             closestSuccessor.getValue()));
 
         return result;
-    }
-
-    public byte[] getMerkleRoot() {
-        trieChanges.getRoot().ifPresent(r -> trieMerkleRoot = r.newMerkleValue());
-        return trieMerkleRoot;
     }
 
     /**

@@ -97,7 +97,8 @@ public class FullSyncMachine {
 
         while (!receivedBlocks.isEmpty()) {
             executeBlocks(receivedBlocks, trieAccessor);
-            log.info("Executed blocks from " + startNumber + " to " + (startNumber + blocksToFetch));
+            log.info("Executed blocks from " + receivedBlocks.getFirst().getHeader().getBlockNumber()
+                + " to " + receivedBlocks.getLast().getHeader().getBlockNumber());
             startNumber += blocksToFetch;
             receivedBlocks = requestBlocks(startNumber, blocksToFetch);
         }
