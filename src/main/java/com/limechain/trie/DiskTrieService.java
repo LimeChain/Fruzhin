@@ -448,8 +448,7 @@ public class DiskTrieService {
                     executionUpdates, traversalResult.traversedNodes));
             }
             case TraversalResult.NotFound ignored -> log.fine("DELETE: Node not found at key " + key);
-            case TraversalResult.Unfinished ignored ->
-                throw new IllegalStateException("Traversal result cannot be unfinished at this point in the logic");
+            case TraversalResult.Unfinished ignored -> throw new IllegalStateException(UNFINISHED_TRAVERSAL_ERROR);
         }
     }
 
@@ -498,8 +497,7 @@ public class DiskTrieService {
                 log.fine("DELETE: Node not found at key " + prefix);
                 return new DeleteByPrefixResult(0, true);
             }
-            case TraversalResult.Unfinished ignored ->
-                throw new IllegalStateException("Traversal result cannot be unfinished at this point in the logic");
+            case TraversalResult.Unfinished ignored -> throw new IllegalStateException(UNFINISHED_TRAVERSAL_ERROR);
         }
     }
 
@@ -1018,7 +1016,7 @@ public class DiskTrieService {
      * This means that the traversal has to continue in the database stored nodes.
      */
     @Getter
-    private sealed abstract static class TraversalResult {
+    private abstract sealed static class TraversalResult {
 
         /**
          * All the nodes visited during the traversal. Could be empty in case of an empty trie or when the sought key
