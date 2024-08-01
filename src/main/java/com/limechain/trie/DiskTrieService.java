@@ -104,7 +104,7 @@ public class DiskTrieService {
             return Optional.of(currentKey);
         }
 
-        for (Nibble nibble : Nibbles.ALL) {
+        for (Nibble nibble : Nibbles.ALL.drop(prefix.get(0).asInt())) {
             byte[] childMerkle = node.getChildrenMerkleValues().get(nibble.asInt());
             if (childMerkle == null) {
                 continue;
