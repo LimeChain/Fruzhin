@@ -1,13 +1,16 @@
 package com.limechain.trie.structure.database;
 
 import com.limechain.exception.trie.TrieBuildException;
+import com.limechain.trie.cache.node.PendingInsertUpdate;
 import com.limechain.trie.structure.NodeHandle;
 import com.limechain.trie.structure.TrieNodeIndex;
 import com.limechain.trie.structure.TrieStructure;
 import com.limechain.trie.structure.nibble.Nibbles;
 import com.limechain.trie.structure.node.InsertTrieNode;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 public class InsertTrieBuilder {
@@ -23,9 +26,30 @@ public class InsertTrieBuilder {
      */
     public static List<InsertTrieNode> build(TrieStructure<NodeData> trieStructure) {
         return trieStructure
-                .streamUnordered()
-                .map((TrieNodeIndex trieIndex) -> prepareForInsert(trieStructure, trieIndex))
-                .filter(Objects::nonNull).toList();
+            .streamUnordered()
+            .map((TrieNodeIndex trieIndex) -> prepareForInsert(trieStructure, trieIndex))
+            .filter(Objects::nonNull).toList();
+    }
+
+    public static List<InsertTrieNode> build(Map<Nibbles, PendingInsertUpdate> updates) {
+        List<InsertTrieNode> result = new ArrayList<>();
+
+        for (Map.Entry<Nibbles, PendingInsertUpdate> e : updates.entrySet()) {
+            boolean isReferenceValue = e.getKey()
+                .startsWith(Nibbles.fromBytes(":child_storage:".getBytes()));
+            PendingInsertUpdate update = e.getValue();
+
+            result.add(new InsertTrieNode(
+                update.value() == null,
+                update.value(),
+                update.newMerkleValue(),
+                update.childrenMerkleValues(),
+                update.partialKey(),
+                isReferenceValue,
+                (byte) update.stateVersion().asInt()));
+        }
+
+        return result;
     }
 
     /**
@@ -39,9 +63,9 @@ public class InsertTrieBuilder {
      */
     public static List<InsertTrieNode> build(TrieStructure<NodeData> trieStructure, List<TrieNodeIndex> trieNodes) {
         return trieNodes
-                .stream()
-                .map((TrieNodeIndex trieIndex) -> prepareForInsert(trieStructure, trieIndex))
-                .filter(Objects::nonNull).toList();
+            .stream()
+            .map((TrieNodeIndex trieIndex) -> prepareForInsert(trieStructure, trieIndex))
+            .filter(Objects::nonNull).toList();
     }
 
     private static InsertTrieNode prepareForInsert(TrieStructure<NodeData> trieStructure, TrieNodeIndex nodeIndex) {
@@ -56,27 +80,27 @@ public class InsertTrieBuilder {
         }
 
         boolean isReferenceValue = nodeHandle
-                .getFullKey()
-                .startsWith(Nibbles.fromBytes(":child_storage:".getBytes()));
+            .getFullKey()
+            .startsWith(Nibbles.fromBytes(":child_storage:".getBytes()));
 
         return new InsertTrieNode(
-                !nodeHandle.hasStorageValue(),
-                userData.getValue(),
-                userData.getMerkleValue(),
-                childrenMerkleValues(nodeHandle),
-                nodeHandle.getPartialKey(),
-                isReferenceValue,
-                nodeHandle.getStateVersion()
-                );
+            !nodeHandle.hasStorageValue(),
+            userData.getValue(),
+            userData.getMerkleValue(),
+            childrenMerkleValues(nodeHandle),
+            nodeHandle.getPartialKey(),
+            isReferenceValue,
+            nodeHandle.getStateVersion()
+        );
     }
 
     private static List<byte[]> childrenMerkleValues(NodeHandle<NodeData> nodeHandle) {
         return Nibbles.ALL.stream()
-                .map(nodeHandle::getChild)
-                .map(child -> child
-                        .map(NodeHandle::getUserData)
-                        .map(NodeData::getMerkleValue)
-                        .orElse(null))
-                .toList();
+            .map(nodeHandle::getChild)
+            .map(child -> child
+                .map(NodeHandle::getUserData)
+                .map(NodeData::getMerkleValue)
+                .orElse(null))
+            .toList();
     }
 }

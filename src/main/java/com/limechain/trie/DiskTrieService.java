@@ -82,21 +82,28 @@ public class DiskTrieService {
      * @return An {@link Optional} with the found key or and empty one if not found.
      */
     public Optional<Nibbles> getNextKey(Nibbles key) {
-        PendingInsertUpdate cachedRoot = trieChanges.getRoot().orElse(null);
-        TrieNodeData root = cachedRoot != null
-            ? new TrieNodeData(cachedRoot.value() != null,
-            cachedRoot.partialKey(),
-            cachedRoot.childrenMerkleValues(),
-            cachedRoot.value(),
-            null,
-            (byte) cachedRoot.stateVersion().asInt())
-            : trieStorage.getTrieNodeFromMerkleValue(trieMerkleRoot);
-
-        if (root == null) {
+        TraversalResult traversalResult = traverseTrie(trieMerkleRoot, key);
+        if (traversalResult.getTraversedNodes().isEmpty()) {
             return Optional.empty();
         }
 
-        return findNextKey(key, Nibbles.EMPTY, root);
+        Optional<Nibbles> result = Optional.empty();
+
+        for (TraversedNode traversedNode : traversalResult.getTraversedNodes().reversed()) {
+            TrieNodeData node = new TrieNodeData(traversedNode.getValue() != null,
+                traversedNode.getPartialKey(),
+                traversedNode.getChildrenMerkleValues(),
+                traversedNode.getValue(),
+                null,
+                (byte) traversedNode.getStateVersion().asInt());
+
+            result = findNextKey(key, traversedNode.getFullKey(), node);
+            if (result.isPresent()) {
+                break;
+            }
+        }
+
+        return result;
     }
 
     private Optional<Nibbles> findNextKey(Nibbles prefix, Nibbles currentKey, TrieNodeData node) {
@@ -104,7 +111,11 @@ public class DiskTrieService {
             return Optional.of(currentKey);
         }
 
-        for (Nibble nibble : Nibbles.ALL.drop(prefix.get(0).asInt())) {
+        // Skip all lexicographically lower child nibbles to improve performance.
+        Nibble startingNibble = currentKey.size() >= prefix.size()
+            ? Nibble.ZERO
+            : prefix.get(currentKey.size());
+        for (Nibble nibble : Nibbles.ALL.drop(startingNibble.asInt())) {
             byte[] childMerkle = node.getChildrenMerkleValues().get(nibble.asInt());
             if (childMerkle == null) {
                 continue;
@@ -738,9 +749,11 @@ public class DiskTrieService {
      * This method persists the changes from the cache layer to the disk. It also clears the cache.
      */
     public void persistChanges() {
-        trieStorage.insertTrieNodeStorageBatch(trieChanges.getChanges().entrySet().stream()
+        Map<Nibbles, PendingInsertUpdate> updates = trieChanges.getChanges().entrySet().stream()
             .filter(e -> e.getValue() instanceof PendingInsertUpdate)
-            .collect(Collectors.toMap(Map.Entry::getKey, e -> (PendingInsertUpdate) e.getValue())));
+            .collect(Collectors.toMap(Map.Entry::getKey, e -> (PendingInsertUpdate) e.getValue()));
+
+        trieStorage.updateTrieStorage(updates);
 
         trieChanges.clear();
     }
