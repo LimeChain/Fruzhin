@@ -2,6 +2,7 @@ package com.limechain.storage.trie;
 
 import com.limechain.runtime.version.StateVersion;
 import com.limechain.storage.KVRepository;
+import com.limechain.trie.cache.node.PendingInsertUpdate;
 import com.limechain.trie.dto.node.StorageNode;
 import com.limechain.trie.structure.TrieNodeIndex;
 import com.limechain.trie.structure.TrieStructure;
@@ -19,7 +20,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.logging.Level;
@@ -96,12 +99,13 @@ public class TrieStorage {
         return getNodeFromDb(childMerkleValue, remainder.drop(1));
     }
 
-    private TrieNodeData getTrieNodeFromMerkleValue(@NotNull byte[] childMerkleValue) {
+    @Nullable
+    public TrieNodeData getTrieNodeFromMerkleValue(@NotNull byte[] childMerkleValue) {
         Optional<Object> encodedChild = db.find(TRIE_NODE_PREFIX + new String(childMerkleValue));
 
         return (TrieNodeData) encodedChild.orElse(null);
     }
-    
+
     public boolean merkleValueExists(Hash256 lastFinalizedStateRoot) {
         return getTrieNodeFromMerkleValue(lastFinalizedStateRoot.getBytes()) != null;
     }
@@ -265,7 +269,7 @@ public class TrieStorage {
         }
 
         List<Nibbles> matchingKeys = new ArrayList<>();
-        collectKeysWithPrefix(rootNode, Nibbles.EMPTY, prefix, startKey, limit, matchingKeys, new boolean[] {false});
+        collectKeysWithPrefix(rootNode, Nibbles.EMPTY, prefix, startKey, limit, matchingKeys, new boolean[]{false});
         return matchingKeys;
     }
 
@@ -326,7 +330,7 @@ public class TrieStorage {
      * Serializes the given trie into a format suitable for storage and persists it using
      * the specified state version for compatibility.
      *
-     * @param trie         The trie to serialize and save.
+     * @param trie The trie to serialize and save.
      */
     public void insertTrieStorage(TrieStructure<NodeData> trie) {
         List<InsertTrieNode> dbSerializedTrieNodes = InsertTrieBuilder.build(trie);
@@ -336,12 +340,17 @@ public class TrieStorage {
     /**
      * Saves only specified nodes from the trie structure to storage.
      *
-     * @param trie         The trie to serialize and save.
-     * @param nodes        Only the nodes specified in the list will be saved.
+     * @param trie  The trie to serialize and save.
+     * @param nodes Only the nodes specified in the list will be saved.
      */
     public void updateTrieStorage(TrieStructure<NodeData> trie, List<TrieNodeIndex> nodes) {
         List<InsertTrieNode> dbSerializedTrieNodes = InsertTrieBuilder.build(trie, nodes);
         saveTrieNodes(dbSerializedTrieNodes);
+    }
+
+    public void updateTrieStorage(Map<Nibbles, PendingInsertUpdate> updates) {
+        List<InsertTrieNode> dbSerializedTrieNodes = InsertTrieBuilder.build(updates);
+        insertTrieNodeStorageBatch(dbSerializedTrieNodes);
     }
 
     /**
@@ -364,22 +373,41 @@ public class TrieStorage {
      * <p>
      * The storage data is represented by a {@link TrieNodeData} object, which is serialized and saved to the repository.
      *
-     * @param trieNode     The trie node whose storage data is to be inserted.
+     * @param trieNode The trie node whose storage data is to be inserted.
      */
     private void insertTrieNodeStorage(InsertTrieNode trieNode) {
         String key = TRIE_NODE_PREFIX + new String(trieNode.merkleValue());
+        db.save(key, toTrieNodeData(trieNode));
+    }
 
-        List<byte[]> childrenMerkleValues = trieNode.childrenMerkleValues();
+    /**
+     * Inserts trie nodes storage data into the key-value repository in a batch manner.
+     * <p>
+     * The storage data is represented by a {@link TrieNodeData} object, which is serialized and saved to the repository.
+     *
+     * @param insertTrieNodes The trie nodes whose storage data is to be inserted.
+     */
+    public void insertTrieNodeStorageBatch(List<InsertTrieNode> insertTrieNodes) {
+        Map<String, Object> nodesMap = new HashMap<>();
 
-        TrieNodeData storageValue = new TrieNodeData(
-            trieNode.isBranch(),
-            trieNode.partialKeyNibbles(),
+        for (InsertTrieNode trieNode : insertTrieNodes) {
+            String key = TRIE_NODE_PREFIX + new String(trieNode.merkleValue());
+            nodesMap.put(key, toTrieNodeData(trieNode));
+        }
+
+        db.saveBatch(nodesMap);
+    }
+
+    private static TrieNodeData toTrieNodeData(InsertTrieNode insertTrieNode) {
+        List<byte[]> childrenMerkleValues = insertTrieNode.childrenMerkleValues();
+
+        return new TrieNodeData(
+            insertTrieNode.isBranch(),
+            insertTrieNode.partialKeyNibbles(),
             childrenMerkleValues,
-            trieNode.isReferenceValue() ? null : trieNode.storageValue(),
-            trieNode.isReferenceValue() ? trieNode.storageValue() : null,
-            (byte) trieNode.stateVersion());
-
-        db.save(key, storageValue);
+            insertTrieNode.isReferenceValue() ? null : insertTrieNode.storageValue(),
+            insertTrieNode.isReferenceValue() ? insertTrieNode.storageValue() : null,
+            (byte) insertTrieNode.stateVersion());
     }
 
     /**

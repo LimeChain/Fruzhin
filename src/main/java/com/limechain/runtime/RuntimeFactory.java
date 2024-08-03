@@ -10,7 +10,7 @@ import com.limechain.runtime.memory.WasmMemory;
 import com.limechain.runtime.version.RuntimeVersion;
 import com.limechain.storage.crypto.KeyStore;
 import com.limechain.storage.offchain.OffchainStorages;
-import com.limechain.trie.BlockTrieAccessor;
+import com.limechain.trie.TrieAccessor;
 import lombok.extern.java.Log;
 import org.jetbrains.annotations.Nullable;
 import org.wasmer.ImportObject;
@@ -67,7 +67,7 @@ public class RuntimeFactory {
 
         SharedMemory sharedMemory = new SharedMemory(null, null);
         Context context = new Context(
-            config.blockTrieAccessor(),
+            config.trieAccessor,
             config.keyStore(),
             config.offchainStorages(),
             config.offchainNetworkState(),
@@ -148,7 +148,7 @@ public class RuntimeFactory {
     /**
      * A configuration holding all necessary dependencies for runtime calls.
      *
-     * @param blockTrieAccessor    used by storage related endpoints for accessing the trie storage for a block
+     * @param trieAccessor         used by storage related endpoints for accessing the trie storage for a block
      * @param keyStore             used by crypto host functions to access secret keys
      * @param offchainStorages     used by offchain host functions to access the different offchain storages
      * @param offchainNetworkState used by offchain host functions.
@@ -161,7 +161,7 @@ public class RuntimeFactory {
      */
     public record Config(
         @Nullable
-        BlockTrieAccessor blockTrieAccessor,
+        TrieAccessor trieAccessor,
         @Nullable
         KeyStore keyStore,
         @Nullable

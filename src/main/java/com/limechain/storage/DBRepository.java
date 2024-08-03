@@ -9,6 +9,8 @@ import org.rocksdb.Options;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
+import org.rocksdb.WriteBatch;
+import org.rocksdb.WriteOptions;
 import org.springframework.util.SerializationUtils;
 
 import java.io.File;
@@ -17,6 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Level;
 
@@ -52,9 +55,9 @@ public class DBRepository implements KVRepository<String, Object> {
             log.log(Level.INFO, "\uD83E\uDEA8RocksDB initialized");
         } catch (IOException | RocksDBException e) {
             log.log(Level.SEVERE, String.format("Error initializing RocksDB. Exception: '%s', message: '%s'",
-                            e.getCause(),
-                            e.getMessage()),
-                    e);
+                    e.getCause(),
+                    e.getMessage()),
+                e);
         }
     }
 
@@ -67,10 +70,26 @@ public class DBRepository implements KVRepository<String, Object> {
 
         } catch (IOException e) {
             log.log(Level.SEVERE, String.format("Error deleting db folder. Exception: '%s', message: '%s'",
-                            e.getCause(),
-                            e.getMessage()),
-                    e);
+                    e.getCause(),
+                    e.getMessage()),
+                e);
             throw new DBException(e);
+        }
+    }
+
+    @Override
+    public synchronized void saveBatch(Map<String, Object> kvMap) {
+        log.fine("Saving batch of key value pairs.");
+        try (final WriteBatch batch = new WriteBatch()) {
+            for (Map.Entry<String, Object> e : kvMap.entrySet()) {
+                batch.put(e.getKey().getBytes(UTF_8), SerializationUtils.serialize(e.getValue()));
+            }
+
+            try (final WriteOptions writeOptions = new WriteOptions()) {
+                db.write(writeOptions, batch);
+            }
+        } catch (RocksDBException e) {
+            log.warning(String.format("Error saving batch. Cause: '%s', message: '%s'", e.getCause(), e.getMessage()));
         }
     }
 
@@ -81,7 +100,7 @@ public class DBRepository implements KVRepository<String, Object> {
             db.put(key.getBytes(UTF_8), SerializationUtils.serialize(value));
         } catch (RocksDBException e) {
             log.log(Level.WARNING,
-                    String.format("Error saving entry. Cause: '%s', message: '%s'", e.getCause(), e.getMessage()));
+                String.format("Error saving entry. Cause: '%s', message: '%s'", e.getCause(), e.getMessage()));
             return false;
         }
         return true;
@@ -97,10 +116,10 @@ public class DBRepository implements KVRepository<String, Object> {
             }
         } catch (RocksDBException e) {
             log.severe(String.format(
-                    "Error retrieving the entry with key: %s, cause: %s, message: %s",
-                    key,
-                    e.getCause(),
-                    e.getMessage())
+                "Error retrieving the entry with key: %s, cause: %s, message: %s",
+                key,
+                e.getCause(),
+                e.getMessage())
             );
         }
         log.fine(String.format("finding key '%s' returns '%s'", Nibbles.fromBytes(key.getBytes()), value));
@@ -110,8 +129,8 @@ public class DBRepository implements KVRepository<String, Object> {
     @Override
     public synchronized List<byte[]> findKeysByPrefix(String prefixSeek, int limit) {
         return findByPrefix(prefixSeek, (long) limit)
-                .stream()
-                .toList();
+            .stream()
+            .toList();
     }
 
     @Override
@@ -121,7 +140,7 @@ public class DBRepository implements KVRepository<String, Object> {
             db.delete(key.getBytes(UTF_8));
         } catch (RocksDBException e) {
             log.log(Level.SEVERE,
-                    String.format("Error deleting entry, cause: '%s', message: '%s'", e.getCause(), e.getMessage()));
+                String.format("Error deleting entry, cause: '%s', message: '%s'", e.getCause(), e.getMessage()));
             return false;
         }
         return true;
@@ -137,7 +156,7 @@ public class DBRepository implements KVRepository<String, Object> {
                 db.delete(key);
             } catch (RocksDBException e) {
                 log.log(Level.SEVERE, String.format("Error deleting entry, cause: '%s', message: '%s'",
-                        e.getCause(), e.getMessage()));
+                    e.getCause(), e.getMessage()));
             }
         });
 
@@ -170,21 +189,6 @@ public class DBRepository implements KVRepository<String, Object> {
         String nextKey = iterator.isValid() ? new String(iterator.key()) : null;
         iterator.close();
         return Optional.ofNullable(nextKey);
-    }
-
-    @Override
-    public void startTransaction() {
-        //TODO: implement
-    }
-
-    @Override
-    public void rollbackTransaction() {
-        //TODO: implement
-    }
-
-    @Override
-    public void commitTransaction() {
-        //TODO: implement
     }
 
     public synchronized void closeConnection() {

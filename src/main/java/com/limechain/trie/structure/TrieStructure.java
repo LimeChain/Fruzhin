@@ -605,7 +605,7 @@ public class TrieStructure<T> {
             parentNode.childrenIndices[parent.childIndexWithinParent().asInt()] = null;
             nodes.remove(nodeIndex);
 
-            //A leaf node being single child of a it's parent is invalid scenario.
+            //A leaf node being single child of its parent is invalid scenario.
             assert !(parentChildren == 1 && !parentNode.hasStorageValue) : "Unreachable state.";
 
             if (parentChildren == 2) {

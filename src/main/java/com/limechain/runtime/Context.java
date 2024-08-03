@@ -2,9 +2,9 @@ package com.limechain.runtime;
 
 import com.limechain.runtime.hostapi.dto.OffchainNetworkState;
 import com.limechain.storage.offchain.OffchainStorages;
-import com.limechain.trie.BlockTrieAccessor;
 import com.limechain.runtime.version.RuntimeVersion;
 import com.limechain.storage.crypto.KeyStore;
+import com.limechain.trie.TrieAccessor;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -20,7 +20,7 @@ public class Context {
     /**
      * Used by storage related endpoints for accessing the trie storage for a block.
      */
-    BlockTrieAccessor blockTrieAccessor;
+    TrieAccessor trieAccessor;
 
     /**
      * Used by crypto host functions to access secret keys.
@@ -29,6 +29,7 @@ public class Context {
 
     /**
      * Used by offchain host functions to access the different offchain storages.
+     *
      * @see OffchainStorages
      */
     OffchainStorages offchainStorages;

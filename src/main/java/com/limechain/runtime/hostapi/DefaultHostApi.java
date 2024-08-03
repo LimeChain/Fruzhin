@@ -20,12 +20,12 @@ public class DefaultHostApi extends HostApi {
         List<PartialHostApi> impls = List.of(
             new AllocatorHostFunctions(sharedMemory),
             new HashingHostFunctions(sharedMemory),
-            new StorageHostFunctions(sharedMemory, context.getBlockTrieAccessor()),
+            new StorageHostFunctions(sharedMemory, context.getTrieAccessor()),
             new TrieHostFunctions(sharedMemory),
             new MiscellaneousHostFunctions(sharedMemory),
             new OffchainHostFunctions(sharedMemory, context.getOffchainStorages(), context.getOffchainNetworkState(), context.isValidator()),
             new CryptoHostFunctions(sharedMemory, context.getKeyStore()),
-            new ChildStorageHostFunctions(sharedMemory, context.getBlockTrieAccessor())
+            new ChildStorageHostFunctions(sharedMemory, context.getTrieAccessor())
         );
 
         return impls.stream()

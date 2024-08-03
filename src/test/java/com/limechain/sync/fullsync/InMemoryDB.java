@@ -5,6 +5,7 @@ import com.limechain.storage.KVRepository;
 import org.apache.commons.collections4.trie.PatriciaTrie;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -17,6 +18,11 @@ class InMemoryDB implements KVRepository<String, Object> {
     public boolean save(String key, Object value) {
         storage.put(key, value);
         return true;
+    }
+
+    @Override
+    public void saveBatch(Map<String, Object> stringObjectMap) {
+        storage.putAll(stringObjectMap);
     }
 
     @Override
@@ -53,21 +59,6 @@ class InMemoryDB implements KVRepository<String, Object> {
     @Override
     public Optional<String> getNextKey(String key) {
         return Optional.empty();
-    }
-
-    @Override
-    public void startTransaction() {
-
-    }
-
-    @Override
-    public void rollbackTransaction() {
-
-    }
-
-    @Override
-    public void commitTransaction() {
-
     }
 
     @Override

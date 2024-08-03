@@ -26,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith(MockitoExtension.class)
 @Disabled
-class TrieAccessorTest {
+class MemoryTrieAccessorTest {
     public static final StateVersion STATE_VERSION_0 = StateVersion.V0;
     @Spy
     private TrieStructure<NodeData> partialTrie;
@@ -40,7 +40,7 @@ class TrieAccessorTest {
     private Hash256 blockHash;
 
     @InjectMocks
-    private TrieAccessor trieAccessor;
+    private MemoryTrieAccessor trieAccessor;
 
     private final List<StorageNode> initStorageNodes = List.of(
             new StorageNode(Nibbles.fromHexString("a1b"), new NodeData(new byte[]{1, 2, 3})),
@@ -76,9 +76,9 @@ class TrieAccessorTest {
 
 
     @Test
-    void find() {
+    void findStorageValue() {
         StorageNode storageNode = initStorageNodes.get(1);
-        byte[] result = trieAccessor.find(storageNode.key()).orElse(null);
+        byte[] result = trieAccessor.findStorageValue(storageNode.key()).orElse(null);
 
         assertEquals(storageNode.nodeData().getValue(), result);
     }
@@ -87,7 +87,7 @@ class TrieAccessorTest {
     void save() {
         Nibbles key = Nibbles.fromHexString("abcde");
         byte[] value = new byte[]{17, 1, 62};
-        trieAccessor.save(key, value);
+        trieAccessor.upsertNode(key, value);
 
         byte[] result = Objects.requireNonNull(partialTrie.node(key).asNodeHandle().getUserData()).getValue();
         assertArrayEquals(value, result);
@@ -120,7 +120,7 @@ class TrieAccessorTest {
 
     private void addNode(Nibbles key, byte[] value) {
         fullTrie.insertNode(key, new NodeData(value), STATE_VERSION_0);
-        trieAccessor.save(key, value);
+        trieAccessor.upsertNode(key, value);
     }
 
     @Test
@@ -134,7 +134,7 @@ class TrieAccessorTest {
 
     private void removeNode(Nibbles key) {
         fullTrie.deleteStorageNodeAt(key);
-        trieAccessor.delete(key);
+        trieAccessor.deleteNode(key);
     }
 
     private byte[] fullTrieMerkleRoot() {

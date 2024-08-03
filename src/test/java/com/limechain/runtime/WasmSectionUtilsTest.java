@@ -4,8 +4,6 @@ import com.limechain.runtime.version.ApiVersion;
 import com.limechain.runtime.version.ApiVersions;
 import com.limechain.runtime.version.RuntimeVersion;
 import com.limechain.runtime.version.StateVersion;
-import com.limechain.utils.TestUtils;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.wasmer.ImportObject;
 
@@ -15,7 +13,8 @@ import java.math.BigInteger;
 import java.util.List;
 import java.util.Objects;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static com.limechain.utils.TestUtils.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 class WasmSectionUtilsTest {
 
@@ -103,7 +102,7 @@ class WasmSectionUtilsTest {
         ImportObject.MemoryImport result = WasmSectionUtils.parseMemoryFromBinary(
             getTestWasmBytes(WASM_FILE_WITH_EXPORT));
 
-        TestUtils.assertEquals(expected, result);
+        assertEquals(expected, result);
     }
 
     @Test
@@ -114,7 +113,7 @@ class WasmSectionUtilsTest {
         ImportObject.MemoryImport result = WasmSectionUtils.parseMemoryFromBinary(
             getTestWasmBytes(WASM_FILE_WITH_IMPORT));
 
-        TestUtils.assertEquals(expected, result);
+        assertEquals(expected, result);
     }
 
     @Test

@@ -59,13 +59,13 @@ class StorageHostFunctionsTest {
 
         storageHostFunctions.extStorageSetVersion1(keyPointer, valuePointer);
 
-        verify(blockTrieAccessor).save(key, valueBytes);
+        verify(blockTrieAccessor).upsertNode(key, valueBytes);
     }
 
     @Test
     void extStorageGetVersion1() {
         when(sharedMemory.readData(keyPointer)).thenReturn(keyBytes);
-        when(blockTrieAccessor.find(key)).thenReturn(Optional.of(valueBytes));
+        when(blockTrieAccessor.findStorageValue(key)).thenReturn(Optional.of(valueBytes));
         when(sharedMemory.writeData(toOption(valueBytes))).thenReturn(resultPointer);
 
         RuntimePointerSize result = storageHostFunctions.extStorageGetVersion1(keyPointer);
@@ -76,7 +76,7 @@ class StorageHostFunctionsTest {
     @Test
     void extStorageGetVersion1ShouldReturnNoneOptionWhenNoValue() {
         when(sharedMemory.readData(keyPointer)).thenReturn(keyBytes);
-        when(blockTrieAccessor.find(key)).thenReturn(Optional.empty());
+        when(blockTrieAccessor.findStorageValue(key)).thenReturn(Optional.empty());
         when(sharedMemory.writeData(emptyOption)).thenReturn(resultPointer);
 
         RuntimePointerSize result = storageHostFunctions.extStorageGetVersion1(keyPointer);
@@ -88,7 +88,7 @@ class StorageHostFunctionsTest {
     void extStorageReadVersion1() {
         byte[] scaleEncodedOptionSize = new byte[] { 1, 2, 0, 0, 0 }; // Option with value 2
         when(sharedMemory.readData(keyPointer)).thenReturn(keyBytes);
-        when(blockTrieAccessor.find(key)).thenReturn(Optional.of(valueBytes));
+        when(blockTrieAccessor.findStorageValue(key)).thenReturn(Optional.of(valueBytes));
         when(sharedMemory.writeData(scaleEncodedOptionSize)).thenReturn(resultPointer);
         doNothing().when(sharedMemory).writeData(any(), any());
 
@@ -101,7 +101,7 @@ class StorageHostFunctionsTest {
     @Test
     void extStorageReadVersion1ShouldReturnNoneWhenNoValue() {
         when(sharedMemory.readData(keyPointer)).thenReturn(keyBytes);
-        when(blockTrieAccessor.find(key)).thenReturn(Optional.empty());
+        when(blockTrieAccessor.findStorageValue(key)).thenReturn(Optional.empty());
         when(sharedMemory.writeData(emptyOption)).thenReturn(resultPointer);
 
         RuntimePointerSize result = storageHostFunctions.extStorageReadVersion1(keyPointer, valuePointer, 1);
@@ -114,7 +114,7 @@ class StorageHostFunctionsTest {
     void extStorageReadVersion1ShouldReturnPointerTo0WhenOffsetGreaterThanLength() {
         byte[] scaleEncodedOptionSize = new byte[] { 1, 0, 0, 0, 0 }; // Option with value 0
         when(sharedMemory.readData(keyPointer)).thenReturn(keyBytes);
-        when(blockTrieAccessor.find(key)).thenReturn(Optional.of(valueBytes));
+        when(blockTrieAccessor.findStorageValue(key)).thenReturn(Optional.of(valueBytes));
         when(sharedMemory.writeData(scaleEncodedOptionSize)).thenReturn(resultPointer);
 
         RuntimePointerSize result = storageHostFunctions.extStorageReadVersion1(keyPointer, valuePointer, 10);
@@ -129,13 +129,13 @@ class StorageHostFunctionsTest {
 
         storageHostFunctions.extStorageClearVersion1(keyPointer);
 
-        verify(blockTrieAccessor).delete(key);
+        verify(blockTrieAccessor).deleteNode(key);
     }
 
     @Test
     void extStorageExistsVersion1() {
         when(sharedMemory.readData(keyPointer)).thenReturn(keyBytes);
-        when(blockTrieAccessor.find(key)).thenReturn(Optional.of(valueBytes));
+        when(blockTrieAccessor.findStorageValue(key)).thenReturn(Optional.of(valueBytes));
 
         int result = storageHostFunctions.extStorageExistsVersion1(keyPointer);
 
@@ -145,7 +145,7 @@ class StorageHostFunctionsTest {
     @Test
     void extStorageExistsVersion1WhenNonExistent() {
         when(sharedMemory.readData(keyPointer)).thenReturn(keyBytes);
-        when(blockTrieAccessor.find(key)).thenReturn(Optional.empty());
+        when(blockTrieAccessor.findStorageValue(key)).thenReturn(Optional.empty());
 
         int result = storageHostFunctions.extStorageExistsVersion1(keyPointer);
 
@@ -158,7 +158,7 @@ class StorageHostFunctionsTest {
 
         storageHostFunctions.extStorageClearPrefixVersion1(keyPointer);
 
-        verify(blockTrieAccessor).deleteByPrefix(key, null);
+        verify(blockTrieAccessor).deleteMultipleNodesByPrefix(key, null);
     }
 
     @Test
@@ -168,7 +168,7 @@ class StorageHostFunctionsTest {
         byte[] encodedResult = new byte[] { 0, 2, 0, 0, 0 }; // Result with remaining items and 2 deleted
         when(sharedMemory.readData(keyPointer)).thenReturn(keyBytes);
         when(sharedMemory.readData(limitPointer)).thenReturn(encodedLimit);
-        when(blockTrieAccessor.deleteByPrefix(key, 2L)).thenReturn(new DeleteByPrefixResult(2, false));
+        when(blockTrieAccessor.deleteMultipleNodesByPrefix(key, 2L)).thenReturn(new DeleteByPrefixResult(2, false));
         when(sharedMemory.writeData(encodedResult)).thenReturn(resultPointer);
 
         RuntimePointerSize result = storageHostFunctions.extStorageClearPrefixVersion2(keyPointer, limitPointer);
@@ -183,7 +183,7 @@ class StorageHostFunctionsTest {
         byte[] encodedResult = new byte[] { 1, 3, 0, 0, 0 }; // Result with no remaining items and 3 deleted
         when(sharedMemory.readData(keyPointer)).thenReturn(keyBytes);
         when(sharedMemory.readData(limitPointer)).thenReturn(encodedLimit);
-        when(blockTrieAccessor.deleteByPrefix(key, 4L)).thenReturn(new DeleteByPrefixResult(3, true));
+        when(blockTrieAccessor.deleteMultipleNodesByPrefix(key, 4L)).thenReturn(new DeleteByPrefixResult(3, true));
         when(sharedMemory.writeData(encodedResult)).thenReturn(resultPointer);
 
         RuntimePointerSize result = storageHostFunctions.extStorageClearPrefixVersion2(keyPointer, limitPointer);
@@ -195,11 +195,11 @@ class StorageHostFunctionsTest {
     void extStorageAppendVersion1WhenNoSequenceShouldStoreValueAsByteArray() {
         when(sharedMemory.readData(keyPointer)).thenReturn(keyBytes);
         when(sharedMemory.readData(valuePointer)).thenReturn(valueBytes);
-        when(blockTrieAccessor.find(key)).thenReturn(Optional.empty());
+        when(blockTrieAccessor.findStorageValue(key)).thenReturn(Optional.empty());
 
         storageHostFunctions.extStorageAppendVersion1(keyPointer, valuePointer);
 
-        verify(blockTrieAccessor).save(key, valueBytes);
+        verify(blockTrieAccessor).upsertNode(key, valueBytes);
     }
 
     @Test
@@ -208,11 +208,11 @@ class StorageHostFunctionsTest {
         byte[] newSequence = new byte[] { 12, 3, 4, 5, 6, 7, 8, 4, 5, 6 };
         when(sharedMemory.readData(keyPointer)).thenReturn(keyBytes);
         when(sharedMemory.readData(valuePointer)).thenReturn(valueBytes);
-        when(blockTrieAccessor.find(key)).thenReturn(Optional.of(sequence));
+        when(blockTrieAccessor.findStorageValue(key)).thenReturn(Optional.of(sequence));
 
         storageHostFunctions.extStorageAppendVersion1(keyPointer, valuePointer);
 
-        verify(blockTrieAccessor).save(key, newSequence);
+        verify(blockTrieAccessor).upsertNode(key, newSequence);
     }
 
     @Test

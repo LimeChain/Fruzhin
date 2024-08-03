@@ -8,22 +8,25 @@ import lombok.Getter;
  * ChildTrieAccessor provides access to a child trie within a parent trie structure.
  * It extends TrieAccessor and inherits its functionalities for key-value storage and retrieval.
  */
-public final class ChildTrieAccessor extends TrieAccessor {
+public final class MemoryChildTrieAccessor extends MemoryTrieAccessor {
 
-    private final TrieAccessor parentTrie;
+    private final MemoryTrieAccessor parentTrie;
     @Getter
     private final Nibbles childTrieKey;
 
-    public ChildTrieAccessor(TrieStorage trieStorage, TrieAccessor parentTrie, Nibbles trieKey, byte[] merkleRoot) {
+    public MemoryChildTrieAccessor(TrieStorage trieStorage,
+                                   MemoryTrieAccessor parentTrie,
+                                   Nibbles trieKey,
+                                   byte[] merkleRoot) {
         super(trieStorage, merkleRoot);
         this.parentTrie = parentTrie;
         this.childTrieKey = trieKey;
     }
 
     @Override
-    public void persistUpdates() {
-        super.persistUpdates();
-        parentTrie.save(childTrieKey, mainTrieRoot);
+    public void persistChanges() {
+        super.persistChanges();
+        parentTrie.upsertNode(childTrieKey, mainTrieRoot);
     }
 
 }
