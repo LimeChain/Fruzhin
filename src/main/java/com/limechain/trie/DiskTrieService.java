@@ -107,12 +107,17 @@ public class DiskTrieService {
     }
 
     private Optional<Nibbles> findNextKey(Nibbles prefix, Nibbles currentKey, TrieNodeData node) {
+        // A key that is equal or greater and lower in the lexicographical order should be skipped.
+        if (currentKey.size() >= prefix.size() && currentKey.compareTo(prefix) < 0) {
+            return Optional.empty();
+        }
+        // If it's a storage node and its key is lexicographically greater than prefix it's a hit.
         if (node.getValue() != null && currentKey.compareTo(prefix) > 0) {
             return Optional.of(currentKey);
         }
 
         // Skip all lexicographically lower child nibbles to improve performance.
-        Nibble startingNibble = currentKey.size() >= prefix.size()
+        Nibble startingNibble = currentKey.compareTo(prefix) >= 0
             ? Nibble.ZERO
             : prefix.get(currentKey.size());
         for (Nibble nibble : Nibbles.ALL.drop(startingNibble.asInt())) {

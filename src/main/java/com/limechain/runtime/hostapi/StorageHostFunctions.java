@@ -186,8 +186,13 @@ public class StorageHostFunctions implements PartialHostApi {
      * @param keyPointer a pointer-size containing the key.
      */
     public void extStorageClearVersion1(RuntimePointerSize keyPointer) {
-        log.fine("extStorageClearVersion1");
         Nibbles key = Nibbles.fromBytes(sharedMemory.readData(keyPointer));
+
+        log.fine("");
+        log.fine("extStorageClearVersion1");
+        log.fine("key: " + key);
+        log.fine("");
+
         trieAccessor.deleteNode(key);
     }
 
@@ -342,9 +347,13 @@ public class StorageHostFunctions implements PartialHostApi {
      * @return a pointer-size to the SCALE encoded Option value containing the next key in lexicographic order.
      */
     public RuntimePointerSize extStorageNextKeyVersion1(RuntimePointerSize keyPointer) {
-        log.fine("extStorageNextKeyVersion1");
-
         Nibbles key = Nibbles.fromBytes(sharedMemory.readData(keyPointer));
+
+        log.fine("");
+        log.fine("extStorageNextKeyVersion1");
+        log.fine("key: " + key);
+        log.fine("");
+
         byte[] nextKey = trieAccessor.getNextKey(key)
             .map(NibblesUtils::toBytesAppending)
             .map(this::asByteArray)
