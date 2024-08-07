@@ -1,7 +1,6 @@
 package com.limechain.network.protocol.warp.dto;
 
 import com.limechain.network.protocol.warp.scale.writer.BlockBodyWriter;
-import com.limechain.utils.HashUtils;
 import com.limechain.utils.scale.ScaleUtils;
 import lombok.Data;
 
@@ -20,7 +19,7 @@ public class BlockBody {
 
     public byte[] getEncoded(){
         byte[] encoded = ScaleUtils.Encode.encode(BlockBodyWriter.getInstance(), this);
-        return HashUtils.hashWithBlake2b(encoded);
+        return null;//HashUtils.hashWithBlake2b(encoded);
     }
 
 }

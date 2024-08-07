@@ -1,9 +1,9 @@
 package com.limechain.network.protocol;
 
-import io.libp2p.core.multistream.ProtocolBinding;
+import com.limechain.network.StrictProtocolBinding;
 import lombok.Getter;
 
-public class NetworkService<P extends ProtocolBinding> {
+public class NetworkService<P extends StrictProtocolBinding> {
     @Getter
     protected P protocol;
 }

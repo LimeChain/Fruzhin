@@ -1,34 +1,14 @@
 package com.limechain.network.protocol.grandpa;
 
-import com.limechain.exception.scale.ScaleEncodingException;
 import com.limechain.network.ConnectionManager;
 import com.limechain.network.protocol.blockannounce.messages.BlockAnnounceHandshakeBuilder;
 import com.limechain.network.protocol.grandpa.messages.GrandpaMessageType;
-import com.limechain.network.protocol.grandpa.messages.catchup.req.CatchUpReqMessage;
-import com.limechain.network.protocol.grandpa.messages.catchup.req.CatchUpReqMessageScaleReader;
-import com.limechain.network.protocol.grandpa.messages.catchup.res.CatchUpMessage;
-import com.limechain.network.protocol.grandpa.messages.catchup.res.CatchUpMessageScaleReader;
-import com.limechain.network.protocol.grandpa.messages.commit.CommitMessage;
-import com.limechain.network.protocol.grandpa.messages.commit.CommitMessageScaleReader;
-import com.limechain.network.protocol.grandpa.messages.neighbour.NeighbourMessage;
 import com.limechain.network.protocol.grandpa.messages.neighbour.NeighbourMessageBuilder;
-import com.limechain.network.protocol.grandpa.messages.neighbour.NeighbourMessageScaleReader;
-import com.limechain.network.protocol.grandpa.messages.neighbour.NeighbourMessageScaleWriter;
-import com.limechain.network.protocol.grandpa.messages.vote.VoteMessage;
-import com.limechain.network.protocol.grandpa.messages.vote.VoteMessageScaleReader;
 import com.limechain.rpc.server.AppBean;
 import com.limechain.sync.warpsync.WarpSyncState;
-import io.emeraldpay.polkaj.scale.ScaleCodecReader;
-import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
-import io.libp2p.core.PeerId;
-import io.libp2p.core.Stream;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.extern.java.Log;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.logging.Level;
 
 /**
  * Engine for handling transactions on GRANDPA streams.
@@ -65,53 +45,51 @@ public class GrandpaEngine {
      * @param message received message as byre array
      * @param stream  stream, where the request was received
      */
-    public void receiveRequest(byte[] message, Stream stream) {
-        GrandpaMessageType messageType = getGrandpaMessageType(message);
+//    public void receiveRequest(byte[] message, Stream stream) {
+//        GrandpaMessageType messageType = getGrandpaMessageType(message);
+//
+//        if (messageType == null) {
+//            log.log(Level.WARNING, String.format("Unknown grandpa message type \"%d\" from Peer %s",
+//                    message[0], stream.remotePeerId()));
+//            return;
+//        }
+//
+//        if (stream.isInitiator()) {
+//            handleInitiatorStreamMessage(message, messageType, stream);
+//        } else {
+//            handleResponderStreamMessage(message, messageType, stream);
+//        }
+//    }
 
-        if (messageType == null) {
-            log.log(Level.WARNING, String.format("Unknown grandpa message type \"%d\" from Peer %s",
-                    message[0], stream.remotePeerId()));
-            return;
-        }
+//    private void handleInitiatorStreamMessage(byte[] message, GrandpaMessageType messageType, Stream stream) {
+//        PeerId peerId = stream.remotePeerId();
+//        if (messageType != GrandpaMessageType.HANDSHAKE) {
+//            stream.close();
+//            log.log(Level.WARNING, "Non handshake message on initiator grandpa stream from peer " + peerId);
+//            return;
+//        }
+//        connectionManager.addGrandpaStream(stream);
+//        log.log(Level.INFO, "Received grandpa handshake from " + peerId);
+//        writeNeighbourMessage(stream, peerId);
+//    }
 
-        if (stream.isInitiator()) {
-            handleInitiatorStreamMessage(message, messageType, stream);
-        } else {
-            handleResponderStreamMessage(message, messageType, stream);
-        }
-    }
-
-    private void handleInitiatorStreamMessage(byte[] message, GrandpaMessageType messageType, Stream stream) {
-        PeerId peerId = stream.remotePeerId();
-        if (messageType != GrandpaMessageType.HANDSHAKE) {
-            stream.close();
-            log.log(Level.WARNING, "Non handshake message on initiator grandpa stream from peer " + peerId);
-            return;
-        }
-        connectionManager.addGrandpaStream(stream);
-        log.log(Level.INFO, "Received grandpa handshake from " + peerId);
-        writeNeighbourMessage(stream, peerId);
-    }
-
-    private void handleResponderStreamMessage(byte[] message, GrandpaMessageType messageType, Stream stream) {
-        PeerId peerId = stream.remotePeerId();
-        boolean connectedToPeer = connectionManager.isGrandpaConnected(peerId);
-
-        if (!connectedToPeer && messageType != GrandpaMessageType.HANDSHAKE) {
-            log.log(Level.WARNING, "No handshake for grandpa message from Peer " + peerId);
-            stream.close();
-            return;
-        }
-
-        switch (messageType) {
-            case HANDSHAKE -> handleHandshake(message, peerId, stream);
-            case VOTE -> handleVoteMessage(message, peerId);
-            case COMMIT -> handleCommitMessage(message, peerId);
-            case NEIGHBOUR -> handleNeighbourMessage(message, peerId);
-            case CATCH_UP_REQUEST -> handleCatchupRequestMessage(message, peerId);
-            case CATCH_UP_RESPONSE -> handleCatchupResponseMessage(message, peerId);
-        }
-    }
+//    private void handleResponderStreamMessage(byte[] message, GrandpaMessageType messageType, Stream stream) {
+//        PeerId peerId = stream.remotePeerId();
+//        boolean connectedToPeer = connectionManager.isGrandpaConnected(peerId);
+//
+//        if (!connectedToPeer && messageType != GrandpaMessageType.HANDSHAKE) {
+//            log.log(Level.WARNING, "No handshake for grandpa message from Peer " + peerId);
+//            stream.close();
+//            return;
+//        }
+//
+//        switch (messageType) {
+////            case HANDSHAKE -> handleHandshake(message, peerId, stream);
+////            case VOTE -> handleVoteMessage(message, peerId);
+////            case COMMIT -> handleCommitMessage(message, peerId);
+////            case NEIGHBOUR -> handleNeighbourMessage(message, peerId);
+//        }
+//    }
 
     private GrandpaMessageType getGrandpaMessageType(byte[] message) {
         if (message.length == HANDSHAKE_LENGTH) {
@@ -120,51 +98,30 @@ public class GrandpaEngine {
         return GrandpaMessageType.getByType(message[0]);
     }
 
-    private void handleHandshake(byte[] message, PeerId peerId, Stream stream) {
-        if (connectionManager.isGrandpaConnected(peerId)) {
-            log.log(Level.INFO, "Received existing grandpa handshake from " + peerId);
-            stream.close();
-        } else {
-            connectionManager.addGrandpaStream(stream);
-            connectionManager.getPeerInfo(peerId).setNodeRole(message[0]);
-            log.log(Level.INFO, "Received grandpa handshake from " + peerId);
-            writeHandshakeToStream(stream, peerId);
-        }
-    }
+//    private void handleHandshake(byte[] message, PeerId peerId, Stream stream) {
+//        if (connectionManager.isGrandpaConnected(peerId)) {
+//            log.log(Level.INFO, "Received existing grandpa handshake from " + peerId);
+//            stream.close();
+//        } else {
+//            connectionManager.addGrandpaStream(stream);
+//            connectionManager.getPeerInfo(peerId).setNodeRole(message[0]);
+//            log.log(Level.INFO, "Received grandpa handshake from " + peerId);
+//            writeHandshakeToStream(stream, peerId);
+//        }
+//    }
 
-    private void handleNeighbourMessage(byte[] message, PeerId peerId) {
-        ScaleCodecReader reader = new ScaleCodecReader(message);
-        NeighbourMessage neighbourMessage = reader.read(NeighbourMessageScaleReader.getInstance());
-        log.log(Level.INFO, "Received neighbour message from Peer " + peerId + "\n" + neighbourMessage);
-        new Thread(() -> warpSyncState.syncNeighbourMessage(neighbourMessage, peerId)).start();
-    }
+//    private void handleNeighbourMessage(byte[] message, PeerId peerId) {
+//        ScaleCodecReader reader = new ScaleCodecReader(message);
+//        NeighbourMessage neighbourMessage = reader.read(NeighbourMessageScaleReader.getInstance());
+//        log.log(Level.INFO, "Received neighbour message from Peer " + peerId + "\n" + neighbourMessage);
+//        new Thread(() -> warpSyncState.syncNeighbourMessage(neighbourMessage, peerId)).start();
+//    }
 
-    private void handleVoteMessage(byte[] message, PeerId peerId) {
-        ScaleCodecReader reader = new ScaleCodecReader(message);
-        VoteMessage voteMessage = reader.read(VoteMessageScaleReader.getInstance());
-        //todo: handle vote message (authoring node responsibility?)
-        log.log(Level.INFO, "Received vote message from Peer " + peerId + "\n" + voteMessage);
-    }
-
-    private void handleCommitMessage(byte[] message, PeerId peerId) {
-        ScaleCodecReader reader = new ScaleCodecReader(message);
-        CommitMessage commitMessage = reader.read(CommitMessageScaleReader.getInstance());
-        warpSyncState.syncCommit(commitMessage, peerId);
-    }
-
-    private void handleCatchupRequestMessage(byte[] message, PeerId peerId) {
-        ScaleCodecReader reader = new ScaleCodecReader(message);
-        CatchUpReqMessage catchUpReqMessage = reader.read(CatchUpReqMessageScaleReader.getInstance());
-        //todo: handle catchup req message (authoring node responsibility)
-        log.log(Level.INFO, "Received catch up request message from Peer " + peerId + "\n" + catchUpReqMessage);
-    }
-
-    private void handleCatchupResponseMessage(byte[] message, PeerId peerId) {
-        ScaleCodecReader reader = new ScaleCodecReader(message);
-        CatchUpMessage catchUpMessage = reader.read(CatchUpMessageScaleReader.getInstance());
-        //todo: handle catchup res message (authoring node responsibility)
-        log.log(Level.INFO, "Received catch up message from Peer " + peerId + "\n" + catchUpMessage);
-    }
+//    private void handleCommitMessage(byte[] message, PeerId peerId) {
+//        ScaleCodecReader reader = new ScaleCodecReader(message);
+//        CommitMessage commitMessage = reader.read(CommitMessageScaleReader.getInstance());
+//        warpSyncState.syncCommit(commitMessage, peerId);
+//    }
 
     /**
      * Send our GRANDPA handshake on a given <b>initiator</b> stream.
@@ -172,14 +129,14 @@ public class GrandpaEngine {
      * @param stream <b>initiator</b> stream to write the message to
      * @param peerId peer to send to
      */
-    public void writeHandshakeToStream(Stream stream, PeerId peerId) {
+    /*public void writeHandshakeToStream(Stream stream, PeerId peerId) {
         byte[] handshake = new byte[]{
                 (byte) handshakeBuilder.getBlockAnnounceHandshake().getNodeRole()
         };
 
         log.log(Level.INFO, "Sending grandpa handshake to " + peerId);
         stream.writeAndFlush(handshake);
-    }
+    }*/
 
     /**
      * Send our GRANDPA neighbour message from {@link WarpSyncState} on a given <b>responder</b> stream.
@@ -187,6 +144,7 @@ public class GrandpaEngine {
      * @param stream <b>responder</b> stream to write the message to
      * @param peerId peer to send to
      */
+/*
     public void writeNeighbourMessage(Stream stream, PeerId peerId) {
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
         try (ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
@@ -198,4 +156,5 @@ public class GrandpaEngine {
         log.log(Level.INFO, "Sending neighbour message to peer " + peerId);
         stream.writeAndFlush(buf.toByteArray());
     }
+*/
 }

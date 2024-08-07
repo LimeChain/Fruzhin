@@ -23,7 +23,7 @@ public class BlockAnnounceHandshakeBuilder {
         Hash256 lastFinalizedBlockHash = syncState.getLastFinalizedBlockHash();
         BigInteger lastFinalizedBlockNumber = syncState.getLastFinalizedBlockNumber();
 
-        NodeRole nodeRole = hostConfig.getNodeRole();
+        NodeRole nodeRole = NodeRole.LIGHT;//hostConfig.getNodeRole();
 
         Hash256 blockHash = lastFinalizedBlockHash == null
                 ? genesisBlockHash

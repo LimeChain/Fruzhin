@@ -6,6 +6,6 @@ import lombok.extern.java.Log;
 @Log
 public class BlockAnnounce extends StrictProtocolBinding<BlockAnnounceController> {
     public BlockAnnounce(String protocolId, BlockAnnounceProtocol protocol) {
-        super(protocolId, protocol);
+        super(protocolId/*, protocol*/);
     }
 }

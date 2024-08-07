@@ -4,11 +4,11 @@ import com.limechain.chain.ChainService;
 import com.limechain.config.HostConfig;
 import com.limechain.config.SystemInfo;
 import com.limechain.network.Network;
-import com.limechain.storage.DBInitializer;
 import com.limechain.storage.KVRepository;
 import com.limechain.storage.block.SyncState;
 import com.limechain.sync.warpsync.WarpSyncMachine;
 import com.limechain.sync.warpsync.WarpSyncState;
+import com.limechain.utils.DivLogger;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -19,19 +19,25 @@ import java.util.Map;
 public class CommonConfig {
 
     private static Map<Class<?>, Object> beans = new HashMap<>();
+    private static final DivLogger log = new DivLogger();
 
     public static void start() {
-        getBean(WarpSyncMachine.class);
         getBean(SystemInfo.class);
         getBean(HostConfig.class);
         getBean(KVRepository.class);
+        Object bean = getBean(WarpSyncMachine.class);
+        log.log("WarpSyncMachina is null " + (bean == null));
+        log.log("Building SystemInfo");
     }
 
     protected static Object getBean(Class<?> beanClass) {
+        log.log("Getting bean: " + beanClass.getSimpleName());
         if (beans.containsKey(beanClass)) {
+            log.log("Bean found in map");
             return beans.get(beanClass);
         } else {
-            switch (beanClass.getName()) {
+            log.log("Bean not found in map, building");
+            switch (beanClass.getSimpleName()) {
                 case "HostConfig":
                     HostConfig hostConfig = hostConfig();
                     beans.put(beanClass, hostConfig);
@@ -50,8 +56,7 @@ public class CommonConfig {
                     beans.put(beanClass, syncState);
                     return syncState;
                 case "SystemInfo":
-                    SystemInfo systemInfo = systemInfo((HostConfig) getBean(HostConfig.class),
-                            (Network) getBean(Network.class), (SyncState) getBean(SyncState.class));
+                    SystemInfo systemInfo = systemInfo((HostConfig) getBean(HostConfig.class), (SyncState) getBean(SyncState.class));
                     beans.put(beanClass, systemInfo);
                     return systemInfo;
                 case "Network":
@@ -81,7 +86,7 @@ public class CommonConfig {
     }
 
     private static KVRepository<String, Object> repository(HostConfig hostConfig) {
-        return DBInitializer.initialize(hostConfig.getChain());
+        return null;//DBInitializer.initialize(hostConfig.getChain());
     }
 
     private static ChainService chainService(HostConfig hostConfig, KVRepository<String, Object> repository) {
@@ -92,8 +97,9 @@ public class CommonConfig {
         return new SyncState(repository);
     }
 
-    private static SystemInfo systemInfo(HostConfig hostConfig, Network network, SyncState syncState) {
-        return new SystemInfo(hostConfig, network, syncState);
+    private static SystemInfo systemInfo(HostConfig hostConfig, SyncState syncState) {
+        log.log("Building SystemInfo method");
+        return new SystemInfo(hostConfig, syncState);
     }
 
     private static Network network(ChainService chainService, HostConfig hostConfig,

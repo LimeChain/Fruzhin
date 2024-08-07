@@ -1,7 +1,6 @@
 package com.limechain.network.protocol.warp.dto;
 
 import com.limechain.network.protocol.blockannounce.scale.BlockHeaderScaleWriter;
-import com.limechain.utils.HashUtils;
 import com.limechain.utils.scale.ScaleUtils;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.Getter;
@@ -36,6 +35,6 @@ public class BlockHeader {
 
     public Hash256 getHash() {
         byte[] scaleEncoded = ScaleUtils.Encode.encode(BlockHeaderScaleWriter.getInstance(), this);
-        return new Hash256(HashUtils.hashWithBlake2b(scaleEncoded));
+        return null;//new Hash256(HashUtils.hashWithBlake2b(scaleEncoded));
     }
 }

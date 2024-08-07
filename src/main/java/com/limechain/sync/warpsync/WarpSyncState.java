@@ -2,34 +2,14 @@ package com.limechain.sync.warpsync;
 
 import com.limechain.chain.lightsyncstate.Authority;
 import com.limechain.network.Network;
-import com.limechain.network.protocol.blockannounce.messages.BlockAnnounceMessage;
-import com.limechain.network.protocol.grandpa.messages.commit.CommitMessage;
-import com.limechain.network.protocol.grandpa.messages.neighbour.NeighbourMessage;
-import com.limechain.network.protocol.sync.pb.SyncMessage.BlockData;
-import com.limechain.network.protocol.sync.pb.SyncMessage.BlockResponse;
-import com.limechain.network.protocol.warp.dto.BlockHeader;
-import com.limechain.network.protocol.warp.dto.ConsensusEngine;
-import com.limechain.network.protocol.warp.dto.DigestType;
-import com.limechain.network.protocol.warp.dto.HeaderDigest;
-import com.limechain.network.protocol.warp.dto.Justification;
-import com.limechain.network.protocol.warp.scale.reader.BlockHeaderReader;
-import com.limechain.network.protocol.warp.scale.reader.JustificationReader;
 import com.limechain.storage.KVRepository;
 import com.limechain.storage.block.SyncState;
-import com.limechain.sync.JustificationVerifier;
-import com.limechain.sync.warpsync.dto.AuthoritySetChange;
-import com.limechain.sync.warpsync.dto.GrandpaDigestMessageType;
-import com.limechain.sync.warpsync.scale.ForcedChangeReader;
-import com.limechain.sync.warpsync.scale.ScheduledChangeReader;
-import io.emeraldpay.polkaj.scale.ScaleCodecReader;
-import io.libp2p.core.PeerId;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.java.Log;
 import org.javatuples.Pair;
 
 import java.math.BigInteger;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.PriorityQueue;
@@ -74,20 +54,20 @@ public class WarpSyncState {
         this.scheduledAuthorityChanges = scheduledAuthorityChanges;
     }
 
-    /**
-     * Update the state with information from a block announce message.
-     * Schedule runtime updates found in header, to be executed when block is verified.
-     *
-     * @param blockAnnounceMessage received block announce message
-     */
-    public void syncBlockAnnounce(BlockAnnounceMessage blockAnnounceMessage) {
-        boolean hasRuntimeUpdate = Arrays.stream(blockAnnounceMessage.getHeader().getDigest())
-                .anyMatch(d -> d.getType() == DigestType.RUN_ENV_UPDATED);
-
-        if (hasRuntimeUpdate) {
-            scheduledRuntimeUpdateBlocks.add(blockAnnounceMessage.getHeader().getBlockNumber());
-        }
-    }
+//    /**
+//     * Update the state with information from a block announce message.
+//     * Schedule runtime updates found in header, to be executed when block is verified.
+//     *
+//     * @param blockAnnounceMessage received block announce message
+//     */
+//    public void syncBlockAnnounce(BlockAnnounceMessage blockAnnounceMessage) {
+//        boolean hasRuntimeUpdate = Arrays.stream(blockAnnounceMessage.getHeader().getDigest())
+//                .anyMatch(d -> d.getType() == DigestType.RUN_ENV_UPDATED);
+//
+//        if (hasRuntimeUpdate) {
+//            scheduledRuntimeUpdateBlocks.add(blockAnnounceMessage.getHeader().getBlockNumber());
+//        }
+//    }
 
     /**
      * Updates the Host's state with information from a commit message.
@@ -97,39 +77,39 @@ public class WarpSyncState {
      * @param commitMessage received commit message
      * @param peerId        sender of the message
      */
-    public synchronized void syncCommit(CommitMessage commitMessage, PeerId peerId) {
-        if (commitMessage.getVote().getBlockNumber().compareTo(syncState.getLastFinalizedBlockNumber()) <= 0) {
-            log.log(Level.FINE, String.format("Received commit message for finalized block %d from peer %s",
-                    commitMessage.getVote().getBlockNumber(), peerId));
-            return;
-        }
+//    public synchronized void syncCommit(CommitMessage commitMessage, PeerId peerId) {
+//        if (commitMessage.getVote().getBlockNumber().compareTo(syncState.getLastFinalizedBlockNumber()) <= 0) {
+//            log.log(Level.FINE, String.format("Received commit message for finalized block %d from peer %s",
+//                    commitMessage.getVote().getBlockNumber(), peerId));
+//            return;
+//        }
+//
+//        log.log(Level.INFO, "Received commit message from peer " + peerId
+//                            + " for block #" + commitMessage.getVote().getBlockNumber()
+//                            + " with hash " + commitMessage.getVote().getBlockHash()
+//                            + " with setId " + commitMessage.getSetId() + " and round " + commitMessage.getRoundNumber()
+//                            + " with " + commitMessage.getPrecommits().length + " voters");
+//
+//        boolean verified = JustificationVerifier.verify(commitMessage.getPrecommits(), commitMessage.getRoundNumber());
+//        if (!verified) {
+//            log.log(Level.WARNING, "Could not verify commit from peer: " + peerId);
+//            return;
+//        }
+//
+//        if (warpSyncFinished) {
+//            updateState(commitMessage);
+//        }
+//    }
 
-        log.log(Level.INFO, "Received commit message from peer " + peerId
-                            + " for block #" + commitMessage.getVote().getBlockNumber()
-                            + " with hash " + commitMessage.getVote().getBlockHash()
-                            + " with setId " + commitMessage.getSetId() + " and round " + commitMessage.getRoundNumber()
-                            + " with " + commitMessage.getPrecommits().length + " voters");
-
-        boolean verified = JustificationVerifier.verify(commitMessage.getPrecommits(), commitMessage.getRoundNumber());
-        if (!verified) {
-            log.log(Level.WARNING, "Could not verify commit from peer: " + peerId);
-            return;
-        }
-
-        if (warpSyncFinished) {
-            updateState(commitMessage);
-        }
-    }
-
-    private void updateState(CommitMessage commitMessage) {
-        BigInteger lastFinalizedBlockNumber = syncState.getLastFinalizedBlockNumber();
-        if (commitMessage.getVote().getBlockNumber().compareTo(lastFinalizedBlockNumber) < 1) {
-            return;
-        }
-        syncState.finalizedCommitMessage(commitMessage);
-
-        log.log(Level.INFO, "Reached block #" + lastFinalizedBlockNumber);
-    }
+//    private void updateState(CommitMessage commitMessage) {
+//        BigInteger lastFinalizedBlockNumber = syncState.getLastFinalizedBlockNumber();
+//        if (commitMessage.getVote().getBlockNumber().compareTo(lastFinalizedBlockNumber) < 1) {
+//            return;
+//        }
+//        syncState.finalizedCommitMessage(commitMessage);
+//
+//        log.log(Level.INFO, "Reached block #" + lastFinalizedBlockNumber);
+//    }
 
     /**
      * Updates the Host's state with information from a neighbour message.
@@ -139,35 +119,35 @@ public class WarpSyncState {
      * @param neighbourMessage received neighbour message
      * @param peerId           sender of message
      */
-    public void syncNeighbourMessage(NeighbourMessage neighbourMessage, PeerId peerId) {
-        network.sendNeighbourMessage(peerId);
-        if (warpSyncFinished && neighbourMessage.getSetId().compareTo(syncState.getSetId()) > 0) {
-            updateSetData(neighbourMessage.getLastFinalizedBlock().add(BigInteger.ONE), peerId);
-        }
-    }
+//    public void syncNeighbourMessage(NeighbourMessage neighbourMessage, PeerId peerId) {
+//        network.sendNeighbourMessage(peerId);
+//        if (warpSyncFinished && neighbourMessage.getSetId().compareTo(syncState.getSetId()) > 0) {
+//            updateSetData(neighbourMessage.getLastFinalizedBlock().add(BigInteger.ONE), peerId);
+//        }
+//    }
 
-    private void updateSetData(BigInteger setChangeBlock, PeerId peerId) {
-        BlockResponse response = network.syncBlock(peerId, setChangeBlock);
-        BlockData block = response.getBlocksList().get(0);
-
-        if (block.getIsEmptyJustification()) {
-            log.log(Level.WARNING, "No justification for block " + setChangeBlock);
-            return;
-        }
-
-        Justification justification = new JustificationReader().read(
-                new ScaleCodecReader(block.getJustification().toByteArray()));
-        boolean verified = justification != null
-                           && JustificationVerifier.verify(justification.getPrecommits(), justification.getRound());
-
-        if (verified) {
-            BlockHeader header = new BlockHeaderReader().read(new ScaleCodecReader(block.getHeader().toByteArray()));
-
-            syncState.finalizeHeader(header);
-            handleAuthorityChanges(header.getDigest(), setChangeBlock);
-            handleScheduledEvents();
-        }
-    }
+//    private void updateSetData(BigInteger setChangeBlock, PeerId peerId) {
+//        BlockResponse response = network.syncBlock(peerId, setChangeBlock);
+//        BlockData block = response.getBlocksList().get(0);
+//
+//        if (block.getIsEmptyJustification()) {
+//            log.log(Level.WARNING, "No justification for block " + setChangeBlock);
+//            return;
+//        }
+//
+//        Justification justification = new JustificationReader().read(
+//                new ScaleCodecReader(block.getJustification().toByteArray()));
+//        boolean verified = justification != null
+//                           && JustificationVerifier.verify(justification.getPrecommits(), justification.getRound());
+//
+//        if (verified) {
+//            BlockHeader header = new BlockHeaderReader().read(new ScaleCodecReader(block.getHeader().toByteArray()));
+//
+//            syncState.finalizeHeader(header);
+//            handleAuthorityChanges(header.getDigest(), setChangeBlock);
+//            handleScheduledEvents();
+//        }
+//    }
 
     /**
      * Executes authority changes, scheduled for the current block.
@@ -198,51 +178,51 @@ public class WarpSyncState {
      * @param headerDigests digest of the block header
      * @param blockNumber   block that contains the digest
      */
-    public void handleAuthorityChanges(HeaderDigest[] headerDigests, BigInteger blockNumber) {
-        // Update authority set and set id
-        AuthoritySetChange authorityChanges;
-        for (HeaderDigest digest : headerDigests) {
-            if (digest.getId() == ConsensusEngine.GRANDPA) {
-                ScaleCodecReader reader = new ScaleCodecReader(digest.getMessage());
-                GrandpaDigestMessageType type = GrandpaDigestMessageType.fromId(reader.readByte());
-
-                if (type == null) {
-                    log.log(Level.SEVERE, "Could not get grandpa message type");
-                    throw new IllegalStateException("Unknown grandpa message type");
-                }
-
-                switch (type) {
-                    case SCHEDULED_CHANGE -> {
-                        ScheduledChangeReader authorityChangesReader = new ScheduledChangeReader();
-                        authorityChanges = authorityChangesReader.read(reader);
-                        scheduledAuthorityChanges
-                                .add(new Pair<>(blockNumber.add(authorityChanges.getDelay()),
-                                        authorityChanges.getAuthorities()));
-                        return;
-                    }
-                    case FORCED_CHANGE -> {
-                        ForcedChangeReader authorityForcedChangesReader = new ForcedChangeReader();
-                        authorityChanges = authorityForcedChangesReader.read(reader);
-                        scheduledAuthorityChanges
-                                .add(new Pair<>(blockNumber.add(authorityChanges.getDelay()),
-                                        authorityChanges.getAuthorities()));
-                        return;
-                    }
-                    case ON_DISABLED -> {
-                        log.log(Level.SEVERE, "'ON DISABLED' grandpa message not implemented");
-                        return;
-                    }
-                    case PAUSE -> {
-                        log.log(Level.SEVERE, "'PAUSE' grandpa message not implemented");
-                        return;
-                    }
-                    case RESUME -> {
-                        log.log(Level.SEVERE, "'RESUME' grandpa message not implemented");
-                        return;
-                    }
-                }
-            }
-        }
-    }
+//    public void handleAuthorityChanges(HeaderDigest[] headerDigests, BigInteger blockNumber) {
+//        // Update authority set and set id
+//        AuthoritySetChange authorityChanges;
+//        for (HeaderDigest digest : headerDigests) {
+//            if (digest.getId() == ConsensusEngine.GRANDPA) {
+//                ScaleCodecReader reader = new ScaleCodecReader(digest.getMessage());
+//                GrandpaDigestMessageType type = GrandpaDigestMessageType.fromId(reader.readByte());
+//
+//                if (type == null) {
+//                    log.log(Level.SEVERE, "Could not get grandpa message type");
+//                    throw new IllegalStateException("Unknown grandpa message type");
+//                }
+//
+//                switch (type) {
+//                    case SCHEDULED_CHANGE -> {
+//                        ScheduledChangeReader authorityChangesReader = new ScheduledChangeReader();
+//                        authorityChanges = authorityChangesReader.read(reader);
+//                        scheduledAuthorityChanges
+//                                .add(new Pair<>(blockNumber.add(authorityChanges.getDelay()),
+//                                        authorityChanges.getAuthorities()));
+//                        return;
+//                    }
+//                    case FORCED_CHANGE -> {
+//                        ForcedChangeReader authorityForcedChangesReader = new ForcedChangeReader();
+//                        authorityChanges = authorityForcedChangesReader.read(reader);
+//                        scheduledAuthorityChanges
+//                                .add(new Pair<>(blockNumber.add(authorityChanges.getDelay()),
+//                                        authorityChanges.getAuthorities()));
+//                        return;
+//                    }
+//                    case ON_DISABLED -> {
+//                        log.log(Level.SEVERE, "'ON DISABLED' grandpa message not implemented");
+//                        return;
+//                    }
+//                    case PAUSE -> {
+//                        log.log(Level.SEVERE, "'PAUSE' grandpa message not implemented");
+//                        return;
+//                    }
+//                    case RESUME -> {
+//                        log.log(Level.SEVERE, "'RESUME' grandpa message not implemented");
+//                        return;
+//                    }
+//                }
+//            }
+//        }
+//    }
 
 }

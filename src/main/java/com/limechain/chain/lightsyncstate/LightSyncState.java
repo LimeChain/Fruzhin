@@ -2,8 +2,6 @@ package com.limechain.chain.lightsyncstate;
 
 import com.limechain.chain.lightsyncstate.scale.AuthoritySetReader;
 import com.limechain.chain.lightsyncstate.scale.EpochChangesReader;
-import com.limechain.network.protocol.warp.dto.BlockHeader;
-import com.limechain.network.protocol.warp.scale.reader.BlockHeaderReader;
 import com.limechain.utils.StringUtils;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import lombok.Getter;
@@ -12,7 +10,7 @@ import java.util.Map;
 
 @Getter
 public class LightSyncState {
-    private BlockHeader finalizedBlockHeader;
+//    private BlockHeader finalizedBlockHeader;
     private EpochChanges epochChanges;
     private AuthoritySet grandpaAuthoritySet;
 
@@ -32,8 +30,8 @@ public class LightSyncState {
         }
 
         var state = new LightSyncState();
-        state.finalizedBlockHeader = new BlockHeaderReader()
-                .read(new ScaleCodecReader(StringUtils.hexToBytes(header)));
+//        state.finalizedBlockHeader = new BlockHeaderReader()
+//                .read(new ScaleCodecReader(StringUtils.hexToBytes(header)));
 
         state.epochChanges = new EpochChangesReader()
                 .read(new ScaleCodecReader(StringUtils.hexToBytes(epochChanges)));

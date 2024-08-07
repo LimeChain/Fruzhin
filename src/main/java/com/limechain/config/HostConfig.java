@@ -2,28 +2,21 @@ package com.limechain.config;
 
 import com.limechain.chain.Chain;
 import com.limechain.constants.RpcConstants;
-import com.limechain.exception.misc.InvalidChainException;
-import com.limechain.network.protocol.blockannounce.NodeRole;
+import com.limechain.utils.DivLogger;
 import lombok.Getter;
-import lombok.extern.java.Log;
 
-import java.util.Optional;
 import java.util.logging.Level;
-
-import static com.limechain.chain.Chain.WESTEND;
-import static com.limechain.chain.Chain.fromString;
 
 /**
  * Configuration class used to store any Host specific information
  */
-@Log
 @Getter
 public class HostConfig {
     /**
      * Chain the Host is running on
      */
     private final Chain chain;
-    private final NodeRole nodeRole;
+    //    private final NodeRole nodeRole;
     private final String rpcNodeAddress;
 
     private String polkadotGenesisPath = "genesis/polkadot.json";
@@ -31,21 +24,33 @@ public class HostConfig {
     private String westendGenesisPath = "genesis/westend.json";
     private String localGenesisPath = "genesis/local.json";
 
+    private static final DivLogger log = new DivLogger();
+
     public HostConfig() {
-        String network = "polkadot";
-        this.chain = Optional
-                .ofNullable(network.isEmpty() ? WESTEND : fromString(network))
-                .orElseThrow(() -> new InvalidChainException(String.format("\"%s\" is not a valid chain.", network)));
+        log.log(Level.INFO, "Loading app config...");
+        this.chain = Chain.POLKADOT;
+//        Optional
+//                .ofNullable(network.isEmpty() ? WESTEND : fromString(network))
+//                .orElseThrow(() -> new InvalidChainException(String.format("\"%s\" is not a valid chain.", network)));
 
-        this.nodeRole = NodeRole.LIGHT;
+//        this.nodeRole = NodeRole.LIGHT;
 
-        this.rpcNodeAddress = switch (chain) {
-            case POLKADOT, LOCAL -> RpcConstants.POLKADOT_WS_RPC;
-            case KUSAMA -> RpcConstants.KUSAMA_WS_RPC;
-            case WESTEND -> RpcConstants.WESTEND_WS_RPC;
-        };
+        log.log(Level.INFO, "Loading rpcNodeAddress...");
+        switch (chain.getValue()) {
+            case "POLKADOT", "LOCAL":
+                rpcNodeAddress = RpcConstants.POLKADOT_WS_RPC;
+                break;
+            case "KUSAMA":
+                rpcNodeAddress = RpcConstants.KUSAMA_WS_RPC;
+                break;
+            case "WESTEND":
+                rpcNodeAddress = RpcConstants.WESTEND_WS_RPC;
+                break;
+            default:
+                rpcNodeAddress = RpcConstants.POLKADOT_WS_RPC;
+        }
 
-        log.log(Level.INFO, String.format("✅️Loaded app config for chain %s%n", chain));
+        log.log(Level.INFO, "✅️Loaded app config for chain " + chain);
     }
 
     /**

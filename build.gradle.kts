@@ -1,8 +1,8 @@
 plugins {
     id("java")
-    id("io.freefair.lombok") version "8.6"
     id("war")
     id("org.teavm") version "0.9.2"
+    id("io.freefair.lombok") version "8.6"
 }
 
 group = "com.limechain"
@@ -24,7 +24,7 @@ dependencies {
 
     implementation("org.javatuples:javatuples:1.2")
 
-    implementation("com.github.LimeChain:nabu:0.7.8")
+//    implementation("com.github.LimeChain:nabu:0.7.8")
 //    implementation("com.fasterxml.jackson.core:jackson-databind:2.17.2")
 
     implementation("org.teavm:teavm-jso-apis:0.9.2")
@@ -41,3 +41,10 @@ teavm.js {
     mainClass = "com.limechain.Main"
     targetFileName = "fruzhin.js"
 }
+
+//teavm {
+//    js {
+//        sourceMap.set(true)
+//        debugInformation.set(true)
+//    }
+//}

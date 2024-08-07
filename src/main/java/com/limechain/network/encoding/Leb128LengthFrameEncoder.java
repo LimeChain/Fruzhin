@@ -1,10 +1,6 @@
 package com.limechain.network.encoding;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.MessageToByteEncoder;
-
-public class Leb128LengthFrameEncoder extends MessageToByteEncoder<ByteBuf> {
+public class Leb128LengthFrameEncoder /*extends MessageToByteEncoder<ByteBuf>*/ {
 
     /**
      * Gets the number of bytes in the unsigned LEB128 encoding of the
@@ -23,6 +19,7 @@ public class Leb128LengthFrameEncoder extends MessageToByteEncoder<ByteBuf> {
         return count + 1;
     }
 
+/*
     protected void encode(ChannelHandlerContext ctx, ByteBuf msg, ByteBuf out) throws Exception {
         int bodyLen = msg.readableBytes();
         int headerLen = unsignedLeb128Size(bodyLen);
@@ -31,4 +28,5 @@ public class Leb128LengthFrameEncoder extends MessageToByteEncoder<ByteBuf> {
         out.writeBytes(msg, msg.readerIndex(), bodyLen);
 
     }
+*/
 }
