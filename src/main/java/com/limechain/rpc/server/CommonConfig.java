@@ -47,8 +47,7 @@ public class CommonConfig {
                     beans.put(beanClass, repository);
                     return repository;
                 case "ChainService":
-                    ChainService chainService = chainService((HostConfig) getBean(HostConfig.class),
-                            (KVRepository<String, Object>) getBean(KVRepository.class));
+                    ChainService chainService = chainService((HostConfig) getBean(HostConfig.class));
                     beans.put(beanClass, chainService);
                     return chainService;
                 case "SyncState":
@@ -61,18 +60,18 @@ public class CommonConfig {
                     return systemInfo;
                 case "Network":
                     Network network = network((ChainService) getBean(ChainService.class),
-                            (HostConfig) getBean(HostConfig.class), (KVRepository<String, Object>) getBean(KVRepository.class));
+                        (HostConfig) getBean(HostConfig.class), (KVRepository<String, Object>) getBean(KVRepository.class));
                     beans.put(beanClass, network);
                     return network;
                 case "WarpSyncState":
                     WarpSyncState warpSyncState = warpSyncState((Network) getBean(Network.class),
-                            (SyncState) getBean(SyncState.class), (KVRepository<String, Object>) getBean(KVRepository.class));
+                        (SyncState) getBean(SyncState.class), (KVRepository<String, Object>) getBean(KVRepository.class));
                     beans.put(beanClass, warpSyncState);
                     return warpSyncState;
                 case "WarpSyncMachine":
                     WarpSyncMachine warpSyncMachine = warpSyncMachine((Network) getBean(Network.class),
-                            (ChainService) getBean(ChainService.class), (SyncState) getBean(SyncState.class),
-                            (WarpSyncState) getBean(WarpSyncState.class));
+                        (ChainService) getBean(ChainService.class), (SyncState) getBean(SyncState.class),
+                        (WarpSyncState) getBean(WarpSyncState.class));
                     beans.put(beanClass, warpSyncMachine);
                     return warpSyncMachine;
                 default:
@@ -89,8 +88,8 @@ public class CommonConfig {
         return null;//DBInitializer.initialize(hostConfig.getChain());
     }
 
-    private static ChainService chainService(HostConfig hostConfig, KVRepository<String, Object> repository) {
-        return new ChainService(hostConfig, repository);
+    private static ChainService chainService(HostConfig hostConfig) {
+        return new ChainService(hostConfig);
     }
 
     private static SyncState syncState(KVRepository<String, Object> repository) {
