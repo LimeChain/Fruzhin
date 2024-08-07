@@ -1,6 +1,6 @@
 plugins {
     id("java")
-    id("io.freefair.lombok") version "8.6"
+    id("io.freefair.lombok") version "8.7.1"
     id("org.springframework.boot") version "3.2.8"
     id("io.spring.dependency-management") version "1.1.6"
     id("application")
@@ -12,7 +12,7 @@ application {
 
 group = "com.limechain"
 version = "0.1.0"
-java.sourceCompatibility = JavaVersion.VERSION_21
+java.sourceCompatibility = JavaVersion.VERSION_22
 
 repositories {
     mavenCentral()
