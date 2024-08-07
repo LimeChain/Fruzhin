@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TeaVM example</title>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+    <script src="https://unpkg.com/@chainsafe/libp2p-yamux/dist/index.min.js"></script>
+    <script src="https://unpkg.com/@chainsafe/libp2p-noise/dist/index.min.js"></script>
+    <script src="https://unpkg.com/@libp2p/websockets/dist/index.min.js"></script>
+    <script src="https://unpkg.com/@libp2p/kad-dht/dist/index.min.js"></script>
+    <script src="https://unpkg.com/@libp2p/identify/dist/index.min.js"></script>
+    <script src="https://unpkg.com/@libp2p/bootstrap/dist/index.min.js"></script>
+    <script src="https://unpkg.com/@libp2p/ping/dist/index.min.js"></script>
+    <script src="https://unpkg.com/@chainsafe/libp2p-gossipsub/dist/index.min.js"></script>
+    <script src="https://unpkg.com/@libp2p/interface-libp2p/dist/index.min.js"></script>
+    <script src="https://unpkg.com/it-protobuf-stream/dist/index.min.js"></script>
+    <!--    <script src="" defer></script>-->
+    <script src="https://unpkg.com/libp2p/dist/index.min.js"></script>
+    <script src=""></script>
+    <script type="text/javascript" charset="utf-8" src="js/fruzhin.js"></script>
+</head>
+<body onload="main()">
+<script>
+    let start = async () => {
+        let test = {
+            addresses: {
+                listen: [],
+            },
+            transports: [
+                Libp2PWebsockets.webSockets()
+            ],
+            streamMuxers: [ChainsafeLibp2PYamux.yamux()],
+            connectionEncryption: [ChainsafeLibp2PNoise.noise()],
+            peerDiscovery: [
+                Libp2PBootstrap.bootstrap({
+                    list: [
+                        "/dns/polkadot-bootnode-0.polkadot.io/tcp/30333/p2p/12D3KooWSz8r2WyCdsfWHgPyvD8GKQdJ1UAiRmrcrs8sQB3fe2KU",
+                        "/dns/polkadot-bootnode-0.polkadot.io/tcp/30334/ws/p2p/12D3KooWSz8r2WyCdsfWHgPyvD8GKQdJ1UAiRmrcrs8sQB3fe2KU",
+                        "/dns/polkadot-bootnode-0.polkadot.io/tcp/443/wss/p2p/12D3KooWSz8r2WyCdsfWHgPyvD8GKQdJ1UAiRmrcrs8sQB3fe2KU",
+                        "/dns/polkadot-bootnode-1.polkadot.io/tcp/30333/p2p/12D3KooWFN2mhgpkJsDBuNuE5427AcDrsib8EoqGMZmkxWwx3Md4",
+                        "/dns/polkadot-bootnode-1.polkadot.io/tcp/30334/ws/p2p/12D3KooWFN2mhgpkJsDBuNuE5427AcDrsib8EoqGMZmkxWwx3Md4",
+                        "/dns/polkadot-bootnode-1.polkadot.io/tcp/443/wss/p2p/12D3KooWFN2mhgpkJsDBuNuE5427AcDrsib8EoqGMZmkxWwx3Md4",
+                        "/dns/polkadot-boot.dwellir.com/tcp/30334/ws/p2p/12D3KooWKvdDyRKqUfSAaUCbYiLwKY8uK3wDWpCuy2FiDLbkPTDJ",
+                        "/dns/polkadot-boot.dwellir.com/tcp/443/wss/p2p/12D3KooWKvdDyRKqUfSAaUCbYiLwKY8uK3wDWpCuy2FiDLbkPTDJ",
+                        "/dns/boot.stake.plus/tcp/30333/p2p/12D3KooWKT4ZHNxXH4icMjdrv7EwWBkfbz5duxE5sdJKKeWFYi5n",
+                        "/dns/boot.stake.plus/tcp/30334/wss/p2p/12D3KooWKT4ZHNxXH4icMjdrv7EwWBkfbz5duxE5sdJKKeWFYi5n",
+                        "/dns/boot-node.helikon.io/tcp/7070/p2p/12D3KooWS9ZcvRxyzrSf6p63QfTCWs12nLoNKhGux865crgxVA4H",
+                        "/dns/boot-node.helikon.io/tcp/7072/wss/p2p/12D3KooWS9ZcvRxyzrSf6p63QfTCWs12nLoNKhGux865crgxVA4H",
+                        "/dns/polkadot.bootnode.amforc.com/tcp/30333/p2p/12D3KooWAsuCEVCzUVUrtib8W82Yne3jgVGhQZN3hizko5FTnDg3",
+                        "/dns/polkadot.bootnode.amforc.com/tcp/30334/wss/p2p/12D3KooWAsuCEVCzUVUrtib8W82Yne3jgVGhQZN3hizko5FTnDg3"
+                    ]
+                })
+            ],
+            services: {
+                identify: Libp2PIdentify.identify(),
+                ping: Libp2PPing.ping(),
+                dht: Libp2PKadDht.kadDHT({protocol: "dot/dht/1.0.0"}),
+                pubsub: ChainsafeLibp2PGossipsub.gossipsub(),
+            }
+        };
+
+        const libp = await Libp2P.createLibp2p(test);
+        libp.start();
+
+        let pbStream = ItProtobufStream.pbStream;
+
+        libp.handle('/dot/sync/warp', ({stream}) => {
+
+            console.log('Received a warp sync request');
+            stream.write('Hello from the other side');
+            stream.end();
+        });
+    }
+
+    start();
+</script>
+</body>
+</html>
