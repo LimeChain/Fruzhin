@@ -19,11 +19,11 @@ git clone https://github.com/LimeChain/Fruzhin.git
 cd Fruzhin
 ```
 
-#### Install java 21 (if you don't already have it)
+#### Install java 22 (if you don't already have it)
 Setup guide:
-- [Windows](https://docs.aws.amazon.com/corretto/latest/corretto-21-ug/windows-install.html)
-- [Linux](https://docs.aws.amazon.com/corretto/latest/corretto-21-ug/generic-linux-install.html)
-- [Mac](https://docs.aws.amazon.com/corretto/latest/corretto-21-ug/macos-install.html)
+- [Windows](https://docs.aws.amazon.com/corretto/latest/corretto-22-ug/windows-install.html)
+- [Linux](https://docs.aws.amazon.com/corretto/latest/corretto-22-ug/generic-linux-install.html)
+- [Mac](https://docs.aws.amazon.com/corretto/latest/corretto-22-ug/macos-install.html)
 
 #### Build project
 

@@ -5,7 +5,7 @@ WORKDIR /usr/build/
 COPY . .
 RUN gradle clean build -x test
 
-FROM sapmachine:21
+FROM sapmachine:22
 
 RUN apt-get update && \
     apt-get install -y libstdc++6 && \

@@ -26,12 +26,12 @@ cd Fruzhin
 
 ### Java Version
 
-Fruzhin only works with Java 21. 
+Fruzhin works with Java 22.
 
-If you have multiple java version installed please make sure you're using 21:
+If you have multiple java version installed please make sure you're using 22:
 
 ```
-export JAVA_HOME=`/usr/libexec/java_home -v 21`
+export JAVA_HOME=`/usr/libexec/java_home -v 22`
 ```
 
 ### Build
