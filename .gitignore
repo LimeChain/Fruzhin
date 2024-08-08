@@ -25,4 +25,4 @@ out/
 /test
 
 ### Local Chain Spec
-/genesis/westend-local.json
+/src/main/webapp/genesis/westend-local.json

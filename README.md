@@ -99,7 +99,7 @@ Now you have 2 options:
    work. Without it, the light client won't have a checkpoint to start from
    and could be long-range attacked
 
-2. Create a new `westend-local.json` inside of the `genesis` project directory.
+2. Create a new `westend-local.json` inside of the `src/main/webapp/genesis` project directory.
 3. Copy the contents of the `result` field from the fetched chain spec into the newly created `westend-local.json`.
 4. In order to comply with the project requirements change the json structured as follows:
 

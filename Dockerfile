@@ -14,7 +14,7 @@ RUN apt-get update && \
 
 WORKDIR /usr/app/
 
-COPY genesis /usr/app/genesis
+COPY src/main/webapp/genesis /usr/app/genesis
 COPY --from=build_image /usr/build/build/libs/*.jar /usr/app/app.jar
 
 ENTRYPOINT ["java","-jar","/usr/app/app.jar"]

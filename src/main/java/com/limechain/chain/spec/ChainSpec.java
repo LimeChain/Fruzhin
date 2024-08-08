@@ -2,6 +2,7 @@ package com.limechain.chain.spec;
 
 import com.limechain.utils.json.ObjectMapper;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -11,6 +12,7 @@ import java.util.Map;
  * Contains the chain spec data, deserialized and parsed in-memory into appropriate structures
  */
 @Getter
+@Setter
 public class ChainSpec implements Serializable {
     private String id;
     private String name;

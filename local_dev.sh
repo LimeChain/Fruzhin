@@ -12,4 +12,4 @@ boot_nodes=$(echo "$boot_nodes_resp" | jq '.result')
 # Paste boot nodes
 final_json=$(echo "$output_json" | jq --argjson bootNodes "$boot_nodes" '.bootNodes = $bootNodes')
 
-echo "$final_json" > "./genesis/westend-local.json"
+echo "$final_json" > "./src/main/webapp/genesis/westend-local.json"

@@ -20,9 +20,9 @@ public class HostConfig {
     private final String rpcNodeAddress;
 
     private String polkadotGenesisPath = "genesis/polkadot.json";
-    private String kusamaGenesisPath = "genesis/kusama.json";
-    private String westendGenesisPath = "genesis/westend.json";
-    private String localGenesisPath = "genesis/local.json";
+    private String kusamaGenesisPath = "genesis/ksmcc3.json";
+    private String westendGenesisPath = "genesis/westend2.json";
+    private String localGenesisPath = "genesis/westend-local.json";
 
     private static final DivLogger log = new DivLogger();
 
