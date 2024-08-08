@@ -1,10 +1,10 @@
 package com.limechain.network.protocol.warp.scale.reader;
 
 import com.limechain.network.protocol.warp.dto.Precommit;
-import io.emeraldpay.polkaj.scale.ScaleCodecReader;
-import io.emeraldpay.polkaj.scale.ScaleReader;
-import io.emeraldpay.polkaj.types.Hash256;
-import io.emeraldpay.polkaj.types.Hash512;
+import com.limechain.polkaj.Hash256;
+import com.limechain.polkaj.Hash512;
+import com.limechain.polkaj.reader.ScaleCodecReader;
+import com.limechain.polkaj.reader.ScaleReader;
 
 public class PrecommitReader implements ScaleReader<Precommit> {
     @Override

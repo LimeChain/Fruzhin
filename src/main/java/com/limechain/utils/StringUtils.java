@@ -1,13 +1,12 @@
 package com.limechain.utils;
 
 import lombok.experimental.UtilityClass;
+import org.teavm.jso.JSBody;
 
-import java.security.InvalidParameterException;
 import java.util.regex.Pattern;
 
 @UtilityClass
 public class StringUtils {
-    private static final Pattern HEX_PATTERN = Pattern.compile("^(0x)?[0-9a-fA-F]+$");
     public static final String HEX_PREFIX = "0x";
 
     /**
@@ -17,23 +16,24 @@ public class StringUtils {
      *
      * @param hex the hexadecimal string to convert
      * @return the corresponding byte array
-     * @throws InvalidParameterException if the hex string has an odd length or does not match the hex pattern
+     * @throws IllegalArgumentException if the hex string has an odd length or does not match the hex pattern
      */
     public static byte[] hexToBytes(String hex) {
         if (hex.length() % 2 != 0) {
-            throw new InvalidParameterException("Invalid hex string length");
-        }
-
-        if (!HEX_PATTERN.matcher(hex).matches()) {
-            throw new InvalidParameterException("Invalid hex string");
+            throw new IllegalArgumentException("Invalid hex string length");
         }
 
         // Trim the 0x prefix if it exists
         hex = remove0xPrefix(hex);
 
-//        return ByteString.fromHex(hex).toByteArray();
-        return null;
+        return fromHex(hex);
     }
+
+    @JSBody(params = { "hex" }, script = " let bytes = [];" +
+                     "    for (let c = 0; c < hex.length; c += 2)" +
+                     "        bytes.push(parseInt(hex.substr(c, 2), 16));" +
+                     "    return bytes;")
+    public static native byte[] fromHex(String hex);
 
     /**
      * Removes the "0x" prefix from a hexadecimal string, if it exists.

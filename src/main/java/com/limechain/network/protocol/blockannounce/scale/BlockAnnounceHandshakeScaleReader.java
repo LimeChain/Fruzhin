@@ -1,9 +1,9 @@
 package com.limechain.network.protocol.blockannounce.scale;
 
 import com.limechain.network.protocol.blockannounce.messages.BlockAnnounceHandshake;
-import io.emeraldpay.polkaj.scale.ScaleCodecReader;
-import io.emeraldpay.polkaj.scale.ScaleReader;
-import io.emeraldpay.polkaj.types.Hash256;
+import com.limechain.polkaj.Hash256;
+import com.limechain.polkaj.reader.ScaleCodecReader;
+import com.limechain.polkaj.reader.ScaleReader;
 
 import java.math.BigInteger;
 

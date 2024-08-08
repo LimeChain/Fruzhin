@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>TeaVM example</title>
+    <title>Fruzhin</title>
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
     <script src="https://unpkg.com/@chainsafe/libp2p-yamux/dist/index.min.js"></script>
     <script src="https://unpkg.com/@chainsafe/libp2p-noise/dist/index.min.js"></script>
@@ -19,9 +19,17 @@
     <script type="text/javascript" charset="utf-8" src="js/fruzhin.js"></script>
     <script type="text/javascript" charset="utf-8" src="js/http.js"></script>
 </head>
-<body onload="main()">
+<body>
 <script>
-    let start = async () => {
+    var libp = undefined;
+
+    var getPeerId = () => {
+        return libp?.peerId;
+    }
+
+    var start = async (bootnodes) => {
+        console.log('Starting libp2p node');
+        console.log(bootnodes);
         let test = {
             addresses: {
                 listen: [],
@@ -33,22 +41,7 @@
             connectionEncryption: [ChainsafeLibp2PNoise.noise()],
             peerDiscovery: [
                 Libp2PBootstrap.bootstrap({
-                    list: [
-                        "/dns/polkadot-bootnode-0.polkadot.io/tcp/30333/p2p/12D3KooWSz8r2WyCdsfWHgPyvD8GKQdJ1UAiRmrcrs8sQB3fe2KU",
-                        "/dns/polkadot-bootnode-0.polkadot.io/tcp/30334/ws/p2p/12D3KooWSz8r2WyCdsfWHgPyvD8GKQdJ1UAiRmrcrs8sQB3fe2KU",
-                        "/dns/polkadot-bootnode-0.polkadot.io/tcp/443/wss/p2p/12D3KooWSz8r2WyCdsfWHgPyvD8GKQdJ1UAiRmrcrs8sQB3fe2KU",
-                        "/dns/polkadot-bootnode-1.polkadot.io/tcp/30333/p2p/12D3KooWFN2mhgpkJsDBuNuE5427AcDrsib8EoqGMZmkxWwx3Md4",
-                        "/dns/polkadot-bootnode-1.polkadot.io/tcp/30334/ws/p2p/12D3KooWFN2mhgpkJsDBuNuE5427AcDrsib8EoqGMZmkxWwx3Md4",
-                        "/dns/polkadot-bootnode-1.polkadot.io/tcp/443/wss/p2p/12D3KooWFN2mhgpkJsDBuNuE5427AcDrsib8EoqGMZmkxWwx3Md4",
-                        "/dns/polkadot-boot.dwellir.com/tcp/30334/ws/p2p/12D3KooWKvdDyRKqUfSAaUCbYiLwKY8uK3wDWpCuy2FiDLbkPTDJ",
-                        "/dns/polkadot-boot.dwellir.com/tcp/443/wss/p2p/12D3KooWKvdDyRKqUfSAaUCbYiLwKY8uK3wDWpCuy2FiDLbkPTDJ",
-                        "/dns/boot.stake.plus/tcp/30333/p2p/12D3KooWKT4ZHNxXH4icMjdrv7EwWBkfbz5duxE5sdJKKeWFYi5n",
-                        "/dns/boot.stake.plus/tcp/30334/wss/p2p/12D3KooWKT4ZHNxXH4icMjdrv7EwWBkfbz5duxE5sdJKKeWFYi5n",
-                        "/dns/boot-node.helikon.io/tcp/7070/p2p/12D3KooWS9ZcvRxyzrSf6p63QfTCWs12nLoNKhGux865crgxVA4H",
-                        "/dns/boot-node.helikon.io/tcp/7072/wss/p2p/12D3KooWS9ZcvRxyzrSf6p63QfTCWs12nLoNKhGux865crgxVA4H",
-                        "/dns/polkadot.bootnode.amforc.com/tcp/30333/p2p/12D3KooWAsuCEVCzUVUrtib8W82Yne3jgVGhQZN3hizko5FTnDg3",
-                        "/dns/polkadot.bootnode.amforc.com/tcp/30334/wss/p2p/12D3KooWAsuCEVCzUVUrtib8W82Yne3jgVGhQZN3hizko5FTnDg3"
-                    ]
+                    list: bootnodes
                 })
             ],
             services: {
@@ -59,20 +52,19 @@
             }
         };
 
-        const libp = await Libp2P.createLibp2p(test);
+        libp = await Libp2P.createLibp2p(test);
         libp.start();
 
-        let pbStream = ItProtobufStream.pbStream;
-
-        libp.handle('/dot/sync/warp', ({stream}) => {
-
-            console.log('Received a warp sync request');
-            stream.write('Hello from the other side');
-            stream.end();
-        });
+        // let pbStream = ItProtobufStream.pbStream;
+        //
+        // libp.handle('/dot/sync/warp', ({stream}) => {
+        //
+        //     console.log('Received a warp sync request');
+        //     stream.write('Hello from the other side');
+        //     stream.end();
+        // });
     }
-
-    start();
+    main();
 </script>
 </body>
 </html>

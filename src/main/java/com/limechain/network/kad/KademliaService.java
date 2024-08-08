@@ -1,8 +1,15 @@
 package com.limechain.network.kad;
 
+import com.limechain.network.kad.dto.Host;
+import com.limechain.network.kad.dto.PeerId;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.java.Log;
+import org.teavm.interop.Async;
+import org.teavm.interop.AsyncCallback;
+import org.teavm.jso.JSBody;
 
+import java.util.Arrays;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
@@ -14,30 +21,13 @@ import java.util.logging.Level;
 @Log
 public class KademliaService /*extends NetworkService<Kademlia>*/ {
     public static final int REPLICATION = 20;
-    private static final int ALPHA = 3;
     private static final Random RANDOM = new Random();
 
-//    @Setter
-//    private Host host;
-//    private List<PeerId> bootNodePeerIds;
+    @Setter
+    private Host host;
+    //    private List<PeerId> bootNodePeerIds;
     private int successfulBootNodes;
 
-    public KademliaService(String protocolId, boolean localDht, boolean clientMode) {
-        this.initialize(protocolId, localDht, clientMode);
-    }
-
-    /**
-     * Initializes Kademlia dht with replication=20 and alpha=3
-     *
-     * @param protocolId
-//     * @param hostId
-     * @param localEnabled
-     */
-    private void initialize(String protocolId, boolean localEnabled, boolean clientMode) {
-//        protocol = new Kademlia(
-//                new KademliaEngine(hostId, new RamProviderStore(1000), new RamRecordStore(), new RamBlockstore()),
-//                protocolId, REPLICATION, ALPHA, localEnabled, clientMode);
-    }
 
     public void addReservedPeer(String multiaddr) throws ExecutionException, InterruptedException {
 //        final Multiaddr addrWithPeer = Multiaddr.fromString(multiaddr);
@@ -61,18 +51,44 @@ public class KademliaService /*extends NetworkService<Kademlia>*/ {
      * @return the number of successfully connected nodes
      */
     public int connectBootNodes(String[] bootNodes) {
-//        var bootstrapMultiAddress = Arrays.stream(bootNodes)
-//                .map(DnsUtils::dnsNodeToIp4)
-//                .map(MultiAddress::new)
-//                .toList();
-//        this.setBootNodePeerIds(bootNodes);
-//        successfulBootNodes = protocol.bootstrapRoutingTable(host, bootstrapMultiAddress,
-//                addr -> !addr.contains("wss") && !addr.contains("ws"));
+        startNetwork(bootNodes);
+        Object peer = getPeerId();
+        while (peer.toString().equalsIgnoreCase("undefined")) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            peer = getPeerId();
+        }
+        String peerIdStr = peer.toString();
+        byte[] privateKey = getPeerPrivateKey();
+        byte[] publicKey = getPeerPublicKey();
+
+        PeerId peerId = new PeerId(privateKey, publicKey, peerIdStr);
+        this.host = new Host(peerId);
+
+        successfulBootNodes = getPeerStoreSize();
+
         if (successfulBootNodes > 0)
             log.log(Level.INFO, "Successfully connected to " + successfulBootNodes + " boot nodes");
         else log.log(Level.SEVERE, "Failed to connect to boot nodes");
         return successfulBootNodes;
     }
+
+    @JSBody(params = {"bootNodes"}, script = "start(bootNodes)")
+    @Async
+    public static native void startNetwork(String[] bootNodes);
+
+    @JSBody(script = "return getPeerId()")
+    public static native Object getPeerId();
+    @JSBody(script = "return libp.peerId.privateKey")
+    public static native byte[] getPeerPrivateKey();
+    @JSBody(script = "return libp.peerId.publicKey")
+    public static native byte[] getPeerPublicKey();
+    @JSBody(script = "return libp.peerStore.store.datastore.data.size")
+    public static native int getPeerStoreSize();
+
 
     /**
      * Populates Kademlia dht with peers closest in distance to a random id then makes connections with our node

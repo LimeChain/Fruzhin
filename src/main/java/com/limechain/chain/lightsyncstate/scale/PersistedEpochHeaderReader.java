@@ -2,8 +2,8 @@ package com.limechain.chain.lightsyncstate.scale;
 
 import com.limechain.chain.lightsyncstate.EpochHeader;
 import com.limechain.chain.lightsyncstate.PersistedEpochHeader;
-import io.emeraldpay.polkaj.scale.ScaleCodecReader;
-import io.emeraldpay.polkaj.scale.ScaleReader;
+import com.limechain.polkaj.reader.ScaleCodecReader;
+import com.limechain.polkaj.reader.ScaleReader;
 
 import java.util.ArrayList;
 import java.util.List;

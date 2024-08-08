@@ -2,10 +2,10 @@ package com.limechain.sync.warpsync.scale;
 
 import com.limechain.chain.lightsyncstate.Authority;
 import com.limechain.chain.lightsyncstate.scale.AuthorityReader;
+import com.limechain.polkaj.reader.ListReader;
+import com.limechain.polkaj.reader.ScaleCodecReader;
+import com.limechain.polkaj.reader.ScaleReader;
 import com.limechain.sync.warpsync.dto.AuthoritySetChange;
-import io.emeraldpay.polkaj.scale.ScaleCodecReader;
-import io.emeraldpay.polkaj.scale.ScaleReader;
-import io.emeraldpay.polkaj.scale.reader.ListReader;
 
 import java.math.BigInteger;
 

@@ -2,11 +2,11 @@ package com.limechain.network.protocol.grandpa.messages.commit;
 
 import com.limechain.exception.network.SignatureCountMismatchException;
 import com.limechain.network.protocol.warp.dto.Precommit;
-import io.emeraldpay.polkaj.scale.ScaleCodecReader;
-import io.emeraldpay.polkaj.scale.ScaleReader;
-import io.emeraldpay.polkaj.scale.reader.ListReader;
-import io.emeraldpay.polkaj.types.Hash256;
-import io.emeraldpay.polkaj.types.Hash512;
+import com.limechain.polkaj.Hash256;
+import com.limechain.polkaj.Hash512;
+import com.limechain.polkaj.reader.ListReader;
+import com.limechain.polkaj.reader.ScaleCodecReader;
+import com.limechain.polkaj.reader.ScaleReader;
 
 import java.util.List;
 

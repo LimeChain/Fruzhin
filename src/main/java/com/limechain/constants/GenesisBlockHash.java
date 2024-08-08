@@ -1,6 +1,6 @@
 package com.limechain.constants;
 
-import io.emeraldpay.polkaj.types.Hash256;
+import com.limechain.polkaj.Hash256;
 
 public class GenesisBlockHash {
     public static final Hash256 POLKADOT =

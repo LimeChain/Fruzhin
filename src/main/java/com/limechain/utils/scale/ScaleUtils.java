@@ -1,8 +1,8 @@
 package com.limechain.utils.scale;
 
 import com.limechain.exception.scale.ScaleEncodingException;
-import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
-import io.emeraldpay.polkaj.scale.ScaleWriter;
+import com.limechain.polkaj.writer.ScaleCodecWriter;
+import com.limechain.polkaj.writer.ScaleWriter;
 import lombok.experimental.UtilityClass;
 
 import java.io.ByteArrayOutputStream;

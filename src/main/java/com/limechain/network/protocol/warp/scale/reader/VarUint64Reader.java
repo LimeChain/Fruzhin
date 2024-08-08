@@ -1,7 +1,7 @@
 package com.limechain.network.protocol.warp.scale.reader;
 
-import io.emeraldpay.polkaj.scale.ScaleCodecReader;
-import io.emeraldpay.polkaj.scale.ScaleReader;
+import com.limechain.polkaj.reader.ScaleCodecReader;
+import com.limechain.polkaj.reader.ScaleReader;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;

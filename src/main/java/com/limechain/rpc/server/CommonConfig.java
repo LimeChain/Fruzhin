@@ -19,24 +19,18 @@ import java.util.Map;
 public class CommonConfig {
 
     private static Map<Class<?>, Object> beans = new HashMap<>();
-    private static final DivLogger log = new DivLogger();
 
     public static void start() {
         getBean(SystemInfo.class);
         getBean(HostConfig.class);
         getBean(KVRepository.class);
-        Object bean = getBean(WarpSyncMachine.class);
-        log.log("WarpSyncMachina is null " + (bean == null));
-        log.log("Building SystemInfo");
+        getBean(WarpSyncMachine.class);
     }
 
     protected static Object getBean(Class<?> beanClass) {
-        log.log("Getting bean: " + beanClass.getSimpleName());
         if (beans.containsKey(beanClass)) {
-            log.log("Bean found in map");
             return beans.get(beanClass);
         } else {
-            log.log("Bean not found in map, building");
             switch (beanClass.getSimpleName()) {
                 case "HostConfig":
                     HostConfig hostConfig = hostConfig();
@@ -97,7 +91,6 @@ public class CommonConfig {
     }
 
     private static SystemInfo systemInfo(HostConfig hostConfig, SyncState syncState) {
-        log.log("Building SystemInfo method");
         return new SystemInfo(hostConfig, syncState);
     }
 

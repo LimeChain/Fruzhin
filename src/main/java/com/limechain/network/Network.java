@@ -25,7 +25,7 @@ public class Network {
     private final Chain chain;
     @Getter
     private final String[] bootNodes;
-//    private final ConnectionManager connectionManager;
+    //    private final ConnectionManager connectionManager;
     @Getter
     private KademliaService kademliaService;
     private boolean started = false;
@@ -37,12 +37,12 @@ public class Network {
      * Manages if nodes running locally are going to be allowed
      * Connects Kademlia to boot nodes
      *
-     * @param chainService     chain specification information containing boot nodes
-     * @param hostConfig       host configuration containing current network
-     * @param repository       database repository
+     * @param chainService chain specification information containing boot nodes
+     * @param hostConfig   host configuration containing current network
+     * @param repository   database repository
      */
     public Network(ChainService chainService, HostConfig hostConfig, KVRepository<String, Object> repository) {
-        this.bootNodes = null;// chainService.getChainSpec().getBootNodes();
+        this.bootNodes = chainService.getChainSpec().getBootNodes();
         this.chain = hostConfig.getChain();
 //        this.connectionManager = ConnectionManager.getInstance();
         this.initializeProtocols(chainService, hostConfig, repository);
@@ -51,21 +51,15 @@ public class Network {
     private void initializeProtocols(ChainService chainService,
                                      HostConfig hostConfig,
                                      KVRepository<String, Object> repository) {
-        boolean isLocalEnabled = hostConfig.getChain() == Chain.LOCAL;
-        boolean clientMode = true;
+
 //
-//        String pingProtocol = ProtocolUtils.PING_PROTOCOL;
 //        String chainId = chainService.getChainSpec().getProtocolId();
-//        String kadProtocolId = ProtocolUtils.getKadProtocol(chainId);
 //        String warpProtocolId = ProtocolUtils.getWarpSyncProtocol(chainId);
 //        String lightProtocolId = ProtocolUtils.getLightMessageProtocol(chainId);
-//        String syncProtocolId = ProtocolUtils.getSyncProtocol(chainId);
-//        String stateProtocolId = ProtocolUtils.getStateProtocol(chainId);
 //        String blockAnnounceProtocolId = ProtocolUtils.getBlockAnnounceProtocol(chainId);
 //        String grandpaProtocolId = ProtocolUtils.getGrandpaProtocol(chainId);
-//        String transactionsProtocolId = ProtocolUtils.getTransactionsProtocol(chainId);
 
-//        kademliaService = new KademliaService(kadProtocolId, isLocalEnabled, clientMode);
+        kademliaService = new KademliaService();
     }
 
 //    private Ed25519PrivateKey loadPrivateKeyFromDB(KVRepository<String, Object> repository) {
@@ -85,6 +79,7 @@ public class Network {
 
     public void start() {
         log.log(Level.INFO, "Starting network module...");
+
         kademliaService.connectBootNodes(this.bootNodes);
         started = true;
         log.log(Level.INFO, "Started network module!");
@@ -161,7 +156,7 @@ public class Network {
         log.log(Level.INFO, String.format("Connected peers: %s", getPeersCount()));
     }
 
-//    @Scheduled(fixedDelay = 1, timeUnit = TimeUnit.MINUTES)
+    //    @Scheduled(fixedDelay = 1, timeUnit = TimeUnit.MINUTES)
     public void pingPeers() {
         // TODO: This needs to by synchronized with the findPeers method
         if (getPeersCount() == 0) {
@@ -259,7 +254,7 @@ public class Network {
 //        ).start();
 //    }
 
-//    @Scheduled(fixedRate = 5, initialDelay = 5, timeUnit = TimeUnit.MINUTES)
+    //    @Scheduled(fixedRate = 5, initialDelay = 5, timeUnit = TimeUnit.MINUTES)
     public void sendNeighbourMessages() {
         if (!AppBean.getBean(WarpSyncState.class).isWarpSyncFinished()) {
             return;

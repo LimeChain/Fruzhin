@@ -1,8 +1,8 @@
 plugins {
     id("java")
     id("war")
-    id("org.teavm") version "0.9.2"
-    id("io.freefair.lombok") version "8.6"
+    id("org.teavm") version "0.10.0"
+    id("io.freefair.lombok") version "8.7.1"
 }
 
 group = "com.limechain"
@@ -20,20 +20,8 @@ dependencies {
     compileOnly("org.projectlombok:lombok:1.18.34")
     implementation("org.projectlombok:lombok:1.18.34")
 
-    implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
+    implementation("org.teavm:teavm-jso-apis:0.10.0")
 
-    implementation("org.javatuples:javatuples:1.2")
-
-//    implementation("com.github.LimeChain:nabu:0.7.8")
-//    implementation("com.fasterxml.jackson.core:jackson-databind:2.17.2")
-
-    implementation("org.teavm:teavm-jso-apis:0.9.2")
-
-}
-
-tasks.getByName<Test>("test") {
-    useJUnitPlatform()
-    jvmArgs("-Dnet.bytebuddy.experimental=true")
 }
 
 teavm.js {
@@ -42,9 +30,11 @@ teavm.js {
     targetFileName = "fruzhin.js"
 }
 
-//teavm {
-//    js {
-//        sourceMap.set(true)
-//        debugInformation.set(true)
-//    }
-//}
+
+//TODO: Debug only. Remove when doing release build
+teavm {
+    js {
+        sourceMap.set(true)
+        debugInformation.set(true)
+    }
+}

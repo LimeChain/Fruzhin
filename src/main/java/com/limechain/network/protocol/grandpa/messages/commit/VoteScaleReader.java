@@ -1,9 +1,9 @@
 package com.limechain.network.protocol.grandpa.messages.commit;
 
 import com.limechain.network.protocol.warp.scale.reader.BlockNumberReader;
-import io.emeraldpay.polkaj.scale.ScaleCodecReader;
-import io.emeraldpay.polkaj.scale.ScaleReader;
-import io.emeraldpay.polkaj.types.Hash256;
+import com.limechain.polkaj.Hash256;
+import com.limechain.polkaj.reader.ScaleCodecReader;
+import com.limechain.polkaj.reader.ScaleReader;
 
 public class VoteScaleReader implements ScaleReader<Vote> {
     private static final VoteScaleReader INSTANCE = new VoteScaleReader();

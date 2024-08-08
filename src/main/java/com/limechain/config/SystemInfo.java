@@ -6,6 +6,7 @@ import com.limechain.utils.DivLogger;
 import lombok.Getter;
 
 import java.math.BigInteger;
+import java.util.Map;
 import java.util.logging.Level;
 
 /**
@@ -23,14 +24,10 @@ public class SystemInfo {
     private static final DivLogger log = new DivLogger();
 
     public SystemInfo(HostConfig hostConfig, SyncState syncState) {
-        log.log("Building SystemInfo constructor");
 //        this.role = network.getNodeRole().name();
         this.chain = hostConfig.getChain();
-        log.log("getChain");
 //        this.hostIdentity = network.getHost().getPeerId().toString();
         this.highestBlock = syncState.getLastFinalizedBlockNumber();
-
-        log.log("SystemInfo built");
         logSystemInfo();
     }
 
@@ -51,7 +48,6 @@ public class SystemInfo {
 //        log.log(Level.INFO, authEmoji + "Role: " + role);
 //        log.log(Level.INFO, "Local node identity is: " + hostIdentity);
         log.log(Level.INFO, "Operating System: " + System.getProperty("os.name"));
-        log.log(Level.INFO, "CPU architecture: " + System.getProperty("os.arch"));
         log.log(Level.INFO, "Highest known block at #" + highestBlock);
     }
 }

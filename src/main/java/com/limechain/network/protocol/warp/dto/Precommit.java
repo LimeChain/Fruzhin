@@ -1,7 +1,7 @@
 package com.limechain.network.protocol.warp.dto;
 
-import io.emeraldpay.polkaj.types.Hash256;
-import io.emeraldpay.polkaj.types.Hash512;
+import com.limechain.polkaj.Hash256;
+import com.limechain.polkaj.Hash512;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

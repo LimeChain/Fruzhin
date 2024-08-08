@@ -1,9 +1,9 @@
 package com.limechain.sync.warpsync.action;
 
+import com.limechain.polkaj.Hash256;
 import com.limechain.rpc.server.AppBean;
 import com.limechain.sync.warpsync.WarpSyncMachine;
 import com.limechain.sync.warpsync.WarpSyncState;
-import io.emeraldpay.polkaj.types.Hash256;
 import lombok.extern.java.Log;
 
 import java.util.logging.Level;

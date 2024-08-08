@@ -1,9 +1,9 @@
 package com.limechain.network.protocol.grandpa.messages.neighbour;
 
 import com.limechain.network.protocol.grandpa.messages.GrandpaMessageType;
-import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
-import io.emeraldpay.polkaj.scale.ScaleWriter;
-import io.emeraldpay.polkaj.scale.writer.UInt64Writer;
+import com.limechain.polkaj.writer.ScaleCodecWriter;
+import com.limechain.polkaj.writer.ScaleWriter;
+import com.limechain.polkaj.writer.UInt64Writer;
 
 import java.io.IOException;
 

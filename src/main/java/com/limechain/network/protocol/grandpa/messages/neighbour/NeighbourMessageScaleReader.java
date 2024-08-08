@@ -2,9 +2,9 @@ package com.limechain.network.protocol.grandpa.messages.neighbour;
 
 import com.limechain.exception.scale.WrongMessageTypeException;
 import com.limechain.network.protocol.grandpa.messages.GrandpaMessageType;
-import io.emeraldpay.polkaj.scale.ScaleCodecReader;
-import io.emeraldpay.polkaj.scale.ScaleReader;
-import io.emeraldpay.polkaj.scale.reader.UInt64Reader;
+import com.limechain.polkaj.reader.ScaleCodecReader;
+import com.limechain.polkaj.reader.ScaleReader;
+import com.limechain.polkaj.reader.UInt64Reader;
 
 import java.math.BigInteger;
 

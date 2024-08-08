@@ -1,7 +1,7 @@
 package com.limechain.storage;
 
 import com.limechain.exception.scale.ScaleEncodingException;
-import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
+import com.limechain.polkaj.writer.ScaleCodecWriter;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

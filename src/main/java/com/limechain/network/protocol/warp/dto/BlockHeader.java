@@ -1,8 +1,8 @@
 package com.limechain.network.protocol.warp.dto;
 
 import com.limechain.network.protocol.blockannounce.scale.BlockHeaderScaleWriter;
+import com.limechain.polkaj.Hash256;
 import com.limechain.utils.scale.ScaleUtils;
-import io.emeraldpay.polkaj.types.Hash256;
 import lombok.Getter;
 import lombok.Setter;
 

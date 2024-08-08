@@ -4,12 +4,12 @@ import com.limechain.chain.lightsyncstate.Authority;
 import com.limechain.chain.lightsyncstate.AuthoritySet;
 import com.limechain.chain.lightsyncstate.ForkTree;
 import com.limechain.chain.lightsyncstate.PendingChange;
-import io.emeraldpay.polkaj.scale.ScaleCodecReader;
-import io.emeraldpay.polkaj.scale.ScaleReader;
-import io.emeraldpay.polkaj.scale.reader.ListReader;
-import io.emeraldpay.polkaj.scale.reader.UInt32Reader;
-import io.emeraldpay.polkaj.scale.reader.UInt64Reader;
-import org.javatuples.Pair;
+import com.limechain.polkaj.reader.ListReader;
+import com.limechain.polkaj.reader.ScaleCodecReader;
+import com.limechain.polkaj.reader.ScaleReader;
+import com.limechain.polkaj.reader.UInt32Reader;
+import com.limechain.polkaj.reader.UInt64Reader;
+import com.limechain.tuple.Pair;
 
 public class AuthoritySetReader implements ScaleReader<AuthoritySet> {
     @Override

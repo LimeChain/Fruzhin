@@ -2,8 +2,8 @@ package com.limechain.network.protocol.warp.scale.reader;
 
 import com.limechain.network.protocol.warp.dto.WarpSyncFragment;
 import com.limechain.network.protocol.warp.dto.WarpSyncResponse;
-import io.emeraldpay.polkaj.scale.ScaleCodecReader;
-import io.emeraldpay.polkaj.scale.ScaleReader;
+import com.limechain.polkaj.reader.ScaleCodecReader;
+import com.limechain.polkaj.reader.ScaleReader;
 
 import java.util.ArrayList;
 import java.util.List;

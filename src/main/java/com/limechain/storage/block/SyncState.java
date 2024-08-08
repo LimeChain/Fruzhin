@@ -3,9 +3,12 @@ package com.limechain.storage.block;
 import com.limechain.chain.lightsyncstate.Authority;
 import com.limechain.chain.lightsyncstate.LightSyncState;
 import com.limechain.constants.GenesisBlockHash;
+import com.limechain.exception.storage.HeaderNotFoundException;
+import com.limechain.network.protocol.grandpa.messages.commit.CommitMessage;
+import com.limechain.network.protocol.warp.dto.BlockHeader;
+import com.limechain.polkaj.Hash256;
 import com.limechain.storage.DBConstants;
 import com.limechain.storage.KVRepository;
-import io.emeraldpay.polkaj.types.Hash256;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.java.Log;
@@ -32,8 +35,18 @@ public class SyncState {
 
         if (repository != null) {
             loadPersistedState();
+        } else {
+            loadDefaultState();
         }
         this.startingBlock = this.lastFinalizedBlockNumber;
+    }
+
+    private void loadDefaultState() {
+        this.lastFinalizedBlockNumber = BigInteger.ZERO;
+        this.lastFinalizedBlockHash = new Hash256(genesisBlockHash.getBytes());
+        this.authoritySet = new Authority[0];
+        this.latestRound = BigInteger.ONE;
+        this.setId = BigInteger.ZERO;
     }
 
     private void loadPersistedState() {
@@ -54,19 +67,19 @@ public class SyncState {
         repository.save(DBConstants.SET_ID, setId);
     }
 
-//    public void finalizeHeader(BlockHeader header) {
-//        this.lastFinalizedBlockNumber = header.getBlockNumber();
-//        this.lastFinalizedBlockHash = header.getHash();
-//    }
+    public void finalizeHeader(BlockHeader header) {
+        this.lastFinalizedBlockNumber = header.getBlockNumber();
+        this.lastFinalizedBlockHash = header.getHash();
+    }
 
-//    public void finalizedCommitMessage(CommitMessage commitMessage) {
-//        try {
-//            this.lastFinalizedBlockHash = commitMessage.getVote().getBlockHash();
-//            this.lastFinalizedBlockNumber = commitMessage.getVote().getBlockNumber();
-//        } catch (HeaderNotFoundException ignored) {
-//            log.fine("Received commit message for a block that is not in the block store");
-//        }
-//    }
+    public void finalizedCommitMessage(CommitMessage commitMessage) {
+        try {
+            this.lastFinalizedBlockHash = commitMessage.getVote().getBlockHash();
+            this.lastFinalizedBlockNumber = commitMessage.getVote().getBlockNumber();
+        } catch (HeaderNotFoundException ignored) {
+            log.fine("Received commit message for a block that is not in the block store");
+        }
+    }
 
     public BigInteger incrementSetId() {
         this.setId = this.setId.add(BigInteger.ONE);

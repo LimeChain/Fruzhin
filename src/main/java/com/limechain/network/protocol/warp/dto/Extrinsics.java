@@ -1,7 +1,7 @@
 package com.limechain.network.protocol.warp.dto;
 
 import com.limechain.exception.scale.ScaleEncodingException;
-import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
+import com.limechain.polkaj.writer.ScaleCodecWriter;
 import lombok.Data;
 
 import java.io.ByteArrayOutputStream;

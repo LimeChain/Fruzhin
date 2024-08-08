@@ -3,16 +3,18 @@ package com.limechain.chain.lightsyncstate.scale;
 import com.limechain.chain.lightsyncstate.EpochChanges;
 import com.limechain.chain.lightsyncstate.ForkTree;
 import com.limechain.chain.lightsyncstate.PersistedEpoch;
-import io.emeraldpay.polkaj.scale.ScaleCodecReader;
-import io.emeraldpay.polkaj.scale.ScaleReader;
-import io.emeraldpay.polkaj.scale.reader.ListReader;
-import io.emeraldpay.polkaj.scale.reader.UInt32Reader;
-import io.emeraldpay.polkaj.types.Hash256;
-import org.javatuples.Pair;
+import com.limechain.chain.lightsyncstate.PersistedEpochHeader;
+import com.limechain.polkaj.Hash256;
+import com.limechain.polkaj.reader.ListReader;
+import com.limechain.polkaj.reader.ScaleCodecReader;
+import com.limechain.polkaj.reader.ScaleReader;
+import com.limechain.polkaj.reader.UInt32Reader;
+import com.limechain.tuple.Pair;
 
 import java.math.BigInteger;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 public class EpochChangesReader implements ScaleReader<EpochChanges> {
     @Override
@@ -20,21 +22,22 @@ public class EpochChangesReader implements ScaleReader<EpochChanges> {
         EpochChanges changes = new EpochChanges();
 
         var forkTree = new ForkTree<>();
-        forkTree.setRoots(reader.read(new ListReader<>(
-                        new ForkTreeNodeReader<>(
-                                new PersistedEpochHeaderReader()
-                        )))
-                .toArray(ForkTree.ForkTreeNode[]::new));
+        PersistedEpochHeaderReader epochHeaderReader = new PersistedEpochHeaderReader();
+        ForkTreeNodeReader<PersistedEpochHeader> forkTreeReader = new ForkTreeNodeReader<>(epochHeaderReader);
+        ListReader<ForkTree.ForkTreeNode<PersistedEpochHeader>> listReader = new ListReader<>(forkTreeReader);
+        List<ForkTree.ForkTreeNode<PersistedEpochHeader>> roots = reader.read(listReader);
+        forkTree.setRoots(roots.toArray(ForkTree.ForkTreeNode[]::new));
         forkTree.setBestFinalizedNumber(reader.readOptional(new UInt32Reader()));
 
-        Map<Pair<Hash256, BigInteger>, PersistedEpoch> epochs = new TreeMap<>();
+        PersistedEpochReader scaleReader = new PersistedEpochReader();
+
+        Map<Pair<Hash256, BigInteger>, PersistedEpoch> epochs = new HashMap<>();
         int epochsCount = reader.readCompactInt();
         for (int i = 0; i < epochsCount; i++) {
-            Pair<Hash256, BigInteger> key = new Pair<>(
-                    new Hash256(reader.readUint256()),
-                    BigInteger.valueOf(reader.readUint32())
-            );
-            var value = reader.read(new PersistedEpochReader());
+            Hash256 hash256 = new Hash256(reader.readUint256());
+            BigInteger bigInteger = BigInteger.valueOf(reader.readUint32());
+            Pair<Hash256, BigInteger> key = new Pair<>(hash256, bigInteger);
+            var value = reader.read(scaleReader);
             epochs.put(key, value);
         }
 

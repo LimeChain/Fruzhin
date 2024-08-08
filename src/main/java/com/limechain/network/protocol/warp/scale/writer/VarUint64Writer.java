@@ -1,7 +1,7 @@
 package com.limechain.network.protocol.warp.scale.writer;
 
-import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
-import io.emeraldpay.polkaj.scale.ScaleWriter;
+import com.limechain.polkaj.writer.ScaleCodecWriter;
+import com.limechain.polkaj.writer.ScaleWriter;
 
 import java.io.IOException;
 import java.math.BigInteger;

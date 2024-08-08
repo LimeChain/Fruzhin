@@ -2,15 +2,19 @@ package com.limechain.chain.lightsyncstate;
 
 import com.limechain.chain.lightsyncstate.scale.AuthoritySetReader;
 import com.limechain.chain.lightsyncstate.scale.EpochChangesReader;
+import com.limechain.network.protocol.warp.dto.BlockHeader;
+import com.limechain.network.protocol.warp.scale.reader.BlockHeaderReader;
+import com.limechain.polkaj.reader.ScaleCodecReader;
 import com.limechain.utils.StringUtils;
-import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import lombok.Getter;
+import lombok.ToString;
 
+import java.util.Arrays;
 import java.util.Map;
 
 @Getter
 public class LightSyncState {
-//    private BlockHeader finalizedBlockHeader;
+    private BlockHeader finalizedBlockHeader;
     private EpochChanges epochChanges;
     private AuthoritySet grandpaAuthoritySet;
 
@@ -29,12 +33,15 @@ public class LightSyncState {
             throw new IllegalStateException("grandpaAuthoritySet is null");
         }
 
-        var state = new LightSyncState();
-//        state.finalizedBlockHeader = new BlockHeaderReader()
-//                .read(new ScaleCodecReader(StringUtils.hexToBytes(header)));
 
+        var state = new LightSyncState();
+        byte[] bytes = StringUtils.hexToBytes(header);
+        state.finalizedBlockHeader = new BlockHeaderReader()
+                .read(new ScaleCodecReader(bytes));
+
+        byte[] bytes1 = StringUtils.hexToBytes(epochChanges);
         state.epochChanges = new EpochChangesReader()
-                .read(new ScaleCodecReader(StringUtils.hexToBytes(epochChanges)));
+                .read(new ScaleCodecReader(bytes1));
 
         state.grandpaAuthoritySet = new AuthoritySetReader()
                 .read(new ScaleCodecReader(StringUtils.hexToBytes(grandpaAuthoritySet)));

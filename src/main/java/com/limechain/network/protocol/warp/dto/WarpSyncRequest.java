@@ -1,6 +1,6 @@
 package com.limechain.network.protocol.warp.dto;
 
-import io.emeraldpay.polkaj.types.Hash256;
+import com.limechain.polkaj.Hash256;
 import lombok.Getter;
 
 public class WarpSyncRequest {

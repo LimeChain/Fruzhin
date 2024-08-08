@@ -3,10 +3,10 @@ package com.limechain.network.protocol.warp.scale.reader;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.network.protocol.warp.dto.Precommit;
 import com.limechain.network.protocol.warp.dto.Justification;
-import io.emeraldpay.polkaj.scale.ScaleCodecReader;
-import io.emeraldpay.polkaj.scale.ScaleReader;
-import io.emeraldpay.polkaj.scale.reader.UInt64Reader;
-import io.emeraldpay.polkaj.types.Hash256;
+import com.limechain.polkaj.Hash256;
+import com.limechain.polkaj.reader.ScaleCodecReader;
+import com.limechain.polkaj.reader.ScaleReader;
+import com.limechain.polkaj.reader.UInt64Reader;
 
 public class JustificationReader implements ScaleReader<Justification> {
     @Override

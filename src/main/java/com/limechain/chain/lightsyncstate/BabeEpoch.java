@@ -2,7 +2,7 @@ package com.limechain.chain.lightsyncstate;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.javatuples.Pair;
+import com.limechain.tuple.Pair;
 
 import java.math.BigInteger;
 import java.util.List;

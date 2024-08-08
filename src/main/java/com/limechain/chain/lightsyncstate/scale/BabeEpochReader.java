@@ -1,10 +1,10 @@
 package com.limechain.chain.lightsyncstate.scale;
 
 import com.limechain.chain.lightsyncstate.BabeEpoch;
-import io.emeraldpay.polkaj.scale.ScaleCodecReader;
-import io.emeraldpay.polkaj.scale.ScaleReader;
-import io.emeraldpay.polkaj.scale.reader.ListReader;
-import io.emeraldpay.polkaj.scale.reader.UInt64Reader;
+import com.limechain.polkaj.reader.ListReader;
+import com.limechain.polkaj.reader.ScaleCodecReader;
+import com.limechain.polkaj.reader.ScaleReader;
+import com.limechain.polkaj.reader.UInt64Reader;
 
 public class BabeEpochReader implements ScaleReader<BabeEpoch> {
     @Override

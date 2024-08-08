@@ -7,7 +7,7 @@ import com.limechain.storage.block.SyncState;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.java.Log;
-import org.javatuples.Pair;
+import com.limechain.tuple.Pair;
 
 import java.math.BigInteger;
 import java.util.Comparator;
