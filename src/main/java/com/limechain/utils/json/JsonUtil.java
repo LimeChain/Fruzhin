@@ -13,6 +13,6 @@ public class JsonUtil {
     }
 
     public static String readJsonFromFile(String filePath) {
-        return HttpRequest.httpRequestSync("GET", filePath, null);
+        return HttpRequest.asyncHttpRequest("GET", filePath, null);
     }
 }
