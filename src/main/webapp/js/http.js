@@ -3,7 +3,7 @@ function httpRequestSync(method, url, body) {
     xhr.open(method, url, false); // false for synchronous request
     xhr.setRequestHeader('Content-Type', 'application/json');
     if (method === 'POST' && body) {
-        xhr.send(JSON.stringify(body));
+        xhr.send(body);
     } else {
         xhr.send();
     }

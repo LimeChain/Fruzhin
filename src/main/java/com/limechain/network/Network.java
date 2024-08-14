@@ -5,7 +5,6 @@ import com.limechain.chain.ChainService;
 import com.limechain.config.HostConfig;
 import com.limechain.network.kad.KademliaService;
 import com.limechain.rpc.server.AppBean;
-import com.limechain.storage.KVRepository;
 import com.limechain.sync.warpsync.WarpSyncState;
 import lombok.Getter;
 import lombok.extern.java.Log;
@@ -39,18 +38,16 @@ public class Network {
      *
      * @param chainService chain specification information containing boot nodes
      * @param hostConfig   host configuration containing current network
-     * @param repository   database repository
      */
-    public Network(ChainService chainService, HostConfig hostConfig, KVRepository<String, Object> repository) {
+    public Network(ChainService chainService, HostConfig hostConfig) {
         this.bootNodes = chainService.getChainSpec().getBootNodes();
         this.chain = hostConfig.getChain();
 //        this.connectionManager = ConnectionManager.getInstance();
-        this.initializeProtocols(chainService, hostConfig, repository);
+        this.initializeProtocols(chainService, hostConfig);
     }
 
     private void initializeProtocols(ChainService chainService,
-                                     HostConfig hostConfig,
-                                     KVRepository<String, Object> repository) {
+                                     HostConfig hostConfig) {
 
 //
 //        String chainId = chainService.getChainSpec().getProtocolId();
@@ -141,7 +138,7 @@ public class Network {
         }
         if (getPeersCount() >= REPLICATION) {
             log.log(Level.INFO,
-                    "Connections have reached replication factor(" + REPLICATION + "). " +
+                "Connections have reached replication factor(" + REPLICATION + "). " +
                     "No need to search for new ones yet.");
             return;
         }

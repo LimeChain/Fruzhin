@@ -1,5 +1,7 @@
 package com.limechain.chain.spec;
 
+import com.limechain.teavm.annotation.Reflectable;
+import com.limechain.utils.json.JsonUtil;
 import com.limechain.utils.json.ObjectMapper;
 import lombok.Getter;
 import lombok.Setter;
@@ -13,6 +15,7 @@ import java.util.Map;
  */
 @Getter
 @Setter
+@Reflectable
 public class ChainSpec implements Serializable {
     private String id;
     private String name;
@@ -29,6 +32,7 @@ public class ChainSpec implements Serializable {
      */
     public static ChainSpec newFromJSON(String pathToChainSpecJSON) throws IOException {
         ObjectMapper mapper = new ObjectMapper(false);
-        return mapper.mapToClass(pathToChainSpecJSON, ChainSpec.class);
+        String jsonChainSpec = JsonUtil.readJsonFromFile(pathToChainSpecJSON);
+        return mapper.mapToClass(jsonChainSpec, ChainSpec.class);
     }
 }

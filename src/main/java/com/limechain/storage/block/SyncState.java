@@ -8,18 +8,18 @@ import com.limechain.network.protocol.grandpa.messages.commit.CommitMessage;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.polkaj.Hash256;
 import com.limechain.storage.DBConstants;
-import com.limechain.storage.KVRepository;
+import com.limechain.storage.LocalStorage;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.java.Log;
 
 import java.math.BigInteger;
+import java.util.Arrays;
 
 @Getter
 @Log
 public class SyncState {
 
-    private final KVRepository<String, Object> repository;
     private BigInteger lastFinalizedBlockNumber;
     private final BigInteger startingBlock;
     private final Hash256 genesisBlockHash;
@@ -29,42 +29,29 @@ public class SyncState {
     private BigInteger latestRound;
     private BigInteger setId;
 
-    public SyncState(KVRepository<String, Object> repository) {
+    public SyncState() {
         this.genesisBlockHash = GenesisBlockHash.POLKADOT;
-        this.repository = repository;
 
-        if (repository != null) {
-            loadPersistedState();
-        } else {
-            loadDefaultState();
-        }
+        loadState();
         this.startingBlock = this.lastFinalizedBlockNumber;
     }
 
-    private void loadDefaultState() {
-        this.lastFinalizedBlockNumber = BigInteger.ZERO;
-        this.lastFinalizedBlockHash = new Hash256(genesisBlockHash.getBytes());
-        this.authoritySet = new Authority[0];
-        this.latestRound = BigInteger.ONE;
-        this.setId = BigInteger.ZERO;
-    }
-
-    private void loadPersistedState() {
-        this.lastFinalizedBlockNumber =
-                (BigInteger) repository.find(DBConstants.LAST_FINALIZED_BLOCK_NUMBER).orElse(BigInteger.ZERO);
-        this.lastFinalizedBlockHash = new Hash256(
-                (byte[]) repository.find(DBConstants.LAST_FINALIZED_BLOCK_HASH).orElse(genesisBlockHash.getBytes()));
-        this.authoritySet = (Authority[]) repository.find(DBConstants.AUTHORITY_SET).orElse(new Authority[0]);
-        this.latestRound = (BigInteger) repository.find(DBConstants.LATEST_ROUND).orElse(BigInteger.ONE);
-        this.setId = (BigInteger) repository.find(DBConstants.SET_ID).orElse(BigInteger.ZERO);
+    private void loadState() {
+        this.lastFinalizedBlockNumber = LocalStorage.find(
+            DBConstants.LAST_FINALIZED_BLOCK_NUMBER, BigInteger.class).orElse(BigInteger.ZERO);
+        this.lastFinalizedBlockHash = new Hash256(LocalStorage.find(
+            DBConstants.LAST_FINALIZED_BLOCK_HASH, byte[].class).orElse(genesisBlockHash.getBytes()));
+        this.authoritySet = LocalStorage.find(DBConstants.AUTHORITY_SET, Authority[].class).orElse(new Authority[0]);
+        this.latestRound = LocalStorage.find(DBConstants.LATEST_ROUND, BigInteger.class).orElse(BigInteger.ONE);
+        this.setId = LocalStorage.find(DBConstants.SET_ID, BigInteger.class).orElse(BigInteger.ZERO);
     }
 
     public void persistState() {
-        repository.save(DBConstants.LAST_FINALIZED_BLOCK_NUMBER, lastFinalizedBlockNumber);
-        repository.save(DBConstants.LAST_FINALIZED_BLOCK_HASH, lastFinalizedBlockHash.getBytes());
-        repository.save(DBConstants.AUTHORITY_SET, authoritySet);
-        repository.save(DBConstants.LATEST_ROUND, latestRound);
-        repository.save(DBConstants.SET_ID, setId);
+        LocalStorage.save(DBConstants.LAST_FINALIZED_BLOCK_NUMBER, lastFinalizedBlockNumber);
+        LocalStorage.save(DBConstants.LAST_FINALIZED_BLOCK_HASH, lastFinalizedBlockHash.getBytes());
+        LocalStorage.save(DBConstants.AUTHORITY_SET, authoritySet);
+        LocalStorage.save(DBConstants.LATEST_ROUND, latestRound);
+        LocalStorage.save(DBConstants.SET_ID, setId);
     }
 
     public void finalizeHeader(BlockHeader header) {

@@ -15,11 +15,7 @@ public class JsonParser {
         this.index = 0;
     }
 
-    Map<String, Object> parse() {
-        return (Map<String, Object>) parseValue();
-    }
-
-    private Object parseValue() {
+    Object parse() {
         skipWhitespace();
         char currentChar = peek();
         if (currentChar == '{') {
@@ -60,7 +56,7 @@ public class JsonParser {
             }
             index++; // Skip ':'
             skipWhitespace();
-            Object value = parseValue();
+            Object value = parse();
             object.put(key, value);
             skipWhitespace();
             char currentChar = peek();
@@ -85,7 +81,7 @@ public class JsonParser {
         }
         while (true) {
             skipWhitespace();
-            Object value = parseValue();
+            Object value = parse();
             array.add(value);
             skipWhitespace();
             char currentChar = peek();
@@ -144,9 +140,9 @@ public class JsonParser {
         return sb.toString();
     }
 
-    private Number parseNumber() {
+    private Object parseNumber() {
         int start = index;
-        while (Character.isDigit(peek()) || peek() == '-' || peek() == '.' || peek() == 'e' || peek() == 'E') {
+        while (index < json.length() && isValidNumberChar()) {
             index++;
         }
         String numberStr = json.substring(start, index).trim();
@@ -154,11 +150,19 @@ public class JsonParser {
             if (numberStr.contains(".") || numberStr.contains("e") || numberStr.contains("E")) {
                 return Double.parseDouble(numberStr);
             } else {
-                return Long.parseLong(numberStr);
+                return numberStr;
             }
         } catch (NumberFormatException e) {
             throw new RuntimeException("Invalid number format: " + numberStr);
         }
+    }
+
+    private boolean isValidNumberChar() {
+        return (Character.isDigit(json.charAt(index))
+            || json.charAt(index) == '-'
+            || json.charAt(index) == '.'
+            || json.charAt(index) == 'e'
+            || json.charAt(index) == 'E');
     }
 
     private void skipWhitespace() {

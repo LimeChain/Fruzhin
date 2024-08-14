@@ -21,7 +21,7 @@ dependencies {
     implementation("org.projectlombok:lombok:1.18.34")
 
     implementation("org.teavm:teavm-jso-apis:0.10.0")
-
+    implementation("org.teavm:teavm-core:0.10.0")
 }
 
 teavm.js {
