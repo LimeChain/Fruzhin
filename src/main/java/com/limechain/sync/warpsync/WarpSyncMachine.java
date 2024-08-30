@@ -5,6 +5,7 @@ import com.limechain.chain.lightsyncstate.Authority;
 import com.limechain.chain.lightsyncstate.LightSyncState;
 import com.limechain.network.Network;
 import com.limechain.network.protocol.warp.dto.WarpSyncFragment;
+import com.limechain.storage.block.BlockState;
 import com.limechain.storage.block.SyncState;
 import com.limechain.sync.warpsync.action.FinishedAction;
 import com.limechain.sync.warpsync.action.RequestFragmentsAction;
@@ -101,6 +102,12 @@ public class WarpSyncMachine {
         this.warpState.setWarpSyncFinished(true);
         this.networkService.handshakeBootNodes();
         this.syncState.persistState();
+
+        BlockState.getInstance().initializeWarp(
+                syncState.getLastFinalizedBlockHash(),
+                syncState.getLastFinalizedBlockNumber()
+        );
+
         log.info("Warp sync finished.");
         this.onFinishCallbacks.forEach(executor::submit);
     }

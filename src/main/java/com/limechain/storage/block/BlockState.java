@@ -16,23 +16,20 @@ import com.limechain.rpc.subscriptions.chainsub.ChainSub;
 import com.limechain.runtime.Runtime;
 import com.limechain.storage.DBConstants;
 import com.limechain.storage.KVRepository;
+import com.limechain.storage.block.tree.BlockNode;
 import com.limechain.storage.block.tree.BlockTree;
 import com.limechain.utils.scale.ScaleUtils;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.extern.java.Log;
 import org.javatuples.Pair;
 import org.springframework.util.SerializationUtils;
 
 import java.math.BigInteger;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Contains the historical block data of the blockchain, including block headers and bodies.
@@ -53,6 +50,12 @@ public class BlockState {
     private Hash256 lastFinalized;
     @Getter
     private boolean initialized;
+    @Getter
+    @Setter
+    private boolean fullSyncFinished;
+
+    @Getter
+    private Map<Hash256, Pair<Instant, Block>> blockBuffer = new LinkedHashMap<>();
 
     /**
      * Initializes the BlockState instance from genesis
@@ -97,9 +100,19 @@ public class BlockState {
 
         this.genesisHash = getHashByNumberFromDb(BigInteger.ZERO);
         final BlockHeader lastHeader = getHighestFinalizedHeader();
-        final Hash256 headerHash = lastHeader.getHash();
-        this.lastFinalized = headerHash;
+        this.lastFinalized = lastHeader.getHash();
         this.blockTree = new BlockTree(lastHeader);
+    }
+
+    public void initializeWarp(Hash256 lastFinalizedBlockHash, BigInteger lastFinalizedBlockNumber) {
+        BlockNode parent = new BlockNode(
+                lastFinalizedBlockHash,
+                null,
+                lastFinalizedBlockNumber.longValue()
+        );
+
+        this.blockTree = new BlockTree(parent);
+        this.lastFinalized = lastFinalizedBlockHash;
     }
 
     /**
@@ -589,7 +602,7 @@ public class BlockState {
         // Verify that we ended up with the start hash
         if (!Objects.equals(inLoopHash, startHash)) {
             throw new BlockStorageGenericException("Start hash mismatch: expected " + startHash +
-                                                   ", found: " + inLoopHash);
+                    ", found: " + inLoopHash);
         }
 
         return hashes;
@@ -884,7 +897,7 @@ public class BlockState {
             Block block = unfinalizedBlocks.get(subchainHash);
             if (block == null) {
                 throw new BlockNotFoundException("Failed to find block in unfinalized block map for hash" +
-                                                 subchainHash);
+                        subchainHash);
             }
 
             setHeader(block.getHeader());
@@ -903,5 +916,20 @@ public class BlockState {
             // but keep the state trie from the current finalized block
             //TODO: If currentFinalizedHash is not equal to subchain hash, delete subchain state trie
         }
+    }
+
+    // TODO: The last block from full sync machine has bigger number than the last block from the buffer, which results
+    // in not finding any parent of the blocks from the buffer in the block tree and it seems pointless to add any of the
+    // blocks from the buffer to the block tree.
+    public void mergeBlockStateWithAnnouncedBlocks() {
+        for (Map.Entry<Hash256, Pair<Instant, Block>> entry : blockBuffer.entrySet()) {
+
+            try {
+                this.addBlockWithArrivalTime(entry.getValue().getValue1(), entry.getValue().getValue0());
+            } catch (BlockNodeNotFoundException ex) {
+                log.info(ex.getMessage());
+            }
+        }
+        blockBuffer.clear();
     }
 }
