@@ -103,7 +103,6 @@ public class FullSyncMachine {
             receivedBlocks = requestBlocks(startNumber, blocksToFetch);
         }
 
-        BlockState.getInstance().mergeBlockStateWithAnnouncedBlocks();
         blockState.setFullSyncFinished(true);
     }
 

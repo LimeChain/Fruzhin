@@ -55,7 +55,7 @@ public class BlockState {
     private boolean fullSyncFinished;
 
     @Getter
-    private Map<Hash256, Pair<Instant, Block>> blockBuffer = new LinkedHashMap<>();
+    private final ArrayDeque<Pair<Instant, Block>> pendingBlocksQueue = new ArrayDeque<>();
 
     /**
      * Initializes the BlockState instance from genesis
@@ -918,18 +918,32 @@ public class BlockState {
         }
     }
 
-    // TODO: The last block from full sync machine has bigger number than the last block from the buffer, which results
-    // in not finding any parent of the blocks from the buffer in the block tree and it seems pointless to add any of the
-    // blocks from the buffer to the block tree.
-    public void mergeBlockStateWithAnnouncedBlocks() {
-        for (Map.Entry<Hash256, Pair<Instant, Block>> entry : blockBuffer.entrySet()) {
+    public synchronized void addBlockToQueue(BlockHeader blockHeader) {
+        var currentBlock = new Block(
+                blockHeader,
+                new BlockBody(new ArrayList<>())
+        );
+
+        pendingBlocksQueue.add(
+                new Pair<>(Instant.now(), currentBlock)
+        );
+    }
+
+    public synchronized void processPendingBlocksFromQueue() {
+        var rootBlockNumber = BigInteger.valueOf(blockTree.getRoot().getNumber());
+
+        while (!pendingBlocksQueue.isEmpty()) {
+            var current = pendingBlocksQueue.poll();
+
+            if (current.getValue1().getHeader().getBlockNumber().compareTo(rootBlockNumber) <= 0) {
+                continue;
+            }
 
             try {
-                this.addBlockWithArrivalTime(entry.getValue().getValue1(), entry.getValue().getValue0());
-            } catch (BlockNodeNotFoundException ex) {
+                this.addBlockWithArrivalTime(current.getValue1(), current.getValue0());
+            } catch (BlockStorageGenericException ex) {
                 log.info(ex.getMessage());
             }
         }
-        blockBuffer.clear();
     }
 }

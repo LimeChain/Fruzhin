@@ -6,6 +6,7 @@ import com.limechain.exception.storage.BlockStorageGenericException;
 import com.limechain.exception.storage.LowerThanRootException;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.runtime.Runtime;
+import com.limechain.storage.block.BlockState;
 import com.limechain.storage.block.map.HashToRuntime;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.Getter;
@@ -84,7 +85,8 @@ public class BlockTree {
             throw new BlockNodeNotFoundException("Parent does not exist in tree");
         }
         if (getNode(header.getHash()) != null) {
-            throw new BlockAlreadyExistsException("Block already exists in tree");
+            //TODO: Remove
+            throw new BlockAlreadyExistsException("Block already exists in tree -> ["+header.getBlockNumber()+"] ["+header.getHash()+"]");
         }
 
         long number = parent.getNumber() + 1;
@@ -97,6 +99,9 @@ public class BlockTree {
             //TODO: Check if primary
         }
 
+        //TODO: Remove
+        System.out.println("Queue size: " + BlockState.getInstance().getPendingBlocksQueue().size());
+        System.out.println("Block [" + header.getBlockNumber() + "] with hash [" + header.getHash() + "] added to the BlockTree");
         BlockNode newBlockNode = new BlockNode(header.getHash(), parent, new ArrayList<>(),
                 number, arrivalTime, isPrimary);
         parent.addChild(newBlockNode);
