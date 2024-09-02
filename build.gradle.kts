@@ -30,7 +30,7 @@ dependencies {
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.11.0")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.3")
-    testImplementation("org.mockito:mockito-core:5.12.0")
+    testImplementation("org.mockito:mockito-core:5.13.0")
 
     // CLI
     implementation("commons-cli:commons-cli:1.9.0")
