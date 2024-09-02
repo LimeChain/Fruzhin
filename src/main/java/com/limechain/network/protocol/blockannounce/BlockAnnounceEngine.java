@@ -21,18 +21,18 @@ import io.libp2p.core.Stream;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.extern.java.Log;
-import org.javatuples.Pair;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.logging.Level;
 
 @Log
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 public class BlockAnnounceEngine {
+
     public static final int HANDSHAKE_LENGTH = 69;
+
     protected ConnectionManager connectionManager;
     protected WarpSyncState warpSyncState;
     protected BlockAnnounceHandshakeBuilder handshakeBuilder;
@@ -93,23 +93,24 @@ public class BlockAnnounceEngine {
                 " stateRoot:" + announce.getHeader().getStateRoot());
 
         if (BlockState.getInstance().isInitialized()) {
-
             if (BlockState.getInstance().isFullSyncFinished()) {
+
                 BlockState.getInstance().processPendingBlocksFromQueue();
+
+                if (BlockState.getInstance().getPendingBlocksQueue().isEmpty()) {
+                    try {
+                        BlockState.getInstance().addBlock(new Block(announce.getHeader(), new BlockBody(new ArrayList<>())));
+                        return;
+                    } catch (BlockNodeNotFoundException ignored) {
+                        //TODO: Handle the error
+                        // Currently we ignore this exception, because our syncing strategy as full node is not implemented yet.
+                        // And thus when we receive a block announce and try to add it in the BlockState we will get this
+                        // exception because the parent block of the received one is not found in the BlockState.
+                    }
+                }
             }
 
-            if (BlockState.getInstance().isFullSyncFinished() && BlockState.getInstance().getPendingBlocksQueue().isEmpty()) {
-                try {
-                    BlockState.getInstance().addBlock(new Block(announce.getHeader(), new BlockBody(new ArrayList<>())));
-                } catch (BlockNodeNotFoundException ignored) {
-                    //TODO: Handle the error
-                    // Currently we ignore this exception, because our syncing strategy as full node is not implemented yet.
-                    // And thus when we receive a block announce and try to add it in the BlockState we will get this
-                    // exception because the parent block of the received one is not found in the BlockState.
-                }
-            } else {
-                BlockState.getInstance().addBlockToQueue(announce.getHeader());
-            }
+            BlockState.getInstance().addBlockToQueue(announce.getHeader());
         }
     }
 
