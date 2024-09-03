@@ -53,7 +53,6 @@ public class BlockState {
     @Getter
     @Setter
     private boolean fullSyncFinished;
-
     @Getter
     private final ArrayDeque<Pair<Instant, Block>> pendingBlocksQueue = new ArrayDeque<>();
 
@@ -104,14 +103,14 @@ public class BlockState {
         this.blockTree = new BlockTree(lastHeader);
     }
 
-    public void initializeWarp(Hash256 lastFinalizedBlockHash, BigInteger lastFinalizedBlockNumber) {
-        BlockNode parent = new BlockNode(
+    public void initializeAfterWarpSync(Hash256 lastFinalizedBlockHash, BigInteger lastFinalizedBlockNumber) {
+        BlockNode parentBlock = new BlockNode(
                 lastFinalizedBlockHash,
                 null,
                 lastFinalizedBlockNumber.longValue()
         );
 
-        this.blockTree = new BlockTree(parent);
+        this.blockTree = new BlockTree(parentBlock);
         this.lastFinalized = lastFinalizedBlockHash;
     }
 
@@ -927,13 +926,14 @@ public class BlockState {
                 if (getPendingBlocksQueue().isEmpty()) {
                     try {
                         addBlock(new Block(blockHeader, new BlockBody(new ArrayList<>())));
-                        return;
-                    } catch (BlockNodeNotFoundException ignored) {
-                        //TODO: Handle the error
-                        // Currently we ignore this exception, because our syncing strategy as full node is not implemented yet.
-                        // And thus when we receive a block announce and try to add it in the BlockState we will get this
-                        // exception because the parent block of the received one is not found in the BlockState.
+                    } catch (BlockStorageGenericException ex) {
+                        log.warning(String.format("Block with hash %s was not added to the block tree. Reason: %s",
+                                blockHeader.getHash().toString(),
+                                ex.getMessage())
+                        );
                     }
+
+                    return;
                 }
             }
 
@@ -956,16 +956,20 @@ public class BlockState {
         var rootBlockNumber = BigInteger.valueOf(blockTree.getRoot().getNumber());
 
         while (!pendingBlocksQueue.isEmpty()) {
-            var current = pendingBlocksQueue.poll();
+            var currentPair = pendingBlocksQueue.poll();
+            var block = currentPair.getValue1();
+            var arrivalTime = currentPair.getValue0();
 
-            if (current.getValue1().getHeader().getBlockNumber().compareTo(rootBlockNumber) <= 0) {
+            if (block.getHeader().getBlockNumber().compareTo(rootBlockNumber) <= 0) {
                 continue;
             }
 
             try {
-                addBlockWithArrivalTime(current.getValue1(), current.getValue0());
+                addBlockWithArrivalTime(block, arrivalTime);
             } catch (BlockStorageGenericException ex) {
-                log.info(ex.getMessage());
+                log.warning(String.format("Block with hash %s was not added to the block tree. Reason: %s",
+                        block.getHeader().getHash().toString(),
+                        ex.getMessage()));
             }
         }
     }

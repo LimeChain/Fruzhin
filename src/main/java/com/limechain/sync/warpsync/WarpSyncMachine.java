@@ -103,7 +103,7 @@ public class WarpSyncMachine {
         this.networkService.handshakeBootNodes();
         this.syncState.persistState();
 
-        BlockState.getInstance().initializeWarp(
+        BlockState.getInstance().initializeAfterWarpSync(
                 syncState.getLastFinalizedBlockHash(),
                 syncState.getLastFinalizedBlockNumber()
         );
