@@ -92,26 +92,7 @@ public class BlockAnnounceEngine {
                 " parentHash:" + announce.getHeader().getParentHash() +
                 " stateRoot:" + announce.getHeader().getStateRoot());
 
-        if (BlockState.getInstance().isInitialized()) {
-            if (BlockState.getInstance().isFullSyncFinished()) {
-
-                BlockState.getInstance().processPendingBlocksFromQueue();
-
-                if (BlockState.getInstance().getPendingBlocksQueue().isEmpty()) {
-                    try {
-                        BlockState.getInstance().addBlock(new Block(announce.getHeader(), new BlockBody(new ArrayList<>())));
-                        return;
-                    } catch (BlockNodeNotFoundException ignored) {
-                        //TODO: Handle the error
-                        // Currently we ignore this exception, because our syncing strategy as full node is not implemented yet.
-                        // And thus when we receive a block announce and try to add it in the BlockState we will get this
-                        // exception because the parent block of the received one is not found in the BlockState.
-                    }
-                }
-            }
-
-            BlockState.getInstance().addBlockToQueue(announce.getHeader());
-        }
+        BlockState.getInstance().addBlockToBlockTree(announce.getHeader());
     }
 
     public void writeHandshakeToStream(Stream stream, PeerId peerId) {

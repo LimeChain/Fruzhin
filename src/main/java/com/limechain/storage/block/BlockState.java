@@ -918,7 +918,30 @@ public class BlockState {
         }
     }
 
-    public synchronized void addBlockToQueue(BlockHeader blockHeader) {
+    public void addBlockToBlockTree(BlockHeader blockHeader) {
+        if (isInitialized()) {
+            if (isFullSyncFinished()) {
+
+                processPendingBlocksFromQueue();
+
+                if (getPendingBlocksQueue().isEmpty()) {
+                    try {
+                        addBlock(new Block(blockHeader, new BlockBody(new ArrayList<>())));
+                        return;
+                    } catch (BlockNodeNotFoundException ignored) {
+                        //TODO: Handle the error
+                        // Currently we ignore this exception, because our syncing strategy as full node is not implemented yet.
+                        // And thus when we receive a block announce and try to add it in the BlockState we will get this
+                        // exception because the parent block of the received one is not found in the BlockState.
+                    }
+                }
+            }
+
+            addBlockToQueue(blockHeader);
+        }
+    }
+
+    private synchronized void addBlockToQueue(BlockHeader blockHeader) {
         var currentBlock = new Block(
                 blockHeader,
                 new BlockBody(new ArrayList<>())
@@ -929,7 +952,7 @@ public class BlockState {
         );
     }
 
-    public synchronized void processPendingBlocksFromQueue() {
+    private synchronized void processPendingBlocksFromQueue() {
         var rootBlockNumber = BigInteger.valueOf(blockTree.getRoot().getNumber());
 
         while (!pendingBlocksQueue.isEmpty()) {
@@ -940,7 +963,7 @@ public class BlockState {
             }
 
             try {
-                this.addBlockWithArrivalTime(current.getValue1(), current.getValue0());
+                addBlockWithArrivalTime(current.getValue1(), current.getValue0());
             } catch (BlockStorageGenericException ex) {
                 log.info(ex.getMessage());
             }
