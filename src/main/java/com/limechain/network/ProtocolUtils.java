@@ -31,6 +31,10 @@ public final class ProtocolUtils {
         return String.format("/%s/kad", chainId);
     }
 
+    public static String getGrandpaProtocol(String chainId, boolean legacyProtocol) {
+        return String.format("/%s/grandpa/1", legacyProtocol ? "paritytech" : chainId);
+    }
+
     public static String getGrandpaProtocol(String chainId) {
         return String.format("/%s/grandpa/1", grandpaProtocolChain(chainId));
     }

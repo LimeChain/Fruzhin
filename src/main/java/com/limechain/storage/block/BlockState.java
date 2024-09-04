@@ -761,6 +761,8 @@ public class BlockState {
      * @throws BlockNodeNotFoundException if the block corresponding to the provided hash is not found.
      */
     public void setFinalizedHash(final Hash256 hash, final BigInteger round, final BigInteger setId) {
+        if (!fullSyncFinished) return;
+
         if (!hasHeader(hash)) {
             throw new BlockNodeNotFoundException("Cannot finalise unknown block " + hash);
         }
@@ -895,7 +897,7 @@ public class BlockState {
 
             Block block = unfinalizedBlocks.get(subchainHash);
             if (block == null) {
-                throw new BlockNotFoundException("Failed to find block in unfinalized block map for hash" +
+                throw new BlockNotFoundException("Failed to find block in unfinalized block map for hash " +
                         subchainHash);
             }
 
@@ -917,7 +919,7 @@ public class BlockState {
         }
     }
 
-    public void addBlockToBlockTree(BlockHeader blockHeader) {
+    public synchronized void addBlockToBlockTree(BlockHeader blockHeader) {
         if (isInitialized()) {
             if (isFullSyncFinished()) {
 
@@ -927,10 +929,7 @@ public class BlockState {
                     try {
                         addBlock(new Block(blockHeader, new BlockBody(new ArrayList<>())));
                     } catch (BlockStorageGenericException ex) {
-                        log.warning(String.format("Block with hash %s was not added to the block tree. Reason: %s",
-                                blockHeader.getHash().toString(),
-                                ex.getMessage())
-                        );
+                        log.fine(String.format("[%s] %s", blockHeader.getHash().toString(), ex.getMessage()));
                     }
 
                     return;
@@ -941,7 +940,7 @@ public class BlockState {
         }
     }
 
-    private synchronized void addBlockToQueue(BlockHeader blockHeader) {
+    private void addBlockToQueue(BlockHeader blockHeader) {
         var currentBlock = new Block(
                 blockHeader,
                 new BlockBody(new ArrayList<>())
@@ -952,7 +951,7 @@ public class BlockState {
         );
     }
 
-    private synchronized void processPendingBlocksFromQueue() {
+    private void processPendingBlocksFromQueue() {
         var rootBlockNumber = BigInteger.valueOf(blockTree.getRoot().getNumber());
 
         while (!pendingBlocksQueue.isEmpty()) {
@@ -967,9 +966,7 @@ public class BlockState {
             try {
                 addBlockWithArrivalTime(block, arrivalTime);
             } catch (BlockStorageGenericException ex) {
-                log.warning(String.format("Block with hash %s was not added to the block tree. Reason: %s",
-                        block.getHeader().getHash().toString(),
-                        ex.getMessage()));
+                log.fine(String.format("[%s] %s", block.getHeader().getHash().toString(), ex.getMessage()));
             }
         }
     }

@@ -178,10 +178,6 @@ public class BlockTree {
             throw new BlockNodeNotFoundException("Start node not found");
         }
 
-        if (startBlockNode.getNumber() > endBlockNode.getNumber()) {
-            throw new BlockStorageGenericException("Start is greater than end");
-        }
-
         return accumulateHashesInDescendingOrder(endBlockNode, startBlockNode);
     }
 
@@ -196,7 +192,7 @@ public class BlockTree {
      */
     public List<Hash256> accumulateHashesInDescendingOrder(final BlockNode endNode, final BlockNode startNode) {
         if (startNode.getNumber() > endNode.getNumber()) {
-            throw new IllegalArgumentException("Start is greater than end");
+            throw new BlockStorageGenericException("Start is greater than end");
         }
 
         int blocksInRange = (int) (endNode.getNumber() - startNode.getNumber());
@@ -205,7 +201,7 @@ public class BlockTree {
         BlockNode tempNode = endNode;
         for (int position = blocksInRange - 1; position >= 0; position--) {
             hashes.add(tempNode.getHash());
-            tempNode = endNode.getParent();
+            tempNode = tempNode.getParent();
 
             if (tempNode == null) {
                 throw new BlockStorageGenericException("End node is null");
