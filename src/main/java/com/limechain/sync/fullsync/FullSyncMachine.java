@@ -209,7 +209,7 @@ public class FullSyncMachine {
      */
     private void executeBlocks(List<Block> receivedBlockDatas, TrieAccessor trieAccessor) {
         for (Block block : receivedBlockDatas) {
-            log.info("Block number to be executed is " + block.getHeader().getBlockNumber());
+            log.fine("Block number to be executed is " + block.getHeader().getBlockNumber());
 
             try {
                 blockState.addBlock(block);
