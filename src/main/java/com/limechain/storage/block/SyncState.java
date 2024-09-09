@@ -77,7 +77,9 @@ public class SyncState {
                 this.lastFinalizedBlockHash = commitMessage.getVote().getBlockHash();
                 this.lastFinalizedBlockNumber = commitMessage.getVote().getBlockNumber();
 
-                BlockState.getInstance().setFinalizedHash(commitMessage.getVote().getBlockHash(), commitMessage.getRoundNumber(), commitMessage.getSetId());
+                if (BlockState.getInstance().isInitialized()) {
+                    BlockState.getInstance().setFinalizedHash(commitMessage.getVote().getBlockHash(), commitMessage.getRoundNumber(), commitMessage.getSetId());
+                }
             }
 
         } catch (HeaderNotFoundException ignored) {

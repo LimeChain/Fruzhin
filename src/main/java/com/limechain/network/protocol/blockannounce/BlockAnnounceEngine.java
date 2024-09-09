@@ -88,7 +88,9 @@ public class BlockAnnounceEngine {
                 " parentHash:" + announce.getHeader().getParentHash() +
                 " stateRoot:" + announce.getHeader().getStateRoot());
 
-        BlockState.getInstance().addBlockToBlockTree(announce.getHeader());
+        if (BlockState.getInstance().isInitialized()) {
+            BlockState.getInstance().addBlockToBlockTree(announce.getHeader());
+        }
     }
 
     public void writeHandshakeToStream(Stream stream, PeerId peerId) {
