@@ -76,7 +76,12 @@ public class SyncState {
                 this.stateRoot = blockByHash.getHeader().getStateRoot();
                 this.lastFinalizedBlockHash = commitMessage.getVote().getBlockHash();
                 this.lastFinalizedBlockNumber = commitMessage.getVote().getBlockNumber();
+
+                if (BlockState.getInstance().isInitialized()) {
+                    BlockState.getInstance().setFinalizedHash(commitMessage.getVote().getBlockHash(), commitMessage.getRoundNumber(), commitMessage.getSetId());
+                }
             }
+
         } catch (HeaderNotFoundException ignored) {
             log.fine("Received commit message for a block that is not in the block store");
         }

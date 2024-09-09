@@ -102,6 +102,8 @@ public class FullSyncMachine {
             startNumber += blocksToFetch;
             receivedBlocks = requestBlocks(startNumber, blocksToFetch);
         }
+
+        blockState.setFullSyncFinished(true);
     }
 
     private TrieStructure<NodeData> loadStateAtBlockFromPeer(Hash256 lastFinalizedBlockHash) {

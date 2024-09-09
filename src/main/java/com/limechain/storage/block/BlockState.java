@@ -16,17 +16,20 @@ import com.limechain.rpc.subscriptions.chainsub.ChainSub;
 import com.limechain.runtime.Runtime;
 import com.limechain.storage.DBConstants;
 import com.limechain.storage.KVRepository;
+import com.limechain.storage.block.tree.BlockNode;
 import com.limechain.storage.block.tree.BlockTree;
 import com.limechain.utils.scale.ScaleUtils;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.extern.java.Log;
 import org.javatuples.Pair;
 import org.springframework.util.SerializationUtils;
 
 import java.math.BigInteger;
 import java.time.Instant;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -53,6 +56,10 @@ public class BlockState {
     private Hash256 lastFinalized;
     @Getter
     private boolean initialized;
+    @Setter
+    private boolean fullSyncFinished;
+    @Getter
+    private final ArrayDeque<Pair<Instant, Block>> pendingBlocksQueue = new ArrayDeque<>();
 
     /**
      * Initializes the BlockState instance from genesis
@@ -97,9 +104,19 @@ public class BlockState {
 
         this.genesisHash = getHashByNumberFromDb(BigInteger.ZERO);
         final BlockHeader lastHeader = getHighestFinalizedHeader();
-        final Hash256 headerHash = lastHeader.getHash();
-        this.lastFinalized = headerHash;
+        this.lastFinalized = lastHeader.getHash();
         this.blockTree = new BlockTree(lastHeader);
+    }
+
+    public void initializeAfterWarpSync(Hash256 lastFinalizedBlockHash, BigInteger lastFinalizedBlockNumber) {
+        BlockNode parentBlock = new BlockNode(
+                lastFinalizedBlockHash,
+                null,
+                lastFinalizedBlockNumber.longValue()
+        );
+
+        this.blockTree = new BlockTree(parentBlock);
+        this.lastFinalized = lastFinalizedBlockHash;
     }
 
     /**
@@ -589,7 +606,7 @@ public class BlockState {
         // Verify that we ended up with the start hash
         if (!Objects.equals(inLoopHash, startHash)) {
             throw new BlockStorageGenericException("Start hash mismatch: expected " + startHash +
-                                                   ", found: " + inLoopHash);
+                    ", found: " + inLoopHash);
         }
 
         return hashes;
@@ -749,6 +766,8 @@ public class BlockState {
      * @throws BlockNodeNotFoundException if the block corresponding to the provided hash is not found.
      */
     public void setFinalizedHash(final Hash256 hash, final BigInteger round, final BigInteger setId) {
+        if (!fullSyncFinished) return;
+
         if (!hasHeader(hash)) {
             throw new BlockNodeNotFoundException("Cannot finalise unknown block " + hash);
         }
@@ -883,8 +902,8 @@ public class BlockState {
 
             Block block = unfinalizedBlocks.get(subchainHash);
             if (block == null) {
-                throw new BlockNotFoundException("Failed to find block in unfinalized block map for hash" +
-                                                 subchainHash);
+                throw new BlockNotFoundException("Failed to find block in unfinalized block map for hash " +
+                        subchainHash);
             }
 
             setHeader(block.getHeader());
@@ -902,6 +921,54 @@ public class BlockState {
             // Prune all the subchain hashes state trie from memory
             // but keep the state trie from the current finalized block
             //TODO: If currentFinalizedHash is not equal to subchain hash, delete subchain state trie
+        }
+    }
+
+    public synchronized void addBlockToBlockTree(BlockHeader blockHeader) {
+        if (!fullSyncFinished) {
+            addBlockToQueue(blockHeader);
+            return;
+        }
+
+        processPendingBlocksFromQueue();
+
+        if (getPendingBlocksQueue().isEmpty()) {
+            try {
+                addBlock(new Block(blockHeader, new BlockBody(new ArrayList<>())));
+            } catch (BlockStorageGenericException ex) {
+                log.fine(String.format("[%s] %s", blockHeader.getHash().toString(), ex.getMessage()));
+            }
+        }
+    }
+
+    private void addBlockToQueue(BlockHeader blockHeader) {
+        var currentBlock = new Block(
+                blockHeader,
+                new BlockBody(new ArrayList<>())
+        );
+
+        pendingBlocksQueue.add(
+                new Pair<>(Instant.now(), currentBlock)
+        );
+    }
+
+    private void processPendingBlocksFromQueue() {
+        var rootBlockNumber = BigInteger.valueOf(blockTree.getRoot().getNumber());
+
+        while (!pendingBlocksQueue.isEmpty()) {
+            var currentPair = pendingBlocksQueue.poll();
+            var block = currentPair.getValue1();
+            var arrivalTime = currentPair.getValue0();
+
+            if (block.getHeader().getBlockNumber().compareTo(rootBlockNumber) <= 0) {
+                continue;
+            }
+
+            try {
+                addBlockWithArrivalTime(block, arrivalTime);
+            } catch (BlockStorageGenericException ex) {
+                log.fine(String.format("[%s] %s", block.getHeader().getHash().toString(), ex.getMessage()));
+            }
         }
     }
 }

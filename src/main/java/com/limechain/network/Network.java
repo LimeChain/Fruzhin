@@ -120,16 +120,16 @@ public class Network {
 
         String pingProtocol = ProtocolUtils.PING_PROTOCOL;
         String chainId = chainService.getChainSpec().getProtocolId();
-        String protocolId = cliArgs.noLegacyProtocols()
-                ? StringUtils.remove0xPrefix(genesisBlockHash.getGenesisHash().toString())
-                : chainId;
+        boolean legacyProtocol = !cliArgs.noLegacyProtocols();
+        String protocolId = legacyProtocol ? chainId :
+                StringUtils.remove0xPrefix(genesisBlockHash.getGenesisHash().toString());
         String kadProtocolId = ProtocolUtils.getKadProtocol(chainId);
         String warpProtocolId = ProtocolUtils.getWarpSyncProtocol(protocolId);
         String lightProtocolId = ProtocolUtils.getLightMessageProtocol(protocolId);
         String syncProtocolId = ProtocolUtils.getSyncProtocol(protocolId);
         String stateProtocolId = ProtocolUtils.getStateProtocol(protocolId);
         String blockAnnounceProtocolId = ProtocolUtils.getBlockAnnounceProtocol(protocolId);
-        String grandpaProtocolId = ProtocolUtils.getGrandpaProtocol(protocolId);
+        String grandpaProtocolId = ProtocolUtils.getGrandpaProtocol(protocolId, legacyProtocol);
         String transactionsProtocolId = ProtocolUtils.getTransactionsProtocol(protocolId);
 
         kademliaService = new KademliaService(kadProtocolId, hostId, isLocalEnabled, clientMode);

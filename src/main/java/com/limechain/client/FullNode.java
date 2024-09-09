@@ -59,7 +59,7 @@ public class FullNode implements HostNode {
         switch (args.syncMode()) {
             case FULL -> fullSyncMachine.start();
             case WARP -> {
-                warpSyncMachine.onFinish(() -> fullSyncMachine.start());
+                warpSyncMachine.onFinish(fullSyncMachine::start);
                 warpSyncMachine.start();
             }
             default -> throw new IllegalStateException("Unexpected value: " + args.syncMode());
