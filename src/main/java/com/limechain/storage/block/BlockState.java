@@ -768,6 +768,10 @@ public class BlockState {
     public void setFinalizedHash(final Hash256 hash, final BigInteger round, final BigInteger setId) {
         if (!fullSyncFinished) return;
 
+        if (!initialized) {
+            throw new IllegalStateException("BlockState not initialized");
+        }
+
         if (!hasHeader(hash)) {
             throw new BlockNodeNotFoundException("Cannot finalise unknown block " + hash);
         }
