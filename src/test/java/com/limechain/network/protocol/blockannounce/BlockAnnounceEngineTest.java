@@ -24,7 +24,12 @@ import java.util.Arrays;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockConstruction;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 @SuppressWarnings("unused")
 @ExtendWith(MockitoExtension.class)
@@ -129,7 +134,7 @@ class BlockAnnounceEngineTest {
     }
 
     @Test
-    void receiveBlockAnnounceWhenConnectedShouldSyncMessage() throws IllegalAccessException, NoSuchFieldException {
+    void receiveBlockAnnounceWhenConnectedShouldSyncMessage() {
         byte[] message = new byte[] { 1, 2, 3 };
         BlockAnnounceMessage blockAnnounceMessage = mock(BlockAnnounceMessage.class);
         when(blockAnnounceMessage.getHeader()).thenReturn(mock(BlockHeader.class));
