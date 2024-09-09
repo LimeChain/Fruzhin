@@ -1,5 +1,6 @@
 package com.limechain.network.protocol.blockannounce;
 
+import com.limechain.exception.global.RuntimeCodeException;
 import com.limechain.network.ConnectionManager;
 import com.limechain.network.protocol.blockannounce.messages.BlockAnnounceHandshake;
 import com.limechain.network.protocol.blockannounce.messages.BlockAnnounceHandshakeBuilder;
@@ -7,6 +8,7 @@ import com.limechain.network.protocol.blockannounce.messages.BlockAnnounceMessag
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshakeScaleWriter;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceMessageScaleReader;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
+import com.limechain.storage.block.BlockState;
 import com.limechain.sync.warpsync.WarpSyncState;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
@@ -20,16 +22,13 @@ import org.mockito.MockedConstruction;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.Arrays;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockConstruction;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @SuppressWarnings("unused")
 @ExtendWith(MockitoExtension.class)
@@ -134,7 +133,31 @@ class BlockAnnounceEngineTest {
     }
 
     @Test
-    void receiveBlockAnnounceWhenConnectedShouldSyncMessage() {
+    void receiveBlockAnnounceWhenConnectedShouldSyncMessage() throws IllegalAccessException, NoSuchFieldException {
+        byte[] message = new byte[] { 1, 2, 3 };
+        BlockAnnounceMessage blockAnnounceMessage = mock(BlockAnnounceMessage.class);
+        when(blockAnnounceMessage.getHeader()).thenReturn(mock(BlockHeader.class));
+        when(stream.remotePeerId()).thenReturn(peerId);
+        when(connectionManager.isBlockAnnounceConnected(peerId)).thenReturn(true);
+
+        BlockState blockState = BlockState.getInstance();
+
+        Field initializedField = BlockState.class.getDeclaredField("initialized");
+        initializedField.setAccessible(true);
+        initializedField.set(blockState, true);
+
+        try (MockedConstruction<ScaleCodecReader> readerMock = mockConstruction(ScaleCodecReader.class,
+                (mock, context) -> when(mock.read(any(BlockAnnounceMessageScaleReader.class)))
+                        .thenReturn(blockAnnounceMessage))
+        ) {
+            blockAnnounceEngine.receiveRequest(message, stream);
+
+            verify(warpSyncState).syncBlockAnnounce(blockAnnounceMessage);
+        }
+    }
+
+    @Test
+    void receiveBlockAnnounceWithoutInitializedBlockStateShouldThrowException() throws IllegalAccessException, NoSuchFieldException {
         byte[] message = new byte[] { 1, 2, 3 };
         BlockAnnounceMessage blockAnnounceMessage = mock(BlockAnnounceMessage.class);
         when(blockAnnounceMessage.getHeader()).thenReturn(mock(BlockHeader.class));
@@ -145,8 +168,7 @@ class BlockAnnounceEngineTest {
                 (mock, context) -> when(mock.read(any(BlockAnnounceMessageScaleReader.class)))
                         .thenReturn(blockAnnounceMessage))
         ) {
-            blockAnnounceEngine.receiveRequest(message, stream);
-
+            assertThrows(IllegalStateException.class, () -> blockAnnounceEngine.receiveRequest(message, stream));
             verify(warpSyncState).syncBlockAnnounce(blockAnnounceMessage);
         }
     }
