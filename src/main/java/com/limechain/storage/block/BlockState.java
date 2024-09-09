@@ -29,7 +29,13 @@ import org.springframework.util.SerializationUtils;
 
 import java.math.BigInteger;
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Contains the historical block data of the blockchain, including block headers and bodies.
@@ -50,7 +56,6 @@ public class BlockState {
     private Hash256 lastFinalized;
     @Getter
     private boolean initialized;
-    @Getter
     @Setter
     private boolean fullSyncFinished;
     @Getter
@@ -920,23 +925,23 @@ public class BlockState {
     }
 
     public synchronized void addBlockToBlockTree(BlockHeader blockHeader) {
-        if (isInitialized()) {
-            if (isFullSyncFinished()) {
+        if (!initialized) {
+            throw new IllegalStateException("BlockState not initialized");
+        }
 
-                processPendingBlocksFromQueue();
-
-                if (getPendingBlocksQueue().isEmpty()) {
-                    try {
-                        addBlock(new Block(blockHeader, new BlockBody(new ArrayList<>())));
-                    } catch (BlockStorageGenericException ex) {
-                        log.fine(String.format("[%s] %s", blockHeader.getHash().toString(), ex.getMessage()));
-                    }
-
-                    return;
-                }
-            }
-
+        if (!fullSyncFinished) {
             addBlockToQueue(blockHeader);
+            return;
+        }
+
+        processPendingBlocksFromQueue();
+
+        if (getPendingBlocksQueue().isEmpty()) {
+            try {
+                addBlock(new Block(blockHeader, new BlockBody(new ArrayList<>())));
+            } catch (BlockStorageGenericException ex) {
+                log.fine(String.format("[%s] %s", blockHeader.getHash().toString(), ex.getMessage()));
+            }
         }
     }
 
