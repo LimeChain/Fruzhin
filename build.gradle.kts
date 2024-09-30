@@ -69,7 +69,7 @@ dependencies {
     implementation("com.github.LimeChain:jsonrpc4j:1.7.0")
 
     // Guava
-    implementation("com.google.guava:guava:33.3.0-jre")
+    implementation("com.google.guava:guava:33.3.1-jre")
 
     // Apache commons
     implementation("commons-io:commons-io:2.17.0")
