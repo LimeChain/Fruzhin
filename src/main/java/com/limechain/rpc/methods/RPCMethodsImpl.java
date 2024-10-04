@@ -6,6 +6,7 @@ import com.limechain.chain.spec.ChainSpec;
 import com.limechain.chain.spec.ChainType;
 import com.limechain.chain.spec.PropertyValue;
 import com.limechain.exception.rpc.InvalidParametersException;
+import com.limechain.rpc.methods.author.AuthorRPCImpl;
 import com.limechain.rpc.methods.chain.ChainRPC;
 import com.limechain.rpc.methods.chain.ChainRPCImpl;
 import com.limechain.rpc.methods.childstate.ChildStateRPCImpl;
@@ -67,6 +68,11 @@ public class RPCMethodsImpl implements RPCMethods {
      * References to child state rpc method implementation classes
      */
     private final ChildStateRPCImpl childStateRPC;
+
+    /**
+     * References to author rpc method implementation classes
+     */
+    private final AuthorRPCImpl authorRPC;
 
     @Override
     public String[] rpcMethods() {
@@ -304,5 +310,38 @@ public class RPCMethodsImpl implements RPCMethods {
     public String childStateGetStorageSize(String childKeyHex, String keyHex, String blockHashHex) {
         return childStateRPC.stateGetStorageSize(childKeyHex, keyHex, blockHashHex);
     }
+    //endregion
+
+    //region AuthorRPC
+    @Override
+    public String authorRotateKeys() {
+        return "";
+    }
+
+    @Override
+    public String authorInsertKey(String keyType, String suri, String publicKey) {
+        return "";
+    }
+
+    @Override
+    public Boolean authorHasKey(String publicKey, String keyType) {
+        return null;
+    }
+
+    @Override
+    public Boolean authorHasSessionKeys(String sessionKeys) {
+        return null;
+    }
+
+    @Override
+    public String authorSubmitExtrinsic(String extrinsics) {
+        return "";
+    }
+
+    @Override
+    public String authorSubmitAndWatchExtrinsic(String extrinsics) {
+        return "";
+    }
+
     //endregion
 }
