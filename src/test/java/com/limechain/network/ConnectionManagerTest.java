@@ -3,7 +3,7 @@ package com.limechain.network;
 import com.limechain.network.dto.PeerInfo;
 import com.limechain.network.dto.ProtocolStreamType;
 import com.limechain.network.dto.ProtocolStreams;
-import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceMessage;
+import com.limechain.network.protocol.blockannounce.messages.BlockAnnounceMessage;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import io.emeraldpay.polkaj.types.Hash256;
 import io.libp2p.core.PeerId;

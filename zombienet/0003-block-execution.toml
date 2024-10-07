@@ -1,0 +1,9 @@
+[relaychain]
+chain = "westend-local"
+default_command = "java -jar build/libs/fruzhin-0.1.0.jar"
+default_args = ["-n westend --node-mode full --db-recreate --sync-mode full"]
+chain_spec_path = "genesis/westend-raw.json"
+
+[[relaychain.nodes]]
+name = "alice"
+validator = false

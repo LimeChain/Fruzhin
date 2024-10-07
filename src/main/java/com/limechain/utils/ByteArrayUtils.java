@@ -4,9 +4,25 @@ import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class ByteArrayUtils {
+
+    /**
+     * Calculates the length of the common prefix between two byte arrays.
+     * <p>
+     * This method iterates over the arrays and compares them byte by byte to find
+     * the length of the common prefix, i.e., the number of leading bytes that are identical
+     * in both arrays.
+     *
+     * @param a The first byte array.
+     * @param b The second byte array.
+     * @return The length of the common prefix. Returns 0 if the first byte is not the same or
+     * if either array is empty.
+     */
     public static int commonPrefixLength(byte[] a, byte[] b) {
         int minLength = Math.min(a.length, b.length);
-        int length = 0;
+        if(minLength == 0) {
+            return 0;
+        }
+        int length;
         for (length = 0; length < minLength; length++) {
             if (a[length] != b[length]) {
                 break;
@@ -15,6 +31,17 @@ public class ByteArrayUtils {
         return length;
     }
 
+    /**
+     * Checks if the given array starts with the specified prefix.
+     * <p>
+     * This method compares the prefix array to the beginning of the main array to determine
+     * if the main array starts with the given prefix.
+     *
+     * @param array  The byte array to check.
+     * @param prefix The byte array representing the prefix to look for.
+     * @return {@code true} if the array starts with the prefix; {@code false} otherwise.
+     * Also returns {@code false} if the main array is shorter than the prefix.
+     */
     public static boolean hasPrefix(byte[] array, byte[] prefix) {
         if (array.length < prefix.length) {
             return false;
@@ -34,26 +61,43 @@ public class ByteArrayUtils {
      * <p>More formally, returns the lowest index {@code i} such that {@code Arrays.copyOfRange(array,
      * i, i + target.length)} contains exactly the same elements as {@code target}.
      *
-     * @param array the array to search for the sequence {@code target}
+     * @param array  the array to search for the sequence {@code target}
      * @param target the array to search for as a sub-sequence of {@code array}
      */
     public static int indexOf(byte[] array, byte[] target) {
-        if (array == null || target == null){
+        if (array == null || target == null) {
             return -1;
         }
         if (target.length == 0) {
             return 0;
         }
 
-        outer:
         for (int i = 0; i < array.length - target.length + 1; i++) {
+            boolean shouldReturn = true;
             for (int j = 0; j < target.length; j++) {
                 if (array[i + j] != target[j]) {
-                    continue outer;
+                    shouldReturn = false;
+                    break;
                 }
             }
-            return i;
+            if (shouldReturn) return i;
         }
         return -1;
+    }
+
+    /**
+     * Concatenates two byte arrays into a single byte array. This method combines the contents
+     * of the first byte array and the second byte array into a new byte array, where the
+     * contents of the first array precede those of the second.
+     *
+     * @param prefix The first byte array to concatenate.
+     * @param suffix The second byte array to concatenate.
+     * @return A new byte array containing the concatenated result of the two input byte arrays.
+     */
+    public static byte[] concatenate(byte[] prefix, byte[] suffix) {
+        byte[] result = new byte[prefix.length + suffix.length];
+        System.arraycopy(prefix, 0, result, 0, prefix.length);
+        System.arraycopy(suffix, 0, result, prefix.length, suffix.length);
+        return result;
     }
 }

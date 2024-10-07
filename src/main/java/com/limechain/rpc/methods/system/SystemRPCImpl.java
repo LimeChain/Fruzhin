@@ -1,11 +1,17 @@
 package com.limechain.rpc.methods.system;
 
 import com.limechain.chain.ChainService;
+import com.limechain.chain.spec.ChainType;
+import com.limechain.chain.spec.PropertyValue;
 import com.limechain.config.SystemInfo;
+import com.limechain.exception.global.ExecutionFailedException;
+import com.limechain.exception.global.ThreadInterruptedException;
+import com.limechain.exception.rpc.PeerNotFoundException;
 import com.limechain.network.ConnectionManager;
 import com.limechain.network.Network;
 import com.limechain.network.dto.PeerInfo;
-import com.limechain.sync.warpsync.SyncedState;
+import com.limechain.storage.block.BlockState;
+import com.limechain.storage.block.SyncState;
 import com.limechain.sync.warpsync.WarpSyncMachine;
 import io.libp2p.core.PeerId;
 import lombok.AllArgsConstructor;
@@ -34,7 +40,8 @@ public class SystemRPCImpl {
     private final SystemInfo systemInfo;
     private final Network network;
     private final WarpSyncMachine warpSync;
-    private final SyncedState syncedState = SyncedState.getInstance();
+    private final SyncState syncState;
+    private final BlockState blockState = BlockState.getInstance();
     private final ConnectionManager connectionManager = ConnectionManager.getInstance();
 
     /**
@@ -55,21 +62,21 @@ public class SystemRPCImpl {
      * Get the chain's type. Given as a string identifier.
      */
     public String systemChain() {
-        return this.chainService.getGenesis().getName();
+        return this.chainService.getChainSpec().getName();
     }
 
     /**
      * Get the chain's type.
      */
-    public String systemChainType() {
-        return this.chainService.getGenesis().getChainType();
+    public ChainType systemChainType() {
+        return this.chainService.getChainSpec().getChainType();
     }
 
     /**
      * Get a custom set of properties as a JSON object, defined in the chain specification.
      */
-    public Map<String, Object> systemProperties() {
-        return this.chainService.getGenesis().getProperties();
+    public Map<String, PropertyValue> systemProperties() {
+        return this.chainService.getChainSpec().getProperties();
     }
 
     /**
@@ -134,14 +141,17 @@ public class SystemRPCImpl {
      * @param multiaddr Multiaddr to be added
      */
     public void systemAddReservedPeer(String multiaddr) {
-        if (multiaddr == null || multiaddr.trim().equalsIgnoreCase("")) {
-            throw new RuntimeException("PeerId cannot be empty");
+        if (multiaddr == null || multiaddr.isBlank()) {
+            throw new PeerNotFoundException("PeerId cannot be empty");
         }
 
         try {
-            this.network.kademliaService.addReservedPeer(multiaddr);
-        } catch (ExecutionException | InterruptedException e) {
-            throw new RuntimeException("Error while adding reserved peer: " + e.getMessage());
+            this.network.getKademliaService().addReservedPeer(multiaddr);
+        } catch (ExecutionException e) {
+            throw new ExecutionFailedException("Error while adding reserved peer: " + e.getMessage());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new ThreadInterruptedException(e);
         }
     }
 
@@ -152,8 +162,8 @@ public class SystemRPCImpl {
      * @param peerIdStr peerId to be removed
      */
     public void systemRemoveReservedPeer(String peerIdStr) {
-        if (peerIdStr == null || peerIdStr.trim().equalsIgnoreCase("")) {
-            throw new RuntimeException("PeerId cannot be empty");
+        if (peerIdStr == null || peerIdStr.isBlank()) {
+            throw new PeerNotFoundException("PeerId cannot be empty");
         }
         PeerId peerId = PeerId.fromBase58(peerIdStr);
 
@@ -164,17 +174,23 @@ public class SystemRPCImpl {
      * Returns the state of the syncing of the node.
      */
     public Map<String, Object> systemSyncState() {
-        BigInteger highestBlock = this.connectionManager
-                .getPeerIds()
-                .stream()
-                .map(this.connectionManager::getPeerInfo)
-                .map(PeerInfo::getBestBlock)
-                .max(BigInteger::compareTo)
-                .orElse(BigInteger.ZERO);
+        final BigInteger highestBlock;
+
+        if (this.blockState.isInitialized()) {
+            highestBlock = this.blockState.bestBlockNumber();
+        } else {
+            highestBlock = this.connectionManager
+                    .getPeerIds()
+                    .stream()
+                    .map(this.connectionManager::getPeerInfo)
+                    .map(PeerInfo::getBestBlock)
+                    .max(BigInteger::compareTo)
+                    .orElse(BigInteger.ZERO);
+        }
 
         return Map.ofEntries(
-                entry("startingBlock", this.syncedState.getStartingBlockNumber()),
-                entry("currentBlock", this.syncedState.getLastFinalizedBlockNumber()),
+                entry("startingBlock", this.syncState.getStartingBlock()),
+                entry("currentBlock", this.syncState.getLastFinalizedBlockNumber()),
                 entry("highestBlock", highestBlock)
         );
     }

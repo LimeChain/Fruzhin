@@ -1,5 +1,7 @@
 package com.limechain.network.protocol.ping;
 
+import com.limechain.exception.global.ExecutionFailedException;
+import com.limechain.exception.global.ThreadInterruptedException;
 import com.limechain.network.StrictProtocolBinding;
 import io.libp2p.core.AddressBook;
 import io.libp2p.core.Host;
@@ -18,14 +20,17 @@ public class Ping extends StrictProtocolBinding<PingController> {
     }
 
     public Long ping(Host us, AddressBook addrs, PeerId peer) {
-        PingController controller = dialPeer(us, peer, addrs);
         try {
+            PingController controller = dialPeer(us, peer, addrs);
             Long resp = controller.ping().get();
             log.log(Level.INFO, "Received response: " + resp.toString());
             return resp;
-        } catch (ExecutionException | InterruptedException e) {
+        } catch (ExecutionException | IllegalStateException e) {
             log.log(Level.SEVERE, "Error while sending ping request: ", e);
-            throw new RuntimeException(e);
+            throw new ExecutionFailedException(e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new ThreadInterruptedException(e);
         }
     }
 

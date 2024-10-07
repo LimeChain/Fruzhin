@@ -2,11 +2,12 @@ package com.limechain.config;
 
 import com.limechain.chain.Chain;
 import com.limechain.network.Network;
-import com.limechain.sync.warpsync.SyncedState;
+import com.limechain.storage.block.SyncState;
 import lombok.Getter;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Value;
 
+import java.math.BigInteger;
 import java.nio.file.FileSystems;
 import java.util.logging.Level;
 
@@ -24,12 +25,14 @@ public class SystemInfo {
     private String hostName;
     @Value("${host.version}")
     private String hostVersion;
+    private final BigInteger highestBlock;
 
-    public SystemInfo(HostConfig hostConfig, Network network) {
+    public SystemInfo(HostConfig hostConfig, Network network, SyncState syncState) {
         this.role = network.getNodeRole().name();
         this.chain = hostConfig.getChain();
         this.dbPath = hostConfig.getRocksDbPath();
         this.hostIdentity = network.getHost().getPeerId().toString();
+        this.highestBlock = syncState.getLastFinalizedBlockNumber();
     }
 
     /**
@@ -53,6 +56,6 @@ public class SystemInfo {
         log.log(Level.INFO, "Local node identity is: " + hostIdentity);
         log.log(Level.INFO, "Operating System: " + System.getProperty("os.name"));
         log.log(Level.INFO, "CPU architecture: " + System.getProperty("os.arch"));
-        log.log(Level.INFO, "Highest known block at #" + SyncedState.getInstance().getLastFinalizedBlockNumber());
+        log.log(Level.INFO, "Highest known block at #" + highestBlock);
     }
 }

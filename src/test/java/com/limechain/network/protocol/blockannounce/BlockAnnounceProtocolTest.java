@@ -3,6 +3,7 @@ package com.limechain.network.protocol.blockannounce;
 import com.limechain.network.ConnectionManager;
 import com.limechain.network.encoding.Leb128LengthFrameDecoder;
 import com.limechain.network.encoding.Leb128LengthFrameEncoder;
+import com.limechain.rpc.server.AppBean;
 import io.libp2p.core.Stream;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -11,6 +12,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -33,26 +36,32 @@ class BlockAnnounceProtocolTest {
 
     @Test
     void onStartInitiator() {
-        BlockAnnounceController result = blockAnnounceProtocol.onStartInitiator(stream).join();
+        try (MockedStatic<AppBean> appBean = Mockito.mockStatic(AppBean.class)) {
+            appBean.when(() -> AppBean.getBean(BlockAnnounceEngine.class)).thenReturn(blockAnnounceEngine);
+            BlockAnnounceController result = blockAnnounceProtocol.onStartInitiator(stream).join();
 
-        verify(stream).pushHandler(any(Leb128LengthFrameEncoder.class));
-        verify(stream).pushHandler(any(Leb128LengthFrameDecoder.class));
-        verify(stream).pushHandler(any(ByteArrayEncoder.class));
-        verify(stream).pushHandler(any(BlockAnnounceProtocol.NotificationHandler.class));
+            verify(stream).pushHandler(any(Leb128LengthFrameEncoder.class));
+            verify(stream).pushHandler(any(Leb128LengthFrameDecoder.class));
+            verify(stream).pushHandler(any(ByteArrayEncoder.class));
+            verify(stream).pushHandler(any(BlockAnnounceProtocol.NotificationHandler.class));
 
-        assertEquals(stream, result.stream);
+            assertEquals(stream, result.stream);
+        }
     }
 
     @Test
     void onStartResponder() {
-        BlockAnnounceController result = blockAnnounceProtocol.onStartResponder(stream).join();
+        try (MockedStatic<AppBean> appBean = Mockito.mockStatic(AppBean.class)) {
+            appBean.when(() -> AppBean.getBean(BlockAnnounceEngine.class)).thenReturn(blockAnnounceEngine);
+            BlockAnnounceController result = blockAnnounceProtocol.onStartResponder(stream).join();
 
-        verify(stream).pushHandler(any(Leb128LengthFrameEncoder.class));
-        verify(stream).pushHandler(any(Leb128LengthFrameDecoder.class));
-        verify(stream).pushHandler(any(ByteArrayEncoder.class));
-        verify(stream).pushHandler(any(BlockAnnounceProtocol.NotificationHandler.class));
+            verify(stream).pushHandler(any(Leb128LengthFrameEncoder.class));
+            verify(stream).pushHandler(any(Leb128LengthFrameDecoder.class));
+            verify(stream).pushHandler(any(ByteArrayEncoder.class));
+            verify(stream).pushHandler(any(BlockAnnounceProtocol.NotificationHandler.class));
 
-        assertEquals(stream, result.stream);
+            assertEquals(stream, result.stream);
+        }
     }
 
     @Test

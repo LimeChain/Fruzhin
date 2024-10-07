@@ -1,6 +1,9 @@
 package com.limechain.rpc.methods.system;
 
 import com.googlecode.jsonrpc4j.JsonRpcMethod;
+import com.limechain.chain.spec.ChainType;
+import com.limechain.chain.spec.PropertyValue;
+import com.limechain.rpc.config.UnsafeRpcMethod;
 
 import java.util.List;
 import java.util.Map;
@@ -21,11 +24,10 @@ public interface SystemRPC {
     String systemChain();
 
     @JsonRpcMethod("system_chainType")
-    String systemChainType();
+    ChainType systemChainType();
 
-    //TODO: Change return type to be specific class
     @JsonRpcMethod("system_properties")
-    Map<String, Object> systemProperties();
+    Map<String, PropertyValue> systemProperties();
 
     @JsonRpcMethod("system_nodeRoles")
     String[] systemNodeRoles();
@@ -42,9 +44,11 @@ public interface SystemRPC {
     @JsonRpcMethod("system_peers")
     List<Map<String, Object>> systemSystemPeers();
 
+    @UnsafeRpcMethod
     @JsonRpcMethod("system_addReservedPeer")
     void systemAddReservedPeer(String peerId);
 
+    @UnsafeRpcMethod
     @JsonRpcMethod("system_removeReservedPeer")
     void systemRemoveReservedPeer(String peerId);
 

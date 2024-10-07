@@ -1,5 +1,7 @@
 package com.limechain.storage;
 
+import com.limechain.exception.storage.DBException;
+import com.limechain.trie.structure.nibble.Nibbles;
 import com.limechain.utils.ByteArrayUtils;
 import lombok.extern.java.Log;
 import org.apache.commons.io.FileUtils;
@@ -7,6 +9,8 @@ import org.rocksdb.Options;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
+import org.rocksdb.WriteBatch;
+import org.rocksdb.WriteOptions;
 import org.springframework.util.SerializationUtils;
 
 import java.io.File;
@@ -14,10 +18,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Level;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * Implementation for Key-Value DB interface with String as key and Object as value types
@@ -27,13 +33,12 @@ public class DBRepository implements KVRepository<String, Object> {
     /**
      * Main DB folder
      */
-    private static final  String FOLDER_NAME = "db";
+    private static final String FOLDER_NAME = "db";
 
     /**
      * Connection to the DB
      */
     private RocksDB db;
-    private final String chainPrefix;
 
     public DBRepository(String path, String chain, boolean dbRecreate) {
         RocksDB.loadLibrary();
@@ -43,7 +48,6 @@ public class DBRepository implements KVRepository<String, Object> {
         if (dbRecreate) {
             cleanDatabaseFolder(baseDir);
         }
-        chainPrefix = chain;
         try {
             Files.createDirectories(baseDir.getParentFile().toPath());
             Files.createDirectories(baseDir.getAbsoluteFile().toPath());
@@ -51,9 +55,9 @@ public class DBRepository implements KVRepository<String, Object> {
             log.log(Level.INFO, "\uD83E\uDEA8RocksDB initialized");
         } catch (IOException | RocksDBException e) {
             log.log(Level.SEVERE, String.format("Error initializing RocksDB. Exception: '%s', message: '%s'",
-                            e.getCause(),
-                            e.getMessage()),
-                    e);
+                    e.getCause(),
+                    e.getMessage()),
+                e);
         }
     }
 
@@ -66,10 +70,26 @@ public class DBRepository implements KVRepository<String, Object> {
 
         } catch (IOException e) {
             log.log(Level.SEVERE, String.format("Error deleting db folder. Exception: '%s', message: '%s'",
-                            e.getCause(),
-                            e.getMessage()),
-                    e);
-            throw new RuntimeException();
+                    e.getCause(),
+                    e.getMessage()),
+                e);
+            throw new DBException(e);
+        }
+    }
+
+    @Override
+    public synchronized void saveBatch(Map<String, Object> kvMap) {
+        log.fine("Saving batch of key value pairs.");
+        try (final WriteBatch batch = new WriteBatch()) {
+            for (Map.Entry<String, Object> e : kvMap.entrySet()) {
+                batch.put(e.getKey().getBytes(UTF_8), SerializationUtils.serialize(e.getValue()));
+            }
+
+            try (final WriteOptions writeOptions = new WriteOptions()) {
+                db.write(writeOptions, batch);
+            }
+        } catch (RocksDBException e) {
+            log.warning(String.format("Error saving batch. Cause: '%s', message: '%s'", e.getCause(), e.getMessage()));
         }
     }
 
@@ -77,10 +97,10 @@ public class DBRepository implements KVRepository<String, Object> {
     public synchronized boolean save(String key, Object value) {
         log.log(Level.FINE, String.format("saving value '%s' with key '%s'", value, key));
         try {
-            db.put(getPrefixedKey(key), SerializationUtils.serialize(value));
+            db.put(key.getBytes(UTF_8), SerializationUtils.serialize(value));
         } catch (RocksDBException e) {
             log.log(Level.WARNING,
-                    String.format("Error saving entry. Cause: '%s', message: '%s'", e.getCause(), e.getMessage()));
+                String.format("Error saving entry. Cause: '%s', message: '%s'", e.getCause(), e.getMessage()));
             return false;
         }
         return true;
@@ -90,38 +110,37 @@ public class DBRepository implements KVRepository<String, Object> {
     public synchronized Optional<Object> find(String key) {
         Object value = null;
         try {
-            byte[] bytes = db.get(getPrefixedKey(key));
+            byte[] bytes = db.get(key.getBytes(UTF_8));
             if (bytes != null) {
                 value = SerializationUtils.deserialize(bytes);
             }
         } catch (RocksDBException e) {
-            log.log(Level.SEVERE, String.format(
-                    "Error retrieving the entry with key: %s, cause: %s, message: %s",
-                    key,
-                    e.getCause(),
-                    e.getMessage())
+            log.severe(String.format(
+                "Error retrieving the entry with key: %s, cause: %s, message: %s",
+                key,
+                e.getCause(),
+                e.getMessage())
             );
         }
-        log.log(Level.INFO, String.format("finding key '%s' returns '%s'", key, value));
+        log.fine(String.format("finding key '%s' returns '%s'", Nibbles.fromBytes(key.getBytes()), value));
         return Optional.ofNullable(value);
     }
 
     @Override
     public synchronized List<byte[]> findKeysByPrefix(String prefixSeek, int limit) {
         return findByPrefix(prefixSeek, (long) limit)
-                .stream()
-                .map(this::removePrefixFromKey)
-                .toList();
+            .stream()
+            .toList();
     }
 
     @Override
     public synchronized boolean delete(String key) {
-        log.log(Level.INFO, String.format("deleting key '%s'", key));
+        log.log(Level.FINE, String.format("deleting key '%s'", key));
         try {
-            db.delete(getPrefixedKey(key));
+            db.delete(key.getBytes(UTF_8));
         } catch (RocksDBException e) {
             log.log(Level.SEVERE,
-                    String.format("Error deleting entry, cause: '%s', message: '%s'", e.getCause(), e.getMessage()));
+                String.format("Error deleting entry, cause: '%s', message: '%s'", e.getCause(), e.getMessage()));
             return false;
         }
         return true;
@@ -129,7 +148,7 @@ public class DBRepository implements KVRepository<String, Object> {
 
     @Override
     public synchronized DeleteByPrefixResult deleteByPrefix(String prefix, Long limit) {
-        log.log(Level.INFO, String.format("deleting %s keys with prefix '%s'", limit == null ? "all" : limit, prefix));
+        log.log(Level.FINE, String.format("deleting %s keys with prefix '%s'", limit == null ? "all" : limit, prefix));
         List<byte[]> keysToDelete = findByPrefix(prefix, limit);
 
         keysToDelete.forEach(key -> {
@@ -137,7 +156,7 @@ public class DBRepository implements KVRepository<String, Object> {
                 db.delete(key);
             } catch (RocksDBException e) {
                 log.log(Level.SEVERE, String.format("Error deleting entry, cause: '%s', message: '%s'",
-                                e.getCause(), e.getMessage()));
+                    e.getCause(), e.getMessage()));
             }
         });
 
@@ -147,14 +166,12 @@ public class DBRepository implements KVRepository<String, Object> {
     }
 
     private List<byte[]> findByPrefix(String prefix, Long limit) {
-        String prefixedKey = new String(getPrefixedKey(prefix));
-
         List<byte[]> values = new ArrayList<>();
         RocksIterator rocksIterator = db.newIterator();
-        rocksIterator.seek(prefixedKey.getBytes());
+        rocksIterator.seek(prefix.getBytes());
         while (rocksIterator.isValid() && (limit == null || values.size() < limit)) {
             byte[] key = rocksIterator.key();
-            if (ByteArrayUtils.hasPrefix(key, prefixedKey.getBytes())) {
+            if (ByteArrayUtils.hasPrefix(key, prefix.getBytes())) {
                 values.add(rocksIterator.key());
             }
             rocksIterator.next();
@@ -167,33 +184,11 @@ public class DBRepository implements KVRepository<String, Object> {
     @Override
     public synchronized Optional<String> getNextKey(String key) {
         RocksIterator iterator = db.newIterator();
-        iterator.seek(getPrefixedKey(key));
+        iterator.seek(key.getBytes(UTF_8));
         iterator.next();
         String nextKey = iterator.isValid() ? new String(iterator.key()) : null;
         iterator.close();
         return Optional.ofNullable(nextKey);
-    }
-
-    @Override
-    public void startTransaction() {
-        //TODO: implement
-    }
-
-    @Override
-    public void rollbackTransaction() {
-        //TODO: implement
-    }
-
-    @Override
-    public void commitTransaction() {
-        //TODO: implement
-    }
-
-    private byte[] getPrefixedKey(String key) {
-        return chainPrefix.concat(key).getBytes();
-    }
-    public byte[] removePrefixFromKey(byte[] key) {
-        return Arrays.copyOfRange(key, chainPrefix.length(), key.length);
     }
 
     public synchronized void closeConnection() {

@@ -9,7 +9,7 @@ authoring and relaying node, increasing security of the Polkadot Protocol. It's 
 # Status
 
 - [x] Light Client
-- [ ] Full Node
+- [x] Full Node
 - [ ] Authoring Node
 - [ ] Relaying Node
 
@@ -26,32 +26,12 @@ cd Fruzhin
 
 ### Java Version
 
-Fruzhin only works
-with [Java 17 Coretto](https://docs.aws.amazon.com/corretto/latest/corretto-17-ug/downloads-list.html). Using any other
-version may cause cannot calculate secret errors when running the node:
+Fruzhin works with Java 22.
+
+If you have multiple java version installed please make sure you're using 22:
 
 ```
-org.bouncycastle.tls.crypto.TlsCryptoException: cannot calculate secret
-```
-
-If you have multiple java version installed please make sure you're using 17:
-
-```
-export JAVA_HOME=`/usr/libexec/java_home -v 17.0.8`
-```
-
-### Wasmer-Java dylib setup
-
-```
-Note: This step will be automated in the future
-```
-
-Depending on your architecture type, you will have to grab one of either 2 versions(arm/amd) of the wasmer-java dylib
-file from `wasmer-setup` folder.
-Copy the file to the Java `Extensions` folder:
-
-```
-/Library/Java/Extensions
+export JAVA_HOME=`/usr/libexec/java_home -v 22`
 ```
 
 ### Build
@@ -65,51 +45,100 @@ Copy the file to the Java `Extensions` folder:
 ### Sync with official chain
 
 ```bash
-java -jar build/libs/fruzhin-0.1.0.jar -n {network}
+java -jar build/libs/Fruzhin-0.1.0.jar -n polkadot --node-mode full --sync-mode full
 ```
 
-- `network` can be `westend`, `polkadot` or `kusama`
+- `-n`(network) could be `westend`, `polkadot` or `kusama`
+- `--node-mode` could be `full` or `light`
+- `--sync-mode` could be `full` or `warp`
+
+
+## Get docker image
+
+```bash
+  docker image pull limechain/fruzhin
+  docker volume create rocksdb
+  ```
+
+### Run Fruzhin on docker
+```bash
+  docker run -d -v rocksdb:/usr/app/rocks-db limechain/fruzhin -n polkadot --node-mode full --sync-mode full
+```
 
 ### Local development
+In order to use the Fruzhin node for local development you will first need to start another node that would serve as a
+peer. 
 
-1. Create a local chain specification file by making a copy of `genesis/westend-local-example.json` in the same folder.
-2. Rename the copied file to `westend-local.json`
-3. Run a local Polkadot node with ```polkadot --dev``` command.
-4. Fetch the chain spec
+For the sake of this example we will use [Paritytech's implementation](https://github.com/paritytech/polkadot-sdk).
+If you are not familiar with how to run a node see [this](https://wiki.polkadot.network/docs/maintain-sync#setup-instructions).
+
+Once you have successfully built the Polkadot project run the node via ``polkadot --dev``.
+(The node starts on port 9944 by default)
+
+Now you have 2 options:
+- Use the automated `local_dev.sh` script
+- Manual setup.
+
+#### Automated script
+1. Install [JQ](https://github.com/jqlang/jq).
+
+   `sudo apt-get install jq` Ubuntu
+   
+   `brew install jq` MacOS
+
+2. Head to the main directory of Fruzhin execute the script `./local_dev.sh`.
+
+#### Manual setup
+1. Fetch the chain spec
 
    ```bash
    curl -H "Content-Type: application/json" -d '{"id":1, "jsonrpc":"2.0", "method": "sync_state_genSyncSpec", "params": [true]}' http://localhost:9944
    ```
 
    The `lightSyncState` field is important for the light client to
-   work. Without
-   it, the light client won't have a checkpoint to start from
+   work. Without it, the light client won't have a checkpoint to start from
    and could be long-range attacked
 
+2. Create a new `westend-local.json` inside of the `genesis` project directory.
+3. Copy the contents of the `result` field from the fetched chain spec into the newly created `westend-local.json`.
+4. In order to comply with the project requirements change the json structured as follows:
 
-5. Get the local boot nodes.
+Fetched chain spec
+```JSON
+{
+  "genesis": {
+    "raw": {
+      "top": {},
+      "childrenDefault": {}
+    }
+  }
+}
+```
+
+Desired chain spec
+```JSON
+{
+  "genesis": {
+     "top": {},
+     "childrenDefault": {}
+  }
+}
+```
+
+5. Fetch the local boot nodes.
 
    ```bash
    curl -H "Content-Type: application/json" -d '{"id":1, "jsonrpc":"2.0", "method": "system_localListenAddresses"}' http://localhost:9944
    ```
 
-   Paste the response into the `bootNodes` field of the chain spec.
+   Paste the response into the `bootNodes` field of the `westend-local.json` chain spec.
 
-
-6. Get the genesis hash
-
-   ```bash
-   curl -H 'Content-Type: application/json' -d '{"id": 1, "jsonrpc": "2.0","method": "chain_getBlockHash","params": [0]}' http://localhost:9944/
-   ```
-
-   Paste the response into the `LOCAL` field of `GenesisHash`.
-
-
-7. Build Host
+#### Build & Run
+1. Build project
    ```
    ./gradlew build
    ```
-8. Run Host
+2. Run Fruzhin
    ```
-   java -jar build/libs/fruzhin-0.1.0.jar -n local
+   java -jar build/libs/Fruzhin-0.1.0.jar -n 'local' --node-mode 'full'/'light' --sync-mode 'full'/'warp' --db-recreate true/false
    ```

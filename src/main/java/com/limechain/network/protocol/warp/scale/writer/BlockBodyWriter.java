@@ -11,7 +11,7 @@ import java.io.IOException;
 import java.util.List;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-public class BlockBodyWriter  implements ScaleWriter<BlockBody> {
+public class BlockBodyWriter implements ScaleWriter<BlockBody> {
 
     private static final BlockBodyWriter INSTANCE = new BlockBodyWriter();
 

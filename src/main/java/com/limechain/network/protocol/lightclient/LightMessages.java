@@ -1,5 +1,7 @@
 package com.limechain.network.protocol.lightclient;
 
+import com.limechain.exception.global.ExecutionFailedException;
+import com.limechain.exception.global.ThreadInterruptedException;
 import com.limechain.network.StrictProtocolBinding;
 import com.limechain.network.protocol.lightclient.pb.LightClientMessage;
 import com.limechain.utils.StringUtils;
@@ -15,6 +17,8 @@ import java.util.logging.Level;
 
 @Log
 public class LightMessages extends StrictProtocolBinding<LightMessagesController> {
+    private static final String GENERIC_REMOTE_CALL_ERROR_MESSAGE = "Error while sending remote call request: ";
+
     public LightMessages(String protocolId, LightMessagesProtocol protocol) {
         super(protocolId, protocol);
     }
@@ -23,33 +27,39 @@ public class LightMessages extends StrictProtocolBinding<LightMessagesController
                                                          String blockHash,
                                                          String method,
                                                          String data) {
-        LightMessagesController controller = dialPeer(us, peer, addrs);
         try {
+            LightMessagesController controller = dialPeer(us, peer, addrs);
             LightClientMessage.Response resp = controller
                     .remoteCallRequest(StringUtils.remove0xPrefix(blockHash), method, data)
                     .get();
             log.log(Level.INFO, "Received response with length: " + resp.toByteArray().length);
             return resp;
-        } catch (ExecutionException | InterruptedException e) {
-            log.log(Level.SEVERE, "Error while sending remote call request: ", e);
-            throw new RuntimeException(e);
+        } catch (ExecutionException | IllegalStateException e) {
+            log.log(Level.SEVERE, GENERIC_REMOTE_CALL_ERROR_MESSAGE, e);
+            throw new ExecutionFailedException(e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new ThreadInterruptedException(e);
         }
     }
 
-    public LightClientMessage.Response remoteReadRequest(Host us, AddressBook addrs, PeerId peer,
+    public LightClientMessage.Response remoteReadRequest(Host us, PeerId peer,
                                                          String blockHash,
                                                          String[] hexKeys) {
-        LightMessagesController controller = dialPeer(us, peer, addrs);
         try {
+            LightMessagesController controller = dialPeer(us, peer, us.getAddressBook());
             LightClientMessage.Response resp = controller.remoteReadRequest(
                             StringUtils.remove0xPrefix(blockHash),
                             hexKeys)
                     .get(10, TimeUnit.SECONDS);
             log.log(Level.INFO, "Received light client message response with length: " + resp.toByteArray().length);
             return resp;
-        } catch (ExecutionException | InterruptedException | TimeoutException e) {
-            log.log(Level.SEVERE, "Error while sending remote call request: ", e);
-            throw new RuntimeException(e);
+        } catch (ExecutionException | TimeoutException | IllegalStateException e) {
+            log.log(Level.SEVERE, GENERIC_REMOTE_CALL_ERROR_MESSAGE, e);
+            throw new ExecutionFailedException(e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new ThreadInterruptedException(e);
         }
     }
 
@@ -57,16 +67,19 @@ public class LightMessages extends StrictProtocolBinding<LightMessagesController
                                                               String blockHash,
                                                               String childStorageKey,
                                                               String[] keys) {
-        LightMessagesController controller = dialPeer(us, peer, addrs);
         try {
+            LightMessagesController controller = dialPeer(us, peer, addrs);
             LightClientMessage.Response resp = controller
                     .remoteReadChildRequest(StringUtils.remove0xPrefix(blockHash), childStorageKey, keys)
                     .get();
             log.log(Level.INFO, "Received response: " + resp.toString());
             return resp;
-        } catch (ExecutionException | InterruptedException e) {
-            log.log(Level.SEVERE, "Error while sending remote call request: ", e);
-            throw new RuntimeException(e);
+        } catch (ExecutionException | IllegalStateException e) {
+            log.log(Level.SEVERE, GENERIC_REMOTE_CALL_ERROR_MESSAGE, e);
+            throw new ExecutionFailedException(e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new ThreadInterruptedException(e);
         }
     }
 }

@@ -1,26 +1,35 @@
 package com.limechain.storage.block;
 
+import com.limechain.exception.global.MissingObjectException;
+import com.limechain.exception.storage.BlockNodeNotFoundException;
+import com.limechain.exception.storage.BlockNotFoundException;
+import com.limechain.exception.storage.BlockStorageGenericException;
+import com.limechain.exception.storage.HeaderNotFoundException;
+import com.limechain.exception.storage.LowerThanRootException;
+import com.limechain.exception.storage.RoundAndSetIdNotFoundException;
 import com.limechain.network.protocol.warp.dto.Block;
 import com.limechain.network.protocol.warp.dto.BlockBody;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
+import com.limechain.network.protocol.warp.scale.reader.BlockBodyReader;
+import com.limechain.network.protocol.warp.scale.writer.BlockBodyWriter;
+import com.limechain.rpc.subscriptions.chainsub.ChainSub;
 import com.limechain.runtime.Runtime;
 import com.limechain.storage.DBConstants;
 import com.limechain.storage.KVRepository;
-import com.limechain.storage.block.exception.BlockNodeNotFoundException;
-import com.limechain.storage.block.exception.BlockNotFoundException;
-import com.limechain.storage.block.exception.BlockStorageGenericException;
-import com.limechain.storage.block.exception.HeaderNotFoundException;
-import com.limechain.storage.block.exception.LowerThanRootException;
-import com.limechain.storage.block.exception.NotFoundException;
+import com.limechain.storage.block.tree.BlockNode;
 import com.limechain.storage.block.tree.BlockTree;
+import com.limechain.utils.scale.ScaleUtils;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.extern.java.Log;
-import org.apache.commons.lang3.SerializationUtils;
 import org.javatuples.Pair;
+import org.springframework.util.SerializationUtils;
 
 import java.math.BigInteger;
 import java.time.Instant;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -33,37 +42,39 @@ import java.util.Optional;
  * It wraps the blocktree (which contains unfinalized blocks) and the database (which contains finalized blocks).
  */
 @Log
+@NoArgsConstructor(access = lombok.AccessLevel.PRIVATE)
 public class BlockState {
-    private final BlockTree blockTree;
-    private final Map<Hash256, Block> unfinalizedBlocks;
-    private final KVRepository<String, Object> db;
-    private final BlockStateHelper helper = new BlockStateHelper();
-
     @Getter
-    private final Hash256 genesisHash;
+    private static final BlockState instance = new BlockState();
+    private final BlockStateHelper helper = new BlockStateHelper();
+    private final Map<Hash256, Block> unfinalizedBlocks = new HashMap<>();
+    private BlockTree blockTree;
+    private KVRepository<String, Object> db;
+    @Getter
+    private Hash256 genesisHash;
     @Getter
     private Hash256 lastFinalized;
-    private static BlockState instance;
-
-    public static BlockState getInstance() {
-        return instance;
-    }
+    @Getter
+    private boolean initialized;
+    @Setter
+    private boolean fullSyncFinished;
+    @Getter
+    private final ArrayDeque<Pair<Instant, Block>> pendingBlocksQueue = new ArrayDeque<>();
 
     /**
-     * Creates a new BlockState instance from genesis
+     * Initializes the BlockState instance from genesis
      *
      * @param repository the kvrepository used to store the block state
      * @param header     the genesis block header
      */
-    public BlockState(final KVRepository<String, Object> repository, final BlockHeader header) {
-        if(instance != null) {
+    public void initialize(final KVRepository<String, Object> repository, final BlockHeader header) {
+        if (initialized) {
             throw new IllegalStateException("BlockState already initialized");
         }
-        BlockState.instance = this;
+        initialized = true;
 
         this.blockTree = new BlockTree(header);
         this.db = repository;
-        this.unfinalizedBlocks = new HashMap<>();
 
         final Hash256 headerHash = header.getHash();
         this.genesisHash = headerHash;
@@ -76,6 +87,36 @@ public class BlockState {
 
         //set the latest finalized head to the genesis header
         setFinalizedHash(genesisHash, BigInteger.ZERO, BigInteger.ZERO);
+    }
+
+    /**
+     * Initializes the BlockState instance from existing database
+     *
+     * @param repository the kvrepository used to store the block state
+     */
+    public void initialize(final KVRepository<String, Object> repository) {
+        if (initialized) {
+            throw new IllegalStateException("BlockState already initialized");
+        }
+        initialized = true;
+
+        this.db = repository;
+
+        this.genesisHash = getHashByNumberFromDb(BigInteger.ZERO);
+        final BlockHeader lastHeader = getHighestFinalizedHeader();
+        this.lastFinalized = lastHeader.getHash();
+        this.blockTree = new BlockTree(lastHeader);
+    }
+
+    public void initializeAfterWarpSync(Hash256 lastFinalizedBlockHash, BigInteger lastFinalizedBlockNumber) {
+        BlockNode parentBlock = new BlockNode(
+                lastFinalizedBlockHash,
+                null,
+                lastFinalizedBlockNumber.longValue()
+        );
+
+        this.blockTree = new BlockTree(parentBlock);
+        this.lastFinalized = lastFinalizedBlockHash;
     }
 
     /**
@@ -134,14 +175,24 @@ public class BlockState {
             throw lowerThanRootException;
         } catch (BlockStorageGenericException e) {
             // If error is LowerThanRootException, number has already been finalized, so check db
-            byte[] hash = (byte[]) db.find(helper.headerHashKey(blockNum)).orElse(null);
-
-            if (hash == null) {
-                throw new BlockNotFoundException("Block " + blockNum + " not found");
-            }
-
-            return new Hash256(hash);
+            return getHashByNumberFromDb(blockNum);
         }
+    }
+
+    /**
+     * Get the block hash on our best chain with the given number from the database
+     *
+     * @param blockNum the block number
+     * @return the block hash as byte array
+     */
+    private Hash256 getHashByNumberFromDb(BigInteger blockNum) {
+        byte[] hash = (byte[]) db.find(helper.headerHashKey(blockNum)).orElse(null);
+
+        if (hash == null) {
+            throw new BlockNotFoundException("Block " + blockNum + " not found");
+        }
+
+        return new Hash256(hash);
     }
 
     /**
@@ -289,7 +340,7 @@ public class BlockState {
             throw new BlockNotFoundException("Failed to get block body from database");
         }
 
-        return BlockBody.fromEncoded(data);
+        return ScaleUtils.Decode.decode(data, BlockBodyReader.getInstance());
     }
 
     /**
@@ -299,7 +350,8 @@ public class BlockState {
      * @param blockBody the block body to be persisted
      */
     public void setBlockBody(final Hash256 hash, final BlockBody blockBody) {
-        db.save(helper.blockBodyKey(hash), blockBody.getEncoded());
+        byte[] encoded = ScaleUtils.Encode.encode(BlockBodyWriter.getInstance(), blockBody);
+        db.save(helper.blockBodyKey(hash), encoded);
     }
 
     /**
@@ -326,6 +378,9 @@ public class BlockState {
         // Add block to blocktree
         blockTree.addBlock(block.getHeader(), arrivalTime);
 
+        if (!unfinalizedBlocks.containsKey(block.getHeader().getHash())) {
+            ChainSub.getInstance().notifyNewChainHead(block.getHeader());
+        }
         // Store block in unfinalized blocks
         unfinalizedBlocks.put(block.getHeader().getHash(), block);
     }
@@ -639,20 +694,20 @@ public class BlockState {
      *
      * @param hash the hash of the block
      * @return the arrival time of the block
-     * @throws NotFoundException if the arrival time is not found in the database.
+     * @throws MissingObjectException if the arrival time is not found in the database.
      */
     public Instant getArrivalTime(final Hash256 hash) {
         Optional<Object> object = db.find(helper.arrivalTimeKey(hash));
 
         if (object.isEmpty()) {
-            throw new NotFoundException("Arrival time not found");
+            throw new MissingObjectException("Arrival time not found");
         }
         Object obj = object.get();
 
         if (obj instanceof Instant instant) {
             return instant;
         } else {
-            return SerializationUtils.deserialize((byte[]) obj);
+            return (Instant) SerializationUtils.deserialize((byte[]) obj);
         }
     }
 
@@ -700,26 +755,6 @@ public class BlockState {
         return unfinalizedBlocks.get(hash);
     }
 
-    /**
-     * Add non-finalized block to the blocktree
-     *
-     * @param hash  the hash of the block
-     * @param block the block
-     */
-    public void addUnfinalizedBlock(final Hash256 hash, final Block block) {
-        this.unfinalizedBlocks.put(hash, block);
-    }
-
-    /**
-     * Delete non-finalized block from the blocktree
-     *
-     * @param blockHash the hash of the block
-     * @return the block
-     */
-    public Block deleteUnfinalizedBlock(final Hash256 blockHash) {
-        return this.unfinalizedBlocks.remove(blockHash);
-    }
-
     /* Block finalization */
 
     /**
@@ -731,12 +766,14 @@ public class BlockState {
      * @throws BlockNodeNotFoundException if the block corresponding to the provided hash is not found.
      */
     public void setFinalizedHash(final Hash256 hash, final BigInteger round, final BigInteger setId) {
+        if (!fullSyncFinished) return;
+
         if (!hasHeader(hash)) {
             throw new BlockNodeNotFoundException("Cannot finalise unknown block " + hash);
         }
 
         handleFinalizedBlock(hash);
-        db.save(helper.finalizedHashKey(round, setId), hash);
+        db.save(helper.finalizedHashKey(round, setId), hash.getBytes());
         setHighestRoundAndSetID(round, setId);
 
         if (round.compareTo(BigInteger.ZERO) > 0) {
@@ -767,6 +804,44 @@ public class BlockState {
     }
 
     /**
+     * Gets the header of the latest finalized block
+     */
+    public BlockHeader getHighestFinalizedHeader() {
+        Hash256 hash = getHighestFinalizedHash();
+
+        return getHeader(hash);
+    }
+
+    /**
+     * Gets the number of the latest finalized block
+     */
+    public BigInteger getHighestFinalizedNumber() {
+        return getHighestFinalizedHeader().getBlockNumber();
+    }
+
+    /**
+     * Gets the hash of the latest finalized block
+     */
+    public Hash256 getHighestFinalizedHash() {
+        Pair<BigInteger, BigInteger> roundAndSet = getHighestRoundAndSetID();
+
+        return getFinalizedHash(roundAndSet.getValue0(), roundAndSet.getValue1());
+    }
+
+    /**
+     * Gets the hash of the finalized block for given round and setId
+     */
+    public Hash256 getFinalizedHash(final BigInteger round, final BigInteger setId) {
+        Optional<Object> foundHash = db.find(helper.finalizedHashKey(round, setId));
+
+        if (foundHash.isEmpty()) {
+            throw new HeaderNotFoundException("Header not found in database");
+        }
+
+        return new Hash256((byte[]) foundHash.get());
+    }
+
+    /**
      * Stores the highest round and setId to the database
      *
      * @param round the number of the round
@@ -774,14 +849,19 @@ public class BlockState {
      * @throws BlockNodeNotFoundException if the provided setId is less than the highest stored setId.
      */
     public void setHighestRoundAndSetID(final BigInteger round, final BigInteger setId) {
-        final Pair<BigInteger, BigInteger> highestRoundAndSetID = getHighestRoundAndSetID();
-        final BigInteger highestSetID = highestRoundAndSetID.getValue1();
+        try {
+            final Pair<BigInteger, BigInteger> highestRoundAndSetID = getHighestRoundAndSetID();
+            final BigInteger highestSetID = highestRoundAndSetID.getValue1();
 
-        if (setId.compareTo(highestSetID) < 0) {
-            throw new BlockNodeNotFoundException("SetID " + setId + " should be greater or equal to " + highestSetID);
+            if (setId.compareTo(highestSetID) < 0) {
+                throw new BlockStorageGenericException(
+                        "SetID " + setId + " should be greater or equal to " + highestSetID);
+            }
+        } catch (RoundAndSetIdNotFoundException e) {
+            // If there is no highest round and setId, then we can safely store the provided values
         }
-
         db.save(DBConstants.HIGHEST_ROUND_AND_SET_ID_KEY, helper.bigIntegersToByteArray(round, setId));
+
     }
 
     /**
@@ -795,7 +875,7 @@ public class BlockState {
         byte[] data = (byte[]) roundAndSetId.orElse(null);
 
         if (data == null || data.length < 16) {
-            throw new BlockNodeNotFoundException("Failed to get highest round and setID");
+            throw new RoundAndSetIdNotFoundException("Failed to get highest round and setID");
         }
 
         return helper.bytesToRoundAndSetId(data);
@@ -815,30 +895,28 @@ public class BlockState {
 
         List<Hash256> subchain = rangeInMemory(lastFinalized, currentFinalizedHash);
 
-        List<Hash256> subchainExcludingLatestFinalized = subchain.subList(1, subchain.size());
-
-        // root of subchain is previously finalized block, which has already been stored in the db
-        for (Hash256 subchainHash : subchainExcludingLatestFinalized) {
+        for (Hash256 subchainHash : subchain) {
             if (Objects.equals(subchainHash, genesisHash)) {
                 continue;
             }
 
             Block block = unfinalizedBlocks.get(subchainHash);
             if (block == null) {
-                throw new BlockNotFoundException("Failed to find block in unfinalized block map for hash" +
+                throw new BlockNotFoundException("Failed to find block in unfinalized block map for hash " +
                         subchainHash);
             }
 
             setHeader(block.getHeader());
             setBlockBody(subchainHash, block.getBody());
 
-            Instant arrivalTime = getArrivalTime(subchainHash);
+            Instant arrivalTime = blockTree.getArrivalTime(subchainHash);
             setArrivalTime(subchainHash, arrivalTime);
 
-            db.save(helper.headerHashKey(block.getHeader().getBlockNumber()), subchainHash);
+            db.save(helper.headerHashKey(block.getHeader().getBlockNumber()), subchainHash.getBytes());
 
             // Delete from the unfinalizedBlockMap and delete reference to in-memory trie
             unfinalizedBlocks.remove(subchainHash);
+            ChainSub.getInstance().notifyFinalizedChainHead(block.getHeader());
 
             // Prune all the subchain hashes state trie from memory
             // but keep the state trie from the current finalized block
@@ -846,4 +924,51 @@ public class BlockState {
         }
     }
 
+    public synchronized void addBlockToBlockTree(BlockHeader blockHeader) {
+        if (!fullSyncFinished) {
+            addBlockToQueue(blockHeader);
+            return;
+        }
+
+        processPendingBlocksFromQueue();
+
+        if (getPendingBlocksQueue().isEmpty()) {
+            try {
+                addBlock(new Block(blockHeader, new BlockBody(new ArrayList<>())));
+            } catch (BlockStorageGenericException ex) {
+                log.fine(String.format("[%s] %s", blockHeader.getHash().toString(), ex.getMessage()));
+            }
+        }
+    }
+
+    private void addBlockToQueue(BlockHeader blockHeader) {
+        var currentBlock = new Block(
+                blockHeader,
+                new BlockBody(new ArrayList<>())
+        );
+
+        pendingBlocksQueue.add(
+                new Pair<>(Instant.now(), currentBlock)
+        );
+    }
+
+    private void processPendingBlocksFromQueue() {
+        var rootBlockNumber = BigInteger.valueOf(blockTree.getRoot().getNumber());
+
+        while (!pendingBlocksQueue.isEmpty()) {
+            var currentPair = pendingBlocksQueue.poll();
+            var block = currentPair.getValue1();
+            var arrivalTime = currentPair.getValue0();
+
+            if (block.getHeader().getBlockNumber().compareTo(rootBlockNumber) <= 0) {
+                continue;
+            }
+
+            try {
+                addBlockWithArrivalTime(block, arrivalTime);
+            } catch (BlockStorageGenericException ex) {
+                log.fine(String.format("[%s] %s", block.getHeader().getHash().toString(), ex.getMessage()));
+            }
+        }
+    }
 }

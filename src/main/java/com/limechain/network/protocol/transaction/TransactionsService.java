@@ -5,11 +5,14 @@ import com.limechain.network.protocol.NetworkService;
 import io.libp2p.core.Host;
 import io.libp2p.core.PeerId;
 import io.libp2p.core.Stream;
+import lombok.extern.java.Log;
 
 import java.util.Optional;
 
+@Log
 public class TransactionsService extends NetworkService<Transactions> {
     ConnectionManager connectionManager = ConnectionManager.getInstance();
+
     public TransactionsService(String protocolId) {
         this.protocol = new Transactions(protocolId, new TransactionsProtocol());
     }
@@ -18,7 +21,7 @@ public class TransactionsService extends NetworkService<Transactions> {
      * Sends a transactions message to a peer. If there is no initiator stream opened with the peer,
      * sends a handshake instead.
      *
-     * @param us our host object
+     * @param us     our host object
      * @param peerId message receiver
      */
     public void sendTransactionsMessage(Host us, PeerId peerId) {
@@ -35,7 +38,11 @@ public class TransactionsService extends NetworkService<Transactions> {
     }
 
     private void sendHandshake(Host us, PeerId peerId) {
-        TransactionsController controller = this.protocol.dialPeer(us, peerId, us.getAddressBook());
-        controller.sendHandshake();
+        try {
+            TransactionsController controller = this.protocol.dialPeer(us, peerId, us.getAddressBook());
+            controller.sendHandshake();
+        } catch (IllegalStateException e) {
+            log.warning("Failed sending transaction handshake to peer " + peerId);
+        }
     }
 }

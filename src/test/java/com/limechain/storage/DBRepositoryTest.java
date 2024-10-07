@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class DBRepositoryTest {
+class DBRepositoryTest {
     private DBRepository dbRepository;
 
     @BeforeEach
@@ -25,32 +25,32 @@ public class DBRepositoryTest {
     }
 
     @Test
-    public void find_returnsEmpty_whenKeyDoesNotExist() {
+    void find_returnsEmpty_whenKeyDoesNotExist() {
         Optional<Object> result = dbRepository.find("empty-key");
 
         assertFalse(result.isPresent());
     }
 
     @Test
-    public void findSave_returnsValue_whenKeyExists() {
+    void findSave_returnsValue_whenKeyExists() {
         boolean saveResult = dbRepository.save("key1", "value1");
         assertTrue(saveResult);
 
         Optional<Object> value = dbRepository.find("key1");
 
         assertTrue(value.isPresent());
-        assertEquals(value.get(), "value1");
+        assertEquals("value1", value.get());
     }
 
     @Test
-    public void del_deletesValue_whenKeyExists() {
+    void del_deletesValue_whenKeyExists() {
         boolean saveResult = dbRepository.save("key1", "value1");
         assertTrue(saveResult);
 
         Optional<Object> findValue = dbRepository.find("key1");
 
         assertTrue(findValue.isPresent());
-        assertEquals(findValue.get(), "value1");
+        assertEquals("value1", findValue.get());
 
         boolean delResult = dbRepository.delete("key1");
         assertTrue(delResult);

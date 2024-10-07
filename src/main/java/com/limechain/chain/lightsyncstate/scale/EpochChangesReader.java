@@ -19,14 +19,13 @@ public class EpochChangesReader implements ScaleReader<EpochChanges> {
     public EpochChanges read(ScaleCodecReader reader) {
         EpochChanges changes = new EpochChanges();
 
-        changes.setInner(new ForkTree<>() {{
-            setRoots(reader.read(new ListReader<>(
-                            new ForkTreeNodeReader<>(
-                                    new PersistedEpochHeaderReader()
-                            )))
-                    .toArray(ForkTree.ForkTreeNode[]::new));
-            setBestFinalizedNumber(reader.readOptional(new UInt32Reader()));
-        }});
+        var forkTree = new ForkTree<>();
+        forkTree.setRoots(reader.read(new ListReader<>(
+                        new ForkTreeNodeReader<>(
+                                new PersistedEpochHeaderReader()
+                        )))
+                .toArray(ForkTree.ForkTreeNode[]::new));
+        forkTree.setBestFinalizedNumber(reader.readOptional(new UInt32Reader()));
 
         Map<Pair<Hash256, BigInteger>, PersistedEpoch> epochs = new TreeMap<>();
         int epochsCount = reader.readCompactInt();

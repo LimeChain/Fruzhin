@@ -1,12 +1,17 @@
 package com.limechain.utils;
 
+import com.limechain.exception.misc.Sr25519Exception;
 import com.limechain.runtime.hostapi.dto.VerifySignature;
 import io.emeraldpay.polkaj.schnorrkel.Schnorrkel;
 import io.emeraldpay.polkaj.schnorrkel.SchnorrkelException;
 import lombok.experimental.UtilityClass;
+import lombok.extern.java.Log;
 import org.web3j.crypto.MnemonicUtils;
 
+import java.util.logging.Level;
+
 @UtilityClass
+@Log
 public class Sr25519Utils {
 
     /**
@@ -18,7 +23,7 @@ public class Sr25519Utils {
         try {
             keyPair = Schnorrkel.getInstance().generateKeyPair();
         } catch (SchnorrkelException e) {
-            throw new RuntimeException(e);
+            throw new Sr25519Exception(e);
         }
 
         return keyPair;
@@ -37,7 +42,7 @@ public class Sr25519Utils {
         try {
             rootKey = Schnorrkel.getInstance().generateKeyPairFromSeed(secret);
         } catch (SchnorrkelException e) {
-            throw new RuntimeException(e);
+            throw new Sr25519Exception(e);
         }
 
         return rootKey;
@@ -56,6 +61,7 @@ public class Sr25519Utils {
         try {
             return Schnorrkel.getInstance().sign(message, keyPair);
         } catch (SchnorrkelException e) {
+            log.log(Level.WARNING, e.getMessage(), e);
             return null;
         }
     }
@@ -71,6 +77,7 @@ public class Sr25519Utils {
             Schnorrkel.PublicKey publicKey = new Schnorrkel.PublicKey(signature.getPublicKeyData());
             return schnorrkel.verify(signature.getSignatureData(), signature.getMessageData(), publicKey);
         } catch (SchnorrkelException e) {
+            log.log(Level.WARNING, e.getMessage(), e);
             return false;
         }
     }

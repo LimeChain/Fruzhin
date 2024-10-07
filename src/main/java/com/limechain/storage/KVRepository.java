@@ -3,6 +3,7 @@ package com.limechain.storage;
 import org.springframework.lang.Nullable;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -20,6 +21,11 @@ public interface KVRepository<K, V> {
      * @return whether the save operation was successful
      */
     boolean save(K key, V value);
+
+    /**
+     * @param kvMap a map of all the key value pairs
+     */
+    void saveBatch(Map<K, V> kvMap);
 
     /**
      * Tries to find a value for a given key in the DB
@@ -44,7 +50,7 @@ public interface KVRepository<K, V> {
      * @param limit maximum keys to return
      * @return whether the delete operation was successful
      */
-    List<byte[]> findKeysByPrefix(String prefixSeek, int limit);
+    List<byte[]> findKeysByPrefix(K prefixSeek, int limit);
 
     /**
      * Deletes key-value pairs from the DB where key starts with prefix, up to a given limit.
@@ -53,7 +59,7 @@ public interface KVRepository<K, V> {
      * @param limit maximum entries to delete
      * @return how many entries were deleted and if all were deleted
      */
-    DeleteByPrefixResult deleteByPrefix(String prefix, @Nullable Long limit);
+    DeleteByPrefixResult deleteByPrefix(K prefix, @Nullable Long limit);
 
     /**
      * Tries to find the next key after a given key in the DB
@@ -61,22 +67,7 @@ public interface KVRepository<K, V> {
      * @param key the key to search for
      * @return Optional result that could contain the value
      */
-    Optional<K> getNextKey(String key);
-
-    /**
-     * Starts a DB transaction, that can later be committed or rolled back
-     */
-    void startTransaction();
-
-    /**
-     * Rollbacks an active DB transaction, discarding changes.
-     */
-    void rollbackTransaction();
-
-    /**
-     * Commits an active DB transaction, persisting changes.
-     */
-    void commitTransaction();
+    Optional<K> getNextKey(K key);
 
     /**
      * Closes the connection to the DB

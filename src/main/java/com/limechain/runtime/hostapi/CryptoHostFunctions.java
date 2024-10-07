@@ -1,7 +1,10 @@
 package com.limechain.runtime.hostapi;
 
-import com.limechain.utils.scale.exceptions.ScaleEncodingException;
-import com.limechain.rpc.server.AppBean;
+import com.limechain.exception.hostapi.BatchVerificationNotStartedException;
+import com.limechain.exception.hostapi.InvalidKeyTypeException;
+import com.limechain.exception.hostapi.InvalidSeedException;
+import com.limechain.exception.scale.ScaleEncodingException;
+import com.limechain.runtime.SharedMemory;
 import com.limechain.runtime.hostapi.dto.Key;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import com.limechain.runtime.hostapi.dto.Signature;
@@ -23,137 +26,165 @@ import io.libp2p.crypto.keys.Ed25519PrivateKey;
 import kotlin.Pair;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.java.Log;
 import org.jetbrains.annotations.NotNull;
 import org.wasmer.ImportObject;
-import org.wasmer.Type;
 import org.wasmer.Util;
 import org.web3j.crypto.MnemonicUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
+
+import static com.limechain.runtime.hostapi.PartialHostApi.newImportObjectPair;
 
 /**
  * Implementations of the Crypto HostAPI functions
  * For more info check
  * {<a href="https://spec.polkadot.network/chap-host-api#sect-crypto-api">Crypto API</a>}
  */
+@Log
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
-public class CryptoHostFunctions {
+public class CryptoHostFunctions implements PartialHostApi {
     public static final String SCALE_ENCODING_SIGNED_MESSAGE_ERROR = "Error while SCALE encoding signed message";
     public static final String INVALID_KEY_TYPE = "Invalid key type";
     public static final String SEED_IS_INVALID = "Seed is invalid";
     public static final String BATCH_VERIFICATION_NOT_STARTED = "Batch verification not started";
     public static final int PUBLIC_KEY_LEN = 32;
     public static final int SIGNATURE_LEN = 64;
+    private static final String TYPE_RECEIVED_STRING = "Type received: %s";
+
+    private final SharedMemory sharedMemory;
     private final KeyStore keyStore;
-    private final HostApi hostApi;
     private final Set<VerifySignature> signaturesToVerify;
     protected boolean batchVerificationStarted = false;
 
-    private CryptoHostFunctions(final HostApi hostApi) {
-        this(AppBean.getBean(KeyStore.class), hostApi, new HashSet<>());
+    CryptoHostFunctions(SharedMemory sharedMemory, KeyStore keyStore) {
+        this(sharedMemory, keyStore, new HashSet<>());
     }
 
-    public static List<ImportObject> getFunctions(final HostApi hostApi) {
-        return new CryptoHostFunctions(hostApi).buildFunctions();
-    }
-
-    public List<ImportObject> buildFunctions() {
-        return Arrays.asList(
-                HostApi.getImportObject("ext_crypto_ed25519_public_keys_version_1", argv ->
-                        ed25519PublicKeysV1(argv.get(0).intValue()).pointerSize(), List.of(Type.I32), Type.I64),
-                HostApi.getImportObject("ext_crypto_ed25519_generate_version_1", argv ->
-                                ed25519GenerateV1(argv.get(0).intValue(), new RuntimePointerSize(argv.get(1))),
-                        List.of(Type.I32, Type.I64), Type.I32),
-                HostApi.getImportObject("ext_crypto_ed25519_sign_version_1", argv ->
-                                ed25519SignV1(argv.get(0).intValue(), argv.get(1).intValue(),
-                                        new RuntimePointerSize(argv.get(2))),
-                        List.of(Type.I32, Type.I32, Type.I64), Type.I64),
-                HostApi.getImportObject("ext_crypto_ed25519_verify_version_1", argv ->
-                                ed25519VerifyV1(argv.get(0).intValue(), new RuntimePointerSize(argv.get(1)),
-                                        argv.get(2).intValue()),
-                        List.of(Type.I32, Type.I64, Type.I32), Type.I32),
-                HostApi.getImportObject("ext_crypto_ed25519_batch_verify_version_1", argv ->
-                                ed25519BatchVerifyV1(argv.get(0).intValue(), new RuntimePointerSize(argv.get(1)),
-                                        argv.get(2).intValue()),
-                        List.of(Type.I32, Type.I64, Type.I32), Type.I32),
-                HostApi.getImportObject("ext_crypto_sr25519_public_keys_version_1", argv ->
-                        sr25519PublicKeysV1(argv.get(0).intValue()).pointerSize(), List.of(Type.I32), Type.I64),
-                HostApi.getImportObject("ext_crypto_sr25519_generate_version_1", argv ->
-                                sr25519GenerateV1(argv.get(0).intValue(), new RuntimePointerSize(argv.get(1))),
-                        List.of(Type.I32, Type.I64), Type.I32),
-                HostApi.getImportObject("ext_crypto_sr25519_sign_version_1", argv ->
-                                sr25519SignV1(argv.get(0).intValue(), argv.get(1).intValue(),
-                                        new RuntimePointerSize(argv.get(2))),
-                        List.of(Type.I32, Type.I32, Type.I64), (Type.I64)),
-                HostApi.getImportObject("ext_crypto_sr25519_verify_version_1", argv ->
-                                sr25519VerifyV1(argv.get(0).intValue(), new RuntimePointerSize(argv.get(1)),
-                                        argv.get(2).intValue()),
-                        List.of(Type.I32, Type.I64, Type.I32), Type.I32),
-                HostApi.getImportObject("ext_crypto_sr25519_verify_version_2", argv ->
-                                sr25519VerifyV1(argv.get(0).intValue(), new RuntimePointerSize(argv.get(1)),
-                                        argv.get(2).intValue()),
-                        List.of(Type.I32, Type.I64, Type.I32), Type.I32),
-                HostApi.getImportObject("ext_crypto_sr25519_batch_verify_version_1", argv ->
-                                sr25519BatchVerifyV1(argv.get(0).intValue(), new RuntimePointerSize(argv.get(1)),
-                                        argv.get(2).intValue()),
-                        List.of(Type.I32, Type.I64, Type.I32), Type.I32),
-                HostApi.getImportObject("ext_crypto_ecdsa_public_keys_version_1", argv ->
-                        ecdsaPublicKeysV1(argv.get(0).intValue()).pointerSize(), List.of(Type.I64), (Type.I64)),
-                HostApi.getImportObject("ext_crypto_ecdsa_generate_version_1", argv ->
-                                ecdsaGenerateV1(argv.get(0).intValue(), new RuntimePointerSize(argv.get(1))),
-                        List.of(Type.I32, Type.I64), (Type.I64)),
-                HostApi.getImportObject("ext_crypto_ecdsa_sign_version_1", argv ->
-                                ecdsaSignV1(argv.get(0).intValue(), argv.get(1).intValue(),
-                                        new RuntimePointerSize(argv.get(2))),
-                        List.of(Type.I32, Type.I32, Type.I64), (Type.I64)),
-                HostApi.getImportObject("ext_crypto_ecdsa_sign_prehashed_version_1",
-                        argv -> ecdsaSignPrehashedV1(argv.get(0).intValue(), argv.get(1).intValue(),
-                                new RuntimePointerSize(argv.get(2))),
-                        List.of(Type.I32, Type.I32, Type.I64), (Type.I64)),
-                HostApi.getImportObject("ext_crypto_ecdsa_verify_version_1", argv ->
-                                ecdsaVerifyV1(argv.get(0).intValue(), new RuntimePointerSize(argv.get(1)),
-                                        argv.get(2).intValue()),
-                        List.of(Type.I32, Type.I64, Type.I32), Type.I32),
-                HostApi.getImportObject("ext_crypto_ecdsa_verify_version_2", argv ->
-                                ecdsaVerifyV1(argv.get(0).intValue(), new RuntimePointerSize(argv.get(1)),
-                                        argv.get(2).intValue()),
-                        List.of(Type.I32, Type.I64, Type.I32), Type.I32),
-                HostApi.getImportObject("ext_crypto_ecdsa_verify_prehashed_version_1", argv ->
-                                ecdsaVerifyPrehashedV1(argv.get(0).intValue(), argv.get(1).intValue(),
-                                        argv.get(2).intValue()),
-                        List.of(Type.I32, Type.I32, Type.I32), Type.I32),
-                HostApi.getImportObject("ext_crypto_ecdsa_batch_verify_version_1", argv ->
-                                ecdsaBatchVerifyV1(argv.get(0).intValue(), new RuntimePointerSize(argv.get(1)),
-                                        argv.get(2).intValue()),
-                        List.of(Type.I32, Type.I64, Type.I32), Type.I32),
-                HostApi.getImportObject("ext_crypto_secp256k1_ecdsa_recover_version_1", argv ->
-                                secp256k1EcdsaRecoverV1(argv.get(0).intValue(), argv.get(1).intValue()),
-                        List.of(Type.I32, Type.I32), (Type.I64)),
-                HostApi.getImportObject("ext_crypto_secp256k1_ecdsa_recover_version_2", argv ->
-                                secp256k1EcdsaRecoverV1(argv.get(0).intValue(), argv.get(1).intValue()),
-                        List.of(Type.I32, Type.I32), Type.I64),
-                HostApi.getImportObject("ext_crypto_secp256k1_ecdsa_recover_compressed_version_1",
-                        argv -> secp256k1EcdsaRecoverCompressedV1(argv.get(0).intValue(), argv.get(1).intValue()),
-                        List.of(Type.I32, Type.I32), Type.I64),
-                HostApi.getImportObject("ext_crypto_secp256k1_ecdsa_recover_compressed_version_2",
-                        argv -> secp256k1EcdsaRecoverCompressedV1(argv.get(0).intValue(), argv.get(1).intValue()),
-                        List.of(Type.I32, Type.I32), Type.I64),
-                HostApi.getImportObject("ext_crypto_start_batch_verify", argv ->
-                        startBatchVerify(), HostApi.EMPTY_LIST_OF_TYPES),
-                HostApi.getImportObject("ext_crypto_finish_batch_verify", argv ->
-                        finishBatchVerify(), HostApi.EMPTY_LIST_OF_TYPES, Type.I32));
+    @Override
+    public Map<Endpoint, ImportObject.FuncImport> getFunctionImports() {
+        return Map.ofEntries(
+            newImportObjectPair(Endpoint.ext_crypto_ed25519_public_keys_version_1, argv -> {
+                return ed25519PublicKeysV1(argv.get(0).intValue()).pointerSize();
+            }),
+            newImportObjectPair(Endpoint.ext_crypto_ed25519_generate_version_1, argv -> {
+                return ed25519GenerateV1(argv.get(0).intValue(), new RuntimePointerSize(argv.get(1)));
+            }),
+            newImportObjectPair(Endpoint.ext_crypto_ed25519_sign_version_1, argv -> {
+                return ed25519SignV1(
+                    argv.get(0).intValue(),
+                    argv.get(1).intValue(),
+                    new RuntimePointerSize(argv.get(2)));
+            }),
+            newImportObjectPair(Endpoint.ext_crypto_ed25519_verify_version_1, argv -> {
+                return ed25519VerifyV1(
+                    argv.get(0).intValue(),
+                    new RuntimePointerSize(argv.get(1)),
+                    argv.get(2).intValue());
+            }),
+            newImportObjectPair(Endpoint.ext_crypto_ed25519_batch_verify_version_1, argv -> {
+                return ed25519BatchVerifyV1(
+                    argv.get(0).intValue(),
+                    new RuntimePointerSize(argv.get(1)),
+                    argv.get(2).intValue());
+            }),
+            newImportObjectPair(Endpoint.ext_crypto_sr25519_public_keys_version_1, argv -> {
+                return sr25519PublicKeysV1(argv.get(0).intValue()).pointerSize();
+            }),
+            newImportObjectPair(Endpoint.ext_crypto_sr25519_generate_version_1, argv -> {
+                return sr25519GenerateV1(argv.get(0).intValue(), new RuntimePointerSize(argv.get(1)));
+            }),
+            newImportObjectPair(Endpoint.ext_crypto_sr25519_sign_version_1, argv -> {
+                return sr25519SignV1(
+                    argv.get(0).intValue(),
+                    argv.get(1).intValue(),
+                    new RuntimePointerSize(argv.get(2)));
+            }),
+            newImportObjectPair(Endpoint.ext_crypto_sr25519_verify_version_1, argv -> {
+                return sr25519VerifyV1(argv.get(0).intValue(), new RuntimePointerSize(argv.get(1)), argv.get(2).intValue());
+            }),
+            newImportObjectPair(Endpoint.ext_crypto_sr25519_verify_version_2, argv -> {
+                // NOTE: Intentionally does the same as V1, see: https://spec.polkadot.network/chap-host-api#sect-ext-crypto-sr25519-verify
+                return sr25519VerifyV1(argv.get(0).intValue(), new RuntimePointerSize(argv.get(1)), argv.get(2).intValue());
+            }),
+            newImportObjectPair(Endpoint.ext_crypto_sr25519_batch_verify_version_1, argv -> {
+                return sr25519BatchVerifyV1(
+                    argv.get(0).intValue(),
+                    new RuntimePointerSize(argv.get(1)),
+                    argv.get(2).intValue());
+            }),
+            newImportObjectPair(Endpoint.ext_crypto_ecdsa_public_keys_version_1, argv -> {
+                return ecdsaPublicKeysV1(argv.get(0).intValue()).pointerSize();
+            }),
+            newImportObjectPair(Endpoint.ext_crypto_ecdsa_generate_version_1, argv -> {
+                return ecdsaGenerateV1(argv.get(0).intValue(), new RuntimePointerSize(argv.get(1)));
+            }),
+            newImportObjectPair(Endpoint.ext_crypto_ecdsa_sign_version_1, argv -> {
+                return ecdsaSignV1(argv.get(0).intValue(), argv.get(1).intValue(), new RuntimePointerSize(argv.get(2)));
+            }),
+            newImportObjectPair(Endpoint.ext_crypto_ecdsa_sign_prehashed_version_1, argv -> {
+                return ecdsaSignPrehashedV1(
+                    argv.get(0).intValue(),
+                    argv.get(1).intValue(),
+                    new RuntimePointerSize(argv.get(2)));
+            }),
+            newImportObjectPair(Endpoint.ext_crypto_ecdsa_verify_version_1, argv -> {
+                return ecdsaVerifyV1(
+                    argv.get(0).intValue(),
+                    new RuntimePointerSize(argv.get(1)),
+                    argv.get(2).intValue());
+            }),
+            newImportObjectPair(Endpoint.ext_crypto_ecdsa_verify_version_2, argv -> {
+                return ecdsaVerifyV1(
+                    argv.get(0).intValue(),
+                    new RuntimePointerSize(argv.get(1)),
+                    argv.get(2).intValue());
+            }),
+            newImportObjectPair(Endpoint.ext_crypto_ecdsa_verify_prehashed_version_1, argv -> {
+                return ecdsaVerifyPrehashedV1(
+                    argv.get(0).intValue(),
+                    argv.get(1).intValue(),
+                    argv.get(2).intValue());
+            }),
+            newImportObjectPair(Endpoint.ext_crypto_ecdsa_batch_verify_version_1, argv -> {
+                return ecdsaBatchVerifyV1(
+                    argv.get(0).intValue(),
+                    new RuntimePointerSize(argv.get(1)),
+                    argv.get(2).intValue());
+            }),
+            newImportObjectPair(Endpoint.ext_crypto_secp256k1_ecdsa_recover_version_1, argv -> {
+                return secp256k1EcdsaRecoverV1(argv.get(0).intValue(), argv.get(1).intValue());
+            }),
+            newImportObjectPair(Endpoint.ext_crypto_secp256k1_ecdsa_recover_version_2, argv -> {
+                // NOTE: Intentionally does the same as V1, see: https://spec.polkadot.network/chap-host-api#id-ext_crypto_secp256k1_ecdsa_recover
+                return secp256k1EcdsaRecoverV1(argv.get(0).intValue(), argv.get(1).intValue());
+            }),
+            newImportObjectPair(Endpoint.ext_crypto_secp256k1_ecdsa_recover_compressed_version_1, argv -> {
+                return secp256k1EcdsaRecoverCompressedV1(argv.get(0).intValue(), argv.get(1).intValue());
+            }),
+            newImportObjectPair(Endpoint.ext_crypto_secp256k1_ecdsa_recover_compressed_version_2, argv -> {
+                return secp256k1EcdsaRecoverCompressedV1(argv.get(0).intValue(), argv.get(1).intValue());
+            }),
+            newImportObjectPair(Endpoint.ext_crypto_start_batch_verify_version_1, argv -> {
+                startBatchVerify();
+            }),
+            newImportObjectPair(Endpoint.ext_crypto_finish_batch_verify_version_1, argv -> {
+                return finishBatchVerify();
+            })
+        );
     }
 
     private VerifySignature internalGetVerifySignature(int signature, RuntimePointerSize message,
                                                        int publicKey, Key key) {
-        final byte[] signatureData = hostApi.getDataFromMemory(new RuntimePointerSize(signature, SIGNATURE_LEN));
-        final byte[] messageData = hostApi.getDataFromMemory(message);
-        final byte[] publicKeyData = hostApi.getDataFromMemory(new RuntimePointerSize(publicKey, key == Key.ECDSA ?
+        final byte[] signatureData = sharedMemory.readData(new RuntimePointerSize(signature, SIGNATURE_LEN));
+        final byte[] messageData = sharedMemory.readData(message);
+        final byte[] publicKeyData = sharedMemory.readData(new RuntimePointerSize(publicKey, key == Key.ECDSA ?
                 EcdsaUtils.PUBLIC_KEY_COMPRESSED_LEN : PUBLIC_KEY_LEN));
         return new VerifySignature(signatureData, messageData, publicKeyData, key);
     }
@@ -165,11 +196,13 @@ public class CryptoHostFunctions {
      * @return a pointer-size to the SCALE encoded array of 256bit public keys.
      */
     public RuntimePointerSize ed25519PublicKeysV1(int keyTypeId) {
-        byte[] keyTypeBytes = hostApi.getDataFromMemory(new RuntimePointerSize(keyTypeId, KeyType.KEY_TYPE_LEN));
+        log.log(Level.FINEST, "ed25519PublicKeysV1");
+        byte[] keyTypeBytes = sharedMemory.readData(new RuntimePointerSize(keyTypeId, KeyType.KEY_TYPE_LEN));
         final KeyType keyType = KeyType.getByBytes(keyTypeBytes);
 
         if (keyType == null || (keyType.getKey() != Key.ED25519 && keyType.getKey() != Key.GENERIC)) {
-            throw new RuntimeException(INVALID_KEY_TYPE);
+            throw new InvalidKeyTypeException(
+                    String.format(TYPE_RECEIVED_STRING, keyType != null ? keyType.getKey() : null));
         }
 
         return internalPublicKeys(keyType);
@@ -182,34 +215,41 @@ public class CryptoHostFunctions {
      * @param seed      a pointer-size to the SCALE encoded Option value containing the BIP-39 seed which must be valid
      *                  UTF8.
      * @return a pointer to the buffer containing the 256-bit public key.
-     * @throws RuntimeException Panics if the key cannot be generated, such as when an invalid key type or invalid seed
-     *                          was provided.
+     * @throws InvalidSeedException Panics if the key cannot be generated, such as when an invalid key type or invalid
+     *                              seed was provided.
      */
     public int ed25519GenerateV1(int keyTypeId, RuntimePointerSize seed) {
-        byte[] keyTypeBytes = hostApi.getDataFromMemory(new RuntimePointerSize(keyTypeId, KeyType.KEY_TYPE_LEN));
-        final KeyType keyType = KeyType.getByBytes(keyTypeBytes);
-        if (keyType == null) {
-            Util.nativePanic(INVALID_KEY_TYPE);
-            throw new RuntimeException(INVALID_KEY_TYPE);
-        }
-        final byte[] seedData = hostApi.getDataFromMemory(seed);
-        String seedStr = new ScaleCodecReader(seedData).readOptional(ScaleCodecReader::readString).orElse(null);
-
+        log.log(Level.FINEST, "ed25519GenerateV1");
+        var pair = getSeedStringAndKeyType(keyTypeId, seed);
         final Ed25519PrivateKey ed25519PrivateKey;
-        if (seedStr != null) {
-            if (!MnemonicUtils.validateMnemonic(seedStr)) {
+        if (pair.getSeed() != null) {
+            if (!MnemonicUtils.validateMnemonic(pair.getSeed())) {
                 Util.nativePanic(SEED_IS_INVALID);
-                throw new RuntimeException(SEED_IS_INVALID);
+                throw new InvalidSeedException();
             }
-            ed25519PrivateKey = Ed25519Utils.generateKeyPair(seedStr);
+            ed25519PrivateKey = Ed25519Utils.generateKeyPair(pair.getSeed());
         } else {
             ed25519PrivateKey = Ed25519Utils.generateKeyPair();
         }
 
         final PubKey pubKey = ed25519PrivateKey.publicKey();
 
-        keyStore.put(keyType, pubKey.raw(), ed25519PrivateKey.raw());
-        return hostApi.writeDataToMemory(pubKey.raw()).pointer();
+        keyStore.put(pair.getKeyType(), pubKey.raw(), ed25519PrivateKey.raw());
+        return sharedMemory.writeData(pubKey.raw()).pointer();
+    }
+
+    private SeedStringKeyTypePair getSeedStringAndKeyType(int keyTypeId, RuntimePointerSize seed) {
+        log.log(Level.FINEST, "getSeedStringAndKeyType");
+
+        byte[] keyTypeBytes = sharedMemory.readData(new RuntimePointerSize(keyTypeId, KeyType.KEY_TYPE_LEN));
+        final KeyType keyType = KeyType.getByBytes(keyTypeBytes);
+        if (keyType == null) {
+            Util.nativePanic(INVALID_KEY_TYPE);
+            throw new InvalidKeyTypeException("Null is not a valid type");
+        }
+        final byte[] seedData = sharedMemory.readData(seed);
+        return new SeedStringKeyTypePair(new ScaleCodecReader(seedData).readOptional(ScaleCodecReader::readString)
+                .orElse(null), keyType);
     }
 
     /**
@@ -223,6 +263,7 @@ public class CryptoHostFunctions {
      * This function returns if the public key cannot be found in the key store.
      */
     public long ed25519SignV1(int keyTypeId, int publicKey, RuntimePointerSize message) {
+        log.log(Level.FINEST, "ed25519SignV1");
         final Signature sig = internalGetSignData(keyTypeId, publicKey, message, Key.ED25519);
 
         byte[] signed = null;
@@ -230,17 +271,17 @@ public class CryptoHostFunctions {
             signed = Ed25519Utils.signMessage(sig.getPrivateKey(), sig.getMessageData());
         }
 
-        return hostApi.writeDataToMemory(scaleEncodedOption(signed)).pointer();
+        return sharedMemory.writeData(scaleEncodedOption(signed)).pointer();
     }
 
     @NotNull
     private Signature internalGetSignData(int keyTypeId, int publicKey, RuntimePointerSize message, Key key) {
-        byte[] keyTypeBytes = hostApi.getDataFromMemory(new RuntimePointerSize(keyTypeId, KeyType.KEY_TYPE_LEN));
+        byte[] keyTypeBytes = sharedMemory.readData(new RuntimePointerSize(keyTypeId, KeyType.KEY_TYPE_LEN));
         final KeyType keyType = KeyType.getByBytes(keyTypeBytes);
 
-        final byte[] publicKeyData = hostApi.getDataFromMemory(new RuntimePointerSize(publicKey, key == Key.ECDSA ?
+        final byte[] publicKeyData = sharedMemory.readData(new RuntimePointerSize(publicKey, key == Key.ECDSA ?
                 EcdsaUtils.PUBLIC_KEY_COMPRESSED_LEN : PUBLIC_KEY_LEN));
-        final byte[] messageData = hostApi.getDataFromMemory(message);
+        final byte[] messageData = sharedMemory.readData(message);
 
         byte[] privateKey = keyStore.get(keyType, publicKeyData);
         return new Signature(publicKeyData, messageData, privateKey);
@@ -255,6 +296,7 @@ public class CryptoHostFunctions {
      * @return a i32 integer value equal to 1 if the signature is valid or a value equal to 0 if otherwise.
      */
     public int ed25519VerifyV1(int signature, RuntimePointerSize message, int publicKey) {
+        log.log(Level.FINEST, "ed25519VerifyV1");
         VerifySignature verifySig = internalGetVerifySignature(signature, message, publicKey, Key.ED25519);
         return Ed25519Utils.verifySignature(verifySig) ? 1 : 0;
     }
@@ -270,6 +312,8 @@ public class CryptoHostFunctions {
      * @return an i32 integer value equal to 1 if the signature is valid or batched or a value equal 0 to if otherwise.
      */
     public int ed25519BatchVerifyV1(int signature, RuntimePointerSize message, int publicKey) {
+        log.log(Level.FINEST, "ed25519BatchVerifyV1");
+
         VerifySignature verifySig = internalGetVerifySignature(signature, message, publicKey, Key.ED25519);
 
         if (batchVerificationStarted) {
@@ -287,11 +331,14 @@ public class CryptoHostFunctions {
      * @return a pointer-size to the SCALE encoded array of 256bit public keys.
      */
     public RuntimePointerSize sr25519PublicKeysV1(int keyTypeId) {
-        byte[] keyTypeBytes = hostApi.getDataFromMemory(new RuntimePointerSize(keyTypeId, KeyType.KEY_TYPE_LEN));
+        log.log(Level.FINEST, "sr25519PublicKeysV1");
+
+        byte[] keyTypeBytes = sharedMemory.readData(new RuntimePointerSize(keyTypeId, KeyType.KEY_TYPE_LEN));
         final KeyType keyType = KeyType.getByBytes(keyTypeBytes);
 
         if (keyType == null || (keyType.getKey() != Key.SR25519 && keyType.getKey() != Key.GENERIC)) {
-            throw new RuntimeException(INVALID_KEY_TYPE);
+            throw new InvalidKeyTypeException(
+                    String.format(TYPE_RECEIVED_STRING, keyType != null ? keyType.getKey() : null));
         }
 
         return internalPublicKeys(keyType);
@@ -304,32 +351,27 @@ public class CryptoHostFunctions {
      * @param seed      a pointer-size to the SCALE encoded Option value containing the BIP-39 seed which must be valid
      *                  UTF8.
      * @return a pointer to the buffer containing the 256-bit public key.
-     * @throws RuntimeException Panics if the key cannot be generated, such as when an invalid key type or invalid seed
-     *                          was provided.
+     * @throws InvalidSeedException Panics if the key cannot be generated, such as when an invalid key type or invalid
+     *                              seed was provided.
      */
     public int sr25519GenerateV1(int keyTypeId, RuntimePointerSize seed) {
-        byte[] keyTypeBytes = hostApi.getDataFromMemory(new RuntimePointerSize(keyTypeId, KeyType.KEY_TYPE_LEN));
-        final KeyType keyType = KeyType.getByBytes(keyTypeBytes);
-        if (keyType == null) {
-            Util.nativePanic(INVALID_KEY_TYPE);
-            throw new RuntimeException(INVALID_KEY_TYPE);
-        }
-        final byte[] seedData = hostApi.getDataFromMemory(seed);
-        String seedStr = new ScaleCodecReader(seedData).readOptional(ScaleCodecReader::readString).orElse(null);
+        log.log(Level.FINEST, "sr25519GenerateV1");
+
+        var pair = getSeedStringAndKeyType(keyTypeId, seed);
         final Schnorrkel.KeyPair keyPair;
 
-        if (seedStr != null) {
-            if (!MnemonicUtils.validateMnemonic(seedStr)) {
+        if (pair.getSeed() != null) {
+            if (!MnemonicUtils.validateMnemonic(pair.getSeed())) {
                 Util.nativePanic(SEED_IS_INVALID);
-                throw new RuntimeException(SEED_IS_INVALID);
+                throw new InvalidSeedException();
             }
-            keyPair = Sr25519Utils.generateKeyPair(seedStr);
+            keyPair = Sr25519Utils.generateKeyPair(pair.getSeed());
         } else {
             keyPair = Sr25519Utils.generateKeyPair();
         }
 
-        keyStore.put(keyType, keyPair.getPublicKey(), keyPair.getSecretKey());
-        return hostApi.writeDataToMemory(keyPair.getPublicKey()).pointer();
+        keyStore.put(pair.getKeyType(), keyPair.getPublicKey(), keyPair.getSecretKey());
+        return sharedMemory.writeData(keyPair.getPublicKey()).pointer();
     }
 
     /**
@@ -343,6 +385,8 @@ public class CryptoHostFunctions {
      * This function returns if the public key cannot be found in the key store.
      */
     public int sr25519SignV1(int keyTypeId, int publicKey, RuntimePointerSize message) {
+        log.log(Level.FINEST, "sr25519SignV1");
+
         final Signature sig = internalGetSignData(keyTypeId, publicKey, message, Key.SR25519);
 
         byte[] signed = null;
@@ -350,7 +394,7 @@ public class CryptoHostFunctions {
             signed = Sr25519Utils.signMessage(sig.getPublicKeyData(), sig.getPrivateKey(), sig.getMessageData());
         }
 
-        return hostApi.writeDataToMemory(scaleEncodedOption(signed)).pointer();
+        return sharedMemory.writeData(scaleEncodedOption(signed)).pointer();
     }
 
     /**
@@ -362,6 +406,8 @@ public class CryptoHostFunctions {
      * @return a i32 integer value equal to 1 if the signature is valid or a value equal to 0 if otherwise.
      */
     public int sr25519VerifyV1(int signature, RuntimePointerSize message, int publicKey) {
+        log.log(Level.FINEST, "sr25519VerifyV1");
+
         VerifySignature verifiedSignature = internalGetVerifySignature(signature, message, publicKey, Key.SR25519);
 
         return Sr25519Utils.verifySignature(verifiedSignature) ? 1 : 0;
@@ -378,6 +424,8 @@ public class CryptoHostFunctions {
      * @return an i32 integer value equal to 1 if the signature is valid or batched or a value equal 0 to if otherwise.
      */
     public int sr25519BatchVerifyV1(int signature, RuntimePointerSize message, int publicKey) {
+        log.log(Level.FINEST, "sr25519BatchVerifyV1");
+
         VerifySignature verifiedSignature = internalGetVerifySignature(signature, message, publicKey, Key.SR25519);
 
         if (batchVerificationStarted) {
@@ -396,11 +444,14 @@ public class CryptoHostFunctions {
      * @return a pointer-size to the SCALE encoded array of 33byte compressed public keys.
      */
     public RuntimePointerSize ecdsaPublicKeysV1(int keyTypeId) {
-        byte[] keyTypeBytes = hostApi.getDataFromMemory(new RuntimePointerSize(keyTypeId, KeyType.KEY_TYPE_LEN));
+        log.log(Level.FINEST, "ecdsaPublicKeysV1");
+
+        byte[] keyTypeBytes = sharedMemory.readData(new RuntimePointerSize(keyTypeId, KeyType.KEY_TYPE_LEN));
         final KeyType keyType = KeyType.getByBytes(keyTypeBytes);
 
         if (keyType == null || keyType.getKey() != Key.GENERIC) {
-            throw new RuntimeException(INVALID_KEY_TYPE);
+            throw new InvalidKeyTypeException(
+                    String.format(TYPE_RECEIVED_STRING, keyType != null ? keyType.getKey() : null));
         }
 
         return internalPublicKeys(keyType);
@@ -414,7 +465,7 @@ public class CryptoHostFunctions {
 
             ListWriter<byte[]> listWriter = new ListWriter<>(ScaleCodecWriter::writeByteArray);
             listWriter.write(scaleWriter, publicKeys);
-            return hostApi.writeDataToMemory(baos.toByteArray());
+            return sharedMemory.writeData(baos.toByteArray());
 
         } catch (IOException e) {
             throw new ScaleEncodingException("Error while SCALE encoding public keys");
@@ -428,32 +479,27 @@ public class CryptoHostFunctions {
      * @param seed      a pointer-size to the SCALE encoded Option value containing the BIP-39 seed which must be valid
      *                  UTF8.
      * @return a pointer to the buffer containing the 33-byte public key.
-     * @throws RuntimeException Panics if the key cannot be generated, such as when an invalid key type or invalid seed
-     *                          was provided.
+     * @throws InvalidSeedException Panics if the key cannot be generated, such as when an invalid key type or invalid
+     *                              seed was provided.
      */
     public int ecdsaGenerateV1(int keyTypeId, RuntimePointerSize seed) {
-        byte[] keyTypeBytes = hostApi.getDataFromMemory(new RuntimePointerSize(keyTypeId, KeyType.KEY_TYPE_LEN));
-        final KeyType keyType = KeyType.getByBytes(keyTypeBytes);
-        if (keyType == null) {
-            Util.nativePanic(INVALID_KEY_TYPE);
-            throw new RuntimeException(INVALID_KEY_TYPE);
-        }
-        final byte[] seedData = hostApi.getDataFromMemory(seed);
-        String seedStr = new ScaleCodecReader(seedData).readOptional(ScaleCodecReader::readString).orElse(null);
+        log.log(Level.FINEST, "ecdsaGenerateV1");
+
+        var pair = getSeedStringAndKeyType(keyTypeId, seed);
 
         final Pair<PrivKey, PubKey> keyPair;
-        if (seedStr != null) {
-            if (!MnemonicUtils.validateMnemonic(seedStr)) {
+        if (pair.getSeed() != null) {
+            if (!MnemonicUtils.validateMnemonic(pair.getSeed())) {
                 Util.nativePanic(SEED_IS_INVALID);
-                throw new RuntimeException(SEED_IS_INVALID);
+                throw new InvalidSeedException();
             }
-            keyPair = EcdsaUtils.generateKeyPair(seedStr);
+            keyPair = EcdsaUtils.generateKeyPair(pair.getSeed());
         } else {
             keyPair = EcdsaUtils.generateKeyPair();
         }
 
-        keyStore.put(keyType, keyPair.getSecond().raw(), keyPair.getFirst().raw());
-        return hostApi.writeDataToMemory(keyPair.getSecond().raw()).pointer();
+        keyStore.put(pair.getKeyType(), keyPair.getSecond().raw(), keyPair.getFirst().raw());
+        return sharedMemory.writeData(keyPair.getSecond().raw()).pointer();
     }
 
     /**
@@ -468,6 +514,8 @@ public class CryptoHostFunctions {
      * represent the recovery ID. This function returns if the public key cannot be found in the key store.
      */
     public int ecdsaSignV1(int keyTypeId, int publicKey, RuntimePointerSize message) {
+        log.log(Level.FINEST, "ecdsaSignV1");
+
         final Signature sig = internalGetSignData(keyTypeId, publicKey, message, Key.ECDSA);
         sig.setMessageData(HashUtils.hashWithBlake2b(sig.getMessageData()));
 
@@ -476,7 +524,7 @@ public class CryptoHostFunctions {
             signed = EcdsaUtils.signMessage(sig.getPrivateKey(), sig.getMessageData());
         }
 
-        return hostApi.writeDataToMemory(scaleEncodedOption(signed)).pointer();
+        return sharedMemory.writeData(scaleEncodedOption(signed)).pointer();
     }
 
     /**
@@ -491,6 +539,8 @@ public class CryptoHostFunctions {
      * represent the recovery ID. This function returns if the public key cannot be found in the key store.
      */
     public int ecdsaSignPrehashedV1(int keyTypeId, int publicKey, RuntimePointerSize message) {
+        log.log(Level.FINEST, "ecdsaSignPrehashedV1");
+
         final Signature sig = internalGetSignData(keyTypeId, publicKey, message, Key.ECDSA);
 
         byte[] signed = null;
@@ -498,7 +548,7 @@ public class CryptoHostFunctions {
             signed = EcdsaUtils.signMessage(sig.getPrivateKey(), sig.getMessageData());
         }
 
-        return hostApi.writeDataToMemory(scaleEncodedOption(signed)).pointer();
+        return sharedMemory.writeData(scaleEncodedOption(signed)).pointer();
     }
 
     /**
@@ -511,6 +561,8 @@ public class CryptoHostFunctions {
      * @return a i32 integer value equal 1 to if the signature is valid or a value equal to 0 if otherwise.
      */
     public int ecdsaVerifyV1(int signature, RuntimePointerSize message, int publicKey) {
+        log.log(Level.FINEST, "ecdsaVerifyV1");
+
         final VerifySignature verifySig = internalGetVerifySignature(signature, message, publicKey, Key.ECDSA);
         verifySig.setMessageData(HashUtils.hashWithBlake2b(verifySig.getMessageData()));
         return EcdsaUtils.verifySignature(verifySig) ? 1 : 0;
@@ -526,10 +578,12 @@ public class CryptoHostFunctions {
      * @return a i32 integer value equal 1 to if the signature is valid or a value equal to 0 if otherwise.
      */
     public int ecdsaVerifyPrehashedV1(int signature, int message, int publicKey) {
-        final byte[] signatureData = hostApi.getDataFromMemory(new RuntimePointerSize(signature, SIGNATURE_LEN));
-        final byte[] messageData = hostApi.getDataFromMemory(
+        log.log(Level.FINEST, "ecdsaVerifyPrehashedV1");
+
+        final byte[] signatureData = sharedMemory.readData(new RuntimePointerSize(signature, SIGNATURE_LEN));
+        final byte[] messageData = sharedMemory.readData(
                 new RuntimePointerSize(message, EcdsaUtils.HASHED_MESSAGE_LEN));
-        final byte[] publicKeyData = hostApi.getDataFromMemory(
+        final byte[] publicKeyData = sharedMemory.readData(
                 new RuntimePointerSize(publicKey, EcdsaUtils.PUBLIC_KEY_COMPRESSED_LEN));
 
         VerifySignature verifySig = new VerifySignature(signatureData, messageData, publicKeyData, Key.ECDSA);
@@ -537,7 +591,7 @@ public class CryptoHostFunctions {
     }
 
     /**
-     * Registers ECDSA sr25519 signature for batch verification. Batch verification is enabled by calling
+     * Registers ECDSA signature for batch verification. Batch verification is enabled by calling
      * ext_crypto_start_batch_verify. The result of the verification is returned by ext_crypto_finish_batch_verify.
      * If batch verification is not enabled, the signature is verified immediately.
      *
@@ -547,6 +601,8 @@ public class CryptoHostFunctions {
      * @return an i32 integer value equal to 1 if the signature is valid or batched or a value equal 0 to if otherwise.
      */
     public int ecdsaBatchVerifyV1(int signature, RuntimePointerSize message, int publicKey) {
+        log.log(Level.FINEST, "ecdsaBatchVerifyV1");
+
         final VerifySignature verifySig = internalGetVerifySignature(signature, message, publicKey, Key.ECDSA);
         verifySig.setMessageData(HashUtils.hashWithBlake2b(verifySig.getMessageData()));
 
@@ -567,7 +623,9 @@ public class CryptoHostFunctions {
      * @return a pointer-size to the SCALE encoded Result. On success it contains the 64-byte recovered public key or
      * an error type on failure.
      */
-    public int secp256k1EcdsaRecoverV1(int signature, int message) {
+    public long secp256k1EcdsaRecoverV1(int signature, int message) {
+        log.log(Level.FINEST, "secp256k1EcdsaRecoverV1");
+
         byte[] ecdsaPublicKey = internalSecp256k1RecoverKey(signature, message, false);
         return secp2561kScaleKeyResult(ecdsaPublicKey);
     }
@@ -581,28 +639,30 @@ public class CryptoHostFunctions {
      * @return a pointer-size (Definition 201) to the SCALE encoded Result value. On success it contains the 33-byte
      * recovered public key in compressed form on success or an error type on failure.
      */
-    public int secp256k1EcdsaRecoverCompressedV1(int signature, int message) {
+    public long secp256k1EcdsaRecoverCompressedV1(int signature, int message) {
+        log.log(Level.FINEST, "secp256k1EcdsaRecoverCompressedV1");
+
         byte[] rawBytes = internalSecp256k1RecoverKey(signature, message, true);
         return secp2561kScaleKeyResult(rawBytes);
     }
 
-    private int secp2561kScaleKeyResult(byte[] rawBytes) {
+    private long secp2561kScaleKeyResult(byte[] rawBytes) {
         ResultWriter resultWriter = new ResultWriter();
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
              ScaleCodecWriter scaleCodecWriter = new ScaleCodecWriter(baos)) {
 
             resultWriter.writeResult(scaleCodecWriter, true);
             resultWriter.write(scaleCodecWriter, rawBytes);
-            return hostApi.writeDataToMemory(baos.toByteArray()).pointer();
+            return sharedMemory.writeData(baos.toByteArray()).pointerSize();
         } catch (IOException e) {
             throw new ScaleEncodingException(SCALE_ENCODING_SIGNED_MESSAGE_ERROR);
         }
     }
 
     private byte[] internalSecp256k1RecoverKey(int signature, int message, boolean compressed) {
-        final byte[] messageData = hostApi.getDataFromMemory(
+        final byte[] messageData = sharedMemory.readData(
                 new RuntimePointerSize(message, EcdsaUtils.HASHED_MESSAGE_LEN));
-        final byte[] signatureData = hostApi.getDataFromMemory(
+        final byte[] signatureData = sharedMemory.readData(
                 new RuntimePointerSize(signature, EcdsaUtils.SIGNATURE_LEN));
 
         return EcdsaUtils.recoverPublicKeyFromSignature(signatureData, messageData, compressed);
@@ -628,7 +688,7 @@ public class CryptoHostFunctions {
     public int finishBatchVerify() {
         if (!batchVerificationStarted) {
             Util.nativePanic(BATCH_VERIFICATION_NOT_STARTED);
-            throw new RuntimeException(BATCH_VERIFICATION_NOT_STARTED);
+            throw new BatchVerificationNotStartedException();
         }
         batchVerificationStarted = false;
         HashSet<VerifySignature> signatures = new HashSet<>(signaturesToVerify);
@@ -664,5 +724,4 @@ public class CryptoHostFunctions {
             throw new ScaleEncodingException(SCALE_ENCODING_SIGNED_MESSAGE_ERROR);
         }
     }
-
 }

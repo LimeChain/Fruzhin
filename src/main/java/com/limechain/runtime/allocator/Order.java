@@ -1,7 +1,8 @@
 package com.limechain.runtime.allocator;
 
+import com.limechain.runtime.memory.Memory;
 import lombok.Data;
-import org.wasmer.Memory;
+import lombok.extern.java.Log;
 
 import java.util.Optional;
 
@@ -13,6 +14,7 @@ import java.util.Optional;
  * (orders with value 1 have size 16 bytes; with value 2 - 32 bytes, etc.)
  * <br> An order includes a pointer to the next free header of this order, if any.
  */
+@Log
 @Data
 public class Order {
     // This number corresponds to the number of powers between the minimum possible allocation and
@@ -31,6 +33,7 @@ public class Order {
 
     /**
      * Create an order with given value, calculating the block size of the order.
+     *
      * @param value order
      */
     public Order(int value) {
@@ -46,12 +49,13 @@ public class Order {
      * @return Optional of the popped value or empty if there was no value.
      */
     public Optional<Integer> popFreeHeaderPointer(Memory memory) {
-        if (freeHeaderPointer == null) {
+        if (freeHeaderPointer == null || freeHeaderPointer == Integer.MAX_VALUE) {
             return Optional.empty();
         }
 
-        int value = freeHeaderPointer;
+        int result = freeHeaderPointer;
         freeHeaderPointer = Header.fromMemory(freeHeaderPointer, memory).getNextFreeHeaderPointer();
-        return Optional.of(value);
+        log.finer("Next free header pointer=" + freeHeaderPointer);
+        return Optional.of(result);
     }
 }

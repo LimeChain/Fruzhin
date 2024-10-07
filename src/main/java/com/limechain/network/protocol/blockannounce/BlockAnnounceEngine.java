@@ -1,32 +1,43 @@
 package com.limechain.network.protocol.blockannounce;
 
+import com.limechain.exception.scale.ScaleEncodingException;
 import com.limechain.network.ConnectionManager;
-import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshake;
+import com.limechain.network.protocol.blockannounce.messages.BlockAnnounceHandshake;
+import com.limechain.network.protocol.blockannounce.messages.BlockAnnounceHandshakeBuilder;
+import com.limechain.network.protocol.blockannounce.messages.BlockAnnounceMessage;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshakeScaleReader;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshakeScaleWriter;
-import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceMessage;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceMessageScaleReader;
-import com.limechain.network.protocol.warp.dto.Block;
-import com.limechain.network.protocol.warp.dto.BlockBody;
-import com.limechain.utils.scale.exceptions.ScaleEncodingException;
+import com.limechain.rpc.server.AppBean;
 import com.limechain.storage.block.BlockState;
-import com.limechain.sync.warpsync.SyncedState;
+import com.limechain.sync.warpsync.WarpSyncState;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.libp2p.core.PeerId;
 import io.libp2p.core.Stream;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.extern.java.Log;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.logging.Level;
 
 @Log
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
 public class BlockAnnounceEngine {
+
     public static final int HANDSHAKE_LENGTH = 69;
-    protected ConnectionManager connectionManager = ConnectionManager.getInstance();
-    protected SyncedState syncedState = SyncedState.getInstance();
+
+    protected ConnectionManager connectionManager;
+    protected WarpSyncState warpSyncState;
+    protected BlockAnnounceHandshakeBuilder handshakeBuilder;
+
+    public BlockAnnounceEngine() {
+        connectionManager = ConnectionManager.getInstance();
+        warpSyncState = AppBean.getBean(WarpSyncState.class);
+        handshakeBuilder = new BlockAnnounceHandshakeBuilder();
+    }
 
     public void receiveRequest(byte[] msg, Stream stream) {
         PeerId peerId = stream.remotePeerId();
@@ -70,23 +81,22 @@ public class BlockAnnounceEngine {
         ScaleCodecReader reader = new ScaleCodecReader(msg);
         BlockAnnounceMessage announce = reader.read(new BlockAnnounceMessageScaleReader());
         connectionManager.updatePeer(peerId, announce);
-        syncedState.syncBlockAnnounce(announce);
+        warpSyncState.syncBlockAnnounce(announce);
         log.log(Level.FINE, "Received block announce for block #" + announce.getHeader().getBlockNumber() +
                 " from " + peerId +
                 " with hash:0x" + announce.getHeader().getHash() +
                 " parentHash:" + announce.getHeader().getParentHash() +
                 " stateRoot:" + announce.getHeader().getStateRoot());
 
-        if (BlockState.getInstance() != null) {
-            BlockState.getInstance().addUnfinalizedBlock(announce.getHeader().getHash(),
-                    new Block(announce.getHeader(), new BlockBody(new ArrayList<>())));
+        if (BlockState.getInstance().isInitialized()) {
+            BlockState.getInstance().addBlockToBlockTree(announce.getHeader());
         }
     }
 
     public void writeHandshakeToStream(Stream stream, PeerId peerId) {
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
         try (ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
-            writer.write(new BlockAnnounceHandshakeScaleWriter(), syncedState.getHandshake());
+            writer.write(new BlockAnnounceHandshakeScaleWriter(), handshakeBuilder.getBlockAnnounceHandshake());
         } catch (IOException e) {
             throw new ScaleEncodingException(e);
         }

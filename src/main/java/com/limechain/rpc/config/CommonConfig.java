@@ -6,16 +6,23 @@ import com.limechain.cli.Cli;
 import com.limechain.cli.CliArguments;
 import com.limechain.config.HostConfig;
 import com.limechain.config.SystemInfo;
+import com.limechain.constants.GenesisBlockHash;
 import com.limechain.network.Network;
+import com.limechain.rpc.server.UnsafeInterceptor;
+import com.limechain.runtime.builder.RuntimeBuilder;
 import com.limechain.storage.DBInitializer;
-import com.limechain.storage.DBRepository;
 import com.limechain.storage.KVRepository;
-import com.limechain.sync.warpsync.SyncedState;
+import com.limechain.storage.block.SyncState;
+import com.limechain.storage.trie.TrieStorage;
+import com.limechain.sync.fullsync.FullSyncMachine;
 import com.limechain.sync.warpsync.WarpSyncMachine;
+import com.limechain.sync.warpsync.WarpSyncState;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
+
+import java.util.List;
 
 /**
  * Spring configuration class used to instantiate beans.
@@ -25,15 +32,16 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 public class CommonConfig {
     @Bean
     public static AutoJsonRpcServiceImplExporter autoJsonRpcServiceImplExporter() {
-        AutoJsonRpcServiceImplExporter exp = new AutoJsonRpcServiceImplExporter();
-        // in here you can provide custom HTTP status code providers etc. eg:
-        // exp.setHttpStatusCodeProvider();
-        // exp.setErrorResolver();
-        return exp;
+        final var jsonService = new AutoJsonRpcServiceImplExporter();
+
+        jsonService.setInterceptorList(List.of(new UnsafeInterceptor()));
+        jsonService.setAllowLessParams(true);
+
+        return jsonService;
     }
 
     @Bean
-    public CliArguments cliArgs(ApplicationArguments arguments){
+    public CliArguments cliArgs(ApplicationArguments arguments) {
         return new Cli().parseArgs(arguments.getSourceArgs());
     }
 
@@ -44,10 +52,13 @@ public class CommonConfig {
 
     @Bean
     public KVRepository<String, Object> repository(HostConfig hostConfig) {
-        DBRepository repository = DBInitializer.initialize(hostConfig.getRocksDbPath(),
+        return DBInitializer.initialize(hostConfig.getRocksDbPath(),
                 hostConfig.getChain(), hostConfig.isDbRecreate());
-        SyncedState.getInstance().setRepository(repository);
-        return repository;
+    }
+
+    @Bean
+    public TrieStorage trieStorage(KVRepository<String, Object> repository) {
+        return new TrieStorage(repository);
     }
 
     @Bean
@@ -56,18 +67,41 @@ public class CommonConfig {
     }
 
     @Bean
-    public SystemInfo systemInfo(HostConfig hostConfig, Network network) {
-        return new SystemInfo(hostConfig, network);
+    public SyncState syncState(GenesisBlockHash genesisBlockHash, KVRepository<String, Object> repository) {
+        return new SyncState(genesisBlockHash, repository);
+    }
+
+    @Bean
+    public SystemInfo systemInfo(HostConfig hostConfig, Network network, SyncState syncState) {
+        return new SystemInfo(hostConfig, network, syncState);
     }
 
     @Bean
     public Network network(ChainService chainService, HostConfig hostConfig, KVRepository<String, Object> repository,
-                           CliArguments cliArgs) {
-        return new Network(chainService, hostConfig, repository, cliArgs);
+                           CliArguments cliArgs, GenesisBlockHash genesisBlockHash) {
+        return new Network(chainService, hostConfig, repository, cliArgs, genesisBlockHash);
     }
 
     @Bean
-    public WarpSyncMachine sync(Network network, ChainService chainService, KVRepository<String, Object> repository) {
-        return new WarpSyncMachine(network, chainService);
+    public WarpSyncState warpSyncState(Network network, SyncState syncState,
+                                       KVRepository<String, Object> repository, RuntimeBuilder runtimeBuilder) {
+        return new WarpSyncState(syncState, network, repository, runtimeBuilder);
     }
+
+    @Bean
+    public WarpSyncMachine warpSyncMachine(Network network, ChainService chainService, SyncState syncState,
+                                           WarpSyncState warpSyncState) {
+        return new WarpSyncMachine(network, chainService, syncState, warpSyncState);
+    }
+
+    @Bean
+    public FullSyncMachine fullSyncMachine(Network network, SyncState syncState) {
+        return new FullSyncMachine(network, syncState);
+    }
+
+    @Bean
+    public GenesisBlockHash genesisBlockHash(ChainService chainService) {
+        return new GenesisBlockHash(chainService);
+    }
+
 }

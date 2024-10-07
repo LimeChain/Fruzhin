@@ -1,113 +1,58 @@
 package com.limechain.runtime.hostapi;
 
-import com.limechain.runtime.Runtime;
-import com.limechain.runtime.allocator.FreeingBumpHeapAllocator;
-import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
+import com.limechain.runtime.Context;
+import com.limechain.runtime.SharedMemory;
 import lombok.extern.java.Log;
 import org.wasmer.ImportObject;
-import org.wasmer.Type;
 
-import java.nio.ByteBuffer;
-import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
-import java.util.function.Consumer;
-import java.util.function.Function;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
- * Holds common methods and services used by the different
- * HostApi functions implementations
+ * An abstract class defining a total implementation of the Host API.
+ * Crucially, it makes sure that all {@link Endpoint}s have been implemented
+ * ("implemented" meaning, an {@link org.wasmer.ImportObject.FuncImport} has been provided).
+ *
+ * @apiNote All implementations rely on the {@link Context} for runtime executions.
  */
 @Log
-public class HostApi {
-    protected static final List<Number> EMPTY_LIST_OF_NUMBER = List.of();
-    protected static final List<Type> EMPTY_LIST_OF_TYPES = List.of();
-    private final Runtime runtime;
-    private FreeingBumpHeapAllocator allocator;
+public abstract class HostApi {
+    protected Context context;
+    protected SharedMemory sharedMemory;
 
-    public HostApi(final Runtime runtime) {
-        this.runtime = runtime;
-    }
-
-    protected static ImportObject getImportObject(final String functionName,
-                                                  final Function<List<Number>, Number> function,
-                                                  final List<Type> args,
-                                                  final Type retType) {
-        return new ImportObject.FuncImport("env", functionName, argv -> {
-            log.fine(String.format("Message printed in the body of '%s'%n", functionName));
-            return Collections.singletonList(function.apply(argv));
-        }, args, Collections.singletonList(retType));
-    }
-
-    protected static ImportObject getImportObject(final String functionName,
-                                                  final Consumer<List<Number>> function,
-                                                  final List<Type> args) {
-        return new ImportObject.FuncImport("env", functionName, argv -> {
-            log.fine(String.format("Message printed in the body of '%s'%n", functionName));
-            function.accept(argv);
-            return EMPTY_LIST_OF_NUMBER;
-        }, args, EMPTY_LIST_OF_TYPES);
-    }
-
-    public void updateAllocator() {
-        this.allocator = new FreeingBumpHeapAllocator(runtime.getHeapBase());
+    protected HostApi(Context context) {
+        this.context = context;
+        this.sharedMemory = context.getSharedMemory();
     }
 
     /**
-     * Get the data stored in memory using a {@link  RuntimePointerSize}
-     *
-     * @param runtimePointerSize pointer to data and its size
-     * @return byte array with read data
+     * @return a list of import objects for all {@link Endpoint}s
      */
-    public byte[] getDataFromMemory(RuntimePointerSize runtimePointerSize) {
-        ByteBuffer memoryBuffer = runtime.getMemory().buffer();
-        byte[] data = new byte[runtimePointerSize.size()];
-        memoryBuffer.position(runtimePointerSize.pointer());
-        memoryBuffer.get(data);
-        return data;
+    public final List<ImportObject.FuncImport> getFunctionImports() {
+        var imports = this.buildFunctionImports();
+
+        // Assert all endpoints have been implemented, exactly once (because we collect in a set).
+        // NOTE:
+        //  We do that as an internal sanity check, but it could easily be relaxed if needed:
+        //  e.g. if you want to build empty imports for missing endpoints instead of strictly throwing.
+        Set<Endpoint> got = imports.keySet();
+
+        Set<Endpoint> unimplemented = EnumSet.allOf(Endpoint.class);
+        unimplemented.removeAll(got);
+
+        assert unimplemented.isEmpty()
+            : String.format("Missing imports:%n%s",
+                unimplemented.stream().map(Endpoint::name).collect(Collectors.joining(System.lineSeparator())));
+
+        return imports.values().stream().toList();
     }
 
     /**
-     * Write data to memory, by allocating space in memory and then writing to it.
-     *
-     * @param data data to be written
-     * @return a pointer size to the written data
+     * Builds a map from all endpoints to their implementations, thus constituting the total implementation.
+     * @implSpec the map is expected to contain an entry for every {@link Endpoint}
      */
-    public RuntimePointerSize writeDataToMemory(byte[] data) {
-        RuntimePointerSize allocatedPointer = allocate(data.length);
-        writeDataToMemory(data, allocatedPointer);
-        return allocatedPointer;
-    }
-
-    /**
-     * Write data to memory, by using a {@link RuntimePointerSize}.
-     * <br>Data will be written at the given {@link RuntimePointerSize#pointer() pointer}.
-     * <br>Only the first bytes up to the given {@link RuntimePointerSize#size() size} will be written.
-     *
-     * @param data               data to be written to memory
-     * @param runtimePointerSize pointer to memory and size of data to be stored.
-     */
-    public void writeDataToMemory(byte[] data, RuntimePointerSize runtimePointerSize) {
-        ByteBuffer memoryBuffer = runtime.getMemory().buffer();
-        memoryBuffer.position(runtimePointerSize.pointer());
-        memoryBuffer.put(data, 0, runtimePointerSize.size());
-    }
-
-    /**
-     * Allocate a number of bytes in memory.
-     *
-     * @param numberOfBytes number of bytes to be allocated
-     * @return a pointer-size to the allocated space in memory
-     */
-    public RuntimePointerSize allocate(int numberOfBytes) {
-        return allocator.allocate(numberOfBytes, runtime.getMemory());
-    }
-
-    /**
-     * Deallocate the space at given memory pointer
-     *
-     * @param pointer position in memory
-     */
-    public void deallocate(int pointer) {
-        allocator.deallocate(pointer, runtime.getMemory());
-    }
+    protected abstract Map<Endpoint, ImportObject.FuncImport> buildFunctionImports();
 }

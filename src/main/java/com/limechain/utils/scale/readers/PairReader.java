@@ -2,7 +2,7 @@ package com.limechain.utils.scale.readers;
 
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleReader;
-import kotlin.Pair;
+import org.javatuples.Pair;
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor

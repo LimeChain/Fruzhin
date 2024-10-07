@@ -1,6 +1,7 @@
 package com.limechain.network.protocol.blockannounce.scale;
 
 import com.google.protobuf.ByteString;
+import com.limechain.network.protocol.blockannounce.messages.BlockAnnounceHandshake;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.emeraldpay.polkaj.types.Hash256;
@@ -18,9 +19,7 @@ class BlockAnnounceHandshakeScaleReaderTest {
 
     @Test
     void decodeHandshake() {
-        //CHECKSTYLE.OFF
         ByteString byteString = ByteString.fromHex("044d00000001000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000");
-        //CHECKSTYLE.ON
         byte[] encodedBytes = byteString.toByteArray();
 
         ScaleCodecReader reader = new ScaleCodecReader(encodedBytes);
@@ -36,9 +35,7 @@ class BlockAnnounceHandshakeScaleReaderTest {
 
     @Test
     void EncodeAnnouncementHandshakeTest() {
-        //CHECKSTYLE.OFF
         byte[] expected = ByteString.fromHex("044d00000001000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000").toByteArray();
-        //CHECKSTYLE.ON
 
         BlockAnnounceHandshake dataToEncode = new BlockAnnounceHandshake();
         dataToEncode.setNodeRole(4);

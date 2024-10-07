@@ -1,5 +1,6 @@
 package com.limechain.network.protocol.grandpa.messages.catchup.res;
 
+import com.limechain.exception.scale.WrongMessageTypeException;
 import com.limechain.network.protocol.grandpa.messages.GrandpaMessageType;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleReader;
@@ -32,7 +33,7 @@ public class CatchUpMessageScaleReader implements ScaleReader<CatchUpMessage> {
     public CatchUpMessage read(ScaleCodecReader reader) {
         int messageType = reader.readByte();
         if (messageType != GrandpaMessageType.CATCH_UP_RESPONSE.getType()) {
-            throw new RuntimeException(
+            throw new WrongMessageTypeException(
                     String.format("Trying to read message of type %d as a catch up response message", messageType));
         }
 

@@ -3,7 +3,8 @@ package com.limechain.runtime.allocator;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.wasmer.Memory;
+import lombok.extern.java.Log;
+import com.limechain.runtime.memory.Memory;
 
 /**
  * Allocation header preceding a memory block.
@@ -18,6 +19,7 @@ import org.wasmer.Memory;
  * The header is written in memory as 64 bits: the most significant ones denoting its type
  * and the least significant - the header data (next free block or order).
  */
+@Log
 @Getter
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public class Header {
@@ -31,23 +33,28 @@ public class Header {
 
     /**
      * Creates a header for an occupied block.
+     *
      * @param order order of the occupied block
      * @return occupied header
      */
     public static Header occupied(int order) {
         Header header = new Header(true);
+        log.finer( "Creating occupied header, order=" + order);
         header.order = order;
         return header;
     }
 
     /**
      * Creates a header for a free block.
+     *
      * @param next pointer to the next free block of this order
      * @return free header
      */
     public static Header free(int next) {
         Header header = new Header(false);
         header.nextFreeHeaderPointer = next;
+        log.finer("Creating free header, next=" + next);
+
         return header;
     }
 
@@ -55,10 +62,11 @@ public class Header {
      * Read a header from memory.
      *
      * @param pointer header address
-     * @param memory memory to read from
+     * @param memory  memory to read from
      * @return parsed header
      */
     public static Header fromMemory(int pointer, Memory memory) {
+        log.finer("Reading header from memory, pointer=" + pointer);
         long rawHeader = memory.buffer().getLong(pointer);
         boolean occupied = (rawHeader & OCCUPIED_HEADER_MASK) != 0;
         int data = (int) rawHeader;
@@ -68,6 +76,7 @@ public class Header {
 
     /**
      * Returns the raw 64-bit representation of this header.
+     *
      * @return 64-bit header
      */
     public long raw() {

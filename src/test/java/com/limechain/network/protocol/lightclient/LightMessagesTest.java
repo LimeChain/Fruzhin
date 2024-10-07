@@ -16,11 +16,10 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-//CHECKSTYLE.OFF
-public class LightMessagesTest {
+class LightMessagesTest {
     @Disabled("This is an integration test")
     @Test
-    public void remoteReadRequest_return_response() {
+    void remoteReadRequest_return_response() {
         Host senderNode = null;
         try {
             MultiAddress address = RandomGenerationUtils.generateRandomAddress();
@@ -49,7 +48,6 @@ public class LightMessagesTest {
 
             LightClientMessage.Response response = lightMessages.remoteReadRequest(
                     senderNode,
-                    kademliaService.getProtocol().getAddressBook(),
                     peerId,
                     "202d85e7911b81e7e704be791b6a2147dc37b571bd311abe5dbf6ab3860dc4b8",
                     new String[]{"9c5d795d0297be56027a4b2464e333979c5d795d0297be56027a4b2464e333977a2dce72ec5f24ed58baf131ea24762f3947ac46"}
@@ -63,4 +61,3 @@ public class LightMessagesTest {
         }
     }
 }
-//CHECKSTYLE.ON

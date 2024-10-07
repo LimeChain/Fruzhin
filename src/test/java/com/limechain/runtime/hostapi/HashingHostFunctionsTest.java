@@ -1,5 +1,6 @@
 package com.limechain.runtime.hostapi;
 
+import com.limechain.runtime.SharedMemory;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import com.limechain.utils.HashUtils;
 import org.junit.jupiter.api.Test;
@@ -20,7 +21,7 @@ class HashingHostFunctionsTest {
     @InjectMocks
     private HashingHostFunctions hashingHostFunctions;
     @Mock
-    private HostApi hostApi;
+    private SharedMemory sharedMemory;
     @Mock
     private RuntimePointerSize dataPointer;
     @Spy
@@ -28,8 +29,8 @@ class HashingHostFunctionsTest {
 
     @Test
     void keccak256V1() {
-        when(hostApi.getDataFromMemory(dataPointer)).thenReturn(data);
-        when(hostApi.writeDataToMemory(hashedData)).thenReturn(runtimePointerSize);
+        when(sharedMemory.readData(dataPointer)).thenReturn(data);
+        when(sharedMemory.writeData(hashedData)).thenReturn(runtimePointerSize);
 
         try (var utils = mockStatic(HashUtils.class)) {
             utils.when(() -> HashUtils.hashWithKeccak256(data)).thenReturn(hashedData);
@@ -41,8 +42,8 @@ class HashingHostFunctionsTest {
 
     @Test
     void keccak512V1() {
-        when(hostApi.getDataFromMemory(dataPointer)).thenReturn(data);
-        when(hostApi.writeDataToMemory(hashedData)).thenReturn(runtimePointerSize);
+        when(sharedMemory.readData(dataPointer)).thenReturn(data);
+        when(sharedMemory.writeData(hashedData)).thenReturn(runtimePointerSize);
 
         try (var utils = mockStatic(HashUtils.class)) {
             utils.when(() -> HashUtils.hashWithKeccak512(data)).thenReturn(hashedData);
@@ -54,8 +55,8 @@ class HashingHostFunctionsTest {
 
     @Test
     void sha2256V1() {
-        when(hostApi.getDataFromMemory(dataPointer)).thenReturn(data);
-        when(hostApi.writeDataToMemory(hashedData)).thenReturn(runtimePointerSize);
+        when(sharedMemory.readData(dataPointer)).thenReturn(data);
+        when(sharedMemory.writeData(hashedData)).thenReturn(runtimePointerSize);
 
         try (var utils = mockStatic(HashUtils.class)) {
             utils.when(() -> HashUtils.hashWithSha256(data)).thenReturn(hashedData);
@@ -67,8 +68,8 @@ class HashingHostFunctionsTest {
 
     @Test
     void blake2128V1() {
-        when(hostApi.getDataFromMemory(dataPointer)).thenReturn(data);
-        when(hostApi.writeDataToMemory(hashedData)).thenReturn(runtimePointerSize);
+        when(sharedMemory.readData(dataPointer)).thenReturn(data);
+        when(sharedMemory.writeData(hashedData)).thenReturn(runtimePointerSize);
 
         try (var utils = mockStatic(HashUtils.class)) {
             utils.when(() -> HashUtils.hashWithBlake2b128(data)).thenReturn(hashedData);
@@ -80,8 +81,8 @@ class HashingHostFunctionsTest {
 
     @Test
     void blake2256V1() {
-        when(hostApi.getDataFromMemory(dataPointer)).thenReturn(data);
-        when(hostApi.writeDataToMemory(hashedData)).thenReturn(runtimePointerSize);
+        when(sharedMemory.readData(dataPointer)).thenReturn(data);
+        when(sharedMemory.writeData(hashedData)).thenReturn(runtimePointerSize);
 
         try (var utils = mockStatic(HashUtils.class)) {
             utils.when(() -> HashUtils.hashWithBlake2b(data)).thenReturn(hashedData);
@@ -93,8 +94,8 @@ class HashingHostFunctionsTest {
 
     @Test
     void twox64V1() {
-        when(hostApi.getDataFromMemory(dataPointer)).thenReturn(data);
-        when(hostApi.writeDataToMemory(hashedData)).thenReturn(runtimePointerSize);
+        when(sharedMemory.readData(dataPointer)).thenReturn(data);
+        when(sharedMemory.writeData(hashedData)).thenReturn(runtimePointerSize);
 
         try (var utils = mockStatic(HashUtils.class)) {
             utils.when(() -> HashUtils.hashXx64(0, data)).thenReturn(hashedData);
@@ -106,8 +107,8 @@ class HashingHostFunctionsTest {
 
     @Test
     void twox128V1() {
-        when(hostApi.getDataFromMemory(dataPointer)).thenReturn(data);
-        when(hostApi.writeDataToMemory(hashedData)).thenReturn(runtimePointerSize);
+        when(sharedMemory.readData(dataPointer)).thenReturn(data);
+        when(sharedMemory.writeData(hashedData)).thenReturn(runtimePointerSize);
 
         try (var utils = mockStatic(HashUtils.class)) {
             utils.when(() -> HashUtils.hashXx128(0, data)).thenReturn(hashedData);
@@ -119,8 +120,8 @@ class HashingHostFunctionsTest {
 
     @Test
     void twox256V1() {
-        when(hostApi.getDataFromMemory(dataPointer)).thenReturn(data);
-        when(hostApi.writeDataToMemory(hashedData)).thenReturn(runtimePointerSize);
+        when(sharedMemory.readData(dataPointer)).thenReturn(data);
+        when(sharedMemory.writeData(hashedData)).thenReturn(runtimePointerSize);
 
         try (var utils = mockStatic(HashUtils.class)) {
             utils.when(() -> HashUtils.hashXx256(0, data)).thenReturn(hashedData);

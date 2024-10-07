@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class CliTest {
+class CliTest {
     private Cli cli;
 
     @BeforeEach
@@ -19,47 +19,53 @@ public class CliTest {
     }
 
     @Test
-    public void buildOptions_buildsOptions() {
+    void buildOptions_buildsOptions() {
         Options options = cli.getOptions();
         assertNotNull(options);
         assertTrue(options.hasOption("network"));
         assertTrue(options.hasOption("n"));
         assertTrue(options.hasOption("db-path"));
-        assertEquals(options.getRequiredOptions().size(), 0);
+        assertTrue(options.hasOption("dbc"));
+        assertTrue(options.hasOption("node-key"));
+        assertTrue(options.hasOption("node-mode"));
+        assertTrue(options.hasOption("mode"));
+        assertTrue(options.hasOption("no-legacy-protocols"));
+        assertTrue(options.hasOption("sync-mode"));
+        assertEquals(0, options.getRequiredOptions().size());
     }
 
     @Test
-    public void parseArgs_returns_networkParameter() {
+    void parseArgs_returns_networkParameter() {
         CliArguments arguments = cli.parseArgs(new String[]{"--network", "polkadot"});
-        assertEquals(arguments.network(), "polkadot");
+        assertEquals("polkadot", arguments.network());
     }
 
     @Test
-    public void parseArgs_returns_defaultValue() {
+    void parseArgs_returns_defaultValue() {
         CliArguments arguments = cli.parseArgs(new String[]{});
-        assertEquals(arguments.network(), "");
+        assertEquals("", arguments.network());
     }
 
     @Test
-    public void parseArgs_returns_shortNetworkParameter() {
+    void parseArgs_returns_shortNetworkParameter() {
         CliArguments arguments = cli.parseArgs(new String[]{"-n", "polkadot"});
-        assertEquals(arguments.network(), "polkadot");
+        assertEquals("polkadot", arguments.network());
     }
 
     @Test
-    public void parseArgs_returns_dbPathParameter() {
+    void parseArgs_returns_dbPathParameter() {
         CliArguments arguments = cli.parseArgs(new String[]{"--db-path", "./test-path-somewhere"});
-        assertEquals(arguments.dbPath(), "./test-path-somewhere");
+        assertEquals("./test-path-somewhere", arguments.dbPath());
     }
 
     @Test
-    public void parseArgs_returns_defaultDbPathParameter() {
+    void parseArgs_returns_defaultDbPathParameter() {
         CliArguments arguments = cli.parseArgs(new String[]{});
-        assertEquals(arguments.dbPath(), DBInitializer.DEFAULT_DIRECTORY);
+        assertEquals(DBInitializer.DEFAULT_DIRECTORY, arguments.dbPath());
     }
 
     @Test
-    public void parseArgs_throws_whenInvalidArguments() {
+    void parseArgs_throws_whenInvalidArguments() {
 
         assertThrows(RuntimeException.class, () -> cli.parseArgs(new String[]{"--network"}));
 

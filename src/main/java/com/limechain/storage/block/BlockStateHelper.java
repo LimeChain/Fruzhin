@@ -2,7 +2,7 @@ package com.limechain.storage.block;
 
 import com.limechain.network.protocol.blockannounce.scale.BlockHeaderScaleWriter;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
-import com.limechain.utils.scale.exceptions.ScaleEncodingException;
+import com.limechain.exception.scale.ScaleEncodingException;
 import com.limechain.network.protocol.warp.scale.reader.BlockHeaderReader;
 import com.limechain.storage.DBConstants;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
@@ -24,31 +24,31 @@ public final class BlockStateHelper {
     private final UInt64Reader uint64Reader = new UInt64Reader();
 
     @NotNull
-    String headerKey(Hash256 key) {
+    public String headerKey(Hash256 key) {
         String headerPrefix = "hdr";
         return headerPrefix.concat(key.toString());
     }
 
     @NotNull
-    String blockBodyKey(Hash256 key) {
+    public String blockBodyKey(Hash256 key) {
         String blockBodyPrefix = "blb";
         return blockBodyPrefix.concat(key.toString());
     }
 
     @NotNull
-    String headerHashKey(BigInteger block) {
+    public String headerHashKey(BigInteger block) {
         String headerHashPrefix = "hsh";
         return headerHashPrefix.concat(new String(bigIntegersToByteArray(block)));
     }
 
     @NotNull
-    String arrivalTimeKey(Hash256 key) {
+    public String arrivalTimeKey(Hash256 key) {
         String arrivalTimePrefix = "arr";
         return arrivalTimePrefix.concat(key.toString());
     }
 
     @NotNull
-    String finalizedHashKey(BigInteger round, BigInteger setId) {
+    public String finalizedHashKey(BigInteger round, BigInteger setId) {
         return DBConstants
                 .FINALIZED_BLOCK_KEY
                 .concat(new String(bigIntegersToByteArray(round, setId)));
@@ -85,7 +85,7 @@ public final class BlockStateHelper {
     @NotNull
     byte[] writeHeader(BlockHeader header) {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
-             ScaleCodecWriter scaleCodecWriter = new ScaleCodecWriter(baos);) {
+             ScaleCodecWriter scaleCodecWriter = new ScaleCodecWriter(baos)) {
             BlockHeaderScaleWriter.getInstance().write(scaleCodecWriter, header);
 
             return baos.toByteArray();

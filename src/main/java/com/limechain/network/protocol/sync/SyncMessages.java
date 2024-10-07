@@ -1,9 +1,9 @@
 package com.limechain.network.protocol.sync;
 
+import com.limechain.exception.global.ExecutionFailedException;
+import com.limechain.exception.global.ThreadInterruptedException;
 import com.limechain.network.StrictProtocolBinding;
 import com.limechain.network.protocol.sync.pb.SyncMessage;
-import com.limechain.utils.StringUtils;
-import io.libp2p.core.AddressBook;
 import io.libp2p.core.Host;
 import io.libp2p.core.PeerId;
 import lombok.extern.java.Log;
@@ -19,35 +19,22 @@ public class SyncMessages extends StrictProtocolBinding<SyncController> {
         super(protocolId, protocol);
     }
 
-    public SyncMessage.BlockResponse remoteBlockRequest(Host us, AddressBook addrs, PeerId peer,
-                                                        Integer fields,
-                                                        String hash,
-                                                        Integer number,
-                                                        SyncMessage.Direction direction,
-                                                        int maxBlocks) {
-        SyncController controller = dialPeer(us, peer, addrs);
+    public SyncMessage.BlockResponse remoteBlockRequest(Host us, PeerId peer,
+                                                        BlockRequestDto blockRequest) {
         try {
+            SyncController controller = dialPeer(us, peer, us.getAddressBook());
             SyncMessage.BlockResponse response = controller
-                    .sendBlockRequest(fields, hash, number, direction, maxBlocks)
+                    .sendBlockRequest(blockRequest.getFields(), blockRequest.getHash(), blockRequest.getNumber(),
+                            blockRequest.getDirection(), blockRequest.getMaxBlocks())
                     .get(2, TimeUnit.SECONDS);
-            log.log(Level.INFO, "Received response: " + response.toString());
+            log.log(Level.FINE, "Received blocks: " + response.getBlocksCount());
             return response;
-        } catch (Exception e) {
-            log.log(Level.SEVERE, "Error while sending remote call request: ", e);
-            throw new RuntimeException(e);
-        }
-    }
-
-    public SyncMessage.StateResponse remoteStateRequest(Host us, AddressBook addrs, PeerId peer, String blockHash) {
-        SyncController controller = dialPeer(us, peer, addrs);
-        try {
-            SyncMessage.StateResponse resp = controller.sendStateRequest(StringUtils.remove0xPrefix(blockHash))
-                    .get(10, TimeUnit.SECONDS);
-            log.log(Level.INFO, "Received state sync response " + resp.toString());
-            return resp;
-        } catch (ExecutionException | InterruptedException | TimeoutException e) {
-            log.log(Level.SEVERE, "Error while sending remote call request: ", e);
-            throw new RuntimeException(e);
+        } catch (ExecutionException | TimeoutException | IllegalStateException e) {
+            log.log(Level.SEVERE, "Error while sending remote block request: ", e);
+            throw new ExecutionFailedException(e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new ThreadInterruptedException(e);
         }
     }
 }

@@ -1,12 +1,13 @@
 package com.limechain.network.protocol.blockannounce;
 
 import com.limechain.network.ConnectionManager;
-import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshake;
+import com.limechain.network.protocol.blockannounce.messages.BlockAnnounceHandshake;
+import com.limechain.network.protocol.blockannounce.messages.BlockAnnounceHandshakeBuilder;
+import com.limechain.network.protocol.blockannounce.messages.BlockAnnounceMessage;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshakeScaleWriter;
-import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceMessage;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceMessageScaleReader;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
-import com.limechain.sync.warpsync.SyncedState;
+import com.limechain.sync.warpsync.WarpSyncState;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.libp2p.core.PeerId;
@@ -45,10 +46,12 @@ class BlockAnnounceEngineTest {
     private ConnectionManager connectionManager;
 
     @Mock
-    private SyncedState syncedState;
+    private WarpSyncState warpSyncState;
 
     @Mock
     private BlockAnnounceHandshake handshake;
+    @Mock
+    private BlockAnnounceHandshakeBuilder handshakeBuilder;
 
     @Test
     void receiveNonHandshakeRequestWhenNotConnectedShouldIgnore() {
@@ -59,7 +62,7 @@ class BlockAnnounceEngineTest {
         blockAnnounceEngine.receiveRequest(message, stream);
 
         verifyNoMoreInteractions(connectionManager);
-        verifyNoInteractions(syncedState);
+        verifyNoInteractions(warpSyncState);
     }
 
     @Test
@@ -68,7 +71,7 @@ class BlockAnnounceEngineTest {
         Arrays.fill(message, (byte) 1);
         when(stream.remotePeerId()).thenReturn(peerId);
         when(connectionManager.isBlockAnnounceConnected(peerId)).thenReturn(false);
-        when(syncedState.getHandshake()).thenReturn(handshake);
+        when(handshakeBuilder.getBlockAnnounceHandshake()).thenReturn(handshake);
         try (
                 MockedConstruction<ScaleCodecReader> readerMock = mockConstruction(ScaleCodecReader.class,
                 (mock, context) -> when(mock.read(any())).thenReturn(handshake));
@@ -86,7 +89,7 @@ class BlockAnnounceEngineTest {
         Arrays.fill(message, (byte) 1);
         when(stream.remotePeerId()).thenReturn(peerId);
         when(connectionManager.isBlockAnnounceConnected(peerId)).thenReturn(false);
-        when(syncedState.getHandshake()).thenReturn(handshake);
+        when(handshakeBuilder.getBlockAnnounceHandshake()).thenReturn(handshake);
         try (
                 MockedConstruction<ScaleCodecReader> readerMock = mockConstruction(ScaleCodecReader.class);
                 MockedConstruction<ScaleCodecWriter> writerMock = mockConstruction(ScaleCodecWriter.class)
@@ -144,7 +147,7 @@ class BlockAnnounceEngineTest {
         ) {
             blockAnnounceEngine.receiveRequest(message, stream);
 
-            verify(syncedState).syncBlockAnnounce(blockAnnounceMessage);
+            verify(warpSyncState).syncBlockAnnounce(blockAnnounceMessage);
         }
     }
 }

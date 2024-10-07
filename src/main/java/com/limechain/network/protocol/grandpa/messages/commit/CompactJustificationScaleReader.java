@@ -1,5 +1,6 @@
 package com.limechain.network.protocol.grandpa.messages.commit;
 
+import com.limechain.exception.network.SignatureCountMismatchException;
 import com.limechain.network.protocol.warp.dto.Precommit;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleReader;
@@ -40,7 +41,9 @@ public class CompactJustificationScaleReader implements ScaleReader<Precommit[]>
 
         int signaturesCount = reader.readCompactInt();
         if (signaturesCount != precommitsCount) {
-            throw new RuntimeException("Number of signatures does not match number of precommits");
+            throw new SignatureCountMismatchException(
+                    String.format("Number of signatures (%d) does not match number of precommits (%d)",
+                            signaturesCount, precommitsCount));
         }
 
         for (int i = 0; i < signaturesCount; i++) {

@@ -9,7 +9,7 @@ package com.limechain.runtime.hostapi.dto;
  * @param pointerSize a 64-bit long representation
  */
 public record RuntimePointerSize(long pointerSize) {
-    private final static long LEAST_SIGNIFICANT_BITS_MASK = 0xFFFFFFFFL;
+    private static final long LEAST_SIGNIFICANT_BITS_MASK = 0xFFFFFFFFL;
 
     /**
      * Constructor combining size as the most significant bits of the pointerSize

@@ -1,8 +1,12 @@
 package com.limechain.runtime.hostapi;
 
+import com.limechain.exception.scale.ScaleEncodingException;
 import com.limechain.runtime.Runtime;
-import com.limechain.runtime.RuntimeBuilder;
+import com.limechain.runtime.RuntimeFactory;
+import com.limechain.runtime.SharedMemory;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
+import com.limechain.runtime.version.scale.RuntimeVersionWriter;
+import com.limechain.utils.scale.ScaleUtils;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -10,16 +14,14 @@ import lombok.extern.java.Log;
 import org.apache.tomcat.util.buf.HexUtils;
 import org.springframework.lang.Nullable;
 import org.wasmer.ImportObject;
-import org.wasmer.Memory;
-import org.wasmer.Module;
-import org.wasmer.Type;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
+
+import static com.limechain.runtime.hostapi.PartialHostApi.newImportObjectPair;
 
 /**
  * Implementations of the Miscellaneous and Logging HostAPI functions
@@ -28,31 +30,32 @@ import java.util.logging.Level;
  * {<a href="https://spec.polkadot.network/chap-host-api#sect-logging-api">Logging API</a>}
  */
 @Log
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class MiscellaneousHostFunctions {
+@AllArgsConstructor(access = AccessLevel.PACKAGE)
+public class MiscellaneousHostFunctions implements PartialHostApi {
 
-    private final HostApi hostApi;
+    private final SharedMemory sharedMemory;
 
-    public static List<ImportObject> getFunctions(final HostApi hostApi) {
-        return new MiscellaneousHostFunctions(hostApi).buildFunctions();
-    }
-
-    public List<ImportObject> buildFunctions() {
-        return Arrays.asList(
-                HostApi.getImportObject("ext_misc_print_num_version_1", argv ->
-                        printNumV1(argv.get(0)), List.of(Type.I64)),
-                HostApi.getImportObject("ext_misc_print_utf8_version_1", argv ->
-                        printUtf8V1(new RuntimePointerSize(argv.get(0))), List.of(Type.I64)),
-                HostApi.getImportObject("ext_misc_print_hex_version_1", argv ->
-                        printHexV1(new RuntimePointerSize(argv.get(0))), List.of(Type.I64)),
-                HostApi.getImportObject("ext_misc_runtime_version_version_1", argv ->
-                                runtimeVersionV1(new RuntimePointerSize(argv.get(0))).pointerSize(),
-                        List.of(Type.I64), Type.I64),
-                HostApi.getImportObject("ext_logging_log_version_1", argv ->
-                        logV1(argv.get(0).intValue(), new RuntimePointerSize(argv.get(1)),
-                                new RuntimePointerSize(argv.get(1))), Arrays.asList(Type.I32, Type.I64, Type.I64)),
-                HostApi.getImportObject("ext_logging_max_level_version_1", argv ->
-                        maxLevelV1(), List.of(), Type.I32)
+    @Override
+    public Map<Endpoint, ImportObject.FuncImport> getFunctionImports() {
+        return Map.ofEntries(
+            newImportObjectPair(Endpoint.ext_misc_print_num_version_1, argv -> {
+                printNumV1(argv.get(0));
+            }),
+            newImportObjectPair(Endpoint.ext_misc_print_utf8_version_1, argv -> {
+                printUtf8V1(new RuntimePointerSize(argv.get(0)));
+            }),
+            newImportObjectPair(Endpoint.ext_misc_print_hex_version_1, argv -> {
+                printHexV1(new RuntimePointerSize(argv.get(0)));
+            }),
+            newImportObjectPair(Endpoint.ext_misc_runtime_version_version_1, argv -> {
+                return runtimeVersionV1(new RuntimePointerSize(argv.get(0))).pointerSize();
+            }),
+            newImportObjectPair(Endpoint.ext_logging_log_version_1, argv -> {
+                logV1(argv.get(0).intValue(), new RuntimePointerSize(argv.get(1)), new RuntimePointerSize(argv.get(2)));
+            }),
+            newImportObjectPair(Endpoint.ext_logging_max_level_version_1, argv -> {
+                return maxLevelV1();
+            })
         );
     }
 
@@ -62,7 +65,7 @@ public class MiscellaneousHostFunctions {
      * @param number the number to be printed
      */
     public void printNumV1(Number number) {
-        log.info("Printing number from runtime: " + number);
+        log.fine("Printing number from runtime: " + number);
     }
 
     /**
@@ -71,10 +74,10 @@ public class MiscellaneousHostFunctions {
      * @param strPointer a pointer-size to the valid buffer to be printed.
      */
     public void printUtf8V1(RuntimePointerSize strPointer) {
-        byte[] data = hostApi.getDataFromMemory(strPointer);
+        byte[] data = sharedMemory.readData(strPointer);
 
         final String strToPrint = new String(data, StandardCharsets.UTF_8);
-        log.info("Printing utf8 from runtime: " + strToPrint);
+        log.fine("Printing utf8 from runtime: " + strToPrint);
     }
 
     /**
@@ -83,10 +86,10 @@ public class MiscellaneousHostFunctions {
      * @param pointer a pointer-size to the buffer to be printed.
      */
     public void printHexV1(RuntimePointerSize pointer) {
-        byte[] data = hostApi.getDataFromMemory(pointer);
+        byte[] data = sharedMemory.readData(pointer);
 
         final String hexString = HexUtils.toHexString(data);
-        log.info("Printing hex from runtime: " + hexString);
+        log.fine("Printing hex from runtime: " + hexString);
     }
 
     /**
@@ -102,29 +105,21 @@ public class MiscellaneousHostFunctions {
      * which is encoded as a byte array.
      */
     public RuntimePointerSize runtimeVersionV1(RuntimePointerSize data) {
-        byte[] wasmBlob = hostApi.getDataFromMemory(data);
+        byte[] wasmBlob = sharedMemory.readData(data);
 
         byte[] versionOption;
 
         try {
-            Module module = new Module(wasmBlob);
-            Runtime runtime = new Runtime(module, RuntimeBuilder.DEFAULT_HEAP_PAGES);
-            Memory memory = runtime.getInstance().exports.getMemory("memory");
-            Object[] response = runtime.call("Core_version");
+            Runtime runtime = RuntimeFactory.buildRuntime(wasmBlob, RuntimeFactory.Config.EMPTY);
+            byte[] runtimeVersionData = ScaleUtils.Encode.encode(new RuntimeVersionWriter(), runtime.getVersion());
 
-            byte[] runtimeVersionData = null;
-            if (response != null && response[0] != null) {
-                final RuntimePointerSize responsePointer = new RuntimePointerSize((long) response[0]);
-                runtimeVersionData = new byte[responsePointer.size()];
-                memory.buffer().get(responsePointer.pointer(), runtimeVersionData, 0, responsePointer.size());
-            }
             versionOption = scaleEncodedOption(runtimeVersionData);
         } catch (UnsatisfiedLinkError e) {
             log.log(Level.SEVERE, "Error loading wasm module: " + e.getMessage());
             versionOption = scaleEncodedOption(null);
         }
 
-        return hostApi.writeDataToMemory(versionOption);
+        return sharedMemory.writeData(versionOption);
     }
 
     /**
@@ -137,8 +132,8 @@ public class MiscellaneousHostFunctions {
      * @param messagePtr a pointer-size to the UTF-8 encoded log message.
      */
     public void logV1(int level, RuntimePointerSize targetPtr, RuntimePointerSize messagePtr) {
-        byte[] target = hostApi.getDataFromMemory(targetPtr);
-        byte[] message = hostApi.getDataFromMemory(messagePtr);
+        byte[] target = sharedMemory.readData(targetPtr);
+        byte[] message = sharedMemory.readData(messagePtr);
 
         final String messageToPrint = new String(message, StandardCharsets.UTF_8);
         final String targetToPrint = new String(target);
@@ -190,7 +185,7 @@ public class MiscellaneousHostFunctions {
         try (ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
             writer.writeOptional(ScaleCodecWriter::writeByteArray, data);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new ScaleEncodingException(e);
         }
         return buf.toByteArray();
     }

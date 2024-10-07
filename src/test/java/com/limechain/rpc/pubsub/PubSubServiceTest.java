@@ -1,6 +1,7 @@
 package com.limechain.rpc.pubsub;
 
 import com.limechain.rpc.pubsub.subscriberchannel.AbstractSubscriberChannel;
+import com.limechain.rpc.pubsub.subscriberchannel.Subscriber;
 import com.limechain.rpc.pubsub.subscriberchannel.SubscriberChannel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -8,7 +9,6 @@ import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -48,16 +48,17 @@ class PubSubServiceTest {
         // Reset state of singleton manually before each state
         // Not the best approach but can't reset it using new PubSubService() because of private constructor
         setPrivateField("subscribersTopicMap", new HashMap<>() {{
-            // TODO: Instantiate more subscriber channels in the future
-            put(Topic.UNSTABLE_FOLLOW, new SubscriberChannel(Topic.UNSTABLE_FOLLOW));
-            put(Topic.UNSTABLE_TRANSACTION_WATCH, new SubscriberChannel(Topic.UNSTABLE_TRANSACTION_WATCH));
+            // TODO: Instantiate more subscriber channels in the future if needed
+            for (Topic value : Topic.values()) {
+                put(value, new SubscriberChannel(value));
+            }
         }});
 
         setPrivateField("messagesQueue", new LinkedList<>());
     }
 
     @Test
-    public void GetInstance_returns_sameReference() {
+    void GetInstance_returns_sameReference() {
         PubSubService reference1 = PubSubService.getInstance();
         PubSubService reference2 = PubSubService.getInstance();
 
@@ -65,8 +66,8 @@ class PubSubServiceTest {
     }
 
     @Test
-    public void AddMessageToQueue_addsMessage() throws NoSuchFieldException, IllegalAccessException {
-        Message message = new Message(Topic.UNSTABLE_TRANSACTION_WATCH.getValue(), "test payload");
+    void AddMessageToQueue_addsMessage() throws NoSuchFieldException, IllegalAccessException {
+        Message message = new Message(Topic.UNSTABLE_TRANSACTION_WATCH, "test payload");
 
         // How to proceed? Can't verify since messagesQueue is private
 
@@ -79,7 +80,7 @@ class PubSubServiceTest {
     }
 
     @Test
-    public void AddSubscriber_callsChannelAddSubscriber_whenTopicExists()
+    void AddSubscriber_callsChannelAddSubscriber_whenTopicExists()
             throws NoSuchFieldException, IllegalAccessException {
         SubscriberChannel channel = mock(SubscriberChannel.class);
         WebSocketSession session = mock(WebSocketSession.class);
@@ -96,7 +97,7 @@ class PubSubServiceTest {
     }
 
     @Test
-    public void AddSubscriber_doesNotCallChannelAddSubscriber_whenTopicDoesNotExist()
+    void AddSubscriber_doesNotCallChannelAddSubscriber_whenTopicDoesNotExist()
             throws NoSuchFieldException, IllegalAccessException {
         SubscriberChannel channel = mock(SubscriberChannel.class);
         WebSocketSession session = mock(WebSocketSession.class);
@@ -113,14 +114,14 @@ class PubSubServiceTest {
     }
 
     @Test
-    public void RemoveSubscriber_callsChannelRemoveSubscriber_whenSessionExist()
+    void RemoveSubscriber_callsChannelRemoveSubscriber_whenSessionExist()
             throws NoSuchFieldException, IllegalAccessException {
         SubscriberChannel channel = mock(SubscriberChannel.class);
         WebSocketSession session = mock(WebSocketSession.class);
 
-        doReturn("1").when(session).getId();
-        doReturn(new ArrayList<>() {{
-            add(session);
+        String subscriptionId = "0";
+        doReturn(new HashMap<String, Subscriber>() {{
+            put(subscriptionId, new Subscriber(subscriptionId, session));
         }}).when(channel).getSubscribers();
 
         Map<Topic, AbstractSubscriberChannel> map =
@@ -129,38 +130,18 @@ class PubSubServiceTest {
         // Overwrite channel with mocked channel
         map.put(Topic.UNSTABLE_FOLLOW, channel);
 
-        service.removeSubscriber(Topic.UNSTABLE_FOLLOW, session.getId());
+        service.removeSubscriber(Topic.UNSTABLE_FOLLOW, subscriptionId);
 
-        verify(channel, times(1)).removeSubscriber(session);
+        verify(channel, times(1)).removeSubscriber(subscriptionId);
     }
 
     @Test
-    public void RemoveSubscriber_doesNotCallChannelRemoveSubscriber_whenSessionDoesNotExist()
+    void RemoveSubscriber_doesNotCallChannelRemoveSubscriber_whenTopicDoesNotExist()
             throws NoSuchFieldException, IllegalAccessException {
         SubscriberChannel channel = mock(SubscriberChannel.class);
         WebSocketSession session = mock(WebSocketSession.class);
 
-        doReturn("1").when(session).getId();
-        doReturn(new ArrayList<>()).when(channel).getSubscribers();
-
-        Map<Topic, AbstractSubscriberChannel> map =
-                (Map<Topic, AbstractSubscriberChannel>) getPrivateField("subscribersTopicMap");
-
-        // Overwrite channel with mocked channel
-        map.put(Topic.UNSTABLE_FOLLOW, channel);
-
-        service.removeSubscriber(Topic.UNSTABLE_FOLLOW, session.getId());
-
-        verify(channel, times(0)).removeSubscriber(session);
-    }
-
-    @Test
-    public void RemoveSubscriber_doesNotCallChannelRemoveSubscriber_whenTopicDoesNotExist()
-            throws NoSuchFieldException, IllegalAccessException {
-        SubscriberChannel channel = mock(SubscriberChannel.class);
-        WebSocketSession session = mock(WebSocketSession.class);
-
-        doReturn("1").when(session).getId();
+        String subscriptionId = "0";
 
         // Simulate that we don't have a channel for a topic
         HashMap<Object, Object> map = new HashMap<>() {{
@@ -170,14 +151,14 @@ class PubSubServiceTest {
 
         service.removeSubscriber(Topic.UNSTABLE_TRANSACTION_WATCH, session.getId());
 
-        verify(channel, times(0)).removeSubscriber(session);
+        verify(channel, times(0)).removeSubscriber(subscriptionId);
     }
 
     @Test
-    public void broadcast_emptiesMessageQueue_whenCalled() throws NoSuchFieldException, IllegalAccessException {
-        Message message1 = new Message(Topic.UNSTABLE_FOLLOW.getValue(), "message1");
-        Message message2 = new Message(Topic.UNSTABLE_FOLLOW.getValue(), "message2");
-        Message message3 = new Message(Topic.UNSTABLE_TRANSACTION_WATCH.getValue(), "message3");
+    void broadcast_emptiesMessageQueue_whenCalled() throws NoSuchFieldException, IllegalAccessException {
+        Message message1 = new Message(Topic.UNSTABLE_FOLLOW, "message1");
+        Message message2 = new Message(Topic.UNSTABLE_FOLLOW, "message2");
+        Message message3 = new Message(Topic.UNSTABLE_TRANSACTION_WATCH, "message3");
 
         service.addMessageToQueue(message1);
         service.addMessageToQueue(message2);
@@ -193,7 +174,7 @@ class PubSubServiceTest {
     }
 
     @Test
-    public void notifySubscribers_callsNotifySubscribers_forAllChannels()
+    void notifySubscribers_callsNotifySubscribers_forAllChannels()
             throws NoSuchFieldException, IllegalAccessException, IOException {
         SubscriberChannel channel1 = mock(SubscriberChannel.class);
         SubscriberChannel channel2 = mock(SubscriberChannel.class);
@@ -210,7 +191,7 @@ class PubSubServiceTest {
     }
 
     @Test
-    public void notifySubscribers_throwsRuntimeException_whenNotifySubscribersFails()
+    void notifySubscribers_throwsRuntimeException_whenNotifySubscribersFails()
             throws NoSuchFieldException, IllegalAccessException, IOException {
         SubscriberChannel channel1 = mock(SubscriberChannel.class);
         doThrow(new IOException()).when(channel1).notifySubscribers();

@@ -1,11 +1,11 @@
 package com.limechain.storage.block.tree;
 
+import com.limechain.exception.storage.BlockAlreadyExistsException;
+import com.limechain.exception.storage.BlockNodeNotFoundException;
+import com.limechain.exception.storage.BlockStorageGenericException;
+import com.limechain.exception.storage.LowerThanRootException;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.runtime.Runtime;
-import com.limechain.storage.block.exception.BlockAlreadyExistsException;
-import com.limechain.storage.block.exception.BlockNodeNotFoundException;
-import com.limechain.storage.block.exception.BlockStorageGenericException;
-import com.limechain.storage.block.exception.LowerThanRootException;
 import com.limechain.storage.block.map.HashToRuntime;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.Getter;
@@ -178,10 +178,6 @@ public class BlockTree {
             throw new BlockNodeNotFoundException("Start node not found");
         }
 
-        if (startBlockNode.getNumber() > endBlockNode.getNumber()) {
-            throw new BlockStorageGenericException("Start is greater than end");
-        }
-
         return accumulateHashesInDescendingOrder(endBlockNode, startBlockNode);
     }
 
@@ -196,18 +192,16 @@ public class BlockTree {
      */
     public List<Hash256> accumulateHashesInDescendingOrder(final BlockNode endNode, final BlockNode startNode) {
         if (startNode.getNumber() > endNode.getNumber()) {
-            throw new IllegalArgumentException("Start is greater than end");
+            throw new BlockStorageGenericException("Start is greater than end");
         }
 
-        // blocksInRange is the difference between the end number to start number
-        // but the difference don't include the start item that is why we add 1
-        int blocksInRange = (int) (endNode.getNumber() - startNode.getNumber() + 1);
+        int blocksInRange = (int) (endNode.getNumber() - startNode.getNumber());
         List<Hash256> hashes = new ArrayList<>(blocksInRange);
 
         BlockNode tempNode = endNode;
         for (int position = blocksInRange - 1; position >= 0; position--) {
             hashes.add(tempNode.getHash());
-            tempNode = endNode.getParent();
+            tempNode = tempNode.getParent();
 
             if (tempNode == null) {
                 throw new BlockStorageGenericException("End node is null");

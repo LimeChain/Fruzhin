@@ -1,7 +1,7 @@
 package com.limechain.rpc.methods.sync;
 
 import com.limechain.chain.ChainService;
-import com.limechain.chain.ChainSpec;
+import com.limechain.chain.spec.ChainSpec;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -31,6 +31,6 @@ public class SyncRPCImpl{
         //do that as well in the future when we have working Trie and dynamic genesis sync spec
         //TODO: Consider should we send non raw genesis if raw is false
         //TODO: Local genesis should be updated with the Trie and saved
-        return chainService.getGenesis();
+        return chainService.getChainSpec();
     }
 }

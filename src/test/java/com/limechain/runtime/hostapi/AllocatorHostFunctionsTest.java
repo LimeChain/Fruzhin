@@ -1,5 +1,6 @@
 package com.limechain.runtime.hostapi;
 
+import com.limechain.runtime.SharedMemory;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,14 +19,14 @@ class AllocatorHostFunctionsTest {
     private AllocatorHostFunctions allocatorHostFunctions;
 
     @Mock
-    private HostApi hostApi;
+    private SharedMemory sharedMemory;
 
     @Test
     void extAllocatorMallocVersion1() {
         int size = 123;
         int pointer = 777;
         RuntimePointerSize runtimePointerSize = mock(RuntimePointerSize.class);
-        when(hostApi.allocate(size)).thenReturn(runtimePointerSize);
+        when(sharedMemory.allocate(size)).thenReturn(runtimePointerSize);
         when(runtimePointerSize.pointer()).thenReturn(pointer);
 
         int result = allocatorHostFunctions.extAllocatorMallocVersion1(size);
@@ -39,6 +40,6 @@ class AllocatorHostFunctionsTest {
 
         allocatorHostFunctions.extAllocatorFreeVersion1(pointer);
 
-        verify(hostApi).deallocate(pointer);
+        verify(sharedMemory).deallocate(pointer);
     }
 }

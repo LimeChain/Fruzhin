@@ -3,8 +3,8 @@ package com.limechain.network;
 import com.limechain.network.dto.PeerInfo;
 import com.limechain.network.dto.ProtocolStreamType;
 import com.limechain.network.dto.ProtocolStreams;
-import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshake;
-import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceMessage;
+import com.limechain.network.protocol.blockannounce.messages.BlockAnnounceHandshake;
+import com.limechain.network.protocol.blockannounce.messages.BlockAnnounceMessage;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import io.libp2p.core.PeerId;
 import io.libp2p.core.Stream;
@@ -24,14 +24,14 @@ import java.util.logging.Level;
 @Log
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ConnectionManager {
-    private static ConnectionManager INSTANCE;
+    private static ConnectionManager instance;
     protected final Map<PeerId, PeerInfo> peers = new HashMap<>();
 
     public static ConnectionManager getInstance() {
-        if (INSTANCE == null) {
-            INSTANCE = new ConnectionManager();
+        if (instance == null) {
+            instance = new ConnectionManager();
         }
-        return INSTANCE;
+        return instance;
     }
 
     /**

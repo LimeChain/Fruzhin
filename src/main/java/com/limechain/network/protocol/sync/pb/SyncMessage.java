@@ -2,7 +2,6 @@
 // source: src/main/java/com/limechain/network/protobuf/SyncMessage.proto
 package com.limechain.network.protocol.sync.pb;
 
-//CHECKSTYLE.OFF
 public final class SyncMessage {
     private static final com.google.protobuf.Descriptors.Descriptor
             internal_static_BlockRequest_descriptor;
@@ -7975,4 +7974,3 @@ public final class SyncMessage {
 
     // @@protoc_insertion_point(outer_class_scope)
 }
-//CHECKSTYLE.ON
