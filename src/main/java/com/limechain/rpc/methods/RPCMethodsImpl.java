@@ -6,6 +6,7 @@ import com.limechain.chain.spec.ChainSpec;
 import com.limechain.chain.spec.ChainType;
 import com.limechain.chain.spec.PropertyValue;
 import com.limechain.exception.rpc.InvalidParametersException;
+import com.limechain.rpc.methods.author.AuthorRPC;
 import com.limechain.rpc.methods.author.AuthorRPCImpl;
 import com.limechain.rpc.methods.chain.ChainRPC;
 import com.limechain.rpc.methods.chain.ChainRPCImpl;
@@ -84,6 +85,7 @@ public class RPCMethodsImpl implements RPCMethods {
         Collections.addAll(methods, ChainRPC.class.getDeclaredMethods());
         Collections.addAll(methods, OffchainRPC.class.getDeclaredMethods());
         Collections.addAll(methods, StateRPC.class.getDeclaredMethods());
+        Collections.addAll(methods, AuthorRPC.class.getDeclaredMethods());
 
         return methods.stream().map(m -> m.getAnnotation(JsonRpcMethod.class).value()).toArray(String[]::new);
     }
@@ -315,7 +317,7 @@ public class RPCMethodsImpl implements RPCMethods {
     //region AuthorRPC
     @Override
     public String authorRotateKeys() {
-        return "";
+        return authorRPC.authorRotateKeys();
     }
 
     @Override

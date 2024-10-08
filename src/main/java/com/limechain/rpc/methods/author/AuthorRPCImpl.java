@@ -1,6 +1,5 @@
 package com.limechain.rpc.methods.author;
 
-import com.googlecode.jsonrpc4j.spring.AutoJsonRpcServiceImpl;
 import com.limechain.rpc.server.AppBean;
 import com.limechain.runtime.Runtime;
 import com.limechain.runtime.RuntimeEndpoint;
@@ -8,29 +7,46 @@ import com.limechain.storage.block.BlockState;
 import com.limechain.storage.crypto.KeyStore;
 import com.limechain.storage.crypto.KeyType;
 import com.limechain.utils.StringUtils;
+import com.limechain.utils.scale.ScaleUtils;
+import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 @Service
-@AutoJsonRpcServiceImpl
 @AllArgsConstructor
 public class AuthorRPCImpl {
 
-    private static final String HEX_PREFIX = "0x";
+    private static final Logger log = LoggerFactory.getLogger(AuthorRPCImpl.class);
     private final BlockState blockState = BlockState.getInstance();
     private final KeyStore keyStore = AppBean.getBean(KeyStore.class);
 
     public String authorRotateKeys() {
         var bestBlockHash = blockState.bestBlockHash();
-
         Runtime runtime = blockState.getRuntime(bestBlockHash);
-        //here the keystore should be provided as param, there is no such method in runtime api spec
-        //This is actually a method directly related to the runtime api implementation, not a call to the runtime
-//        byte[] registerExtensions = runtime.call(RuntimeEndpoint.REGISTER_EXTENSION, new byte[] {});
 
-        //Here the best block hash should be provided as param
-        byte[] response = runtime.call(RuntimeEndpoint.SESSION_KEYS_GENERATE_SESSION_KEYS, new byte[]{});
-        return StringUtils.toHexWithPrefix(response);
+        if (runtime != null) {
+            try {
+                //TODO: Temp solution without seed
+                byte[] response = runtime.call(
+                        RuntimeEndpoint.SESSION_KEYS_GENERATE_SESSION_KEYS,
+                        ScaleUtils.Encode.encodeOptional(ScaleCodecWriter::writeByteArray, null)
+                );
+
+//                byte[] response = runtime.call(
+//                        RuntimeEndpoint.SESSION_KEYS_GENERATE_SESSION_KEYS,
+//                        ScaleUtils.Encode.encodeOptional(ScaleCodecWriter::writeAsList, bestBlockHash.getBytes())
+//                );
+
+                log.info(StringUtils.toHexWithPrefix(response));
+                return StringUtils.toHexWithPrefix(response);
+            } catch (Exception e) {
+                log.info(e.getMessage(), e.getCause());
+            }
+        }
+
+        return null;
     }
 
 //    fn rotate_keys(&self, ext: &Extensions) -> Result<Bytes> {
@@ -122,7 +138,7 @@ public class AuthorRPCImpl {
 //		})
 //    }
 
-    public String authorSubmitAndWatchExtrinsic(String extrinsics){
+    public String authorSubmitAndWatchExtrinsic(String extrinsics) {
         return "";
     }
 }
