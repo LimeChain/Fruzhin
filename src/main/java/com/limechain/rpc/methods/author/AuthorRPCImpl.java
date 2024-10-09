@@ -28,7 +28,6 @@ public class AuthorRPCImpl {
         if (runtime == null) return null;
 
         try {
-            //TODO: Temp solution without seed
             byte[] response = runtime.call(
                     RuntimeEndpoint.SESSION_KEYS_GENERATE_SESSION_KEYS,
                     ScaleUtils.Encode.encodeOptional(ScaleCodecWriter::writeByteArray, null)
