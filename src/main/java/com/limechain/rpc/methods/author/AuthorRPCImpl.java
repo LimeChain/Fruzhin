@@ -1,6 +1,5 @@
 package com.limechain.rpc.methods.author;
 
-import com.limechain.rpc.server.AppBean;
 import com.limechain.runtime.Runtime;
 import com.limechain.runtime.RuntimeEndpoint;
 import com.limechain.storage.block.BlockState;
@@ -9,59 +8,37 @@ import com.limechain.storage.crypto.KeyType;
 import com.limechain.utils.StringUtils;
 import com.limechain.utils.scale.ScaleUtils;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
-import lombok.AllArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 @Service
-@AllArgsConstructor
 public class AuthorRPCImpl {
 
-    private static final Logger log = LoggerFactory.getLogger(AuthorRPCImpl.class);
     private final BlockState blockState = BlockState.getInstance();
-    private final KeyStore keyStore = AppBean.getBean(KeyStore.class);
+    private final KeyStore keyStore;
 
+    public AuthorRPCImpl(KeyStore keyStore) {
+        this.keyStore = keyStore;
+    }
+
+    // GENERATE_SESSION_KEYS method injects the generated keys into the keystore and that is done by the runtime
     public String authorRotateKeys() {
         var bestBlockHash = blockState.bestBlockHash();
         Runtime runtime = blockState.getRuntime(bestBlockHash);
 
-        if (runtime != null) {
-            try {
-                //TODO: Temp solution without seed
-                byte[] response = runtime.call(
-                        RuntimeEndpoint.SESSION_KEYS_GENERATE_SESSION_KEYS,
-                        ScaleUtils.Encode.encodeOptional(ScaleCodecWriter::writeByteArray, null)
-                );
+        if (runtime == null) return null;
 
-//                byte[] response = runtime.call(
-//                        RuntimeEndpoint.SESSION_KEYS_GENERATE_SESSION_KEYS,
-//                        ScaleUtils.Encode.encodeOptional(ScaleCodecWriter::writeAsList, bestBlockHash.getBytes())
-//                );
+        try {
+            //TODO: Temp solution without seed
+            byte[] response = runtime.call(
+                    RuntimeEndpoint.SESSION_KEYS_GENERATE_SESSION_KEYS,
+                    ScaleUtils.Encode.encodeOptional(ScaleCodecWriter::writeByteArray, null)
+            );
 
-                log.info(StringUtils.toHexWithPrefix(response));
-                return StringUtils.toHexWithPrefix(response);
-            } catch (Exception e) {
-                log.info(e.getMessage(), e.getCause());
-            }
+            return StringUtils.toHexWithPrefix(response);
+        } catch (Exception e) {
+            return null;
         }
-
-        return null;
     }
-
-//    fn rotate_keys(&self, ext: &Extensions) -> Result<Bytes> {
-//        check_if_safe(ext)?;
-//
-//        let best_block_hash = self.client.info().best_hash;
-//        let mut runtime_api = self.client.runtime_api();
-//
-//        runtime_api.register_extension(KeystoreExt::from(self.keystore.clone()));
-//
-//        runtime_api
-//                .generate_session_keys(best_block_hash, None)
-//                .map(Into::into)
-//                .map_err(|api_err| Error::Client(Box::new(api_err)).into())
-//    }
 
     public String authorInsertKey(String keyType, String suri, String publicKey) {
         KeyType parsedKeyType = KeyType.getByBytes(keyType.getBytes());
