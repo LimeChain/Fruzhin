@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 class CliTest {
     private Cli cli;
@@ -31,6 +32,8 @@ class CliTest {
         assertTrue(options.hasOption("mode"));
         assertTrue(options.hasOption("no-legacy-protocols"));
         assertTrue(options.hasOption("sync-mode"));
+        assertTrue(options.hasOption("public-rpc"));
+        assertTrue(options.hasOption("rpc-methods"));
         assertEquals(0, options.getRequiredOptions().size());
     }
 
@@ -38,6 +41,30 @@ class CliTest {
     void parseArgs_returns_networkParameter() {
         CliArguments arguments = cli.parseArgs(new String[]{"--network", "polkadot"});
         assertEquals("polkadot", arguments.network());
+    }
+
+    @Test
+    void parseArgs_returns_defaultLocalUnsafeRpcEnabled() {
+        CliArguments arguments = cli.parseArgs(new String[]{});
+        assertTrue(arguments.unsafeRpcEnabled());
+    }
+
+    @Test
+    void parseArgs_returns_defaultPublicSafeRpcEnabled() {
+        CliArguments arguments = cli.parseArgs(new String[]{"--public-rpc"});
+        assertFalse(arguments.unsafeRpcEnabled());
+    }
+
+    @Test
+    void parseArgs_returns_localSafeRpcEnabled() {
+        CliArguments arguments = cli.parseArgs(new String[]{"--rpc-methods", "safe"});
+        assertFalse(arguments.unsafeRpcEnabled());
+    }
+
+    @Test
+    void parseArgs_returns_publicUnsafeRpcEnabled() {
+        CliArguments arguments = cli.parseArgs(new String[]{"--rpc-methods", "unsafe", "--public-rpc"});
+        assertTrue(arguments.unsafeRpcEnabled());
     }
 
     @Test

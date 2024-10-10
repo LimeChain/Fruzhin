@@ -18,6 +18,7 @@ import org.apache.commons.cli.ParseException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * Abstraction class around apache.commons.cli used to set arguments rules and parse node arguments
@@ -43,7 +44,6 @@ public class Cli {
     private static final String CHAIN = "chain";
     private static final String NAME = "name";
     private static final String CORS = "rpc-cors";
-    private static final String UNSAFE_RPC_EXTERNAL = "unsafe-rpc-external";
     private static final String NO_MDNS = "no-mdns";
     private static final String NO_TELEMETRY = "no-telemetry";
     private static final String PROMETHEUS_EXTERNAL = "prometheus-external";
@@ -54,7 +54,7 @@ public class Cli {
      * Holds CLI options
      */
     private final Options options;
-    private final List<String> validChains = List.of(Chain.values()).stream().map(Chain::getValue).toList();
+    private final List<String> validChains = Stream.of(Chain.values()).map(Chain::getValue).toList();
     private final HelpFormatter formatter = new HelpFormatter();
 
     public Cli() {
@@ -89,11 +89,11 @@ public class Cli {
      * @throws CliArgsParseException for invalid RPC methods values.
      */
     @NotNull
-    private static RpcMethods parseRpcMethods(CommandLine cmd) {
+    private static RpcMethods parseRpcMethods(CommandLine cmd, boolean isPublic) {
         try {
-            return RpcMethods.valueOf(cmd.getOptionValue(RPC_METHODS, "auto").toUpperCase());
+            return RpcMethods.valueOf(cmd.getOptionValue(RPC_METHODS, isPublic ? "safe" : "unsafe").toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new CliArgsParseException("Invalid rpc methods provided, valid values - AUTO, SAFE, UNSAFE", e);
+            throw new CliArgsParseException("Invalid rpc methods provided, valid values - SAFE, UNSAFE", e);
         }
     }
 
@@ -116,14 +116,13 @@ public class Cli {
             // TODO: separation of enums; this NodeRole enum is used for blockannounce
             //       what does running the node in NodeMode NONE mean?
             String nodeMode = cmd.getOptionValue(NODE_MODE, NodeRole.FULL.toString());
-            boolean noLgacyProtocols = cmd.hasOption(NO_LEGACY_PROTOCOLS);
+            boolean noLegacyProtocols = cmd.hasOption(NO_LEGACY_PROTOCOLS);
             SyncMode syncMode = parseSyncMode(cmd);
-            RpcMethods rpcMethods = parseRpcMethods(cmd);
             boolean isPublic = cmd.hasOption(PUBLIC_RPC);
-
-            boolean unsafeEnabled = isPublic ? rpcMethods == RpcMethods.UNSAFE : rpcMethods != RpcMethods.SAFE;
+            RpcMethods rpcMethods = parseRpcMethods(cmd, isPublic);
+            boolean unsafeEnabled = rpcMethods == RpcMethods.UNSAFE;
             int prometheusPort = Integer.parseInt(cmd.getOptionValue(PROMETHEUS_PORT, "9090"));
-            return new CliArguments(network, dbPath, dbRecreate, nodeKey, nodeMode, noLgacyProtocols, syncMode,
+            return new CliArguments(network, dbPath, dbRecreate, nodeKey, nodeMode, noLegacyProtocols, syncMode,
                     unsafeEnabled, prometheusPort);
         } catch (ParseException e) {
             formatter.printHelp("Specify the network name - " + String.join(", ", validChains), options);
@@ -150,15 +149,13 @@ public class Cli {
                 "\nSync mode (warp/full) - warp by default");
         Option publicRpc = new Option(null, PUBLIC_RPC, false,
                 "\nListen to all RPC interfaces (by default only local interface is listened on).");
-        Option rpcMethods = new Option(null, RPC_METHODS, false, """
-                                
+        Option rpcMethods = new Option(null, RPC_METHODS, true, """
+                               \s
                 RPC methods to expose.
 
-                [default: auto]
+                [default for local: unsafe , default for public: safe]
 
                 Possible values:
-                - auto:   Expose every RPC method only when RPC is listening on
-                  `localhost`, otherwise serve only safe RPC methods
                 - safe:   Allow only a safe subset of RPC methods
                 - unsafe: Expose every RPC method (even potentially unsafe ones)""");
         Option prometheusPort = new Option(null, PROMETHEUS_PORT, true, "Prometheus port");
@@ -166,7 +163,6 @@ public class Cli {
         Option chain = new Option(null, CHAIN, true, "");
         Option name = new Option(null, NAME, true, "");
         Option cors = new Option(null, CORS, false, "");
-        Option unsafeRpcExternal = new Option(null, UNSAFE_RPC_EXTERNAL, false, "");
         Option noMdns = new Option(null, NO_MDNS, false, "");
         Option noTelemetry = new Option(null, NO_TELEMETRY, false, "");
         Option prometheusExternal = new Option(null, PROMETHEUS_EXTERNAL, false, "");
@@ -187,7 +183,6 @@ public class Cli {
         chain.setRequired(false);
         name.setRequired(false);
         cors.setRequired(false);
-        unsafeRpcExternal.setRequired(false);
         noMdns.setRequired(false);
         noTelemetry.setRequired(false);
         prometheusExternal.setRequired(false);
@@ -210,7 +205,6 @@ public class Cli {
         result.addOption(chain);
         result.addOption(name);
         result.addOption(cors);
-        result.addOption(unsafeRpcExternal);
         result.addOption(noMdns);
         result.addOption(noTelemetry);
         result.addOption(prometheusExternal);
