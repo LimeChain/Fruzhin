@@ -57,29 +57,24 @@ public class AuthorRPCImpl {
         if (parsedKeyType == null) return "";
 
         try {
-            byte[] privateKey = decodePrivateKey(suri, parsedKeyType, publicKey);
-            //TODO: We should insert the public key in the store
-            keyStore.put(parsedKeyType, privateKey, publicKey.getBytes());
-            //TODO: Questionable if we want to return back the private key? -> polkadot-sdk returns empty result OK()
-            return StringUtils.toHexWithPrefix(privateKey);
+            byte[] privateKey = decodePrivateKey(
+                    StringUtils.hexToBytes(suri),
+                    parsedKeyType,
+                    StringUtils.hexToBytes(publicKey)
+            );
+
+            keyStore.put(parsedKeyType, StringUtils.hexToBytes(publicKey), privateKey);
+            return publicKey;
         } catch (Exception e) {
             return "";
         }
     }
 
-    //TODO: Fix
     public Boolean authorHasKey(String publicKey, String keyType) {
         KeyType parsedKeyType = KeyType.getByBytes(keyType.getBytes());
         if (parsedKeyType == null) return false;
         return keyStore.contains(parsedKeyType, StringUtils.hexToBytes(publicKey));
     }
-
-//    fn has_key(&self, ext: &Extensions, public_key: Bytes, key_type: String) -> Result<bool> {
-//        check_if_safe(ext)?;
-//
-//        let key_type = key_type.as_str().try_into().map_err(|_| Error::BadKeyType)?;
-//        Ok(self.keystore.has_keys(&[(public_key.to_vec(), key_type)]))
-//    }
 
     public Boolean authorHasSessionKey(String sessionKey) {
         return false;
@@ -121,17 +116,14 @@ public class AuthorRPCImpl {
         return "";
     }
 
-    //TODO: This should return boolean value
-    private byte[] decodePrivateKey(String suri, KeyType keyType, String publicKey) throws SchnorrkelException, IllegalArgumentException {
+    private byte[] decodePrivateKey(byte[] suri, KeyType keyType, byte[] publicKey) throws SchnorrkelException, IllegalArgumentException {
         byte[] privateKey;
         byte[] generatedPublicKey;
-        byte[] providedPublicKey = StringUtils.hexToBytes(publicKey);
 
         //TODO: By ED25519 private key is equal to secret seed
         if (keyType.getKey().equals(Key.ED25519)) {
 
-
-            Ed25519PrivateKeyParameters param = new Ed25519PrivateKeyParameters(StringUtils.hexToBytes(suri), 0);
+            Ed25519PrivateKeyParameters param = new Ed25519PrivateKeyParameters(suri, 0);
             Ed25519PublicKeyParameters pubKey = param.generatePublicKey();
 
             Ed25519PrivateKey pk = new Ed25519PrivateKey(param);
@@ -142,7 +134,7 @@ public class AuthorRPCImpl {
         } else if (keyType.getKey().equals(Key.SR25519)) {
 
             Schnorrkel schnorrkel = SchnorrkelNative.getInstance();
-            Schnorrkel.KeyPair keyPair = schnorrkel.generateKeyPairFromSeed(StringUtils.hexToBytes(suri));
+            Schnorrkel.KeyPair keyPair = schnorrkel.generateKeyPairFromSeed(suri);
 
             generatedPublicKey = keyPair.getPublicKey();
             privateKey = keyPair.getSecretKey();
@@ -151,7 +143,7 @@ public class AuthorRPCImpl {
             throw new IllegalArgumentException("key type not supported");
         }
 
-        if (!Arrays.equals(generatedPublicKey, providedPublicKey)) {
+        if (!Arrays.equals(generatedPublicKey, publicKey)) {
             throw new IllegalArgumentException("provided public key or seed is invalid");
         }
 
