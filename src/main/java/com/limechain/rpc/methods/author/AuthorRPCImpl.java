@@ -31,6 +31,7 @@ public class AuthorRPCImpl {
 
     //TODO: Add documentation
     //TODO: Maybe some logs should be added
+    //TODO: apply validation here
 
     // generate_session_keys method injects the generated keys into the keystore and that is done by the runtime
     public String authorRotateKeys() {
@@ -52,7 +53,6 @@ public class AuthorRPCImpl {
     }
 
     public String authorInsertKey(String keyType, String suri, String publicKey) {
-        //TODO: apply validation here
         KeyType parsedKeyType = KeyType.getByBytes(keyType.getBytes());
         if (parsedKeyType == null) return "";
 

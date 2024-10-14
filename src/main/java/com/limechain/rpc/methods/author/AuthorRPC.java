@@ -18,9 +18,11 @@ public interface AuthorRPC {
     @JsonRpcMethod("author_insertKey")
     String authorInsertKey(String keyType, String suri, String publicKey);
 
+    @UnsafeRpcMethod
     @JsonRpcMethod("author_hasKey")
     Boolean authorHasKey(String publicKey, String keyType);
 
+    @UnsafeRpcMethod
     @JsonRpcMethod("author_hasSessionKeys")
     Boolean authorHasSessionKeys(String sessionKeys);
 
