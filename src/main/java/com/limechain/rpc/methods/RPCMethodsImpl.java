@@ -322,17 +322,17 @@ public class RPCMethodsImpl implements RPCMethods {
 
     @Override
     public String authorInsertKey(String keyType, String suri, String publicKey) {
-        return "";
+        return authorRPC.authorInsertKey(keyType, suri, publicKey);
     }
 
     @Override
     public Boolean authorHasKey(String publicKey, String keyType) {
-        return null;
+        return authorRPC.authorHasKey(publicKey, keyType);
     }
 
     @Override
     public Boolean authorHasSessionKeys(String sessionKeys) {
-        return null;
+        return authorRPC.authorHasSessionKey(sessionKeys);
     }
 
     @Override

@@ -2,13 +2,22 @@ package com.limechain.rpc.methods.author;
 
 import com.limechain.runtime.Runtime;
 import com.limechain.runtime.RuntimeEndpoint;
+import com.limechain.runtime.hostapi.dto.Key;
 import com.limechain.storage.block.BlockState;
 import com.limechain.storage.crypto.KeyStore;
 import com.limechain.storage.crypto.KeyType;
 import com.limechain.utils.StringUtils;
 import com.limechain.utils.scale.ScaleUtils;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
+import io.emeraldpay.polkaj.schnorrkel.Schnorrkel;
+import io.emeraldpay.polkaj.schnorrkel.SchnorrkelException;
+import io.emeraldpay.polkaj.schnorrkel.SchnorrkelNative;
+import io.libp2p.crypto.keys.Ed25519PrivateKey;
+import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters;
+import org.bouncycastle.crypto.params.Ed25519PublicKeyParameters;
 import org.springframework.stereotype.Service;
+
+import java.util.Arrays;
 
 @Service
 public class AuthorRPCImpl {
@@ -20,7 +29,10 @@ public class AuthorRPCImpl {
         this.keyStore = keyStore;
     }
 
-    // GENERATE_SESSION_KEYS method injects the generated keys into the keystore and that is done by the runtime
+    //TODO: Add documentation
+    //TODO: Maybe some logs should be added
+
+    // generate_session_keys method injects the generated keys into the keystore and that is done by the runtime
     public String authorRotateKeys() {
         var bestBlockHash = blockState.bestBlockHash();
         Runtime runtime = blockState.getRuntime(bestBlockHash);
@@ -40,35 +52,26 @@ public class AuthorRPCImpl {
     }
 
     public String authorInsertKey(String keyType, String suri, String publicKey) {
+        //TODO: apply validation here
         KeyType parsedKeyType = KeyType.getByBytes(keyType.getBytes());
+        if (parsedKeyType == null) return "";
 
-        if (parsedKeyType == null) {
+        try {
+            byte[] privateKey = decodePrivateKey(suri, parsedKeyType, publicKey);
+            //TODO: We should insert the public key in the store
+            keyStore.put(parsedKeyType, privateKey, publicKey.getBytes());
+            //TODO: Questionable if we want to return back the private key? -> polkadot-sdk returns empty result OK()
+            return StringUtils.toHexWithPrefix(privateKey);
+        } catch (Exception e) {
             return "";
         }
-
-        keyStore.put(parsedKeyType, suri.getBytes(), publicKey.getBytes());
-
-        return "";
     }
 
-//    fn insert_key(
-//		&self,
-//        ext: &Extensions,
-//        key_type: String,
-//        suri: String,
-//        public: Bytes,
-//        ) -> Result<()> {
-//        check_if_safe(ext)?;
-//
-//        let key_type = key_type.as_str().try_into().map_err(|_| Error::BadKeyType)?;
-//        self.keystore
-//                .insert(key_type, &suri, &public[..])
-//			.map_err(|_| Error::KeystoreUnavailable)?;
-//        Ok(())
-//    }
-
+    //TODO: Fix
     public Boolean authorHasKey(String publicKey, String keyType) {
-        return false;
+        KeyType parsedKeyType = KeyType.getByBytes(keyType.getBytes());
+        if (parsedKeyType == null) return false;
+        return keyStore.contains(parsedKeyType, StringUtils.hexToBytes(publicKey));
     }
 
 //    fn has_key(&self, ext: &Extensions, public_key: Bytes, key_type: String) -> Result<bool> {
@@ -116,5 +119,42 @@ public class AuthorRPCImpl {
 
     public String authorSubmitAndWatchExtrinsic(String extrinsics) {
         return "";
+    }
+
+    //TODO: This should return boolean value
+    private byte[] decodePrivateKey(String suri, KeyType keyType, String publicKey) throws SchnorrkelException, IllegalArgumentException {
+        byte[] privateKey;
+        byte[] generatedPublicKey;
+        byte[] providedPublicKey = StringUtils.hexToBytes(publicKey);
+
+        //TODO: By ED25519 private key is equal to secret seed
+        if (keyType.getKey().equals(Key.ED25519)) {
+
+
+            Ed25519PrivateKeyParameters param = new Ed25519PrivateKeyParameters(StringUtils.hexToBytes(suri), 0);
+            Ed25519PublicKeyParameters pubKey = param.generatePublicKey();
+
+            Ed25519PrivateKey pk = new Ed25519PrivateKey(param);
+
+            generatedPublicKey = pk.publicKey().raw();
+            privateKey = param.getEncoded();
+
+        } else if (keyType.getKey().equals(Key.SR25519)) {
+
+            Schnorrkel schnorrkel = SchnorrkelNative.getInstance();
+            Schnorrkel.KeyPair keyPair = schnorrkel.generateKeyPairFromSeed(StringUtils.hexToBytes(suri));
+
+            generatedPublicKey = keyPair.getPublicKey();
+            privateKey = keyPair.getSecretKey();
+
+        } else {
+            throw new IllegalArgumentException("key type not supported");
+        }
+
+        if (!Arrays.equals(generatedPublicKey, providedPublicKey)) {
+            throw new IllegalArgumentException("provided public key or seed is invalid");
+        }
+
+        return privateKey;
     }
 }
