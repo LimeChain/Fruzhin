@@ -15,7 +15,8 @@ public enum RuntimeEndpoint {
     CORE_VERSION("Core_version"),
     BLOCKBUILDER_CHECK_INHERENTS("BlockBuilder_check_inherents"),
     METADATA_METADATA("Metadata_metadata"),
-    SESSION_KEYS_GENERATE_SESSION_KEYS("SessionKeys_generate_session_keys")
+    SESSION_KEYS_GENERATE_SESSION_KEYS("SessionKeys_generate_session_keys"),
+    SESSION_KEYS_DECODE_SESSION_KEYS("SessionKeys_decode_session_keys")
     ;
 
     private final String name;

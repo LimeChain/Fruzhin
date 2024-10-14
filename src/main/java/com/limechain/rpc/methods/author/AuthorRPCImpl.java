@@ -1,5 +1,7 @@
 package com.limechain.rpc.methods.author;
 
+import com.limechain.rpc.methods.author.dto.DecodedKey;
+import com.limechain.rpc.methods.author.dto.DecodedKeyReader;
 import com.limechain.runtime.Runtime;
 import com.limechain.runtime.RuntimeEndpoint;
 import com.limechain.runtime.hostapi.dto.Key;
@@ -18,6 +20,7 @@ import org.bouncycastle.crypto.params.Ed25519PublicKeyParameters;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
+import java.util.List;
 
 @Service
 public class AuthorRPCImpl {
@@ -76,23 +79,31 @@ public class AuthorRPCImpl {
         return keyStore.contains(parsedKeyType, StringUtils.hexToBytes(publicKey));
     }
 
-    public Boolean authorHasSessionKey(String sessionKey) {
-        return false;
-    }
+    public Boolean authorHasSessionKeys(String sessionKey) {
+        var bestBlockHash = blockState.bestBlockHash();
+        Runtime runtime = blockState.getRuntime(bestBlockHash);
 
-//    fn has_session_keys(&self, ext: &Extensions, session_keys: Bytes) -> Result<bool> {
-//        check_if_safe(ext)?;
-//
-//        let best_block_hash = self.client.info().best_hash;
-//        let keys = self
-//                .client
-//                .runtime_api()
-//                .decode_session_keys(best_block_hash, session_keys.to_vec())
-//                .map_err(|e| Error::Client(Box::new(e)))?
-//			.ok_or(Error::InvalidSessionKeys)?;
-//
-//        Ok(self.keystore.has_keys(&keys))
-//    }
+        if (runtime == null) return false;
+
+        byte[] response = null;
+        try {
+             response = runtime.call(
+                    RuntimeEndpoint.SESSION_KEYS_DECODE_SESSION_KEYS,
+                    ScaleUtils.Encode.encode(ScaleCodecWriter::writeByteArray, StringUtils.hexToBytes(sessionKey))
+            );
+        } catch (Exception e) {
+            return false;
+        }
+
+        List<DecodedKey> decodedKeys = ScaleUtils.Decode.decode(response, new DecodedKeyReader());
+
+        for (DecodedKey key : decodedKeys) {
+            if (!authorHasKey(StringUtils.toHexWithPrefix(key.getData()), new String(key.getKeyType().getBytes()))) {
+                return false;
+            }
+        }
+        return true;
+    }
 
     public String authorSubmitExtrinsic(String extrinsics) {
         return "";

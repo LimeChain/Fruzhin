@@ -332,7 +332,7 @@ public class RPCMethodsImpl implements RPCMethods {
 
     @Override
     public Boolean authorHasSessionKeys(String sessionKeys) {
-        return authorRPC.authorHasSessionKey(sessionKeys);
+        return authorRPC.authorHasSessionKeys(sessionKeys);
     }
 
     @Override
