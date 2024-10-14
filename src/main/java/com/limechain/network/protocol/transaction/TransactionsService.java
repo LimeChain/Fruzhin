@@ -34,7 +34,8 @@ public class TransactionsService extends NetworkService<Transactions> {
     }
 
     private void sendTransactions(Stream stream) {
-        //TODO Send transaction messages
+        //TODO *Last* Send transaction messages
+        // (scheduled task to notify peers about transactions in the TP and TQ).
     }
 
     private void sendHandshake(Host us, PeerId peerId) {

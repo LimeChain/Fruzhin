@@ -1,18 +1,19 @@
 package com.limechain.network.protocol.transaction.scale;
 
-import com.limechain.network.protocol.warp.dto.Extrinsics;
+import com.limechain.transaction.dto.Extrinsic;
+import com.limechain.transaction.dto.ExtrinsicArray;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleReader;
 
-public class TransactionsReader implements ScaleReader<Extrinsics[]> {
+public class TransactionsReader implements ScaleReader<ExtrinsicArray> {
 
     @Override
-    public Extrinsics[] read(ScaleCodecReader reader) {
+    public ExtrinsicArray read(ScaleCodecReader reader) {
         int size = reader.readCompactInt();
-        Extrinsics[] transactions = new Extrinsics[size];
+        Extrinsic[] transactions = new Extrinsic[size];
         for (int i = 0; i < size; i++) {
-            transactions[i] = new Extrinsics(reader.readByteArray());
+            transactions[i] = new Extrinsic(reader.readByteArray());
         }
-        return transactions;
+        return new ExtrinsicArray(transactions);
     }
 }

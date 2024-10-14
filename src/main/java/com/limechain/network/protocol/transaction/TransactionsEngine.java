@@ -5,14 +5,11 @@ import com.limechain.network.ConnectionManager;
 import com.limechain.network.protocol.transaction.scale.TransactionsReader;
 import com.limechain.network.protocol.transaction.scale.TransactionsWriter;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
-import com.limechain.network.protocol.warp.dto.Extrinsics;
 import com.limechain.runtime.Runtime;
 import com.limechain.storage.block.BlockState;
-import com.limechain.sync.warpsync.SyncedState;
-import com.limechain.utils.scale.exceptions.ScaleEncodingException;
-import com.limechain.network.protocol.transactions.scale.TransactionsReader;
-import com.limechain.network.protocol.transactions.scale.TransactionsWriter;
 import com.limechain.sync.warpsync.WarpSyncState;
+import com.limechain.transaction.dto.Extrinsic;
+import com.limechain.transaction.dto.ExtrinsicArray;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.libp2p.core.PeerId;
@@ -72,7 +69,7 @@ public class TransactionsEngine {
         }
         connectionManager.addTransactionsStream(stream);
         log.log(Level.INFO, "Received transactions handshake from " + peerId);
-        //TODO Send valid transactions to the peer we received a handshake from
+        //TODO *2nd* Send valid transactions to the peer we received a handshake from
     }
 
     private void handleResponderStreamMessage(byte[] message, Stream stream) {
@@ -105,8 +102,8 @@ public class TransactionsEngine {
 
     private void handleTransactionMessage(byte[] message, PeerId peerId) {
         ScaleCodecReader reader = new ScaleCodecReader(message);
-        Extrinsics[] transactions = reader.read(new TransactionsReader());
-        log.log(Level.INFO, "Received " + transactions.length + " transactions from Peer "
+        ExtrinsicArray transactions = reader.read(new TransactionsReader());
+        log.log(Level.INFO, "Received " + transactions.getExtrinsics().length + " transactions from Peer "
                 + peerId);
 
         final BlockHeader header = BlockState.getInstance().bestBlockHeader();
@@ -119,7 +116,7 @@ public class TransactionsEngine {
         if (runtime == null) {
             log.log(Level.WARNING, "No runtime found for block header " + header.getHash());
         }
-        //TODO Validate transaction using runtime and then add to transaction pool
+        //TODO *1st* Validate transaction using runtime and then add to transaction pool
         // (depends on StateStorage and TrieState)
     }
 
@@ -145,15 +142,16 @@ public class TransactionsEngine {
     public void writeTransactionsMessage(Stream stream, PeerId peerId) {
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
         try (ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
-            writer.write(new TransactionsWriter(), new Extrinsics[]{
-                    new Extrinsics(new byte[]{}), new Extrinsics(new byte[]{})
-            });
+            writer.write(new TransactionsWriter(), new ExtrinsicArray(new Extrinsic[]{
+                    new Extrinsic(new byte[]{}), new Extrinsic(new byte[]{})
+            }));
         } catch (IOException e) {
             throw new ScaleEncodingException(e);
         }
 
         log.log(Level.INFO, "Sending transaction message to peer " + peerId);
-        //TODO Send our transaction message
+        //TODO *3rd* Send our transaction message
+        // (this is probably used after an extrinsic is received via an RPC call or created internally).
     }
 
     private boolean isHandshake(byte[] message) {

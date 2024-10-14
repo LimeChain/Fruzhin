@@ -1,4 +1,4 @@
-package com.limechain.network.protocol.warp.dto;
+package com.limechain.transaction.dto;
 
 import com.limechain.exception.scale.ScaleEncodingException;
 import com.limechain.utils.HashUtils;
@@ -10,19 +10,19 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 @Data
-public class Extrinsics {
+public class Extrinsic {
 
-    private final byte[] extrinsic;
+    private final byte[] data;
 
     @Override
     public String toString() {
-        return HexUtils.toHexString(extrinsic);
+        return HexUtils.toHexString(data);
     }
 
     public byte[] getHash() {
         try (ByteArrayOutputStream buf = new ByteArrayOutputStream();
              ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
-            writer.writeAsList(extrinsic);
+            writer.writeAsList(data);
             return HashUtils.hashWithBlake2b(buf.toByteArray());
         } catch (IOException e) {
             throw new ScaleEncodingException(e);

@@ -1,5 +1,7 @@
-package com.limechain.network.protocol.transaction.state;
+package com.limechain.transaction;
 
+import com.limechain.transaction.dto.Extrinsic;
+import com.limechain.transaction.dto.ValidTransaction;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -19,7 +21,7 @@ import java.util.concurrent.TimeoutException;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class TransactionState {
     private static final TransactionState INSTANCE = new TransactionState();
-    private final Pool transactionPool = new Pool();
+    private final TransactionPool transactionPool = new TransactionPool();
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     @Getter
     @Setter
@@ -87,7 +89,7 @@ public class TransactionState {
 
     public void removeExtrinsic(byte[] extrinsic) {
         transactionPool.removeExtrinsic(extrinsic);
-        ValidTransaction transactionToBeRemoved = new ValidTransaction(extrinsic);
+        ValidTransaction transactionToBeRemoved = new ValidTransaction(new Extrinsic(extrinsic), null);
         transactionQueue.remove(transactionToBeRemoved);
     }
 
@@ -98,6 +100,4 @@ public class TransactionState {
     public byte[] addToPool(ValidTransaction validTransaction) {
         return transactionPool.insert(validTransaction);
     }
-
-    //Todo: notifyStatus ?
 }

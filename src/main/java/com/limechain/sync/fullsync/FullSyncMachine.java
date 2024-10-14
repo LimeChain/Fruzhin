@@ -10,7 +10,6 @@ import com.limechain.network.protocol.warp.dto.Block;
 import com.limechain.network.protocol.warp.dto.BlockBody;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.network.protocol.warp.dto.DigestType;
-import com.limechain.network.protocol.warp.dto.Extrinsics;
 import com.limechain.network.protocol.warp.dto.HeaderDigest;
 import com.limechain.network.protocol.warp.scale.reader.BlockHeaderReader;
 import com.limechain.rpc.server.AppBean;
@@ -21,12 +20,15 @@ import com.limechain.storage.block.BlockState;
 import com.limechain.storage.block.SyncState;
 import com.limechain.storage.trie.TrieStorage;
 import com.limechain.sync.fullsync.inherents.InherentData;
+import com.limechain.transaction.TransactionValidator;
+import com.limechain.transaction.dto.Extrinsic;
 import com.limechain.trie.DiskTrieAccessor;
 import com.limechain.trie.TrieAccessor;
 import com.limechain.trie.TrieStructureFactory;
 import com.limechain.trie.structure.TrieStructure;
 import com.limechain.trie.structure.database.NodeData;
 import com.limechain.trie.structure.nibble.Nibbles;
+import com.limechain.utils.StringUtils;
 import com.limechain.utils.scale.ScaleUtils;
 import com.limechain.utils.scale.readers.PairReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
@@ -89,8 +91,8 @@ public class FullSyncMachine {
         blockState.storeRuntime(lastFinalizedBlockHash, runtime);
 
         int startNumber = syncState.getLastFinalizedBlockNumber()
-            .add(BigInteger.ONE)
-            .intValue();
+                .add(BigInteger.ONE)
+                .intValue();
 
         int blocksToFetch = 100;
         List<Block> receivedBlocks = requestBlocks(startNumber, blocksToFetch);
@@ -98,7 +100,7 @@ public class FullSyncMachine {
         while (!receivedBlocks.isEmpty()) {
             executeBlocks(receivedBlocks, trieAccessor);
             log.info("Executed blocks from " + receivedBlocks.getFirst().getHeader().getBlockNumber()
-                + " to " + receivedBlocks.getLast().getHeader().getBlockNumber());
+                    + " to " + receivedBlocks.getLast().getHeader().getBlockNumber());
             startNumber += blocksToFetch;
             receivedBlocks = requestBlocks(startNumber, blocksToFetch);
         }
@@ -164,18 +166,18 @@ public class FullSyncMachine {
             final int BODY = 0b0000_0010;
             final int JUSTIFICATION = 0b0001_0000;
             SyncMessage.BlockResponse response = networkService.makeBlockRequest(new BlockRequestDto(
-                HEADER | BODY | JUSTIFICATION,
-                null, // no hash, number instead
-                start,
-                SyncMessage.Direction.Ascending,
-                amount
+                    HEADER | BODY | JUSTIFICATION,
+                    null, // no hash, number instead
+                    start,
+                    SyncMessage.Direction.Ascending,
+                    amount
             ));
 
             List<SyncMessage.BlockData> blockDatas = response.getBlocksList();
 
             return blockDatas.stream()
-                .map(FullSyncMachine::protobufDecodeBlock)
-                .toList();
+                    .map(FullSyncMachine::protobufDecodeBlock)
+                    .toList();
         } catch (Exception ex) {
             log.info("Error while fetching blocks, trying to fetch again");
             if (!this.networkService.updateCurrentSelectedPeerWithNextBootnode()) {
@@ -192,10 +194,10 @@ public class FullSyncMachine {
         BlockHeader blockHeader = ScaleUtils.Decode.decode(encodedHeader, new BlockHeaderReader());
 
         // Protobuf decode the block body
-        List<Extrinsics> extrinsicsList = blockData.getBodyList().stream()
-            .map(bs -> ScaleUtils.Decode.decode(bs.toByteArray(), ScaleCodecReader::readByteArray))
-            .map(Extrinsics::new)
-            .toList();
+        List<Extrinsic> extrinsicsList = blockData.getBodyList().stream()
+                .map(bs -> ScaleUtils.Decode.decode(bs.toByteArray(), ScaleCodecReader::readByteArray))
+                .map(Extrinsic::new)
+                .toList();
 
         BlockBody blockBody = new BlockBody(extrinsicsList);
 
@@ -245,8 +247,8 @@ public class FullSyncMachine {
             }
 
             boolean blockUpdatedRuntime = Arrays.stream(blockHeader.getDigest())
-                .map(HeaderDigest::getType)
-                .anyMatch(type -> type.equals(DigestType.RUN_ENV_UPDATED));
+                    .map(HeaderDigest::getType)
+                    .anyMatch(type -> type.equals(DigestType.RUN_ENV_UPDATED));
 
             if (blockUpdatedRuntime) {
                 log.info("Runtime updated, updating the runtime code");
@@ -259,9 +261,9 @@ public class FullSyncMachine {
 
     private Runtime buildRuntimeFromState(TrieAccessor trieAccessor) {
         return trieAccessor
-            .findStorageValue(Nibbles.fromBytes(":code".getBytes()))
-            .map(wasm -> runtimeBuilder.buildRuntime(wasm, trieAccessor))
-            .orElseThrow(() -> new RuntimeException("Runtime code not found in the trie"));
+                .findStorageValue(Nibbles.fromBytes(":code".getBytes()))
+                .map(wasm -> runtimeBuilder.buildRuntime(wasm, trieAccessor))
+                .orElseThrow(() -> new RuntimeException("Runtime code not found in the trie"));
     }
 
     private boolean checkInherents(Block block) {
@@ -281,13 +283,13 @@ public class FullSyncMachine {
      */
     private static boolean isBlockGoodToExecute(byte[] checkInherentsOutput) {
         var data = ScaleUtils.Decode.decode(
-            ArrayUtils.subarray(checkInherentsOutput, 2, checkInherentsOutput.length),
-            new ListReader<>(
-                new PairReader<>(
-                    scr -> new String(scr.readByteArray(8)),
-                    scr -> new String(scr.readByteArray())
+                ArrayUtils.subarray(checkInherentsOutput, 2, checkInherentsOutput.length),
+                new ListReader<>(
+                        new PairReader<>(
+                                scr -> new String(scr.readByteArray(8)),
+                                scr -> new String(scr.readByteArray())
+                        )
                 )
-            )
         );
 
         boolean goodToExecute;
