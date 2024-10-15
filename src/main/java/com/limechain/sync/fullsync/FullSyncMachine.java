@@ -15,8 +15,8 @@ import com.limechain.network.protocol.warp.dto.HeaderDigest;
 import com.limechain.network.protocol.warp.scale.reader.BlockHeaderReader;
 import com.limechain.rpc.server.AppBean;
 import com.limechain.runtime.Runtime;
-import com.limechain.runtime.babeapi.BabeApiConfiguration;
-import com.limechain.runtime.babeapi.EpochState;
+import com.limechain.babe.api.BabeApiConfiguration;
+import com.limechain.babe.state.EpochState;
 import com.limechain.runtime.builder.RuntimeBuilder;
 import com.limechain.runtime.version.StateVersion;
 import com.limechain.storage.block.BlockState;
@@ -82,7 +82,7 @@ public class FullSyncMachine {
         runtime = buildRuntimeFromState(trieAccessor);
         StateVersion runtimeStateVersion = runtime.getVersion().getStateVersion();
         BabeApiConfiguration babeApiConfiguration = runtime.callBabeApiConfiguration();
-        epochState.setBabeApiConfiguration(babeApiConfiguration);
+        epochState.initialize(babeApiConfiguration);
         trieAccessor.setCurrentStateVersion(runtimeStateVersion);
 
         byte[] calculatedMerkleRoot = trieAccessor.getMerkleRoot(runtimeStateVersion);

@@ -9,7 +9,6 @@ import com.limechain.config.SystemInfo;
 import com.limechain.constants.GenesisBlockHash;
 import com.limechain.network.Network;
 import com.limechain.rpc.server.UnsafeInterceptor;
-import com.limechain.runtime.babeapi.EpochState;
 import com.limechain.runtime.builder.RuntimeBuilder;
 import com.limechain.storage.DBInitializer;
 import com.limechain.storage.KVRepository;
@@ -105,8 +104,4 @@ public class CommonConfig {
         return new GenesisBlockHash(chainService);
     }
 
-    @Bean
-    public EpochState epochState() {
-        return new EpochState();
-    }
 }

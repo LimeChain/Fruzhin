@@ -1,8 +1,8 @@
-package com.limechain.runtime.babeapi.scale;
+package com.limechain.babe.api.scale;
 
 import com.limechain.chain.lightsyncstate.BabeEpoch;
 import com.limechain.chain.lightsyncstate.scale.AuthorityReader;
-import com.limechain.runtime.babeapi.BabeApiConfiguration;
+import com.limechain.babe.api.BabeApiConfiguration;
 import com.limechain.utils.scale.readers.PairReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleReader;

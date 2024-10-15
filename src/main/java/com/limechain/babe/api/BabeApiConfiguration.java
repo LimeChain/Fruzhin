@@ -1,9 +1,8 @@
-package com.limechain.runtime.babeapi;
+package com.limechain.babe.api;
 
 import com.limechain.chain.lightsyncstate.Authority;
 import com.limechain.chain.lightsyncstate.BabeEpoch;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 import org.javatuples.Pair;
 
 import java.math.BigInteger;
@@ -13,8 +12,7 @@ import java.util.List;
 /**
  * Current configuration of the BABE consensus protocol.
  */
-@Getter
-@Setter
+@Data
 public class BabeApiConfiguration {
     private BigInteger slotDuration;
     private BigInteger epochLength;
