@@ -2,7 +2,6 @@ package com.limechain.rpc.methods.author;
 
 import com.limechain.rpc.methods.author.dto.DecodedKey;
 import com.limechain.rpc.methods.author.dto.DecodedKeyReader;
-import com.limechain.runtime.Runtime;
 import com.limechain.runtime.RuntimeEndpoint;
 import com.limechain.runtime.hostapi.dto.Key;
 import com.limechain.storage.block.BlockState;
@@ -32,32 +31,18 @@ public class AuthorRPCImpl {
         this.keyStore = keyStore;
     }
 
-    //TODO: Add documentation
-    //TODO: Maybe some logs should be added
-    //TODO: apply validation here
-
-    // generate_session_keys method injects the generated keys into the keystore and that is done by the runtime
     public String authorRotateKeys() {
-        var bestBlockHash = blockState.bestBlockHash();
-        Runtime runtime = blockState.getRuntime(bestBlockHash);
+        // The runtime injects the generated keys into the keystore.
+        byte[] response = callRuntime(
+                RuntimeEndpoint.SESSION_KEYS_GENERATE_SESSION_KEYS,
+                ScaleUtils.Encode.encodeOptional(ScaleCodecWriter::writeByteArray, null)
+        );
 
-        if (runtime == null) return null;
-
-        try {
-            byte[] response = runtime.call(
-                    RuntimeEndpoint.SESSION_KEYS_GENERATE_SESSION_KEYS,
-                    ScaleUtils.Encode.encodeOptional(ScaleCodecWriter::writeByteArray, null)
-            );
-
-            return StringUtils.toHexWithPrefix(response);
-        } catch (Exception e) {
-            return null;
-        }
+        return StringUtils.toHexWithPrefix(response);
     }
 
     public String authorInsertKey(String keyType, String suri, String publicKey) {
-        KeyType parsedKeyType = KeyType.getByBytes(keyType.getBytes());
-        if (parsedKeyType == null) return "";
+        KeyType parsedKeyType = parseKeyType(keyType);
 
         try {
             byte[] privateKey = decodePrivateKey(
@@ -69,59 +54,37 @@ public class AuthorRPCImpl {
             keyStore.put(parsedKeyType, StringUtils.hexToBytes(publicKey), privateKey);
             return publicKey;
         } catch (Exception e) {
+            //TODO: Throw an exception
             return "";
         }
     }
 
     public Boolean authorHasKey(String publicKey, String keyType) {
-        KeyType parsedKeyType = KeyType.getByBytes(keyType.getBytes());
-        if (parsedKeyType == null) return false;
+        KeyType parsedKeyType = parseKeyType(keyType);
         return keyStore.contains(parsedKeyType, StringUtils.hexToBytes(publicKey));
     }
 
     public Boolean authorHasSessionKeys(String sessionKey) {
-        var bestBlockHash = blockState.bestBlockHash();
-        Runtime runtime = blockState.getRuntime(bestBlockHash);
-
-        if (runtime == null) return false;
-
-        byte[] response = null;
-        try {
-             response = runtime.call(
-                    RuntimeEndpoint.SESSION_KEYS_DECODE_SESSION_KEYS,
-                    ScaleUtils.Encode.encode(ScaleCodecWriter::writeByteArray, StringUtils.hexToBytes(sessionKey))
-            );
-        } catch (Exception e) {
-            return false;
-        }
+        byte[] response = callRuntime(
+                RuntimeEndpoint.SESSION_KEYS_DECODE_SESSION_KEYS,
+                ScaleUtils.Encode.encode(ScaleCodecWriter::writeByteArray, StringUtils.hexToBytes(sessionKey))
+        );
 
         List<DecodedKey> decodedKeys = ScaleUtils.Decode.decode(response, new DecodedKeyReader());
 
-        for (DecodedKey key : decodedKeys) {
-            if (!authorHasKey(StringUtils.toHexWithPrefix(key.getData()), new String(key.getKeyType().getBytes()))) {
-                return false;
-            }
+        for (DecodedKey decodedKey : decodedKeys) {
+            var key = StringUtils.toHexWithPrefix(decodedKey.getData());
+            var type = new String(decodedKey.getKeyType().getBytes());
+
+            if (Boolean.FALSE.equals(authorHasKey(key, type))) return false;
         }
+
         return true;
     }
 
     public String authorSubmitExtrinsic(String extrinsics) {
         return "";
     }
-
-//    async fn submit_extrinsic(&self, ext: Bytes) -> Result<TxHash<P>> {
-//        let xt = match Decode::decode(&mut &ext[..]) {
-//            Ok(xt) => xt,
-//                    Err(err) => return Err(Error::Client(Box::new(err)).into()),
-//        };
-//        let best_block_hash = self.client.info().best_hash;
-//        self.pool.submit_one(best_block_hash, TX_SOURCE, xt).await.map_err(|e| {
-//                e.into_pool_error()
-//                        .map(|e| Error::Pool(e))
-//				.unwrap_or_else(|e| Error::Verification(Box::new(e)))
-//				.into()
-//		})
-//    }
 
     public String authorSubmitAndWatchExtrinsic(String extrinsics) {
         return "";
@@ -159,5 +122,29 @@ public class AuthorRPCImpl {
         }
 
         return privateKey;
+    }
+
+    private byte[] callRuntime(RuntimeEndpoint endpoint, byte[] parameter) {
+        var bestBlockHash = blockState.bestBlockHash();
+        var runtime = blockState.getRuntime(bestBlockHash);
+
+        if (runtime == null) {
+            throw new IllegalStateException("Runtime is null");
+        }
+
+        byte[] response;
+        try {
+            response = runtime.call(endpoint, parameter);
+        } catch (Exception e) {
+            throw new IllegalArgumentException(e.getMessage());
+        }
+
+        return response;
+    }
+
+    private KeyType parseKeyType(String keyType) {
+        KeyType parsedKeyType = KeyType.getByBytes(keyType.getBytes());
+        if (parsedKeyType == null) throw new IllegalArgumentException("Invalid key type");
+        return parsedKeyType;
     }
 }

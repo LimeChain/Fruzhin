@@ -344,6 +344,5 @@ public class RPCMethodsImpl implements RPCMethods {
     public String authorSubmitAndWatchExtrinsic(String extrinsics) {
         return "";
     }
-
     //endregion
 }
