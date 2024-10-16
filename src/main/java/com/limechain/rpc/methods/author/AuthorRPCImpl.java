@@ -58,10 +58,10 @@ public class AuthorRPCImpl {
         return keyStore.contains(parsedKeyType, StringUtils.hexToBytes(publicKey));
     }
 
-    public Boolean authorHasSessionKeys(String sessionKey) {
+    public Boolean authorHasSessionKeys(String sessionKeys) {
         byte[] response = callRuntime(
                 RuntimeEndpoint.SESSION_KEYS_DECODE_SESSION_KEYS,
-                ScaleUtils.Encode.encode(ScaleCodecWriter::writeByteArray, StringUtils.hexToBytes(sessionKey))
+                ScaleUtils.Encode.encode(ScaleCodecWriter::writeByteArray, StringUtils.hexToBytes(sessionKeys))
         );
 
         List<DecodedKey> decodedKeys = ScaleUtils.Decode.decode(response, new DecodedKeysReader());
