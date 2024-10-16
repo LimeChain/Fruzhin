@@ -1,5 +1,6 @@
 package com.limechain.rpc.methods.author;
 
+import com.limechain.exception.misc.WasmRuntimeException;
 import com.limechain.rpc.methods.author.dto.DecodedKey;
 import com.limechain.rpc.methods.author.dto.DecodedKeysReader;
 import com.limechain.runtime.RuntimeEndpoint;
@@ -11,7 +12,6 @@ import com.limechain.utils.scale.ScaleUtils;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.emeraldpay.polkaj.schnorrkel.Schnorrkel;
 import io.emeraldpay.polkaj.schnorrkel.SchnorrkelException;
-import io.emeraldpay.polkaj.schnorrkel.SchnorrkelNative;
 import io.libp2p.crypto.keys.Ed25519PrivateKey;
 import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters;
 import org.javatuples.Pair;
@@ -23,10 +23,11 @@ import java.util.List;
 @Service
 public class AuthorRPCImpl {
 
-    private final BlockState blockState = BlockState.getInstance();
+    private final BlockState blockState;
     private final KeyStore keyStore;
 
     public AuthorRPCImpl(KeyStore keyStore) {
+        this.blockState = BlockState.getInstance();
         this.keyStore = keyStore;
     }
 
@@ -155,7 +156,7 @@ public class AuthorRPCImpl {
         try {
             response = runtime.call(endpoint, parameter);
         } catch (Exception e) {
-            throw new IllegalArgumentException(e.getMessage());
+            throw new WasmRuntimeException(e.getMessage());
         }
 
         return response;

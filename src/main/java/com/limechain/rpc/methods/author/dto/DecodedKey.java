@@ -1,14 +1,10 @@
 package com.limechain.rpc.methods.author.dto;
 
 import com.limechain.storage.crypto.KeyType;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Value;
 
-@Getter
-@Setter
-@AllArgsConstructor
+@Value
 public class DecodedKey {
-    private byte[] data;
-    private KeyType keyType;
+    byte[] data;
+    KeyType keyType;
 }
