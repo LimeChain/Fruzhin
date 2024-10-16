@@ -1,7 +1,7 @@
 package com.limechain.rpc.methods.author;
 
 import com.limechain.rpc.methods.author.dto.DecodedKey;
-import com.limechain.rpc.methods.author.dto.DecodedKeyReader;
+import com.limechain.rpc.methods.author.dto.DecodedKeysReader;
 import com.limechain.runtime.RuntimeEndpoint;
 import com.limechain.storage.block.BlockState;
 import com.limechain.storage.crypto.KeyStore;
@@ -64,7 +64,7 @@ public class AuthorRPCImpl {
                 ScaleUtils.Encode.encode(ScaleCodecWriter::writeByteArray, StringUtils.hexToBytes(sessionKey))
         );
 
-        List<DecodedKey> decodedKeys = ScaleUtils.Decode.decode(response, new DecodedKeyReader());
+        List<DecodedKey> decodedKeys = ScaleUtils.Decode.decode(response, new DecodedKeysReader());
 
         for (DecodedKey decodedKey : decodedKeys) {
             var key = StringUtils.toHexWithPrefix(decodedKey.getData());
@@ -128,7 +128,7 @@ public class AuthorRPCImpl {
     }
 
     private Schnorrkel.KeyPair generateSr25519KeyPair(byte[] suri) {
-        Schnorrkel schnorrkel = SchnorrkelNative.getInstance();
+        Schnorrkel schnorrkel = Schnorrkel.getInstance();
 
         try {
             return schnorrkel.generateKeyPairFromSeed(suri);

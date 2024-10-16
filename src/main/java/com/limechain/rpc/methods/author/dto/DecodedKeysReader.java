@@ -7,7 +7,7 @@ import io.emeraldpay.polkaj.scale.ScaleReader;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DecodedKeyReader implements ScaleReader<List<DecodedKey>> {
+public class DecodedKeysReader implements ScaleReader<List<DecodedKey>> {
 
     /**
     * https://spec.polkadot.network/chap-runtime-api#id-sessionkeys_decode_session_keys
