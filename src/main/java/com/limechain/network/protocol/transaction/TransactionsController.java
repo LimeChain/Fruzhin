@@ -1,4 +1,4 @@
-package com.limechain.network.protocol.transactions;
+package com.limechain.network.protocol.transaction;
 
 import io.libp2p.core.Stream;
 

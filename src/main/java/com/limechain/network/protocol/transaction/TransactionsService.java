@@ -1,4 +1,4 @@
-package com.limechain.network.protocol.transactions;
+package com.limechain.network.protocol.transaction;
 
 import com.limechain.network.ConnectionManager;
 import com.limechain.network.protocol.NetworkService;
@@ -25,6 +25,7 @@ public class TransactionsService extends NetworkService<Transactions> {
      * @param peerId message receiver
      */
     public void sendTransactionsMessage(Host us, PeerId peerId) {
+        // TODO Network improvements Keep track of peers that we've notified about each transaction
         Optional.ofNullable(connectionManager.getPeerInfo(peerId))
                 .map(p -> p.getTransactionsStreams().getInitiator())
                 .ifPresentOrElse(
