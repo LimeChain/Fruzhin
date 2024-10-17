@@ -3,6 +3,8 @@ package com.limechain.runtime;
 import com.limechain.network.protocol.blockannounce.scale.BlockHeaderScaleWriter;
 import com.limechain.network.protocol.warp.dto.Block;
 import com.limechain.network.protocol.warp.scale.writer.BlockBodyWriter;
+import com.limechain.babe.api.BabeApiConfiguration;
+import com.limechain.babe.api.scale.BabeApiConfigurationReader;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import com.limechain.runtime.version.RuntimeVersion;
 import com.limechain.runtime.version.scale.RuntimeVersionReader;
@@ -63,6 +65,13 @@ public class Runtime {
 
         RuntimePointerSize responsePtrSize = new RuntimePointerSize((long) response[0]);
         return context.getSharedMemory().readData(responsePtrSize);
+    }
+
+    /**
+     * @return the {@link BabeApiConfiguration}.
+     */
+    public BabeApiConfiguration callBabeApiConfiguration() {
+        return ScaleUtils.Decode.decode(this.call(RuntimeEndpoint.BABE_API_CONFIGURATION), new BabeApiConfigurationReader());
     }
 
     /**

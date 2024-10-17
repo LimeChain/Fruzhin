@@ -6,6 +6,8 @@ import com.limechain.chain.spec.ChainSpec;
 import com.limechain.chain.spec.ChainType;
 import com.limechain.chain.spec.PropertyValue;
 import com.limechain.exception.rpc.InvalidParametersException;
+import com.limechain.rpc.methods.author.AuthorRPC;
+import com.limechain.rpc.methods.author.AuthorRPCImpl;
 import com.limechain.rpc.methods.chain.ChainRPC;
 import com.limechain.rpc.methods.chain.ChainRPCImpl;
 import com.limechain.rpc.methods.childstate.ChildStateRPCImpl;
@@ -68,6 +70,11 @@ public class RPCMethodsImpl implements RPCMethods {
      */
     private final ChildStateRPCImpl childStateRPC;
 
+    /**
+     * References to author rpc method implementation classes
+     */
+    private final AuthorRPCImpl authorRPC;
+
     @Override
     public String[] rpcMethods() {
         ArrayList<Method> methods = new ArrayList<>();
@@ -78,6 +85,7 @@ public class RPCMethodsImpl implements RPCMethods {
         Collections.addAll(methods, ChainRPC.class.getDeclaredMethods());
         Collections.addAll(methods, OffchainRPC.class.getDeclaredMethods());
         Collections.addAll(methods, StateRPC.class.getDeclaredMethods());
+        Collections.addAll(methods, AuthorRPC.class.getDeclaredMethods());
 
         return methods.stream().map(m -> m.getAnnotation(JsonRpcMethod.class).value()).toArray(String[]::new);
     }
@@ -303,6 +311,38 @@ public class RPCMethodsImpl implements RPCMethods {
     @Override
     public String childStateGetStorageSize(String childKeyHex, String keyHex, String blockHashHex) {
         return childStateRPC.stateGetStorageSize(childKeyHex, keyHex, blockHashHex);
+    }
+    //endregion
+
+    //region AuthorRPC
+    @Override
+    public String authorRotateKeys() {
+        return authorRPC.authorRotateKeys();
+    }
+
+    @Override
+    public String authorInsertKey(String keyType, String suri, String publicKey) {
+        return authorRPC.authorInsertKey(keyType, suri, publicKey);
+    }
+
+    @Override
+    public Boolean authorHasKey(String publicKey, String keyType) {
+        return authorRPC.authorHasKey(publicKey, keyType);
+    }
+
+    @Override
+    public Boolean authorHasSessionKeys(String sessionKeys) {
+        return authorRPC.authorHasSessionKeys(sessionKeys);
+    }
+
+    @Override
+    public String authorSubmitExtrinsic(String extrinsics) {
+        return "";
+    }
+
+    @Override
+    public String authorSubmitAndWatchExtrinsic(String extrinsics) {
+        return "";
     }
     //endregion
 }

@@ -25,6 +25,10 @@ public class KeyStore {
         return (byte[]) repository.find(getKey(keyType, publicKey)).orElse(null);
     }
 
+    public boolean contains(KeyType keyType, byte[] publicKey) {
+        return get(keyType, publicKey) != null;
+    }
+
     /**
      * Retrieves a list of public keys associated with the given key type.
      *
