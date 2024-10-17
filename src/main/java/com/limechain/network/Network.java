@@ -256,7 +256,7 @@ public class Network {
         if (getPeersCount() >= REPLICATION) {
             log.log(Level.INFO,
                     "Connections have reached replication factor(" + REPLICATION + "). " +
-                    "No need to search for new ones yet.");
+                            "No need to search for new ones yet.");
             return;
         }
 
@@ -373,7 +373,8 @@ public class Network {
         if (!AppBean.getBean(WarpSyncState.class).isWarpSyncFinished()) {
             return;
         }
-        connectionManager.getPeerIds().forEach(peerId -> grandpaService.sendNeighbourMessage(this.host, peerId));
+        connectionManager.getPeerIds().forEach(peerId ->
+                grandpaService.sendNeighbourMessage(this.host, peerId));
         connectionManager.getPeerIds().forEach(peerId ->
                 transactionsService.sendTransactionsMessage(this.host, peerId));
     }

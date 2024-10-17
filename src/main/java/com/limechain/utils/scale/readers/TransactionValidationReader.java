@@ -13,6 +13,8 @@ import java.util.Objects;
 
 public class TransactionValidationReader implements ScaleReader<TransactionValidationResponse> {
 
+    private static final int INVALID_TRANSACTION_TYPE = 0;
+
     @Override
     public TransactionValidationResponse read(ScaleCodecReader reader) {
         TransactionValidationResponse response = new TransactionValidationResponse();
@@ -47,7 +49,7 @@ public class TransactionValidationReader implements ScaleReader<TransactionValid
         if (Objects.isNull(response.getValidTx())) {
             int errorType = reader.readCompactInt();
             int errorInt = reader.readCompactInt();
-            TransactionValidityError error = errorType == 0
+            TransactionValidityError error = errorType == INVALID_TRANSACTION_TYPE
                     ? InvalidTransactionType.getFromInt(errorInt)
                     : UnknownTransactionType.getFromInt(errorInt);
 

@@ -1,15 +1,20 @@
 package com.limechain.network.protocol.transaction;
 
 import com.limechain.exception.scale.ScaleEncodingException;
+import com.limechain.exception.transaction.TransactionValidationException;
 import com.limechain.network.ConnectionManager;
 import com.limechain.network.protocol.transaction.scale.TransactionsReader;
 import com.limechain.network.protocol.transaction.scale.TransactionsWriter;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
+import com.limechain.rpc.server.AppBean;
 import com.limechain.runtime.Runtime;
 import com.limechain.storage.block.BlockState;
 import com.limechain.sync.warpsync.WarpSyncState;
+import com.limechain.transaction.TransactionState;
+import com.limechain.transaction.TransactionValidator;
 import com.limechain.transaction.dto.Extrinsic;
 import com.limechain.transaction.dto.ExtrinsicArray;
+import com.limechain.transaction.dto.ValidTransaction;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.libp2p.core.PeerId;
@@ -25,9 +30,18 @@ import java.util.logging.Level;
  */
 @Log
 public class TransactionsEngine {
+
     private static final int HANDSHAKE_LENGTH = 1;
 
-    private final ConnectionManager connectionManager = ConnectionManager.getInstance();
+    private final ConnectionManager connectionManager;
+    private final TransactionState transactionState;
+    private final BlockState blockState;
+
+    public TransactionsEngine() {
+        connectionManager = ConnectionManager.getInstance();
+        transactionState = AppBean.getBean(TransactionState.class);
+        blockState = BlockState.getInstance();
+    }
 
     /**
      * Handles an incoming request as follows:
@@ -69,6 +83,7 @@ public class TransactionsEngine {
         }
         connectionManager.addTransactionsStream(stream);
         log.log(Level.INFO, "Received transactions handshake from " + peerId);
+        stream.writeAndFlush(new byte[]{});
         //TODO *2nd* Send valid transactions to the peer we received a handshake from
     }
 
@@ -106,18 +121,41 @@ public class TransactionsEngine {
         log.log(Level.INFO, "Received " + transactions.getExtrinsics().length + " transactions from Peer "
                 + peerId);
 
-        final BlockHeader header = BlockState.getInstance().bestBlockHeader();
-        if (header == null) {
-            log.log(Level.WARNING, "No best block header found");
-            return;
-        }
+        for (int i = 0; i < transactions.getExtrinsics().length; i++) {
+            Extrinsic current = transactions.getExtrinsics()[i];
+            if (transactionState.existsInQueue(current) || transactionState.existsInPool(current)) {
+                continue;
+            }
 
-        final Runtime runtime = BlockState.getInstance().getRuntime(header.getHash());
-        if (runtime == null) {
-            log.log(Level.WARNING, "No runtime found for block header " + header.getHash());
+            final BlockHeader header = blockState.bestBlockHeader();
+            if (header == null) {
+                log.log(Level.WARNING, "No best block header found");
+                return;
+            }
+
+            final Runtime runtime = blockState.getRuntime(header.getHash());
+            if (runtime == null) {
+                log.log(Level.WARNING, "No runtime found for block header " + header.getHash());
+                return;
+            }
+
+            ValidTransaction validTransaction;
+            try {
+                validTransaction = TransactionValidator.validateTransaction(runtime, header.getHash(), current);
+                validTransaction.getIgnore().add(peerId);
+            } catch (TransactionValidationException e) {
+                log.fine("Error when validating transaction " + current.toString()
+                        + " from protocol: " + e.getMessage());
+
+                continue;
+            }
+
+            if (transactionState.shouldAddToQueue(validTransaction)) {
+                transactionState.pushTransaction(validTransaction);
+            } else {
+                transactionState.addToPool(validTransaction);
+            }
         }
-        //TODO *1st* Validate transaction using runtime and then add to transaction pool
-        // (depends on StateStorage and TrieState)
     }
 
     /**
@@ -150,8 +188,7 @@ public class TransactionsEngine {
         }
 
         log.log(Level.INFO, "Sending transaction message to peer " + peerId);
-        //TODO *3rd* Send our transaction message
-        // (this is probably used after an extrinsic is received via an RPC call or created internally).
+        //TODO send transaction message containing non repetitive transactions for peer.
     }
 
     private boolean isHandshake(byte[] message) {

@@ -1,5 +1,6 @@
 package com.limechain.transaction;
 
+import com.limechain.transaction.dto.Extrinsic;
 import com.limechain.transaction.dto.ValidTransaction;
 import com.limechain.utils.HashUtils;
 
@@ -8,11 +9,10 @@ import java.util.Map;
 
 public class TransactionPool {
 
-    final Map<byte[], ValidTransaction> transactions = new HashMap<>();
+    private final Map<byte[], ValidTransaction> transactions = new HashMap<>();
 
-    public ValidTransaction get(byte[] extrinsics) {
-        byte[] key = HashUtils.hashWithBlake2b(extrinsics);
-
+    public ValidTransaction get(Extrinsic extrinsic) {
+        byte[] key = HashUtils.hashWithBlake2b(extrinsic.getData());
         return transactions.get(key);
     }
 
@@ -21,17 +21,22 @@ public class TransactionPool {
     }
 
     public byte[] insert(ValidTransaction validTransaction) {
-        byte[] key = HashUtils.hashWithBlake2b(validTransaction.extrinsic().getData());
+        byte[] key = HashUtils.hashWithBlake2b(validTransaction.getExtrinsic().getData());
         transactions.put(key, validTransaction);
         return key;
     }
 
-    public void removeExtrinsic(byte[] extrinsic) {
-        byte[] key = HashUtils.hashWithBlake2b(extrinsic);
+    public void removeExtrinsic(Extrinsic extrinsic) {
+        byte[] key = HashUtils.hashWithBlake2b(extrinsic.getData());
         transactions.remove(key);
     }
 
     public int length() {
         return transactions.size();
+    }
+
+    public boolean exists(Extrinsic extrinsic) {
+        byte[] key = HashUtils.hashWithBlake2b(extrinsic.getData());
+        return transactions.containsKey(key);
     }
 }

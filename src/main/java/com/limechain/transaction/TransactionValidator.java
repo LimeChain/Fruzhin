@@ -1,10 +1,10 @@
 package com.limechain.transaction;
 
 import com.limechain.exception.misc.RuntimeApiVersionException;
+import com.limechain.exception.transaction.TransactionValidationException;
 import com.limechain.runtime.Runtime;
 import com.limechain.runtime.RuntimeEndpoint;
 import com.limechain.runtime.version.ApiVersionName;
-import com.limechain.storage.block.BlockState;
 import com.limechain.transaction.dto.Extrinsic;
 import com.limechain.transaction.dto.TransactionSource;
 import com.limechain.transaction.dto.TransactionValidationRequest;
@@ -13,29 +13,30 @@ import com.limechain.transaction.dto.ValidTransaction;
 import com.limechain.utils.scale.ScaleUtils;
 import com.limechain.utils.scale.readers.TransactionValidationReader;
 import com.limechain.utils.scale.writers.TransactionValidationWriter;
+import io.emeraldpay.polkaj.types.Hash256;
 import lombok.extern.java.Log;
-import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
+import java.util.Objects;
 
-@Component
 @Log
 public class TransactionValidator {
 
-    private final BlockState blockState;
-
-    public TransactionValidator() {
-        this.blockState = BlockState.getInstance();
-    }
-
-    public TransactionValidationResponse validateTransaction(Runtime runtime, Extrinsic transaction) {
-        byte[] scaleRequest = createValidationRequest(runtime, transaction);
+    public static ValidTransaction validateTransaction(Runtime runtime, Hash256 hash, Extrinsic transaction) {
+        byte[] scaleRequest = createValidationRequest(runtime, hash, transaction);
         byte[] validationResult = runtime.call(
                 RuntimeEndpoint.TRANSACTION_QUEUE_VALIDATE_TRANSACTION, scaleRequest);
-        return ScaleUtils.Decode.decode(validationResult, new TransactionValidationReader());
+        TransactionValidationResponse response =
+                ScaleUtils.Decode.decode(validationResult, new TransactionValidationReader());
+
+        if (!Objects.isNull(response.getTransactionValidityError())) {
+            throw new TransactionValidationException(response.getTransactionValidityError().toString());
+        }
+
+        return new ValidTransaction(transaction, response.getValidTx());
     }
 
-    private byte[] createValidationRequest(Runtime runtime, Extrinsic transaction) {
+    private static byte[] createValidationRequest(Runtime runtime, Hash256 hash256, Extrinsic transaction) {
         BigInteger txQueueVersion = runtime.getVersion().getApis()
                 .getApiVersion(ApiVersionName.TRANSACTION_QUEUE_API.getHashedName());
 
@@ -50,7 +51,7 @@ public class TransactionValidator {
             case 3 -> {
                 request.setSource(TransactionSource.EXTERNAL);
                 request.setTransaction(transaction.getData());
-                request.setParentBlockHash(blockState.bestBlockHash());
+                request.setParentBlockHash(hash256);
             }
             default -> throw new RuntimeApiVersionException(
                     String.format("Invalid transaction queue version: %d", txQueueVersion));
