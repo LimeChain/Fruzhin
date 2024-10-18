@@ -1,6 +1,5 @@
-package com.limechain.utils;
+package com.limechain.utils.math;
 
-import com.limechain.babe.api.BigRational;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigInteger;
@@ -8,7 +7,7 @@ import java.math.BigInteger;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
-public class BigRationalTest {
+class BigRationalTest {
 
     @Test
     void testBigRational() {
