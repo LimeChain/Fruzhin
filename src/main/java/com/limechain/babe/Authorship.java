@@ -19,19 +19,7 @@ public class Authorship {
             @NotNull final List<Authority> authorities,
             final int authorityIndex) {
 
-        if (BigInteger.ZERO.equals(constant.getValue1()) ||
-                authorityIndex >= authorities.size() ||
-                authorityIndex < 0) {
-            throw new IllegalArgumentException("Invalid denominator or authority index provided");
-        }
-
-        double numerator = constant.getValue0().doubleValue();
-        double denominator = constant.getValue1().doubleValue();
-        double c = numerator / denominator;
-
-        if (c > 1 || c < 0) {
-            throw new IllegalStateException("BABE constant must be within the range (0, 1)");
-        }
+        double c = getBabeConstant(constant, authorities, authorityIndex);
 
         double totalWeight = authorities.stream()
                 .map(Authority::getWeight)
@@ -52,8 +40,30 @@ public class Authorship {
         // 1<<128 == 2^128
         BigInteger twoToThe128 = BigInteger.ONE.shiftLeft(128);
         BigInteger scaledNumer = twoToThe128.multiply(pRational.getNumerator());
-        BigInteger result = scaledNumer.divide(pRational.getDenominator());
 
-        return result;
+        return scaledNumer.divide(pRational.getDenominator());
+    }
+
+    private static double getBabeConstant(@NotNull Pair<BigInteger, BigInteger> constant,
+                                          @NotNull List<Authority> authorities,
+                                          int authorityIndex) {
+
+        if (BigInteger.ZERO.equals(constant.getValue1())) {
+            throw new IllegalArgumentException("Invalid authority index provided");
+        }
+
+        if (authorityIndex >= authorities.size() || authorityIndex < 0) {
+            throw new IllegalArgumentException("Invalid denominator provided");
+        }
+
+        double numerator = constant.getValue0().doubleValue();
+        double denominator = constant.getValue1().doubleValue();
+        double c = numerator / denominator;
+
+        if (c > 1 || c < 0) {
+            throw new IllegalStateException("BABE constant must be within the range (0, 1)");
+        }
+
+        return c;
     }
 }
