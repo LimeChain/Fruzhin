@@ -8,7 +8,7 @@ import java.math.BigInteger;
 
 /**
  * Used to represent quotient a/b of arbitrary precision.
- * The implementation is derived from the standard Go math/big package.
+ * The implementation is derived from the standard Golang math/big package.
  */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
