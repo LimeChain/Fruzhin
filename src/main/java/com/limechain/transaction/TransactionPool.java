@@ -9,7 +9,11 @@ import java.util.Map;
 
 public class TransactionPool {
 
-    private final Map<byte[], ValidTransaction> transactions = new HashMap<>();
+    private final Map<byte[], ValidTransaction> transactions;
+
+    public TransactionPool() {
+        transactions = new HashMap<>();
+    }
 
     public ValidTransaction get(Extrinsic extrinsic) {
         byte[] key = HashUtils.hashWithBlake2b(extrinsic.getData());

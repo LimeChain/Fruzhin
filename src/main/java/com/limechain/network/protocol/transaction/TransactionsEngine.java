@@ -163,6 +163,7 @@ public class TransactionsEngine {
      */
     public void writeTransactionsMessage(Stream stream, PeerId peerId) {
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
+        //TODO Replace empty transaction messages once we have vlaidation working.
         try (ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
             writer.write(new TransactionsWriter(), new ExtrinsicArray(new Extrinsic[]{
                     new Extrinsic(new byte[]{}), new Extrinsic(new byte[]{})
