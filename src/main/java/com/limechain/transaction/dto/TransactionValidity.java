@@ -6,6 +6,12 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigInteger;
 
+/**
+ * Represents the data returned by the runtime "validate_transaction" call. It provides various data needed when adding
+ * the transaction to either the transaction queue or the pool. The simplest example is the priority field. The runtime
+ * returns a priority value that is compared to other priorities in a reverse natural order fashion (higher number
+ * value is added on top of the queue).
+ */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
