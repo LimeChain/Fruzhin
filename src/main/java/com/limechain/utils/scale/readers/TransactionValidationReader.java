@@ -5,11 +5,10 @@ import com.limechain.transaction.dto.TransactionValidationResponse;
 import com.limechain.transaction.dto.TransactionValidity;
 import com.limechain.transaction.dto.TransactionValidityError;
 import com.limechain.transaction.dto.UnknownTransactionType;
+import com.limechain.utils.scale.ScaleUtils;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleReader;
 import io.emeraldpay.polkaj.scale.reader.UInt64Reader;
-
-import java.util.Objects;
 
 public class TransactionValidationReader implements ScaleReader<TransactionValidationResponse> {
 
@@ -19,7 +18,7 @@ public class TransactionValidationReader implements ScaleReader<TransactionValid
     public TransactionValidationResponse read(ScaleCodecReader reader) {
         TransactionValidationResponse response = new TransactionValidationResponse();
 
-        try {
+        if (ScaleUtils.isScaleResultSuccessful(reader)) {
             TransactionValidity validity = new TransactionValidity();
 
             validity.setPriority(new UInt64Reader().read(reader));
@@ -39,16 +38,12 @@ public class TransactionValidationReader implements ScaleReader<TransactionValid
             validity.setProvides(provides);
 
             validity.setLongevity(new UInt64Reader().read(reader));
-            validity.setPropagate(reader.readCompactInt() != 0);
+            validity.setPropagate(reader.readUByte() != 0);
 
             response.setValidTx(validity);
-        } catch (Exception e) {
-            response.setValidTx(null);
-        }
-
-        if (Objects.isNull(response.getValidTx())) {
-            int errorType = reader.readCompactInt();
-            int errorInt = reader.readCompactInt();
+        } else {
+            int errorType = reader.readUByte();
+            int errorInt = reader.readUByte();
             TransactionValidityError error = errorType == INVALID_TRANSACTION_TYPE
                     ? InvalidTransactionType.getFromInt(errorInt)
                     : UnknownTransactionType.getFromInt(errorInt);

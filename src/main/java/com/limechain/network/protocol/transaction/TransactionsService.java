@@ -38,7 +38,7 @@ public class TransactionsService extends NetworkService<Transactions> {
         //TODO Send transaction messages
     }
 
-    private void sendHandshake(Host us, PeerId peerId) {
+    public void sendHandshake(Host us, PeerId peerId) {
         try {
             TransactionsController controller = this.protocol.dialPeer(us, peerId, us.getAddressBook());
             controller.sendHandshake();

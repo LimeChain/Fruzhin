@@ -22,7 +22,6 @@ import com.limechain.storage.block.BlockState;
 import com.limechain.storage.block.SyncState;
 import com.limechain.storage.trie.TrieStorage;
 import com.limechain.sync.fullsync.inherents.InherentData;
-import com.limechain.transaction.TransactionValidator;
 import com.limechain.transaction.dto.Extrinsic;
 import com.limechain.trie.DiskTrieAccessor;
 import com.limechain.trie.TrieAccessor;
@@ -30,7 +29,6 @@ import com.limechain.trie.TrieStructureFactory;
 import com.limechain.trie.structure.TrieStructure;
 import com.limechain.trie.structure.database.NodeData;
 import com.limechain.trie.structure.nibble.Nibbles;
-import com.limechain.utils.StringUtils;
 import com.limechain.utils.scale.ScaleUtils;
 import com.limechain.utils.scale.readers.PairReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
@@ -81,6 +79,8 @@ public class FullSyncMachine {
             loadStateAtBlockFromPeer(lastFinalizedBlockHash);
         }
 
+        networkService.blockAnnounceHandshakeBootNodes();
+
         runtime = buildRuntimeFromState(trieAccessor);
         StateVersion runtimeStateVersion = runtime.getVersion().getStateVersion();
         BabeApiConfiguration babeApiConfiguration = runtime.callBabeApiConfiguration();
@@ -111,6 +111,7 @@ public class FullSyncMachine {
         }
 
         blockState.setFullSyncFinished(true);
+        networkService.handshakePeers();
     }
 
     private TrieStructure<NodeData> loadStateAtBlockFromPeer(Hash256 lastFinalizedBlockHash) {

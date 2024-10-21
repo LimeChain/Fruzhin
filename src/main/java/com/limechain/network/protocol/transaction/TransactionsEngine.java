@@ -35,12 +35,12 @@ public class TransactionsEngine {
 
     private final ConnectionManager connectionManager;
     private final TransactionState transactionState;
-    private final BlockState blockState;
+    private final TransactionValidator transactionValidator;
 
     public TransactionsEngine() {
         connectionManager = ConnectionManager.getInstance();
         transactionState = AppBean.getBean(TransactionState.class);
-        blockState = BlockState.getInstance();
+        transactionValidator = AppBean.getBean(TransactionValidator.class);
     }
 
     /**
@@ -84,7 +84,7 @@ public class TransactionsEngine {
         connectionManager.addTransactionsStream(stream);
         log.log(Level.INFO, "Received transactions handshake from " + peerId);
         stream.writeAndFlush(new byte[]{});
-        //TODO *2nd* Send valid transactions to the peer we received a handshake from
+        //TODO Send valid transactions to the peer we received a handshake from
     }
 
     private void handleResponderStreamMessage(byte[] message, Stream stream) {
@@ -123,30 +123,14 @@ public class TransactionsEngine {
 
         for (int i = 0; i < transactions.getExtrinsics().length; i++) {
             Extrinsic current = transactions.getExtrinsics()[i];
-            if (transactionState.existsInQueue(current) || transactionState.existsInPool(current)) {
-                continue;
-            }
-
-            final BlockHeader header = blockState.bestBlockHeader();
-            if (header == null) {
-                log.log(Level.WARNING, "No best block header found");
-                return;
-            }
-
-            final Runtime runtime = blockState.getRuntime(header.getHash());
-            if (runtime == null) {
-                log.log(Level.WARNING, "No runtime found for block header " + header.getHash());
-                return;
-            }
 
             ValidTransaction validTransaction;
             try {
-                validTransaction = TransactionValidator.validateTransaction(runtime, header.getHash(), current);
+                validTransaction = transactionValidator.validateTransactions(current);
                 validTransaction.getIgnore().add(peerId);
             } catch (TransactionValidationException e) {
-                log.fine("Error when validating transaction " + current.toString()
+                log.warning("Error when validating transaction " + current.toString()
                         + " from protocol: " + e.getMessage());
-
                 continue;
             }
 

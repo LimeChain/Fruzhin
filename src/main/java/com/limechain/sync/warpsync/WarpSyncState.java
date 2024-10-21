@@ -149,7 +149,7 @@ public class WarpSyncState {
         }
         syncState.finalizedCommitMessage(commitMessage);
 
-        log.log(Level.INFO, "Reached block #" + lastFinalizedBlockNumber);
+        log.log(Level.INFO, "Reached block #" + syncState.getLastFinalizedBlockNumber());
         if (warpSyncFinished && scheduledRuntimeUpdateBlocks.contains(lastFinalizedBlockNumber)) {
             new Thread(this::updateRuntime).start();
         }
@@ -257,7 +257,6 @@ public class WarpSyncState {
      * @param peerId           sender of message
      */
     public void syncNeighbourMessage(NeighbourMessage neighbourMessage, PeerId peerId) {
-        network.sendNeighbourMessage(peerId);
         if (warpSyncFinished && neighbourMessage.getSetId().compareTo(syncState.getSetId()) > 0) {
             updateSetData(neighbourMessage.getLastFinalizedBlock().add(BigInteger.ONE), peerId);
         }
@@ -305,7 +304,7 @@ public class WarpSyncState {
         }
         if (warpSyncFinished && updated) {
             log.log(Level.INFO, "Successfully transitioned to authority set id: " + setId);
-            new Thread(network::sendNeighbourMessages).start();
+            new Thread(network::sendMessagesToPeers).start();
         }
     }
 

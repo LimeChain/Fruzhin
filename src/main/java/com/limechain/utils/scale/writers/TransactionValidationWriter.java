@@ -15,7 +15,7 @@ public class TransactionValidationWriter implements ScaleWriter<TransactionValid
             writer.writeByte(request.getSource().ordinal());
         }
 
-        writer.writeByteArray(request.getTransaction());
+        writer.writeAsList(request.getTransaction());
 
         if (!Objects.isNull(request.getParentBlockHash())) {
             writer.writeByteArray(request.getParentBlockHash().getBytes());

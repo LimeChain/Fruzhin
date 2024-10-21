@@ -15,6 +15,7 @@ import java.util.Optional;
 @Log
 public class GrandpaService extends NetworkService<Grandpa> {
     ConnectionManager connectionManager = ConnectionManager.getInstance();
+
     public GrandpaService(String protocolId) {
         this.protocol = new Grandpa(protocolId, new GrandpaProtocol());
     }
@@ -23,7 +24,7 @@ public class GrandpaService extends NetworkService<Grandpa> {
      * Sends a neighbour message to a peer. If there is no initiator stream opened with the peer,
      * sends a handshake instead.
      *
-     * @param us our host object
+     * @param us     our host object
      * @param peerId message receiver
      */
     public void sendNeighbourMessage(Host us, PeerId peerId) {
@@ -40,8 +41,8 @@ public class GrandpaService extends NetworkService<Grandpa> {
         controller.sendNeighbourMessage();
     }
 
-    private void sendHandshake(Host us, PeerId peerId) {
-        try{
+    public void sendHandshake(Host us, PeerId peerId) {
+        try {
             GrandpaController controller = this.protocol.dialPeer(us, peerId, us.getAddressBook());
             controller.sendHandshake();
         } catch (Exception e) {
