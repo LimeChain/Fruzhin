@@ -26,13 +26,13 @@ public class BabeConsensusMessageReader implements ScaleReader<BabeConsensusMess
         BabeConsensusMessageFormat format = BabeConsensusMessageFormat.fromFormat(reader.readByte());
         babeConsensusMessage.setFormat(format);
         switch (format) {
-            case ONE  -> {
+            case NEXT_EPOCH_DATA -> {
                 List<Authority> authorities = reader.read(new ListReader<>(new AuthorityReader()));
                 byte[] randomness = reader.readUint256();
                 babeConsensusMessage.setNextEpochData(new EpochData(authorities, randomness));
             }
-            case TWO -> babeConsensusMessage.setDisabledAuthority(reader.readUint32());
-            case TREE -> {
+            case DISABLED_AUTHORITY -> babeConsensusMessage.setDisabledAuthority(reader.readUint32());
+            case NEXT_EPOCH_DESCRIPTOR -> {
                 Pair<BigInteger, BigInteger> constant = new PairReader<>(new UInt64Reader(), new UInt64Reader()).read(reader);
                 BabeEpoch.BabeAllowedSlots secondarySlot = new EnumReader<>(BabeEpoch.BabeAllowedSlots.values()).read(reader);
                 babeConsensusMessage.setNextEpochDescriptor(new EpochDescriptor(constant, secondarySlot));

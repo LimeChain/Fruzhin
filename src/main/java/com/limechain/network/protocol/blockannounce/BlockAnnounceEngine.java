@@ -101,6 +101,7 @@ public class BlockAnnounceEngine {
         updateEpochStateIfBabeConsensusMessageExists(announce);
     }
 
+    //TODO: We would need DigestHelper class that would encapsulate logic needed for all types message handling HeaderDigest[]
     public void updateEpochStateIfBabeConsensusMessageExists(BlockAnnounceMessage announce) {
         HeaderDigest[] headerDigests = announce.getHeader().getDigest();
         if (headerDigests != null && headerDigests.length > 0) {

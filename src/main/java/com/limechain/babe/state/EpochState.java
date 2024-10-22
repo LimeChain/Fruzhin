@@ -35,9 +35,9 @@ public class EpochState {
     public void updateNextEpochBlockConfig(byte[] message) {
         BabeConsensusMessage babeConsensusMessage = ScaleUtils.Decode.decode(message, new BabeConsensusMessageReader());
         switch (babeConsensusMessage.getFormat()) {
-            case ONE -> this.nextEpochData = babeConsensusMessage.getNextEpochData();
-            case TWO -> this.disabledAuthority = babeConsensusMessage.getDisabledAuthority();
-            case TREE -> this.nextEpochDescriptor = babeConsensusMessage.getNextEpochDescriptor();
+            case NEXT_EPOCH_DATA -> this.nextEpochData = babeConsensusMessage.getNextEpochData();
+            case DISABLED_AUTHORITY -> this.disabledAuthority = babeConsensusMessage.getDisabledAuthority();
+            case NEXT_EPOCH_DESCRIPTOR -> this.nextEpochDescriptor = babeConsensusMessage.getNextEpochDescriptor();
         }
     }
 }

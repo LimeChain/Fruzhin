@@ -4,11 +4,11 @@ import lombok.Getter;
 
 @Getter
 public enum BabeConsensusMessageFormat {
-    ONE((byte) 1), TWO((byte) 2), TREE((byte) 3);
+    NEXT_EPOCH_DATA(1), DISABLED_AUTHORITY(2), NEXT_EPOCH_DESCRIPTOR(3);
 
-    private final byte format;
+    private final int format;
 
-    BabeConsensusMessageFormat(byte format) {
+    BabeConsensusMessageFormat(int format) {
         this.format = format;
     }
 
