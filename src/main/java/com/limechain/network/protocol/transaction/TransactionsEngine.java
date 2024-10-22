@@ -83,8 +83,8 @@ public class TransactionsEngine {
         }
         connectionManager.addTransactionsStream(stream);
         log.log(Level.INFO, "Received transactions handshake from " + peerId);
+        //TODO Replace empty transaction messages once we have validation working.
         stream.writeAndFlush(new byte[]{});
-        //TODO Send valid transactions to the peer we received a handshake from
     }
 
     private void handleResponderStreamMessage(byte[] message, Stream stream) {
@@ -163,7 +163,7 @@ public class TransactionsEngine {
      */
     public void writeTransactionsMessage(Stream stream, PeerId peerId) {
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
-        //TODO Replace empty transaction messages once we have vlaidation working.
+        //TODO Replace empty transaction messages once we have validation working.
         try (ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
             writer.write(new TransactionsWriter(), new ExtrinsicArray(new Extrinsic[]{
                     new Extrinsic(new byte[]{}), new Extrinsic(new byte[]{})
