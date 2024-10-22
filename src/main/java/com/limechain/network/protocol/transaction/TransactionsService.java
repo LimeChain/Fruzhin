@@ -10,11 +10,11 @@ import lombok.extern.java.Log;
 import java.util.Optional;
 
 @Log
-public class TransactionsService extends NetworkService<Transactions> {
+public class TransactionsService extends NetworkService<TransactionMessages> {
     ConnectionManager connectionManager = ConnectionManager.getInstance();
 
     public TransactionsService(String protocolId) {
-        this.protocol = new Transactions(protocolId, new TransactionsProtocol());
+        this.protocol = new TransactionMessages(protocolId, new TransactionsProtocol());
     }
 
     /**
@@ -40,7 +40,7 @@ public class TransactionsService extends NetworkService<Transactions> {
 
     public void sendHandshake(Host us, PeerId peerId) {
         try {
-            TransactionsController controller = this.protocol.dialPeer(us, peerId, us.getAddressBook());
+            TransactionController controller = this.protocol.dialPeer(us, peerId, us.getAddressBook());
             controller.sendHandshake();
         } catch (IllegalStateException e) {
             log.warning("Failed sending transaction handshake to peer " + peerId);

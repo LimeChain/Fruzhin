@@ -36,15 +36,15 @@ public class TransactionState {
         transactionQueue.add(validTransaction);
     }
 
-    public ValidTransaction popTransaction() {
+    public ValidTransaction pollTransaction() {
         return transactionQueue.poll();
     }
 
-    public ValidTransaction popTransactionWithTimer(long timeout) throws InterruptedException {
-        ValidTransaction validTransaction = popTransaction();
+    public ValidTransaction pollTransactionWithTimer(long timeout) throws InterruptedException {
+        ValidTransaction validTransaction = pollTransaction();
         if (validTransaction != null) return validTransaction;
 
-        Future<ValidTransaction> futureTransaction = popFutureTransaction();
+        Future<ValidTransaction> futureTransaction = pollFutureTransaction();
 
         try {
             return futureTransaction.get(timeout, java.util.concurrent.TimeUnit.MILLISECONDS);
@@ -61,11 +61,11 @@ public class TransactionState {
     }
 
     @NotNull
-    private Future<ValidTransaction> popFutureTransaction() {
+    private Future<ValidTransaction> pollFutureTransaction() {
         return executor.submit(() -> {
             ValidTransaction transaction = null;
             while (transaction == null) {
-                transaction = popTransaction();
+                transaction = pollTransaction();
                 Thread.sleep(50);
             }
             return transaction;

@@ -3,12 +3,9 @@ package com.limechain.network.protocol.transaction;
 import com.limechain.exception.scale.ScaleEncodingException;
 import com.limechain.exception.transaction.TransactionValidationException;
 import com.limechain.network.ConnectionManager;
-import com.limechain.network.protocol.transaction.scale.TransactionsReader;
-import com.limechain.network.protocol.transaction.scale.TransactionsWriter;
-import com.limechain.network.protocol.warp.dto.BlockHeader;
+import com.limechain.network.protocol.transaction.scale.TransactionReader;
+import com.limechain.network.protocol.transaction.scale.TransactionWriter;
 import com.limechain.rpc.server.AppBean;
-import com.limechain.runtime.Runtime;
-import com.limechain.storage.block.BlockState;
 import com.limechain.sync.warpsync.WarpSyncState;
 import com.limechain.transaction.TransactionState;
 import com.limechain.transaction.TransactionValidator;
@@ -29,7 +26,7 @@ import java.util.logging.Level;
  * Engine for handling transactions on Transactions streams.
  */
 @Log
-public class TransactionsEngine {
+public class TransactionEngine {
 
     private static final int HANDSHAKE_LENGTH = 1;
 
@@ -37,7 +34,7 @@ public class TransactionsEngine {
     private final TransactionState transactionState;
     private final TransactionValidator transactionValidator;
 
-    public TransactionsEngine() {
+    public TransactionEngine() {
         connectionManager = ConnectionManager.getInstance();
         transactionState = AppBean.getBean(TransactionState.class);
         transactionValidator = AppBean.getBean(TransactionValidator.class);
@@ -117,7 +114,7 @@ public class TransactionsEngine {
 
     private void handleTransactionMessage(byte[] message, PeerId peerId) {
         ScaleCodecReader reader = new ScaleCodecReader(message);
-        ExtrinsicArray transactions = reader.read(new TransactionsReader());
+        ExtrinsicArray transactions = reader.read(new TransactionReader());
         log.log(Level.INFO, "Received " + transactions.getExtrinsics().length + " transactions from Peer "
                 + peerId);
 
@@ -165,7 +162,7 @@ public class TransactionsEngine {
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
         //TODO Replace empty transaction messages once we have validation working.
         try (ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
-            writer.write(new TransactionsWriter(), new ExtrinsicArray(new Extrinsic[]{
+            writer.write(new TransactionWriter(), new ExtrinsicArray(new Extrinsic[]{
                     new Extrinsic(new byte[]{}), new Extrinsic(new byte[]{})
             }));
         } catch (IOException e) {

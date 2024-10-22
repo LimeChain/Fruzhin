@@ -6,7 +6,7 @@ import io.emeraldpay.polkaj.scale.ScaleWriter;
 
 import java.io.IOException;
 
-public class TransactionsWriter implements ScaleWriter<ExtrinsicArray> {
+public class TransactionWriter implements ScaleWriter<ExtrinsicArray> {
 
     @Override
     public void write(ScaleCodecWriter writer, ExtrinsicArray holder) throws IOException {

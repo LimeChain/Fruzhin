@@ -18,7 +18,7 @@ import java.util.logging.Level;
  * Handler for Transactions protocol messages and streams.
  */
 @Log
-public class TransactionsProtocol extends ProtocolHandler<TransactionsController> {
+public class TransactionsProtocol extends ProtocolHandler<TransactionController> {
     private static final long TRAFFIC_LIMIT = Long.MAX_VALUE;
 
     /**
@@ -38,7 +38,7 @@ public class TransactionsProtocol extends ProtocolHandler<TransactionsController
      */
     @NotNull
     @Override
-    protected CompletableFuture<TransactionsController> onStartInitiator(Stream stream) {
+    protected CompletableFuture<TransactionController> onStartInitiator(Stream stream) {
         return onStartStream(stream);
     }
 
@@ -50,11 +50,11 @@ public class TransactionsProtocol extends ProtocolHandler<TransactionsController
      */
     @NotNull
     @Override
-    protected CompletableFuture<TransactionsController> onStartResponder(Stream stream) {
+    protected CompletableFuture<TransactionController> onStartResponder(Stream stream) {
         return onStartStream(stream);
     }
 
-    private CompletableFuture<TransactionsController> onStartStream(Stream stream) {
+    private CompletableFuture<TransactionController> onStartStream(Stream stream) {
         stream.pushHandler(new Leb128LengthFrameDecoder());
         stream.pushHandler(new Leb128LengthFrameEncoder());
 
@@ -67,7 +67,7 @@ public class TransactionsProtocol extends ProtocolHandler<TransactionsController
     /**
      * Handler for notifications received on the Transactions protocol.
      */
-    static class NotificationHandler extends TransactionsController implements ProtocolMessageHandler<ByteBuf> {
+    static class NotificationHandler extends TransactionController implements ProtocolMessageHandler<ByteBuf> {
         ConnectionManager connectionManager = ConnectionManager.getInstance();
 
         public NotificationHandler(Stream stream) {

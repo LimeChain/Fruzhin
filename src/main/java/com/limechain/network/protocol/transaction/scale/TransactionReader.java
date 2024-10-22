@@ -5,7 +5,7 @@ import com.limechain.transaction.dto.ExtrinsicArray;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleReader;
 
-public class TransactionsReader implements ScaleReader<ExtrinsicArray> {
+public class TransactionReader implements ScaleReader<ExtrinsicArray> {
 
     @Override
     public ExtrinsicArray read(ScaleCodecReader reader) {
