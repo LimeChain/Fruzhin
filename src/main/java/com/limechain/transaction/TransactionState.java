@@ -1,5 +1,6 @@
 package com.limechain.transaction;
 
+import com.limechain.exception.global.ThreadInterruptedException;
 import com.limechain.transaction.dto.Extrinsic;
 import com.limechain.transaction.dto.ValidTransaction;
 import com.limechain.utils.ByteArrayUtils;
@@ -40,7 +41,7 @@ public class TransactionState {
         return transactionQueue.poll();
     }
 
-    public ValidTransaction pollTransactionWithTimer(long timeout) throws InterruptedException {
+    public ValidTransaction pollTransactionWithTimer(long timeout) {
         ValidTransaction validTransaction = pollTransaction();
         if (validTransaction != null) return validTransaction;
 
@@ -54,7 +55,7 @@ public class TransactionState {
             futureTransaction.cancel(true);
         } catch (InterruptedException e) {
             if (Thread.interrupted())
-                throw new InterruptedException();
+                throw new ThreadInterruptedException(e);
         }
 
         return null;
