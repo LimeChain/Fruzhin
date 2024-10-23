@@ -54,8 +54,7 @@ public class TransactionState {
         } catch (TimeoutException e) {
             futureTransaction.cancel(true);
         } catch (InterruptedException e) {
-            if (Thread.interrupted())
-                throw new ThreadInterruptedException(e);
+            Thread.currentThread().interrupt();
         }
 
         return null;
