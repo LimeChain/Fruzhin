@@ -23,6 +23,10 @@ public enum KeyType {
      */
     GRANDPA("gran".getBytes(), Key.ED25519),
     /**
+     * Key type for the Beefy module
+     */
+    BEEFY("beef".getBytes(), Key.ECDSA),
+    /**
      * Key type for the ImOnline module
      */
     IM_ONLINE("imon".getBytes(), Key.SR25519),
@@ -38,6 +42,7 @@ public enum KeyType {
      * Key type for the Parachain Assignment Key
      */
     PARACHAIN_ASSIGNMENT_KEY("asgn".getBytes(), Key.SR25519);
+
 
     public static final int KEY_TYPE_LEN = 4;
 
