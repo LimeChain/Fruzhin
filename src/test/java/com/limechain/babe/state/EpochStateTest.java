@@ -2,11 +2,11 @@ package com.limechain.babe.state;
 
 
 import com.limechain.babe.api.BabeApiConfiguration;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigInteger;
 import java.time.Instant;
@@ -14,6 +14,7 @@ import java.time.Instant;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 public class EpochStateTest {
 
     @InjectMocks
@@ -21,11 +22,6 @@ public class EpochStateTest {
 
     @Mock
     private BabeApiConfiguration babeApiConfiguration;
-
-    @BeforeEach
-    public void setup() {
-        MockitoAnnotations.openMocks(this);
-    }
 
     @Test
     public void testGetCurrentSlotNumber() {
