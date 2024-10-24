@@ -44,10 +44,10 @@ class KeyStoreTest {
         byte[] privKey3 = keyStore.get(KeyType.BABE, KEY_3);
         byte[] privKey4 = keyStore.get(KeyType.BEEFY, KEY_4);
 
-        assertArrayEquals(privKey, VALUE);
-        assertArrayEquals(privKey2, VALUE_2);
-        assertArrayEquals(privKey3, VALUE_3);
-        assertArrayEquals(privKey4, VALUE_4);
+        assertArrayEquals(VALUE, privKey);
+        assertArrayEquals(VALUE_2, privKey2);
+        assertArrayEquals(VALUE_3, privKey3);
+        assertArrayEquals(VALUE_4, privKey4);
 
         byte[] invPrivKey = keyStore.get(KeyType.GRANDPA, KEY_4);
         byte[] invPrivKey2 = keyStore.get(KeyType.BABE, KEY_2);
