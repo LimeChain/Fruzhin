@@ -8,6 +8,7 @@ import lombok.Getter;
 import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
+import java.time.Instant;
 
 /**
  * Represents the state information for an epoch in the system.
@@ -39,5 +40,9 @@ public class EpochState {
             case DISABLED_AUTHORITY -> this.disabledAuthority = babeConsensusMessage.getDisabledAuthority();
             case NEXT_EPOCH_DESCRIPTOR -> this.nextEpochDescriptor = babeConsensusMessage.getNextEpochDescriptor();
         }
+    }
+
+    public BigInteger getCurrentSlotNumber() {
+        return BigInteger.valueOf(Instant.now().toEpochMilli()).divide(slotDuration);
     }
 }
