@@ -31,6 +31,7 @@ public class Runtime {
 
     /**
      * Calls an exported runtime function with no parameters.
+     *
      * @param function the name Runtime function to call
      * @return the SCALE encoded response
      */
@@ -41,7 +42,8 @@ public class Runtime {
 
     /**
      * Calls an exported runtime function with parameters.
-     * @param function the name Runtime function to call
+     *
+     * @param function  the name Runtime function to call
      * @param parameter the SCALE encoded tuple of parameters
      * @return the SCALE encoded response
      */
@@ -55,7 +57,7 @@ public class Runtime {
         String functionName = function.getName();
         log.log(Level.FINE, "Making a runtime call: " + functionName);
         Object[] response = instance.exports.getFunction(functionName)
-            .apply(parameterPtrSize.pointer(), parameterPtrSize.size());
+                .apply(parameterPtrSize.pointer(), parameterPtrSize.size());
 
         if (response == null) {
             return null;
@@ -86,6 +88,7 @@ public class Runtime {
 
     /**
      * Executes the block by calling `Core_execute_block`.
+     *
      * @param block the block to execute
      * @return the SCALE encoded result of the runtime call
      */
@@ -96,8 +99,8 @@ public class Runtime {
 
     private static byte[] serializeExecuteBlockParameter(Block block) {
         byte[] encodedUnsealedHeader = ScaleUtils.Encode.encode(
-            BlockHeaderScaleWriter.getInstance()::writeUnsealed,
-            block.getHeader()
+                BlockHeaderScaleWriter.getInstance()::writeUnsealed,
+                block.getHeader()
         );
         byte[] encodedBody = ScaleUtils.Encode.encode(BlockBodyWriter.getInstance(), block.getBody());
 
@@ -106,7 +109,8 @@ public class Runtime {
 
     /**
      * Checks whether the provided inherents are valid for the block by calling `BlockBuilder_Check_inherents
-     * @param block the block to check against
+     *
+     * @param block        the block to check against
      * @param inherentData inherents to check for validity
      * @return the SCALE encoded result of the runtime call
      */

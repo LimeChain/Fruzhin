@@ -18,13 +18,11 @@ import com.limechain.network.protocol.sync.BlockRequestDto;
 import com.limechain.network.protocol.sync.SyncService;
 import com.limechain.network.protocol.sync.pb.SyncMessage;
 import com.limechain.network.protocol.sync.pb.SyncMessage.BlockResponse;
-import com.limechain.network.protocol.transactions.TransactionsService;
+import com.limechain.network.protocol.transaction.TransactionsService;
 import com.limechain.network.protocol.warp.WarpSyncService;
 import com.limechain.network.protocol.warp.dto.WarpSyncResponse;
-import com.limechain.rpc.server.AppBean;
 import com.limechain.storage.DBConstants;
 import com.limechain.storage.KVRepository;
-import com.limechain.sync.warpsync.WarpSyncState;
 import com.limechain.utils.Ed25519Utils;
 import com.limechain.utils.StringUtils;
 import io.ipfs.multiaddr.MultiAddress;
@@ -256,7 +254,7 @@ public class Network {
         if (getPeersCount() >= REPLICATION) {
             log.log(Level.INFO,
                     "Connections have reached replication factor(" + REPLICATION + "). " +
-                    "No need to search for new ones yet.");
+                            "No need to search for new ones yet.");
             return;
         }
 
@@ -352,33 +350,27 @@ public class Network {
         return false;
     }
 
-    public void handshakeBootNodes() {
+    public void blockAnnounceHandshakeBootNodes() {
         kademliaService.getBootNodePeerIds()
                 .stream()
                 .distinct()
-                .forEach(this::sendGrandpaHandshake);
+                .forEach(p -> new Thread(() -> blockAnnounceService.sendHandshake(this.host, p)).start());
     }
 
-    private void sendGrandpaHandshake(PeerId peerId) {
-        //TODO:
-        // when using threads we connect to more than 10 peers, but have some unhandled exceptions,
-        // without them we connect to only 2 peers
-        new Thread(() ->
-                blockAnnounceService.sendHandshake(this.host, this.host.getAddressBook(), peerId)
-        ).start();
+    public void handshakePeers() {
+        connectionManager.getPeerIds().forEach(peerId -> new Thread(() -> {
+                    blockAnnounceService.sendHandshake(this.host, peerId);
+                    grandpaService.sendHandshake(this.host, peerId);
+                    transactionsService.sendHandshake(this.host, peerId);
+                }).start()
+        );
     }
 
     @Scheduled(fixedRate = 5, initialDelay = 5, timeUnit = TimeUnit.MINUTES)
-    public void sendNeighbourMessages() {
-        if (!AppBean.getBean(WarpSyncState.class).isWarpSyncFinished()) {
-            return;
-        }
-        connectionManager.getPeerIds().forEach(peerId -> grandpaService.sendNeighbourMessage(this.host, peerId));
+    public void sendMessagesToPeers() {
+        connectionManager.getPeerIds().forEach(peerId ->
+                grandpaService.sendNeighbourMessage(this.host, peerId));
         connectionManager.getPeerIds().forEach(peerId ->
                 transactionsService.sendTransactionsMessage(this.host, peerId));
-    }
-
-    public void sendNeighbourMessage(PeerId peerId) {
-        grandpaService.sendNeighbourMessage(this.host, peerId);
     }
 }

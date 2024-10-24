@@ -5,7 +5,7 @@ import com.limechain.chain.spec.ChainSpec;
 import com.limechain.network.protocol.warp.dto.Block;
 import com.limechain.network.protocol.warp.dto.BlockBody;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
-import com.limechain.network.protocol.warp.dto.Extrinsics;
+import com.limechain.transaction.dto.Extrinsic;
 import com.limechain.network.protocol.warp.dto.HeaderDigest;
 import com.limechain.network.protocol.warp.scale.reader.HeaderDigestReader;
 import com.limechain.runtime.Runtime;
@@ -75,7 +75,7 @@ class BlockExecutorTest {
 
         var exts = ScaleUtils.Decode.decodeList(scaleEncodedBody, ScaleCodecReader::readByteArray);
         assertEquals(2, exts.size());
-        BlockBody body = new BlockBody(exts.stream().map(Extrinsics::new).toList());
+        BlockBody body = new BlockBody(exts.stream().map(Extrinsic::new).toList());
 
         return new Block(header, body);
     }
