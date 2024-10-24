@@ -2,6 +2,7 @@ package com.limechain.utils;
 
 import lombok.experimental.UtilityClass;
 
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
@@ -36,8 +37,9 @@ public class LittleEndianUtils {
      */
     public static byte[] bytesToFixedLength(byte[] byteArray, int length) {
         byte[] littleEndian = new byte[length];
+        int smallestLength = Math.min(byteArray.length, littleEndian.length);
 
-        for (int i = 0; i < byteArray.length; i++) {
+        for(int i = 0; i < smallestLength; i++) {
             littleEndian[i] = byteArray[byteArray.length - 1 - i];
         }
 
@@ -56,5 +58,27 @@ public class LittleEndianUtils {
         byte byte3 = (byte) (number >>> 16);
         byte byte4 = (byte) (number >>> 24);
         return new byte[]{byte1, byte2, byte3, byte4};
+    }
+
+    //TODO: add documentation
+    public static byte[] longToLittleEndianBytes(long value) {
+        ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
+        buffer.order(ByteOrder.LITTLE_ENDIAN);
+        buffer.putLong(value);
+        return buffer.array();
+    }
+
+    //TODO: add documentation
+    public static BigInteger fromLittleEndianByteArray(byte[] bytes) {
+        if (bytes.length != 16) {
+            throw new IllegalArgumentException("Byte array must be exactly 16 bytes long");
+        }
+
+        byte[] reversed = new byte[bytes.length];
+        for (int i = 0; i < bytes.length; i++) {
+            reversed[i] = bytes[bytes.length - 1 - i];
+        }
+
+        return new BigInteger(1, reversed);
     }
 }
