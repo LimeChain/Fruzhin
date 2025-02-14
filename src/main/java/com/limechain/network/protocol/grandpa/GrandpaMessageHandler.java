@@ -1,5 +1,7 @@
 package com.limechain.network.protocol.grandpa;
 
+import com.limechain.babe.api.OpaqueKeyOwnershipProof;
+import com.limechain.chain.lightsyncstate.Authority;
 import com.limechain.exception.grandpa.GrandpaGenericException;
 import com.limechain.exception.sync.JustificationVerificationException;
 import com.limechain.grandpa.round.GrandpaRound;
@@ -158,6 +160,7 @@ public class GrandpaMessageHandler {
                 + " with " + commitMessage.getPreCommits().length + " voters");
 
         boolean verified = JustificationVerifier.verify(Justification.fromCommitMessage(commitMessage));
+
         if (!verified) {
             log.log(Level.WARNING, "Could not verify commit from peer: " + peerId);
             return;
@@ -222,12 +225,12 @@ public class GrandpaMessageHandler {
         if (neighbourMessage.getSetId().equals(grandpaSetState.getSetId())) {
 
             // Check if needed to catch-up peer
-            if (neighbourMessage.getRound().compareTo(
+            if (neighbourMessage.getRoundNumber().compareTo(
                     grandpaSetState.fetchLatestRoundNumber().add(CATCH_UP_THRESHOLD)) >= 0) {
                 log.log(Level.FINE, "Neighbor message indicates that the round of Peer " + peerId + " is ahead.");
 
                 CatchUpReqMessage catchUpReqMessage = CatchUpReqMessage.builder()
-                        .round(neighbourMessage.getRound())
+                        .round(neighbourMessage.getRoundNumber())
                         .setId(neighbourMessage.getSetId()).build();
 
                 messageCoordinator.sendCatchUpRequestToPeer(peerId, catchUpReqMessage);
@@ -267,7 +270,7 @@ public class GrandpaMessageHandler {
         BlockHeader finalizedBlockHeader = grandpaRound.getFinalizedBlock();
 
         CatchUpResMessage catchUpResMessage = CatchUpResMessage.builder()
-                .round(grandpaRound.getRoundNumber())
+                .roundNumber(grandpaRound.getRoundNumber())
                 .setId(grandpaSetState.getSetId())
                 .preCommits(preCommits)
                 .preVotes(preVotes)
@@ -301,7 +304,7 @@ public class GrandpaMessageHandler {
         }
 
         GrandpaRound latestRound = grandpaSetState.getCurrentGrandpaRound();
-        if (catchUpResMessage.getRound().compareTo(latestRound.getRoundNumber()) <= 0) {
+        if (catchUpResMessage.getRoundNumber().compareTo(latestRound.getRoundNumber()) <= 0) {
             throw new GrandpaGenericException("Catching up into a round in the past.");
         }
 
@@ -311,19 +314,26 @@ public class GrandpaMessageHandler {
             throw new GrandpaGenericException("Catch up response with non-matching block hash and block number.");
         }
 
+        List<Authority> authorities = grandpaSetState.getAuthorities();
+        BigInteger threshold = grandpaSetState.getThreshold(authorities);
+
         GrandpaRound grandpaRound = new GrandpaRound(
                 null,
-                catchUpResMessage.getRound(),
+                catchUpResMessage.getRoundNumber(),
+                catchUpResMessage.getSetId(),
+                authorities,
+                threshold,
                 false,
-                grandpaSetState.getThreshold(),
                 latestRound.getLastFinalizedBlock()
         );
+
         //Todo: Maybe we should set previous block, as it is needed in the current implementation of findGhost
         grandpaRound.setFinalizedBlock(finalizedTarget);
         setPreVotesAndPvEquivocations(grandpaRound, catchUpResMessage.getPreVotes());
         setPreCommitsAndPcEquivocations(grandpaRound, catchUpResMessage.getPreCommits());
 
         boolean verified = JustificationVerifier.verify(Justification.fromCatchUpResMessage(catchUpResMessage));
+
         if (!verified) {
             throw new JustificationVerificationException("Justification could not be verified.");
         }
@@ -517,7 +527,7 @@ public class GrandpaMessageHandler {
     private SignedVote[] getPreCommitJustification(GrandpaRound requestedRound) {
         BlockHeader finalizedBlock = requestedRound.getFinalizedBlock();
         BigInteger totalWeight = BigInteger.ZERO;
-        BigInteger threshold = stateManager.getGrandpaSetState().getThreshold();
+        BigInteger threshold = requestedRound.getThreshold();
 
         List<SignedVote> result = new ArrayList<>();
 
