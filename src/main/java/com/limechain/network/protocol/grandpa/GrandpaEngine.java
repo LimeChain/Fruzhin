@@ -1,6 +1,5 @@
 package com.limechain.network.protocol.grandpa;
 
-import com.limechain.exception.grandpa.GrandpaGenericException;
 import com.limechain.exception.scale.ScaleEncodingException;
 import com.limechain.grandpa.GrandpaService;
 import com.limechain.network.ConnectionManager;
@@ -98,10 +97,6 @@ public class GrandpaEngine {
         PeerId peerId = stream.remotePeerId();
         boolean connectedToPeer = connectionManager.isGrandpaConnected(peerId);
 
-        if (messageType == null) {
-            throw new GrandpaGenericException("Unknown message type");
-        }
-
         if (!connectedToPeer && messageType != GrandpaMessageType.HANDSHAKE) {
             log.log(Level.WARNING, "No handshake for grandpa message from Peer " + peerId);
             stream.close();
@@ -113,24 +108,24 @@ public class GrandpaEngine {
             return;
         }
 
-        if (messageType.equals(GrandpaMessageType.HANDSHAKE)) {
-            handleHandshake(message, peerId, stream);
-        } else {
-            handleGrandpaMessage(message, messageType, peerId);
+        switch (messageType) {
+            case HANDSHAKE -> handleHandshake(message, peerId, stream);
+            case VOTE -> handleVoteMessage(message, peerId);
+            case COMMIT -> handleCommitMessage(message, peerId);
+            case NEIGHBOUR -> handleNeighbourMessage(message, peerId);
+            case CATCH_UP_REQUEST, CATCH_UP_RESPONSE -> handleCatchUpMessage(message, messageType, peerId);
         }
     }
 
-    private void handleGrandpaMessage(byte[] message, GrandpaMessageType messageType, PeerId peerId) {
+    private void handleCatchUpMessage(byte[] message, GrandpaMessageType messageType, PeerId peerId) {
         if (!AbstractState.isActiveAuthority() || !connectionManager.checkIfPeerIsAuthorNode(peerId)) {
             return;
         }
 
-        switch (messageType) {
-            case VOTE -> handleVoteMessage(message, peerId);
-            case COMMIT -> handleCommitMessage(message, peerId);
-            case NEIGHBOUR -> handleNeighbourMessage(message, peerId);
-            case CATCH_UP_REQUEST -> handleCatchupRequestMessage(message, peerId);
-            case CATCH_UP_RESPONSE -> handleCatchupResponseMessage(message, peerId);
+        if (messageType.equals(GrandpaMessageType.CATCH_UP_REQUEST)) {
+            handleCatchupRequestMessage(message, peerId);
+        } else {
+            handleCatchupResponseMessage(message, peerId);
         }
     }
 
