@@ -202,7 +202,6 @@ class GrandpaEngineTest {
             when(stream.isInitiator()).thenReturn(false);
             when(stream.remotePeerId()).thenReturn(peerId);
             when(connectionManager.isGrandpaConnected(peerId)).thenReturn(true);
-            when(connectionManager.checkIfPeerIsAuthorNode(peerId)).thenReturn(true);
 
             try (MockedConstruction<ScaleCodecReader> readerMock = mockConstruction(ScaleCodecReader.class,
                     (mock, context) -> when(mock.read(any(CommitMessageScaleReader.class))).thenReturn(commitMessage))
