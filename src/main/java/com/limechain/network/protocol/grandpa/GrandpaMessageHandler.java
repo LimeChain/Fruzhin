@@ -1,6 +1,5 @@
 package com.limechain.network.protocol.grandpa;
 
-import com.limechain.babe.api.OpaqueKeyOwnershipProof;
 import com.limechain.chain.lightsyncstate.Authority;
 import com.limechain.exception.grandpa.GrandpaGenericException;
 import com.limechain.exception.sync.JustificationVerificationException;
