@@ -98,6 +98,10 @@ public class GrandpaEngine {
         PeerId peerId = stream.remotePeerId();
         boolean connectedToPeer = connectionManager.isGrandpaConnected(peerId);
 
+        if (messageType == null) {
+            throw new GrandpaGenericException("Unknown message type");
+        }
+
         if (!connectedToPeer && messageType != GrandpaMessageType.HANDSHAKE) {
             log.log(Level.WARNING, "No handshake for grandpa message from Peer " + peerId);
             stream.close();
@@ -107,10 +111,6 @@ public class GrandpaEngine {
         if (!SyncMode.HEAD.equals(AbstractState.getSyncMode())) {
             log.fine("Skipping grandpa message before we reach head of chain.");
             return;
-        }
-
-        if (messageType == null) {
-            throw new GrandpaGenericException("Unknown message type");
         }
 
         if (messageType.equals(GrandpaMessageType.HANDSHAKE)) {
