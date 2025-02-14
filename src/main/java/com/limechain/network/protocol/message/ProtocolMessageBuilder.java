@@ -6,6 +6,7 @@ import com.limechain.network.protocol.grandpa.messages.neighbour.NeighbourMessag
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.rpc.server.AppBean;
 import com.limechain.state.StateManager;
+import com.limechain.sync.state.SyncState;
 import lombok.experimental.UtilityClass;
 
 import java.math.BigInteger;
@@ -16,14 +17,18 @@ public class ProtocolMessageBuilder {
 
     public NeighbourMessage buildNeighbourMessage() {
         StateManager stateManager = AppBean.getBean(StateManager.class);
-        GrandpaSetState grandpaSetState = AppBean.getBean(GrandpaSetState.class);
+        GrandpaSetState grandpaSetState = stateManager.getGrandpaSetState();
+        SyncState syncState = stateManager.getSyncState();
+
         BigInteger setId = grandpaSetState.getSetId();
+        BigInteger roundNumber = grandpaSetState.getCurrentGrandpaRound().getRoundNumber();
+        BigInteger bestFinalizedBlockNumber = syncState.getLastFinalizedBlockNumber();
 
         return new NeighbourMessage(
                 NEIGHBOUR_MESSAGE_VERSION,
-                stateManager.getGrandpaSetState().getCurrentGrandpaRound().getRoundNumber(),
+                roundNumber,
                 setId,
-                stateManager.getSyncState().getLastFinalizedBlockNumber()
+                bestFinalizedBlockNumber
         );
     }
 

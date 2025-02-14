@@ -892,15 +892,6 @@ public class BlockState extends AbstractState {
         return BlockStateHelper.bytesToRoundAndSetId(data);
     }
 
-    public Vote getLastFinalizedBlockAsVote() {
-        var lastFinalizedBlockHeader = getHighestFinalizedHeader();
-
-        return new Vote(
-                lastFinalizedBlockHeader.getHash(),
-                lastFinalizedBlockHeader.getBlockNumber()
-        );
-    }
-
     /**
      * Store all the blocks between last saved finalized and current finalized block in database
      * and delete them from the unfinalized block map
