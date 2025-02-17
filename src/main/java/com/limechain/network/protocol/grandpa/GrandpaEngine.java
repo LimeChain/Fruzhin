@@ -113,8 +113,19 @@ public class GrandpaEngine {
             case VOTE -> handleVoteMessage(message, peerId);
             case COMMIT -> handleCommitMessage(message, peerId);
             case NEIGHBOUR -> handleNeighbourMessage(message, peerId);
-            case CATCH_UP_REQUEST -> handleCatchupRequestMessage(message, peerId);
-            case CATCH_UP_RESPONSE -> handleCatchupResponseMessage(message, peerId);
+            case CATCH_UP_REQUEST, CATCH_UP_RESPONSE -> handleCatchUpMessage(message, messageType, peerId);
+        }
+    }
+
+    private void handleCatchUpMessage(byte[] message, GrandpaMessageType messageType, PeerId peerId) {
+        if (!AbstractState.isActiveAuthority() || !connectionManager.checkIfPeerIsAuthorNode(peerId)) {
+            return;
+        }
+
+        if (messageType.equals(GrandpaMessageType.CATCH_UP_REQUEST)) {
+            handleCatchupRequestMessage(message, peerId);
+        } else {
+            handleCatchupResponseMessage(message, peerId);
         }
     }
 
@@ -143,22 +154,22 @@ public class GrandpaEngine {
         log.log(Level.FINE, "Received neighbour message from Peer " + peerId + "\n" + neighbourMessage);
         new Thread(() -> grandpaMessageHandler.handleNeighbourMessage(neighbourMessage, peerId)).start();
 
-        if (AbstractState.isActiveAuthority() && connectionManager.checkIfPeerIsAuthorNode(peerId)) {
-            grandpaMessageHandler.initiateAndSendCatchUpRequest(neighbourMessage, peerId);
-        }
+        grandpaMessageHandler.initiateAndSendCatchUpRequest(neighbourMessage, peerId);
     }
 
     private void handleVoteMessage(byte[] message, PeerId peerId) {
         ScaleCodecReader reader = new ScaleCodecReader(message);
         VoteMessage voteMessage = reader.read(VoteMessageScaleReader.getInstance());
         log.log(Level.INFO, "Received vote message from Peer " + peerId + "\n" + voteMessage);
-        //Maybe we need to add possible roundNumber check
+
         grandpaMessageHandler.handleVoteMessage(voteMessage);
     }
 
     private void handleCommitMessage(byte[] message, PeerId peerId) {
         ScaleCodecReader reader = new ScaleCodecReader(message);
         CommitMessage commitMessage = reader.read(CommitMessageScaleReader.getInstance());
+        log.log(Level.INFO, "Received commit message from Peer " + peerId + "\n" + commitMessage);
+
         grandpaMessageHandler.handleCommitMessage(commitMessage, peerId);
     }
 
@@ -167,9 +178,7 @@ public class GrandpaEngine {
         CatchUpReqMessage catchUpReqMessage = reader.read(CatchUpReqMessageScaleReader.getInstance());
         log.log(Level.INFO, "Received catch up request message from Peer " + peerId + "\n" + catchUpReqMessage);
 
-        if (AbstractState.isActiveAuthority() && connectionManager.checkIfPeerIsAuthorNode(peerId)) {
-            grandpaMessageHandler.initiateAndSendCatchUpResponse(peerId, catchUpReqMessage, connectionManager::getPeerIds);
-        }
+        grandpaMessageHandler.initiateAndSendCatchUpResponse(peerId, catchUpReqMessage, connectionManager::getPeerIds);
     }
 
     private void handleCatchupResponseMessage(byte[] message, PeerId peerId) {
@@ -177,9 +186,7 @@ public class GrandpaEngine {
         CatchUpResMessage catchUpResMessage = reader.read(CatchUpResMessageScaleReader.getInstance());
         log.log(Level.INFO, "Received catch up response message from Peer " + peerId + "\n" + catchUpResMessage);
 
-        if (AbstractState.isActiveAuthority() && connectionManager.checkIfPeerIsAuthorNode(peerId)) {
-            grandpaMessageHandler.handleCatchUpResponse(peerId, catchUpResMessage, connectionManager::getPeerIds);
-        }
+        grandpaMessageHandler.handleCatchUpResponse(peerId, catchUpResMessage, connectionManager::getPeerIds);
     }
 
     /**

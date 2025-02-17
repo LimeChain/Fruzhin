@@ -194,6 +194,7 @@ class GrandpaEngineTest {
     void receiveCommitMessageOnResponderStreamWhenShouldSyncCommit() {
         try (MockedStatic<AbstractState> mockedState = mockStatic(AbstractState.class)) {
             mockedState.when(AbstractState::getSyncMode).thenReturn(SyncMode.HEAD);
+            mockedState.when(AbstractState::isActiveAuthority).thenReturn(true);
 
             byte[] message = new byte[]{1, 2, 3};
             CommitMessage commitMessage = mock(CommitMessage.class);
