@@ -13,6 +13,7 @@ import java.util.List;
 public class BeefyConsensusMessageReader implements ScaleReader<BeefyConsensusMessage> {
 
     private static final BeefyConsensusMessageReader INSTANCE = new BeefyConsensusMessageReader();
+    public static final int ECDSA_PUBLIC_KEY_LENGTH = 33;
 
     public static BeefyConsensusMessageReader getInstance() {
         return INSTANCE;
@@ -28,16 +29,12 @@ public class BeefyConsensusMessageReader implements ScaleReader<BeefyConsensusMe
         switch (format) {
             case BEEFY_CHANGED_AUTHORITIES -> {
                 List<byte[]> authorityPublicKeys = new ListReader<>(
-                        rdr -> rdr.readByteArray(33)).read(reader);
+                        rdr -> rdr.readByteArray(ECDSA_PUBLIC_KEY_LENGTH)).read(reader);
                 beefyConsensusMessage.setAuthorityPublicKeys(authorityPublicKeys);
                 beefyConsensusMessage.setAuthoritySetId(new UInt64Reader().read(reader));
             }
-            case BEEFY_ON_DISABLED -> {
-                beefyConsensusMessage.setDisabledAuthority(new UInt64Reader().read(reader));
-            }
-            case BEEFY_MMR_ROOT -> {
-                beefyConsensusMessage.setMmrRootHash(reader.readUint256());
-            }
+            case BEEFY_ON_DISABLED -> beefyConsensusMessage.setDisabledAuthority(new UInt64Reader().read(reader));
+            case BEEFY_MMR_ROOT -> beefyConsensusMessage.setMmrRootHash(reader.readUint256());
         }
 
         return beefyConsensusMessage;
