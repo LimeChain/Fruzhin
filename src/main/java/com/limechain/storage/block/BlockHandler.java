@@ -169,6 +169,12 @@ public class BlockHandler {
                     ));
 
             grandpaSetState.handleAuthoritySetChange(header.getBlockNumber());
+
+            asyncExecutor.executeAndForget(() -> DigestHelper.getBeefyConsensusMessage(header.getDigest())
+                    .ifPresent(cm -> {
+                            }
+                            //Todo: handleBeefyConsensusMessage
+                    ));
         }
     }
 
