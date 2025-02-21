@@ -1,7 +1,9 @@
 package com.limechain.network.protocol.warp;
 
+import com.limechain.babe.consensus.BabeConsensusMessage;
 import com.limechain.babe.consensus.BabeConsensusMessageFormat;
 import com.limechain.babe.predigest.PreDigestType;
+import com.limechain.network.protocol.grandpa.messages.consensus.GrandpaConsensusMessage;
 import com.limechain.network.protocol.grandpa.messages.consensus.GrandpaConsensusMessageFormat;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.network.protocol.warp.dto.ConsensusEngine;
@@ -25,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class DigestHelperTest {
 
     @Test
-    void getBabeConsensusMessageTest() {
+    void getBabeConsensusMessagesTest() {
         HeaderDigest consensusDigest = new HeaderDigest();
         consensusDigest.setId(ConsensusEngine.BABE);
         consensusDigest.setType(DigestType.CONSENSUS_MESSAGE);
@@ -35,21 +37,21 @@ class DigestHelperTest {
         message[0] = 2;
         consensusDigest.setMessage(message);
 
-        HeaderDigest[] headerDigests = new HeaderDigest[] {consensusDigest};
-        var optResult = DigestHelper.getBabeConsensusMessage(headerDigests);
+        HeaderDigest[] headerDigests = new HeaderDigest[]{consensusDigest};
+        var result = DigestHelper.getBabeConsensusMessages(headerDigests);
 
-        assertTrue(optResult.isPresent());
+        assertEquals(1, result.size());
 
-        var result = optResult.get();
-        assertEquals(BabeConsensusMessageFormat.DISABLED_AUTHORITY, result.getFormat());
-        assertEquals(BigInteger.ZERO, result.getDisabledAuthority());
-        assertNull(result.getNextEpochData());
-        assertNull(result.getNextEpochDescriptor());
+        BabeConsensusMessage firstResult = result.getFirst();
+        assertEquals(BabeConsensusMessageFormat.DISABLED_AUTHORITY, firstResult.getFormat());
+        assertEquals(BigInteger.ZERO, firstResult.getDisabledAuthority());
+        assertNull(firstResult.getNextEpochData());
+        assertNull(firstResult.getNextEpochDescriptor());
     }
 
     @Test
-    void getBabeConsensusMessageWithoutSuchDigestInHeadersTest() {
-        var optResult = DigestHelper.getBabeConsensusMessage(new HeaderDigest[0]);
+    void getBabeConsensusMessagesWithoutSuchDigestInHeadersTest() {
+        var optResult = DigestHelper.getBabeConsensusMessages(new HeaderDigest[0]);
         assertTrue(optResult.isEmpty());
     }
 
@@ -64,20 +66,20 @@ class DigestHelperTest {
         message[0] = 3;
         consensusDigest.setMessage(message);
 
-        HeaderDigest[] headerDigests = new HeaderDigest[] {consensusDigest};
-        var optResult = DigestHelper.getGrandpaConsensusMessage(headerDigests);
+        HeaderDigest[] headerDigests = new HeaderDigest[]{consensusDigest};
+        var result = DigestHelper.getGrandpaConsensusMessages(headerDigests);
 
-        assertTrue(optResult.isPresent());
+        assertEquals(1, result.size());
 
-        var result = optResult.get();
-        assertEquals(GrandpaConsensusMessageFormat.GRANDPA_ON_DISABLED, result.getFormat());
-        assertEquals(BigInteger.ZERO, result.getDisabledAuthority());
-        assertNull(result.getAuthorities());
+        GrandpaConsensusMessage firstResult = result.getFirst();
+        assertEquals(GrandpaConsensusMessageFormat.GRANDPA_ON_DISABLED, firstResult.getFormat());
+        assertEquals(BigInteger.ZERO, firstResult.getDisabledAuthority());
+        assertNull(firstResult.getAuthorities());
     }
 
     @Test
     void getGrandpaConsensusMessageWithoutSuchDigestInHeadersTest() {
-        var optResult = DigestHelper.getGrandpaConsensusMessage(new HeaderDigest[0]);
+        var optResult = DigestHelper.getGrandpaConsensusMessages(new HeaderDigest[0]);
         assertTrue(optResult.isEmpty());
     }
 
@@ -97,7 +99,7 @@ class DigestHelperTest {
         message[0] = 1;
         consensusDigest.setMessage(message);
 
-        HeaderDigest[] headerDigests = new HeaderDigest[] {consensusDigest};
+        HeaderDigest[] headerDigests = new HeaderDigest[]{consensusDigest};
         var optResult = DigestHelper.getBabePreRuntimeDigest(headerDigests);
 
         assertTrue(optResult.isPresent());
@@ -124,7 +126,7 @@ class DigestHelperTest {
         message[0] = 2;
         consensusDigest.setMessage(message);
 
-        HeaderDigest[] headerDigests = new HeaderDigest[] {consensusDigest};
+        HeaderDigest[] headerDigests = new HeaderDigest[]{consensusDigest};
         var optResult = DigestHelper.getBabePreRuntimeDigest(headerDigests);
 
         assertTrue(optResult.isPresent());

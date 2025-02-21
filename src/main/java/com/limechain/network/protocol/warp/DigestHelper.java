@@ -19,7 +19,9 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Helper class for processing different types of header digests
@@ -27,31 +29,31 @@ import java.util.Optional;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class DigestHelper {
 
-    public static Optional<BabeConsensusMessage> getBabeConsensusMessage(HeaderDigest[] headerDigests) {
+    public static List<BabeConsensusMessage> getBabeConsensusMessages(HeaderDigest[] headerDigests) {
         return Arrays.stream(headerDigests)
                 .filter(headerDigest -> DigestType.CONSENSUS_MESSAGE.equals(headerDigest.getType()) &&
                         ConsensusEngine.BABE.equals(headerDigest.getId()))
-                .findFirst()
                 .map(HeaderDigest::getMessage)
-                .map(message -> ScaleUtils.Decode.decode(message, BabeConsensusMessageReader.getInstance()));
+                .map(message -> ScaleUtils.Decode.decode(message, BabeConsensusMessageReader.getInstance()))
+                .collect(Collectors.toList());
     }
 
-    public static Optional<GrandpaConsensusMessage> getGrandpaConsensusMessage(HeaderDigest[] headerDigests) {
+    public static List<GrandpaConsensusMessage> getGrandpaConsensusMessages(HeaderDigest[] headerDigests) {
         return Arrays.stream(headerDigests)
                 .filter(headerDigest -> DigestType.CONSENSUS_MESSAGE.equals(headerDigest.getType()) &&
                         ConsensusEngine.GRANDPA.equals(headerDigest.getId()))
-                .findFirst()
                 .map(HeaderDigest::getMessage)
-                .map(message -> ScaleUtils.Decode.decode(message, GrandpaConsensusMessageReader.getInstance()));
+                .map(message -> ScaleUtils.Decode.decode(message, GrandpaConsensusMessageReader.getInstance()))
+                .collect(Collectors.toList());
     }
 
-    public static Optional<BeefyConsensusMessage> getBeefyConsensusMessage(HeaderDigest[] headerDigests) {
+    public static List<BeefyConsensusMessage> getBeefyConsensusMessages(HeaderDigest[] headerDigests) {
         return Arrays.stream(headerDigests)
                 .filter(headerDigest -> DigestType.CONSENSUS_MESSAGE.equals(headerDigest.getType()) &&
                         ConsensusEngine.BEEFY.equals(headerDigest.getId()))
-                .findFirst()
                 .map(HeaderDigest::getMessage)
-                .map(message -> ScaleUtils.Decode.decode(message, BeefyConsensusMessageReader.getInstance()));
+                .map(message -> ScaleUtils.Decode.decode(message, BeefyConsensusMessageReader.getInstance()))
+                .collect(Collectors.toList());
     }
 
     public static Optional<BabePreDigest> getBabePreRuntimeDigest(HeaderDigest[] headerDigests) {

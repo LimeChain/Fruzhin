@@ -154,27 +154,27 @@ public class BlockHandler {
 
         EpochState epochState = stateManager.getEpochState();
         if (epochState.isInitialized()) {
-            asyncExecutor.executeAndForget(() -> DigestHelper.getBabeConsensusMessage(header.getDigest())
-                    .ifPresent(cm -> {
+            DigestHelper.getBabeConsensusMessages(header.getDigest())
+                    .forEach(cm -> {
                         stateManager.getEpochState().updateNextEpochConfig(cm);
                         log.fine(String.format("Updated epoch block config: %s", cm.getFormat().toString()));
-                    }));
+                    });
         }
 
         GrandpaSetState grandpaSetState = stateManager.getGrandpaSetState();
         if (grandpaSetState.isInitialized()) {
-            asyncExecutor.executeAndForget(() -> DigestHelper.getGrandpaConsensusMessage(header.getDigest())
-                    .ifPresent(cm ->
+            DigestHelper.getGrandpaConsensusMessages(header.getDigest())
+                    .forEach(cm ->
                             grandpaSetState.handleGrandpaConsensusMessage(cm, header.getBlockNumber())
-                    ));
+                    );
 
             grandpaSetState.handleAuthoritySetChange(header.getBlockNumber());
 
-            asyncExecutor.executeAndForget(() -> DigestHelper.getBeefyConsensusMessage(header.getDigest())
-                    .ifPresent(cm -> {
+            DigestHelper.getBeefyConsensusMessages(header.getDigest())
+                    .forEach(cm -> {
+                                //Todo: handleBeefyConsensusMessage
                             }
-                            //Todo: handleBeefyConsensusMessage
-                    ));
+                    );
         }
     }
 
