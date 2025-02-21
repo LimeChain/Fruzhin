@@ -1,7 +1,7 @@
 package com.limechain.network.protocol.blockannounce.scale;
 
 import com.google.protobuf.ByteString;
-import com.limechain.network.protocol.blockannounce.messages.BlockAnnounceHandshake;
+import com.limechain.network.protocol.blockannounce.messages.Handshake;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.emeraldpay.polkaj.types.Hash256;
@@ -14,7 +14,7 @@ import java.math.BigInteger;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class BlockAnnounceHandshakeScaleReaderTest {
+class HandshakeScaleReaderTest {
 
     @Test
     void decodeHandshake() {
@@ -22,7 +22,7 @@ class BlockAnnounceHandshakeScaleReaderTest {
         byte[] encodedBytes = byteString.toByteArray();
 
         ScaleCodecReader reader = new ScaleCodecReader(encodedBytes);
-        BlockAnnounceHandshake decoded = reader.read(BlockAnnounceHandshakeScaleReader.getInstance());
+        Handshake decoded = reader.read(BlockAnnounceHandshakeScaleReader.getInstance());
 
         assertEquals(4, decoded.getNodeRole());
         assertEquals(BigInteger.valueOf(77), decoded.getBestBlock());
@@ -36,7 +36,7 @@ class BlockAnnounceHandshakeScaleReaderTest {
     void EncodeAnnouncementHandshakeTest() {
         byte[] expected = ByteString.fromHex("044d00000001000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000").toByteArray();
 
-        BlockAnnounceHandshake dataToEncode = new BlockAnnounceHandshake();
+        Handshake dataToEncode = new Handshake();
         dataToEncode.setNodeRole(4);
         dataToEncode.setBestBlock(BigInteger.valueOf(77));
         dataToEncode.setBestBlockHash(Hash256.from(

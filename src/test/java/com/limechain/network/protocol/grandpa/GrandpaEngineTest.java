@@ -4,8 +4,8 @@ import com.limechain.grandpa.state.GrandpaSetState;
 import com.limechain.network.ConnectionManager;
 import com.limechain.network.dto.PeerInfo;
 import com.limechain.network.protocol.blockannounce.NodeRole;
-import com.limechain.network.protocol.blockannounce.messages.BlockAnnounceHandshake;
-import com.limechain.network.protocol.blockannounce.messages.BlockAnnounceHandshakeBuilder;
+import com.limechain.network.protocol.blockannounce.messages.Handshake;
+import com.limechain.network.protocol.blockannounce.messages.HandshakeBuilder;
 import com.limechain.network.protocol.grandpa.messages.catchup.req.CatchUpReqMessage;
 import com.limechain.network.protocol.grandpa.messages.catchup.req.CatchUpReqMessageScaleReader;
 import com.limechain.network.protocol.grandpa.messages.catchup.res.CatchUpResMessage;
@@ -58,7 +58,7 @@ class GrandpaEngineTest {
     @Mock
     private GrandpaSetState grandpaSetState;
     @Mock
-    private BlockAnnounceHandshakeBuilder blockAnnounceHandshakeBuilder;
+    private HandshakeBuilder handshakeBuilder;
 
     private final NeighbourMessage neighbourMessage =
             new NeighbourMessage(1, BigInteger.ONE, BigInteger.TWO, BigInteger.TEN);
@@ -161,7 +161,7 @@ class GrandpaEngineTest {
             when(stream.remotePeerId()).thenReturn(peerId);
             when(connectionManager.isGrandpaConnected(peerId)).thenReturn(false);
             when(connectionManager.getPeerInfo(peerId)).thenReturn(mock(PeerInfo.class));
-            when(blockAnnounceHandshakeBuilder.getBlockAnnounceHandshake()).thenReturn(mock(BlockAnnounceHandshake.class));
+            when(handshakeBuilder.getHandshake()).thenReturn(mock(Handshake.class));
 
             grandpaEngine.receiveRequest(message, stream);
 
@@ -180,8 +180,8 @@ class GrandpaEngineTest {
             when(stream.remotePeerId()).thenReturn(peerId);
             when(connectionManager.isGrandpaConnected(peerId)).thenReturn(false);
             when(connectionManager.getPeerInfo(peerId)).thenReturn(mock(PeerInfo.class));
-            BlockAnnounceHandshake handshake = mock(BlockAnnounceHandshake.class);
-            when(blockAnnounceHandshakeBuilder.getBlockAnnounceHandshake()).thenReturn(handshake);
+            Handshake handshake = mock(Handshake.class);
+            when(handshakeBuilder.getHandshake()).thenReturn(handshake);
             when(handshake.getNodeRole()).thenReturn(role);
 
             grandpaEngine.receiveRequest(message, stream);
@@ -292,8 +292,8 @@ class GrandpaEngineTest {
     @Test
     void writeHandshakeToStream() {
         Integer role = NodeRole.LIGHT.getValue();
-        BlockAnnounceHandshake handshake = mock(BlockAnnounceHandshake.class);
-        when(blockAnnounceHandshakeBuilder.getBlockAnnounceHandshake()).thenReturn(handshake);
+        Handshake handshake = mock(Handshake.class);
+        when(handshakeBuilder.getHandshake()).thenReturn(handshake);
         when(handshake.getNodeRole()).thenReturn(role);
 
         grandpaEngine.writeHandshakeToStream(stream, peerId);

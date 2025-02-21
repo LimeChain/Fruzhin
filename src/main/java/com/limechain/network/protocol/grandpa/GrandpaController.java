@@ -6,6 +6,7 @@ import io.libp2p.core.Stream;
  * A controller for sending message on a GRANDPA stream.
  */
 public class GrandpaController {
+
     protected GrandpaEngine engine = new GrandpaEngine();
     protected final Stream stream;
 

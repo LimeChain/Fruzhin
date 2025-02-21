@@ -23,19 +23,23 @@ public final class ProtocolUtils {
         return String.format("/%s/state/2", chainId);
     }
 
-    public static String getBlockAnnounceProtocol(String chainId) {
-        return String.format("/%s/block-announces/1", chainId);
-    }
-
     public static String getKadProtocol(String chainId) {
         return String.format("/%s/kad", chainId);
+    }
+
+    public static String getTransactionsProtocol(String chainId) {
+        return String.format("/%s/transactions/1", chainId);
+    }
+
+    public static String getBlockAnnounceProtocol(String chainId) {
+        return String.format("/%s/block-announces/1", chainId);
     }
 
     public static String getGrandpaProtocol(String chainId, boolean legacyProtocol) {
         return String.format("/%s/grandpa/1", legacyProtocol ? "paritytech" : chainId);
     }
 
-    public static String getTransactionsProtocol(String chainId) {
-        return String.format("/%s/transactions/1", chainId);
+    public static String getBeefyProtocol(String chainId, boolean legacyProtocol) {
+        return String.format("/%s/beefy/1", legacyProtocol ? "paritytech" : chainId);
     }
 }

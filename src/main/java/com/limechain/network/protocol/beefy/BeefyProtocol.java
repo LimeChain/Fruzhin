@@ -1,10 +1,10 @@
-package com.limechain.network.protocol.grandpa;
+package com.limechain.network.protocol.beefy;
 
 import com.limechain.network.ConnectionManager;
 import com.limechain.network.encoding.Leb128LengthFrameDecoder;
 import com.limechain.network.encoding.Leb128LengthFrameEncoder;
-import io.libp2p.core.Stream;
 import io.libp2p.protocol.ProtocolHandler;
+import io.libp2p.core.Stream;
 import io.libp2p.protocol.ProtocolMessageHandler;
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.bytes.ByteArrayEncoder;
@@ -15,10 +15,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 
 /**
- * Handler for GRANDPA protocol messages and streams.
+ * Handler for BEEFY protocol messages and streams
  */
 @Log
-public class GrandpaProtocol extends ProtocolHandler<GrandpaController> {
+public class BeefyProtocol extends ProtocolHandler<BeefyController> {
+
     private static final long TRAFFIC_LIMIT = Long.MAX_VALUE;
 
     /**
@@ -26,48 +27,47 @@ public class GrandpaProtocol extends ProtocolHandler<GrandpaController> {
      * This is a global decreasing limit for the protocol, that gets reduced by the size of each message.
      * In the future it should be changed to a per-message limit
      */
-    public GrandpaProtocol() {
+    public BeefyProtocol() {
         super(TRAFFIC_LIMIT, TRAFFIC_LIMIT);
     }
 
     /**
-     * Handles a new opened initiator stream and adds channel and notification handlers to it.
-     *
+     * Handles a new opened initiator stram and adds channel and notification handlers to it.
      * @param stream stream opened
      * @return async controller for the stream
      */
     @NotNull
     @Override
-    protected CompletableFuture<GrandpaController> onStartInitiator(Stream stream) {
+    protected CompletableFuture<BeefyController> onStartInitiator(Stream stream) {
         return onStartStream(stream);
     }
 
     /**
      * Handles a new opened responder stream and adds channel and notification handlers to it.
-     *
      * @param stream stream opened
      * @return async controller for the stream
      */
     @NotNull
     @Override
-    protected CompletableFuture<GrandpaController> onStartResponder(Stream stream) {
+    protected CompletableFuture<BeefyController> onStartResponder(Stream stream) {
         return onStartStream(stream);
     }
 
-    private CompletableFuture<GrandpaController> onStartStream(Stream stream) {
+
+    private CompletableFuture<BeefyController> onStartStream(Stream stream) {
         stream.pushHandler(new Leb128LengthFrameDecoder());
         stream.pushHandler(new Leb128LengthFrameEncoder());
 
         stream.pushHandler(new ByteArrayEncoder());
-        GrandpaProtocol.NotificationHandler handler = new GrandpaProtocol.NotificationHandler(stream);
+        BeefyProtocol.NotificationHandler handler = new BeefyProtocol.NotificationHandler(stream);
         stream.pushHandler(handler);
         return CompletableFuture.completedFuture(handler);
     }
 
     /**
-     * Handler for notifications received on the GRANDPA protocol.
+     * Handler for notifications received on the BEEFY protocol
      */
-    static class NotificationHandler extends GrandpaController implements ProtocolMessageHandler<ByteBuf> {
+    static class NotificationHandler extends BeefyController implements ProtocolMessageHandler<ByteBuf> {
 
         ConnectionManager connectionManager = ConnectionManager.getInstance();
 
@@ -84,19 +84,19 @@ public class GrandpaProtocol extends ProtocolHandler<GrandpaController> {
 
         @Override
         public void onClosed(Stream stream) {
-            connectionManager.closeGrandpaStream(stream);
-            log.log(Level.INFO, "Grandpa stream closed for peer " + stream.remotePeerId());
+            connectionManager.closeBeefyStream(stream);
+            log.log(Level.INFO, "Beefy stream closed for peer " + stream.remotePeerId());
             ProtocolMessageHandler.super.onClosed(stream);
         }
 
         @Override
         public void onException(Throwable cause) {
-            connectionManager.closeGrandpaStream(stream);
+            connectionManager.closeBeefyStream(stream);
             if (cause != null) {
-                log.log(Level.WARNING, "Grandpa Exception: " + cause.getMessage());
+                log.log(Level.WARNING, "Beefy Exception: " + cause.getMessage());
                 cause.printStackTrace();
             } else {
-                log.log(Level.WARNING, "Grandpa Exception with unknown cause");
+                log.log(Level.WARNING, "Beefy Exception with unknown cause");
             }
             ProtocolMessageHandler.super.onException(cause);
         }

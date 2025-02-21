@@ -7,6 +7,7 @@ import com.limechain.cli.CliArguments;
 import com.limechain.config.HostConfig;
 import com.limechain.constants.GenesisBlockHash;
 import com.limechain.network.kad.KademliaService;
+import com.limechain.network.protocol.beefy.BeefyService;
 import com.limechain.network.protocol.blockannounce.BlockAnnounceService;
 import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.network.protocol.grandpa.GrandpaService;
@@ -70,9 +71,10 @@ public class NetworkService implements NodeService {
     private WarpSyncService warpSyncService;
     private LightMessagesService lightMessagesService;
 
+    private TransactionsService transactionsService;
     private BlockAnnounceService blockAnnounceService;
     private GrandpaService grandpaService;
-    private TransactionsService transactionsService;
+    private BeefyService beefyService;
 
     private Ping ping;
 
@@ -104,6 +106,7 @@ public class NetworkService implements NodeService {
     private void initializeProtocols(ChainService chainService, GenesisBlockHash genesisBlockHash,
                                      HostConfig hostConfig,
                                      KVRepository<String, Object> repository, CliArguments cliArgs) {
+
         boolean isLocalEnabled = hostConfig.getChain() == Chain.LOCAL;
         boolean clientMode = true;
 
@@ -125,19 +128,21 @@ public class NetworkService implements NodeService {
         String lightProtocolId = ProtocolUtils.getLightMessageProtocol(protocolId);
         String syncProtocolId = ProtocolUtils.getSyncProtocol(protocolId);
         String stateProtocolId = ProtocolUtils.getStateProtocol(protocolId);
+        String transactionsProtocolId = ProtocolUtils.getTransactionsProtocol(protocolId);
         String blockAnnounceProtocolId = ProtocolUtils.getBlockAnnounceProtocol(protocolId);
         String grandpaProtocolId = ProtocolUtils.getGrandpaProtocol(protocolId, legacyProtocol);
-        String transactionsProtocolId = ProtocolUtils.getTransactionsProtocol(protocolId);
+        String beefyProtocolId = ProtocolUtils.getBeefyProtocol(protocolId, legacyProtocol);
 
         kademliaService = new KademliaService(kadProtocolId, hostId, isLocalEnabled, clientMode);
         lightMessagesService = new LightMessagesService(lightProtocolId);
         warpSyncService = new WarpSyncService(warpProtocolId);
         syncService = new SyncService(syncProtocolId);
         stateService = new StateService(stateProtocolId);
+        transactionsService = new TransactionsService(transactionsProtocolId);
         blockAnnounceService = new BlockAnnounceService(blockAnnounceProtocolId);
         grandpaService = new GrandpaService(grandpaProtocolId);
+        beefyService = new BeefyService(beefyProtocolId);
         ping = new Ping(pingProtocol, new PingProtocol());
-        transactionsService = new TransactionsService(transactionsProtocolId);
 
         hostBuilder.addProtocols(
                 List.of(
@@ -155,7 +160,8 @@ public class NetworkService implements NodeService {
         if (nodeRole == NodeRole.AUTHORING) {
             hostBuilder.addProtocols(
                     List.of(
-                            transactionsService.getProtocol()
+                            transactionsService.getProtocol(),
+                            beefyService.getProtocol()
                     )
             );
         }

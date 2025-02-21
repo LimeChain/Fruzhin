@@ -8,14 +8,14 @@ import io.emeraldpay.polkaj.types.Hash256;
 
 import java.math.BigInteger;
 
-public class BlockAnnounceHandshakeBuilder {
+public class HandshakeBuilder {
 
     /**
      * Creates a Block Announce handshake based on the latest finalized Host state
      *
      * @return our Block Announce handshake
      */
-    public BlockAnnounceHandshake getBlockAnnounceHandshake() {
+    public Handshake getHandshake() {
         SyncState syncState = AppBean.getBean(SyncState.class);
         HostConfig hostConfig = AppBean.getBean(HostConfig.class);
 
@@ -28,12 +28,12 @@ public class BlockAnnounceHandshakeBuilder {
         Hash256 blockHash = lastFinalizedBlockHash == null
                 ? genesisBlockHash
                 : lastFinalizedBlockHash;
-        return new BlockAnnounceHandshake(
+
+        return new Handshake(
                 nodeRole.getValue(),
                 lastFinalizedBlockNumber,
                 blockHash,
                 genesisBlockHash
         );
     }
-
 }

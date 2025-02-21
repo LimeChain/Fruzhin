@@ -3,7 +3,7 @@ package com.limechain.network.protocol.grandpa;
 import com.limechain.exception.scale.ScaleEncodingException;
 import com.limechain.grandpa.GrandpaService;
 import com.limechain.network.ConnectionManager;
-import com.limechain.network.protocol.blockannounce.messages.BlockAnnounceHandshakeBuilder;
+import com.limechain.network.protocol.blockannounce.messages.HandshakeBuilder;
 import com.limechain.network.protocol.grandpa.messages.GrandpaMessageType;
 import com.limechain.network.protocol.grandpa.messages.catchup.req.CatchUpReqMessage;
 import com.limechain.network.protocol.grandpa.messages.catchup.req.CatchUpReqMessageScaleReader;
@@ -39,14 +39,15 @@ import java.util.logging.Level;
 @Log
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 public class GrandpaEngine {
+
     private static final int HANDSHAKE_LENGTH = 1;
     protected ConnectionManager connectionManager;
-    protected BlockAnnounceHandshakeBuilder handshakeBuilder;
+    protected HandshakeBuilder handshakeBuilder;
     protected GrandpaMessageHandler grandpaMessageHandler;
 
     public GrandpaEngine() {
         connectionManager = ConnectionManager.getInstance();
-        handshakeBuilder = new BlockAnnounceHandshakeBuilder();
+        handshakeBuilder = new HandshakeBuilder();
         grandpaMessageHandler = AppBean.getBean(GrandpaMessageHandler.class);
     }
 
@@ -197,7 +198,7 @@ public class GrandpaEngine {
      */
     public void writeHandshakeToStream(Stream stream, PeerId peerId) {
         byte[] handshake = new byte[]{
-                (byte) handshakeBuilder.getBlockAnnounceHandshake().getNodeRole()
+                (byte) handshakeBuilder.getHandshake().getNodeRole()
         };
 
         log.log(Level.INFO, "Sending grandpa handshake to " + peerId);

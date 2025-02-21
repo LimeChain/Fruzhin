@@ -10,7 +10,7 @@ import java.math.BigInteger;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class BlockAnnounceHandshake {
+public class Handshake {
     private int nodeRole;
     private BigInteger bestBlock;
     private Hash256 bestBlockHash;

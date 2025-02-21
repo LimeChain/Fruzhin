@@ -12,6 +12,7 @@ import java.util.Arrays;
 @Data
 @NoArgsConstructor
 public class PeerInfo {
+
     private PeerId peerId;
     private int nodeRole;
     private BigInteger bestBlock;
@@ -21,6 +22,7 @@ public class PeerInfo {
     private final ProtocolStreams blockAnnounceStreams = new ProtocolStreams();
     private final ProtocolStreams grandpaStreams = new ProtocolStreams();
     private final ProtocolStreams transactionsStreams = new ProtocolStreams();
+    private final ProtocolStreams beefyStreams = new ProtocolStreams();
 
     public String getNodeRoleName(){
         return Arrays
@@ -36,6 +38,7 @@ public class PeerInfo {
             case GRANDPA -> grandpaStreams;
             case BLOCK_ANNOUNCE -> blockAnnounceStreams;
             case TRANSACTIONS -> transactionsStreams;
+            case BEEFY -> beefyStreams;
         };
     }
 

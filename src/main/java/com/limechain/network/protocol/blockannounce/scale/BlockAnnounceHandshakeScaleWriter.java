@@ -1,6 +1,6 @@
 package com.limechain.network.protocol.blockannounce.scale;
 
-import com.limechain.network.protocol.blockannounce.messages.BlockAnnounceHandshake;
+import com.limechain.network.protocol.blockannounce.messages.Handshake;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.emeraldpay.polkaj.scale.ScaleWriter;
 import lombok.AccessLevel;
@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 import java.io.IOException;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-public class BlockAnnounceHandshakeScaleWriter implements ScaleWriter<BlockAnnounceHandshake> {
+public class BlockAnnounceHandshakeScaleWriter implements ScaleWriter<Handshake> {
 
     private static final BlockAnnounceHandshakeScaleWriter INSTANCE = new BlockAnnounceHandshakeScaleWriter();
 
@@ -18,7 +18,7 @@ public class BlockAnnounceHandshakeScaleWriter implements ScaleWriter<BlockAnnou
     }
 
     @Override
-    public void write(ScaleCodecWriter writer, BlockAnnounceHandshake handshake) throws IOException {
+    public void write(ScaleCodecWriter writer, Handshake handshake) throws IOException {
         writer.writeByte(handshake.getNodeRole());
         writer.writeUint32(handshake.getBestBlock().longValue());
         writer.writeUint256(handshake.getBestBlockHash().getBytes());
