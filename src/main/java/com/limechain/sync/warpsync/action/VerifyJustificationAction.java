@@ -61,7 +61,7 @@ public class VerifyJustificationAction implements WarpSyncAction {
 
             WarpSyncFragment fragment = sync.getFragmentsQueue().poll();
             log.log(Level.INFO, "Verifying justification...");
-            
+
             if (fragment == null) {
                 throw new JustificationVerificationException("No such fragment");
             }
@@ -83,9 +83,10 @@ public class VerifyJustificationAction implements WarpSyncAction {
     private void handleAuthorityChanges(WarpSyncFragment fragment) {
         BlockHeader header = fragment.getHeader();
 
-        DigestHelper.getGrandpaConsensusMessage(header.getDigest())
-                .ifPresent(cm -> stateManager.getGrandpaSetState()
-                        .handleGrandpaConsensusMessage(cm, header.getBlockNumber()));
+        DigestHelper.getGrandpaConsensusMessages(header.getDigest())
+                .forEach(cm -> stateManager.getGrandpaSetState().handleGrandpaConsensusMessage(
+                        cm, header.getBlockNumber())
+                );
 
         SyncState syncState = stateManager.getSyncState();
         log.log(Level.INFO, "Verified justification. Block hash is now at #"
