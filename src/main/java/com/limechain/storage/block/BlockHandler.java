@@ -154,21 +154,27 @@ public class BlockHandler {
 
         EpochState epochState = stateManager.getEpochState();
         if (epochState.isInitialized()) {
-            asyncExecutor.executeAndForget(() -> DigestHelper.getBabeConsensusMessage(header.getDigest())
-                    .ifPresent(cm -> {
+            DigestHelper.getBabeConsensusMessages(header.getDigest())
+                    .forEach(cm -> {
                         stateManager.getEpochState().updateNextEpochConfig(cm);
                         log.fine(String.format("Updated epoch block config: %s", cm.getFormat().toString()));
-                    }));
+                    });
         }
 
         GrandpaSetState grandpaSetState = stateManager.getGrandpaSetState();
         if (grandpaSetState.isInitialized()) {
-            asyncExecutor.executeAndForget(() -> DigestHelper.getGrandpaConsensusMessage(header.getDigest())
-                    .ifPresent(cm ->
-                            grandpaSetState.handleGrandpaConsensusMessage(cm, header.getBlockNumber())
-                    ));
+            DigestHelper.getGrandpaConsensusMessages(header.getDigest())
+                    .forEach(cm -> grandpaSetState.handleGrandpaConsensusMessage(
+                            cm, header.getBlockNumber())
+                    );
 
             grandpaSetState.handleAuthoritySetChange(header.getBlockNumber());
+
+            DigestHelper.getBeefyConsensusMessages(header.getDigest())
+                    .forEach(cm -> {
+                                //Todo: handleBeefyConsensusMessage
+                            }
+                    );
         }
     }
 
