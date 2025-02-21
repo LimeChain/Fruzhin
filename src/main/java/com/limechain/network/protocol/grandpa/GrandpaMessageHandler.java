@@ -495,8 +495,8 @@ public class GrandpaMessageHandler {
         stateManager.getSyncState().finalizeHeader(header);
 
         DigestHelper.getGrandpaConsensusMessages(header.getDigest())
-                .forEach(cm ->
-                        stateManager.getGrandpaSetState().handleGrandpaConsensusMessage(cm, header.getBlockNumber())
+                .forEach(cm -> stateManager.getGrandpaSetState().handleGrandpaConsensusMessage(
+                        cm, header.getBlockNumber())
                 );
 
         // Executes scheduled or forced authority changes for the last finalized block.

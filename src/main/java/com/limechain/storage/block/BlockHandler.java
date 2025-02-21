@@ -164,8 +164,8 @@ public class BlockHandler {
         GrandpaSetState grandpaSetState = stateManager.getGrandpaSetState();
         if (grandpaSetState.isInitialized()) {
             DigestHelper.getGrandpaConsensusMessages(header.getDigest())
-                    .forEach(cm ->
-                            grandpaSetState.handleGrandpaConsensusMessage(cm, header.getBlockNumber())
+                    .forEach(cm -> grandpaSetState.handleGrandpaConsensusMessage(
+                            cm, header.getBlockNumber())
                     );
 
             grandpaSetState.handleAuthoritySetChange(header.getBlockNumber());
