@@ -351,7 +351,10 @@ public class GrandpaMessageHandler {
             if (!verified) {
                 throw new JustificationVerificationException("Justification could not be verified.");
             }
-        } catch (ExecutionException | InterruptedException e) {
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new JustificationVerificationException("Justification verification was interrupted.", e);
+        } catch (ExecutionException e) {
             throw new JustificationVerificationException("Justification verification failed.", e);
         }
 
