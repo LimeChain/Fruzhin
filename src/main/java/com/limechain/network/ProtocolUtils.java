@@ -39,7 +39,10 @@ public final class ProtocolUtils {
         return String.format("/%s/grandpa/1", legacyProtocol ? "paritytech" : chainId);
     }
 
-    public static String getBeefyProtocol(String chainId, boolean legacyProtocol) {
-        return String.format("/%s/beefy/1", legacyProtocol ? "paritytech" : chainId);
+    // NOTE: Beefy was likely not part of the original protocols and therefore
+    // only operates with the genesis hash. As a result, it does not support
+    // the {chainId}/beefy/2 format.
+    public static String getBeefyProtocol(String genesisBlockHash) {
+        return String.format("/%s/beefy/2", genesisBlockHash);
     }
 }

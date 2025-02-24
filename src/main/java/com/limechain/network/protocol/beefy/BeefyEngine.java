@@ -22,11 +22,9 @@ public class BeefyEngine {
 
     protected ConnectionManager connectionManager;
     protected BeefyMessageHandler beefyMessageHandler;
-    protected HandshakeBuilder handshakeBuilder;
 
     public BeefyEngine() {
         connectionManager = ConnectionManager.getInstance();
-        handshakeBuilder = new HandshakeBuilder();
         beefyMessageHandler = AppBean.getBean(BeefyMessageHandler.class);
     }
 
@@ -43,18 +41,6 @@ public class BeefyEngine {
             handleInitiatorStreamMessage(messageType, stream);
         } else {
             handleResponderStreamMessage(message, messageType, stream);
-        }
-    }
-
-    private void handleHandshake(byte[] message, PeerId peerId, Stream stream) {
-        if (connectionManager.isBeefyConnected(peerId)) {
-            log.log(Level.INFO, "Received existing beefy handshake from " + peerId);
-            stream.close();
-        } else {
-            connectionManager.addBeefyStream(stream);
-            connectionManager.getPeerInfo(peerId).setNodeRole(message[0]);
-            log.log(Level.INFO, "Received beefy handshake from " + peerId);
-            writeHandshakeToStream(stream, peerId);
         }
     }
 
@@ -91,6 +77,18 @@ public class BeefyEngine {
         }
     }
 
+    private void handleHandshake(byte[] message, PeerId peerId, Stream stream) {
+        if (connectionManager.isBeefyConnected(peerId)) {
+            log.log(Level.INFO, "Received existing beefy handshake from " + peerId);
+            stream.close();
+        } else {
+            connectionManager.addBeefyStream(stream);
+            connectionManager.getPeerInfo(peerId).setNodeRole(message[0]);
+            log.log(Level.INFO, "Received beefy handshake from " + peerId);
+            writeHandshakeToStream(stream, peerId);
+        }
+    }
+
     private void handleVoteMessage(byte[] message, PeerId peerId) {
         //TODO
     }
@@ -105,10 +103,7 @@ public class BeefyEngine {
      * @param peerId peer to send to
      */
     public void writeHandshakeToStream(Stream stream, PeerId peerId) {
-        byte[] handshake = new byte[] {
-                (byte) handshakeBuilder.getHandshake().getNodeRole()
-        };
-
+        byte[] handshake = new byte[]{0};
         log.log(Level.INFO, "Sending beefy handshake to " + peerId);
         stream.writeAndFlush(handshake);
     }

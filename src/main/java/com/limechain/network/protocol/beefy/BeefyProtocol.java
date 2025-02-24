@@ -94,7 +94,6 @@ public class BeefyProtocol extends ProtocolHandler<BeefyController> {
             connectionManager.closeBeefyStream(stream);
             if (cause != null) {
                 log.log(Level.WARNING, "Beefy Exception: " + cause.getMessage());
-                cause.printStackTrace();
             } else {
                 log.log(Level.WARNING, "Beefy Exception with unknown cause");
             }

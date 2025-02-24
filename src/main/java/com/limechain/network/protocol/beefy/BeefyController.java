@@ -7,8 +7,8 @@ import io.libp2p.core.Stream;
  */
 public class BeefyController {
 
-    protected BeefyEngine engine = new BeefyEngine();
     protected final Stream stream;
+    protected BeefyEngine engine = new BeefyEngine();
 
     public BeefyController(Stream stream) {
         this.stream = stream;

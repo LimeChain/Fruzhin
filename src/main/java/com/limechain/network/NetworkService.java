@@ -121,8 +121,11 @@ public class NetworkService implements NodeService {
         String pingProtocol = ProtocolUtils.PING_PROTOCOL;
         String chainId = chainService.getChainSpec().getProtocolId();
         boolean legacyProtocol = !cliArgs.noLegacyProtocols();
-        String protocolId = legacyProtocol ? chainId :
-                StringUtils.remove0xPrefix(genesisBlockHash.getGenesisHash().toString());
+        String genesisBlockHashWithoutPrefix = StringUtils.remove0xPrefix(genesisBlockHash.getGenesisHash().toString());
+        String protocolId = legacyProtocol ?
+                chainId :
+                genesisBlockHashWithoutPrefix;
+
         String kadProtocolId = ProtocolUtils.getKadProtocol(chainId);
         String warpProtocolId = ProtocolUtils.getWarpSyncProtocol(protocolId);
         String lightProtocolId = ProtocolUtils.getLightMessageProtocol(protocolId);
@@ -131,7 +134,7 @@ public class NetworkService implements NodeService {
         String transactionsProtocolId = ProtocolUtils.getTransactionsProtocol(protocolId);
         String blockAnnounceProtocolId = ProtocolUtils.getBlockAnnounceProtocol(protocolId);
         String grandpaProtocolId = ProtocolUtils.getGrandpaProtocol(protocolId, legacyProtocol);
-        String beefyProtocolId = ProtocolUtils.getBeefyProtocol(protocolId, legacyProtocol);
+        String beefyProtocolId = ProtocolUtils.getBeefyProtocol(genesisBlockHashWithoutPrefix);
 
         kademliaService = new KademliaService(kadProtocolId, hostId, isLocalEnabled, clientMode);
         lightMessagesService = new LightMessagesService(lightProtocolId);

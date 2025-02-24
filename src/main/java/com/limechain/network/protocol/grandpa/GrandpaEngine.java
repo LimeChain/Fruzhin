@@ -76,13 +76,13 @@ public class GrandpaEngine {
         }
 
         if (stream.isInitiator()) {
-            handleInitiatorStreamMessage(message, messageType, stream);
+            handleInitiatorStreamMessage(messageType, stream);
         } else {
             handleResponderStreamMessage(message, messageType, stream);
         }
     }
 
-    private void handleInitiatorStreamMessage(byte[] message, GrandpaMessageType messageType, Stream stream) {
+    private void handleInitiatorStreamMessage(GrandpaMessageType messageType, Stream stream) {
         PeerId peerId = stream.remotePeerId();
         if (messageType != GrandpaMessageType.HANDSHAKE) {
             stream.close();
