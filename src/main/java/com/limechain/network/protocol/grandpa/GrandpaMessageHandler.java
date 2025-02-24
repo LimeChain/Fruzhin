@@ -36,6 +36,7 @@ import com.limechain.sync.JustificationVerifier;
 import com.limechain.sync.state.SyncState;
 import com.limechain.sync.warpsync.WarpSyncState;
 import com.limechain.utils.Ed25519Utils;
+import com.limechain.utils.async.AsyncExecutor;
 import com.limechain.utils.scale.ScaleUtils;
 import io.emeraldpay.polkaj.types.Hash256;
 import io.libp2p.core.PeerId;
@@ -50,7 +51,9 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -69,6 +72,8 @@ public class GrandpaMessageHandler {
     private final PeerMessageCoordinator messageCoordinator;
     private final WarpSyncState warpSyncState;
     private final PeerRequester requester;
+    private final AsyncExecutor asyncExecutor = AsyncExecutor.withPoolSize(10);
+
 
     /**
      * Handles a vote message, extracts signed vote, associates it with the correct round.
@@ -331,10 +336,23 @@ public class GrandpaMessageHandler {
         setPreVotesAndPvEquivocations(grandpaRound, catchUpResMessage.getPreVotes());
         setPreCommitsAndPcEquivocations(grandpaRound, catchUpResMessage.getPreCommits());
 
-        boolean verified = JustificationVerifier.verify(Justification.fromCatchUpResMessage(catchUpResMessage));
+        CompletableFuture<Boolean> verifiedPreVotesFuture = asyncExecutor.executeAsync(() ->
+                JustificationVerifier.verify(Justification.fromCatchUpResPreVotes(catchUpResMessage)));
 
-        if (!verified) {
-            throw new JustificationVerificationException("Justification could not be verified.");
+        CompletableFuture<Boolean> verifiedPreCommitsFuture = asyncExecutor.executeAsync(() ->
+                JustificationVerifier.verify(Justification.fromCatchUpResPreCommits(catchUpResMessage)));
+
+        // Combines verified of preVotes and preCommits - it is true only if both and verified.
+        CompletableFuture<Boolean> verifiedFuture = verifiedPreVotesFuture.thenCombine(verifiedPreCommitsFuture,
+                (preVotes, preCommits) -> preVotes && preCommits);
+
+        try {
+            boolean verified = verifiedFuture.get();
+            if (!verified) {
+                throw new JustificationVerificationException("Justification could not be verified.");
+            }
+        } catch (ExecutionException | InterruptedException e) {
+            throw new JustificationVerificationException("Justification verification failed.", e);
         }
 
         BlockHeader bestFinalCandidate = grandpaRound.getBestFinalCandidate();
