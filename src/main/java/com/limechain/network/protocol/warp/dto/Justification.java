@@ -9,7 +9,6 @@ import lombok.Setter;
 
 import java.math.BigInteger;
 import java.util.Arrays;
-import java.util.stream.Stream;
 
 @Setter
 @Getter
@@ -28,20 +27,25 @@ public class Justification {
         justification.setTargetHash(commitMessage.getVote().getBlockHash());
         justification.setTargetBlock(commitMessage.getVote().getBlockNumber());
         justification.setSignedVotes(commitMessage.getPreCommits());
+
         return justification;
     }
 
-    public static Justification fromCatchUpResMessage(CatchUpResMessage catchUpResMessage) {
-        SignedVote[] allVotes = Stream.concat(
-                Arrays.stream(catchUpResMessage.getPreVotes()),
-                Arrays.stream(catchUpResMessage.getPreCommits())
-        ).toArray(SignedVote[]::new);
+    public static Justification fromCatchUpResPreVotes(CatchUpResMessage message) {
+        return fromCatchUpResMessage(message, message.getPreVotes());
+    }
 
+    public static Justification fromCatchUpResPreCommits(CatchUpResMessage message) {
+        return fromCatchUpResMessage(message, message.getPreCommits());
+    }
+
+    private static Justification fromCatchUpResMessage(CatchUpResMessage message, SignedVote[] signedVotes) {
         Justification justification = new Justification();
-        justification.setRoundNumber(catchUpResMessage.getRoundNumber());
-        justification.setTargetHash(catchUpResMessage.getBlockHash());
-        justification.setTargetBlock(catchUpResMessage.getBlockNumber());
-        justification.setSignedVotes(allVotes);
+        justification.setRoundNumber(message.getRoundNumber());
+        justification.setTargetHash(message.getBlockHash());
+        justification.setTargetBlock(message.getBlockNumber());
+        justification.setSignedVotes(signedVotes);
+
         return justification;
     }
 
