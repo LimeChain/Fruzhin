@@ -53,7 +53,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -346,16 +345,9 @@ public class GrandpaMessageHandler {
         CompletableFuture<Boolean> verifiedFuture = verifiedPreVotesFuture.thenCombine(verifiedPreCommitsFuture,
                 (preVotes, preCommits) -> preVotes && preCommits);
 
-        try {
-            boolean verified = verifiedFuture.get();
-            if (!verified) {
-                throw new JustificationVerificationException("Justification could not be verified.");
-            }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new JustificationVerificationException("Justification verification was interrupted.", e);
-        } catch (ExecutionException e) {
-            throw new JustificationVerificationException("Justification verification failed.", e);
+        boolean verified = verifiedFuture.join();
+        if (!verified) {
+            throw new JustificationVerificationException("Justification could not be verified.");
         }
 
         BlockHeader bestFinalCandidate = grandpaRound.getBestFinalCandidate();
