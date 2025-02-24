@@ -7,6 +7,6 @@ import java.util.List;
 
 @Data
 public class ValidatorSet {
-    List<PubKey> validators;
-    private  long id;
+    private List<PubKey> validators;
+    private long id;
 }

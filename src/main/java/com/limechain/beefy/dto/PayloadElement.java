@@ -4,6 +4,6 @@ import lombok.Data;
 
 @Data
 public class PayloadElement {
-    private  byte[] payloadId;
-    private  byte[] data;
+    private BeefyPayloadId payloadId;
+    private byte[] data;
 }
