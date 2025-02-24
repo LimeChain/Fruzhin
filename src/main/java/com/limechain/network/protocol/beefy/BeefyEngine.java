@@ -103,7 +103,7 @@ public class BeefyEngine {
      * @param peerId peer to send to
      */
     public void writeHandshakeToStream(Stream stream, PeerId peerId) {
-        byte[] handshake = new byte[]{0};
+        byte[] handshake = new byte[]{};
         log.log(Level.INFO, "Sending beefy handshake to " + peerId);
         stream.writeAndFlush(handshake);
     }

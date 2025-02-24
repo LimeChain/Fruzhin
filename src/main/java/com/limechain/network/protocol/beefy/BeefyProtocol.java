@@ -53,7 +53,6 @@ public class BeefyProtocol extends ProtocolHandler<BeefyController> {
         return onStartStream(stream);
     }
 
-
     private CompletableFuture<BeefyController> onStartStream(Stream stream) {
         stream.pushHandler(new Leb128LengthFrameDecoder());
         stream.pushHandler(new Leb128LengthFrameEncoder());
