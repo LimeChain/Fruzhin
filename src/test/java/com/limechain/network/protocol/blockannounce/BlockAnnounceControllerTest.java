@@ -1,6 +1,6 @@
 package com.limechain.network.protocol.blockannounce;
 
-import com.limechain.network.protocol.blockannounce.messages.HandshakeBuilder;
+import com.limechain.network.protocol.blockannounce.messages.BlockAnnounceHandshakeBuilder;
 import io.libp2p.core.PeerId;
 import io.libp2p.core.Stream;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,12 +24,12 @@ class BlockAnnounceControllerTest {
     @Mock
     private BlockAnnounceEngine engine;
     @Mock
-    private HandshakeBuilder handshakeBuilder;
+    private BlockAnnounceHandshakeBuilder blockAnnounceHandshakeBuilder;
 
     @BeforeEach
     void setup() {
         blockAnnounceController.engine = engine;
-        engine.handshakeBuilder = handshakeBuilder;
+        engine.blockAnnounceHandshakeBuilder = blockAnnounceHandshakeBuilder;
     }
 
     @Test

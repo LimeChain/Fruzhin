@@ -2,7 +2,7 @@ package com.limechain.network.protocol.blockannounce;
 
 import com.limechain.network.ConnectionManager;
 import com.limechain.network.protocol.blockannounce.messages.Handshake;
-import com.limechain.network.protocol.blockannounce.messages.HandshakeBuilder;
+import com.limechain.network.protocol.blockannounce.messages.BlockAnnounceHandshakeBuilder;
 import com.limechain.network.protocol.blockannounce.messages.BlockAnnounceMessage;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshakeScaleWriter;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceMessageScaleReader;
@@ -62,7 +62,7 @@ class BlockAnnounceEngineTest {
     @Mock
     private Handshake handshake;
     @Mock
-    private HandshakeBuilder handshakeBuilder;
+    private BlockAnnounceHandshakeBuilder blockAnnounceHandshakeBuilder;
 
     @Mock
     BlockHandler blockHandler;
@@ -85,7 +85,7 @@ class BlockAnnounceEngineTest {
         Arrays.fill(message, (byte) 1);
         when(stream.remotePeerId()).thenReturn(peerId);
         when(connectionManager.isBlockAnnounceConnected(peerId)).thenReturn(false);
-        when(handshakeBuilder.getHandshake()).thenReturn(handshake);
+        when(blockAnnounceHandshakeBuilder.getBlockAnnounceHandshake()).thenReturn(handshake);
         try (
                 MockedConstruction<ScaleCodecReader> readerMock = mockConstruction(ScaleCodecReader.class,
                         (mock, context) -> when(mock.read(any())).thenReturn(handshake));
@@ -103,7 +103,7 @@ class BlockAnnounceEngineTest {
         Arrays.fill(message, (byte) 1);
         when(stream.remotePeerId()).thenReturn(peerId);
         when(connectionManager.isBlockAnnounceConnected(peerId)).thenReturn(false);
-        when(handshakeBuilder.getHandshake()).thenReturn(handshake);
+        when(blockAnnounceHandshakeBuilder.getBlockAnnounceHandshake()).thenReturn(handshake);
         try (
                 MockedConstruction<ScaleCodecReader> readerMock = mockConstruction(ScaleCodecReader.class);
                 MockedConstruction<ScaleCodecWriter> writerMock = mockConstruction(ScaleCodecWriter.class)

@@ -3,7 +3,7 @@ package com.limechain.network.protocol.blockannounce;
 import com.limechain.exception.scale.ScaleEncodingException;
 import com.limechain.network.ConnectionManager;
 import com.limechain.network.protocol.blockannounce.messages.Handshake;
-import com.limechain.network.protocol.blockannounce.messages.HandshakeBuilder;
+import com.limechain.network.protocol.blockannounce.messages.BlockAnnounceHandshakeBuilder;
 import com.limechain.network.protocol.blockannounce.messages.BlockAnnounceMessage;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshakeScaleReader;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshakeScaleWriter;
@@ -35,13 +35,13 @@ public class BlockAnnounceEngine {
     protected ConnectionManager connectionManager;
     protected WarpSyncState warpSyncState;
     private BlockHandler blockHandler;
-    protected HandshakeBuilder handshakeBuilder;
+    protected BlockAnnounceHandshakeBuilder blockAnnounceHandshakeBuilder;
 
     public BlockAnnounceEngine() {
         connectionManager = ConnectionManager.getInstance();
         warpSyncState = AppBean.getBean(WarpSyncState.class);
         blockHandler = AppBean.getBean(BlockHandler.class);
-        handshakeBuilder = new HandshakeBuilder();
+        blockAnnounceHandshakeBuilder = new BlockAnnounceHandshakeBuilder();
     }
 
     public void receiveRequest(byte[] msg, Stream stream) {
@@ -102,7 +102,10 @@ public class BlockAnnounceEngine {
     public void writeHandshakeToStream(Stream stream, PeerId peerId) {
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
         try (ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
-            writer.write(BlockAnnounceHandshakeScaleWriter.getInstance(), handshakeBuilder.getHandshake());
+            writer.write(
+                    BlockAnnounceHandshakeScaleWriter.getInstance(),
+                    blockAnnounceHandshakeBuilder.getBlockAnnounceHandshake()
+            );
         } catch (IOException e) {
             throw new ScaleEncodingException(e);
         }

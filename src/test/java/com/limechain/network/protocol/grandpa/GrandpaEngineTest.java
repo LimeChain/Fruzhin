@@ -1,11 +1,10 @@
 package com.limechain.network.protocol.grandpa;
 
+import com.limechain.config.HostConfig;
 import com.limechain.grandpa.state.GrandpaSetState;
 import com.limechain.network.ConnectionManager;
 import com.limechain.network.dto.PeerInfo;
 import com.limechain.network.protocol.blockannounce.NodeRole;
-import com.limechain.network.protocol.blockannounce.messages.Handshake;
-import com.limechain.network.protocol.blockannounce.messages.HandshakeBuilder;
 import com.limechain.network.protocol.grandpa.messages.catchup.req.CatchUpReqMessage;
 import com.limechain.network.protocol.grandpa.messages.catchup.req.CatchUpReqMessageScaleReader;
 import com.limechain.network.protocol.grandpa.messages.catchup.res.CatchUpResMessage;
@@ -45,6 +44,7 @@ import static org.mockito.Mockito.when;
 @SuppressWarnings("unused")
 @ExtendWith(MockitoExtension.class)
 class GrandpaEngineTest {
+
     @InjectMocks
     private GrandpaEngine grandpaEngine;
     @Mock
@@ -58,7 +58,7 @@ class GrandpaEngineTest {
     @Mock
     private GrandpaSetState grandpaSetState;
     @Mock
-    private HandshakeBuilder handshakeBuilder;
+    private HostConfig hostConfig;
 
     private final NeighbourMessage neighbourMessage =
             new NeighbourMessage(1, BigInteger.ONE, BigInteger.TWO, BigInteger.TEN);
@@ -67,7 +67,6 @@ class GrandpaEngineTest {
 
     private final byte[] encodedCommitMessage
             = new byte[]{2, 1, 1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 10, 0, 0, 0};
-
 
     @Test
     void receiveRequestWithUnknownGrandpaTypeShouldLogAndIgnore() {
@@ -161,7 +160,7 @@ class GrandpaEngineTest {
             when(stream.remotePeerId()).thenReturn(peerId);
             when(connectionManager.isGrandpaConnected(peerId)).thenReturn(false);
             when(connectionManager.getPeerInfo(peerId)).thenReturn(mock(PeerInfo.class));
-            when(handshakeBuilder.getHandshake()).thenReturn(mock(Handshake.class));
+            when(hostConfig.getNodeRole()).thenReturn(NodeRole.AUTHORING);
 
             grandpaEngine.receiveRequest(message, stream);
 
@@ -174,19 +173,15 @@ class GrandpaEngineTest {
         try (MockedStatic<AbstractState> mockedState = mockStatic(AbstractState.class)) {
             mockedState.when(AbstractState::getSyncMode).thenReturn(SyncMode.HEAD);
             byte[] message = new byte[]{2};
-            Integer role = NodeRole.LIGHT.getValue();
-
             when(stream.isInitiator()).thenReturn(false);
             when(stream.remotePeerId()).thenReturn(peerId);
             when(connectionManager.isGrandpaConnected(peerId)).thenReturn(false);
             when(connectionManager.getPeerInfo(peerId)).thenReturn(mock(PeerInfo.class));
-            Handshake handshake = mock(Handshake.class);
-            when(handshakeBuilder.getHandshake()).thenReturn(handshake);
-            when(handshake.getNodeRole()).thenReturn(role);
+            when(hostConfig.getNodeRole()).thenReturn(NodeRole.LIGHT);
 
             grandpaEngine.receiveRequest(message, stream);
 
-            verify(stream).writeAndFlush(new byte[]{role.byteValue()});
+            verify(stream).writeAndFlush(new byte[]{NodeRole.LIGHT.getValue().byteValue()});
         }
     }
 
@@ -291,14 +286,9 @@ class GrandpaEngineTest {
     // WRITE
     @Test
     void writeHandshakeToStream() {
-        Integer role = NodeRole.LIGHT.getValue();
-        Handshake handshake = mock(Handshake.class);
-        when(handshakeBuilder.getHandshake()).thenReturn(handshake);
-        when(handshake.getNodeRole()).thenReturn(role);
-
+        when(hostConfig.getNodeRole()).thenReturn(NodeRole.LIGHT);
         grandpaEngine.writeHandshakeToStream(stream, peerId);
-
-        verify(stream).writeAndFlush(new byte[]{role.byteValue()});
+        verify(stream).writeAndFlush(new byte[]{NodeRole.LIGHT.getValue().byteValue()});
     }
 
     @Test
