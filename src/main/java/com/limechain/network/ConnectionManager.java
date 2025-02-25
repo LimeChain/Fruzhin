@@ -4,7 +4,7 @@ import com.limechain.network.dto.PeerInfo;
 import com.limechain.network.dto.ProtocolStreamType;
 import com.limechain.network.dto.ProtocolStreams;
 import com.limechain.network.protocol.blockannounce.NodeRole;
-import com.limechain.network.protocol.blockannounce.messages.Handshake;
+import com.limechain.network.protocol.blockannounce.messages.BlockAnnounceHandshake;
 import com.limechain.network.protocol.blockannounce.messages.BlockAnnounceMessage;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import io.libp2p.core.PeerId;
@@ -163,18 +163,18 @@ public class ConnectionManager {
      * based on a Block Announce Handshake.
      *
      * @param peerId                 peer to be updated
-     * @param handshake handshake
+     * @param blockAnnounceHandshake handshake
      */
-    public void updatePeer(PeerId peerId, Handshake handshake) {
+    public void updatePeer(PeerId peerId, BlockAnnounceHandshake blockAnnounceHandshake) {
         PeerInfo peerInfo = peers.get(peerId);
         if (peerInfo == null) {
             log.log(Level.WARNING, "Trying to update missing peer " + peerId);
             return;
         }
-        peerInfo.setNodeRole(handshake.getNodeRole());
-        peerInfo.setGenesisBlockHash(handshake.getGenesisBlockHash());
-        peerInfo.setBestBlock(handshake.getBestBlock());
-        peerInfo.setBestBlockHash(handshake.getBestBlockHash());
+        peerInfo.setNodeRole(blockAnnounceHandshake.getNodeRole());
+        peerInfo.setGenesisBlockHash(blockAnnounceHandshake.getGenesisBlockHash());
+        peerInfo.setBestBlock(blockAnnounceHandshake.getBestBlock());
+        peerInfo.setBestBlockHash(blockAnnounceHandshake.getBestBlockHash());
     }
 
     /**

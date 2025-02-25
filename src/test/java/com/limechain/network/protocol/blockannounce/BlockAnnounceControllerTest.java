@@ -29,7 +29,7 @@ class BlockAnnounceControllerTest {
     @BeforeEach
     void setup() {
         blockAnnounceController.engine = engine;
-        engine.blockAnnounceHandshakeBuilder = blockAnnounceHandshakeBuilder;
+        engine.handshakeBuilder = blockAnnounceHandshakeBuilder;
     }
 
     @Test

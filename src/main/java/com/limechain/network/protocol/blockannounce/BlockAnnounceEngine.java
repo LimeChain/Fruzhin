@@ -2,7 +2,7 @@ package com.limechain.network.protocol.blockannounce;
 
 import com.limechain.exception.scale.ScaleEncodingException;
 import com.limechain.network.ConnectionManager;
-import com.limechain.network.protocol.blockannounce.messages.Handshake;
+import com.limechain.network.protocol.blockannounce.messages.BlockAnnounceHandshake;
 import com.limechain.network.protocol.blockannounce.messages.BlockAnnounceHandshakeBuilder;
 import com.limechain.network.protocol.blockannounce.messages.BlockAnnounceMessage;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceHandshakeScaleReader;
@@ -35,13 +35,13 @@ public class BlockAnnounceEngine {
     protected ConnectionManager connectionManager;
     protected WarpSyncState warpSyncState;
     private BlockHandler blockHandler;
-    protected BlockAnnounceHandshakeBuilder blockAnnounceHandshakeBuilder;
+    protected BlockAnnounceHandshakeBuilder handshakeBuilder;
 
     public BlockAnnounceEngine() {
         connectionManager = ConnectionManager.getInstance();
         warpSyncState = AppBean.getBean(WarpSyncState.class);
         blockHandler = AppBean.getBean(BlockHandler.class);
-        blockAnnounceHandshakeBuilder = new BlockAnnounceHandshakeBuilder();
+        handshakeBuilder = new BlockAnnounceHandshakeBuilder();
     }
 
     public void receiveRequest(byte[] msg, Stream stream) {
@@ -73,7 +73,7 @@ public class BlockAnnounceEngine {
             stream.close();
         } else {
             ScaleCodecReader reader = new ScaleCodecReader(msg);
-            Handshake handshake = reader.read(BlockAnnounceHandshakeScaleReader.getInstance());
+            BlockAnnounceHandshake handshake = reader.read(BlockAnnounceHandshakeScaleReader.getInstance());
             connectionManager.addBlockAnnounceStream(stream);
             connectionManager.updatePeer(peerId, handshake);
             log.log(Level.INFO, "Received handshake from " + peerId + "\n" +
@@ -104,7 +104,7 @@ public class BlockAnnounceEngine {
         try (ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
             writer.write(
                     BlockAnnounceHandshakeScaleWriter.getInstance(),
-                    blockAnnounceHandshakeBuilder.getBlockAnnounceHandshake()
+                    handshakeBuilder.getBlockAnnounceHandshake()
             );
         } catch (IOException e) {
             throw new ScaleEncodingException(e);

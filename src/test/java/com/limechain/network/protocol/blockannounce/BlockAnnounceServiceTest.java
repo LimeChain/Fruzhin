@@ -4,7 +4,7 @@ import com.limechain.network.ConnectionManager;
 import com.limechain.network.dto.PeerInfo;
 import com.limechain.network.dto.ProtocolStreams;
 import com.limechain.network.kad.KademliaService;
-import com.limechain.network.protocol.blockannounce.messages.Handshake;
+import com.limechain.network.protocol.blockannounce.messages.BlockAnnounceHandshake;
 import com.limechain.utils.RandomGenerationUtils;
 import io.emeraldpay.polkaj.types.Hash256;
 import io.ipfs.multiaddr.MultiAddress;
@@ -131,7 +131,7 @@ class BlockAnnounceServiceTest {
 
             kademliaService.connectBootNodes(receivers);
 
-            var handshake = new Handshake() {{
+            var handshake = new BlockAnnounceHandshake() {{
                 setNodeRole(4);
                 setBestBlockHash(Hash256.from("0x7b22fc4469863c9671686c189a3238708033d364a77ba8d83e78777e7563f346"));
                 setBestBlock(BigInteger.ZERO);

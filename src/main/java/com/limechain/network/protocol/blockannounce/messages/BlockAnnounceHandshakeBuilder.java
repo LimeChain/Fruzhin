@@ -15,7 +15,7 @@ public class BlockAnnounceHandshakeBuilder {
      *
      * @return our Block Announce handshake
      */
-    public Handshake getBlockAnnounceHandshake() {
+    public BlockAnnounceHandshake getBlockAnnounceHandshake() {
         SyncState syncState = AppBean.getBean(SyncState.class);
         HostConfig hostConfig = AppBean.getBean(HostConfig.class);
 
@@ -29,7 +29,7 @@ public class BlockAnnounceHandshakeBuilder {
                 ? genesisBlockHash
                 : lastFinalizedBlockHash;
 
-        return new Handshake(
+        return new BlockAnnounceHandshake(
                 nodeRole.getValue(),
                 lastFinalizedBlockNumber,
                 blockHash,
