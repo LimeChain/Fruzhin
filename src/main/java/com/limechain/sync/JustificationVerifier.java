@@ -63,7 +63,11 @@ public class JustificationVerifier {
 
         if (justification.getAncestryVotes() != null &&
                 Arrays.stream(justification.getAncestryVotes())
-                        .anyMatch(vote -> !blockState.isDescendantOf(justification.getTargetHash(), vote.getHash()))
+                        .anyMatch(vote -> !blockState.isDescendantOf(
+                                        justification.getTargetHash(),
+                                        vote.getHash()
+                                )
+                        )
         ) {
             log.log(Level.WARNING, "Ancestry vote block is not a descendant of the target block");
             return false;
