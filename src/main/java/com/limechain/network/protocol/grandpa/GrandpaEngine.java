@@ -3,6 +3,7 @@ package com.limechain.network.protocol.grandpa;
 import com.limechain.config.HostConfig;
 import com.limechain.exception.scale.ScaleEncodingException;
 import com.limechain.grandpa.GrandpaService;
+import com.limechain.network.ConnectionManager;
 import com.limechain.network.protocol.BaseEngine;
 import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.network.protocol.grandpa.messages.GrandpaMessageType;
@@ -26,8 +27,6 @@ import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.libp2p.core.PeerId;
 import io.libp2p.core.Stream;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.extern.java.Log;
 
 import java.io.ByteArrayOutputStream;
@@ -38,15 +37,16 @@ import java.util.logging.Level;
  * Engine for handling transactions on GRANDPA streams.
  */
 @Log
-@AllArgsConstructor(access = AccessLevel.PROTECTED)
 public class GrandpaEngine extends BaseEngine {
 
     private static final int HANDSHAKE_LENGTH = 1;
 
+    protected ConnectionManager connectionManager;
     protected GrandpaMessageHandler grandpaMessageHandler;
     protected HostConfig hostConfig;
 
     public GrandpaEngine() {
+        connectionManager = ConnectionManager.getInstance();
         grandpaMessageHandler = AppBean.getBean(GrandpaMessageHandler.class);
         hostConfig = AppBean.getBean(HostConfig.class);
     }

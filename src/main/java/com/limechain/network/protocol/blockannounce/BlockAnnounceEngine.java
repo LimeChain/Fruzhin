@@ -1,6 +1,7 @@
 package com.limechain.network.protocol.blockannounce;
 
 import com.limechain.exception.scale.ScaleEncodingException;
+import com.limechain.network.ConnectionManager;
 import com.limechain.network.protocol.BaseEngine;
 import com.limechain.network.protocol.blockannounce.messages.BlockAnnounceHandshake;
 import com.limechain.network.protocol.blockannounce.messages.BlockAnnounceHandshakeBuilder;
@@ -17,8 +18,6 @@ import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.libp2p.core.PeerId;
 import io.libp2p.core.Stream;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.extern.java.Log;
 
 import java.io.ByteArrayOutputStream;
@@ -27,16 +26,17 @@ import java.time.Instant;
 import java.util.logging.Level;
 
 @Log
-@AllArgsConstructor(access = AccessLevel.PROTECTED)
 public class BlockAnnounceEngine extends BaseEngine {
 
     public static final int HANDSHAKE_LENGTH = 69;
 
+    protected ConnectionManager connectionManager;
     protected WarpSyncState warpSyncState;
     protected BlockAnnounceHandshakeBuilder handshakeBuilder;
     private BlockHandler blockHandler;
 
     public BlockAnnounceEngine() {
+        connectionManager = ConnectionManager.getInstance();
         warpSyncState = AppBean.getBean(WarpSyncState.class);
         blockHandler = AppBean.getBean(BlockHandler.class);
         handshakeBuilder = new BlockAnnounceHandshakeBuilder();

@@ -1,5 +1,6 @@
 package com.limechain.network.protocol.beefy;
 
+import com.limechain.network.ConnectionManager;
 import com.limechain.network.protocol.BaseEngine;
 import com.limechain.network.protocol.beefy.messages.BeefyMessageType;
 import com.limechain.rpc.server.AppBean;
@@ -19,9 +20,11 @@ public class BeefyEngine extends BaseEngine {
 
     private static final int HANDSHAKE_LENGTH = 1;
 
+    protected ConnectionManager connectionManager;
     protected BeefyMessageHandler beefyMessageHandler;
 
     public BeefyEngine() {
+        connectionManager = ConnectionManager.getInstance();
         beefyMessageHandler = AppBean.getBean(BeefyMessageHandler.class);
     }
 

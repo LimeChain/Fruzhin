@@ -1,5 +1,6 @@
 package com.limechain.network.protocol.transaction;
 
+import com.limechain.network.ConnectionManager;
 import com.limechain.network.protocol.BaseEngine;
 import com.limechain.network.protocol.transaction.scale.TransactionReader;
 import com.limechain.rpc.server.AppBean;
@@ -27,9 +28,11 @@ public class TransactionEngine extends BaseEngine {
 
     private static final int HANDSHAKE_LENGTH = 1;
 
+    private final ConnectionManager connectionManager;
     private final TransactionProcessor transactionProcessor;
 
     public TransactionEngine() {
+        connectionManager = ConnectionManager.getInstance();
         transactionProcessor = AppBean.getBean(TransactionProcessor.class);
     }
 
