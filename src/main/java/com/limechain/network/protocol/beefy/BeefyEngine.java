@@ -1,6 +1,6 @@
 package com.limechain.network.protocol.beefy;
 
-import com.limechain.network.ConnectionManager;
+import com.limechain.network.protocol.BaseEngine;
 import com.limechain.network.protocol.beefy.messages.BeefyMessageType;
 import com.limechain.rpc.server.AppBean;
 import com.limechain.state.AbstractState;
@@ -15,18 +15,30 @@ import java.util.logging.Level;
  * Engine for handling transactions on BEEFY streams
  */
 @Log
-public class BeefyEngine {
+public class BeefyEngine extends BaseEngine {
 
     private static final int HANDSHAKE_LENGTH = 1;
 
-    protected ConnectionManager connectionManager;
     protected BeefyMessageHandler beefyMessageHandler;
 
     public BeefyEngine() {
-        connectionManager = ConnectionManager.getInstance();
         beefyMessageHandler = AppBean.getBean(BeefyMessageHandler.class);
     }
 
+    @Override
+    protected void handleHandshake(byte[] message, PeerId peerId, Stream stream) {
+        if (connectionManager.isBeefyConnected(peerId)) {
+            log.log(Level.INFO, "Received existing beefy handshake from " + peerId);
+            stream.close();
+        } else {
+            connectionManager.addBeefyStream(stream);
+            connectionManager.getPeerInfo(peerId).setNodeRole(message[0]);
+            log.log(Level.INFO, "Received beefy handshake from " + peerId);
+            writeHandshakeToStream(stream, peerId);
+        }
+    }
+
+    @Override
     public void receiveRequest(byte[] message, Stream stream) {
         BeefyMessageType messageType = getBeefyMessageType(message);
 
@@ -41,6 +53,18 @@ public class BeefyEngine {
         } else {
             handleResponderStreamMessage(message, messageType, stream);
         }
+    }
+
+    /**
+     * Send our BEEFY handshake on a given initiator stream
+     * @param stream initiator stream to write the message to
+     * @param peerId peer to send to
+     */
+    @Override
+    public void writeHandshakeToStream(Stream stream, PeerId peerId) {
+        byte[] handshake = new byte[]{};
+        log.log(Level.INFO, "Sending beefy handshake to " + peerId);
+        stream.writeAndFlush(handshake);
     }
 
     private void handleInitiatorStreamMessage(BeefyMessageType messageType, Stream stream) {
@@ -76,35 +100,12 @@ public class BeefyEngine {
         }
     }
 
-    private void handleHandshake(byte[] message, PeerId peerId, Stream stream) {
-        if (connectionManager.isBeefyConnected(peerId)) {
-            log.log(Level.INFO, "Received existing beefy handshake from " + peerId);
-            stream.close();
-        } else {
-            connectionManager.addBeefyStream(stream);
-            connectionManager.getPeerInfo(peerId).setNodeRole(message[0]);
-            log.log(Level.INFO, "Received beefy handshake from " + peerId);
-            writeHandshakeToStream(stream, peerId);
-        }
-    }
-
     private void handleVoteMessage(byte[] message, PeerId peerId) {
         //TODO
     }
 
     private void handleSignedCommitmentMessage(byte[] message, PeerId peerId) {
         //TODO
-    }
-
-    /**
-     * Send our BEEFY handshake on a given initiator stream
-     * @param stream initiator stream to write the message to
-     * @param peerId peer to send to
-     */
-    public void writeHandshakeToStream(Stream stream, PeerId peerId) {
-        byte[] handshake = new byte[]{};
-        log.log(Level.INFO, "Sending beefy handshake to " + peerId);
-        stream.writeAndFlush(handshake);
     }
 
     private BeefyMessageType getBeefyMessageType(byte[] message) {
