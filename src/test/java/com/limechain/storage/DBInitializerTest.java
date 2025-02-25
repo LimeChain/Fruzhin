@@ -3,6 +3,7 @@ package com.limechain.storage;
 import com.limechain.chain.Chain;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import sun.misc.Unsafe;
 
@@ -20,6 +21,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@Disabled(value = "It is no longer possible to modify 'private static final' fields via reflection")
 class DBInitializerTest {
     // All calls made using 'DBInitializer' are automatically redirected towards this mock
     private final DBInitializer test = mock(DBInitializer.class);
