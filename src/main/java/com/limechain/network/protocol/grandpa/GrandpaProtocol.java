@@ -94,7 +94,6 @@ public class GrandpaProtocol extends ProtocolHandler<GrandpaController> {
             connectionManager.closeGrandpaStream(stream);
             if (cause != null) {
                 log.log(Level.WARNING, "Grandpa Exception: " + cause.getMessage());
-                cause.printStackTrace();
             } else {
                 log.log(Level.WARNING, "Grandpa Exception with unknown cause");
             }

@@ -72,7 +72,6 @@ public class BlockAnnounceProtocol extends ProtocolHandler<BlockAnnounceControll
             connectionManager.closeBlockAnnounceStream(stream);
             if (cause != null) {
                 log.log(Level.WARNING, "Block Announce Exception: " + cause.getMessage());
-                cause.printStackTrace();
             } else {
                 log.log(Level.WARNING, "Block Announce Exception with unknown cause");
             }
