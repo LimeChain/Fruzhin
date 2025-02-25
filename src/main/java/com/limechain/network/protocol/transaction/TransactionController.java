@@ -1,23 +1,15 @@
 package com.limechain.network.protocol.transaction;
 
+import com.limechain.network.protocol.BaseController;
 import io.libp2p.core.Stream;
 
 /**
  * A controller for sending message on a Transactions stream.
  */
-public class TransactionController {
-    protected final TransactionEngine engine = new TransactionEngine();
-    protected final Stream stream;
+public class TransactionController extends BaseController<TransactionEngine> {
 
     public TransactionController(Stream stream) {
-        this.stream = stream;
-    }
-
-    /**
-     * Sends a handshake message over the controller stream.
-     */
-    public void sendHandshake() {
-        engine.writeHandshakeToStream(stream, stream.remotePeerId());
+        super(stream, new TransactionEngine());
     }
 
     /**

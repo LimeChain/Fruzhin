@@ -1,24 +1,15 @@
 package com.limechain.network.protocol.beefy;
 
+import com.limechain.network.protocol.BaseController;
 import io.libp2p.core.Stream;
 
 /**
  * A controller for sending message on a BEEFY stream
  */
-public class BeefyController {
-
-    protected final Stream stream;
-    protected BeefyEngine engine = new BeefyEngine();
+public class BeefyController extends BaseController<BeefyEngine> {
 
     public BeefyController(Stream stream) {
-        this.stream = stream;
-    }
-
-    /**
-     * Sends a handshake message over the controller stream.
-     */
-    public void sendHandshake() {
-        engine.writeHandshakeToStream(stream, stream.remotePeerId());
+        super(stream, new BeefyEngine());
     }
 
     public void sendVoteMessage() {
