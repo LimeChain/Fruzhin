@@ -37,4 +37,7 @@ public class StateUtil {
         return prepareKey(preCommitsKey, roundNumber.toString(), setId.toString());
     }
 
+    public String generateBeefyJustificationKey(String justificationKey, BigInteger blockNumber) {
+        return prepareKey(justificationKey, blockNumber.toString());
+    }
 }

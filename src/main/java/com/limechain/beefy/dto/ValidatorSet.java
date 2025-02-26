@@ -1,12 +1,16 @@
 package com.limechain.beefy.dto;
 
-import io.libp2p.core.crypto.PubKey;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
+import java.math.BigInteger;
 import java.util.List;
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class ValidatorSet {
-    private List<PubKey> validators;
-    private long id;
+    private List<byte[]> validators;
+    private BigInteger setId;
 }

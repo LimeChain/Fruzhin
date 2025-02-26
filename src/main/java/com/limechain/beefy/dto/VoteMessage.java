@@ -1,13 +1,11 @@
 package com.limechain.beefy.dto;
 
-import com.limechain.runtime.hostapi.dto.Signature;
+import io.libp2p.core.crypto.PubKey;
 import lombok.Data;
-
-import java.math.BigInteger;
 
 @Data
 public class VoteMessage {
     private Commitment commitment;
-    private BigInteger authorityId;
-    private Signature signature;
+    private byte[] authorityId;
+    private PubKey signature;
 }
