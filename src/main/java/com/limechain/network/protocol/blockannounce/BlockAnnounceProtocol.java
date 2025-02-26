@@ -1,50 +1,31 @@
 package com.limechain.network.protocol.blockannounce;
 
 import com.limechain.network.ConnectionManager;
-import com.limechain.network.encoding.Leb128LengthFrameDecoder;
-import com.limechain.network.encoding.Leb128LengthFrameEncoder;
+import com.limechain.network.protocol.base.BaseProtocol;
 import io.libp2p.core.Stream;
-import io.libp2p.protocol.ProtocolHandler;
 import io.libp2p.protocol.ProtocolMessageHandler;
 import io.netty.buffer.ByteBuf;
-import io.netty.handler.codec.bytes.ByteArrayEncoder;
 import lombok.extern.java.Log;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 
+/**
+ * Handler for BlockAnnounce protocol messages and streams
+ */
 @Log
-public class BlockAnnounceProtocol extends ProtocolHandler<BlockAnnounceController> {
-    public static final int MAX_HANDSHAKE_SIZE = 1024 * 1024;
-    public static final int MAX_NOTIFICATION_SIZE = 1024 * 1024;
+public class BlockAnnounceProtocol extends BaseProtocol<BlockAnnounceController, BlockAnnounceProtocol.NotificationHandler> {
+
+    public static final long MAX_HANDSHAKE_SIZE = 1024L * 1024L;
+    public static final long MAX_NOTIFICATION_SIZE = 1024L * 1024L;
 
     public BlockAnnounceProtocol() {
         super(MAX_HANDSHAKE_SIZE, MAX_NOTIFICATION_SIZE);
     }
 
-    @NotNull
     @Override
-    protected CompletableFuture<BlockAnnounceController> onStartInitiator(Stream stream) {
-        stream.pushHandler(new Leb128LengthFrameDecoder());
-        stream.pushHandler(new Leb128LengthFrameEncoder());
-
-        stream.pushHandler(new ByteArrayEncoder());
-        NotificationHandler handler = new NotificationHandler(stream);
-        stream.pushHandler(handler);
-        return CompletableFuture.completedFuture(handler);
-    }
-
-    @NotNull
-    @Override
-    protected CompletableFuture<BlockAnnounceController> onStartResponder(Stream stream) {
-        stream.pushHandler(new Leb128LengthFrameDecoder());
-        stream.pushHandler(new Leb128LengthFrameEncoder());
-
-        stream.pushHandler(new ByteArrayEncoder());
-        NotificationHandler handler = new NotificationHandler(stream);
-        stream.pushHandler(handler);
-        return CompletableFuture.completedFuture(handler);
+    protected BlockAnnounceProtocol.NotificationHandler createNotificationHandler(Stream stream) {
+        return new BlockAnnounceProtocol.NotificationHandler(stream);
     }
 
     static class NotificationHandler extends BlockAnnounceController implements ProtocolMessageHandler<ByteBuf> {

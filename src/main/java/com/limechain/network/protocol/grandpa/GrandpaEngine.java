@@ -4,7 +4,7 @@ import com.limechain.config.HostConfig;
 import com.limechain.exception.scale.ScaleEncodingException;
 import com.limechain.grandpa.GrandpaService;
 import com.limechain.network.ConnectionManager;
-import com.limechain.network.protocol.BaseEngine;
+import com.limechain.network.protocol.base.BaseEngine;
 import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.network.protocol.grandpa.messages.GrandpaMessageType;
 import com.limechain.network.protocol.grandpa.messages.catchup.req.CatchUpReqMessage;

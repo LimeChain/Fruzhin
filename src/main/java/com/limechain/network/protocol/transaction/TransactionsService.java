@@ -13,7 +13,7 @@ public class TransactionsService extends NetworkService<TransactionMessages> {
     ConnectionManager connectionManager = ConnectionManager.getInstance();
 
     public TransactionsService(String protocolId) {
-        this.protocol = new TransactionMessages(protocolId, new TransactionsProtocol());
+        this.protocol = new TransactionMessages(protocolId, new TransactionProtocol());
     }
 
     /**

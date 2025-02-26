@@ -1,7 +1,7 @@
 package com.limechain.network.protocol.beefy;
 
 import com.limechain.network.ConnectionManager;
-import com.limechain.network.protocol.BaseEngine;
+import com.limechain.network.protocol.base.BaseEngine;
 import com.limechain.network.protocol.beefy.messages.BeefyMessageType;
 import com.limechain.rpc.server.AppBean;
 import com.limechain.state.AbstractState;

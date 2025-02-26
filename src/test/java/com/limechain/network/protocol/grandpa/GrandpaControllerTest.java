@@ -1,5 +1,6 @@
 package com.limechain.network.protocol.grandpa;
 
+import com.limechain.network.protocol.BaseUtils;
 import io.libp2p.core.PeerId;
 import io.libp2p.core.Stream;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,6 +15,7 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class GrandpaControllerTest {
+
     @InjectMocks
     private GrandpaController grandpaController;
     @Mock
@@ -24,8 +26,8 @@ class GrandpaControllerTest {
     private GrandpaEngine engine;
 
     @BeforeEach
-    void setup() {
-        grandpaController.engine = engine;
+    void setup() throws NoSuchFieldException, IllegalAccessException {
+        BaseUtils.setProtectedEngineField(grandpaController, engine);
     }
 
     @Test

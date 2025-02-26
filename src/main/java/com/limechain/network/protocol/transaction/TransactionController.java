@@ -1,6 +1,6 @@
 package com.limechain.network.protocol.transaction;
 
-import com.limechain.network.protocol.BaseController;
+import com.limechain.network.protocol.base.BaseController;
 import io.libp2p.core.Stream;
 
 /**

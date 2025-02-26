@@ -2,7 +2,7 @@ package com.limechain.network.protocol.blockannounce;
 
 import com.limechain.exception.scale.ScaleEncodingException;
 import com.limechain.network.ConnectionManager;
-import com.limechain.network.protocol.BaseEngine;
+import com.limechain.network.protocol.base.BaseEngine;
 import com.limechain.network.protocol.blockannounce.messages.BlockAnnounceHandshake;
 import com.limechain.network.protocol.blockannounce.messages.BlockAnnounceHandshakeBuilder;
 import com.limechain.network.protocol.blockannounce.messages.BlockAnnounceMessage;
