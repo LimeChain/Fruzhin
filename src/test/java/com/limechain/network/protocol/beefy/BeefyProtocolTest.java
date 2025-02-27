@@ -1,4 +1,4 @@
-package com.limechain.network.protocol.grandpa;
+package com.limechain.network.protocol.beefy;
 
 import com.limechain.network.ConnectionManager;
 import com.limechain.network.encoding.Leb128LengthFrameDecoder;
@@ -23,14 +23,14 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
-class GrandpaProtocolTest {
+class BeefyProtocolTest {
 
     @InjectMocks
-    private GrandpaProtocol grandpaProtocol;
+    private BeefyProtocol beefyProtocol;
     @InjectMocks
-    private GrandpaProtocol.NotificationHandler notificationHandler;
+    private BeefyProtocol.NotificationHandler notificationHandler;
     @Mock
-    private GrandpaEngine grandpaEngine;
+    private BeefyEngine beefyEngine;
     @Mock
     private Stream stream;
     @Mock
@@ -40,13 +40,13 @@ class GrandpaProtocolTest {
     void onStartInitiator()
             throws InvocationTargetException, NoSuchMethodException, IllegalAccessException, NoSuchFieldException {
 
-        Object result = BaseUtils.callProtectedMethod(grandpaProtocol, stream, "onStartInitiator");
-        GrandpaController actualResult = ((CompletableFuture<GrandpaController>) result).join();
+        Object result = BaseUtils.callProtectedMethod(beefyProtocol, stream, "onStartInitiator");
+        BeefyController actualResult = ((CompletableFuture<BeefyController>) result).join();
 
         verify(stream).pushHandler(any(Leb128LengthFrameEncoder.class));
         verify(stream).pushHandler(any(Leb128LengthFrameDecoder.class));
         verify(stream).pushHandler(any(ByteArrayEncoder.class));
-        verify(stream).pushHandler(any(GrandpaProtocol.NotificationHandler.class));
+        verify(stream).pushHandler(any(BeefyProtocol.NotificationHandler.class));
 
         assertEquals(stream, BaseUtils.getProtectedStreamField(actualResult));
     }
@@ -55,49 +55,50 @@ class GrandpaProtocolTest {
     void onStartResponder()
             throws NoSuchFieldException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
 
-        Object result = BaseUtils.callProtectedMethod(grandpaProtocol, stream, "onStartResponder");
-        GrandpaController actualResult = ((CompletableFuture<GrandpaController>) result).join();
+        Object result = BaseUtils.callProtectedMethod(beefyProtocol, stream, "onStartResponder");
+        BeefyController actualResult = ((CompletableFuture<BeefyController>) result).join();
 
         verify(stream).pushHandler(any(Leb128LengthFrameEncoder.class));
         verify(stream).pushHandler(any(Leb128LengthFrameDecoder.class));
         verify(stream).pushHandler(any(ByteArrayEncoder.class));
-        verify(stream).pushHandler(any(GrandpaProtocol.NotificationHandler.class));
+        verify(stream).pushHandler(any(BeefyProtocol.NotificationHandler.class));
 
         assertEquals(stream, BaseUtils.getProtectedStreamField(actualResult));
     }
 
     @Test
     void onMessage() throws NoSuchFieldException, IllegalAccessException {
+
         byte[] message = new byte[] { 1, 2, 3 };
         ByteBuf byteBuf = Unpooled.copiedBuffer(message);
 
-        BaseUtils.setProtectedEngineField(notificationHandler, grandpaEngine);
+        BaseUtils.setProtectedEngineField(notificationHandler, beefyEngine);
         notificationHandler.connectionManager = connectionManager;
 
         notificationHandler.onMessage(stream, byteBuf);
 
-        verify(grandpaEngine).receiveRequest(message, stream);
+        verify(beefyEngine).receiveRequest(message, stream);
     }
 
     @Test
     void onClosed() throws NoSuchFieldException, IllegalAccessException {
 
-        BaseUtils.setProtectedEngineField(notificationHandler, grandpaEngine);
+        BaseUtils.setProtectedEngineField(notificationHandler, beefyEngine);
         notificationHandler.connectionManager = connectionManager;
 
         notificationHandler.onClosed(stream);
 
-        verify(connectionManager).closeGrandpaStream(stream);
+        verify(connectionManager).closeBeefyStream(stream);
     }
 
     @Test
     void onException() throws NoSuchFieldException, IllegalAccessException {
 
-        BaseUtils.setProtectedEngineField(notificationHandler, grandpaEngine);
+        BaseUtils.setProtectedEngineField(notificationHandler, beefyEngine);
         notificationHandler.connectionManager = connectionManager;
 
         notificationHandler.onException(mock(Throwable.class));
 
-        verify(connectionManager).closeGrandpaStream(stream);
+        verify(connectionManager).closeBeefyStream(stream);
     }
 }

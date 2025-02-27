@@ -2,6 +2,7 @@ package com.limechain.network.protocol.blockannounce;
 
 import com.limechain.exception.scale.ScaleEncodingException;
 import com.limechain.network.ConnectionManager;
+import com.limechain.network.protocol.base.BaseEngine;
 import com.limechain.network.protocol.blockannounce.messages.BlockAnnounceHandshake;
 import com.limechain.network.protocol.blockannounce.messages.BlockAnnounceHandshakeBuilder;
 import com.limechain.network.protocol.blockannounce.messages.BlockAnnounceMessage;
@@ -17,8 +18,6 @@ import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.libp2p.core.PeerId;
 import io.libp2p.core.Stream;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.extern.java.Log;
 
 import java.io.ByteArrayOutputStream;
@@ -27,15 +26,14 @@ import java.time.Instant;
 import java.util.logging.Level;
 
 @Log
-@AllArgsConstructor(access = AccessLevel.PROTECTED)
-public class BlockAnnounceEngine {
+public class BlockAnnounceEngine implements BaseEngine {
 
     public static final int HANDSHAKE_LENGTH = 69;
 
     protected ConnectionManager connectionManager;
     protected WarpSyncState warpSyncState;
-    private BlockHandler blockHandler;
     protected BlockAnnounceHandshakeBuilder handshakeBuilder;
+    private BlockHandler blockHandler;
 
     public BlockAnnounceEngine() {
         connectionManager = ConnectionManager.getInstance();
@@ -44,10 +42,27 @@ public class BlockAnnounceEngine {
         handshakeBuilder = new BlockAnnounceHandshakeBuilder();
     }
 
-    public void receiveRequest(byte[] msg, Stream stream) {
+    @Override
+    public void handleHandshake(byte[] message, PeerId peerId, Stream stream) {
+        if (connectionManager.isBlockAnnounceConnected(peerId)) {
+            log.log(Level.INFO, "Received existing handshake from " + peerId);
+            stream.close();
+        }
+
+        ScaleCodecReader reader = new ScaleCodecReader(message);
+        BlockAnnounceHandshake handshake = reader.read(BlockAnnounceHandshakeScaleReader.getInstance());
+        connectionManager.addBlockAnnounceStream(stream);
+        connectionManager.updatePeer(peerId, handshake);
+        log.log(Level.INFO, "Received handshake from " + peerId + "\n" + handshake);
+
+        writeHandshakeToStream(stream, peerId);
+    }
+
+    @Override
+    public void receiveRequest(byte[] message, Stream stream) {
         PeerId peerId = stream.remotePeerId();
         boolean connectedToPeer = connectionManager.isBlockAnnounceConnected(peerId);
-        boolean isHandshake = msg.length == HANDSHAKE_LENGTH;
+        boolean isHandshake = message.length == HANDSHAKE_LENGTH;
 
         if (!connectedToPeer && !isHandshake) {
             log.log(Level.WARNING, "No handshake for block announce message from Peer " + peerId);
@@ -55,31 +70,33 @@ public class BlockAnnounceEngine {
         }
 
         if (isHandshake) {
-            handleHandshake(msg, peerId, stream, connectedToPeer);
+            handleHandshake(message, peerId, stream);
         } else {
-            handleBlockAnnounce(msg, peerId);
+            handleBlockAnnounce(message, peerId);
         }
 
         //TODO: Send message to network? module
     }
 
-    private void handleHandshake(byte[] msg, PeerId peerId, Stream stream, boolean connectedToPeer) {
-        /*  We might not need to send a second handshake.
-        If we already have stored the key it means that we have processed the handshake once.
-        This might be caused by using a different stream for sending and receiving in libp2p.
-        */
-        if (connectedToPeer) {
-            log.log(Level.INFO, "Received existing handshake from " + peerId);
-            stream.close();
-        } else {
-            ScaleCodecReader reader = new ScaleCodecReader(msg);
-            BlockAnnounceHandshake handshake = reader.read(BlockAnnounceHandshakeScaleReader.getInstance());
-            connectionManager.addBlockAnnounceStream(stream);
-            connectionManager.updatePeer(peerId, handshake);
-            log.log(Level.INFO, "Received handshake from " + peerId + "\n" +
-                    handshake);
-            writeHandshakeToStream(stream, peerId);
+    @Override
+    public void writeHandshakeToStream(Stream stream, PeerId peerId) {
+        ByteArrayOutputStream buf = new ByteArrayOutputStream();
+        try (ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
+            writer.write(
+                    BlockAnnounceHandshakeScaleWriter.getInstance(),
+                    handshakeBuilder.getBlockAnnounceHandshake()
+            );
+        } catch (IOException e) {
+            throw new ScaleEncodingException(e);
         }
+
+        log.log(Level.INFO, "Sending handshake to " + peerId);
+        stream.writeAndFlush(buf.toByteArray());
+    }
+
+    public void writeBlockAnnounceMessage(Stream stream, PeerId peerId, byte[] encodedBlockAnnounceMessage) {
+        log.log(Level.FINE, "Sending Block Announce message to peer " + peerId);
+        stream.writeAndFlush(encodedBlockAnnounceMessage);
     }
 
     private void handleBlockAnnounce(byte[] msg, PeerId peerId) {
@@ -97,22 +114,5 @@ public class BlockAnnounceEngine {
             //TODO Network improvements: Block requests should be sent to the peer that announced the block itself.
             blockHandler.handleAnnounced(announce.getHeader(), Instant.now(), peerId);
         }
-    }
-
-    public void writeHandshakeToStream(Stream stream, PeerId peerId) {
-        ByteArrayOutputStream buf = new ByteArrayOutputStream();
-        try (ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
-            writer.write(BlockAnnounceHandshakeScaleWriter.getInstance(), handshakeBuilder.getBlockAnnounceHandshake());
-        } catch (IOException e) {
-            throw new ScaleEncodingException(e);
-        }
-
-        log.log(Level.INFO, "Sending handshake to " + peerId);
-        stream.writeAndFlush(buf.toByteArray());
-    }
-
-    public void writeBlockAnnounceMessage(Stream stream, PeerId peerId, byte[] encodedBlockAnnounceMessage) {
-        log.log(Level.FINE, "Sending Block Announce message to peer " + peerId);
-        stream.writeAndFlush(encodedBlockAnnounceMessage);
     }
 }

@@ -3,7 +3,7 @@ package com.limechain.network.protocol.blockannounce;
 import com.limechain.network.ConnectionManager;
 import com.limechain.network.encoding.Leb128LengthFrameDecoder;
 import com.limechain.network.encoding.Leb128LengthFrameEncoder;
-import com.limechain.rpc.server.AppBean;
+import com.limechain.network.protocol.BaseUtils;
 import io.libp2p.core.Stream;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -12,9 +12,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.lang.reflect.InvocationTargetException;
+import java.util.concurrent.CompletableFuture;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -23,6 +24,7 @@ import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class BlockAnnounceProtocolTest {
+
     @InjectMocks
     private BlockAnnounceProtocol blockAnnounceProtocol;
     @InjectMocks
@@ -35,40 +37,37 @@ class BlockAnnounceProtocolTest {
     private ConnectionManager connectionManager;
 
     @Test
-    void onStartInitiator() {
-        try (MockedStatic<AppBean> appBean = Mockito.mockStatic(AppBean.class)) {
-            appBean.when(() -> AppBean.getBean(BlockAnnounceEngine.class)).thenReturn(blockAnnounceEngine);
-            BlockAnnounceController result = blockAnnounceProtocol.onStartInitiator(stream).join();
+    void onStartInitiator() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, NoSuchFieldException {
+        Object result = BaseUtils.callProtectedMethod(blockAnnounceProtocol, stream, "onStartInitiator");
+        BlockAnnounceController actualResult = ((CompletableFuture<BlockAnnounceController>) result).join();
 
-            verify(stream).pushHandler(any(Leb128LengthFrameEncoder.class));
-            verify(stream).pushHandler(any(Leb128LengthFrameDecoder.class));
-            verify(stream).pushHandler(any(ByteArrayEncoder.class));
-            verify(stream).pushHandler(any(BlockAnnounceProtocol.NotificationHandler.class));
+        verify(stream).pushHandler(any(Leb128LengthFrameEncoder.class));
+        verify(stream).pushHandler(any(Leb128LengthFrameDecoder.class));
+        verify(stream).pushHandler(any(ByteArrayEncoder.class));
+        verify(stream).pushHandler(any(BlockAnnounceProtocol.NotificationHandler.class));
 
-            assertEquals(stream, result.stream);
-        }
+        assertEquals(stream, BaseUtils.getProtectedStreamField(actualResult));
     }
 
     @Test
-    void onStartResponder() {
-        try (MockedStatic<AppBean> appBean = Mockito.mockStatic(AppBean.class)) {
-            appBean.when(() -> AppBean.getBean(BlockAnnounceEngine.class)).thenReturn(blockAnnounceEngine);
-            BlockAnnounceController result = blockAnnounceProtocol.onStartResponder(stream).join();
+    void onStartResponder() throws NoSuchFieldException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+        Object result = BaseUtils.callProtectedMethod(blockAnnounceProtocol, stream, "onStartResponder");
+        BlockAnnounceController actualResult = ((CompletableFuture<BlockAnnounceController>) result).join();
 
-            verify(stream).pushHandler(any(Leb128LengthFrameEncoder.class));
-            verify(stream).pushHandler(any(Leb128LengthFrameDecoder.class));
-            verify(stream).pushHandler(any(ByteArrayEncoder.class));
-            verify(stream).pushHandler(any(BlockAnnounceProtocol.NotificationHandler.class));
+        verify(stream).pushHandler(any(Leb128LengthFrameEncoder.class));
+        verify(stream).pushHandler(any(Leb128LengthFrameDecoder.class));
+        verify(stream).pushHandler(any(ByteArrayEncoder.class));
+        verify(stream).pushHandler(any(BlockAnnounceProtocol.NotificationHandler.class));
 
-            assertEquals(stream, result.stream);
-        }
+        assertEquals(stream, BaseUtils.getProtectedStreamField(actualResult));
     }
 
     @Test
-    void onMessage() {
+    void onMessage() throws NoSuchFieldException, IllegalAccessException {
         byte[] message = new byte[]{1, 2, 3};
         ByteBuf byteBuf = Unpooled.copiedBuffer(message);
-        notificationHandler.engine = blockAnnounceEngine;
+
+        BaseUtils.setProtectedEngineField(notificationHandler, blockAnnounceEngine);
         notificationHandler.connectionManager = connectionManager;
 
         notificationHandler.onMessage(stream, byteBuf);
@@ -77,8 +76,9 @@ class BlockAnnounceProtocolTest {
     }
 
     @Test
-    void onClosed() {
-        notificationHandler.engine = blockAnnounceEngine;
+    void onClosed() throws NoSuchFieldException, IllegalAccessException {
+
+        BaseUtils.setProtectedEngineField(notificationHandler, blockAnnounceEngine);
         notificationHandler.connectionManager = connectionManager;
 
         notificationHandler.onClosed(stream);
@@ -87,8 +87,9 @@ class BlockAnnounceProtocolTest {
     }
 
     @Test
-    void onException() {
-        notificationHandler.engine = blockAnnounceEngine;
+    void onException() throws NoSuchFieldException, IllegalAccessException {
+
+        BaseUtils.setProtectedEngineField(notificationHandler, blockAnnounceEngine);
         notificationHandler.connectionManager = connectionManager;
 
         notificationHandler.onException(mock(Throwable.class));

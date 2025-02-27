@@ -1,4 +1,4 @@
-package com.limechain.network.protocol.grandpa;
+package com.limechain.network.protocol.transaction;
 
 import com.limechain.network.protocol.BaseUtils;
 import io.libp2p.core.PeerId;
@@ -14,40 +14,33 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class GrandpaControllerTest {
+class TransactionControllerTest {
 
     @InjectMocks
-    private GrandpaController grandpaController;
+    private TransactionController transactionController;
     @Mock
     private Stream stream;
     @Mock
     private PeerId peerId;
     @Mock
-    private GrandpaEngine engine;
+    private TransactionEngine engine;
 
     @BeforeEach
     void setup() throws NoSuchFieldException, IllegalAccessException {
-        BaseUtils.setProtectedEngineField(grandpaController, engine);
+        BaseUtils.setProtectedEngineField(transactionController, engine);
     }
 
     @Test
     void sendHandshake() {
         when(stream.remotePeerId()).thenReturn(peerId);
-        grandpaController.sendHandshake();
+        transactionController.sendHandshake();
         verify(engine).writeHandshakeToStream(stream, peerId);
     }
 
     @Test
-    void sendNeighbourMessage() {
-        when(stream.remotePeerId()).thenReturn(peerId);
-        grandpaController.sendNeighbourMessage();
-        verify(engine).writeNeighbourMessage(stream, peerId);
-    }
-
-    @Test
-    void sendCommitMessage() {
+    void sendTransactionsMessage() {
         byte[] encodedCommitMessage = {1, 0, 0, 0, 2, 0, 1, 1, 1, 1, 0, 0, 0, 1, 2, 0};
-        grandpaController.sendCommitMessage(encodedCommitMessage);
-        verify(engine).writeCommitMessage(stream, encodedCommitMessage);
+        transactionController.sendTransactionsMessage(encodedCommitMessage);
+        verify(engine).writeTransactionsMessage(stream, encodedCommitMessage);
     }
 }
