@@ -18,6 +18,9 @@ public enum BeefyMessageType {
     }
 
     public static BeefyMessageType getByType(int type) {
-        return Arrays.stream(values()).filter(t -> t.type == type).findFirst().orElse(null);
+        return Arrays.stream(values())
+                .filter(t -> t.type == type)
+                .findFirst()
+                .orElse(null);
     }
 }
