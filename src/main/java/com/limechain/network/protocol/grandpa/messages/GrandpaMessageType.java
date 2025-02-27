@@ -4,10 +4,16 @@ import lombok.Getter;
 
 import java.util.Arrays;
 
+@Getter
 public enum GrandpaMessageType {
-    HANDSHAKE(-1), VOTE(0), COMMIT(1), NEIGHBOUR(2), CATCH_UP_REQUEST(3), CATCH_UP_RESPONSE(4);
 
-    @Getter
+    HANDSHAKE(-1),
+    VOTE(0),
+    COMMIT(1),
+    NEIGHBOUR(2),
+    CATCH_UP_REQUEST(3),
+    CATCH_UP_RESPONSE(4);
+
     private final int type;
 
     GrandpaMessageType(int type) {

@@ -1,24 +1,21 @@
 package com.limechain.network.protocol.transaction;
 
 import com.limechain.network.ConnectionManager;
-import com.limechain.network.encoding.Leb128LengthFrameDecoder;
-import com.limechain.network.encoding.Leb128LengthFrameEncoder;
+import com.limechain.network.protocol.base.BaseProtocol;
 import io.libp2p.core.Stream;
-import io.libp2p.protocol.ProtocolHandler;
 import io.libp2p.protocol.ProtocolMessageHandler;
 import io.netty.buffer.ByteBuf;
-import io.netty.handler.codec.bytes.ByteArrayEncoder;
 import lombok.extern.java.Log;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 
 /**
  * Handler for Transactions protocol messages and streams.
  */
 @Log
-public class TransactionsProtocol extends ProtocolHandler<TransactionController> {
+public class TransactionProtocol extends BaseProtocol<TransactionController, TransactionProtocol.NotificationHandler> {
+
     private static final long TRAFFIC_LIMIT = Long.MAX_VALUE;
 
     /**
@@ -26,48 +23,20 @@ public class TransactionsProtocol extends ProtocolHandler<TransactionController>
      * This is a global decreasing limit for the protocol, that gets reduced by the size of each message.
      * In the future it should be changed to a per-message limit
      */
-    public TransactionsProtocol() {
+    public TransactionProtocol() {
         super(TRAFFIC_LIMIT, TRAFFIC_LIMIT);
     }
 
-    /**
-     * Handles a new opened initiator stream and adds channel and notification handlers to it.
-     *
-     * @param stream stream opened
-     * @return async controller for the stream
-     */
-    @NotNull
     @Override
-    protected CompletableFuture<TransactionController> onStartInitiator(Stream stream) {
-        return onStartStream(stream);
-    }
-
-    /**
-     * Handles a new opened responder stream and adds channel and notification handlers to it.
-     *
-     * @param stream stream opened
-     * @return async controller for the stream
-     */
-    @NotNull
-    @Override
-    protected CompletableFuture<TransactionController> onStartResponder(Stream stream) {
-        return onStartStream(stream);
-    }
-
-    private CompletableFuture<TransactionController> onStartStream(Stream stream) {
-        stream.pushHandler(new Leb128LengthFrameDecoder());
-        stream.pushHandler(new Leb128LengthFrameEncoder());
-
-        stream.pushHandler(new ByteArrayEncoder());
-        TransactionsProtocol.NotificationHandler handler = new TransactionsProtocol.NotificationHandler(stream);
-        stream.pushHandler(handler);
-        return CompletableFuture.completedFuture(handler);
+    protected TransactionProtocol.NotificationHandler createNotificationHandler(Stream stream) {
+        return new TransactionProtocol.NotificationHandler(stream);
     }
 
     /**
      * Handler for notifications received on the Transactions protocol.
      */
     static class NotificationHandler extends TransactionController implements ProtocolMessageHandler<ByteBuf> {
+
         ConnectionManager connectionManager = ConnectionManager.getInstance();
 
         public NotificationHandler(Stream stream) {

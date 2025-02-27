@@ -6,7 +6,7 @@ import com.limechain.network.StrictProtocolBinding;
  * Transactions protocol binding
  */
 public class TransactionMessages extends StrictProtocolBinding<TransactionController> {
-    public TransactionMessages(String protocolId, TransactionsProtocol protocol) {
+    public TransactionMessages(String protocolId, TransactionProtocol protocol) {
         super(protocolId, protocol);
     }
 }

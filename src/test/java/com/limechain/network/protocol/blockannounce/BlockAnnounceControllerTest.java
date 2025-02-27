@@ -1,5 +1,6 @@
 package com.limechain.network.protocol.blockannounce;
 
+import com.limechain.network.protocol.BaseUtils;
 import com.limechain.network.protocol.blockannounce.messages.BlockAnnounceHandshakeBuilder;
 import io.libp2p.core.PeerId;
 import io.libp2p.core.Stream;
@@ -15,6 +16,7 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class BlockAnnounceControllerTest {
+
     @InjectMocks
     private BlockAnnounceController blockAnnounceController;
     @Mock
@@ -27,8 +29,8 @@ class BlockAnnounceControllerTest {
     private BlockAnnounceHandshakeBuilder blockAnnounceHandshakeBuilder;
 
     @BeforeEach
-    void setup() {
-        blockAnnounceController.engine = engine;
+    void setup() throws NoSuchFieldException, IllegalAccessException {
+        BaseUtils.setProtectedEngineField(blockAnnounceController, engine);
         engine.handshakeBuilder = blockAnnounceHandshakeBuilder;
     }
 

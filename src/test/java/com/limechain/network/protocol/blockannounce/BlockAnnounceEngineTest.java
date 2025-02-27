@@ -14,6 +14,7 @@ import com.limechain.storage.block.state.BlockState;
 import com.limechain.sync.warpsync.WarpSyncState;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
+import io.emeraldpay.polkaj.types.Hash256;
 import io.libp2p.core.PeerId;
 import io.libp2p.core.Stream;
 import org.junit.jupiter.api.Test;
@@ -25,6 +26,7 @@ import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.Arrays;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -40,6 +42,7 @@ import static org.mockito.Mockito.when;
 @SuppressWarnings("unused")
 @ExtendWith(MockitoExtension.class)
 class BlockAnnounceEngineTest {
+
     @InjectMocks
     private BlockAnnounceEngine blockAnnounceEngine;
 
@@ -59,8 +62,6 @@ class BlockAnnounceEngineTest {
     @Mock
     private DigestHelper digestHelper;
 
-    @Mock
-    private BlockAnnounceHandshake handshake;
     @Mock
     private BlockAnnounceHandshakeBuilder handshakeBuilder;
 
@@ -85,10 +86,10 @@ class BlockAnnounceEngineTest {
         Arrays.fill(message, (byte) 1);
         when(stream.remotePeerId()).thenReturn(peerId);
         when(connectionManager.isBlockAnnounceConnected(peerId)).thenReturn(false);
-        when(handshakeBuilder.getBlockAnnounceHandshake()).thenReturn(handshake);
+        when(handshakeBuilder.getBlockAnnounceHandshake()).thenReturn(getBlockAnnounceHandshake());
         try (
                 MockedConstruction<ScaleCodecReader> readerMock = mockConstruction(ScaleCodecReader.class,
-                        (mock, context) -> when(mock.read(any())).thenReturn(handshake));
+                        (mock, context) -> when(mock.read(any())).thenReturn(getBlockAnnounceHandshake()));
                 MockedConstruction<ScaleCodecWriter> writerMock = mockConstruction(ScaleCodecWriter.class)
         ) {
             blockAnnounceEngine.receiveRequest(message, stream);
@@ -103,7 +104,7 @@ class BlockAnnounceEngineTest {
         Arrays.fill(message, (byte) 1);
         when(stream.remotePeerId()).thenReturn(peerId);
         when(connectionManager.isBlockAnnounceConnected(peerId)).thenReturn(false);
-        when(handshakeBuilder.getBlockAnnounceHandshake()).thenReturn(handshake);
+        when(handshakeBuilder.getBlockAnnounceHandshake()).thenReturn(getBlockAnnounceHandshake());
         try (
                 MockedConstruction<ScaleCodecReader> readerMock = mockConstruction(ScaleCodecReader.class);
                 MockedConstruction<ScaleCodecWriter> writerMock = mockConstruction(ScaleCodecWriter.class)
@@ -111,7 +112,7 @@ class BlockAnnounceEngineTest {
             blockAnnounceEngine.receiveRequest(message, stream);
             ScaleCodecWriter writer = writerMock.constructed().getFirst();
 
-            verify(writer).write(any(BlockAnnounceHandshakeScaleWriter.class), eq(handshake));
+            verify(writer).write(any(BlockAnnounceHandshakeScaleWriter.class), eq(getBlockAnnounceHandshake()));
             verify(stream).writeAndFlush(any());
         }
     }
@@ -122,6 +123,8 @@ class BlockAnnounceEngineTest {
         Arrays.fill(message, (byte) 1);
         when(stream.remotePeerId()).thenReturn(peerId);
         when(connectionManager.isBlockAnnounceConnected(peerId)).thenReturn(true);
+        when(handshakeBuilder.getBlockAnnounceHandshake()).thenReturn(getBlockAnnounceHandshake());
+
         try (MockedConstruction<ScaleCodecReader> readerMock = mockConstruction(ScaleCodecReader.class)) {
             blockAnnounceEngine.receiveRequest(message, stream);
 
@@ -182,5 +185,14 @@ class BlockAnnounceEngineTest {
         blockAnnounceEngine.writeBlockAnnounceMessage(stream, peerId, message);
 
         verify(stream).writeAndFlush(message);
+    }
+
+    private BlockAnnounceHandshake getBlockAnnounceHandshake() {
+        return new BlockAnnounceHandshake(
+                NodeRole.AUTHORING.getValue(),
+                BigInteger.ONE,
+                Hash256.empty(),
+                Hash256.empty()
+        );
     }
 }

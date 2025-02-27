@@ -1,6 +1,7 @@
 package com.limechain.network.protocol.transaction;
 
 import com.limechain.network.ConnectionManager;
+import com.limechain.network.protocol.base.BaseEngine;
 import com.limechain.network.protocol.transaction.scale.TransactionReader;
 import com.limechain.rpc.server.AppBean;
 import com.limechain.state.AbstractState;
@@ -19,7 +20,7 @@ import java.util.logging.Level;
  * Engine for handling transactions on Transactions streams.
  */
 @Log
-public class TransactionEngine {
+public class TransactionEngine implements BaseEngine {
 
     //TODO Network improvements: We need a static lock as it seems we create new instances of this engine on
     // each incoming protocol thread. I am not sure that that is optimal, but I could be wrong.
@@ -33,6 +34,19 @@ public class TransactionEngine {
     public TransactionEngine() {
         connectionManager = ConnectionManager.getInstance();
         transactionProcessor = AppBean.getBean(TransactionProcessor.class);
+    }
+
+    @Override
+    public void handleHandshake(byte[] message, PeerId peerId, Stream stream) {
+        if (connectionManager.isTransactionsConnected(peerId)) {
+            log.log(Level.INFO, "Received existing transactions handshake from " + peerId);
+            stream.close();
+        }
+
+        connectionManager.addTransactionsStream(stream);
+        log.log(Level.INFO, "Received transactions handshake from " + peerId);
+
+        writeHandshakeToStream(stream, peerId);
     }
 
     /**
@@ -50,6 +64,7 @@ public class TransactionEngine {
      * @param message received message as byre array
      * @param stream  stream, where the request was received
      */
+    @Override
     public void receiveRequest(byte[] message, Stream stream) {
         if (message == null || message.length == 0) {
             log.log(Level.WARNING,
@@ -63,6 +78,30 @@ public class TransactionEngine {
         } else {
             handleResponderStreamMessage(message, stream);
         }
+    }
+
+    /**
+     * Send our Transactions handshake on a given <b>initiator</b> stream.
+     *
+     * @param stream <b>initiator</b> stream to write the message to
+     * @param peerId peer to send to
+     */
+    @Override
+    public void writeHandshakeToStream(Stream stream, PeerId peerId) {
+        byte[] handshake = new byte[]{};
+        log.log(Level.INFO, "Sending transactions handshake to " + peerId);
+        stream.writeAndFlush(handshake);
+    }
+
+    /**
+     * Send our Transactions message from {@link WarpSyncState} on a given <b>responder</b> stream.
+     *
+     * @param stream                    <b>responder</b> stream to write the message to
+     * @param encodedTransactionMessage scale encoded transaction message
+     */
+    public void writeTransactionsMessage(Stream stream, byte[] encodedTransactionMessage) {
+        log.log(Level.INFO, "Sending transaction message to peer " + stream.remotePeerId());
+        stream.writeAndFlush(encodedTransactionMessage);
     }
 
     private void handleInitiatorStreamMessage(byte[] message, Stream stream) {
@@ -95,22 +134,10 @@ public class TransactionEngine {
         }
 
         if (isHandshake(message)) {
-            handleHandshake(peerId, stream);
+            handleHandshake(message, peerId, stream);
         } else {
             handleTransactionMessage(message, stream);
         }
-    }
-
-    private void handleHandshake(PeerId peerId, Stream stream) {
-        if (connectionManager.isTransactionsConnected(peerId)) {
-            log.log(Level.INFO, "Received existing transactions handshake from " + peerId);
-            stream.close();
-        }
-
-        connectionManager.addTransactionsStream(stream);
-        log.log(Level.INFO, "Received transactions handshake from " + peerId);
-
-        writeHandshakeToStream(stream, peerId);
     }
 
     private void handleTransactionMessage(byte[] message, Stream stream) {
@@ -122,29 +149,6 @@ public class TransactionEngine {
         synchronized (LOCK) {
             transactionProcessor.handleExternalTransactions(transactions.getExtrinsics(), stream.remotePeerId());
         }
-    }
-
-    /**
-     * Send our Transactions handshake on a given <b>initiator</b> stream.
-     *
-     * @param stream <b>initiator</b> stream to write the message to
-     * @param peerId peer to send to
-     */
-    public void writeHandshakeToStream(Stream stream, PeerId peerId) {
-        byte[] handshake = new byte[]{};
-        log.log(Level.INFO, "Sending transactions handshake to " + peerId);
-        stream.writeAndFlush(handshake);
-    }
-
-    /**
-     * Send our Transactions message from {@link WarpSyncState} on a given <b>responder</b> stream.
-     *
-     * @param stream                    <b>responder</b> stream to write the message to
-     * @param encodedTransactionMessage scale encoded transaction message
-     */
-    public void writeTransactionsMessage(Stream stream, byte[] encodedTransactionMessage) {
-        log.log(Level.INFO, "Sending transaction message to peer " + stream.remotePeerId());
-        stream.writeAndFlush(encodedTransactionMessage);
     }
 
     private boolean isHandshake(byte[] message) {

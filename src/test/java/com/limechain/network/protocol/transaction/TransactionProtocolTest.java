@@ -1,4 +1,4 @@
-package com.limechain.network.protocol.grandpa;
+package com.limechain.network.protocol.transaction;
 
 import com.limechain.network.ConnectionManager;
 import com.limechain.network.encoding.Leb128LengthFrameDecoder;
@@ -23,14 +23,14 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
-class GrandpaProtocolTest {
+class TransactionProtocolTest {
 
     @InjectMocks
-    private GrandpaProtocol grandpaProtocol;
+    private TransactionProtocol transactionProtocol;
     @InjectMocks
-    private GrandpaProtocol.NotificationHandler notificationHandler;
+    private TransactionProtocol.NotificationHandler notificationHandler;
     @Mock
-    private GrandpaEngine grandpaEngine;
+    private TransactionEngine transactionEngine;
     @Mock
     private Stream stream;
     @Mock
@@ -40,13 +40,13 @@ class GrandpaProtocolTest {
     void onStartInitiator()
             throws InvocationTargetException, NoSuchMethodException, IllegalAccessException, NoSuchFieldException {
 
-        Object result = BaseUtils.callProtectedMethod(grandpaProtocol, stream, "onStartInitiator");
-        GrandpaController actualResult = ((CompletableFuture<GrandpaController>) result).join();
+        Object result = BaseUtils.callProtectedMethod(transactionProtocol, stream, "onStartInitiator");
+        TransactionController actualResult = ((CompletableFuture<TransactionController>) result).join();
 
         verify(stream).pushHandler(any(Leb128LengthFrameEncoder.class));
         verify(stream).pushHandler(any(Leb128LengthFrameDecoder.class));
         verify(stream).pushHandler(any(ByteArrayEncoder.class));
-        verify(stream).pushHandler(any(GrandpaProtocol.NotificationHandler.class));
+        verify(stream).pushHandler(any(TransactionProtocol.NotificationHandler.class));
 
         assertEquals(stream, BaseUtils.getProtectedStreamField(actualResult));
     }
@@ -55,49 +55,50 @@ class GrandpaProtocolTest {
     void onStartResponder()
             throws NoSuchFieldException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
 
-        Object result = BaseUtils.callProtectedMethod(grandpaProtocol, stream, "onStartResponder");
-        GrandpaController actualResult = ((CompletableFuture<GrandpaController>) result).join();
+        Object result = BaseUtils.callProtectedMethod(transactionProtocol, stream, "onStartResponder");
+        TransactionController actualResult = ((CompletableFuture<TransactionController>) result).join();
 
         verify(stream).pushHandler(any(Leb128LengthFrameEncoder.class));
         verify(stream).pushHandler(any(Leb128LengthFrameDecoder.class));
         verify(stream).pushHandler(any(ByteArrayEncoder.class));
-        verify(stream).pushHandler(any(GrandpaProtocol.NotificationHandler.class));
+        verify(stream).pushHandler(any(TransactionProtocol.NotificationHandler.class));
 
         assertEquals(stream, BaseUtils.getProtectedStreamField(actualResult));
     }
 
     @Test
     void onMessage() throws NoSuchFieldException, IllegalAccessException {
+
         byte[] message = new byte[] { 1, 2, 3 };
         ByteBuf byteBuf = Unpooled.copiedBuffer(message);
 
-        BaseUtils.setProtectedEngineField(notificationHandler, grandpaEngine);
+        BaseUtils.setProtectedEngineField(notificationHandler, transactionEngine);
         notificationHandler.connectionManager = connectionManager;
 
         notificationHandler.onMessage(stream, byteBuf);
 
-        verify(grandpaEngine).receiveRequest(message, stream);
+        verify(transactionEngine).receiveRequest(message, stream);
     }
 
     @Test
     void onClosed() throws NoSuchFieldException, IllegalAccessException {
 
-        BaseUtils.setProtectedEngineField(notificationHandler, grandpaEngine);
+        BaseUtils.setProtectedEngineField(notificationHandler, transactionEngine);
         notificationHandler.connectionManager = connectionManager;
 
         notificationHandler.onClosed(stream);
 
-        verify(connectionManager).closeGrandpaStream(stream);
+        verify(connectionManager).closeTransactionsStream(stream);
     }
 
     @Test
     void onException() throws NoSuchFieldException, IllegalAccessException {
 
-        BaseUtils.setProtectedEngineField(notificationHandler, grandpaEngine);
+        BaseUtils.setProtectedEngineField(notificationHandler, transactionEngine);
         notificationHandler.connectionManager = connectionManager;
 
         notificationHandler.onException(mock(Throwable.class));
 
-        verify(connectionManager).closeGrandpaStream(stream);
+        verify(connectionManager).closeTransactionsStream(stream);
     }
 }

@@ -28,6 +28,7 @@ public class BlockAnnounceHandshakeBuilder {
         Hash256 blockHash = lastFinalizedBlockHash == null
                 ? genesisBlockHash
                 : lastFinalizedBlockHash;
+
         return new BlockAnnounceHandshake(
                 nodeRole.getValue(),
                 lastFinalizedBlockNumber,
@@ -35,5 +36,4 @@ public class BlockAnnounceHandshakeBuilder {
                 genesisBlockHash
         );
     }
-
 }

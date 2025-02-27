@@ -25,6 +25,7 @@ import java.util.logging.Level;
 @Log
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ConnectionManager {
+
     private static ConnectionManager instance;
     protected final Map<PeerId, PeerInfo> peers = new HashMap<>();
 
@@ -46,6 +47,14 @@ public class ConnectionManager {
     }
 
     /**
+     * Adds a Transaction stream to the peer info. Peer id is retrieved from the stream.
+     * @param stream stream to be added
+     */
+    public void addTransactionsStream(Stream stream) {
+        addStream(stream, ProtocolStreamType.TRANSACTIONS);
+    }
+
+    /**
      * Adds a Block Announce stream to the peer info. Peer id is retrieved from the stream.
      *
      * @param stream stream to be added
@@ -63,8 +72,12 @@ public class ConnectionManager {
         addStream(stream, ProtocolStreamType.GRANDPA);
     }
 
-    public void addTransactionsStream(Stream stream) {
-        addStream(stream, ProtocolStreamType.TRANSACTIONS);
+    /**
+     * Adds a BEEFY stream to the peer info. Peer id is retrieved from the stream.
+     * @param stream stream to be added
+     */
+    public void addBeefyStream(Stream stream) {
+        addStream(stream, ProtocolStreamType.BEEFY);
     }
 
     private void addStream(Stream stream, ProtocolStreamType type) {
@@ -95,15 +108,6 @@ public class ConnectionManager {
     }
 
     /**
-     * Removes a GRANDPA stream from the peer info. Peer id is retrieved from the stream.
-     *
-     * @param stream stream to be closed
-     */
-    public void closeGrandpaStream(Stream stream) {
-        closeStream(stream, ProtocolStreamType.GRANDPA);
-    }
-
-    /**
      * Removes a Transactions stream from the peer info. Peer id is retrieved from the stream.
      *
      * @param stream stream to be closed
@@ -119,6 +123,23 @@ public class ConnectionManager {
      */
     public void closeBlockAnnounceStream(Stream stream) {
         closeStream(stream, ProtocolStreamType.BLOCK_ANNOUNCE);
+    }
+
+    /**
+     * Removes a GRANDPA stream from the peer info. Peer id is retrieved from the stream.
+     *
+     * @param stream stream to be closed
+     */
+    public void closeGrandpaStream(Stream stream) {
+        closeStream(stream, ProtocolStreamType.GRANDPA);
+    }
+
+    /**
+     * Removes a BEEFY stream from the peer info. Peer id is retrieved from the stream
+     * @param stream stream to be closed
+     */
+    public void closeBeefyStream(Stream stream) {
+        closeStream(stream, ProtocolStreamType.BEEFY);
     }
 
     private void closeStream(Stream stream, ProtocolStreamType type) {
@@ -180,16 +201,6 @@ public class ConnectionManager {
     }
 
     /**
-     * Checks if we have an open GRANDPA responder stream with a peer.
-     *
-     * @param peerId peer to check
-     * @return do peer info and GRANDPA responder stream exist
-     */
-    public boolean isGrandpaConnected(PeerId peerId) {
-        return peers.containsKey(peerId) && peers.get(peerId).getGrandpaStreams().getResponder() != null;
-    }
-
-    /**
      * Checks if we have an open Transactions responder stream with a peer.
      *
      * @param peerId peer to check
@@ -210,6 +221,25 @@ public class ConnectionManager {
     }
 
     /**
+     * Checks if we have an open GRANDPA responder stream with a peer.
+     *
+     * @param peerId peer to check
+     * @return do peer info and GRANDPA responder stream exist
+     */
+    public boolean isGrandpaConnected(PeerId peerId) {
+        return peers.containsKey(peerId) && peers.get(peerId).getGrandpaStreams().getResponder() != null;
+    }
+
+    /**
+     * Checks if we have an open BEEFY responder steam with a peer
+     * @param peerId peer to check
+     * @return do peer info and BEEFY responder steam exist
+     */
+    public boolean isBeefyConnected(PeerId peerId) {
+        return peers.containsKey(peerId) && peers.get(peerId).getBeefyStreams().getResponder() != null;
+    }
+
+    /**
      * Gets the ids of all peers with open connections.
      * Open connection means either Grandpa or Block Announce stream has been opened.
      *
@@ -223,10 +253,14 @@ public class ConnectionManager {
      * Closes conneciton to all the connected peers and removes them from the peersList.
      */
     public void removeAllPeers() {
-        peers.forEach((peerId, peerInfo) -> {
+
+        peers.values().forEach(peerInfo -> {
+            closeProtocolStream(peerInfo.getTransactionsStreams());
             closeProtocolStream(peerInfo.getBlockAnnounceStreams());
             closeProtocolStream(peerInfo.getGrandpaStreams());
+            closeProtocolStream(peerInfo.getBeefyStreams());
         });
+
         peers.clear();
     }
 
@@ -236,10 +270,15 @@ public class ConnectionManager {
      * @param peerId peerId of the peer to be removed
      */
     public void removePeer(PeerId peerId) {
+
         if (peers.containsKey(peerId)) {
+
             PeerInfo peerInfo = peers.get(peerId);
+            closeProtocolStream(peerInfo.getTransactionsStreams());
             closeProtocolStream(peerInfo.getBlockAnnounceStreams());
             closeProtocolStream(peerInfo.getGrandpaStreams());
+            closeProtocolStream(peerInfo.getBeefyStreams());
+
             peers.remove(peerId);
         }
     }

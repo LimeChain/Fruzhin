@@ -42,6 +42,9 @@ public class PeerMessageCoordinator {
             asyncExecutor.executeAndForget(() ->
                     network.getGrandpaService().sendHandshake(network.getHost(), peerId));
 
+            asyncExecutor.executeAndForget(() ->
+                    network.getBeefyService().sendHandshake(network.getHost(), peerId));
+
             if (network.getNodeRole().equals(NodeRole.AUTHORING)) {
                 asyncExecutor.executeAndForget(() ->
                         network.getTransactionsService().sendHandshake(network.getHost(), peerId));

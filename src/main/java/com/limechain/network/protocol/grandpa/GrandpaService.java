@@ -14,6 +14,7 @@ import java.util.Optional;
  */
 @Log
 public class GrandpaService extends NetworkService<Grandpa> {
+
     ConnectionManager connectionManager = ConnectionManager.getInstance();
 
     public GrandpaService(String protocolId) {
