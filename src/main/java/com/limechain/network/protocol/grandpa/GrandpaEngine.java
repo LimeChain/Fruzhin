@@ -37,7 +37,7 @@ import java.util.logging.Level;
  * Engine for handling transactions on GRANDPA streams.
  */
 @Log
-public class GrandpaEngine extends BaseEngine {
+public class GrandpaEngine implements BaseEngine {
 
     private static final int HANDSHAKE_LENGTH = 1;
 
@@ -52,7 +52,7 @@ public class GrandpaEngine extends BaseEngine {
     }
 
     @Override
-    protected void handleHandshake(byte[] message, PeerId peerId, Stream stream) {
+    public void handleHandshake(byte[] message, PeerId peerId, Stream stream) {
         if (connectionManager.isGrandpaConnected(peerId)) {
             log.log(Level.INFO, "Received existing grandpa handshake from " + peerId);
             stream.close();

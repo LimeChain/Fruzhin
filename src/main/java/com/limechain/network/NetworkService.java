@@ -156,15 +156,15 @@ public class NetworkService implements NodeService {
                         syncService.getProtocol(),
                         stateService.getProtocol(),
                         blockAnnounceService.getProtocol(),
-                        grandpaService.getProtocol()
+                        grandpaService.getProtocol(),
+                        beefyService.getProtocol()
                 )
         );
 
         if (nodeRole == NodeRole.AUTHORING) {
             hostBuilder.addProtocols(
                     List.of(
-                            transactionsService.getProtocol(),
-                            beefyService.getProtocol()
+                            transactionsService.getProtocol()
                     )
             );
         }

@@ -20,7 +20,7 @@ import java.util.logging.Level;
  * Engine for handling transactions on Transactions streams.
  */
 @Log
-public class TransactionEngine extends BaseEngine {
+public class TransactionEngine implements BaseEngine {
 
     //TODO Network improvements: We need a static lock as it seems we create new instances of this engine on
     // each incoming protocol thread. I am not sure that that is optimal, but I could be wrong.
@@ -37,7 +37,7 @@ public class TransactionEngine extends BaseEngine {
     }
 
     @Override
-    protected void handleHandshake(byte[] message, PeerId peerId, Stream stream) {
+    public void handleHandshake(byte[] message, PeerId peerId, Stream stream) {
         if (connectionManager.isTransactionsConnected(peerId)) {
             log.log(Level.INFO, "Received existing transactions handshake from " + peerId);
             stream.close();

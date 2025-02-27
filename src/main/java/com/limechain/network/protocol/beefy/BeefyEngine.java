@@ -16,7 +16,7 @@ import java.util.logging.Level;
  * Engine for handling transactions on BEEFY streams
  */
 @Log
-public class BeefyEngine extends BaseEngine {
+public class BeefyEngine implements BaseEngine {
 
     private static final int HANDSHAKE_LENGTH = 1;
 
@@ -29,7 +29,7 @@ public class BeefyEngine extends BaseEngine {
     }
 
     @Override
-    protected void handleHandshake(byte[] message, PeerId peerId, Stream stream) {
+    public void handleHandshake(byte[] message, PeerId peerId, Stream stream) {
         if (connectionManager.isBeefyConnected(peerId)) {
             log.log(Level.INFO, "Received existing beefy handshake from " + peerId);
             stream.close();

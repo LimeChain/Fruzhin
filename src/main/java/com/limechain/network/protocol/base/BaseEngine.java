@@ -6,11 +6,11 @@ import io.libp2p.core.Stream;
 /**
  * Abstract engine for handling transactions on specific streams
  */
-public abstract class BaseEngine {
+public interface BaseEngine {
 
-    protected abstract void handleHandshake(byte[] message, PeerId peerId, Stream stream);
+    void handleHandshake(byte[] message, PeerId peerId, Stream stream);
 
-    public abstract void receiveRequest(byte[] message, Stream stream);
+    void receiveRequest(byte[] message, Stream stream);
 
-    public abstract void writeHandshakeToStream(Stream stream, PeerId peerId);
+    void writeHandshakeToStream(Stream stream, PeerId peerId);
 }
