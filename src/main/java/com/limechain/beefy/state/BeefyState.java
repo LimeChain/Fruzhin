@@ -4,6 +4,7 @@ import com.limechain.ServiceConsensusState;
 import com.limechain.beefy.dto.SignedCommitment;
 import com.limechain.beefy.dto.ValidatorSet;
 import com.limechain.beefy.dto.VoteMessage;
+import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.runtime.Runtime;
 import com.limechain.state.AbstractState;
 import com.limechain.storage.DBConstants;
@@ -85,9 +86,7 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
 
     @Override
     public void persistState() {
-        persistBeefyValidators();
-        persistValidatorsSetId();
-        persistRoundNumber(roundNumber);
+        saveRoundNumber(roundNumber);
     }
 
     private void initializeNextDigest() {
@@ -112,7 +111,9 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
                 BigInteger sessionBlock = validatorsSet.getLeft();
                 ValidatorSet validatorSet = validatorsSet.getRight();
 
-                BeefySession beefySession = new BeefySession(validatorSet);
+                BeefySession beefySession = new BeefySession();
+                beefySession.setValidatorSet(validatorSet);
+
                 sessions.put(sessionBlock, beefySession);
             }
             nextDigest = nextDigest.add(BigInteger.ONE);
@@ -126,6 +127,10 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
                                                                     BigInteger minBlockNumber) {
         //Todo: We should search for authority changes in runtime and beefyValidatorsDigest
         return null;
+    }
+
+    private BlockHeader fetchBeefyFinalized() {
+        return repository.find(DBConstants.BEEFY_FINALIZED, new BlockHeader());
     }
 
     /**
@@ -150,39 +155,23 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
     }
 
     private void loadPersistedState() {
-        BigInteger setId = fetchValidatorsSetId();
-        List<byte[]> validators = fetchBeefyValidators(setId);
+        BigInteger setId = fetchAuthoritiesSetId();
+        List<byte[]> validators = fetchValidators(setId);
         this.validatorSet = new ValidatorSet(validators, setId);
     }
 
-    private BigInteger fetchValidatorsSetId() {
-        return repository.find(DBConstants.BEEFY_SET_ID, BigInteger.ZERO);
+    private BigInteger fetchAuthoritiesSetId() {
+        return repository.find(DBConstants.SET_ID, BigInteger.ZERO);
     }
 
-    public void persistValidatorsSetId() {
-        repository.save(DBConstants.BEEFY_SET_ID, validatorSet.getSetId());
-    }
-
-
-    private List<byte[]> fetchBeefyValidators(BigInteger setId) {
+    private List<byte[]> fetchValidators(BigInteger setId) {
         return repository.find(
-                StateUtil.generateAuthorityKey(DBConstants.BEEFY_AUTHORITY_SET, setId),
+                StateUtil.generateAuthorityKey(DBConstants.AUTHORITY_SET, setId),
                 Collections.emptyList()
         );
     }
 
-    public void persistBeefyValidators() {
-        repository.save(
-                StateUtil.generateAuthorityKey(DBConstants.BEEFY_AUTHORITY_SET, validatorSet.getSetId()),
-                validatorSet.getValidators()
-        );
-    }
-
-    private BigInteger fetchBeefyFinalized() {
-        return repository.find(DBConstants.BEEFY_FINALIZED, BigInteger.ZERO);
-    }
-
-    private void persistBeefyFinalized() {
+    private void saveBeefyFinalized() {
         repository.save(DBConstants.BEEFY_FINALIZED, beefyFinalized);
     }
 
@@ -190,7 +179,7 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
         return repository.find(DBConstants.BEEFY_ROUND, BigInteger.ZERO);
     }
 
-    private void persistRoundNumber(BigInteger roundNumber) {
+    private void saveRoundNumber(BigInteger roundNumber) {
         repository.save(DBConstants.BEEFY_ROUND, roundNumber);
     }
 
@@ -201,7 +190,7 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
         );
     }
 
-    private void persistJustification(BigInteger blockNumber, SignedCommitment justification) {
+    private void saveJustification(BigInteger blockNumber, SignedCommitment justification) {
         repository.save(
                 StateUtil.generateBeefyJustificationKey(DBConstants.BEEFY_JUSTIFICATION, blockNumber),
                 justification
