@@ -53,12 +53,16 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
     private List<Authority> authorities;
     private BigInteger disabledAuthority;
     private BigInteger setId;
+    private AuthoritySetChange lastAuthoritySetChange;
 
     private final BlockState blockState;
     private final KeyStore keyStore;
     private final KVRepository<String, Object> repository;
 
-    private final PriorityQueue<AuthoritySetChange> authoritySetChanges =
+    private final PriorityQueue<ForcedAuthoritySetChange> pendingForcedChanges =
+            new PriorityQueue<>(AuthoritySetChange.getComparator());
+
+    private final PriorityQueue<ScheduledAuthoritySetChange> pendingScheduledChanges =
             new PriorityQueue<>(AuthoritySetChange.getComparator());
 
     private GrandpaRound currentGrandpaRound;
@@ -180,33 +184,36 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
      * @param blockNumber required to determine if it's time to apply the change
      */
     public boolean handleAuthoritySetChange(BigInteger blockNumber) {
-        AuthoritySetChange changeSetData = authoritySetChanges.peek();
-
-        boolean updated = false;
-        while (changeSetData != null) {
-
-            if (changeSetData.getApplicationBlockNumber().compareTo(blockNumber) > 0) {
-                break;
-            }
-
-            startNewSet(changeSetData.getAuthorities());
-            authoritySetChanges.poll();
-            updated = true;
-
-            changeSetData = authoritySetChanges.peek();
-        }
-
-        return updated;
+//        AuthoritySetChange changeSetData = authoritySetChanges.peek();
+//
+//        boolean updated = false;
+//        while (changeSetData != null) {
+//
+//            if (changeSetData.getApplicationBlockNumber().compareTo(blockNumber) > 0) {
+//                break;
+//            }
+//
+//            startNewSet(changeSetData.getAuthorities());
+//            authoritySetChanges.poll();
+//            lastAuthoritySetChange = changeSetData;
+//            updated = true;
+//
+//            changeSetData = authoritySetChanges.peek();
+//        }
+//
+//        return updated;
+        return false;
     }
 
     public void handleGrandpaConsensusMessage(GrandpaConsensusMessage consensusMessage, BigInteger currentBlockNumber) {
+        //TODO: remove first 2 arms when the handleAuthoritySetChanges method is implemented
         switch (consensusMessage.getFormat()) {
-            case GRANDPA_SCHEDULED_CHANGE -> authoritySetChanges.add(new ScheduledAuthoritySetChange(
+            case GRANDPA_SCHEDULED_CHANGE -> pendingScheduledChanges.add(new ScheduledAuthoritySetChange(
                     consensusMessage.getAuthorities(),
                     consensusMessage.getDelay(),
                     currentBlockNumber
             ));
-            case GRANDPA_FORCED_CHANGE -> authoritySetChanges.add(new ForcedAuthoritySetChange(
+            case GRANDPA_FORCED_CHANGE -> pendingForcedChanges.add(new ForcedAuthoritySetChange(
                     consensusMessage.getAuthorities(),
                     consensusMessage.getDelay(),
                     consensusMessage.getAdditionalOffset(),

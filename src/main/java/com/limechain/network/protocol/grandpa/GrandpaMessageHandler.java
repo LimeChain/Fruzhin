@@ -507,6 +507,12 @@ public class GrandpaMessageHandler {
 
         stateManager.getSyncState().finalizeHeader(header);
 
+        //TODO
+        // Create a method that iterates over the consensus messages and looks only for authority set changes
+        // If there is a forcedChange it should be directly added to pendingForcedChange queue
+        // If there is only ScheduledChange it should be added to the pendingScheduledChange queue
+        // I think it is impossible to have more that one forced/scheduled change at a time -> this should be checked
+        // After this method is created remove the case arms for Forced/Scheduled changes from the handleGrandpaConsensusMessage method
         DigestHelper.getGrandpaConsensusMessages(header.getDigest())
                 .forEach(cm -> stateManager.getGrandpaSetState().handleGrandpaConsensusMessage(
                         cm, header.getBlockNumber())
