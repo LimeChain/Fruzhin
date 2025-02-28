@@ -1,12 +1,16 @@
 package com.limechain.beefy.dto;
 
-import lombok.Value;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.math.BigInteger;
 import java.util.List;
 
-@Value
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class ValidatorSet {
-    List<byte[]> validators;
-    BigInteger setId;
+    private List<byte[]> validators;
+    private BigInteger setId;
 }
