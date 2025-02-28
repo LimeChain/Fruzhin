@@ -40,4 +40,9 @@ public class DBConstants {
     public static final String SET_ID = "gs::setId";
     public static final String GRANDPA_PREVOTES = "gs:grandpaPreVotes";
     public static final String GRANDPA_PRECOMMITS = "gs:grandpaPreCommits";
+
+    //BeefyState keys
+    public static final String BEEFY_FINALIZED = "bs:beefyFinalized";
+    public static final String BEEFY_ROUND = "bs:beefyRound";
+    public static final String BEEFY_JUSTIFICATION = "bs:justification";
 }
