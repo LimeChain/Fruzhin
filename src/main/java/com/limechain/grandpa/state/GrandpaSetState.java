@@ -245,19 +245,19 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
     }
 
     public void saveGrandpaAuthorities() {
-        repository.save(StateUtil.generateAuthorityKey(DBConstants.AUTHORITY_SET, setId), authorities);
+        repository.save(StateUtil.generateAuthorityKey(DBConstants.GRANDPA_AUTHORITY_SET, setId), authorities);
     }
 
     public Authority[] fetchGrandpaAuthorities() {
-        return repository.find(StateUtil.generateAuthorityKey(DBConstants.AUTHORITY_SET, setId), new Authority[0]);
+        return repository.find(StateUtil.generateAuthorityKey(DBConstants.GRANDPA_AUTHORITY_SET, setId), new Authority[0]);
     }
 
     public void saveAuthoritySetId() {
-        repository.save(DBConstants.SET_ID, setId);
+        repository.save(DBConstants.GRANDPA_SET_ID, setId);
     }
 
     public BigInteger fetchAuthoritiesSetId() {
-        return repository.find(DBConstants.SET_ID, BigInteger.ZERO);
+        return repository.find(DBConstants.GRANDPA_SET_ID, BigInteger.ZERO);
     }
 
     public void saveLatestRoundNumber(BigInteger roundNumber) {
