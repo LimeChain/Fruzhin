@@ -27,6 +27,7 @@ import java.util.concurrent.CompletableFuture;
 public class PeerRequester {
 
     private static final String BLOCK_REQUEST_ERROR = "There was an issue in the block request: ";
+    private static final int THREAD_POOL_SIZE = 5;
 
     private final AsyncExecutor asyncExecutor;
     private final NetworkService network;
@@ -34,7 +35,7 @@ public class PeerRequester {
     public PeerRequester(NetworkService network) {
         this.network = network;
 
-        asyncExecutor = AsyncExecutor.withPoolSize(50);
+        asyncExecutor = AsyncExecutor.withPoolSize(THREAD_POOL_SIZE);
     }
 
     //<editor-fold desc="Sync requests">

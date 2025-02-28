@@ -31,7 +31,14 @@ import java.util.logging.Level;
 @Getter
 @Log
 public class KademliaService extends NetworkService<Kademlia> {
+
+    /**
+     * Used to set an upper threshold that Kademlia respects when looking for new peers on each run.
+     */
     public static final int REPLICATION = 20;
+    /**
+     * Used to set an upper threshold for parallelism during each round of processing the found closest peers.
+     */
     private static final int ALPHA = 3;
     private static final Random RANDOM = new Random();
 

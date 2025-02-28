@@ -9,7 +9,6 @@ import com.limechain.grandpa.vote.SignedVote;
 import com.limechain.grandpa.vote.SubRound;
 import com.limechain.grandpa.vote.Vote;
 import com.limechain.network.PeerMessageCoordinator;
-import com.limechain.network.PeerRequester;
 import com.limechain.network.protocol.grandpa.messages.catchup.req.CatchUpReqMessage;
 import com.limechain.network.protocol.grandpa.messages.catchup.res.CatchUpResMessage;
 import com.limechain.network.protocol.grandpa.messages.commit.CommitMessage;
@@ -19,13 +18,8 @@ import com.limechain.network.protocol.grandpa.messages.vote.FullVoteScaleWriter;
 import com.limechain.network.protocol.grandpa.messages.vote.GrandpaEquivocation;
 import com.limechain.network.protocol.grandpa.messages.vote.SignedMessage;
 import com.limechain.network.protocol.grandpa.messages.vote.VoteMessage;
-import com.limechain.network.protocol.sync.BlockRequestField;
-import com.limechain.network.protocol.sync.pb.SyncMessage;
-import com.limechain.network.protocol.warp.DigestHelper;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.network.protocol.warp.dto.Justification;
-import com.limechain.network.protocol.warp.scale.reader.BlockHeaderReader;
-import com.limechain.network.protocol.warp.scale.reader.JustificationReader;
 import com.limechain.runtime.Runtime;
 import com.limechain.runtime.hostapi.dto.Key;
 import com.limechain.runtime.hostapi.dto.VerifySignature;
@@ -65,13 +59,14 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 @Component
 public class GrandpaMessageHandler {
+
     private static final BigInteger CATCH_UP_THRESHOLD = BigInteger.TWO;
+    private static final int THREAD_POOL_SIZE = 4;
 
     private final StateManager stateManager;
     private final PeerMessageCoordinator messageCoordinator;
     private final WarpSyncState warpSyncState;
-    private final PeerRequester requester;
-    private final AsyncExecutor asyncExecutor = AsyncExecutor.withPoolSize(10);
+    private final AsyncExecutor asyncExecutor = AsyncExecutor.withPoolSize(THREAD_POOL_SIZE);
 
 
     /**
@@ -88,6 +83,7 @@ public class GrandpaMessageHandler {
             throw new GrandpaGenericException("Vote message has a different setId.");
         }
 
+        // TODO: If we're not an active authority no round will be playing. We should only verify and broadcast.
         BigInteger voteMessageRoundNumber = voteMessage.getRound();
         BigInteger currentRoundNumber = grandpaSetState.getCurrentGrandpaRound().getRoundNumber();
 
@@ -175,44 +171,6 @@ public class GrandpaMessageHandler {
 
         if (warpSyncState.isWarpSyncFinished() && !AbstractState.isActiveAuthority()) {
             updateSyncStateAndRuntime(commitMessage);
-        }
-    }
-
-    /**
-     * Updates the Host's state with information from a neighbour message.
-     * Tries to update Host's set data (id and authorities) if neighbour has a greater set id than the Host.
-     * Synchronized to avoid race condition between checking and updating set id
-     *
-     * @param neighbourMessage received neighbour message
-     * @param peerId           sender of message
-     */
-    public void handleNeighbourMessage(NeighbourMessage neighbourMessage, PeerId peerId) {
-        messageCoordinator.sendNeighbourMessageToPeer(peerId);
-        if (warpSyncState.isWarpSyncFinished() && neighbourMessage.getSetId()
-                .compareTo(stateManager.getGrandpaSetState().getSetId()) > 0) {
-            BigInteger setChangeBlock = neighbourMessage.getLastFinalizedBlock().add(BigInteger.ONE);
-
-            List<SyncMessage.BlockData> response = requester.requestBlockData(
-                    BlockRequestField.ALL,
-                    setChangeBlock.intValueExact(),
-                    1
-            ).join();
-
-            SyncMessage.BlockData block = response.getFirst();
-
-            if (block.getIsEmptyJustification()) {
-                log.log(Level.WARNING, "No justification for block " + setChangeBlock);
-                return;
-            }
-
-            Justification justification = ScaleUtils.Decode.decode(
-                    block.getJustification().toByteArray(), JustificationReader.getInstance());
-
-            boolean verified = JustificationVerifier.verify(justification);
-
-            if (verified) {
-                processNeighbourUpdates(block);
-            }
         }
     }
 
@@ -499,26 +457,6 @@ public class GrandpaMessageHandler {
         syncState.finalizedCommitMessage(commitMessage);
 
         new Thread(() -> warpSyncState.updateRuntime(lastFinalizedBlockNumber)).start();
-    }
-
-    private void processNeighbourUpdates(SyncMessage.BlockData block) {
-        BlockHeader header = ScaleUtils.Decode.decode(
-                block.getHeader().toByteArray(), BlockHeaderReader.getInstance());
-
-        stateManager.getSyncState().finalizeHeader(header);
-
-        DigestHelper.getGrandpaConsensusMessages(header.getDigest())
-                .forEach(cm -> stateManager.getGrandpaSetState().handleGrandpaConsensusMessage(
-                        cm, header.getBlockNumber())
-                );
-
-        // Executes scheduled or forced authority changes for the last finalized block.
-        boolean changeInAuthoritySet = stateManager.getGrandpaSetState().handleAuthoritySetChange(
-                stateManager.getSyncState().getLastFinalizedBlockNumber());
-
-        if (warpSyncState.isWarpSyncFinished() && changeInAuthoritySet) {
-            new Thread(messageCoordinator::sendMessagesToPeers).start();
-        }
     }
 
     private SignedVote[] getPreVoteJustification(GrandpaRound requestedRound) {
