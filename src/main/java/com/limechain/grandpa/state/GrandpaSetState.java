@@ -53,12 +53,17 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
     private List<Authority> authorities;
     private BigInteger disabledAuthority;
     private BigInteger setId;
-    private AuthoritySetChange lastAuthoritySetChange;
 
     private final BlockState blockState;
     private final KeyStore keyStore;
     private final KVRepository<String, Object> repository;
 
+    private AuthoritySetChange finishedAuthoritySetChange;
+    private AuthoritySetChange inProgressAuthoritySetChange;
+    // TODO:
+    //  State can hold a value for the current authority set change(inProgressAuthorityChange) that is not applied yet
+    //  Before adding new authority set change in any of the queues we should check if the origin block number
+    //  of the chane is bigger than the application number of the inProgressAuthorityChange
     private final PriorityQueue<ForcedAuthoritySetChange> pendingForcedChanges =
             new PriorityQueue<>(AuthoritySetChange.getComparator());
 
