@@ -63,7 +63,13 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
     // TODO:
     //  State can hold a value for the current authority set change(inProgressAuthorityChange) that is not applied yet
     //  Before adding new authority set change in any of the queues we should check if the origin block number
-    //  of the chane is bigger than the application number of the inProgressAuthorityChange
+    //  of the change is bigger than the application number of the inProgressAuthorityChange
+
+    // TODO
+    //  What will happen if we try to add to the queue a change with originBlockNumber smaller than last origin block number
+    //  of the change added to the queue? Should we apply it instead of applying the already existing in queue change or
+    //  we just ignore it because its getApplicationBlockNumber of the inProgressAuthoritySetChange is bigger than the origin block
+    //  number of the new incoming change
     private final PriorityQueue<ForcedAuthoritySetChange> pendingForcedChanges =
             new PriorityQueue<>(AuthoritySetChange.getComparator());
 
