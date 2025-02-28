@@ -54,6 +54,8 @@ public class GrandpaRound {
     // Based on https://github.com/paritytech/polkadot/pull/6217
     public static final long DURATION = 1000;
 
+    private static final AsyncExecutor ASYNC_EXECUTOR = AsyncExecutor.withSingleThread();
+
     // Copy of GrandpaSetState information at round creation
     private BigInteger setId;
     private List<Authority> authorities;
@@ -128,10 +130,8 @@ public class GrandpaRound {
     private final List<CommitMessage> commitMessagesArchive = new ArrayList<>();
 
     private final StateManager stateManager = Objects.requireNonNull(AppBean.getBean(StateManager.class));
-
     private final GrandpaMessageHandler grandpaMessageHandler = Objects.requireNonNull(
             AppBean.getBean(GrandpaMessageHandler.class));
-
     private final PeerMessageCoordinator peerMessageCoordinator = Objects.requireNonNull(
             AppBean.getBean(PeerMessageCoordinator.class));
 
@@ -185,7 +185,7 @@ public class GrandpaRound {
             shouldUpdateEstimate = updateGrandpaGhost();
 
             if (grandpaGhost != null) {
-                AsyncExecutor.withSingleThread().executeAndForget(() -> {
+                ASYNC_EXECUTOR.executeAndForget(() -> {
                     if (stage instanceof PreCommitStage) {
                         stage.end(this);
                     }

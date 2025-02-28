@@ -9,6 +9,7 @@ import com.limechain.sync.SyncMode;
 import com.limechain.sync.warpsync.WarpSyncState;
 import com.limechain.transaction.TransactionProcessor;
 import com.limechain.transaction.dto.ExtrinsicArray;
+import com.limechain.utils.async.AsyncExecutor;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.libp2p.core.PeerId;
 import io.libp2p.core.Stream;
@@ -22,10 +23,10 @@ import java.util.logging.Level;
 @Log
 public class TransactionEngine implements BaseEngine {
 
-    //TODO Network improvements: We need a static lock as it seems we create new instances of this engine on
-    // each incoming protocol thread. I am not sure that that is optimal, but I could be wrong.
-    private static final Object LOCK = new Object();
-
+    /**
+     * Equals to the number of different messages we can receive excluding handshake.
+     */
+    private static final AsyncExecutor TRANSACTION_EXECUTOR = AsyncExecutor.withSingleThread();
     private static final int HANDSHAKE_LENGTH = 1;
 
     private final ConnectionManager connectionManager;
@@ -128,27 +129,26 @@ public class TransactionEngine implements BaseEngine {
             return;
         }
 
+        if (isHandshake(message)) {
+            handleHandshake(message, peerId, stream);
+        } else {
+            TRANSACTION_EXECUTOR.executeAndForget(() -> handleTransactionMessage(message, stream));
+        }
+    }
+
+    private void handleTransactionMessage(byte[] message, Stream stream) {
+
         if (!SyncMode.HEAD.equals(AbstractState.getSyncMode())) {
             log.fine("Skipping transaction message before we reach head of chain.");
             return;
         }
 
-        if (isHandshake(message)) {
-            handleHandshake(message, peerId, stream);
-        } else {
-            handleTransactionMessage(message, stream);
-        }
-    }
-
-    private void handleTransactionMessage(byte[] message, Stream stream) {
         ScaleCodecReader reader = new ScaleCodecReader(message);
         ExtrinsicArray transactions = reader.read(TransactionReader.getInstance());
         log.log(Level.FINE, "Received " + transactions.getExtrinsics().length + " transactions from Peer "
                 + stream.remotePeerId());
 
-        synchronized (LOCK) {
-            transactionProcessor.handleExternalTransactions(transactions.getExtrinsics(), stream.remotePeerId());
-        }
+        transactionProcessor.handleExternalTransactions(transactions.getExtrinsics(), stream.remotePeerId());
     }
 
     private boolean isHandshake(byte[] message) {

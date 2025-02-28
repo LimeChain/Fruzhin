@@ -4,8 +4,6 @@ import com.limechain.network.ConnectionManager;
 import com.limechain.network.protocol.base.BaseEngine;
 import com.limechain.network.protocol.beefy.messages.BeefyMessageType;
 import com.limechain.rpc.server.AppBean;
-import com.limechain.state.AbstractState;
-import com.limechain.sync.SyncMode;
 import io.libp2p.core.PeerId;
 import io.libp2p.core.Stream;
 import lombok.extern.java.Log;
@@ -30,6 +28,7 @@ public class BeefyEngine implements BaseEngine {
 
     @Override
     public void handleHandshake(byte[] message, PeerId peerId, Stream stream) {
+
         if (connectionManager.isBeefyConnected(peerId)) {
             log.log(Level.INFO, "Received existing beefy handshake from " + peerId);
             stream.close();
@@ -43,6 +42,7 @@ public class BeefyEngine implements BaseEngine {
 
     @Override
     public void receiveRequest(byte[] message, Stream stream) {
+
         BeefyMessageType messageType = getBeefyMessageType(message);
 
         if (messageType == null) {
@@ -60,6 +60,7 @@ public class BeefyEngine implements BaseEngine {
 
     /**
      * Send our BEEFY handshake on a given initiator stream
+     *
      * @param stream initiator stream to write the message to
      * @param peerId peer to send to
      */
@@ -71,12 +72,14 @@ public class BeefyEngine implements BaseEngine {
     }
 
     private void handleInitiatorStreamMessage(BeefyMessageType messageType, Stream stream) {
+
         PeerId peerId = stream.remotePeerId();
         if (messageType != BeefyMessageType.HANDSHAKE) {
             stream.close();
             log.log(Level.WARNING, "Non handshake message on initiator beefy steam from peer " + peerId);
             return;
         }
+
         connectionManager.addBeefyStream(stream);
         log.log(Level.INFO, "Received beefy handshake from " + peerId);
     }
@@ -88,11 +91,6 @@ public class BeefyEngine implements BaseEngine {
         if (!connectedToPeer && messageType != BeefyMessageType.HANDSHAKE) {
             log.log(Level.WARNING, "No handshake for beefy message from peer " + peerId);
             stream.close();
-            return;
-        }
-
-        if (!SyncMode.HEAD.equals(AbstractState.getSyncMode())) {
-            log.fine("Skipping beefy message before we reach head of chain.");
             return;
         }
 
@@ -112,8 +110,8 @@ public class BeefyEngine implements BaseEngine {
     }
 
     private BeefyMessageType getBeefyMessageType(byte[] message) {
-        return message.length == HANDSHAKE_LENGTH ?
-                BeefyMessageType.HANDSHAKE :
-                BeefyMessageType.getByType(message[0]);
+        return message.length == HANDSHAKE_LENGTH
+                ? BeefyMessageType.HANDSHAKE
+                : BeefyMessageType.getByType(message[0]);
     }
 }

@@ -21,10 +21,12 @@ import com.limechain.storage.DBConstants;
 import com.limechain.storage.KVRepository;
 import com.limechain.utils.Ed25519Utils;
 import com.limechain.utils.StringUtils;
+import com.limechain.utils.async.AsyncExecutor;
 import io.ipfs.multiaddr.MultiAddress;
 import io.ipfs.multihash.Multihash;
 import io.libp2p.core.Host;
 import io.libp2p.core.PeerId;
+import io.libp2p.core.Stream;
 import io.libp2p.core.multiformats.Multiaddr;
 import io.libp2p.crypto.keys.Ed25519PrivateKey;
 import io.libp2p.protocol.PingProtocol;
@@ -45,8 +47,6 @@ import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
-import static com.limechain.network.kad.KademliaService.REPLICATION;
-
 /**
  * A Network class that handles all peer connections and Kademlia
  */
@@ -54,8 +54,11 @@ import static com.limechain.network.kad.KademliaService.REPLICATION;
 @Getter
 @Component
 public class NetworkService implements NodeService {
+
     public static final String LOCAL_IPV4_TCP_ADDRESS = "/ip4/127.0.0.1/tcp/";
     private static final int HOST_PORT = 30333;
+    private static final int THREAD_POOL_SIZE = 5;
+
     private static final Random RANDOM = new SecureRandom();
 
     private final Chain chain;
@@ -82,6 +85,8 @@ public class NetworkService implements NodeService {
     private int bootPeerIndex = 0;
     private boolean started = false;
 
+    private final AsyncExecutor asyncExecutor;
+
     /**
      * Initializes a host for the peer connection,
      * Initializes the Kademlia service
@@ -101,6 +106,129 @@ public class NetworkService implements NodeService {
         this.nodeRole = hostConfig.getNodeRole();
         this.connectionManager = ConnectionManager.getInstance();
         this.initializeProtocols(chainService, genesisBlockHash, hostConfig, repository, cliArgs);
+
+        this.asyncExecutor = AsyncExecutor.withPoolSize(THREAD_POOL_SIZE);
+    }
+
+    @SneakyThrows
+    @Override
+    public void start() {
+        log.log(Level.INFO, "Starting network module...");
+        kademliaService.connectBootNodes(this.bootNodes);
+        started = true;
+        log.log(Level.INFO, "Started network module!");
+
+        // Wait for peers
+        while (true) {
+            if (!kademliaService.getBootNodePeerIds().isEmpty()) {
+                if (kademliaService.getSuccessfulBootNodes() > 0) {
+                    break;
+                }
+                updateCurrentSelectedPeer();
+            }
+
+            log.log(Level.INFO, "Waiting for peer connection...");
+            Thread.sleep(10000);
+        }
+
+        log.log(Level.INFO, "Node successfully connected to a peer! Sync can start!");
+    }
+
+    @Override
+    @PreDestroy
+    public void stop() {
+        log.log(Level.INFO, "Stopping network module...");
+        started = false;
+        connectionManager.removeAllPeers();
+        host.stop();
+        log.log(Level.INFO, "Stopped network module!");
+    }
+
+    public boolean updateCurrentSelectedPeerWithNextBootnode() {
+        if (bootPeerIndex > kademliaService.getBootNodePeerIds().size())
+            return false;
+        this.currentSelectedPeer = this.kademliaService.getBootNodePeerIds().get(bootPeerIndex);
+        bootPeerIndex++;
+        return true;
+    }
+
+    public boolean updateCurrentSelectedPeerWithBootnode(int index) {
+        if (index >= 0 && index < this.kademliaService.getBootNodePeerIds().size()) {
+            this.currentSelectedPeer = this.kademliaService.getBootNodePeerIds().get(index);
+            return true;
+        }
+        return false;
+    }
+
+    public void updateCurrentSelectedPeer() {
+        if (connectionManager.getPeerIds().isEmpty()) return;
+        this.currentSelectedPeer = connectionManager.getPeerIds().stream()
+                .skip(RANDOM.nextInt(connectionManager.getPeerIds().size())).findAny().orElse(null);
+    }
+
+    public String getPeerId() {
+        return this.host.getPeerId().toString();
+    }
+
+    public String[] getListenAddresses() {
+        // TODO Bug: .listenAddresses() returns empty list
+        return this.host.listenAddresses().stream().map(Multiaddr::toString).toArray(String[]::new);
+    }
+
+    public int getPeersCount() {
+        return connectionManager.getPeerIds().size();
+    }
+
+    /**
+     * Periodically searches for new peers, connects to them and sends a block announce handshake so that we start
+     * communication.
+     */
+    @Scheduled(fixedDelay = 10, initialDelay = 30, timeUnit = TimeUnit.SECONDS)
+    private void updatePeers() {
+        if (!started) {
+            return;
+        }
+
+        log.log(Level.INFO, String.format("findPeers: connected peers: %s", getPeersCount()));
+        log.log(Level.INFO, "findPeers: searching for peers...");
+
+        kademliaService.findNewPeers();
+
+        if (this.currentSelectedPeer == null) {
+            updateCurrentSelectedPeer();
+        }
+
+        host.getStreams().stream()
+                .map(Stream::remotePeerId)
+                .distinct()
+                .filter(id -> !connectionManager.getPeerIds().contains(id))
+                .forEach(peerId ->
+                        asyncExecutor.executeAndForget(() -> blockAnnounceService.sendHandshake(host, peerId)));
+    }
+
+    // TODO: Fix ping requests being rejected because of the "timeoutScheduler" inside of Ping.kt.
+    @Scheduled(fixedDelay = 1, timeUnit = TimeUnit.MINUTES)
+    private void pingPeers() {
+        // TODO: This needs to by synchronized with the findPeers method
+        if (getPeersCount() == 0) {
+            log.log(Level.INFO, "No peers to ping.");
+            return;
+        }
+
+        log.log(Level.INFO, "Pinging peers...");
+        connectionManager.getPeerIds().forEach(this::ping);
+    }
+
+    private void ping(PeerId peerId) {
+        try {
+            Long latency = ping.ping(host, host.getAddressBook(), peerId);
+            log.log(Level.INFO, String.format("Pinged peer: %s, latency %s ms", peerId, latency));
+        } catch (Exception e) {
+            log.log(Level.FINE, String.format("Failed to ping peer: %s. Removing from active connections", peerId));
+            if (this.currentSelectedPeer.equals(peerId)) {
+                updateCurrentSelectedPeer();
+            }
+        }
     }
 
     private void initializeProtocols(ChainService chainService, GenesisBlockHash genesisBlockHash,
@@ -197,126 +325,6 @@ public class NetworkService implements NodeService {
             log.log(Level.INFO, "Generated new peerId!");
         }
         return privateKey;
-    }
-
-    @SneakyThrows
-    @Override
-    public void start() {
-        log.log(Level.INFO, "Starting network module...");
-        kademliaService.connectBootNodes(this.bootNodes);
-        started = true;
-        log.log(Level.INFO, "Started network module!");
-
-        // Wait for peers
-        while (true) {
-            if (!kademliaService.getBootNodePeerIds().isEmpty()) {
-                if (kademliaService.getSuccessfulBootNodes() > 0) {
-                    break;
-                }
-                updateCurrentSelectedPeer();
-            }
-
-            log.log(Level.INFO, "Waiting for peer connection...");
-            Thread.sleep(10000);
-        }
-
-        log.log(Level.INFO, "Node successfully connected to a peer! Sync can start!");
-    }
-
-    @Override
-    @PreDestroy
-    public void stop() {
-        log.log(Level.INFO, "Stopping network module...");
-        started = false;
-        connectionManager.removeAllPeers();
-        host.stop();
-        log.log(Level.INFO, "Stopped network module!");
-    }
-
-    public boolean updateCurrentSelectedPeerWithNextBootnode() {
-        if (bootPeerIndex > kademliaService.getBootNodePeerIds().size())
-            return false;
-        this.currentSelectedPeer = this.kademliaService.getBootNodePeerIds().get(bootPeerIndex);
-        bootPeerIndex++;
-        return true;
-    }
-
-    public boolean updateCurrentSelectedPeerWithBootnode(int index) {
-        if (index >= 0 && index < this.kademliaService.getBootNodePeerIds().size()) {
-            this.currentSelectedPeer = this.kademliaService.getBootNodePeerIds().get(index);
-            return true;
-        }
-        return false;
-    }
-
-    public void updateCurrentSelectedPeer() {
-        if (connectionManager.getPeerIds().isEmpty()) return;
-        this.currentSelectedPeer = connectionManager.getPeerIds().stream()
-                .skip(RANDOM.nextInt(connectionManager.getPeerIds().size())).findAny().orElse(null);
-    }
-
-    public String getPeerId() {
-        return this.host.getPeerId().toString();
-    }
-
-    public String[] getListenAddresses() {
-        // TODO Bug: .listenAddresses() returns empty list
-        return this.host.listenAddresses().stream().map(Multiaddr::toString).toArray(String[]::new);
-    }
-
-    public int getPeersCount() {
-        return connectionManager.getPeerIds().size();
-    }
-
-    /**
-     * Periodically searches for new peers and connects to them
-     * Logs the number of connected peers excluding boot nodes
-     * By default Spring Boot uses a thread pool of size 1, so each call will be executed one at a time.
-     */
-    @Scheduled(fixedDelay = 10, timeUnit = TimeUnit.SECONDS)
-    public void findPeers() {
-        if (!started) {
-            return;
-        }
-        if (getPeersCount() >= REPLICATION) {
-            log.log(Level.INFO,
-                    "Connections have reached replication factor(" + REPLICATION + "). " +
-                            "No need to search for new ones yet.");
-            return;
-        }
-
-        log.log(Level.INFO, "Searching for peers...");
-        kademliaService.findNewPeers();
-
-        if (this.currentSelectedPeer == null) {
-            updateCurrentSelectedPeer();
-        }
-
-        log.log(Level.INFO, String.format("Connected peers: %s", getPeersCount()));
-    }
-
-    @Scheduled(fixedDelay = 1, timeUnit = TimeUnit.MINUTES)
-    public void pingPeers() {
-        // TODO: This needs to by synchronized with the findPeers method
-        if (getPeersCount() == 0) {
-            log.log(Level.INFO, "No peers to ping.");
-            return;
-        }
-
-        log.log(Level.INFO, "Pinging peers...");
-        connectionManager.getPeerIds().forEach(this::ping);
-    }
-
-    private void ping(PeerId peerId) {
-        try {
-            Long latency = ping.ping(host, host.getAddressBook(), peerId);
-            log.log(Level.INFO, String.format("Pinged peer: %s, latency %s ms", peerId, latency));
-        } catch (Exception e) {
-            log.log(Level.WARNING, String.format("Failed to ping peer: %s. Removing from active connections", peerId));
-            if (this.currentSelectedPeer.equals(peerId)) {
-                updateCurrentSelectedPeer();
-            }
-        }
     }
 }
 

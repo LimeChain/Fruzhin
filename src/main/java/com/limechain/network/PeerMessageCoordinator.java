@@ -28,13 +28,24 @@ import java.util.function.Consumer;
 @Component
 public class PeerMessageCoordinator {
 
+    private static final int THREAD_POOL_SIZE = 5;
+
     private final AsyncExecutor asyncExecutor;
     private final NetworkService network;
 
     public PeerMessageCoordinator(NetworkService network) {
         this.network = network;
 
-        asyncExecutor = AsyncExecutor.withPoolSize(50);
+        asyncExecutor = AsyncExecutor.withPoolSize(THREAD_POOL_SIZE);
+    }
+
+    public void handshakeBootNodes() {
+        KademliaService kademliaService = network.getKademliaService();
+        kademliaService.getBootNodePeerIds()
+                .stream()
+                .distinct()
+                .forEach(p -> asyncExecutor.executeAndForget(() ->
+                        network.getBlockAnnounceService().sendHandshake(kademliaService.getHost(), p)));
     }
 
     public void handshakePeers() {
@@ -94,23 +105,6 @@ public class PeerMessageCoordinator {
         });
     }
 
-    private void sendMessageToActivePeers(Consumer<PeerId> messageAction) {
-        network.getConnectionManager().getPeerIds().forEach(messageAction);
-    }
-
-    public void handshakeBootNodes() {
-        KademliaService kademliaService = network.getKademliaService();
-        kademliaService.getBootNodePeerIds()
-                .stream()
-                .distinct()
-                .forEach(p -> asyncExecutor.executeAndForget(() ->
-                        network.getBlockAnnounceService().sendHandshake(kademliaService.getHost(), p)));
-    }
-
-    public void sendNeighbourMessageToPeer(PeerId peerId) {
-        network.getGrandpaService().sendNeighbourMessage(network.getHost(), peerId);
-    }
-
     public void sendCommitMessageToPeers(CommitMessage commitMessage) {
         byte[] scaleMessage = ScaleUtils.Encode.encode(CommitMessageScaleWriter.getInstance(), commitMessage);
         sendMessageToActivePeers(peerId -> {
@@ -135,5 +129,9 @@ public class PeerMessageCoordinator {
         sendMessageToActivePeers(peerId -> asyncExecutor.executeAndForget(() -> network.getGrandpaService().sendVoteMessage(
                 network.getHost(), peerId, scaleMessage
         )));
+    }
+
+    private void sendMessageToActivePeers(Consumer<PeerId> messageAction) {
+        network.getConnectionManager().getPeerIds().forEach(messageAction);
     }
 }

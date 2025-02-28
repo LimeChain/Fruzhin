@@ -20,8 +20,12 @@ public class ProtocolMessageBuilder {
         GrandpaSetState grandpaSetState = stateManager.getGrandpaSetState();
         SyncState syncState = stateManager.getSyncState();
 
-        BigInteger setId = grandpaSetState.getSetId();
-        BigInteger roundNumber = grandpaSetState.getCurrentGrandpaRound().getRoundNumber();
+        BigInteger setId = grandpaSetState.getSetId() == null
+                ? BigInteger.ZERO
+                : grandpaSetState.getSetId();
+        BigInteger roundNumber = grandpaSetState.getCurrentGrandpaRound() == null
+                ? BigInteger.ONE
+                : grandpaSetState.getCurrentGrandpaRound().getRoundNumber();
         BigInteger bestFinalizedBlockNumber = syncState.getLastFinalizedBlockNumber();
 
         return new NeighbourMessage(
