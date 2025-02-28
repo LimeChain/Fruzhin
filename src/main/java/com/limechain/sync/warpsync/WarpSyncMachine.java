@@ -107,12 +107,9 @@ public class WarpSyncMachine {
 
     private void finishWarpSync() {
         SyncState syncState = stateManager.getSyncState();
-        GrandpaSetState grandpaSetState = stateManager.getGrandpaSetState();
         BlockState blockState = stateManager.getBlockState();
 
         this.warpState.setWarpSyncFinished(true);
-        syncState.persistState();
-        grandpaSetState.persistState();
 
         blockState.setupPostWarpSync(syncState.getLastFinalizedBlockHash(), syncState.getLastFinalizedBlockNumber());
 
