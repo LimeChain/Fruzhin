@@ -1,9 +1,16 @@
 package com.limechain.beefy.state;
 
 import com.limechain.ServiceConsensusState;
+import com.limechain.beefy.dto.BeefyPayloadId;
+import com.limechain.beefy.dto.Commitment;
+import com.limechain.beefy.dto.PayloadElement;
 import com.limechain.beefy.dto.SignedCommitment;
 import com.limechain.beefy.dto.ValidatorSet;
 import com.limechain.beefy.dto.VoteMessage;
+import com.limechain.exception.beefy.BeefyGenericException;
+import com.limechain.network.protocol.beefy.messages.consensus.BeefyConsensusMessage;
+import com.limechain.network.protocol.warp.DigestHelper;
+import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.runtime.Runtime;
 import com.limechain.state.AbstractState;
 import com.limechain.storage.DBConstants;
@@ -22,6 +29,7 @@ import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -206,5 +214,23 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
                 StateUtil.generateBeefyJustificationKey(DBConstants.BEEFY_JUSTIFICATION, blockNumber),
                 justification
         );
+    }
+
+    private Commitment getCommitment(BigInteger blockNumber, BigInteger setId) {
+        BlockHeader blockHeader = blockState.getHeaderByNumber(blockNumber);
+        byte[] mmrHash = extractMmrRootHash(blockHeader);
+        PayloadElement payloadElement = new PayloadElement(BeefyPayloadId.MMR, mmrHash);
+
+        return new Commitment(List.of(payloadElement), blockNumber, setId);
+    }
+
+    public byte[] extractMmrRootHash(BlockHeader blockHeader) {
+        return DigestHelper.getBeefyConsensusMessages(blockHeader.getDigest())
+                .stream().map(BeefyConsensusMessage::getMmrRootHash)
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElseThrow(() -> new BeefyGenericException(
+                        String.format("No MMR digest found in block header: %s", blockHeader.getBlockNumber()))
+                );
     }
 }
