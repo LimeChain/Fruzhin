@@ -221,7 +221,7 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
         byte[] mmrHash = extractMmrRootHash(blockHeader);
         PayloadElement payloadElement = new PayloadElement(BeefyPayloadId.MMR, mmrHash);
 
-        return new Commitment(List.of(payloadElement), blockNumber, setId);
+        return new Commitment(Collections.singletonList(payloadElement), blockNumber, setId);
     }
 
     public byte[] extractMmrRootHash(BlockHeader blockHeader) {
