@@ -224,7 +224,7 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
         return new Commitment(Collections.singletonList(payloadElement), blockNumber, setId);
     }
 
-    public byte[] extractMmrRootHash(BlockHeader blockHeader) {
+    private byte[] extractMmrRootHash(BlockHeader blockHeader) {
         return DigestHelper.getBeefyConsensusMessages(blockHeader.getDigest())
                 .stream().map(BeefyConsensusMessage::getMmrRootHash)
                 .filter(Objects::nonNull)
