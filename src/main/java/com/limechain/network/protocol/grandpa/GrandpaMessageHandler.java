@@ -455,8 +455,6 @@ public class GrandpaMessageHandler {
             return;
         }
         syncState.finalizedCommitMessage(commitMessage);
-
-        new Thread(() -> warpSyncState.updateRuntime(lastFinalizedBlockNumber)).start();
     }
 
     private SignedVote[] getPreVoteJustification(GrandpaRound requestedRound) {
