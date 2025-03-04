@@ -230,7 +230,7 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
                 .filter(Objects::nonNull)
                 .findFirst()
                 .orElseThrow(() -> new BeefyGenericException(
-                        String.format("No MMR digest found in block header: %s", blockHeader.getBlockNumber()))
+                        String.format("No MMR digest found in block header: %d", blockHeader.getBlockNumber()))
                 );
     }
 }
