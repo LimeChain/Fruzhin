@@ -146,11 +146,11 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
     }
 
     /**
-     * Method is called after processing all the accumulated justifications.
+     * Method is being called after processing all the accumulated justifications.
      * It checks for mandatory blocks by detecting set changes in all blocks
      * between the last BEEFY finalized and GRANDPA finalized blocks.
      */
-    private void handleBeefyAuthoritiesConsensusMessages(BeefyConsensusMessage consensusMessage, BigInteger currentBlockNumber) {
+    private void handleBeefyAuthorityConsensusMessage(BeefyConsensusMessage consensusMessage, BigInteger currentBlockNumber) {
         switch (consensusMessage.getFormat()) {
             case BEEFY_CHANGED_AUTHORITIES -> {
                 //Todo implement handle BEEFY_CHANGED_AUTHORITIES logic.
