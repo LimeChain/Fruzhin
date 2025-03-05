@@ -178,6 +178,24 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
         );
     }
 
+    private BigInteger fetchDisabledAuthority(BigInteger setId) {
+        return repository.find(
+                StateUtil.generateBeefyDisabledAuthorityKey(
+                        DBConstants.BEEFY_DISABLED_AUTHORITY, setId
+                ),
+                BigInteger.ZERO
+        );
+    }
+
+    private void persistDisabledAuthority() {
+        repository.save(
+                StateUtil.generateBeefyDisabledAuthorityKey(
+                        DBConstants.BEEFY_DISABLED_AUTHORITY, validatorSet.getSetId()
+                ),
+                disabledAuthority
+        );
+    }
+
     private BigInteger fetchBeefyFinalized() {
         return repository.find(DBConstants.BEEFY_FINALIZED, BigInteger.ZERO);
     }
