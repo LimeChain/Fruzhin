@@ -41,7 +41,6 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
     private ValidatorSet validatorSet;
 
     private BigInteger disabledAuthority;
-    private byte[] mmrRootHash;
 
     private final BlockState blockState;
     private final KeyStore keyStore;
@@ -159,7 +158,7 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
         return repository.find(DBConstants.BEEFY_SET_ID, BigInteger.ZERO);
     }
 
-    public void persistValidatorsSetId() {
+    private void persistValidatorsSetId() {
         repository.save(DBConstants.BEEFY_SET_ID, validatorSet.getSetId());
     }
 
@@ -171,7 +170,7 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
         );
     }
 
-    public void persistBeefyValidators() {
+    private void persistBeefyValidators() {
         repository.save(
                 StateUtil.generateAuthorityKey(DBConstants.BEEFY_AUTHORITY_SET, validatorSet.getSetId()),
                 validatorSet.getValidators()
