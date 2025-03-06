@@ -4,6 +4,7 @@ import com.limechain.ServiceConsensusState;
 import com.limechain.beefy.dto.SignedCommitment;
 import com.limechain.beefy.dto.ValidatorSet;
 import com.limechain.beefy.dto.VoteMessage;
+import com.limechain.network.protocol.beefy.messages.consensus.BeefyConsensusMessage;
 import com.limechain.runtime.Runtime;
 import com.limechain.state.AbstractState;
 import com.limechain.storage.DBConstants;
@@ -133,19 +134,17 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
     }
 
     /**
-     * The threshold is determined as the numOfValidators - (numOfValidators - 1) / 3
-     *
-     * @return minimum required validators for finality.
+     * It checks for mandatory blocks by detecting set changes in all blocks
+     * between the last BEEFY finalized and GRANDPA finalized blocks.
      */
-    public BigInteger getThreshold() {
-        var validatorSize = validatorSet.getValidators().size();
-        if (validatorSize == 0) {
-            return BigInteger.ZERO;
-        }
-        var numOfValidators = BigInteger.valueOf(validatorSize);
-        var faulty = (numOfValidators.subtract(BigInteger.ONE)).divide(THRESHOLD_DENOMINATOR);
+    private void handleBeefyAuthorityConsensusMessage(BeefyConsensusMessage consensusMessage, BigInteger currentBlockNumber) {
+        switch (consensusMessage.getFormat()) {
+            case BEEFY_CHANGED_AUTHORITIES -> {
+                //Todo implement handle BEEFY_CHANGED_AUTHORITIES logic.
 
-        return numOfValidators.subtract(faulty);
+            }
+            case BEEFY_ON_DISABLED -> disabledAuthority = consensusMessage.getDisabledAuthority();
+        }
     }
 
     public void vote() {
@@ -225,6 +224,24 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
         repository.save(
                 StateUtil.generateAuthorityKey(DBConstants.BEEFY_AUTHORITY_SET, validatorSet.getSetId()),
                 validatorSet.getValidators()
+        );
+    }
+
+    private BigInteger fetchDisabledAuthority(BigInteger setId) {
+        return repository.find(
+                StateUtil.generateBeefyDisabledAuthorityKey(
+                        DBConstants.BEEFY_DISABLED_AUTHORITY, setId
+                ),
+                BigInteger.ZERO
+        );
+    }
+
+    private void persistDisabledAuthority() {
+        repository.save(
+                StateUtil.generateBeefyDisabledAuthorityKey(
+                        DBConstants.BEEFY_DISABLED_AUTHORITY, validatorSet.getSetId()
+                ),
+                disabledAuthority
         );
     }
 

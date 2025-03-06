@@ -3,6 +3,7 @@ package com.limechain.beefy;
 import com.limechain.beefy.dto.BeefyPayloadId;
 import com.limechain.beefy.dto.Commitment;
 import com.limechain.beefy.dto.PayloadElement;
+import com.limechain.beefy.dto.ValidatorSet;
 import com.limechain.exception.storage.BlockStorageGenericException;
 import com.limechain.network.protocol.beefy.messages.consensus.BeefyConsensusMessage;
 import com.limechain.network.protocol.warp.DigestHelper;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
 import java.util.Collections;
+import java.util.Objects;
 import java.util.Optional;
 
 @Log
@@ -22,7 +24,35 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class BeefyService {
 
+    private static final BigInteger THRESHOLD_DENOMINATOR = BigInteger.valueOf(3);
+
     private final StateManager stateManager;
+
+    /**
+     * The threshold is determined as the numOfValidators - (numOfValidators - 1) / 3
+     *
+     * @return minimum required validators for finality.
+     */
+    private BigInteger getThreshold() {
+        ValidatorSet validatorSet = stateManager.getBeefyState().getValidatorSet();
+
+        if (Objects.isNull(validatorSet)) {
+            log.warning("getThreshold: No validatorSet in BeefyState.");
+            return BigInteger.ZERO;
+        }
+
+        var validatorSize = validatorSet.getValidators().size();
+
+        if (validatorSize == 0) {
+            log.warning("getThreshold: Validator set is empty.");
+            return BigInteger.ZERO;
+        }
+
+        var numOfValidators = BigInteger.valueOf(validatorSize);
+        var faulty = (numOfValidators.subtract(BigInteger.ONE)).divide(THRESHOLD_DENOMINATOR);
+
+        return numOfValidators.subtract(faulty);
+    }
 
     private Commitment getCommitment(BigInteger blockNumber, BigInteger setId) {
         BlockState blockState = stateManager.getBlockState();
