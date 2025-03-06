@@ -37,8 +37,6 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiredArgsConstructor
 public class BeefyState extends AbstractState implements ServiceConsensusState {
 
-    private static final BigInteger THRESHOLD_DENOMINATOR = BigInteger.valueOf(3);
-
     private ValidatorSet validatorSet;
 
     private BigInteger disabledAuthority;
@@ -88,22 +86,6 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
         persistBeefyValidators();
         persistValidatorsSetId();
         persistRoundNumber(roundNumber);
-    }
-
-    /**
-     * The threshold is determined as the numOfValidators - (numOfValidators - 1) / 3
-     *
-     * @return minimum required validators for finality.
-     */
-    public BigInteger getThreshold() {
-        var validatorSize = validatorSet.getValidators().size();
-        if (validatorSize == 0) {
-            return BigInteger.ZERO;
-        }
-        var numOfValidators = BigInteger.valueOf(validatorSize);
-        var faulty = (numOfValidators.subtract(BigInteger.ONE)).divide(THRESHOLD_DENOMINATOR);
-
-        return numOfValidators.subtract(faulty);
     }
 
     private void initializeNextDigest() {
