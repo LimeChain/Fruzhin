@@ -2,6 +2,7 @@ package com.limechain.rpc.config;
 
 import com.googlecode.jsonrpc4j.spring.AutoJsonRpcServiceImplExporter;
 import com.limechain.babe.state.EpochState;
+import com.limechain.beefy.state.BeefyState;
 import com.limechain.chain.ChainService;
 import com.limechain.cli.Cli;
 import com.limechain.cli.CliArguments;
@@ -89,6 +90,13 @@ public class CommonConfig {
     }
 
     @Bean
+    public BeefyState beefyState(KeyStore keyStore,
+                                 KVRepository<String, Object> repository,
+                                 BlockState blockState) {
+        return new BeefyState(blockState, keyStore, repository);
+    }
+
+    @Bean
     public NetworkService networkService(ChainService chainService,
                                          HostConfig hostConfig,
                                          KVRepository<String, Object> repository,
@@ -118,8 +126,9 @@ public class CommonConfig {
                                      GrandpaSetState grandpaSetState,
                                      EpochState epochState,
                                      TransactionState transactionState,
-                                     BlockState blockState) {
-        return new StateManager(syncState, grandpaSetState, epochState, transactionState, blockState);
+                                     BlockState blockState,
+                                     BeefyState beefyState) {
+        return new StateManager(syncState, grandpaSetState, epochState, transactionState, blockState, beefyState);
     }
 
     @Bean

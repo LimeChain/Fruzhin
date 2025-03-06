@@ -1,17 +1,13 @@
 package com.limechain.beefy.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Value;
 
 import java.math.BigInteger;
 import java.util.List;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
+@Value
 public class Commitment {
-    private List<PayloadElement> payload;
-    private BigInteger blockNumber;
-    private BigInteger validatorSetId;
+    List<PayloadElement> payload;
+    BigInteger blockNumber;
+    BigInteger validatorSetId;
 }
