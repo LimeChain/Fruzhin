@@ -150,12 +150,13 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
     }
 
     public void vote() {
+
         // Get the first session (round)
         Map.Entry<BigInteger, BeefySession> sessionStart = sessions.firstEntry();
 
         // If no session is found, exit the method
         if (sessionStart == null) {
-            System.out.println("BEEFY: No voting round started");
+            log.info("Vote BEEFY: No voting round started");
             return;
         }
 
@@ -166,17 +167,17 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
 
         // If the mandatory block (sessionStart) does not have a beefy justification yet, vote on it
         if (beefyFinalized.compareTo(sessionStartBlock) < 0) {
-            log.info(String.format("BEEFY: vote target - mandatory block: #%s%n", sessionStartBlock));
+            log.info(String.format("Vote BEEFY: vote target - mandatory block: #%s%n", sessionStartBlock));
             targetVoteBlockNumber = sessionStartBlock;
         } else {
             BigInteger diff = grandpaFinalized.subtract(beefyFinalized).max(BigInteger.ZERO).add(BigInteger.ONE);
             int diffInt = diff.min(BigInteger.valueOf(Integer.MAX_VALUE)).intValue();
-            int nextPowerOfTwo = Integer.highestOneBit(diffInt) << 1;
+            int nextPowerOfTwo = (Integer.bitCount(diffInt) == 1) ? diffInt : Integer.highestOneBit(diffInt) << 1;
             int adjustedDiff = Math.max(MIN_BLOCK_DELTA, nextPowerOfTwo);
 
             targetVoteBlockNumber = beefyFinalized.add(BigInteger.valueOf(adjustedDiff));
 
-            log.info(String.format("BEEFY: vote target - diff: %d, next_power_of_two: %d, target block: #%s%n",
+            log.info(String.format("Vote BEEFY: vote target - diff: %d, next_power_of_two: %d, target block: #%s%n",
                     diffInt, nextPowerOfTwo, targetVoteBlockNumber));
         }
 
