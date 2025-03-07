@@ -2,7 +2,7 @@ package com.limechain.chain.lightsyncstate.scale;
 
 import com.limechain.chain.lightsyncstate.Authority;
 import com.limechain.chain.lightsyncstate.AuthoritySet;
-import com.limechain.chain.lightsyncstate.ForkTree;
+import com.limechain.storage.forktree.ForkTree;
 import com.limechain.chain.lightsyncstate.PendingChange;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleReader;
@@ -12,6 +12,9 @@ import io.emeraldpay.polkaj.scale.reader.UInt64Reader;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.javatuples.Pair;
+
+import java.math.BigInteger;
+import java.util.Optional;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class AuthoritySetReader implements ScaleReader<AuthoritySet> {
@@ -32,11 +35,12 @@ public class AuthoritySetReader implements ScaleReader<AuthoritySet> {
 
         authoritySet.setSetId(new UInt64Reader().read(reader));
 
-        var forkTree = new ForkTree<>();
+        ForkTree<PendingChange> forkTree = new ForkTree<>();
         forkTree.setRoots(reader.read(new ListReader<>(
                 new ForkTreeNodeReader<>(PendingChangeReader.getInstance()))
-        ).toArray(ForkTree.ForkTreeNode[]::new));
-        forkTree.setBestFinalizedNumber(reader.readOptional(new UInt32Reader()));
+        ));
+        Optional<Long> bestFinalizedNumber = reader.readOptional(new UInt32Reader());
+        forkTree.setBestFinalizedNumber(bestFinalizedNumber.map(BigInteger::valueOf));
 
         authoritySet.setPendingForcedChanges(reader.read(
                 new ListReader<>(PendingChangeReader.getInstance())).toArray(PendingChange[]::new)

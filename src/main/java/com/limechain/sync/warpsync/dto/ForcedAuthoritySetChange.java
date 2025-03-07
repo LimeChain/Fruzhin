@@ -1,6 +1,7 @@
 package com.limechain.sync.warpsync.dto;
 
 import com.limechain.chain.lightsyncstate.Authority;
+import io.emeraldpay.polkaj.types.Hash256;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -8,10 +9,11 @@ import java.util.List;
 public class ForcedAuthoritySetChange extends AuthoritySetChange {
 
     public ForcedAuthoritySetChange(List<Authority> authorities,
-                                    BigInteger delay,
+                                    Hash256 originBlockHash,
+                                    BigInteger originBlockNumber,
                                     BigInteger additionalOffset,
-                                    BigInteger announceBlockNumber) {
+                                    BigInteger delay) {
 
-        super(authorities, delay.add(additionalOffset), announceBlockNumber);
+        super(authorities, originBlockHash, originBlockNumber, delay.add(additionalOffset));
     }
 }

@@ -513,18 +513,20 @@ public class GrandpaMessageHandler {
         // If there is only ScheduledChange it should be added to the pendingScheduledChange queue
         // I think it is impossible to have more that one forced/scheduled change at a time -> this should be checked
         // After this method is created remove the case arms for Forced/Scheduled changes from the handleGrandpaConsensusMessage method
-        DigestHelper.getGrandpaConsensusMessages(header.getDigest())
-                .forEach(cm -> stateManager.getGrandpaSetState().handleGrandpaConsensusMessage(
-                        cm, header.getBlockNumber())
-                );
 
-        // Executes scheduled or forced authority changes for the last finalized block.
-        boolean changeInAuthoritySet = stateManager.getGrandpaSetState().handleAuthoritySetChange(
-                stateManager.getSyncState().getLastFinalizedBlockNumber());
-
-        if (warpSyncState.isWarpSyncFinished() && changeInAuthoritySet) {
-            new Thread(messageCoordinator::sendMessagesToPeers).start();
-        }
+        //TODO: Uncomment
+//        DigestHelper.getGrandpaConsensusMessages(header.getDigest())
+//                .forEach(cm -> stateManager.getGrandpaSetState().handleGrandpaConsensusMessage(
+//                        cm, header)
+//                );
+//
+//         Executes scheduled or forced authority changes for the last finalized block.
+//        boolean changeInAuthoritySet = stateManager.getGrandpaSetState().handleAuthoritySetChange(
+//                stateManager.getSyncState().getLastFinalizedBlockNumber());
+//
+//        if (warpSyncState.isWarpSyncFinished() && changeInAuthoritySet) {
+//            new Thread(messageCoordinator::sendMessagesToPeers).start();
+//        }
     }
 
     private SignedVote[] getPreVoteJustification(GrandpaRound requestedRound) {

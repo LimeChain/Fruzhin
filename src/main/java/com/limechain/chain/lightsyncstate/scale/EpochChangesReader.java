@@ -1,8 +1,9 @@
 package com.limechain.chain.lightsyncstate.scale;
 
 import com.limechain.chain.lightsyncstate.EpochChanges;
-import com.limechain.chain.lightsyncstate.ForkTree;
+import com.limechain.storage.forktree.ForkTree;
 import com.limechain.chain.lightsyncstate.PersistedEpoch;
+import com.limechain.chain.lightsyncstate.PersistedEpochHeader;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleReader;
 import io.emeraldpay.polkaj.scale.reader.ListReader;
@@ -14,6 +15,7 @@ import org.javatuples.Pair;
 
 import java.math.BigInteger;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeMap;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -29,13 +31,11 @@ public class EpochChangesReader implements ScaleReader<EpochChanges> {
     public EpochChanges read(ScaleCodecReader reader) {
         EpochChanges changes = new EpochChanges();
 
-        var forkTree = new ForkTree<>();
+        ForkTree<PersistedEpochHeader> forkTree = new ForkTree<>();
         forkTree.setRoots(reader.read(new ListReader<>(
-                        new ForkTreeNodeReader<>(
-                                PersistedEpochHeaderReader.getInstance()
-                        )))
-                .toArray(ForkTree.ForkTreeNode[]::new));
-        forkTree.setBestFinalizedNumber(reader.readOptional(new UInt32Reader()));
+                        new ForkTreeNodeReader<>(PersistedEpochHeaderReader.getInstance()))));
+        Optional<Long> bestFinalizedNumber = reader.readOptional(new UInt32Reader());
+        forkTree.setBestFinalizedNumber(bestFinalizedNumber.map(BigInteger::valueOf));
 
         Map<Pair<Hash256, BigInteger>, PersistedEpoch> epochs = new TreeMap<>();
         int epochsCount = reader.readCompactInt();

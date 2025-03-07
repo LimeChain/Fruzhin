@@ -163,12 +163,13 @@ public class BlockHandler {
 
         GrandpaSetState grandpaSetState = stateManager.getGrandpaSetState();
         if (grandpaSetState.isInitialized()) {
-            DigestHelper.getGrandpaConsensusMessages(header.getDigest())
-                    .forEach(cm -> grandpaSetState.handleGrandpaConsensusMessage(
-                            cm, header.getBlockNumber())
-                    );
-
-            grandpaSetState.handleAuthoritySetChange(header.getBlockNumber());
+            //TODO: uncomment
+//            DigestHelper.getGrandpaConsensusMessages(header.getDigest())
+//                    .forEach(cm -> grandpaSetState.handleGrandpaConsensusMessage(
+//                            cm, header)
+//                    );
+//
+//            grandpaSetState.handleAuthoritySetChange(header.getBlockNumber());
 
             DigestHelper.getBeefyConsensusMessages(header.getDigest())
                     .forEach(cm -> {

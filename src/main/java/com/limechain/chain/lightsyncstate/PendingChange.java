@@ -16,6 +16,10 @@ public class PendingChange {
     private Hash256 canonHash;
     private DelayKind delayKind;
 
+    public BigInteger getEffectiveNumber() {
+        return canonHeight.add(delay);
+    }
+
     public enum DelayKindEnum {
         FINALIZED,
         BEST
@@ -29,5 +33,4 @@ public class PendingChange {
         // Applies only when `BEST` is selected
         private BigInteger medianLastFinalized;
     }
-
 }
