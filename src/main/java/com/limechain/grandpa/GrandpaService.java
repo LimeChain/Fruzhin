@@ -31,7 +31,7 @@ public class GrandpaService {
         try {
             tryStartFromLastFinalizedBlock();
 
-            log.info(String.format("Grandpa service started with round #%d",
+            log.info(String.format("start: Grandpa service started with round #%d",
                     stateManager.getGrandpaSetState().getCurrentGrandpaRound().getRoundNumber()));
         } catch (RuntimeException e) {
             log.warning(String.format("start: There was an error when starting grandpa: %s", e.getMessage()));

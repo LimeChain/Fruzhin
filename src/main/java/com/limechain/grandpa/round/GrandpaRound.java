@@ -827,13 +827,13 @@ public class GrandpaRound {
     }
 
     private Justification createJustification() {
-        SignedVote[] preCommits = getPreCommits().values().toArray(new SignedVote[0]);
+        SignedVote[] signedVotes = getPreCommits().values().toArray(new SignedVote[0]);
 
         Justification justification = new Justification();
         justification.setRoundNumber(roundNumber);
         justification.setTargetHash(getBestFinalCandidate().getHash());
         justification.setTargetBlock(getBestFinalCandidate().getBlockNumber());
-        justification.setSignedVotes(preCommits);
+        justification.setSignedVotes(signedVotes);
 
         return justification;
     }

@@ -380,14 +380,12 @@ public class GrandpaMessageHandler {
             round.complete();
         }
 
-        for (SignedVote v : catchUpResMessage.getPreVotes()) {
-            round.getPreVotes().put(v.getAuthorityPublicKey(), v);
-            round.update(false, true, false);
-        }
-        for (SignedVote v : catchUpResMessage.getPreCommits()) {
-            round.getPreCommits().put(v.getAuthorityPublicKey(), v);
-            round.update(false, false, true);
-        }
+
+        setPreVotesAndPvEquivocations(round, catchUpResMessage.getPreVotes());
+        round.update(false, true, false);
+
+        setPreCommitsAndPcEquivocations(round, catchUpResMessage.getPreCommits());
+        round.update(false, false, true);
 
         if (isNewerThanCurrent) {
             grandpaSetState.getCurrentGrandpaRound().complete();

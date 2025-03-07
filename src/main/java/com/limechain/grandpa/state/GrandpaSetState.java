@@ -63,6 +63,7 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
             new PriorityQueue<>(AuthoritySetChange.getComparator());
 
     private final LinkedHashMap<BigInteger, AuthoritySet> pastSetChanges = new LinkedHashMap<>() {
+        @Override
         protected boolean removeEldestEntry(Map.Entry<BigInteger, AuthoritySet> eldest) {
             return SET_CHANGES_MAX.compareTo(BigInteger.valueOf(size())) <= 0;
         }
