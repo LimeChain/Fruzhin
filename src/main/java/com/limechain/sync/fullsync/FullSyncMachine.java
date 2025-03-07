@@ -6,6 +6,7 @@ import com.limechain.babe.coordinator.SlotCoordinator;
 import com.limechain.config.HostConfig;
 import com.limechain.exception.storage.BlockNodeNotFoundException;
 import com.limechain.exception.sync.BlockExecutionException;
+import com.limechain.grandpa.GrandpaService;
 import com.limechain.network.NetworkService;
 import com.limechain.network.PeerMessageCoordinator;
 import com.limechain.network.PeerRequester;
@@ -65,6 +66,7 @@ public class FullSyncMachine {
     private final TrieStorage trieStorage = AppBean.getBean(TrieStorage.class);
     private final RuntimeBuilder runtimeBuilder = AppBean.getBean(RuntimeBuilder.class);
     private final SlotCoordinator slotCoordinator = AppBean.getBean(SlotCoordinator.class);
+    private final GrandpaService grandpaService = AppBean.getBean(GrandpaService.class);
     private Runtime runtime = null;
 
     public FullSyncMachine(NetworkService networkService,
@@ -134,6 +136,7 @@ public class FullSyncMachine {
             slotCoordinator.start(List.of(
                     AppBean.getBean(BabeService.class)
             ));
+            grandpaService.start();
         }
 
         AbstractState.setSyncMode(SyncMode.HEAD);
@@ -192,13 +195,7 @@ public class FullSyncMachine {
     private void executeBlocks(List<Block> receivedBlockDatas, TrieAccessor trieAccessor) {
         BlockState blockState = stateManager.getBlockState();
         for (Block block : receivedBlockDatas) {
-            log.fine("Block number to be executed is " + block.getHeader().getBlockNumber());
-
-            try {
-                blockHandler.addBlockToTree(block, Instant.now());
-            } catch (BlockNodeNotFoundException ex) {
-                log.fine("Executing block with number " + block.getHeader().getBlockNumber() + " which has no parent in block state.");
-            }
+            log.info("Block number to be executed is " + block.getHeader().getBlockNumber());
 
             // Check the block for valid inherents
             // NOTE: This is only relevant for block production.
@@ -217,8 +214,12 @@ public class FullSyncMachine {
             runtime.executeBlock(block);
             log.fine("Block executed successfully");
 
-            // Persist the updates to the trie structure
-            trieAccessor.persistChanges();
+            try {
+                blockHandler.addBlockToTree(block, Instant.now());
+            } catch (BlockNodeNotFoundException ex) {
+                log.fine("Executing block with number " + block.getHeader().getBlockNumber()
+                        + " which has no parent in block state.");
+            }
 
             BlockHeader blockHeader = block.getHeader();
             boolean blockUpdatedRuntime = Arrays.stream(blockHeader.getDigest())
@@ -232,11 +233,9 @@ public class FullSyncMachine {
                 blockState.storeRuntime(blockHeader.getHash(), runtime);
             }
 
-            try {
+            if (blockState.getJustifications().isEmpty()) {
                 stateManager.getSyncState().finalizeHeader(blockHeader);
-                blockState.setFinalizedHash(blockHeader, BigInteger.ZERO, BigInteger.ZERO);
-            } catch (BlockNodeNotFoundException ignored) {
-                log.fine("Executing block with number " + block.getHeader().getBlockNumber() + " which has no parent in block state.");
+                blockState.setFinalizedHash(blockHeader, null, BigInteger.ZERO);
             }
         }
     }

@@ -1,10 +1,14 @@
 package com.limechain.network.protocol.grandpa;
 
-import com.limechain.chain.lightsyncstate.Authority;
 import com.limechain.exception.grandpa.GrandpaGenericException;
+import com.limechain.exception.storage.HeaderNotFoundException;
+import com.limechain.exception.storage.LowerThanRootException;
 import com.limechain.exception.sync.JustificationVerificationException;
+import com.limechain.grandpa.GrandpaService;
 import com.limechain.grandpa.round.GrandpaRound;
+import com.limechain.grandpa.state.AuthoritySet;
 import com.limechain.grandpa.state.GrandpaSetState;
+import com.limechain.grandpa.state.RoundState;
 import com.limechain.grandpa.vote.SignedVote;
 import com.limechain.grandpa.vote.SubRound;
 import com.limechain.grandpa.vote.Vote;
@@ -27,8 +31,8 @@ import com.limechain.state.AbstractState;
 import com.limechain.state.StateManager;
 import com.limechain.storage.block.state.BlockState;
 import com.limechain.sync.JustificationVerifier;
+import com.limechain.sync.SyncMode;
 import com.limechain.sync.state.SyncState;
-import com.limechain.sync.warpsync.WarpSyncState;
 import com.limechain.utils.Ed25519Utils;
 import com.limechain.utils.async.AsyncExecutor;
 import com.limechain.utils.scale.ScaleUtils;
@@ -44,6 +48,7 @@ import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -64,8 +69,8 @@ public class GrandpaMessageHandler {
     private static final int THREAD_POOL_SIZE = 4;
 
     private final StateManager stateManager;
+    private final GrandpaService grandpaService;
     private final PeerMessageCoordinator messageCoordinator;
-    private final WarpSyncState warpSyncState;
     private final AsyncExecutor asyncExecutor = AsyncExecutor.withPoolSize(THREAD_POOL_SIZE);
 
 
@@ -85,7 +90,14 @@ public class GrandpaMessageHandler {
 
         // TODO: If we're not an active authority no round will be playing. We should only verify and broadcast.
         BigInteger voteMessageRoundNumber = voteMessage.getRound();
-        BigInteger currentRoundNumber = grandpaSetState.getCurrentGrandpaRound().getRoundNumber();
+
+        GrandpaRound currentRound = grandpaSetState.getCurrentGrandpaRound();
+        if (currentRound == null) {
+            log.fine("handleVoteMessage: No running grandpa round.");
+            return;
+        }
+
+        BigInteger currentRoundNumber = currentRound.getRoundNumber();
 
         if (voteMessageRoundNumber.compareTo(currentRoundNumber.subtract(BigInteger.ONE)) < 0) {
             throw new GrandpaGenericException("Vote message is invalid as it refers to a round that is " +
@@ -145,14 +157,20 @@ public class GrandpaMessageHandler {
      * @param peerId        sender of the message
      */
     public synchronized void handleCommitMessage(CommitMessage commitMessage, PeerId peerId) {
+        if (!commitMessage.getSetId().equals(stateManager.getGrandpaSetState().getSetId())) {
+            log.fine(String.format("handleCommitMessage: Received commit set id, %d, doesn't match local set id, %d",
+                    commitMessage.getSetId(), stateManager.getGrandpaSetState().getSetId()));
+            return;
+        }
+
         if (commitMessage.getVote().getBlockNumber().compareTo(
                 stateManager.getSyncState().getLastFinalizedBlockNumber()) <= 0) {
-            log.log(Level.FINE, String.format("Received commit message for finalized block %d from peer %s",
+            log.fine(String.format("Received commit message for finalized block %d from peer %s",
                     commitMessage.getVote().getBlockNumber(), peerId));
             return;
         }
 
-        log.log(Level.FINE, "Received commit message from peer " + peerId
+        log.fine("Received commit message from peer " + peerId
                 + " for block #" + commitMessage.getVote().getBlockNumber()
                 + " with hash " + commitMessage.getVote().getBlockHash()
                 + " with setId " + commitMessage.getSetId() + " and round " + commitMessage.getRoundNumber()
@@ -161,17 +179,79 @@ public class GrandpaMessageHandler {
         boolean verified = JustificationVerifier.verify(Justification.fromCommitMessage(commitMessage));
 
         if (!verified) {
-            log.log(Level.WARNING, "Could not verify commit from peer: " + peerId);
+            log.warning("Could not verify commit from peer: " + peerId);
             return;
         }
 
-        GrandpaSetState grandpaSetState = stateManager.getGrandpaSetState();
-        GrandpaRound grandpaRound = grandpaSetState.getGrandpaRound(commitMessage.getRoundNumber());
-        grandpaRound.addCommitMessageToArchive(commitMessage);
-
-        if (warpSyncState.isWarpSyncFinished() && !AbstractState.isActiveAuthority()) {
-            updateSyncStateAndRuntime(commitMessage);
+        if (!SyncMode.HEAD.equals(AbstractState.getSyncMode())) {
+            handleCommitPreHead(commitMessage);
+        } else {
+            handleCommitAtHead(commitMessage);
         }
+    }
+
+    /**
+     * Handles commit messages during the process of syncing.<br>
+     * If the block from the commit message is present in the block tree it is finalized, otherwise the best block is
+     * finalized since it is an ancestor of the one in the message. This is only always true during syncing.
+     *
+     * @param commitMessage the message received via the grandpa sub-stream.
+     */
+    private void handleCommitPreHead(CommitMessage commitMessage) {
+
+        BlockState blockState = stateManager.getBlockState();
+        SyncState syncState = stateManager.getSyncState();
+
+        if (!blockState.hasHeader(commitMessage.getVote().getBlockHash())) {
+
+            BlockHeader bestBlockHeader;
+            try {
+                bestBlockHeader = blockState.bestBlockHeader();
+                blockState.setFinalizedHash(bestBlockHeader,
+                        null,
+                        stateManager.getGrandpaSetState().getSetId());
+                syncState.finalizeHeader(bestBlockHeader);
+
+                log.info(String.format(
+                        "handleCommitPreHead: Commit block #%d not in tree. Finalized best block with #%d and hash %s",
+                        commitMessage.getVote().getBlockNumber(),
+                        bestBlockHeader.getBlockNumber(),
+                        bestBlockHeader.getHash()));
+            } catch (HeaderNotFoundException e) {
+                log.warning("handleCommitPreHead: No block header found for best block.");
+                return;
+            } catch (LowerThanRootException e) {
+                log.warning("handleCommitPreHead: Lower than root exception for best block.");
+            }
+
+            blockState.getJustifications()
+                    .put(commitMessage.getVote().getBlockHash(), Justification.fromCommitMessage(commitMessage));
+
+            return;
+        }
+
+        syncState.finalizedCommitMessage(commitMessage);
+        log.info(String.format(
+                "handleCommitPreHead: Finalized block with #%d and hash %s",
+                commitMessage.getVote().getBlockNumber(), commitMessage.getVote().getBlockHash()));
+    }
+
+    /**
+     * Handles commit messages when the node is at the head of the chain.<br>
+     *
+     * @param commitMessage the message
+     */
+    private void handleCommitAtHead(CommitMessage commitMessage) {
+
+        if (AbstractState.isActiveAuthority()) {
+            // TODO: When we receive a grandpa justification we should apply it and create an appropriate round.
+            return;
+        }
+
+        stateManager.getSyncState().finalizedCommitMessage(commitMessage);
+        log.fine(String.format(
+                "handleCommitAtHead: Finalized block with #%d and hash %s",
+                commitMessage.getVote().getBlockNumber(), commitMessage.getVote().getBlockHash()));
     }
 
     /**
@@ -256,43 +336,68 @@ public class GrandpaMessageHandler {
                                       Supplier<Set<PeerId>> peerIds) {
 
         GrandpaSetState grandpaSetState = stateManager.getGrandpaSetState();
+
         if (!peerIds.get().contains(peerId)) {
-            throw new GrandpaGenericException("Receiving catching up response from a non-peer.");
+            throw new GrandpaGenericException("handleCatchUpResponse: Response from a non-peer.");
         }
 
         if (!catchUpResMessage.getSetId().equals(grandpaSetState.getSetId())) {
-            throw new GrandpaGenericException("Catch up response has a different setId.");
+            throw new GrandpaGenericException("handleCatchUpResponse: Response has a different setId.");
         }
 
-        GrandpaRound latestRound = grandpaSetState.getCurrentGrandpaRound();
-        if (catchUpResMessage.getRoundNumber().compareTo(latestRound.getRoundNumber()) <= 0) {
-            throw new GrandpaGenericException("Catching up into a round in the past.");
+        GrandpaRound round = grandpaSetState.getCurrentGrandpaRound();
+        if (catchUpResMessage.getRoundNumber().compareTo(round.getRoundNumber()) <= 0) {
+            throw new GrandpaGenericException("handleCatchUpResponse: Catching up into a round in the past.");
         }
 
         BlockState blockState = stateManager.getBlockState();
-        BlockHeader finalizedTarget = blockState.getHeaderByNumber(catchUpResMessage.getBlockNumber());
-        if (!finalizedTarget.getHash().equals(catchUpResMessage.getBlockHash())) {
-            throw new GrandpaGenericException("Catch up response with non-matching block hash and block number.");
+        if (blockState.hasHeader(catchUpResMessage.getBlockHash())) {
+            throw new GrandpaGenericException("handleCatchUpResponse: Response for a block not in tree received.");
         }
 
-        List<Authority> authorities = grandpaSetState.getAuthorities();
-        BigInteger threshold = grandpaSetState.getThreshold(authorities);
+        verifyCatchupMessage(catchUpResMessage);
 
-        GrandpaRound grandpaRound = new GrandpaRound(
-                null,
-                catchUpResMessage.getRoundNumber(),
-                catchUpResMessage.getSetId(),
-                authorities,
-                threshold,
-                false,
-                latestRound.getLastFinalizedBlock()
-        );
+        boolean isNewerThanCurrent = catchUpResMessage.getBlockNumber().compareTo(round.getRoundNumber()) > 0;
 
-        //Todo: Maybe we should set previous block, as it is needed in the current implementation of findGhost
-        grandpaRound.setFinalizedBlock(finalizedTarget);
-        setPreVotesAndPvEquivocations(grandpaRound, catchUpResMessage.getPreVotes());
-        setPreCommitsAndPcEquivocations(grandpaRound, catchUpResMessage.getPreCommits());
+        if (isNewerThanCurrent) {
 
+            RoundState roundState = RoundState.builder()
+                    .roundNumber(catchUpResMessage.getRoundNumber())
+                    .lastFinalizedBlock(round.getLastFinalizedBlock())
+                    .finalizedBlock(BlockHeader.fromHash(catchUpResMessage.getBlockHash()))
+                    .build();
+
+            Optional<AuthoritySet> authSetOpt = grandpaService.getAuthoritiesForBlock(
+                    roundState.getFinalizedBlock().getBlockNumber());
+
+            if (authSetOpt.isEmpty()) {
+                log.warning(String.format("createNextRound: No authority set found for block %d",
+                        roundState.getFinalizedBlock().getBlockNumber()));
+                return;
+            }
+
+            round = grandpaService.createInitialRound(roundState);
+            round.complete();
+        }
+
+        for (SignedVote v : catchUpResMessage.getPreVotes()) {
+            round.getPreVotes().put(v.getAuthorityPublicKey(), v);
+            round.update(false, true, false);
+        }
+        for (SignedVote v : catchUpResMessage.getPreCommits()) {
+            round.getPreCommits().put(v.getAuthorityPublicKey(), v);
+            round.update(false, false, true);
+        }
+
+        if (isNewerThanCurrent) {
+            grandpaSetState.getCurrentGrandpaRound().complete();
+            grandpaSetState.addNewGrandpaRound(round);
+        }
+
+        grandpaService.tryStartFromPreviousRound(round);
+    }
+
+    private void verifyCatchupMessage(CatchUpResMessage catchUpResMessage) {
         CompletableFuture<Boolean> verifiedPreVotesFuture = asyncExecutor.executeAsync(() ->
                 JustificationVerifier.verify(Justification.fromCatchUpResPreVotes(catchUpResMessage)));
 
@@ -307,20 +412,6 @@ public class GrandpaMessageHandler {
         if (!verified) {
             throw new JustificationVerificationException("Justification could not be verified.");
         }
-
-        BlockHeader bestFinalCandidate = grandpaRound.getBestFinalCandidate();
-        if (!bestFinalCandidate.getHash().equals(finalizedTarget.getHash())) {
-            throw new GrandpaGenericException("Unjustified Catch-up target finalization");
-        }
-
-        //Todo: Iterate over preVotes, for each check if we are at Stage::PRE_COMMIT_WAITS_FOR_PRE_VOTES
-        //      then updateGrandpaGhost if we have obtained enough preVotes. If grandpaGhost is updated,
-        //      finish the PRE_COMMIT_WAITS_FOR_PRE_VOTES stage.
-
-        //Todo: If preVotes and preCommits are valid, we updateGrandpaGhost, updateFinalizeEstimate
-        //      and attemptToFinalizeRound
-
-        //Todo: Play grandpa round for the currently created round
     }
 
     private boolean isMessageSignatureValid(VoteMessage voteMessage) {
@@ -446,15 +537,6 @@ public class GrandpaMessageHandler {
 
         setUniqueVotes.accept(grandpaRound, uniqueVotes);
         setEquivocations.accept(grandpaRound, equivocations);
-    }
-
-    private void updateSyncStateAndRuntime(CommitMessage commitMessage) {
-        SyncState syncState = stateManager.getSyncState();
-        BigInteger lastFinalizedBlockNumber = syncState.getLastFinalizedBlockNumber();
-        if (commitMessage.getVote().getBlockNumber().compareTo(lastFinalizedBlockNumber) <= 0) {
-            return;
-        }
-        syncState.finalizedCommitMessage(commitMessage);
     }
 
     private SignedVote[] getPreVoteJustification(GrandpaRound requestedRound) {
