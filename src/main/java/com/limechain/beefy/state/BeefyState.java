@@ -12,6 +12,7 @@ import com.limechain.storage.KVRepository;
 import com.limechain.storage.StateUtil;
 import com.limechain.storage.block.state.BlockState;
 import com.limechain.storage.crypto.KeyStore;
+import com.limechain.storage.crypto.KeyType;
 import io.micrometer.common.lang.Nullable;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -118,6 +120,15 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
                 ValidatorSet validatorSet = validatorsSet.getRight();
 
                 BeefySession beefySession = new BeefySession(validatorSet);
+                Optional<org.javatuples.Pair<byte[], byte[]>> keyPair = validatorSet.getValidators().stream()
+                        .map(publicKey -> keyStore.getKeyPair(KeyType.BEEFY, publicKey))
+                        .flatMap(Optional::stream)
+                        .findFirst();
+
+                keyPair.ifPresentOrElse(
+                        beefySession::setBeefyKeyPair,
+                        () -> log.info(String.format("BEEFY: We are not chosen to vote in current session, block number: %s", sessionBlock))
+                );
                 sessions.put(sessionBlock, beefySession);
             }
             nextDigest = nextDigest.add(BigInteger.ONE);
