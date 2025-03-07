@@ -15,8 +15,7 @@ import com.limechain.network.protocol.warp.dto.HeaderDigest;
 import com.limechain.utils.Sr25519Utils;
 import com.limechain.utils.scale.ScaleUtils;
 import io.emeraldpay.polkaj.schnorrkel.Schnorrkel;
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
+import lombok.experimental.UtilityClass;
 
 import java.util.Arrays;
 import java.util.List;
@@ -26,10 +25,10 @@ import java.util.stream.Collectors;
 /**
  * Helper class for processing different types of header digests
  */
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
+@UtilityClass
 public class DigestHelper {
 
-    public static List<BabeConsensusMessage> getBabeConsensusMessages(HeaderDigest[] headerDigests) {
+    public List<BabeConsensusMessage> getBabeConsensusMessages(HeaderDigest[] headerDigests) {
         return Arrays.stream(headerDigests)
                 .filter(headerDigest -> DigestType.CONSENSUS_MESSAGE.equals(headerDigest.getType()) &&
                         ConsensusEngine.BABE.equals(headerDigest.getId()))
@@ -38,7 +37,7 @@ public class DigestHelper {
                 .collect(Collectors.toList());
     }
 
-    public static List<GrandpaConsensusMessage> getGrandpaConsensusMessages(HeaderDigest[] headerDigests) {
+    public List<GrandpaConsensusMessage> getGrandpaConsensusMessages(HeaderDigest[] headerDigests) {
         return Arrays.stream(headerDigests)
                 .filter(headerDigest -> DigestType.CONSENSUS_MESSAGE.equals(headerDigest.getType()) &&
                         ConsensusEngine.GRANDPA.equals(headerDigest.getId()))
@@ -47,7 +46,7 @@ public class DigestHelper {
                 .collect(Collectors.toList());
     }
 
-    public static List<BeefyConsensusMessage> getBeefyConsensusMessages(HeaderDigest[] headerDigests) {
+    public List<BeefyConsensusMessage> getBeefyConsensusMessages(HeaderDigest[] headerDigests) {
         return Arrays.stream(headerDigests)
                 .filter(headerDigest -> DigestType.CONSENSUS_MESSAGE.equals(headerDigest.getType()) &&
                         ConsensusEngine.BEEFY.equals(headerDigest.getId()))
@@ -56,7 +55,7 @@ public class DigestHelper {
                 .collect(Collectors.toList());
     }
 
-    public static Optional<BabePreDigest> getBabePreRuntimeDigest(HeaderDigest[] headerDigests) {
+    public Optional<BabePreDigest> getBabePreRuntimeDigest(HeaderDigest[] headerDigests) {
         return Arrays.stream(headerDigests)
                 .filter(headerDigest -> DigestType.PRE_RUNTIME.equals(headerDigest.getType()) &&
                         ConsensusEngine.BABE.equals(headerDigest.getId()))
@@ -65,7 +64,7 @@ public class DigestHelper {
                 .map(message -> ScaleUtils.Decode.decode(message, PreDigestReader.getInstance()));
     }
 
-    public static HeaderDigest buildSealHeaderDigest(BlockHeader blockHeader, Schnorrkel.KeyPair keyPair) {
+    public HeaderDigest buildSealHeaderDigest(BlockHeader blockHeader, Schnorrkel.KeyPair keyPair) {
         byte[] signedMessage = Sr25519Utils.signMessage(
                 keyPair.getPublicKey(), keyPair.getSecretKey(), blockHeader.getBlake2bHash(true));
         HeaderDigest sealHeaderDigest = new HeaderDigest();

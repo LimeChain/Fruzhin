@@ -5,6 +5,7 @@ import com.limechain.constants.GenesisBlockHash;
 import com.limechain.exception.storage.HeaderNotFoundException;
 import com.limechain.network.protocol.grandpa.messages.commit.CommitMessage;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
+import com.limechain.network.protocol.warp.dto.Justification;
 import com.limechain.state.AbstractState;
 import com.limechain.storage.DBConstants;
 import com.limechain.storage.KVRepository;
@@ -100,7 +101,9 @@ public class SyncState extends AbstractState {
 
     private boolean updateBlockState(CommitMessage commitMessage, BlockHeader blockHeader) {
         try {
-            blockState.setFinalizedHash(blockHeader, commitMessage.getRoundNumber(), commitMessage.getSetId());
+            blockState.setFinalizedHash(blockHeader,
+                    Justification.fromCommitMessage(commitMessage),
+                    commitMessage.getSetId());
         } catch (RuntimeException e) {
             log.fine(e.getMessage());
             return false;

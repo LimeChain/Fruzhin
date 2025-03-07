@@ -107,8 +107,6 @@ public class BlockAnnounceEngine implements BaseEngine {
     private void handleBlockAnnounce(byte[] msg, PeerId peerId) {
         BlockAnnounceMessage announce = ScaleUtils.Decode.decode(msg, BlockAnnounceMessageScaleReader.getInstance());
         connectionManager.updatePeer(peerId, announce);
-        //TODO Yordan: Do we actually need this since each block has a runtime?
-        warpSyncState.syncBlockAnnounce(announce);
         log.log(Level.FINE, "Received block announce for block #" + announce.getHeader().getBlockNumber() +
                 " from " + peerId +
                 " with hash:" + announce.getHeader().getHash() +

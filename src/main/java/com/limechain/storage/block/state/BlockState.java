@@ -11,6 +11,7 @@ import com.limechain.exception.storage.RoundAndSetIdNotFoundException;
 import com.limechain.network.protocol.warp.dto.Block;
 import com.limechain.network.protocol.warp.dto.BlockBody;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
+import com.limechain.network.protocol.warp.dto.Justification;
 import com.limechain.network.protocol.warp.scale.reader.BlockBodyReader;
 import com.limechain.network.protocol.warp.scale.writer.BlockBodyWriter;
 import com.limechain.rpc.subscriptions.chainsub.ChainSub;
@@ -22,6 +23,7 @@ import com.limechain.storage.block.tree.BlockNode;
 import com.limechain.storage.block.tree.BlockTree;
 import com.limechain.utils.scale.ScaleUtils;
 import io.emeraldpay.polkaj.types.Hash256;
+import jakarta.annotation.Nullable;
 import lombok.Getter;
 import lombok.extern.java.Log;
 import org.javatuples.Pair;
@@ -49,6 +51,7 @@ public class BlockState extends AbstractState {
     private final KVRepository<String, Object> db;
 
     private final Map<Hash256, Block> unfinalizedBlocks;
+    private final Map<Hash256, Justification> justifications;
     private final BlockHeader genesisBlockHeader;
     private BlockTree blockTree;
     private Hash256 lastFinalized;
@@ -56,6 +59,7 @@ public class BlockState extends AbstractState {
     public BlockState(KVRepository<String, Object> db, GenesisBlockHash genesisBlockHash) {
         this.db = db;
         unfinalizedBlocks = new HashMap<>();
+        justifications = new HashMap<>();
         genesisBlockHeader = genesisBlockHash.getGenesisBlockHeader();
     }
 
@@ -757,7 +761,19 @@ public class BlockState extends AbstractState {
         return unfinalizedBlocks.get(hash);
     }
 
+    public Optional<Justification> getJustification(final Hash256 hash) {
+        return Optional.ofNullable(justifications.get(hash));
+    }
+
     /* Block finalization */
+
+    public void setFinalizedHash(final BlockHeader header,
+                                 @Nullable final Justification justification,
+                                 final BigInteger setId) {
+        setFinalizedHash(header, setId, justification == null
+                ? BigInteger.ZERO
+                : justification.getRoundNumber());
+    }
 
     /**
      * Sets the hash of the latest finalized block
@@ -767,7 +783,7 @@ public class BlockState extends AbstractState {
      * @param setId  The set ID of the finalized block.
      * @throws BlockNodeNotFoundException if the block corresponding to the provided hash is not found.
      */
-    public void setFinalizedHash(final BlockHeader header, final BigInteger round, final BigInteger setId) {
+    private void setFinalizedHash(final BlockHeader header, final BigInteger setId, final BigInteger round) {
         Hash256 hash = header.getHash();
         if (!hasHeader(hash)) {
             throw new BlockNodeNotFoundException("Cannot finalise unknown block " + hash);

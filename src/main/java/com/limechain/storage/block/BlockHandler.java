@@ -168,8 +168,6 @@ public class BlockHandler {
                             cm, header.getBlockNumber())
                     );
 
-            grandpaSetState.handleAuthoritySetChange(header.getBlockNumber());
-
             DigestHelper.getBeefyConsensusMessages(header.getDigest())
                     .forEach(cm -> {
                                 //Todo: handleBeefyConsensusMessage

@@ -108,9 +108,7 @@ public class PeerRequester {
             return response.getBlocksList();
         } catch (Exception ex) {
             log.fine("Error while fetching blocks, trying to fetch again");
-            if (!this.network.updateCurrentSelectedPeerWithNextBootnode()) {
-                this.network.updateCurrentSelectedPeer();
-            }
+            this.network.updateCurrentSelectedPeer();
             return requestBlocks(field, startNumber, startHash, amount);
         }
     }

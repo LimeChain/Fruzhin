@@ -4,11 +4,7 @@ import com.google.protobuf.ByteString;
 import com.limechain.exception.global.RuntimeCodeException;
 import com.limechain.network.NetworkService;
 import com.limechain.network.PeerRequester;
-import com.limechain.network.protocol.blockannounce.messages.BlockAnnounceMessage;
 import com.limechain.network.protocol.lightclient.pb.LightClientMessage;
-import com.limechain.network.protocol.warp.dto.BlockHeader;
-import com.limechain.network.protocol.warp.dto.DigestType;
-import com.limechain.network.protocol.warp.dto.HeaderDigest;
 import com.limechain.runtime.Runtime;
 import com.limechain.runtime.RuntimeBuilder;
 import com.limechain.state.StateManager;
@@ -40,7 +36,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockConstruction;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @SuppressWarnings("unused")
@@ -105,36 +100,6 @@ class WarpSyncActionTest {
             verify(repository).save(DBConstants.RUNTIME_CODE, runtimeCode);
             assertEquals(runtimeCode, warpSyncState.getRuntimeCode());
         }
-    }
-
-    @Test
-    void syncBlockAnnounceWhenHasRunEnvUpdatedDigestShouldScheduleRuntimeUpdate() {
-        BlockAnnounceMessage blockAnnounceMessage = mock(BlockAnnounceMessage.class);
-        BlockHeader blockHeader = mock(BlockHeader.class);
-        HeaderDigest headerDigest = mock(HeaderDigest.class);
-        BigInteger blockNumber = mock(BigInteger.class);
-        when(blockAnnounceMessage.getHeader()).thenReturn(blockHeader);
-        when(blockHeader.getDigest()).thenReturn(new HeaderDigest[]{headerDigest});
-        when(headerDigest.getType()).thenReturn(DigestType.RUN_ENV_UPDATED);
-        when(blockHeader.getBlockNumber()).thenReturn(blockNumber);
-
-        warpSyncState.syncBlockAnnounce(blockAnnounceMessage);
-
-        verify(scheduledRuntimeUpdateBlocks).add(blockNumber);
-    }
-
-    @Test
-    void syncBlockAnnounceWhenNoRunEnvUpdatedDigestShouldDoNothing() {
-        BlockAnnounceMessage blockAnnounceMessage = mock(BlockAnnounceMessage.class);
-        BlockHeader blockHeader = mock(BlockHeader.class);
-        HeaderDigest headerDigest = mock(HeaderDigest.class);
-        when(blockAnnounceMessage.getHeader()).thenReturn(blockHeader);
-        when(blockHeader.getDigest()).thenReturn(new HeaderDigest[]{headerDigest});
-        when(headerDigest.getType()).thenReturn(DigestType.OTHER);
-
-        warpSyncState.syncBlockAnnounce(blockAnnounceMessage);
-
-        verifyNoInteractions(scheduledRuntimeUpdateBlocks);
     }
 
     @Test

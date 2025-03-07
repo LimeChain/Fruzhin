@@ -3,9 +3,7 @@ package com.limechain.sync.warpsync;
 import com.limechain.exception.global.RuntimeCodeException;
 import com.limechain.exception.trie.TrieDecoderException;
 import com.limechain.network.PeerRequester;
-import com.limechain.network.protocol.blockannounce.messages.BlockAnnounceMessage;
 import com.limechain.network.protocol.lightclient.pb.LightClientMessage;
-import com.limechain.network.protocol.warp.dto.DigestType;
 import com.limechain.runtime.Runtime;
 import com.limechain.runtime.RuntimeBuilder;
 import com.limechain.state.StateManager;
@@ -22,10 +20,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.java.Log;
 
-import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.logging.Level;
 
 /**
@@ -52,57 +46,16 @@ public class WarpSyncState {
     private byte[] runtimeCode;
 
     protected final RuntimeBuilder runtimeBuilder;
-    //TODO Yordan: maybe we won't need this anymore.
-    private final Set<BigInteger> scheduledRuntimeUpdateBlocks;
 
     public WarpSyncState(StateManager stateManager,
                          KVRepository<String, Object> db,
                          RuntimeBuilder runtimeBuilder,
                          PeerRequester requester) {
 
-        this(stateManager,
-                db,
-                runtimeBuilder,
-                new HashSet<>(),
-                requester
-        );
-    }
-
-    public WarpSyncState(StateManager stateManager,
-                         KVRepository<String, Object> db,
-                         RuntimeBuilder runtimeBuilder, Set<BigInteger> scheduledRuntimeUpdateBlocks,
-                         PeerRequester requester) {
-
         this.stateManager = stateManager;
         this.db = db;
         this.runtimeBuilder = runtimeBuilder;
-        this.scheduledRuntimeUpdateBlocks = scheduledRuntimeUpdateBlocks;
         this.requester = requester;
-    }
-
-    /**
-     * Update the state with information from a block announce message.
-     * Schedule runtime updates found in header, to be executed when block is verified.
-     *
-     * @param blockAnnounceMessage received block announce message
-     */
-    public void syncBlockAnnounce(BlockAnnounceMessage blockAnnounceMessage) {
-        boolean hasRuntimeUpdate = Arrays.stream(blockAnnounceMessage.getHeader().getDigest())
-                .anyMatch(d -> d.getType() == DigestType.RUN_ENV_UPDATED);
-
-        if (hasRuntimeUpdate) {
-            scheduledRuntimeUpdateBlocks.add(blockAnnounceMessage.getHeader().getBlockNumber());
-        }
-    }
-
-    public void updateRuntime(BigInteger blockNumber) {
-        if (!scheduledRuntimeUpdateBlocks.contains(blockNumber)) {
-            return;
-        }
-        updateRuntimeCode();
-        buildRuntime();
-        BigInteger lastFinalizedBlockNumber = stateManager.getSyncState().getLastFinalizedBlockNumber();
-        scheduledRuntimeUpdateBlocks.remove(lastFinalizedBlockNumber);
     }
 
     private static final byte[] CODE_KEY_BYTES =
