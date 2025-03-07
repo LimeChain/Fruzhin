@@ -1,9 +1,9 @@
 package com.limechain.beefy.dto;
 
-import lombok.Data;
+import lombok.Value;
 
-@Data
+@Value
 public class PayloadElement {
-    private BeefyPayloadId payloadId;
-    private byte[] data;
+    BeefyPayloadId payloadId;
+    byte[] data;
 }

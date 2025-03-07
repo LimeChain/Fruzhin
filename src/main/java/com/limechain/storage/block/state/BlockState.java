@@ -161,9 +161,7 @@ public class BlockState extends AbstractState {
             // Try to get the hash from the block tree
             return blockTree.getHashByNumber(blockNum.longValue());
         } catch (LowerThanRootException lowerThanRootException) {
-            throw lowerThanRootException;
-        } catch (BlockStorageGenericException e) {
-            // If error is LowerThanRootException, number has already been finalized, so check db
+            log.fine("getHashByNumber: Requested number lower than root. Fetching from DB.");
             return getHashByNumberFromDb(blockNum);
         }
     }

@@ -18,6 +18,7 @@ import java.util.Map;
 @ComponentScan(basePackages = {
         "com.limechain.babe",
         "com.limechain.grandpa",
+        "com.limechain.beefy",
         "com.limechain.network",
         "com.limechain.rpc.config",
         "com.limechain.rpc.methods",
