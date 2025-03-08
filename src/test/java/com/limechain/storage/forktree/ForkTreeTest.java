@@ -240,6 +240,77 @@ class ForkTreeTest {
     }
 
     @Test
+    void testFinalizeRootFound() throws Exception {
+        ForkTree<Integer> tree = new ForkTree<>();
+
+        // |A| -> B
+        // |C|
+        Hash256 hashA = new Hash256(generateHash(1));
+        tree.importNode(hashA, BigInteger.valueOf(10), DATA, FALSE_BIPREDICATE);
+
+        Hash256 hashB = new Hash256(generateHash(2));
+        tree.importNode(hashB, BigInteger.valueOf(20), 1, TRUE_BIPREDICATE);
+
+        Hash256 hashC = new Hash256(generateHash(3));
+        tree.importNode(hashC, BigInteger.valueOf(15), 2, FALSE_BIPREDICATE);
+
+        Optional<Integer> finalizedData = tree.finalizeRoot(hashA);
+        assertTrue(finalizedData.isPresent());
+        assertEquals(DATA, finalizedData.get());
+
+        assertEquals(BigInteger.valueOf(10), tree.getBestFinalizedNumber().get());
+
+        assertEquals(1, tree.getRoots().size());
+        assertEquals(hashB, tree.getRoots().get(0).getHash());
+    }
+
+    @Test
+    void testFinalizeRootNotFound() throws Exception {
+        ForkTree<Integer> tree = new ForkTree<>();
+
+        Hash256 hashA = new Hash256(generateHash(1));
+        tree.importNode(hashA, BigInteger.valueOf(30), DATA, FALSE_BIPREDICATE);
+
+        Hash256 nonExistentHash = new Hash256(generateHash(2));
+        Optional<Integer> finalizedData = tree.finalizeRoot(nonExistentHash);
+        assertFalse(finalizedData.isPresent());
+
+        assertEquals(1, tree.getRoots().size());
+        assertEquals(hashA, tree.getRoots().get(0).getHash());
+    }
+
+    @Test
+    void testFinalizeRootAtValidIndex() throws Exception {
+        ForkTree<Integer> tree = new ForkTree<>();
+
+        Hash256 hashA = new Hash256(generateHash(1));
+        tree.importNode(hashA, BigInteger.valueOf(40), DATA, FALSE_BIPREDICATE);
+
+        Hash256 hashB = new Hash256(generateHash(2));
+        tree.importNode(hashB, BigInteger.valueOf(50), 1, TRUE_BIPREDICATE);
+
+        Optional<Integer> finalizedData = tree.finalizeRootAt(0);
+        assertTrue(finalizedData.isPresent());
+        assertEquals(DATA, finalizedData.get());
+
+        assertEquals(BigInteger.valueOf(40), tree.getBestFinalizedNumber().get());
+
+        assertEquals(1, tree.getRoots().size());
+        assertEquals(hashB, tree.getRoots().get(0).getHash());
+    }
+
+    @Test
+    void testFinalizeRootAtInvalidIndex() throws Exception {
+        ForkTree<Integer> tree = new ForkTree<>();
+
+        Hash256 hash = new Hash256(generateHash(1));
+        tree.importNode(hash, BigInteger.valueOf(60), DATA, FALSE_BIPREDICATE);
+
+        Optional<Integer> result = tree.finalizeRootAt(5);
+        assertFalse(result.isPresent());
+    }
+
+    @Test
     void testForkTreeNodeGetMaxDepth() throws ForkTreeException {
         ForkTree<Integer> tree = new ForkTree<>();
 

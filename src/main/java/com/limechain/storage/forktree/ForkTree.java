@@ -317,10 +317,10 @@ public class ForkTree<T> {
      * Searches through the roots for a node with the given hash. If found, finalizes it by removing it
      * from the roots (using finalizeRootAt) and returns its data.
      */
-    private Optional<T> finalizeRoot(Hash256 hash) {
+    public Optional<T> finalizeRoot(Hash256 hash) {
         for (int i = 0; i < roots.size(); i++) {
             if (roots.get(i).hash.equals(hash)) {
-                return Optional.of(finalizeRootAt(i));
+                return finalizeRootAt(i);
             }
         }
         return Optional.empty();
@@ -331,11 +331,16 @@ public class ForkTree<T> {
      * This method removes the node from roots, replaces the entire roots list with the node's children,
      * updates bestFinalizedNumber, and returns the node's data
      */
-    private T finalizeRootAt(int index) {
+    public Optional<T> finalizeRootAt(int index) {
+
+        if (index >= roots.size()) {
+            return Optional.empty();
+        }
+
         ForkTreeNode<T> node = roots.remove(index);
         roots = new ArrayList<>(node.children);
         bestFinalizedNumber = Optional.of(node.number);
-        return node.data;
+        return Optional.of(node.data);
     }
 
     @Getter
