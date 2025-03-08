@@ -88,6 +88,45 @@ class ForkTreeTest {
         assertThrows(DuplicateException.class, () ->
                 tree.importNode(hashChild, BigInteger.TWO, DATA, TRUE_BIPREDICATE));
     }
+
+    @Test
+    void testImportNodeMultiplePotentialParents() throws Exception {
+        ForkTree<Integer> tree = new ForkTree<>();
+
+        // |A| -> B -> C
+        // |C|
+        Hash256 hashA = new Hash256(generateHash(1));
+        boolean isANodeRoot = tree.importNode(hashA, BigInteger.TEN, DATA, FALSE_BIPREDICATE);
+
+        Hash256 hashB = new Hash256(generateHash(2));
+        boolean isBNodeRoot = tree.importNode(hashB, BigInteger.valueOf(20), DATA, TRUE_BIPREDICATE);
+
+        Hash256 hashC = new Hash256(generateHash(3));
+        boolean isCNodeRoot = tree.importNode(hashC, BigInteger.valueOf(15), DATA, FALSE_BIPREDICATE);
+
+        Hash256 hashD = new Hash256(generateHash(4));
+        boolean isDNodeRoot = tree.importNode(hashD, BigInteger.valueOf(30), DATA, TRUE_BIPREDICATE);
+
+        assertTrue(isANodeRoot);
+        assertFalse(isBNodeRoot);
+        assertTrue(isCNodeRoot);
+        assertFalse(isDNodeRoot);
+
+
+        ForkTree.ForkTreeNode<Integer> aNode = tree.getRoots().get(0);
+        assertEquals(hashA, aNode.getHash());
+        List<ForkTree.ForkTreeNode<Integer>> aChildren = aNode.getChildren();
+        assertEquals(1, aChildren.size());
+        ForkTree.ForkTreeNode<Integer> aChild = aChildren.get(0);
+        assertEquals(hashB, aChild.getHash());
+        assertEquals(1, aChild.getChildren().size());
+
+        ForkTree.ForkTreeNode<Integer> cNode = tree.getRoots().get(1);
+        assertEquals(hashC, cNode.getHash());
+        List<ForkTree.ForkTreeNode<Integer>> cChildren = cNode.getChildren();
+        assertEquals(0, cChildren.size());
+    }
+
 //
 //    /**
 //     * Test that importing a duplicate node (same hash) throws DuplicateException.
@@ -150,18 +189,20 @@ class ForkTreeTest {
     @Test
     void testIteratorBFS() throws Exception {
         ForkTree<Integer> tree = new ForkTree<>();
+
         Hash256 hashA = new Hash256(generateHash(1));
         Hash256 hashB = new Hash256(generateHash(2));
         Hash256 hashC = new Hash256(generateHash(3));
 
-        BiPredicate<Hash256, Hash256> alwaysFalse = (a, b) -> false;
-
-        // Import nodes as roots.
-        tree.importNode(hashA, BigInteger.TEN, 1, alwaysFalse);
-        tree.importNode(hashB, BigInteger.valueOf(20), 2, alwaysFalse);
-        tree.importNode(hashC, BigInteger.valueOf(30), 3, alwaysFalse);
+        // |A|
+        // |B|
+        // |C|
+        tree.importNode(hashA, BigInteger.TEN, 1, FALSE_BIPREDICATE);
+        tree.importNode(hashB, BigInteger.valueOf(20), 2, FALSE_BIPREDICATE);
+        tree.importNode(hashC, BigInteger.valueOf(30), 3, FALSE_BIPREDICATE);
 
         Iterator<Integer> it = tree.iterator();
+
         List<Integer> result = new ArrayList<>();
         while (it.hasNext()) {
             result.add(it.next());
@@ -173,20 +214,20 @@ class ForkTreeTest {
     @Test
     void testIteratorWithForkTreeHavingBranches() throws Exception {
         ForkTree<Integer> tree = new ForkTree<>();
+
         Hash256 hashA = new Hash256(generateHash(1));
         Hash256 hashB = new Hash256(generateHash(2));
         Hash256 hashC = new Hash256(generateHash(3));
         Hash256 hashD = new Hash256(generateHash(4));
         Hash256 hashE = new Hash256(generateHash(5));
 
-        BiPredicate<Hash256, Hash256> falsePredicate = (a, b) -> false;
-        BiPredicate<Hash256, Hash256> truePredicate = (a, b) -> true;
-
-        tree.importNode(hashA, BigInteger.TEN, 1, falsePredicate);
-        tree.importNode(hashB, BigInteger.valueOf(20), 2, truePredicate);
-        tree.importNode(hashC, BigInteger.valueOf(30), 3, falsePredicate);
-        tree.importNode(hashD, BigInteger.valueOf(40), 4, truePredicate);
-        tree.importNode(hashE, BigInteger.valueOf(50), 5, truePredicate);
+        // |A| -> B -> C -> E
+        // |C|
+        tree.importNode(hashA, BigInteger.TEN, 1, FALSE_BIPREDICATE);
+        tree.importNode(hashB, BigInteger.valueOf(20), 2, TRUE_BIPREDICATE);
+        tree.importNode(hashC, BigInteger.valueOf(30), 3, FALSE_BIPREDICATE);
+        tree.importNode(hashD, BigInteger.valueOf(40), 4, TRUE_BIPREDICATE);
+        tree.importNode(hashE, BigInteger.valueOf(50), 5, TRUE_BIPREDICATE);
 
         Iterator<Integer> it = tree.iterator();
         List<Integer> result = new ArrayList<>();
@@ -194,7 +235,6 @@ class ForkTreeTest {
             result.add(it.next());
         }
 
-        // The iterate method uses BFS
         assertArrayEquals(new Integer[]{1, 3, 2, 4, 5}, result.toArray(new Integer[0]));
     }
 

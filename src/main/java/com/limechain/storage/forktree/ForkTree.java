@@ -80,7 +80,7 @@ public class ForkTree<T> {
         return isRoot;
     }
 
-    public void finalizeWithDescendentIf(Hash256 hash,
+    public void finalizeWithDescendantIf(Hash256 hash,
                                          BigInteger number,
                                          BiPredicate<Hash256, Hash256> isDescendantOf,
                                          Predicate<T> predicate) throws RevertException, UnfinalizedAncestor {
