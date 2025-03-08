@@ -1,6 +1,7 @@
 package com.limechain.storage.forktree;
 
 import com.limechain.exception.forktree.DuplicateException;
+import com.limechain.exception.forktree.ForkTreeException;
 import com.limechain.exception.forktree.RevertException;
 import io.emeraldpay.polkaj.types.Hash256;
 import org.junit.jupiter.api.Test;
@@ -93,7 +94,7 @@ class ForkTreeTest {
     void testImportNodeMultiplePotentialParents() throws Exception {
         ForkTree<Integer> tree = new ForkTree<>();
 
-        // |A| -> B -> C
+        // |A| -> B -> D
         // |C|
         Hash256 hashA = new Hash256(generateHash(1));
         boolean isANodeRoot = tree.importNode(hashA, BigInteger.TEN, DATA, FALSE_BIPREDICATE);
@@ -236,6 +237,35 @@ class ForkTreeTest {
         }
 
         assertArrayEquals(new Integer[]{1, 3, 2, 4, 5}, result.toArray(new Integer[0]));
+    }
+
+    @Test
+    void testForkTreeNodeGetMaxDepth() throws ForkTreeException {
+        ForkTree<Integer> tree = new ForkTree<>();
+
+        // |A| -> B -> D
+        // |C|
+        Hash256 hashA = new Hash256(generateHash(1));
+        tree.importNode(hashA, BigInteger.TEN, DATA, FALSE_BIPREDICATE);
+
+        Hash256 hashB = new Hash256(generateHash(2));
+        tree.importNode(hashB, BigInteger.valueOf(20), DATA, TRUE_BIPREDICATE);
+
+        Hash256 hashC = new Hash256(generateHash(3));
+        tree.importNode(hashC, BigInteger.valueOf(15), DATA, FALSE_BIPREDICATE);
+
+        Hash256 hashD = new Hash256(generateHash(4));
+        tree.importNode(hashD, BigInteger.valueOf(30), DATA, TRUE_BIPREDICATE);
+
+        // Node A depth
+        assertEquals(3, tree.getRoots().get(0).getMaxDepth());
+        // Node B depth
+        assertEquals(2, tree.getRoots().get(0).getChildren().get(0).getMaxDepth());
+        // Node D depth
+        assertEquals(1, tree.getRoots().get(0).getChildren().get(0).getChildren().get(0).getMaxDepth());
+        // Node C depth
+        assertEquals(1, tree.getRoots().get(1).getMaxDepth());
+
     }
 
     private byte[] generateHash(int seed) {

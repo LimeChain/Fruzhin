@@ -1,6 +1,7 @@
 package com.limechain.storage.forktree;
 
 import com.limechain.exception.forktree.DuplicateException;
+import com.limechain.exception.forktree.ForkTreeException;
 import com.limechain.exception.forktree.RevertException;
 import com.limechain.exception.forktree.UnfinalizedAncestor;
 import io.emeraldpay.polkaj.types.Hash256;
@@ -44,7 +45,7 @@ public class ForkTree<T> {
     public boolean importNode(Hash256 hash,
                               BigInteger number,
                               T data,
-                              BiPredicate<Hash256, Hash256> isDescendentOf) throws Exception {
+                              BiPredicate<Hash256, Hash256> isDescendentOf) throws ForkTreeException {
 
         if (bestFinalizedNumber.isPresent() && number.compareTo(bestFinalizedNumber.get()) <= 0) {
             throw new RevertException("Block number " + number +
