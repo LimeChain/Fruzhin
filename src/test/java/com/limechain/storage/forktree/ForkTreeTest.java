@@ -1,5 +1,6 @@
 package com.limechain.storage.forktree;
 
+import com.limechain.exception.forktree.DuplicateException;
 import com.limechain.exception.forktree.RevertException;
 import io.emeraldpay.polkaj.types.Hash256;
 import org.junit.jupiter.api.Test;
@@ -20,22 +21,34 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ForkTreeTest {
 
+    private static final BiPredicate<Hash256, Hash256> FALSE_BIPREDICATE = (a, b) -> false;
+    private static final BiPredicate<Hash256, Hash256> TRUE_BIPREDICATE = (a, b) -> true;
+    private static final Integer DATA = 42;
+
     @Test
-    void testImportNode() throws Exception {
+    void testImportNodeAsRoot() throws Exception {
+        ForkTree<Integer> tree = new ForkTree<>();
+        Hash256 hash = new Hash256(generateHash(1));
+        boolean isRoot = tree.importNode(hash, BigInteger.ONE, DATA, FALSE_BIPREDICATE);
+
+        assertTrue(isRoot);
+        assertEquals(1, tree.getRoots().size());
+        assertEquals(hash, tree.getRoots().get(0).getHash());
+    }
+
+    @Test
+    void testImportRootNodeAndChildNode() throws Exception {
         ForkTree<Integer> tree = new ForkTree<>();
 
         Hash256 hashA = new Hash256(generateHash(1));
         Hash256 hashB = new Hash256(generateHash(2));
 
-        // Import node A with number 10, data 1. Expect A to be a root.
-        boolean isRoot = tree.importNode(hashA, BigInteger.TEN, 1, (a, b) -> false);
+        boolean isRoot = tree.importNode(hashA, BigInteger.TEN, DATA, FALSE_BIPREDICATE);
         assertTrue(isRoot);
         assertEquals(1, tree.getRoots().size());
         assertEquals(hashA, tree.getRoots().get(0).getHash());
 
-        // Import node B with number 20, data 2.
-        // According to our descendant check, since A is an ancestor of B, B should attach to A.
-        isRoot = tree.importNode(hashB, BigInteger.valueOf(20), 2, (a, b) -> true);
+        isRoot = tree.importNode(hashB, BigInteger.valueOf(20), DATA, TRUE_BIPREDICATE);
         assertFalse(isRoot);
         assertEquals(1, tree.getRoots().get(0).getChildren().size());
         assertEquals(hashB, tree.getRoots().get(0).getChildren().get(0).getHash());
@@ -45,11 +58,35 @@ class ForkTreeTest {
     void testImportNodeWithBlockNumberSmallerThanBestFinalizedBlockShouldThrowRevertException() {
         ForkTree<Integer> tree = new ForkTree<>();
         tree.setBestFinalizedNumber(Optional.of(BigInteger.TEN));
+
         Hash256 hashA = new Hash256(generateHash(1));
 
-        // Import node A.
         assertThrows(RevertException.class,
-                () -> tree.importNode(hashA, BigInteger.ONE, 1, (a, b) -> false));
+                () -> tree.importNode(hashA, BigInteger.ONE, 1, FALSE_BIPREDICATE));
+    }
+
+    @Test
+    void testImportNodeDuplicateInRoots() throws Exception {
+        ForkTree<Integer> tree = new ForkTree<>();
+        Hash256 hash = new Hash256(generateHash(1));
+        tree.importNode(hash, BigInteger.ONE, DATA, FALSE_BIPREDICATE);
+
+        assertThrows(DuplicateException.class, () ->
+                tree.importNode(hash, BigInteger.valueOf(1), DATA, FALSE_BIPREDICATE));
+    }
+
+    @Test
+    void testImportNodeDuplicateInChildren() throws Exception {
+        ForkTree<Integer> tree = new ForkTree<>();
+        Hash256 hashRoot = new Hash256(generateHash(1));
+
+        tree.importNode(hashRoot, BigInteger.ONE, DATA, FALSE_BIPREDICATE);
+
+        Hash256 hashChild = new Hash256(generateHash(2));
+        tree.importNode(hashChild, BigInteger.TWO, DATA, TRUE_BIPREDICATE);
+
+        assertThrows(DuplicateException.class, () ->
+                tree.importNode(hashChild, BigInteger.TWO, DATA, TRUE_BIPREDICATE));
     }
 //
 //    /**
@@ -110,12 +147,6 @@ class ForkTreeTest {
 //        tree.finalizeWithDescendentIf(hashA, BigInteger.TEN, isDescendantOf, data -> true);
 //    }
 
-    private byte[] generateHash(int number) {
-        byte[] arr = new byte[32];
-        Arrays.fill(arr, (byte) number);
-        return arr;
-    }
-
     @Test
     void testIteratorBFS() throws Exception {
         ForkTree<Integer> tree = new ForkTree<>();
@@ -165,5 +196,11 @@ class ForkTreeTest {
 
         // The iterate method uses BFS
         assertArrayEquals(new Integer[]{1, 3, 2, 4, 5}, result.toArray(new Integer[0]));
+    }
+
+    private byte[] generateHash(int seed) {
+        byte[] arr = new byte[32];
+        Arrays.fill(arr, (byte) seed);
+        return arr;
     }
 }

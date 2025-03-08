@@ -27,7 +27,7 @@ import java.util.function.Predicate;
 public class ForkTree<T> {
 
     private List<ForkTreeNode<T>> roots = new ArrayList<>();
-    private Optional<BigInteger> bestFinalizedNumber = Optional.empty();
+    private Optional<BigInteger> bestFinalizedNumber = Optional.empty(); //TODO: check if we can make that BigInteger
 
     /**
      * Import a new node into the tree
@@ -205,16 +205,16 @@ public class ForkTree<T> {
      * Returns an iterator that traverses the tree in breadth-first order.
      */
     public Iterator<T> iterator() {
-        ArrayDeque<ForkTreeNode<T>> queue = new ArrayDeque<>(roots);
+
         List<T> result = new ArrayList<>();
+        ArrayDeque<ForkTreeNode<T>> queue = new ArrayDeque<>(roots);
 
         while (!queue.isEmpty()) {
             ForkTreeNode<T> current = queue.poll();
 
             T data = current.data;
-            if (data != null) {
-                result.add(data);
-            }
+            if (data != null) result.add(data);
+
             queue.addAll(current.children);
         }
 
@@ -222,14 +222,13 @@ public class ForkTree<T> {
     }
 
     /**
-     * For each level, child nodes are sorted in descending order by the maximum branch depth.
+     * The list of root nodes is sorted first and then for each level, child nodes are sorted in descending
+     * order by the maximum branch depth.
      * This makes the deepest (longest) chains appear first.
      */
     public void rebalance() {
-        // Sort roots
         roots.sort(Comparator.comparingInt((ForkTreeNode<T> n) -> n.getMaxDepth()).reversed());
 
-        // Traverse and sort all children
         Deque<ForkTreeNode<T>> stack = new ArrayDeque<>(roots);
         while (!stack.isEmpty()) {
             ForkTreeNode<T> node = stack.pop();
@@ -238,54 +237,75 @@ public class ForkTree<T> {
         }
     }
 
-    //TODO: do we need an iterator or just the tree as list?
-
     /**
-     * Finds the candidate parent (if any) in the tree to which a new node should be attached.
-     * Searches through all roots and returns the deepest ancestor for which the descendant check successes.
+     * Finds the appropriate parent node for inserting a new block into the fork tree.
+     *
+     * <p>This method iterates over all root nodes in the fork tree (stored in {@code roots}) and
+     * performs the following checks for each root:
+     * <ul>
+     *   <li>Skips the root if its block number is greater or equal to the new block's number
+     *   (i.e., the root is newer or equal in order).</li>
+     *   <li>Skips the root if its hash is not an ancestor of the new block's hash, as determined by the
+     *       {@code isDescendentOf} predicate.</li>
+     * </ul>
+     *
+     * <p>For each root that passes these checks, it calls {@code findDeepestAncestor} to locate the deepest
+     * valid ancestor within that fork. If a valid ancestor is found, it is immediately returned as the parent
+     * for insertion.
+     *
+     * <p>If no suitable parent is found among the roots (i.e., the method returns {@code null}), it implies
+     * that the new block is not a descendant of any existing block, and thus should be added as a new root
+     * node in the fork tree.
      */
     public ForkTreeNode<T> findParentForInsertion(Hash256 newHash,
                                                   BigInteger newNumber,
                                                   BiPredicate<Hash256, Hash256> isDescendentOf) {
 
-        ForkTreeNode<T> candidate = null;
         for (ForkTreeNode<T> root : roots) {
-            ForkTreeNode<T> found = findDeepestAncestor(root, newHash, newNumber, isDescendentOf);
 
-            // Search for the deepest ancestor node
-            if (found != null && (candidate == null || found.getMaxDepth() > candidate.getMaxDepth())) {
-                candidate = found;
-            }
+            if (root.number.compareTo(newNumber) >= 0) continue;
+            if (!isDescendentOf.test(root.hash, newHash)) continue;
+
+            return findDeepestAncestor(root, newHash, newNumber, isDescendentOf);
         }
 
-        return candidate;
+        return null;
     }
 
     /**
-     * Recursively searches for the deepest node (in a given branch) that is an ancestor of the new node.
-     * A node qualifies if its numer is less than the new node's number and
-     * isDescendantOf returns true.
+     * Finds the deepest ancestor node in the fork tree that qualifies as an ancestor of a new block,
+     * based on a given isDescendantOf predicate and block number.
+     * <p>This method performs an iterative depth-first search (DFS) starting from the provided root node,
+     * using a stack to avoid recursion. For each node processed, it checks its children and selects the first
+     * child that meets two conditions:
+     * <ul>
+     *   <li>The child's block number is less than the new block's number (newNumber).</li>
+     *   <li>The child's hash is an ancestor of the new block's hash (newHash), as determined by the
+     *       {@code isDescendantOf} predicate.</li>
+     * </ul>
+     * When a child satisfies these conditions, it becomes the new candidate, and the search continues down
+     * that branch. Since only one child per level is expected to pass the check, the loop breaks early after
+     * finding the matching child.
      */
-    public ForkTreeNode<T> findDeepestAncestor(ForkTreeNode<T> node,
+    public ForkTreeNode<T> findDeepestAncestor(ForkTreeNode<T> root,
                                                Hash256 newHash,
                                                BigInteger newNumber,
                                                BiPredicate<Hash256, Hash256> isDescendantOf) {
 
-        // Only consider nodes with a number less than newNumber
-        if (node.number.compareTo(newNumber) >= 0) {
-            return null;
-        }
+        ForkTreeNode<T> candidate = root;
+        Deque<ForkTreeNode<T>> stack = new ArrayDeque<>();
+        stack.push(root);
 
-        if (!isDescendantOf.test(node.hash, newHash)) {
-            return null;
-        }
+        while (!stack.isEmpty()) {
+            ForkTreeNode<T> node = stack.pop();
 
-        // Search for deeper ancestors
-        ForkTreeNode<T> candidate = node;
-        for (ForkTreeNode<T> child : node.children) {
-            ForkTreeNode<T> deeper = findDeepestAncestor(child, newHash, newNumber, isDescendantOf);
-            if (deeper != null) {
-                candidate = deeper;
+            for (ForkTreeNode<T> child : node.children) {
+                // Since we are searching for ancestor, number of the node should be smaller of new number
+                if (child.number.compareTo(newNumber) < 0 && isDescendantOf.test(child.hash, newHash)) {
+                    candidate = child;
+                    stack.push(child);
+                    break;
+                }
             }
         }
 
@@ -321,6 +341,7 @@ public class ForkTree<T> {
     @Setter
     @NoArgsConstructor
     public static class ForkTreeNode<T> {
+
         private Hash256 hash;
         private BigInteger number;
         private T data;
