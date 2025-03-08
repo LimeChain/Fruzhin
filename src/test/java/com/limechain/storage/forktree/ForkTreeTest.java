@@ -128,6 +128,73 @@ class ForkTreeTest {
         assertEquals(0, cChildren.size());
     }
 
+    @Test
+    void testRebalanceSortsRoots() {
+        ForkTree<Integer> tree = new ForkTree<>();
+
+        // |B|
+        // |A| - C
+        ForkTree.ForkTreeNode<Integer> nodeA =
+                new ForkTree.ForkTreeNode<>(new Hash256(generateHash(1)), BigInteger.ONE, DATA);
+        ForkTree.ForkTreeNode<Integer> nodeB =
+                new ForkTree.ForkTreeNode<>(new Hash256(generateHash(2)), BigInteger.ONE, DATA);
+        ForkTree.ForkTreeNode<Integer> nodeC =
+                new ForkTree.ForkTreeNode<>(new Hash256(generateHash(3)), BigInteger.ONE, DATA);
+
+        nodeA.getChildren().add(nodeC);
+        tree.getRoots().add(nodeB);
+        tree.getRoots().add(nodeA);
+
+        tree.rebalance();
+
+        assertEquals(nodeA.getHash(), tree.getRoots().get(0).getHash());
+        assertEquals(nodeB.getHash(), tree.getRoots().get(1).getHash());
+    }
+
+    @Test
+    void testRebalanceSortsChildren() {
+        ForkTree<Integer> tree = new ForkTree<>();
+
+        // |H| - D
+        // |A| - B - E - G
+        //  | -> C - F
+        ForkTree.ForkTreeNode<Integer> nodeA =
+                new ForkTree.ForkTreeNode<>(new Hash256(generateHash(1)), BigInteger.ONE, DATA);
+        ForkTree.ForkTreeNode<Integer> nodeB =
+                new ForkTree.ForkTreeNode<>(new Hash256(generateHash(2)), BigInteger.ONE, DATA);
+        ForkTree.ForkTreeNode<Integer> nodeC =
+                new ForkTree.ForkTreeNode<>(new Hash256(generateHash(3)), BigInteger.ONE, DATA);
+        ForkTree.ForkTreeNode<Integer> nodeD =
+                new ForkTree.ForkTreeNode<>(new Hash256(generateHash(4)), BigInteger.ONE, DATA);
+        ForkTree.ForkTreeNode<Integer> nodeE =
+                new ForkTree.ForkTreeNode<>(new Hash256(generateHash(5)), BigInteger.ONE, DATA);
+        ForkTree.ForkTreeNode<Integer> nodeF =
+                new ForkTree.ForkTreeNode<>(new Hash256(generateHash(6)), BigInteger.ONE, DATA);
+        ForkTree.ForkTreeNode<Integer> nodeG =
+                new ForkTree.ForkTreeNode<>(new Hash256(generateHash(7)), BigInteger.ONE, DATA);
+        ForkTree.ForkTreeNode<Integer> nodeH =
+                new ForkTree.ForkTreeNode<>(new Hash256(generateHash(8)), BigInteger.ONE, DATA);
+
+        nodeE.getChildren().add(nodeG);
+        nodeB.getChildren().add(nodeE);
+        nodeA.getChildren().add(nodeB);
+
+        nodeC.getChildren().add(nodeF);
+        nodeA.getChildren().add(nodeC);
+
+        nodeH.getChildren().add(nodeD);
+
+        tree.getRoots().add(nodeH);
+        tree.getRoots().add(nodeA);
+
+        tree.rebalance();
+
+        assertEquals(nodeA.getHash(), tree.getRoots().get(0).getHash());
+        assertEquals(nodeB.getHash(), tree.getRoots().get(0).getChildren().get(0).getHash());
+        assertEquals(nodeC.getHash(), tree.getRoots().get(0).getChildren().get(1).getHash());
+        assertEquals(nodeH.getHash(), tree.getRoots().get(1).getHash());
+    }
+
 //
 //    /**
 //     * Test that importing a duplicate node (same hash) throws DuplicateException.
