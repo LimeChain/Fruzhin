@@ -33,8 +33,6 @@ public class AuthoritySet {
 
     private ForkTree<PendingChange> pendingScheduledChanges = new ForkTree<>();
     private List<PendingChange> pendingForcedChanges = new ArrayList<>();
-    //TODO: not sure if if the value should be Hash256 or List of authorities
-    private List<Pair<BigInteger, Hash256>[]> authoritySetChanges = new LinkedList<>();
 
     /**
      * Returns the next pending change applicable to the given best block hash.
@@ -68,7 +66,7 @@ public class AuthoritySet {
         return forcedChange.isPresent() ? forcedChange : scheduledChange;
     }
 
-    private void addPendingChange(PendingChange pendingChange, BiPredicate<Hash256, Hash256> isDescendantOf)
+    public void addPendingChange(PendingChange pendingChange, BiPredicate<Hash256, Hash256> isDescendantOf)
             throws Exception {
 
         if (validateAuthorityList(pendingChange.getNextAuthorities())) {
@@ -134,6 +132,7 @@ public class AuthoritySet {
         pendingForcedChanges.add(idx, pendingChange);
     }
 
+    //TODO: Probably not needed
     private Iterable<PendingChange> getAllPendingChanges() {
         List<PendingChange> combined = new ArrayList<>();
         combined.addAll(pendingScheduledChanges.getAll());
@@ -141,6 +140,7 @@ public class AuthoritySet {
         return combined;
     }
 
+    //TODO: Probably not needed
     private Optional<BigInteger> currentLimit(BigInteger min) {
         return pendingScheduledChanges.getRoots().stream()
                 .map(ForkTree.ForkTreeNode::getData)
@@ -149,51 +149,59 @@ public class AuthoritySet {
                 .min(Comparator.naturalOrder());
     }
 
-    private void applyForcedChanges(Hash256 bestBlockHash,
+    //TODO: called on import block from makeAuthoritiesChanges method
+    private boolean applyForcedChanges(Hash256 bestBlockHash,
                                     BigInteger bestBlockNumber,
                                     BiPredicate<Hash256, Hash256> isDescendantOf)
             throws Exception {
-//        for (PendingChange change : pendingForcedChanges) {
-//            if (change.getEffectiveNumber().compareTo(bestBlockNumber) > 0) {
-//                break;
-//            }
-//
-//            if (change.getEffectiveNumber().equals(bestBlockNumber) && (bestBlockHash.equals(change.getCanonHash())
-//                    || blockState.isDescendantOf(change.getCanonHash(), bestBlockHash))) {
-//
-//                BigInteger medianLastFinalized = change.getDelayKind().getMedianLastFinalized();
-//
-//                for (ForkTree.ForkTreeNode<PendingChange> forkTreeNode : pendingScheduledChanges.getRoots()) {
-//                    PendingChange scheduledChange = forkTreeNode.getData();
-//
-//                    if (scheduledChange.getEffectiveNumber().compareTo(medianLastFinalized) <= 0 &&
-//                            blockState.isDescendantOf(scheduledChange.getCanonHash(), change.getCanonHash())) {
-//
+
+        for (PendingChange change : pendingForcedChanges) {
+
+            if (change.getEffectiveNumber().compareTo(bestBlockNumber) > 0) {
+                break;
+            }
+
+            if (change.getEffectiveNumber().equals(bestBlockNumber) && (bestBlockHash.equals(change.getCanonHash())
+                    ||isDescendantOf.test(change.getCanonHash(), bestBlockHash))) {
+
+                BigInteger medianLastFinalized = change.getDelayKind().getMedianLastFinalized();
+
+                for (ForkTree.ForkTreeNode<PendingChange> forkTreeNode : pendingScheduledChanges.getRoots()) {
+                    PendingChange scheduledChange = forkTreeNode.getData();
+
+                    if (scheduledChange.getEffectiveNumber().compareTo(medianLastFinalized) <= 0 &&
+                            isDescendantOf.test(scheduledChange.getCanonHash(), change.getCanonHash())) {
+
 //                        log.info("Not applying forced authority set change at block " +
 //                                change.getCanonHeight() + " due to pending scheduled change at block " +
 //                                scheduledChange.getCanonHeight()
 //                        );
-//
-//                        throw new Exception("Forced authority set change dependency unsatisfied: " +
-//                                scheduledChange.getEffectiveNumber());
-//                    }
-//                }
+
+                        throw new Exception("Forced authority set change dependency unsatisfied: " +
+                                scheduledChange.getEffectiveNumber());
+                    }
+                }
 //                log.info("Applying forced authority set change at block " + change.getCanonHeight());
-////                authoritySetChanges.add(new Pair<>(setId, medianLastFinalized);
-//            }
-//        }
+                //TODO: here a new set should be started
+                return true;
+            }
+        }
+        return false;
     }
 
+    //TODO: called on finalizing block
     private void applyScheduledChanges(Hash256 bestBlockHash,
                                        BigInteger bestBlockNumber,
                                        BiPredicate<Hash256, Hash256> isDescendantOf) {
 
     }
 
+    //TODO: Probably not needed
     public void revert(Hash256 blockHash, BigInteger blockNumber) {
         //TODO: ForkTree should support drainFilter in order this method to be implemented
     }
 
+    //TODO: called on import block from makeAuthoritiesChanges method
     public void enactScheduledChanges() {
 
     }

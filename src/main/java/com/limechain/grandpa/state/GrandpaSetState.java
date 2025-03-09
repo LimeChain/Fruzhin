@@ -2,15 +2,14 @@ package com.limechain.grandpa.state;
 
 import com.limechain.ServiceConsensusState;
 import com.limechain.chain.lightsyncstate.Authority;
-import com.limechain.storage.forktree.ForkTree;
 import com.limechain.chain.lightsyncstate.LightSyncState;
 import com.limechain.chain.lightsyncstate.PendingChange;
 import com.limechain.exception.grandpa.GrandpaGenericException;
 import com.limechain.grandpa.round.GrandpaRound;
 import com.limechain.grandpa.vote.SignedVote;
 import com.limechain.grandpa.vote.Vote;
-import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.network.protocol.grandpa.messages.consensus.GrandpaConsensusMessage;
+import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.runtime.Runtime;
 import com.limechain.state.AbstractState;
 import com.limechain.storage.DBConstants;
@@ -19,7 +18,6 @@ import com.limechain.storage.StateUtil;
 import com.limechain.storage.block.state.BlockState;
 import com.limechain.storage.crypto.KeyStore;
 import com.limechain.storage.crypto.KeyType;
-import com.limechain.sync.warpsync.dto.AuthoritySetChange;
 import io.emeraldpay.polkaj.types.Hash256;
 import io.libp2p.core.crypto.PubKey;
 import lombok.Getter;
@@ -29,16 +27,12 @@ import org.javatuples.Pair;
 import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
-import java.util.Comparator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.PriorityQueue;
 import java.util.logging.Level;
 
 /**
@@ -55,6 +49,7 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
     private static final BigInteger THRESHOLD_DENOMINATOR = BigInteger.valueOf(3);
     private static final BigInteger SET_CHANGES_MAX = BigInteger.valueOf(3);
 
+    private AuthoritySet authoritySet;
     private List<Authority> authorities;
     private BigInteger disabledAuthority;
     private BigInteger setId;
@@ -62,12 +57,6 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
     private final BlockState blockState;
     private final KeyStore keyStore;
     private final KVRepository<String, Object> repository;
-
-    //TODO: Remove
-//    private final PriorityQueue<AuthoritySetChange> pendingSetChanges =
-//            new PriorityQueue<>(AuthoritySetChange.getComparator());
-
-    //TODO: Remove
     private final LinkedHashMap<BigInteger, AuthoritySet> pastSetChanges = new LinkedHashMap<>() {
         @Override
         protected boolean removeEldestEntry(Map.Entry<BigInteger, AuthoritySet> eldest) {
@@ -123,7 +112,6 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
         return totalWeight.subtract(faulty);
     }
 
-
     public BigInteger getAuthoritiesTotalWeight(List<Authority> authorities) {
         return authorities.stream()
                 .map(Authority::getWeight)
@@ -135,6 +123,7 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
         return roundNumber.remainder(authoritiesCount);
     }
 
+    //TODO: This can be part of the authority set
     public void startNewSet(List<Authority> authorities) {
 
         this.setId = setId != null ? setId.add(BigInteger.ONE) : BigInteger.ONE;
@@ -152,7 +141,6 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
         this.authorities = Arrays.asList(initState.getGrandpaAuthoritySet().getCurrentAuthorities());
     }
 
-    //TODO: Remove
     /**
      * Apply scheduled or forced authority set changes from the queue if present
      *
@@ -182,26 +170,51 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
         return false;
     }
 
-    public void handleGrandpaConsensusMessage(GrandpaConsensusMessage consensusMessage, BigInteger currentBlockNumber) {
+    public void handleGrandpaConsensusMessage(GrandpaConsensusMessage consensusMessage, BlockHeader blockHeader) {
         switch (consensusMessage.getFormat()) {
-            //TODO: Remove
-//            case GRANDPA_SCHEDULED_CHANGE -> pendingSetChanges.add(new ScheduledAuthoritySetChange(
-//                    consensusMessage.getAuthorities(),
-//                    consensusMessage.getDelay(),
-//                    currentBlockNumber
-//            ));
-//            case GRANDPA_FORCED_CHANGE -> pendingSetChanges.add(new ForcedAuthoritySetChange(
-//                    consensusMessage.getAuthorities(),
-//                    consensusMessage.getDelay(),
-//                    consensusMessage.getAdditionalOffset(),
-//                    currentBlockNumber
-//            ));
+            case GRANDPA_SCHEDULED_CHANGE -> handleForcedAuthoritySetChange(consensusMessage, blockHeader);
+            case GRANDPA_FORCED_CHANGE -> handleScheduledAuthoritySetChange(consensusMessage, blockHeader);
             case GRANDPA_ON_DISABLED -> disabledAuthority = consensusMessage.getDisabledAuthority();
             case GRANDPA_PAUSE -> log.log(Level.SEVERE, "'PAUSE' grandpa message not implemented");
             case GRANDPA_RESUME -> log.log(Level.SEVERE, "'RESUME' grandpa message not implemented");
         }
 
         log.fine(String.format("Updated grandpa set config: %s", consensusMessage.getFormat().toString()));
+    }
+
+    private void handleForcedAuthoritySetChange(GrandpaConsensusMessage consensusMessage, BlockHeader blockHeader) {
+        try {
+            authoritySet.addPendingChange(
+                    PendingChange.buildForcedAuthoritySetChange(
+                            consensusMessage.getAuthorities(),
+                            consensusMessage.getDelay(),
+                            blockHeader.getBlockNumber(),
+                            blockHeader.getHash(),
+                            consensusMessage.getMedialLastFinalized()
+                    ),
+                    blockState::isDescendantOf);
+            //TODO: add logs that forced change was added
+        } catch (Exception e) {
+            //TODO: Improve error handling
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void handleScheduledAuthoritySetChange(GrandpaConsensusMessage consensusMessage, BlockHeader blockHeader) {
+        try {
+            authoritySet.addPendingChange(
+                    PendingChange.buildScheduledAuthoritySetChange(
+                            consensusMessage.getAuthorities(),
+                            consensusMessage.getDelay(),
+                            blockHeader.getBlockNumber(),
+                            blockHeader.getHash()
+                    ),
+                    blockState::isDescendantOf);
+            //TODO: add logs that forced change was added
+        } catch (Exception e) {
+            //TODO: Improve error handling
+            throw new RuntimeException(e);
+        }
     }
 
     // We keep a maximum of 3 rounds at a time
