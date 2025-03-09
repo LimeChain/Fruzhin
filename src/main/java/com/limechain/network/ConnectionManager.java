@@ -281,6 +281,8 @@ public class ConnectionManager {
 
             peers.remove(peerId);
         }
+
+        log.info(String.format("removePeer: removed %s", peerId));
     }
 
     private void closeProtocolStream(final ProtocolStreams streams) {

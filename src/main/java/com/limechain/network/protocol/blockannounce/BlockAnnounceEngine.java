@@ -13,6 +13,7 @@ import com.limechain.rpc.server.AppBean;
 import com.limechain.storage.block.BlockHandler;
 import com.limechain.storage.block.state.BlockState;
 import com.limechain.sync.warpsync.WarpSyncState;
+import com.limechain.utils.async.AsyncExecutor;
 import com.limechain.utils.scale.ScaleUtils;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
@@ -28,12 +29,16 @@ import java.util.logging.Level;
 @Log
 public class BlockAnnounceEngine implements BaseEngine {
 
+    /**
+     * Equals to the number of different messages we can receive excluding handshake.
+     */
+    private static final AsyncExecutor BLOCK_ANNOUNCE_EXECUTOR = AsyncExecutor.withSingleThread();
     public static final int HANDSHAKE_LENGTH = 69;
 
     protected ConnectionManager connectionManager;
     protected WarpSyncState warpSyncState;
     protected BlockAnnounceHandshakeBuilder handshakeBuilder;
-    private BlockHandler blockHandler;
+    private final BlockHandler blockHandler;
 
     public BlockAnnounceEngine() {
         connectionManager = ConnectionManager.getInstance();
@@ -102,8 +107,6 @@ public class BlockAnnounceEngine implements BaseEngine {
     private void handleBlockAnnounce(byte[] msg, PeerId peerId) {
         BlockAnnounceMessage announce = ScaleUtils.Decode.decode(msg, BlockAnnounceMessageScaleReader.getInstance());
         connectionManager.updatePeer(peerId, announce);
-        //TODO Yordan: Do we actually need this since each block has a runtime?
-        warpSyncState.syncBlockAnnounce(announce);
         log.log(Level.FINE, "Received block announce for block #" + announce.getHeader().getBlockNumber() +
                 " from " + peerId +
                 " with hash:" + announce.getHeader().getHash() +
@@ -111,8 +114,11 @@ public class BlockAnnounceEngine implements BaseEngine {
                 " stateRoot:" + announce.getHeader().getStateRoot());
 
         if (AppBean.getBean(BlockState.class).isInitialized()) {
-            //TODO Network improvements: Block requests should be sent to the peer that announced the block itself.
-            blockHandler.handleAnnounced(announce.getHeader(), Instant.now(), peerId);
+            // TODO Network improvements: Block requests should be sent to the peer that announced the block itself.
+            // This is a temporary solution to the libp2p thread starvation.
+            BLOCK_ANNOUNCE_EXECUTOR.executeAndForget(() -> {
+                blockHandler.handleAnnounced(announce.getHeader(), Instant.now(), peerId);
+            });
         }
     }
 }

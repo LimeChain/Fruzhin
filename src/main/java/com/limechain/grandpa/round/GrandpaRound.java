@@ -5,7 +5,9 @@ import com.limechain.exception.grandpa.EstimateExecutionException;
 import com.limechain.exception.grandpa.GhostExecutionException;
 import com.limechain.exception.grandpa.GrandpaGenericException;
 import com.limechain.exception.storage.BlockStorageGenericException;
+import com.limechain.grandpa.GrandpaService;
 import com.limechain.grandpa.state.GrandpaSetState;
+import com.limechain.grandpa.state.RoundState;
 import com.limechain.grandpa.vote.SignedVote;
 import com.limechain.grandpa.vote.SubRound;
 import com.limechain.grandpa.vote.Vote;
@@ -17,6 +19,7 @@ import com.limechain.network.protocol.grandpa.messages.vote.FullVoteScaleWriter;
 import com.limechain.network.protocol.grandpa.messages.vote.SignedMessage;
 import com.limechain.network.protocol.grandpa.messages.vote.VoteMessage;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
+import com.limechain.network.protocol.warp.dto.Justification;
 import com.limechain.rpc.server.AppBean;
 import com.limechain.state.AbstractState;
 import com.limechain.state.StateManager;
@@ -53,6 +56,8 @@ public class GrandpaRound {
 
     // Based on https://github.com/paritytech/polkadot/pull/6217
     public static final long DURATION = 1000;
+
+    private static final AsyncExecutor ASYNC_EXECUTOR = AsyncExecutor.withSingleThread();
 
     // Copy of GrandpaSetState information at round creation
     private BigInteger setId;
@@ -128,10 +133,8 @@ public class GrandpaRound {
     private final List<CommitMessage> commitMessagesArchive = new ArrayList<>();
 
     private final StateManager stateManager = Objects.requireNonNull(AppBean.getBean(StateManager.class));
-
     private final GrandpaMessageHandler grandpaMessageHandler = Objects.requireNonNull(
             AppBean.getBean(GrandpaMessageHandler.class));
-
     private final PeerMessageCoordinator peerMessageCoordinator = Objects.requireNonNull(
             AppBean.getBean(PeerMessageCoordinator.class));
 
@@ -150,6 +153,19 @@ public class GrandpaRound {
         this.threshold = threshold;
         this.isPrimaryVoter = isPrimaryVoter;
         this.lastFinalizedBlock = lastFinalizedBlock;
+    }
+
+    public GrandpaRound(RoundState roundState,
+                        BigInteger threshold,
+                        boolean isPrimaryVoter) {
+
+        this.roundNumber = roundState.getRoundNumber();
+        this.setId = roundState.getAuthoritySet().getSetId();
+        this.authorities = roundState.getAuthoritySet().getAuthorities();
+        this.lastFinalizedBlock = roundState.getLastFinalizedBlock();
+        this.finalizedBlock = roundState.getFinalizedBlock();
+        this.threshold = threshold;
+        this.isPrimaryVoter = isPrimaryVoter;
     }
 
     public void switchStage() {
@@ -185,7 +201,7 @@ public class GrandpaRound {
             shouldUpdateEstimate = updateGrandpaGhost();
 
             if (grandpaGhost != null) {
-                AsyncExecutor.withSingleThread().executeAndForget(() -> {
+                ASYNC_EXECUTOR.executeAndForget(() -> {
                     if (stage instanceof PreCommitStage) {
                         stage.end(this);
                     }
@@ -196,10 +212,23 @@ public class GrandpaRound {
         if (shouldUpdateEstimate && updateEstimate()) {
             attemptToFinalize();
 
-            //TODO update R + 1
+            updateNextRound();
         }
 
-        //TODO check if we can start next round.
+        boolean shouldStartNextRound = true;
+
+        if (previous != null) {
+            shouldStartNextRound = previous.finalizedBlock != null;
+        }
+
+        shouldStartNextRound = shouldStartNextRound && isCompletable;
+
+        if (shouldStartNextRound) {
+            log.fine(String.format("update: Starting next round from round #%d in set %d", this.roundNumber, setId));
+
+            ASYNC_EXECUTOR.executeAndForget(() -> Objects.requireNonNull(AppBean.getBean(GrandpaService.class))
+                    .tryStartFromPreviousRound(this));
+        }
     }
 
     /**
@@ -364,7 +393,7 @@ public class GrandpaRound {
         }
 
         if (finalizedBlock != null) {
-            blockState.setFinalizedHash(finalizedBlock, roundNumber, setId);
+            blockState.setFinalizedHash(finalizedBlock, createJustification(), setId);
 
             // Persisting round data into the database when a block is finalized
             GrandpaSetState grandpaSetState = stateManager.getGrandpaSetState();
@@ -492,10 +521,6 @@ public class GrandpaRound {
                                                BlockHeader borderBlock) {
         BlockState blockState = stateManager.getBlockState();
 
-        if (roundNumber.equals(BigInteger.ZERO)) {
-            return grandpaGhost;
-        }
-
         Map<Hash256, BigInteger> possibleSelectedBlocks = getPossibleSelectedBlocks(
                 condition,
                 round
@@ -577,10 +602,6 @@ public class GrandpaRound {
     private BlockHeader findGrandpaGhost(Function<BigInteger, Boolean> condition,
                                          SubRound subround,
                                          BlockHeader currentBest) {
-
-        if (roundNumber.equals(BigInteger.ZERO)) {
-            return lastFinalizedBlock;
-        }
 
         Map<Hash256, BigInteger> blocks = getPossibleSelectedBlocks(condition, subround);
 
@@ -803,5 +824,26 @@ public class GrandpaRound {
             voteWeight = voteWeight.add(authorityWeight.orElse(BigInteger.ZERO));
         }
         return voteWeight;
+    }
+
+    private Justification createJustification() {
+        SignedVote[] signedVotes = getPreCommits().values().toArray(new SignedVote[0]);
+
+        Justification justification = new Justification();
+        justification.setRoundNumber(roundNumber);
+        justification.setTargetHash(getBestFinalCandidate().getHash());
+        justification.setTargetBlock(getBestFinalCandidate().getBlockNumber());
+        justification.setSignedVotes(signedVotes);
+
+        return justification;
+    }
+
+    private void updateNextRound() {
+
+        GrandpaRound nextRound = stateManager.getGrandpaSetState().getGrandpaRound(roundNumber.add(BigInteger.ONE));
+
+        if (nextRound != null) {
+            nextRound.update(true, false, false);
+        }
     }
 }

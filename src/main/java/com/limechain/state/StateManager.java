@@ -1,6 +1,7 @@
 package com.limechain.state;
 
 import com.limechain.babe.state.EpochState;
+import com.limechain.beefy.state.BeefyState;
 import com.limechain.grandpa.state.GrandpaSetState;
 import com.limechain.storage.block.state.BlockState;
 import com.limechain.sync.state.SyncState;
@@ -19,4 +20,5 @@ public class StateManager {
     private final EpochState epochState;
     private final TransactionState transactionState;
     private final BlockState blockState;
+    private final BeefyState beefyState;
 }

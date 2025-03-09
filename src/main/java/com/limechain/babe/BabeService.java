@@ -39,7 +39,6 @@ import com.limechain.utils.scale.ScaleUtils;
 import io.emeraldpay.polkaj.scale.writer.UInt64Writer;
 import io.emeraldpay.polkaj.schnorrkel.Schnorrkel;
 import lombok.extern.java.Log;
-import org.apache.commons.collections4.map.HashedMap;
 import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
@@ -48,6 +47,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -57,10 +57,11 @@ public class BabeService implements SlotChangeListener {
 
     private final StateManager stateManager;
     private final KeyStore keyStore;
-    private final AsyncExecutor asyncExecutor;
-    private final Map<BigInteger, BabePreDigest> slotToPreRuntimeDigest = new HashedMap<>();
     private final RuntimeBuilder runtimeBuilder;
     private final BlockHandler blockHandler;
+
+    private final Map<BigInteger, BabePreDigest> slotToPreRuntimeDigest = new HashMap<>();
+    private final AsyncExecutor asyncExecutor = AsyncExecutor.withSingleThread();
 
     public BabeService(StateManager stateManager,
                        KeyStore keyStore,
@@ -69,7 +70,6 @@ public class BabeService implements SlotChangeListener {
         this.stateManager = stateManager;
         this.keyStore = keyStore;
         this.runtimeBuilder = runtimeBuilder;
-        asyncExecutor = AsyncExecutor.withSingleThread();
         this.blockHandler = blockHandler;
     }
 

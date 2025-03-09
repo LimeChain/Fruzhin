@@ -35,9 +35,17 @@ public class DBConstants {
     public static final String STATE_ROOT = "ss::stateRoot";
 
     // GrandpaState keys
-    public static final String AUTHORITY_SET = "gs::authoritySet";
+    public static final String GRANDPA_AUTHORITY_SET = "gs::grandpaAuthoritySet";
+    public static final String GRANDPA_SET_ID = "gs::grandpaSetId";
     public static final String LATEST_ROUND = "gs::latestRound";
-    public static final String SET_ID = "gs::setId";
     public static final String GRANDPA_PREVOTES = "gs:grandpaPreVotes";
     public static final String GRANDPA_PRECOMMITS = "gs:grandpaPreCommits";
+
+    //BeefyState keys
+    public static final String BEEFY_AUTHORITY_SET = "gs::beefyAuthoritySet";
+    public static final String BEEFY_SET_ID = "gs::beefySetId";
+    public static final String BEEFY_DISABLED_AUTHORITY = "bs:beefyDisabledAuthority";
+    public static final String BEEFY_FINALIZED = "bs:beefyFinalized";
+    public static final String BEEFY_ROUND = "bs:beefyRound";
+    public static final String BEEFY_JUSTIFICATION = "bs:justification";
 }

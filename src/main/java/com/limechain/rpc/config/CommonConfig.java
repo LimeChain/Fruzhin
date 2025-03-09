@@ -2,6 +2,7 @@ package com.limechain.rpc.config;
 
 import com.googlecode.jsonrpc4j.spring.AutoJsonRpcServiceImplExporter;
 import com.limechain.babe.state.EpochState;
+import com.limechain.beefy.state.BeefyState;
 import com.limechain.chain.ChainService;
 import com.limechain.cli.Cli;
 import com.limechain.cli.CliArguments;
@@ -19,7 +20,6 @@ import com.limechain.storage.DBInitializer;
 import com.limechain.storage.KVRepository;
 import com.limechain.storage.block.BlockHandler;
 import com.limechain.storage.block.state.BlockState;
-import com.limechain.storage.crypto.KeyStore;
 import com.limechain.storage.trie.TrieStorage;
 import com.limechain.sync.SyncService;
 import com.limechain.sync.fullsync.FullSyncMachine;
@@ -82,13 +82,6 @@ public class CommonConfig {
     }
 
     @Bean
-    public GrandpaSetState grandpaSetState(KeyStore keyStore,
-                                           KVRepository<String, Object> repository,
-                                           BlockState blockState) {
-        return new GrandpaSetState(blockState, keyStore, repository);
-    }
-
-    @Bean
     public NetworkService networkService(ChainService chainService,
                                          HostConfig hostConfig,
                                          KVRepository<String, Object> repository,
@@ -118,8 +111,9 @@ public class CommonConfig {
                                      GrandpaSetState grandpaSetState,
                                      EpochState epochState,
                                      TransactionState transactionState,
-                                     BlockState blockState) {
-        return new StateManager(syncState, grandpaSetState, epochState, transactionState, blockState);
+                                     BlockState blockState,
+                                     BeefyState beefyState) {
+        return new StateManager(syncState, grandpaSetState, epochState, transactionState, blockState, beefyState);
     }
 
     @Bean

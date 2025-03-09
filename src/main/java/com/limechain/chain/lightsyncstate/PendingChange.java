@@ -10,6 +10,7 @@ import java.util.List;
 @Getter
 @Setter
 public class PendingChange {
+
     private List<Authority> nextAuthorities;
     private BigInteger delay;
     private BigInteger canonHeight;

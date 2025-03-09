@@ -201,7 +201,7 @@ public class RuntimeImpl implements Runtime {
     }
 
     @Override
-    public void persistsChanges() {
+    public synchronized void persistsChanges() {
         context.getTrieAccessor().persistChanges();
     }
 

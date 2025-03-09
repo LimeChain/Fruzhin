@@ -45,7 +45,8 @@ public class ForkTree<T> {
     public boolean importNode(Hash256 hash,
                               BigInteger number,
                               T data,
-                              BiPredicate<Hash256, Hash256> isDescendentOf) throws ForkTreeException {
+                              BiPredicate<Hash256, Hash256> isDescendentOf)
+            throws RevertException, DuplicateException {
 
         if (bestFinalizedNumber.isPresent() && number.compareTo(bestFinalizedNumber.get()) <= 0) {
             throw new RevertException("Block number " + number +
@@ -220,6 +221,13 @@ public class ForkTree<T> {
         }
 
         return result.iterator();
+    }
+
+    public List<T> getAll() {
+        List<T> nodeData = new ArrayList<>();
+        Iterator<T> iter = iterator();
+        iter.forEachRemaining(nodeData::add);
+        return nodeData;
     }
 
     /**

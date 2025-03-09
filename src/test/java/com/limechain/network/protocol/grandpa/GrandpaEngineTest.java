@@ -36,6 +36,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockConstruction;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -153,7 +154,10 @@ class GrandpaEngineTest {
 
     @Test
     void receiveHandshakeRequestOnResponderStreamWhenNotConnectedShouldAddStreamToConnection() {
-        try (MockedStatic<AbstractState> mockedState = mockStatic(AbstractState.class)) {
+        try (MockedStatic<AbstractState> mockedState = mockStatic(AbstractState.class);
+             MockedStatic<ProtocolMessageBuilder> mockerBuilder = mockStatic(ProtocolMessageBuilder.class)) {
+
+            mockerBuilder.when(ProtocolMessageBuilder::buildNeighbourMessage).thenReturn(neighbourMessage);
             mockedState.when(AbstractState::getSyncMode).thenReturn(SyncMode.HEAD);
             byte[] message = new byte[]{2};
             when(stream.isInitiator()).thenReturn(false);
@@ -170,7 +174,10 @@ class GrandpaEngineTest {
 
     @Test
     void receiveHandshakeRequestOnResponderStreamWhenNotConnectedShouldSendHandshakeBack() {
-        try (MockedStatic<AbstractState> mockedState = mockStatic(AbstractState.class)) {
+        try (MockedStatic<AbstractState> mockedState = mockStatic(AbstractState.class);
+             MockedStatic<ProtocolMessageBuilder> mockerBuilder = mockStatic(ProtocolMessageBuilder.class)) {
+
+            mockerBuilder.when(ProtocolMessageBuilder::buildNeighbourMessage).thenReturn(neighbourMessage);
             mockedState.when(AbstractState::getSyncMode).thenReturn(SyncMode.HEAD);
             byte[] message = new byte[]{2};
             when(stream.isInitiator()).thenReturn(false);
@@ -199,7 +206,8 @@ class GrandpaEngineTest {
             when(connectionManager.isGrandpaConnected(peerId)).thenReturn(true);
 
             try (MockedConstruction<ScaleCodecReader> readerMock = mockConstruction(ScaleCodecReader.class,
-                    (mock, context) -> when(mock.read(any(CommitMessageScaleReader.class))).thenReturn(commitMessage))
+                    (mock, context) -> when(mock.read(any(CommitMessageScaleReader.class)))
+                            .thenReturn(commitMessage))
             ) {
                 grandpaEngine.receiveRequest(message, stream);
 
@@ -222,7 +230,7 @@ class GrandpaEngineTest {
                 (mock, context) -> when(mock.read(any(NeighbourMessageScaleReader.class))).thenReturn(neighbourMessage))
         ) {
             grandpaEngine.receiveRequest(message, stream);
-            verify(grandpaMessageHandler).handleNeighbourMessage(neighbourMessage, peerId);
+            verify(grandpaEngine).writeNeighbourMessage(stream, peerId);
         }
     }
 
@@ -236,12 +244,15 @@ class GrandpaEngineTest {
         when(connectionManager.isGrandpaConnected(peerId)).thenReturn(true);
 
         try (MockedConstruction<ScaleCodecReader> readerMock = mockConstruction(ScaleCodecReader.class,
-                (mock, context) -> when(mock.read(any(VoteMessageScaleReader.class))).thenReturn(voteMessage))
+                (mock, context) -> when(mock.read(any(VoteMessageScaleReader.class)))
+                        .thenReturn(voteMessage))
         ) {
             grandpaEngine.receiveRequest(message, stream);
 
+            verify(grandpaMessageHandler, times(1)).handleVoteMessage(voteMessage);
+
             verifyNoMoreInteractions(connectionManager);
-            verifyNoInteractions(grandpaMessageHandler);
+            verifyNoMoreInteractions(grandpaMessageHandler);
         }
     }
 
