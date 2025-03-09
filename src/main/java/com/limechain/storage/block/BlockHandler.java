@@ -165,7 +165,7 @@ public class BlockHandler {
         if (grandpaSetState.isInitialized()) {
             DigestHelper.getGrandpaConsensusMessages(header.getDigest())
                     .forEach(cm -> grandpaSetState.handleGrandpaConsensusMessage(
-                            cm, header.getBlockNumber())
+                            cm, header)
                     );
             //TODO: here are added auth changes previously
             DigestHelper.getBeefyConsensusMessages(header.getDigest())

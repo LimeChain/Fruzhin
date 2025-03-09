@@ -20,9 +20,9 @@ public class ProtocolMessageBuilder {
         GrandpaSetState grandpaSetState = stateManager.getGrandpaSetState();
         SyncState syncState = stateManager.getSyncState();
 
-        BigInteger setId = grandpaSetState.getSetId() == null
+        BigInteger setId = grandpaSetState.getAuthoritySet().getSetId() == null
                 ? BigInteger.ZERO
-                : grandpaSetState.getSetId();
+                : grandpaSetState.getAuthoritySet().getSetId();
         BigInteger roundNumber = grandpaSetState.getCurrentGrandpaRound() == null
                 ? BigInteger.ONE
                 : grandpaSetState.getCurrentGrandpaRound().getRoundNumber();

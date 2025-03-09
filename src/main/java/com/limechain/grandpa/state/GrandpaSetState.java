@@ -49,10 +49,8 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
     private static final BigInteger THRESHOLD_DENOMINATOR = BigInteger.valueOf(3);
     private static final BigInteger SET_CHANGES_MAX = BigInteger.valueOf(3);
 
-    private AuthoritySet authoritySet;
-    private List<Authority> authorities;
+    private AuthoritySet authoritySet = new AuthoritySet();
     private BigInteger disabledAuthority;
-    private BigInteger setId;
 
     private final BlockState blockState;
     private final KeyStore keyStore;
@@ -68,7 +66,7 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
 
     @Override
     public void populateDataFromRuntime(Runtime runtime) {
-        this.authorities = runtime.getGrandpaApiAuthorities();
+        this.authoritySet.setAuthorities(runtime.getGrandpaApiAuthorities());
     }
 
     @Override
@@ -119,26 +117,21 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
     }
 
     public BigInteger derivePrimary(BigInteger roundNumber) {
-        var authoritiesCount = BigInteger.valueOf(authorities.size());
+        var authoritiesCount = BigInteger.valueOf(authoritySet.getAuthorities().size());
         return roundNumber.remainder(authoritiesCount);
     }
 
     //TODO: This can be part of the authority set
     public void startNewSet(List<Authority> authorities) {
-
-        this.setId = setId != null ? setId.add(BigInteger.ONE) : BigInteger.ONE;
-        this.authorities = authorities;
-
+        authoritySet = new AuthoritySet(authoritySet, authorities);
         persistNewSetState();
-
         updateAuthorityStatus();
-
-        log.log(Level.INFO, "Successfully transitioned to authority set id: " + setId);
+        log.log(Level.INFO, "Successfully transitioned to authority set id: " + authoritySet.getSetId());
     }
 
     public void setLightSyncState(LightSyncState initState) {
-        this.setId = initState.getGrandpaAuthoritySet().getSetId();
-        this.authorities = Arrays.asList(initState.getGrandpaAuthoritySet().getCurrentAuthorities());
+        authoritySet.setSetId(initState.getGrandpaAuthoritySet().getSetId());
+        authoritySet.setAuthorities(Arrays.asList(initState.getGrandpaAuthoritySet().getCurrentAuthorities()));
     }
 
     /**
@@ -247,16 +240,19 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
     }
 
     public void saveGrandpaAuthorities() {
-        repository.save(StateUtil.generateAuthorityKey(DBConstants.GRANDPA_AUTHORITY_SET, setId), authorities);
+        repository.save(StateUtil.generateAuthorityKey(
+                DBConstants.GRANDPA_AUTHORITY_SET, authoritySet.getSetId()), authoritySet.getAuthorities()
+        );
     }
 
     public Authority[] fetchGrandpaAuthorities() {
-        return repository.find(
-                StateUtil.generateAuthorityKey(DBConstants.GRANDPA_AUTHORITY_SET, setId), new Authority[0]);
+        return repository.find(StateUtil.generateAuthorityKey(
+                DBConstants.GRANDPA_AUTHORITY_SET, authoritySet.getSetId()), new Authority[0]
+        );
     }
 
     public void saveAuthoritySetId() {
-        repository.save(DBConstants.GRANDPA_SET_ID, setId);
+        repository.save(DBConstants.GRANDPA_SET_ID, authoritySet.getSetId());
     }
 
     public BigInteger fetchAuthoritiesSetId() {
@@ -274,39 +270,45 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
     public void savePreVotes(BigInteger roundNumber) {
         GrandpaRound round = getGrandpaRound(roundNumber);
         Map<Hash256, SignedVote> preVotes = round.getPreVotes();
-        repository.save(StateUtil.generatePreVotesKey(DBConstants.GRANDPA_PREVOTES, roundNumber, setId), preVotes);
+        repository.save(StateUtil.generatePreVotesKey(
+                DBConstants.GRANDPA_PREVOTES, roundNumber, authoritySet.getSetId()), preVotes
+        );
     }
 
     public Map<PubKey, Vote> fetchPreVotes(BigInteger roundNumber) {
-        return repository.find(StateUtil.generatePreVotesKey(DBConstants.GRANDPA_PREVOTES, roundNumber, setId),
-                Collections.emptyMap());
+        return repository.find(StateUtil.generatePreVotesKey(
+                DBConstants.GRANDPA_PREVOTES, roundNumber, authoritySet.getSetId()), Collections.emptyMap()
+        );
     }
 
     public void savePreCommits(BigInteger roundNumber) {
         GrandpaRound round = getGrandpaRound(roundNumber);
         Map<Hash256, SignedVote> preCommits = round.getPreCommits();
-        repository.save(StateUtil.generatePreCommitsKey(DBConstants.GRANDPA_PRECOMMITS, roundNumber, setId), preCommits);
+        repository.save(StateUtil.generatePreCommitsKey(
+                DBConstants.GRANDPA_PRECOMMITS, roundNumber, authoritySet.getSetId()), preCommits
+        );
     }
 
     public Map<PubKey, Vote> fetchPreCommits(BigInteger roundNumber) {
-        return repository.find(StateUtil.generatePreCommitsKey(DBConstants.GRANDPA_PRECOMMITS, roundNumber, setId),
-                Collections.emptyMap());
+        return repository.find(StateUtil.generatePreCommitsKey(
+                DBConstants.GRANDPA_PRECOMMITS, roundNumber, authoritySet.getSetId()), Collections.emptyMap()
+        );
     }
 
     public Optional<BigInteger> getAuthorityWeight(Hash256 authorityPublicKey) {
-        return authorities.stream()
+        return authoritySet.getAuthorities().stream()
                 .filter(authority -> new Hash256(authority.getPublicKey()).equals(authorityPublicKey))
                 .map(Authority::getWeight)
                 .findFirst();
     }
 
     private void loadPersistedState() {
-        this.setId = fetchAuthoritiesSetId();
-        this.authorities = Arrays.asList(fetchGrandpaAuthorities());
+        authoritySet.setSetId(fetchAuthoritiesSetId());
+        authoritySet.setAuthorities(Arrays.asList(fetchGrandpaAuthorities()));
     }
 
     private void updateAuthorityStatus() {
-        Optional<Pair<byte[], byte[]>> keyPair = authorities.stream()
+        Optional<Pair<byte[], byte[]>> keyPair = authoritySet.getAuthorities().stream()
                 .map(a -> keyStore.getKeyPair(KeyType.GRANDPA, a.getPublicKey()))
                 .filter(Optional::isPresent)
                 .map(Optional::get)

@@ -6,18 +6,15 @@ import com.limechain.exception.forktree.DuplicateException;
 import com.limechain.exception.forktree.RevertException;
 import com.limechain.storage.forktree.ForkTree;
 import io.emeraldpay.polkaj.types.Hash256;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.Value;
 import org.javatuples.Pair;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiPredicate;
@@ -25,7 +22,6 @@ import java.util.function.BiPredicate;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
 public class AuthoritySet {
 
     private BigInteger setId;
@@ -33,6 +29,20 @@ public class AuthoritySet {
 
     private ForkTree<PendingChange> pendingScheduledChanges = new ForkTree<>();
     private List<PendingChange> pendingForcedChanges = new ArrayList<>();
+
+    public AuthoritySet(AuthoritySet previousSet, List<Authority> authorities) {
+
+        BigInteger previousSetSetId = previousSet.getSetId();
+        if (this.setId != null) {
+            this.setId = previousSetSetId.add(BigInteger.ONE);
+        } else {
+            this.setId = BigInteger.ONE;
+        }
+
+        this.authorities = authorities;
+        this.pendingScheduledChanges = new ForkTree<>();
+        this.pendingForcedChanges = new ArrayList<>();
+    }
 
     /**
      * Returns the next pending change applicable to the given best block hash.

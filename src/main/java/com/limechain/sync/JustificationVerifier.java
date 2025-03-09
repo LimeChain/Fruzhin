@@ -41,7 +41,7 @@ public class JustificationVerifier {
         GrandpaSetState grandpaSetState = AppBean.getBean(GrandpaSetState.class);
         BlockState blockState = AppBean.getBean(BlockState.class);
 
-        List<Authority> authorities = grandpaSetState.getAuthorities();
+        List<Authority> authorities = grandpaSetState.getAuthoritySet().getAuthorities();
         BigInteger threshold = grandpaSetState.getThreshold(authorities);
 
         // Implementation from: https://github.com/smol-dot/smoldot
@@ -51,7 +51,7 @@ public class JustificationVerifier {
             return false;
         }
 
-        BigInteger setId = grandpaSetState.getSetId();
+        BigInteger setId = grandpaSetState.getAuthoritySet().getSetId();
         Set<Hash256> authorityKeys = authorities.stream()
                 .map(Authority::getPublicKey)
                 .map(Hash256::new)

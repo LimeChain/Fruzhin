@@ -3,6 +3,7 @@ package com.limechain.chain.lightsyncstate;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigInteger;
@@ -11,6 +12,7 @@ import java.util.List;
 @Getter
 @Setter
 @AllArgsConstructor
+@NoArgsConstructor
 public class PendingChange {
 
     private List<Authority> nextAuthorities;
@@ -72,6 +74,7 @@ public class PendingChange {
     @Getter
     @Setter
     @AllArgsConstructor
+    @NoArgsConstructor
     public static class DelayKind {
         private DelayKindEnum kind;
 
