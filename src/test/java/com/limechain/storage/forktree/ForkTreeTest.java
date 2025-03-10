@@ -480,7 +480,11 @@ class ForkTreeTest {
         node.getChildren().add(childNode);
         tree.getRoots().add(node);
 
-        Integer result = tree.finalizeWithDescendantIf(hashNode, BigInteger.valueOf(10), TRUE_BIPREDICATE, t -> true);
+        Optional<Integer> optResult =
+                tree.finalizeWithDescendantIf(hashNode, BigInteger.valueOf(10), TRUE_BIPREDICATE, t -> true);
+
+        assertTrue(optResult.isPresent());
+        Integer result = optResult.get();
 
         assertEquals(DATA, result);
         assertEquals(1, tree.getRoots().size());
@@ -494,9 +498,10 @@ class ForkTreeTest {
         ForkTree.ForkTreeNode<Integer> node = new ForkTree.ForkTreeNode<>(hashNode, BigInteger.TEN, DATA);
         tree.getRoots().add(node);
 
-        Integer result = tree.finalizeWithDescendantIf(hashNode, BigInteger.valueOf(20), TRUE_BIPREDICATE, t -> false);
+        Optional<Integer> optResult =
+                tree.finalizeWithDescendantIf(hashNode, BigInteger.valueOf(20), TRUE_BIPREDICATE, t -> false);
 
-        assertNull(result);
+        assertTrue(optResult.isEmpty());
         assertEquals(BigInteger.valueOf(20), tree.getBestFinalizedNumber().get());
     }
 

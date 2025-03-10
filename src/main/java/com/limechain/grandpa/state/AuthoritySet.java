@@ -26,10 +26,10 @@ public class AuthoritySet {
 
     private BigInteger setId;
     private List<Authority> authorities;
-    private Pair<BigInteger, Hash256>[] authoritySetChanges;
 
     private ForkTree<PendingChange> pendingScheduledChanges = new ForkTree<>();
     private List<PendingChange> pendingForcedChanges = new ArrayList<>();
+    private List<Pair<BigInteger, BigInteger>> authoritySetChanges = new ArrayList<>();
 
     public AuthoritySet(AuthoritySet previousSet, List<Authority> authorities) {
 
@@ -170,8 +170,8 @@ public class AuthoritySet {
     //TODO: Decrease the horizontal complexity of the method
     //TODO: After calling this method a new set should be started and the pending change should be added to the past changes
     private Optional<PendingChange> applyForcedChanges(Hash256 bestBlockHash,
-                                       BigInteger bestBlockNumber,
-                                       BiPredicate<Hash256, Hash256> isDescendantOf)
+                                                       BigInteger bestBlockNumber,
+                                                       BiPredicate<Hash256, Hash256> isDescendantOf)
             throws GrandpaGenericException {
 
         for (PendingChange change : pendingForcedChanges) {
@@ -206,10 +206,19 @@ public class AuthoritySet {
     }
 
     //TODO: called on finalizing block
-    private void applyScheduledChanges(Hash256 bestBlockHash,
-                                       BigInteger bestBlockNumber,
-                                       BiPredicate<Hash256, Hash256> isDescendantOf) {
+    public Optional<PendingChange> applyScheduledChanges(Hash256 finalizedHash,
+                                                         BigInteger finalizedNumber,
+                                                         BiPredicate<Hash256, Hash256> isDescendantOf)
+            throws ForkTreeException {
 
+        removeInvalidForcedAuthoritySetChanges(finalizedHash, finalizedNumber, isDescendantOf);
+
+        return pendingScheduledChanges.finalizeWithDescendantIf(
+                finalizedHash,
+                finalizedNumber,
+                isDescendantOf,
+                pendingChange -> pendingChange.getEffectiveNumber().compareTo(finalizedNumber) <= 0
+        );
     }
 
     //TODO: called on import block from makeAuthoritiesChanges method
@@ -220,6 +229,23 @@ public class AuthoritySet {
     //TODO: Probably not needed
     public void revert(Hash256 blockHash, BigInteger blockNumber) {
         //TODO: ForkTree should support drainFilter in order this method to be implemented
+    }
+
+    private void removeInvalidForcedAuthoritySetChanges(Hash256 finalizedHash,
+                                                        BigInteger finalizedNumber,
+                                                        BiPredicate<Hash256, Hash256> isDescendantOf) {
+
+        List<PendingChange> newForcedChanges = new ArrayList<>();
+
+        for (PendingChange forcedChange : pendingForcedChanges) {
+            if (forcedChange.getEffectiveNumber().compareTo(finalizedNumber) > 0 &&
+                    isDescendantOf.test(finalizedHash, forcedChange.getCanonHash())) {
+
+                newForcedChanges.add(forcedChange);
+            }
+        }
+
+        pendingForcedChanges = newForcedChanges;
     }
 
     private boolean validateAuthorityList(List<Authority> authorities) {

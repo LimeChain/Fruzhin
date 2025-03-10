@@ -13,7 +13,6 @@ import io.emeraldpay.polkaj.scale.reader.UInt32Reader;
 import io.emeraldpay.polkaj.scale.reader.UInt64Reader;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.javatuples.Pair;
 
 import java.math.BigInteger;
 import java.util.Optional;
@@ -49,7 +48,7 @@ public class AuthoritySetReader implements ScaleReader<AuthoritySet> {
         );
 
         authoritySet.setAuthoritySetChanges(
-                reader.read(new ListReader<>(AuthoritySetChangeReader.getInstance())).toArray(Pair[]::new)
+                reader.read(new ListReader<>(AuthoritySetChangeReader.getInstance()))
         );
 
         return authoritySet;

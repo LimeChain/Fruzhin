@@ -77,14 +77,14 @@ public class ForkTree<T> {
         return isRoot;
     }
 
-    public T finalizeWithDescendantIf(Hash256 hash,
+    public Optional<T> finalizeWithDescendantIf(Hash256 hash,
                                       BigInteger number,
                                       BiPredicate<Hash256, Hash256> isDescendantOf,
                                       Predicate<T> predicate) throws ForkTreeException {
 
         validateFinalizedNumber(number);
         Integer candidateIndex = findCandidateIndex(hash, number, isDescendantOf, predicate);
-        T finalizedData = finalizeCandidateIfPresent(candidateIndex);
+        Optional<T> finalizedData = finalizeCandidateIfPresent(candidateIndex);
         pruneRoots(hash, number, isDescendantOf);
 
         return finalizedData;
@@ -130,15 +130,17 @@ public class ForkTree<T> {
         }
     }
 
-    private T finalizeCandidateIfPresent(Integer candidateIndex) {
+    private Optional<T> finalizeCandidateIfPresent(Integer candidateIndex) {
+
         if (candidateIndex != null) {
             ForkTreeNode<T> candidate = roots.remove(candidateIndex.intValue());
             T finalizedData = candidate.data;
             roots = candidate.children;
             bestFinalizedNumber = Optional.of(candidate.number);
-            return finalizedData;
+            return Optional.of(finalizedData);
         }
-        return null;
+
+        return Optional.empty();
     }
 
     private void pruneRoots(Hash256 hash, BigInteger number, BiPredicate<Hash256, Hash256> isDescendantOf) {
