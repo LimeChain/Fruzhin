@@ -1,7 +1,9 @@
-package com.limechain.chain.lightsyncstate.scale;
+package com.limechain.grandpa.state.scale;
 
-import com.limechain.chain.lightsyncstate.Authority;
-import com.limechain.chain.lightsyncstate.AuthoritySet;
+import com.limechain.chain.lightsyncstate.scale.AuthorityReader;
+import com.limechain.storage.forktree.scale.ForkTreeNodeReader;
+import com.limechain.chain.lightsyncstate.scale.PendingChangeReader;
+import com.limechain.grandpa.state.AuthoritySet;
 import com.limechain.storage.forktree.ForkTree;
 import com.limechain.chain.lightsyncstate.PendingChange;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
@@ -29,8 +31,8 @@ public class AuthoritySetReader implements ScaleReader<AuthoritySet> {
     public AuthoritySet read(ScaleCodecReader reader) {
         AuthoritySet authoritySet = new AuthoritySet();
 
-        authoritySet.setCurrentAuthorities(
-                reader.read(new ListReader<>(AuthorityReader.getInstance())).toArray(Authority[]::new)
+        authoritySet.setAuthorities(
+                reader.read(new ListReader<>(AuthorityReader.getInstance()))
         );
 
         authoritySet.setSetId(new UInt64Reader().read(reader));
@@ -43,7 +45,7 @@ public class AuthoritySetReader implements ScaleReader<AuthoritySet> {
         forkTree.setBestFinalizedNumber(bestFinalizedNumber.map(BigInteger::valueOf));
 
         authoritySet.setPendingForcedChanges(reader.read(
-                new ListReader<>(PendingChangeReader.getInstance())).toArray(PendingChange[]::new)
+                new ListReader<>(PendingChangeReader.getInstance()))
         );
 
         authoritySet.setAuthoritySetChanges(

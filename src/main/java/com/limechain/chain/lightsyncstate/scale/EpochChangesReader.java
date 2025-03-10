@@ -4,6 +4,7 @@ import com.limechain.chain.lightsyncstate.EpochChanges;
 import com.limechain.storage.forktree.ForkTree;
 import com.limechain.chain.lightsyncstate.PersistedEpoch;
 import com.limechain.chain.lightsyncstate.PersistedEpochHeader;
+import com.limechain.storage.forktree.scale.ForkTreeNodeReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleReader;
 import io.emeraldpay.polkaj.scale.reader.ListReader;

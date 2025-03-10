@@ -26,6 +26,7 @@ public class AuthoritySet {
 
     private BigInteger setId;
     private List<Authority> authorities;
+    private Pair<BigInteger, Hash256>[] authoritySetChanges;
 
     private ForkTree<PendingChange> pendingScheduledChanges = new ForkTree<>();
     private List<PendingChange> pendingForcedChanges = new ArrayList<>();

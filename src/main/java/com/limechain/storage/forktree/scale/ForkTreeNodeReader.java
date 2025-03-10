@@ -1,8 +1,9 @@
-package com.limechain.chain.lightsyncstate.scale;
+package com.limechain.storage.forktree.scale;
 
 import com.limechain.storage.forktree.ForkTree;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleReader;
+import io.emeraldpay.polkaj.scale.reader.ListReader;
 import io.emeraldpay.polkaj.types.Hash256;
 
 import java.math.BigInteger;
@@ -22,11 +23,9 @@ public class ForkTreeNodeReader<T> implements ScaleReader<ForkTree.ForkTreeNode<
 
         node.setData(dataReader.read(reader));
 
-        //TODO: uncomment
-//        node.setChildren(reader
-//                .read(new ListReader<>(new ForkTreeNodeReader<>(dataReader)))
-//                .toArray(ForkTree.ForkTreeNode[]::new)
-//        );
+        node.setChildren(reader
+                .read(new ListReader<>(new ForkTreeNodeReader<>(dataReader)))
+        );
         return node;
     }
 }

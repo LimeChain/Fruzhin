@@ -1,4 +1,4 @@
-package com.limechain.chain.lightsyncstate.scale;
+package com.limechain.grandpa.state.scale;
 
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleReader;

@@ -131,7 +131,7 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
 
     public void setLightSyncState(LightSyncState initState) {
         authoritySet.setSetId(initState.getGrandpaAuthoritySet().getSetId());
-        authoritySet.setAuthorities(Arrays.asList(initState.getGrandpaAuthoritySet().getCurrentAuthorities()));
+        authoritySet.setAuthorities(initState.getGrandpaAuthoritySet().getAuthorities());
     }
 
     /**
