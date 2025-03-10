@@ -45,12 +45,10 @@ public class ForkTree<T> {
                               BiPredicate<Hash256, Hash256> isDescendentOf)
             throws ForkTreeException {
 
-        if (bestFinalizedNumber.isPresent() && number.compareTo(bestFinalizedNumber.get()) <= 0) {
-            throw new ForkTreeException("Block number " + number +
-                    " is not greater than best finalized number " + bestFinalizedNumber);
-        }
+        validateFinalizedNumber(number);
 
         ForkTreeNode<T> parent = findParentForInsertion(hash, number, isDescendentOf);
+
         List<ForkTreeNode<T>> childrenList;
         boolean isRoot;
         if (parent != null) {
@@ -79,124 +77,82 @@ public class ForkTree<T> {
         return isRoot;
     }
 
-    public void finalizeWithDescendantIf(Hash256 hash,
-                                         BigInteger number,
-                                         BiPredicate<Hash256, Hash256> isDescendantOf,
-                                         Predicate<T> predicate) throws ForkTreeException {
+    public T finalizeWithDescendantIf(Hash256 hash,
+                                      BigInteger number,
+                                      BiPredicate<Hash256, Hash256> isDescendantOf,
+                                      Predicate<T> predicate) throws ForkTreeException {
 
+        validateFinalizedNumber(number);
+        Integer candidateIndex = findCandidateIndex(hash, number, isDescendantOf, predicate);
+        T finalizedData = finalizeCandidateIfPresent(candidateIndex);
+        pruneRoots(hash, number, isDescendantOf);
+
+        return finalizedData;
+    }
+
+    private void validateFinalizedNumber(BigInteger number) throws ForkTreeException {
         if (bestFinalizedNumber.isPresent() && number.compareTo(bestFinalizedNumber.get()) <= 0) {
-            throw new ForkTreeException("New block number " + number +
-                    " is not greater than best finalized number " + bestFinalizedNumber);
+            throw new ForkTreeException("Cannot import or finalize a node " + number +
+                    "that is ancestor of the current finalized block " + bestFinalizedNumber);
         }
+    }
 
-        Integer position = null;
-        int index = 0;
-        for (ForkTreeNode<T> root : roots) {
+    private Integer findCandidateIndex(Hash256 hash,
+                                       BigInteger number,
+                                       BiPredicate<Hash256, Hash256> isDescendantOf,
+                                       Predicate<T> predicate) throws ForkTreeException {
 
-            if (predicate.test(root.data) &&
-                    (root.hash.equals(hash) || isDescendantOf.test(root.hash, hash))) {
+        for (int i = 0; i < roots.size(); i++) {
 
-                for (ForkTreeNode<T> child : root.children) {
-
-                    if (child.number.compareTo(number) <= 0 &&
-                            (child.hash == hash || isDescendantOf.test(child.hash, hash))) {
-
-                        throw new ForkTreeException(
-                                "Finalized descendent of Tree node without finalizing its ancestor/s first"
-                        );
-                    }
-
-                    position = index;
-                    break;
-                }
-
-                index++;
+            ForkTreeNode<T> root = roots.get(i);
+            if (predicate.test(root.data) && (root.hash.equals(hash) || isDescendantOf.test(root.hash, hash))) {
+                checkChildrenForConflictingDescendant(root, hash, number, isDescendantOf);
+                return i;
             }
         }
 
-        ForkTreeNode<T> node = null;
-        if (position != null) {
-            node = roots.get(position);
-            roots.remove(node);
-            roots = node.children;
-            bestFinalizedNumber = Optional.of(node.number);
+        return null;
+    }
+
+    private void checkChildrenForConflictingDescendant(ForkTreeNode<T> root,
+                                                       Hash256 hash,
+                                                       BigInteger number,
+                                                       BiPredicate<Hash256, Hash256> isDescendantOf)
+            throws ForkTreeException {
+
+        for (ForkTreeNode<T> child : root.children) {
+            if (child.number.compareTo(number) <= 0 &&
+                    (child.hash.equals(hash) || isDescendantOf.test(child.hash, hash))) {
+                throw new ForkTreeException(
+                        "Finalized descendant of tree node without finalizing its ancestor/s first"
+                );
+            }
         }
+    }
 
-        boolean changed = false;
+    private T finalizeCandidateIfPresent(Integer candidateIndex) {
+        if (candidateIndex != null) {
+            ForkTreeNode<T> candidate = roots.remove(candidateIndex.intValue());
+            T finalizedData = candidate.data;
+            roots = candidate.children;
+            bestFinalizedNumber = Optional.of(candidate.number);
+            return finalizedData;
+        }
+        return null;
+    }
 
-        //TODO: refactor because currently the roots are updated while the code iterates over them which is considered as bad practice
+    private void pruneRoots(Hash256 hash, BigInteger number, BiPredicate<Hash256, Hash256> isDescendantOf) {
+        List<ForkTreeNode<T>> newRoots = new ArrayList<>();
         for (ForkTreeNode<T> root : roots) {
-            //TODO find a way to make it straight forward
-            boolean retain = root.number.compareTo(number) > 0 &&
-                    isDescendantOf.test(hash, root.hash) ||
-                    root.number.equals(number) &&
-                            root.hash.equals(hash) ||
-                    isDescendantOf.test(root.hash, hash);
-
+            boolean retain = (root.number.compareTo(number) > 0 && isDescendantOf.test(hash, root.hash))
+                    || (root.number.equals(number) && root.hash.equals(hash))
+                    || isDescendantOf.test(root.hash, hash);
             if (retain) {
-                roots.add(root);
-            } else {
-                changed = true;
+                newRoots.add(root);
             }
         }
-
+        roots = newRoots;
         bestFinalizedNumber = Optional.of(number);
-
-        if (node != null) {
-            //FINALIZATION RESULT -> CHANGED (node_data)
-        } else if (changed){
-            //FINALIZATION RESULT -> CHANGED (node)
-        } else {
-            //FINALIZATION RESULT -> UNCHANGED
-        }
-
-//        Optional<T> finalizedRoot = finalizeRoot(hash);
-//        if (finalizedRoot.isPresent() && predicate.test(finalizedRoot.get())) {
-//            // TODO changed
-//        }
-//
-//        boolean changed = false;
-//        int idx = 0;
-//        while (idx < roots.size()) {
-//            ForkTreeNode<T> root = roots.get(idx);
-//
-//            boolean isFinalized = root.hash.equals(hash);
-//            boolean isDescendant = !isFinalized &&
-//                    root.number.compareTo(number) > 0 &&
-//                    isDescendantOf.test(root.hash, hash);
-//            boolean isAncestor = !isFinalized &&
-//                    !isDescendant &&
-//                    root.number.compareTo(number) < 0 &&
-//                    isDescendantOf.test(root.hash, hash);
-//
-//            //TODO: This check looks redundant
-//            if (isFinalized && predicate.test(root.data)) {
-//                finalizeRootAt(idx);
-//                //TODO: changed
-//            }
-//
-//            if (isDescendant) {
-//                idx++;
-//                continue;
-//            }
-//
-//            if (isAncestor) {
-//                ForkTreeNode<T> removedNode = roots.remove(idx);
-//                roots.addAll(removedNode.children);
-//                changed = true;
-//                continue;
-//            }
-//
-//            roots.remove(idx);
-//            changed = true;
-//        }
-//
-//        bestFinalizedNumber = Optional.of(number);
-//        if (changed) {
-//            //TODO changed
-//        } else {
-//            //TODO unchanged
-//        }
     }
 
     /**

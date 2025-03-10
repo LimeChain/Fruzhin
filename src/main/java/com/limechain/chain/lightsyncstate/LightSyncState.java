@@ -13,6 +13,7 @@ import java.util.Map;
 
 @Getter
 public class LightSyncState {
+
     private BlockHeader finalizedBlockHeader;
     private EpochChanges epochChanges;
     private AuthoritySet grandpaAuthoritySet;
