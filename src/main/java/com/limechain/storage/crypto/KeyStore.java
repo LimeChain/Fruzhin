@@ -1,5 +1,6 @@
 package com.limechain.storage.crypto;
 
+import com.limechain.chain.lightsyncstate.Authority;
 import com.limechain.storage.KVRepository;
 import io.emeraldpay.polkaj.schnorrkel.Schnorrkel;
 import lombok.extern.java.Log;
@@ -44,6 +45,23 @@ public class KeyStore {
                 .stream()
                 .map(this::removeKeyTypeFromKey)
                 .toList();
+    }
+
+    /**
+     * Searches for a {@link io.emeraldpay.polkaj.schnorrkel.Schnorrkel.KeyPair} within the provided list of authorities
+     * and retrieves the corresponding key pair if available.
+     *
+     * @param authorities the list of authorities to search for the key pair.
+     * @param type        the type of cryptographic algorithm used for the key.
+     * @return an {@link Optional} containing a {@link Pair} of byte arrays representing the public and private keys,
+     *         or an empty {@link Optional} if no matching key pair is found.
+     */
+    public Optional<Pair<byte[], byte[]>> findKeyPair(List<Authority> authorities, KeyType type){
+        return authorities.stream()
+                .map(a -> getKeyPair(type, a.getPublicKey()))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .findFirst();
     }
 
     /**

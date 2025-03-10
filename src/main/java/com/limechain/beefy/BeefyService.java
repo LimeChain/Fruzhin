@@ -3,8 +3,8 @@ package com.limechain.beefy;
 import com.limechain.beefy.dto.BeefyPayloadId;
 import com.limechain.beefy.dto.Commitment;
 import com.limechain.beefy.dto.PayloadElement;
-import com.limechain.beefy.dto.ValidatorSet;
 import com.limechain.exception.storage.BlockStorageGenericException;
+import com.limechain.grandpa.state.AuthoritySet;
 import com.limechain.network.protocol.beefy.messages.consensus.BeefyConsensusMessage;
 import com.limechain.network.protocol.warp.DigestHelper;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
@@ -34,14 +34,14 @@ public class BeefyService {
      * @return minimum required validators for finality.
      */
     private BigInteger getThreshold() {
-        ValidatorSet validatorSet = stateManager.getBeefyState().getValidatorSet();
+        AuthoritySet authoritySet = stateManager.getBeefyState().getAuthoritySet();
 
-        if (Objects.isNull(validatorSet)) {
-            log.warning("getThreshold: No validatorSet in BeefyState.");
+        if (Objects.isNull(authoritySet)) {
+            log.warning("getThreshold: No authoritySet in BeefyState.");
             return BigInteger.ZERO;
         }
 
-        var validatorSize = validatorSet.getValidators().size();
+        var validatorSize = authoritySet.getAuthorities().size();
 
         if (validatorSize == 0) {
             log.warning("getThreshold: Validator set is empty.");
