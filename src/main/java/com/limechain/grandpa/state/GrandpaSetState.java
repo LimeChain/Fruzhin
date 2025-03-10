@@ -24,7 +24,6 @@ import io.libp2p.core.crypto.PubKey;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.java.Log;
-import org.javatuples.Pair;
 import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
@@ -284,12 +283,7 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
     }
 
     private void updateAuthorityStatus() {
-        Optional<Pair<byte[], byte[]>> keyPair = authorities.stream()
-                .map(a -> keyStore.getKeyPair(KeyType.GRANDPA, a.getPublicKey()))
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .findFirst();
-
-        keyPair.ifPresentOrElse(AbstractState::setAuthorityStatus, AbstractState::clearAuthorityStatus);
+        keyStore.findKeyPair(authorities, KeyType.GRANDPA)
+                .ifPresentOrElse(AbstractState::setAuthorityStatus, AbstractState::clearAuthorityStatus);
     }
 }

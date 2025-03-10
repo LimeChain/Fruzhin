@@ -7,6 +7,8 @@ import io.emeraldpay.polkaj.scale.reader.UInt64Reader;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
+import java.math.BigInteger;
+
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class AuthorityReader implements ScaleReader<Authority> {
 
@@ -18,6 +20,14 @@ public class AuthorityReader implements ScaleReader<Authority> {
 
     @Override
     public Authority read(ScaleCodecReader reader) {
-        return new Authority(reader.readUint256(), new UInt64Reader().read(reader));
+        return read(reader, false, null);
+    }
+
+    public Authority readFixedWeight(ScaleCodecReader reader, int fixedWeight) {
+        return read(reader, true, fixedWeight);
+    }
+
+    private Authority read(ScaleCodecReader reader, boolean isFixedWeight, Integer fixedWeight) {
+        return new Authority(reader.readUint256(), isFixedWeight ? BigInteger.valueOf(fixedWeight) : new UInt64Reader().read(reader));
     }
 }

@@ -1,6 +1,6 @@
 package com.limechain.beefy.state;
 
-import com.limechain.beefy.dto.ValidatorSet;
+import com.limechain.grandpa.state.AuthoritySet;
 import lombok.Data;
 import org.javatuples.Pair;
 
@@ -11,12 +11,12 @@ import java.util.Set;
 
 @Data
 public class BeefySession {
-    ValidatorSet validatorSet;
+    AuthoritySet authoritySet;
     Set<BigInteger> nonMandatoryBlockNumbers = Collections.synchronizedSet(new HashSet<>());
     Pair<byte[], byte[]> beefyKeyPair = null;
 
-    public BeefySession(ValidatorSet validatorSet) {
-        this.validatorSet = validatorSet;
+    public BeefySession(AuthoritySet authoritySet) {
+        this.authoritySet = authoritySet;
     }
 }
 

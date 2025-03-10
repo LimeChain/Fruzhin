@@ -2,8 +2,9 @@ package com.limechain.beefy.state;
 
 import com.limechain.ServiceConsensusState;
 import com.limechain.beefy.dto.SignedCommitment;
-import com.limechain.beefy.dto.ValidatorSet;
 import com.limechain.beefy.dto.VoteMessage;
+import com.limechain.chain.lightsyncstate.Authority;
+import com.limechain.grandpa.state.AuthoritySet;
 import com.limechain.network.protocol.beefy.messages.consensus.BeefyConsensusMessage;
 import com.limechain.runtime.Runtime;
 import com.limechain.state.AbstractState;
@@ -25,7 +26,6 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -43,7 +43,7 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
     private static final BigInteger THRESHOLD_DENOMINATOR = BigInteger.valueOf(3);
     private static final int MIN_BLOCK_DELTA = 1;
 
-    private ValidatorSet validatorSet;
+    private AuthoritySet authoritySet;
 
     private BigInteger disabledAuthority;
 
@@ -92,8 +92,8 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
 
     @Override
     public void persistState() {
-        persistBeefyValidators();
-        persistValidatorsSetId();
+        persistBeefyAuthorities();
+        persistAuthoritiesSetId();
         persistRoundNumber(roundNumber);
     }
 
@@ -110,24 +110,21 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
     private void handleSessionTransitions(BigInteger grandpaFinalized) {
         while (nextDigest.compareTo(grandpaFinalized) <= 0) {
             //Todo: In kagome fetching header.
-            Pair<BigInteger, ValidatorSet> validatorsSet = detectValidatorSetChange(
+            Pair<BigInteger, AuthoritySet> validatorsSet = detectAuthoritySetChange(
                     nextDigest,
                     sessions.isEmpty() ? beefyGenesis : nextDigest
             );
 
             if (validatorsSet != null) {
                 BigInteger sessionBlock = validatorsSet.getLeft();
-                ValidatorSet validatorSet = validatorsSet.getRight();
+                AuthoritySet authoritySet = validatorsSet.getRight();
 
-                BeefySession beefySession = new BeefySession(validatorSet);
-                Optional<org.javatuples.Pair<byte[], byte[]>> keyPair = validatorSet.getValidators().stream()
-                        .map(publicKey -> keyStore.getKeyPair(KeyType.BEEFY, publicKey))
-                        .flatMap(Optional::stream)
-                        .findFirst();
-
-                keyPair.ifPresentOrElse(
+                BeefySession beefySession = new BeefySession(authoritySet);
+                keyStore.findKeyPair(authoritySet.getAuthorities(), KeyType.BEEFY).ifPresentOrElse(
                         beefySession::setBeefyKeyPair,
-                        () -> log.info(String.format("BEEFY: We are not chosen to vote in current session, block number: %s", sessionBlock))
+                        () -> log.info(
+                                String.format("BEEFY: We are not chosen to vote in current session, block number: %s",
+                                        sessionBlock))
                 );
                 sessions.put(sessionBlock, beefySession);
             }
@@ -138,7 +135,7 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
     /**
      * Checks for validator set changes at a given block and returns a pair of the block and the new set.
      */
-    private Pair<BigInteger, ValidatorSet> detectValidatorSetChange(BigInteger maxBlockNumber,
+    private Pair<BigInteger, AuthoritySet> detectAuthoritySetChange(BigInteger maxBlockNumber,
                                                                     BigInteger minBlockNumber) {
         //Todo: We should search for authority changes in runtime and beefyValidatorsDigest
         return null;
@@ -210,31 +207,31 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
     }
 
     private void loadPersistedState() {
-        BigInteger setId = fetchValidatorsSetId();
-        List<byte[]> validators = fetchBeefyValidators(setId);
-        this.validatorSet = new ValidatorSet(validators, setId);
+        BigInteger setId = fetchAuthoritiesSetId();
+        List<Authority> authorities = fetchBeefyAuthorities(setId);
+        this.authoritySet = new AuthoritySet(setId, authorities);
     }
 
-    private BigInteger fetchValidatorsSetId() {
+    private BigInteger fetchAuthoritiesSetId() {
         return repository.find(DBConstants.BEEFY_SET_ID, BigInteger.ZERO);
     }
 
-    private void persistValidatorsSetId() {
-        repository.save(DBConstants.BEEFY_SET_ID, validatorSet.getSetId());
+    private void persistAuthoritiesSetId() {
+        repository.save(DBConstants.BEEFY_SET_ID, authoritySet.getSetId());
     }
 
 
-    private List<byte[]> fetchBeefyValidators(BigInteger setId) {
+    private List<Authority> fetchBeefyAuthorities(BigInteger setId) {
         return repository.find(
                 StateUtil.generateAuthorityKey(DBConstants.BEEFY_AUTHORITY_SET, setId),
                 Collections.emptyList()
         );
     }
 
-    private void persistBeefyValidators() {
+    private void persistBeefyAuthorities() {
         repository.save(
-                StateUtil.generateAuthorityKey(DBConstants.BEEFY_AUTHORITY_SET, validatorSet.getSetId()),
-                validatorSet.getValidators()
+                StateUtil.generateAuthorityKey(DBConstants.BEEFY_AUTHORITY_SET, authoritySet.getSetId()),
+                authoritySet.getAuthorities()
         );
     }
 
@@ -250,7 +247,7 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
     private void persistDisabledAuthority() {
         repository.save(
                 StateUtil.generateBeefyDisabledAuthorityKey(
-                        DBConstants.BEEFY_DISABLED_AUTHORITY, validatorSet.getSetId()
+                        DBConstants.BEEFY_DISABLED_AUTHORITY, authoritySet.getSetId()
                 ),
                 disabledAuthority
         );
