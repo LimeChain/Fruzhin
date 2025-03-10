@@ -8,6 +8,7 @@ import org.javatuples.Pair;
 
 import java.math.BigInteger;
 
+//TODO: Remove
 @Getter
 @Setter
 public class AuthoritySet {

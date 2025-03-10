@@ -176,7 +176,9 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
     }
 
     private void handleForcedAuthoritySetChange(GrandpaConsensusMessage consensusMessage, BlockHeader blockHeader) {
+
         try {
+
             authoritySet.addPendingChange(
                     PendingChange.buildForcedAuthoritySetChange(
                             consensusMessage.getAuthorities(),
@@ -186,15 +188,16 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
                             consensusMessage.getMedialLastFinalized()
                     ),
                     blockState::isDescendantOf);
-            //TODO: add logs that forced change was added
-        } catch (Exception e) {
-            //TODO: Improve error handling
-            throw new RuntimeException(e);
+
+        } catch (GrandpaGenericException e) {
+            log.warning("Error while importing new forced authority set change: " + e.getMessage());
         }
     }
 
     private void handleScheduledAuthoritySetChange(GrandpaConsensusMessage consensusMessage, BlockHeader blockHeader) {
+
         try {
+
             authoritySet.addPendingChange(
                     PendingChange.buildScheduledAuthoritySetChange(
                             consensusMessage.getAuthorities(),
@@ -203,10 +206,9 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
                             blockHeader.getHash()
                     ),
                     blockState::isDescendantOf);
-            //TODO: add logs that forced change was added
-        } catch (Exception e) {
-            //TODO: Improve error handling
-            throw new RuntimeException(e);
+
+        } catch (GrandpaGenericException e) {
+            log.warning("Error while importing new scheduled authority set change: " + e.getMessage());
         }
     }
 

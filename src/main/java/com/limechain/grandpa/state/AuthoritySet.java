@@ -2,8 +2,8 @@ package com.limechain.grandpa.state;
 
 import com.limechain.chain.lightsyncstate.Authority;
 import com.limechain.chain.lightsyncstate.PendingChange;
-import com.limechain.exception.forktree.DuplicateException;
-import com.limechain.exception.forktree.RevertException;
+import com.limechain.exception.forktree.ForkTreeException;
+import com.limechain.exception.grandpa.GrandpaGenericException;
 import com.limechain.storage.forktree.ForkTree;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.Getter;
@@ -77,16 +77,16 @@ public class AuthoritySet {
     }
 
     public void addPendingChange(PendingChange pendingChange, BiPredicate<Hash256, Hash256> isDescendantOf)
-            throws Exception {
+            throws GrandpaGenericException {
 
         if (validateAuthorityList(pendingChange.getNextAuthorities())) {
-            throw new Exception("Invalid authority set");
+            throw new GrandpaGenericException("Invalid authority set");
         }
 
         PendingChange.DelayKind delayKind = Optional.ofNullable(pendingChange.getDelayKind())
-                .orElseThrow(() -> new Exception("Delay kind is null"));
+                .orElseThrow(() -> new GrandpaGenericException("Delay kind is null"));
         PendingChange.DelayKindEnum delayKindEnum = Optional.ofNullable(delayKind.getKind())
-                .orElseThrow(() -> new Exception("Delay kind enum is null"));
+                .orElseThrow(() -> new GrandpaGenericException("Delay kind enum is null"));
 
         switch (delayKindEnum) {
             case BEST -> addForcedChange(pendingChange, isDescendantOf);
@@ -95,9 +95,13 @@ public class AuthoritySet {
     }
 
     private void addScheduledChange(PendingChange change, BiPredicate<Hash256, Hash256> isDescendantOf)
-            throws DuplicateException, RevertException {
+            throws GrandpaGenericException {
 
-        pendingScheduledChanges.importNode(change.getCanonHash(), change.getCanonHeight(), change, isDescendantOf);
+        try {
+            pendingScheduledChanges.importNode(change.getCanonHash(), change.getCanonHeight(), change, isDescendantOf);
+        } catch (ForkTreeException e) {
+            throw new GrandpaGenericException(e.getMessage());
+        }
     }
 
     /**
@@ -108,14 +112,14 @@ public class AuthoritySet {
      * using binary search and inserts the new pending change to maintain the sorted order.
      */
     private void addForcedChange(PendingChange pendingChange, BiPredicate<Hash256, Hash256> isDescendantOf)
-            throws Exception {
+            throws GrandpaGenericException {
 
         for (PendingChange change : pendingForcedChanges) {
             if (change.getCanonHash().equals(pendingChange.getCanonHash())) {
-                throw new Exception("Duplicate authority set change");
+                throw new GrandpaGenericException("Duplicate authority set change");
             }
             if (isDescendantOf.test(change.getCanonHash(), pendingChange.getCanonHash())) {
-                throw new Exception("Multiple pending forced authority set changes");
+                throw new GrandpaGenericException("Multiple pending forced authority set changes");
             }
         }
 
@@ -130,11 +134,13 @@ public class AuthoritySet {
 
         // If the index is non-negative, an equivalent pending change already exists in the list
         if (idx >= 0) {
-            throw new Exception("Pending change with the same effective number and canonHeight already exists");
+            throw new GrandpaGenericException(
+                    "Pending change with the same effective number and canonHeight already exists"
+            );
         } else {
             // If binarySearch returns a negative value, invert it to get the correct insertion index.
             // For example, if binarySearch returns -4, then the element should be inserted at index 3.
-            idx = (- idx) - 1;
+            idx = (-idx) - 1;
         }
 
         // Insert a pending change to specific index and right shift all elements in the list with
@@ -160,10 +166,12 @@ public class AuthoritySet {
     }
 
     //TODO: called on import block from makeAuthoritiesChanges method
-    private boolean applyForcedChanges(Hash256 bestBlockHash,
-                                    BigInteger bestBlockNumber,
-                                    BiPredicate<Hash256, Hash256> isDescendantOf)
-            throws Exception {
+    //TODO: Decrease the horizontal complexity of the method
+    //TODO: After calling this method a new set should be started and the pending change should be added to the past changes
+    private Optional<PendingChange> applyForcedChanges(Hash256 bestBlockHash,
+                                       BigInteger bestBlockNumber,
+                                       BiPredicate<Hash256, Hash256> isDescendantOf)
+            throws GrandpaGenericException {
 
         for (PendingChange change : pendingForcedChanges) {
 
@@ -172,7 +180,7 @@ public class AuthoritySet {
             }
 
             if (change.getEffectiveNumber().equals(bestBlockNumber) && (bestBlockHash.equals(change.getCanonHash())
-                    ||isDescendantOf.test(change.getCanonHash(), bestBlockHash))) {
+                    || isDescendantOf.test(change.getCanonHash(), bestBlockHash))) {
 
                 BigInteger medianLastFinalized = change.getDelayKind().getMedianLastFinalized();
 
@@ -182,21 +190,18 @@ public class AuthoritySet {
                     if (scheduledChange.getEffectiveNumber().compareTo(medianLastFinalized) <= 0 &&
                             isDescendantOf.test(scheduledChange.getCanonHash(), change.getCanonHash())) {
 
-//                        log.info("Not applying forced authority set change at block " +
-//                                change.getCanonHeight() + " due to pending scheduled change at block " +
-//                                scheduledChange.getCanonHeight()
-//                        );
-
-                        throw new Exception("Forced authority set change dependency unsatisfied: " +
-                                scheduledChange.getEffectiveNumber());
+                        throw new GrandpaGenericException("Applying forced authority set change at block " +
+                                change.getCanonHeight() + " while pending scheduled change at block " +
+                                scheduledChange.getCanonHeight() + " exists."
+                        );
                     }
                 }
-//                log.info("Applying forced authority set change at block " + change.getCanonHeight());
-                //TODO: here a new set should be started
-                return true;
+
+                return Optional.of(change);
             }
         }
-        return false;
+
+        return Optional.empty();
     }
 
     //TODO: called on finalizing block
@@ -206,14 +211,14 @@ public class AuthoritySet {
 
     }
 
-    //TODO: Probably not needed
-    public void revert(Hash256 blockHash, BigInteger blockNumber) {
-        //TODO: ForkTree should support drainFilter in order this method to be implemented
-    }
-
     //TODO: called on import block from makeAuthoritiesChanges method
     public void enactScheduledChanges() {
 
+    }
+
+    //TODO: Probably not needed
+    public void revert(Hash256 blockHash, BigInteger blockNumber) {
+        //TODO: ForkTree should support drainFilter in order this method to be implemented
     }
 
     private boolean validateAuthorityList(List<Authority> authorities) {

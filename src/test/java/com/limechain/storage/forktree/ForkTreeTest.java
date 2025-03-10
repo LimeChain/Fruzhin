@@ -1,8 +1,6 @@
 package com.limechain.storage.forktree;
 
-import com.limechain.exception.forktree.DuplicateException;
 import com.limechain.exception.forktree.ForkTreeException;
-import com.limechain.exception.forktree.RevertException;
 import io.emeraldpay.polkaj.types.Hash256;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -67,7 +65,7 @@ class ForkTreeTest {
 
         Hash256 hashA = new Hash256(generateHash(1));
 
-        assertThrows(RevertException.class,
+        assertThrows(ForkTreeException.class,
                 () -> tree.importNode(hashA, BigInteger.ONE, 1, FALSE_BIPREDICATE));
     }
 
@@ -76,7 +74,7 @@ class ForkTreeTest {
         Hash256 hash = new Hash256(generateHash(1));
         tree.importNode(hash, BigInteger.ONE, DATA, FALSE_BIPREDICATE);
 
-        assertThrows(DuplicateException.class, () ->
+        assertThrows(ForkTreeException.class, () ->
                 tree.importNode(hash, BigInteger.valueOf(1), DATA, FALSE_BIPREDICATE));
     }
 
@@ -89,7 +87,7 @@ class ForkTreeTest {
         Hash256 hashChild = new Hash256(generateHash(2));
         tree.importNode(hashChild, BigInteger.TWO, DATA, TRUE_BIPREDICATE);
 
-        assertThrows(DuplicateException.class, () ->
+        assertThrows(ForkTreeException.class, () ->
                 tree.importNode(hashChild, BigInteger.TWO, DATA, TRUE_BIPREDICATE));
     }
 

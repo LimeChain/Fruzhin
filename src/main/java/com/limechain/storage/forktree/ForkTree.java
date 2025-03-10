@@ -1,9 +1,6 @@
 package com.limechain.storage.forktree;
 
-import com.limechain.exception.forktree.DuplicateException;
 import com.limechain.exception.forktree.ForkTreeException;
-import com.limechain.exception.forktree.RevertException;
-import com.limechain.exception.forktree.UnfinalizedAncestor;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -46,10 +43,10 @@ public class ForkTree<T> {
                               BigInteger number,
                               T data,
                               BiPredicate<Hash256, Hash256> isDescendentOf)
-            throws RevertException, DuplicateException {
+            throws ForkTreeException {
 
         if (bestFinalizedNumber.isPresent() && number.compareTo(bestFinalizedNumber.get()) <= 0) {
-            throw new RevertException("Block number " + number +
+            throw new ForkTreeException("Block number " + number +
                     " is not greater than best finalized number " + bestFinalizedNumber);
         }
 
@@ -67,7 +64,7 @@ public class ForkTree<T> {
         // Check for duplicates
         for (ForkTreeNode<T> child : childrenList) {
             if (child.hash.equals(hash)) {
-                throw new DuplicateException("A node with hash " + hash + " already exists.");
+                throw new ForkTreeException("A node with hash " + hash + " already exists.");
             }
         }
 
@@ -85,13 +82,12 @@ public class ForkTree<T> {
     public void finalizeWithDescendantIf(Hash256 hash,
                                          BigInteger number,
                                          BiPredicate<Hash256, Hash256> isDescendantOf,
-                                         Predicate<T> predicate) throws RevertException, UnfinalizedAncestor {
+                                         Predicate<T> predicate) throws ForkTreeException {
 
         if (bestFinalizedNumber.isPresent() && number.compareTo(bestFinalizedNumber.get()) <= 0) {
-            throw new RevertException("New block number " + number +
+            throw new ForkTreeException("New block number " + number +
                     " is not greater than best finalized number " + bestFinalizedNumber);
         }
-
 
         Integer position = null;
         int index = 0;
@@ -105,7 +101,7 @@ public class ForkTree<T> {
                     if (child.number.compareTo(number) <= 0 &&
                             (child.hash == hash || isDescendantOf.test(child.hash, hash))) {
 
-                        throw new UnfinalizedAncestor(
+                        throw new ForkTreeException(
                                 "Finalized descendent of Tree node without finalizing its ancestor/s first"
                         );
                     }
