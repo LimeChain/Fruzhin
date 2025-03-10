@@ -118,14 +118,14 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
             if (validatorsSet != null) {
                 BigInteger sessionBlock = validatorsSet.getLeft();
                 AuthoritySet authoritySet = validatorsSet.getRight();
-
-                BeefySession beefySession = new BeefySession(authoritySet);
-                keyStore.findKeyPair(authoritySet.getAuthorities(), KeyType.BEEFY).ifPresentOrElse(
-                        beefySession::setBeefyKeyPair,
-                        () -> log.info(
-                                String.format("BEEFY: We are not chosen to vote in current session, block number: %s",
-                                        sessionBlock))
-                );
+                org.javatuples.Pair<byte[], byte[]> keyPair = keyStore.findKeyPair(authoritySet.getAuthorities(), KeyType.BEEFY)
+                        .orElse(null);
+                if (keyPair == null) {
+                    log.info(
+                            String.format("BEEFY: We are not chosen to vote in current session, block number: %s",
+                                    sessionBlock));
+                }
+                BeefySession beefySession = new BeefySession(authoritySet, keyPair);
                 sessions.put(sessionBlock, beefySession);
             }
             nextDigest = nextDigest.add(BigInteger.ONE);
