@@ -470,6 +470,65 @@ class ForkTreeTest {
     }
 
     @Test
+    void testFinalizeWithDescendantIfCandidateFound() throws Exception {
+        Hash256 hashNode = new Hash256(generateHash(1));
+        ForkTree.ForkTreeNode<Integer> node = new ForkTree.ForkTreeNode<>(hashNode, BigInteger.TEN, DATA);
+
+        Hash256 childNodeHash = new Hash256(generateHash(2));
+        ForkTree.ForkTreeNode<Integer> childNode = new ForkTree.ForkTreeNode<>(childNodeHash, BigInteger.valueOf(11), DATA);
+
+        node.getChildren().add(childNode);
+        tree.getRoots().add(node);
+
+        Integer result = tree.finalizeWithDescendantIf(hashNode, BigInteger.valueOf(10), TRUE_BIPREDICATE, t -> true);
+
+        assertEquals(DATA, result);
+        assertEquals(1, tree.getRoots().size());
+        assertEquals(childNodeHash, tree.getRoots().get(0).getHash());
+        assertEquals(BigInteger.valueOf(10), tree.getBestFinalizedNumber().get());
+    }
+
+    @Test
+    void testFinalizeWithDescendantIfCandidateNotFound() throws Exception {
+        Hash256 hashNode = new Hash256(generateHash(1));
+        ForkTree.ForkTreeNode<Integer> node = new ForkTree.ForkTreeNode<>(hashNode, BigInteger.TEN, DATA);
+        tree.getRoots().add(node);
+
+        Integer result = tree.finalizeWithDescendantIf(hashNode, BigInteger.valueOf(20), TRUE_BIPREDICATE, t -> false);
+
+        assertNull(result);
+        assertEquals(BigInteger.valueOf(20), tree.getBestFinalizedNumber().get());
+    }
+
+    @Test
+    void testFinalizeWithDescendantIfThrowsDueToChildConflict() {
+        Hash256 hashCandidate = new Hash256(generateHash(1));
+        ForkTree.ForkTreeNode<Integer> candidate = new ForkTree.ForkTreeNode<>(hashCandidate, BigInteger.TEN, DATA);
+
+        Hash256 hashConflictChild = new Hash256(generateHash(2));
+        ForkTree.ForkTreeNode<Integer> conflictChild =
+                new ForkTree.ForkTreeNode<>(hashConflictChild, BigInteger.valueOf(15), DATA);
+
+        candidate.getChildren().add(conflictChild);
+
+        tree.getRoots().add(candidate);
+
+        assertThrows(ForkTreeException.class, () ->
+                tree.finalizeWithDescendantIf(hashCandidate, BigInteger.valueOf(20), TRUE_BIPREDICATE, t -> true)
+        );
+    }
+
+    @Test
+    void testFinalizeWithDescendantIfLowerNumberThrows() {
+        tree.setBestFinalizedNumber(Optional.of(BigInteger.valueOf(30)));
+        Hash256 hashNode = new Hash256(generateHash(1));
+
+        assertThrows(ForkTreeException.class, () ->
+                tree.finalizeWithDescendantIf(hashNode, BigInteger.valueOf(20), TRUE_BIPREDICATE, t -> true)
+        );
+    }
+
+    @Test
     void testForkTreeNodeGetMaxDepth() throws ForkTreeException {
         // |A| -> B -> D
         // |C|
