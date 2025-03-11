@@ -1,5 +1,6 @@
 package com.limechain.chain.lightsyncstate;
 
+import com.limechain.storage.forktree.ForkTree;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.Getter;
 import lombok.Setter;
@@ -11,7 +12,7 @@ import java.util.Map;
 @Getter
 @Setter
 public class EpochChanges {
-    private ForkTree<PersistedEpochHeader> inner;
 
+    private ForkTree<PersistedEpochHeader> inner;
     private Map<Pair<Hash256, BigInteger>, PersistedEpoch> epochs;
 }

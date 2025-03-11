@@ -1,5 +1,6 @@
 package com.limechain.chain.lightsyncstate;
 
+import com.limechain.storage.forktree.ForkTree;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.Getter;
 import lombok.Setter;
