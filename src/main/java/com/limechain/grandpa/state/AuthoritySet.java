@@ -213,7 +213,7 @@ public class AuthoritySet {
 
         removeInvalidForcedAuthoritySetChanges(finalizedHash, finalizedNumber, isDescendantOf);
 
-        return pendingScheduledChanges.finalizeWithDescendantIf(
+        return pendingScheduledChanges.finalizeNode(
                 finalizedHash,
                 finalizedNumber,
                 isDescendantOf,

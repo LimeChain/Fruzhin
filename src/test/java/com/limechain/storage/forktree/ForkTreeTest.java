@@ -5,6 +5,7 @@ import io.emeraldpay.polkaj.types.Hash256;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -127,7 +128,7 @@ class ForkTreeTest {
     }
 
     @Test
-    void testRebalanceSortsRoots() {
+    void testRebalanceSortsRoots() throws Exception {
         // |B|
         // |A| - C
         ForkTree.ForkTreeNode<Integer> nodeA =
@@ -141,14 +142,14 @@ class ForkTreeTest {
         tree.getRoots().add(nodeB);
         tree.getRoots().add(nodeA);
 
-        tree.rebalance();
+        callRebalance();
 
         assertEquals(nodeA.getHash(), tree.getRoots().get(0).getHash());
         assertEquals(nodeB.getHash(), tree.getRoots().get(1).getHash());
     }
 
     @Test
-    void testRebalanceSortsChildren() {
+    void testRebalanceSortsChildren() throws Exception {
         // |H| - D
         // |A| - B - E - G
         //  | -> C - F
@@ -181,7 +182,7 @@ class ForkTreeTest {
         tree.getRoots().add(nodeH);
         tree.getRoots().add(nodeA);
 
-        tree.rebalance();
+        callRebalance();
 
         assertEquals(nodeA.getHash(), tree.getRoots().get(0).getHash());
         assertEquals(nodeB.getHash(), tree.getRoots().get(0).getChildren().get(0).getHash());
@@ -202,7 +203,7 @@ class ForkTreeTest {
         tree.importNode(hashB, BigInteger.valueOf(20), 2, FALSE_BIPREDICATE);
         tree.importNode(hashC, BigInteger.valueOf(30), 3, FALSE_BIPREDICATE);
 
-        Iterator<Integer> it = tree.iterator();
+        Iterator<Integer> it = callIterator();
 
         List<Integer> result = new ArrayList<>();
         while (it.hasNext()) {
@@ -228,7 +229,7 @@ class ForkTreeTest {
         tree.importNode(hashD, BigInteger.valueOf(40), 4, TRUE_BIPREDICATE);
         tree.importNode(hashE, BigInteger.valueOf(50), 5, TRUE_BIPREDICATE);
 
-        Iterator<Integer> it = tree.iterator();
+        Iterator<Integer> it = callIterator();
         List<Integer> result = new ArrayList<>();
         while (it.hasNext()) {
             result.add(it.next());
@@ -238,31 +239,35 @@ class ForkTreeTest {
     }
 
     @Test
-    void testFindParentForInsertionNoCandidate() {
+    void testFindParentForInsertionNoCandidate()
+            throws Exception {
         Hash256 hashA = new Hash256(generateHash(1));
         ForkTree.ForkTreeNode<Integer> nodeA = new ForkTree.ForkTreeNode<>(hashA, BigInteger.valueOf(10), DATA);
         tree.getRoots().add(nodeA);
 
         ForkTree.ForkTreeNode<Integer> result =
-                tree.findParentForInsertion(new Hash256(generateHash(2)), BigInteger.valueOf(5), TRUE_BIPREDICATE);
+                callFindParentForInsertion(new Hash256(generateHash(2)), BigInteger.valueOf(5), TRUE_BIPREDICATE);
 
         assertNull(result);
     }
 
     @Test
-    void testFindParentForInsertionSingleLevelCandidate() {
+    void testFindParentForInsertionSingleLevelCandidate()
+            throws Exception {
         Hash256 hashA = new Hash256(generateHash(1));
         ForkTree.ForkTreeNode<Integer> nodeA = new ForkTree.ForkTreeNode<>(hashA, BigInteger.valueOf(10), DATA);
         tree.getRoots().add(nodeA);
 
         ForkTree.ForkTreeNode<Integer> result =
-                tree.findParentForInsertion(new Hash256(generateHash(2)), BigInteger.valueOf(20), TRUE_BIPREDICATE);
+                callFindParentForInsertion(new Hash256(generateHash(2)), BigInteger.valueOf(20), TRUE_BIPREDICATE);
 
         assertEquals(nodeA, result);
     }
 
     @Test
-    void testFindParentForInsertionMultipleLevels() {
+    void testFindParentForInsertionMultipleLevels()
+            throws Exception {
+        
         // |A| - B - C - new
         Hash256 hashA = new Hash256(generateHash(1));
         ForkTree.ForkTreeNode<Integer> nodeA = new ForkTree.ForkTreeNode<>(hashA, BigInteger.valueOf(10), DATA);
@@ -278,13 +283,13 @@ class ForkTreeTest {
 
         Hash256 hashNew = new Hash256(generateHash(4));
         ForkTree.ForkTreeNode<Integer> result =
-                tree.findParentForInsertion(hashNew, BigInteger.valueOf(20), TRUE_BIPREDICATE);
+                callFindParentForInsertion(hashNew, BigInteger.valueOf(20), TRUE_BIPREDICATE);
 
         assertEquals(nodeC, result);
     }
 
     @Test
-    void testFindParentForInsertionCreatingFork() {
+    void testFindParentForInsertionCreatingFork() throws Exception {
         // |A| - B - C
         //       | - new
         Hash256 hashA = new Hash256(generateHash(1));
@@ -301,13 +306,13 @@ class ForkTreeTest {
 
         Hash256 hashNew = new Hash256(generateHash(4));
         ForkTree.ForkTreeNode<Integer> result =
-                tree.findParentForInsertion(hashNew, BigInteger.valueOf(18), TRUE_BIPREDICATE);
+                callFindParentForInsertion(hashNew, BigInteger.valueOf(18), TRUE_BIPREDICATE);
 
         assertEquals(nodeB, result);
     }
 
     @Test
-    void testFindParentForInsertionCreatingNewRoot() {
+    void testFindParentForInsertionCreatingNewRoot() throws Exception {
         // |A| - B - C
         // |new|
         Hash256 hashA = new Hash256(generateHash(1));
@@ -324,13 +329,13 @@ class ForkTreeTest {
 
         Hash256 hashNew = new Hash256(generateHash(4));
         ForkTree.ForkTreeNode<Integer> result =
-                tree.findParentForInsertion(hashNew, BigInteger.valueOf(10), TRUE_BIPREDICATE);
+                callFindParentForInsertion(hashNew, BigInteger.valueOf(10), TRUE_BIPREDICATE);
 
         assertNull(result);
     }
 
     @Test
-    void testFindParentForInsertionCreatingForkInTreeWithMultipleForks() {
+    void testFindParentForInsertionCreatingForkInTreeWithMultipleForks() throws Exception {
         // |A| - B - D - E
         //       |   | - F
         //       |   | - new
@@ -361,13 +366,13 @@ class ForkTreeTest {
 
         Hash256 hashNew = new Hash256(generateHash(7));
         ForkTree.ForkTreeNode<Integer> result =
-                tree.findParentForInsertion(hashNew, BigInteger.valueOf(20), TRUE_BIPREDICATE);
+                callFindParentForInsertion(hashNew, BigInteger.valueOf(20), TRUE_BIPREDICATE);
 
         assertEquals(nodeD, result);
     }
 
     @Test
-    void testFindDeepestAncestor() {
+    void testFindDeepestAncestor() throws Exception {
         // |A| - B - D
         //  | - C
         Hash256 hashA = new Hash256(generateHash(1));
@@ -388,26 +393,28 @@ class ForkTreeTest {
         nodeB.getChildren().add(nodeD);
 
         ForkTree.ForkTreeNode<Integer> result =
-                tree.findDeepestAncestor(nodeA, new Hash256(generateHash(5)), BigInteger.valueOf(20), TRUE_BIPREDICATE);
+                callFindDeepestAncestor(nodeA, new Hash256(generateHash(5)), BigInteger.valueOf(20), TRUE_BIPREDICATE);
 
         assertEquals(nodeD, result);
     }
 
     @Test
-    void testFindParentForInsertionPredicateFalse() {
+    void testFindParentForInsertionPredicateFalse() throws Exception {
         Hash256 hashA = new Hash256(generateHash(1));
         ForkTree.ForkTreeNode<Integer> nodeA = new ForkTree.ForkTreeNode<>(hashA, BigInteger.valueOf(10), DATA);
 
         tree.getRoots().add(nodeA);
 
         Hash256 hashNew = new Hash256(generateHash(2));
-        ForkTree.ForkTreeNode<Integer> result = tree.findParentForInsertion(hashNew, BigInteger.valueOf(20), FALSE_BIPREDICATE);
+        
+        ForkTree.ForkTreeNode<Integer> result = 
+                callFindParentForInsertion(hashNew, BigInteger.valueOf(20), FALSE_BIPREDICATE);
 
         assertNull(result);
     }
 
     @Test
-    void testFinalizeRootFound() throws Exception {
+    void testFinalizeNodeRootFound() throws Exception {
         // |A| -> B
         // |C|
         Hash256 hashA = new Hash256(generateHash(1));
@@ -419,7 +426,7 @@ class ForkTreeTest {
         Hash256 hashC = new Hash256(generateHash(3));
         tree.importNode(hashC, BigInteger.valueOf(15), 2, FALSE_BIPREDICATE);
 
-        Optional<Integer> finalizedData = tree.finalizeRoot(hashA);
+        Optional<Integer> finalizedData = callFinalizeRoot(hashA);
         assertTrue(finalizedData.isPresent());
         assertEquals(DATA, finalizedData.get());
 
@@ -430,12 +437,12 @@ class ForkTreeTest {
     }
 
     @Test
-    void testFinalizeRootNotFound() throws Exception {
+    void testFinalizeNodeRootNotFound() throws Exception {
         Hash256 hashA = new Hash256(generateHash(1));
         tree.importNode(hashA, BigInteger.valueOf(30), DATA, FALSE_BIPREDICATE);
 
         Hash256 nonExistentHash = new Hash256(generateHash(2));
-        Optional<Integer> finalizedData = tree.finalizeRoot(nonExistentHash);
+        Optional<Integer> finalizedData = callFinalizeRoot(nonExistentHash);
         assertFalse(finalizedData.isPresent());
 
         assertEquals(1, tree.getRoots().size());
@@ -443,14 +450,14 @@ class ForkTreeTest {
     }
 
     @Test
-    void testFinalizeRootAtValidIndex() throws Exception {
+    void testFinalizeNodeRootAtValidIndex() throws Exception {
         Hash256 hashA = new Hash256(generateHash(1));
         tree.importNode(hashA, BigInteger.valueOf(40), DATA, FALSE_BIPREDICATE);
 
         Hash256 hashB = new Hash256(generateHash(2));
         tree.importNode(hashB, BigInteger.valueOf(50), 1, TRUE_BIPREDICATE);
 
-        Optional<Integer> finalizedData = tree.finalizeRootAt(0);
+        Optional<Integer> finalizedData = callFinalizeRootAt(0);
         assertTrue(finalizedData.isPresent());
         assertEquals(DATA, finalizedData.get());
 
@@ -461,16 +468,16 @@ class ForkTreeTest {
     }
 
     @Test
-    void testFinalizeRootAtInvalidIndex() throws Exception {
+    void testFinalizeNodeRootAtInvalidIndex() throws Exception {
         Hash256 hash = new Hash256(generateHash(1));
         tree.importNode(hash, BigInteger.valueOf(60), DATA, FALSE_BIPREDICATE);
 
-        Optional<Integer> result = tree.finalizeRootAt(5);
+        Optional<Integer> result = callFinalizeRootAt(5);
         assertFalse(result.isPresent());
     }
 
     @Test
-    void testFinalizeWithDescendantIfCandidateFound() throws Exception {
+    void testFinalizeNodeCandidateFound() throws Exception {
         Hash256 hashNode = new Hash256(generateHash(1));
         ForkTree.ForkTreeNode<Integer> node = new ForkTree.ForkTreeNode<>(hashNode, BigInteger.TEN, DATA);
 
@@ -481,7 +488,7 @@ class ForkTreeTest {
         tree.getRoots().add(node);
 
         Optional<Integer> optResult =
-                tree.finalizeWithDescendantIf(hashNode, BigInteger.valueOf(10), TRUE_BIPREDICATE, t -> true);
+                tree.finalizeNode(hashNode, BigInteger.valueOf(10), TRUE_BIPREDICATE, t -> true);
 
         assertTrue(optResult.isPresent());
         Integer result = optResult.get();
@@ -493,20 +500,20 @@ class ForkTreeTest {
     }
 
     @Test
-    void testFinalizeWithDescendantIfCandidateNotFound() throws Exception {
+    void testFinalizeNodeCandidateNotFound() throws Exception {
         Hash256 hashNode = new Hash256(generateHash(1));
         ForkTree.ForkTreeNode<Integer> node = new ForkTree.ForkTreeNode<>(hashNode, BigInteger.TEN, DATA);
         tree.getRoots().add(node);
 
         Optional<Integer> optResult =
-                tree.finalizeWithDescendantIf(hashNode, BigInteger.valueOf(20), TRUE_BIPREDICATE, t -> false);
+                tree.finalizeNode(hashNode, BigInteger.valueOf(20), TRUE_BIPREDICATE, t -> false);
 
         assertTrue(optResult.isEmpty());
         assertEquals(BigInteger.valueOf(20), tree.getBestFinalizedNumber());
     }
 
     @Test
-    void testFinalizeWithDescendantIfThrowsDueToChildConflict() {
+    void testFinalizeNodeThrowsDueToChildConflict() {
         Hash256 hashCandidate = new Hash256(generateHash(1));
         ForkTree.ForkTreeNode<Integer> candidate = new ForkTree.ForkTreeNode<>(hashCandidate, BigInteger.TEN, DATA);
 
@@ -519,17 +526,17 @@ class ForkTreeTest {
         tree.getRoots().add(candidate);
 
         assertThrows(ForkTreeException.class, () ->
-                tree.finalizeWithDescendantIf(hashCandidate, BigInteger.valueOf(20), TRUE_BIPREDICATE, t -> true)
+                tree.finalizeNode(hashCandidate, BigInteger.valueOf(20), TRUE_BIPREDICATE, t -> true)
         );
     }
 
     @Test
-    void testFinalizeWithDescendantIfLowerNumberThrows() {
+    void testFinalizeNodeLowerNumberThrows() {
         tree.setBestFinalizedNumber(BigInteger.valueOf(30));
         Hash256 hashNode = new Hash256(generateHash(1));
 
         assertThrows(ForkTreeException.class, () ->
-                tree.finalizeWithDescendantIf(hashNode, BigInteger.valueOf(20), TRUE_BIPREDICATE, t -> true)
+                tree.finalizeNode(hashNode, BigInteger.valueOf(20), TRUE_BIPREDICATE, t -> true)
         );
     }
 
@@ -559,6 +566,71 @@ class ForkTreeTest {
         assertEquals(1, tree.getRoots().get(1).getMaxDepth());
 
     }
+    
+    private ForkTree.ForkTreeNode<Integer> callFindParentForInsertion(Hash256 hashNew, 
+                                                                      BigInteger number, 
+                                                                      BiPredicate<Hash256, Hash256> isDescendantOf)
+            throws Exception {
+        
+        Method findParentForInsertionMethod = ForkTree.class.getDeclaredMethod(
+                "findParentForInsertion", Hash256.class, BigInteger.class, BiPredicate.class);
+
+        findParentForInsertionMethod.setAccessible(true);
+
+        return (ForkTree.ForkTreeNode<Integer>)
+                findParentForInsertionMethod.invoke(tree, hashNew, number, isDescendantOf);
+    }
+
+    private ForkTree.ForkTreeNode<Integer> callFindDeepestAncestor(ForkTree.ForkTreeNode<Integer> node,
+                                                                   Hash256 hash,
+                                                                   BigInteger number,
+                                                                   BiPredicate<Hash256, Hash256> isDescendantOf)
+            throws Exception {
+
+        Method findDeepestAncestorMethod = ForkTree.class.getDeclaredMethod(
+                "findDeepestAncestor",
+                ForkTree.ForkTreeNode.class, Hash256.class, BigInteger.class, BiPredicate.class
+        );
+
+        findDeepestAncestorMethod.setAccessible(true);
+
+        return (ForkTree.ForkTreeNode<Integer>)
+                findDeepestAncestorMethod.invoke(tree, node, hash, number, isDescendantOf);
+    }
+
+    private Optional<Integer> callFinalizeRoot(Hash256 hash256) throws Exception{
+        Method finalizeRootMethod = ForkTree.class.getDeclaredMethod(
+                "finalizeRoot", Hash256.class);
+
+        finalizeRootMethod.setAccessible(true);
+        return (Optional<Integer>) finalizeRootMethod.invoke(tree, hash256);
+    }
+
+    private Optional<Integer> callFinalizeRootAt(int index) throws Exception {
+        Method finalizeRootAtMethod = ForkTree.class.getDeclaredMethod(
+                "finalizeRootAt", int.class);
+
+        finalizeRootAtMethod.setAccessible(true);
+        return (Optional<Integer>) finalizeRootAtMethod.invoke(tree, index);
+    }
+
+    private Iterator<Integer> callIterator() throws Exception {
+        Method iteratorMethod = ForkTree.class.getDeclaredMethod(
+                "iterator");
+
+        iteratorMethod.setAccessible(true);
+        return (Iterator<Integer>) iteratorMethod.invoke(tree);
+    }
+
+    private void callRebalance() throws Exception {
+        Method rebalanceMethod = ForkTree.class.getDeclaredMethod(
+                "rebalance");
+
+        rebalanceMethod.setAccessible(true);
+        rebalanceMethod.invoke(tree);
+    }
+    
+    
 
     private byte[] generateHash(int seed) {
         byte[] arr = new byte[32];
