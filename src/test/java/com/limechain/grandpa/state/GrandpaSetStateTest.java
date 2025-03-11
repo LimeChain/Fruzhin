@@ -1,6 +1,7 @@
 package com.limechain.grandpa.state;
 
-import com.limechain.chain.lightsyncstate.Authority;
+import com.limechain.consensus.dto.Authority;
+import com.limechain.consensus.grandpa.GrandpaSetState;
 import com.limechain.storage.KVRepository;
 import com.limechain.storage.block.state.BlockState;
 import com.limechain.storage.crypto.KeyStore;

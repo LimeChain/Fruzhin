@@ -1,10 +1,10 @@
 package com.limechain.storage.block;
 
-import com.limechain.babe.BlockProductionVerifier;
-import com.limechain.babe.state.EpochState;
+import com.limechain.consensus.babe.BlockProductionVerifier;
+import com.limechain.consensus.babe.EpochState;
 import com.limechain.config.HostConfig;
 import com.limechain.exception.storage.BlockStorageGenericException;
-import com.limechain.grandpa.state.GrandpaSetState;
+import com.limechain.consensus.grandpa.GrandpaSetState;
 import com.limechain.network.PeerMessageCoordinator;
 import com.limechain.network.PeerRequester;
 import com.limechain.network.protocol.blockannounce.NodeRole;

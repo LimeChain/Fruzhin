@@ -4,14 +4,14 @@ import com.limechain.exception.grandpa.GrandpaGenericException;
 import com.limechain.exception.storage.HeaderNotFoundException;
 import com.limechain.exception.storage.LowerThanRootException;
 import com.limechain.exception.sync.JustificationVerificationException;
-import com.limechain.grandpa.GrandpaService;
-import com.limechain.grandpa.round.GrandpaRound;
-import com.limechain.grandpa.state.AuthoritySet;
-import com.limechain.grandpa.state.GrandpaSetState;
-import com.limechain.grandpa.state.RoundState;
-import com.limechain.grandpa.vote.SignedVote;
-import com.limechain.grandpa.vote.SubRound;
-import com.limechain.grandpa.vote.Vote;
+import com.limechain.consensus.grandpa.GrandpaService;
+import com.limechain.consensus.grandpa.round.GrandpaRound;
+import com.limechain.consensus.grandpa.dto.GrandpaAuthoritySet;
+import com.limechain.consensus.grandpa.GrandpaSetState;
+import com.limechain.consensus.grandpa.dto.RoundState;
+import com.limechain.consensus.grandpa.dto.SignedVote;
+import com.limechain.consensus.grandpa.dto.SubRound;
+import com.limechain.consensus.grandpa.dto.Vote;
 import com.limechain.network.PeerMessageCoordinator;
 import com.limechain.network.protocol.grandpa.messages.catchup.req.CatchUpReqMessage;
 import com.limechain.network.protocol.grandpa.messages.catchup.res.CatchUpResMessage;
@@ -19,7 +19,7 @@ import com.limechain.network.protocol.grandpa.messages.commit.CommitMessage;
 import com.limechain.network.protocol.grandpa.messages.neighbour.NeighbourMessage;
 import com.limechain.network.protocol.grandpa.messages.vote.FullVote;
 import com.limechain.network.protocol.grandpa.messages.vote.FullVoteScaleWriter;
-import com.limechain.network.protocol.grandpa.messages.vote.GrandpaEquivocation;
+import com.limechain.consensus.grandpa.dto.runtime.GrandpaEquivocation;
 import com.limechain.network.protocol.grandpa.messages.vote.SignedMessage;
 import com.limechain.network.protocol.grandpa.messages.vote.VoteMessage;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
@@ -367,7 +367,7 @@ public class GrandpaMessageHandler {
                     .finalizedBlock(BlockHeader.fromHash(catchUpResMessage.getBlockHash()))
                     .build();
 
-            Optional<AuthoritySet> authSetOpt = grandpaService.getAuthoritiesForBlock(
+            Optional<GrandpaAuthoritySet> authSetOpt = grandpaService.getAuthoritiesForBlock(
                     roundState.getFinalizedBlock().getBlockNumber());
 
             if (authSetOpt.isEmpty()) {

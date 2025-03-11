@@ -1,15 +1,15 @@
 package com.limechain.rpc.config;
 
 import com.googlecode.jsonrpc4j.spring.AutoJsonRpcServiceImplExporter;
-import com.limechain.babe.state.EpochState;
-import com.limechain.beefy.state.BeefyState;
+import com.limechain.consensus.babe.EpochState;
+import com.limechain.consensus.beefy.BeefyState;
 import com.limechain.chain.ChainService;
 import com.limechain.cli.Cli;
 import com.limechain.cli.CliArguments;
 import com.limechain.config.HostConfig;
 import com.limechain.config.SystemInfo;
 import com.limechain.constants.GenesisBlockHash;
-import com.limechain.grandpa.state.GrandpaSetState;
+import com.limechain.consensus.grandpa.GrandpaSetState;
 import com.limechain.network.NetworkService;
 import com.limechain.network.PeerMessageCoordinator;
 import com.limechain.network.PeerRequester;

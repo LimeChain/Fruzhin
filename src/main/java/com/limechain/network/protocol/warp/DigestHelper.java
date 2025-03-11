@@ -1,13 +1,13 @@
 package com.limechain.network.protocol.warp;
 
-import com.limechain.babe.consensus.BabeConsensusMessage;
-import com.limechain.babe.consensus.scale.BabeConsensusMessageReader;
-import com.limechain.babe.predigest.BabePreDigest;
-import com.limechain.babe.predigest.scale.PreDigestReader;
-import com.limechain.network.protocol.beefy.messages.consensus.BeefyConsensusMessage;
-import com.limechain.network.protocol.beefy.messages.consensus.BeefyConsensusMessageReader;
-import com.limechain.network.protocol.grandpa.messages.consensus.GrandpaConsensusMessage;
-import com.limechain.network.protocol.grandpa.messages.consensus.GrandpaConsensusMessageReader;
+import com.limechain.consensus.babe.dto.message.BabeConsensusMessage;
+import com.limechain.consensus.babe.scale.message.BabeConsensusMessageReader;
+import com.limechain.consensus.babe.dto.predigest.BabePreDigest;
+import com.limechain.consensus.babe.scale.predigest.PreDigestReader;
+import com.limechain.consensus.beefy.dto.message.BeefyConsensusMessage;
+import com.limechain.consensus.beefy.scale.message.BeefyConsensusMessageReader;
+import com.limechain.consensus.grandpa.dto.message.GrandpaConsensusMessage;
+import com.limechain.consensus.grandpa.scale.message.GrandpaConsensusMessageReader;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.network.protocol.warp.dto.ConsensusEngine;
 import com.limechain.network.protocol.warp.dto.DigestType;

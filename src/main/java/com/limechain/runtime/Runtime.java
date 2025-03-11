@@ -1,10 +1,10 @@
 package com.limechain.runtime;
 
-import com.limechain.babe.api.BabeApiConfiguration;
-import com.limechain.babe.api.BlockEquivocationProof;
-import com.limechain.babe.api.OpaqueKeyOwnershipProof;
-import com.limechain.chain.lightsyncstate.Authority;
-import com.limechain.network.protocol.grandpa.messages.vote.GrandpaEquivocation;
+import com.limechain.consensus.babe.dto.runtime.BabeApiConfiguration;
+import com.limechain.consensus.babe.dto.runtime.BlockEquivocationProof;
+import com.limechain.consensus.dto.runtime.OpaqueKeyOwnershipProof;
+import com.limechain.consensus.dto.Authority;
+import com.limechain.consensus.grandpa.dto.runtime.GrandpaEquivocation;
 import com.limechain.network.protocol.warp.dto.Block;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.rpc.methods.author.dto.DecodedKey;
@@ -46,7 +46,7 @@ public interface Runtime {
 
     ApplyExtrinsicResult applyExtrinsic(Extrinsic extrinsic);
 
-    ExtrinsicArray inherentExtrinsics(com.limechain.babe.dto.InherentData inherentData);
+    ExtrinsicArray inherentExtrinsics(com.limechain.consensus.babe.dto.InherentData inherentData);
 
     byte[] generateSessionKeys(byte[] scaleSeed);
 

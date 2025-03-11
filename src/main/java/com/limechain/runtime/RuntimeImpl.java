@@ -1,17 +1,17 @@
 package com.limechain.runtime;
 
-import com.limechain.babe.api.BabeApiConfiguration;
-import com.limechain.babe.api.BlockEquivocationProof;
-import com.limechain.babe.api.OpaqueKeyOwnershipProof;
-import com.limechain.babe.api.scale.BabeApiConfigurationReader;
-import com.limechain.babe.api.scale.BlockEquivocationProofWriter;
-import com.limechain.babe.api.scale.OpaqueKeyOwnershipProofReader;
-import com.limechain.chain.lightsyncstate.Authority;
+import com.limechain.consensus.babe.dto.runtime.BabeApiConfiguration;
+import com.limechain.consensus.babe.dto.runtime.BlockEquivocationProof;
+import com.limechain.consensus.dto.runtime.OpaqueKeyOwnershipProof;
+import com.limechain.consensus.babe.scale.runtime.BabeApiConfigurationReader;
+import com.limechain.consensus.babe.scale.runtime.BlockEquivocationProofWriter;
+import com.limechain.consensus.scale.runtime.OpaqueKeyOwnershipProofReader;
+import com.limechain.consensus.dto.Authority;
 import com.limechain.chain.lightsyncstate.scale.AuthorityReader;
 import com.limechain.exception.scale.ScaleEncodingException;
-import com.limechain.network.protocol.grandpa.messages.vote.GrandpaEquivocation;
+import com.limechain.consensus.grandpa.dto.runtime.GrandpaEquivocation;
 import com.limechain.network.protocol.blockannounce.scale.BlockHeaderScaleWriter;
-import com.limechain.network.protocol.grandpa.messages.vote.GrandpaEquivocationScaleWriter;
+import com.limechain.consensus.grandpa.scale.runtime.GrandpaEquivocationScaleWriter;
 import com.limechain.network.protocol.transaction.scale.TransactionReader;
 import com.limechain.network.protocol.warp.dto.Block;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
@@ -164,7 +164,7 @@ public class RuntimeImpl implements Runtime {
     }
 
     @Override
-    public ExtrinsicArray inherentExtrinsics(com.limechain.babe.dto.InherentData inherentData) {
+    public ExtrinsicArray inherentExtrinsics(com.limechain.consensus.babe.dto.InherentData inherentData) {
         byte[] encodedRequest = ScaleUtils.Encode.encode(BlockInherentsWriter.getInstance(), inherentData);
         byte[] encodedResponse = call(RuntimeEndpoint.BLOCKBUILDER_INHERENT_EXTRINISICS, encodedRequest);
 

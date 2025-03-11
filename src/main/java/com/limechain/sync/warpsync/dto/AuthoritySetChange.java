@@ -1,6 +1,6 @@
 package com.limechain.sync.warpsync.dto;
 
-import com.limechain.chain.lightsyncstate.Authority;
+import com.limechain.consensus.dto.Authority;
 import lombok.Getter;
 import lombok.Setter;
 

@@ -2,7 +2,7 @@ package com.limechain.network.protocol.grandpa;
 
 import com.limechain.config.HostConfig;
 import com.limechain.exception.scale.ScaleEncodingException;
-import com.limechain.grandpa.GrandpaService;
+import com.limechain.consensus.grandpa.GrandpaService;
 import com.limechain.network.ConnectionManager;
 import com.limechain.network.protocol.base.BaseEngine;
 import com.limechain.network.protocol.blockannounce.NodeRole;

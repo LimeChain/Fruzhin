@@ -1,10 +1,10 @@
 package com.limechain.network.protocol.warp;
 
-import com.limechain.babe.consensus.BabeConsensusMessage;
-import com.limechain.babe.consensus.BabeConsensusMessageFormat;
-import com.limechain.babe.predigest.PreDigestType;
-import com.limechain.network.protocol.grandpa.messages.consensus.GrandpaConsensusMessage;
-import com.limechain.network.protocol.grandpa.messages.consensus.GrandpaConsensusMessageFormat;
+import com.limechain.consensus.babe.dto.message.BabeConsensusMessage;
+import com.limechain.consensus.babe.dto.message.BabeConsensusMessageFormat;
+import com.limechain.consensus.babe.dto.predigest.PreDigestType;
+import com.limechain.consensus.grandpa.dto.message.GrandpaConsensusMessage;
+import com.limechain.consensus.grandpa.dto.message.GrandpaConsensusMessageFormat;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.network.protocol.warp.dto.ConsensusEngine;
 import com.limechain.network.protocol.warp.dto.DigestType;

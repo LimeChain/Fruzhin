@@ -1,6 +1,6 @@
 package com.limechain.chain.lightsyncstate.scale;
 
-import com.limechain.chain.lightsyncstate.Authority;
+import com.limechain.consensus.dto.Authority;
 import com.limechain.chain.lightsyncstate.AuthoritySet;
 import com.limechain.chain.lightsyncstate.ForkTree;
 import com.limechain.chain.lightsyncstate.PendingChange;

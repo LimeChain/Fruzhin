@@ -1,7 +1,7 @@
 package com.limechain.storage.block.tree;
 
-import com.limechain.babe.predigest.BabePreDigest;
-import com.limechain.babe.predigest.PreDigestType;
+import com.limechain.consensus.babe.dto.predigest.BabePreDigest;
+import com.limechain.consensus.babe.dto.predigest.PreDigestType;
 import com.limechain.exception.storage.BlockAlreadyExistsException;
 import com.limechain.exception.storage.BlockNodeNotFoundException;
 import com.limechain.exception.storage.BlockStorageGenericException;

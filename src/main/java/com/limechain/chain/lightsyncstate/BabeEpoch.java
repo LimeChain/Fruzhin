@@ -1,5 +1,6 @@
 package com.limechain.chain.lightsyncstate;
 
+import com.limechain.consensus.dto.Authority;
 import lombok.Getter;
 import lombok.Setter;
 import org.javatuples.Pair;

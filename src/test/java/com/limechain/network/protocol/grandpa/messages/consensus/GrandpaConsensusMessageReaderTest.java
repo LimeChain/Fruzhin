@@ -1,5 +1,8 @@
 package com.limechain.network.protocol.grandpa.messages.consensus;
 
+import com.limechain.consensus.grandpa.dto.message.GrandpaConsensusMessage;
+import com.limechain.consensus.grandpa.dto.message.GrandpaConsensusMessageFormat;
+import com.limechain.consensus.grandpa.scale.message.GrandpaConsensusMessageReader;
 import com.limechain.utils.StringUtils;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import org.junit.jupiter.api.Test;

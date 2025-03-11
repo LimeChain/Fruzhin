@@ -1,7 +1,7 @@
 package com.limechain.babe.scale;
 
-import com.limechain.babe.api.BabeApiConfiguration;
-import com.limechain.babe.api.scale.BabeApiConfigurationReader;
+import com.limechain.consensus.babe.dto.runtime.BabeApiConfiguration;
+import com.limechain.consensus.babe.scale.runtime.BabeApiConfigurationReader;
 import com.limechain.chain.lightsyncstate.BabeEpoch;
 import com.limechain.utils.StringUtils;
 import com.limechain.utils.scale.ScaleUtils;
