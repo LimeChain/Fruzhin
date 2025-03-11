@@ -10,8 +10,8 @@ import lombok.Setter;
 import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
-import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
@@ -90,6 +90,30 @@ public class ForkTree<T> {
         return finalizedData;
     }
 
+    public Optional<Boolean> checkIfFinalizationCandidateIsRoot(Hash256 hash,
+                                                     BigInteger number,
+                                                     BiPredicate<Hash256, Hash256> isDescendantOf,
+                                                     Predicate<T> predicate) throws ForkTreeException {
+
+        validateFinalizedNumber(number);
+
+        for (ForkTreeNode<T> node : getNodes()) {
+            if (predicate.test(node.data) && (node.hash.equals(hash) || isDescendantOf.test(node.hash, hash))) {
+                for (ForkTreeNode<T> child : node.children) {
+                    if (child.number.compareTo(number) <= 0
+                            && (child.hash.equals(hash) || isDescendantOf.test(child.hash, hash))) {
+                        throw new ForkTreeException("Cannot import or finalize a node " + number +
+                                "that is ancestor of the current finalized block " + bestFinalizedNumber);
+                    }
+                }
+
+                return Optional.of(roots.stream().anyMatch(r -> r.hash.equals(node.hash)));
+            }
+        }
+
+        return Optional.empty();
+    }
+
     private void validateFinalizedNumber(BigInteger number) throws ForkTreeException {
         if (bestFinalizedNumber.isPresent() && number.compareTo(bestFinalizedNumber.get()) <= 0) {
             throw new ForkTreeException("Cannot import or finalize a node " + number +
@@ -158,33 +182,6 @@ public class ForkTree<T> {
     }
 
     /**
-     * Returns an iterator that traverses the tree in breadth-first order.
-     */
-    public Iterator<T> iterator() {
-
-        List<T> result = new ArrayList<>();
-        ArrayDeque<ForkTreeNode<T>> queue = new ArrayDeque<>(roots);
-
-        while (!queue.isEmpty()) {
-            ForkTreeNode<T> current = queue.poll();
-
-            T data = current.data;
-            if (data != null) result.add(data);
-
-            queue.addAll(current.children);
-        }
-
-        return result.iterator();
-    }
-
-    public List<T> getAll() {
-        List<T> nodeData = new ArrayList<>();
-        Iterator<T> iter = iterator();
-        iter.forEachRemaining(nodeData::add);
-        return nodeData;
-    }
-
-    /**
      * The list of root nodes is sorted first and then for each level, child nodes are sorted in descending
      * order by the maximum branch depth.
      * This makes the deepest (longest) chains appear first.
@@ -192,7 +189,7 @@ public class ForkTree<T> {
     public void rebalance() {
         roots.sort(Comparator.comparingInt((ForkTreeNode<T> n) -> n.getMaxDepth()).reversed());
 
-        Deque<ForkTreeNode<T>> stack = new ArrayDeque<>(roots);
+        ArrayDeque<ForkTreeNode<T>> stack = new ArrayDeque<>(roots);
         while (!stack.isEmpty()) {
             ForkTreeNode<T> node = stack.pop();
             node.children.sort(Comparator.comparingInt((ForkTreeNode<T> n) -> n.getMaxDepth()).reversed());
@@ -256,7 +253,7 @@ public class ForkTree<T> {
                                                BiPredicate<Hash256, Hash256> isDescendantOf) {
 
         ForkTreeNode<T> candidate = root;
-        Deque<ForkTreeNode<T>> stack = new ArrayDeque<>();
+        ArrayDeque<ForkTreeNode<T>> stack = new ArrayDeque<>();
         stack.push(root);
 
         while (!stack.isEmpty()) {
@@ -303,6 +300,53 @@ public class ForkTree<T> {
         roots = new ArrayList<>(node.children);
         bestFinalizedNumber = Optional.of(node.number);
         return Optional.of(node.data);
+    }
+
+    /**
+     * Returns an iterator that traverses the tree in breadth-first order.
+     */
+    public Iterator<T> iterator() {
+
+        List<T> result = new ArrayList<>();
+        ArrayDeque<ForkTreeNode<T>> queue = new ArrayDeque<>(roots);
+
+        while (!queue.isEmpty()) {
+            ForkTreeNode<T> current = queue.poll();
+
+            T data = current.data;
+            if (data != null) result.add(data);
+
+            queue.addAll(current.children);
+        }
+
+        return result.iterator();
+    }
+
+    public List<T> getAll() {
+        List<T> nodeData = new ArrayList<>();
+        Iterator<T> iter = iterator();
+        iter.forEachRemaining(nodeData::add);
+        return nodeData;
+    }
+
+    private List<ForkTreeNode<T>> getNodes() {
+        List<ForkTreeNode<T>> nodes = new ArrayList<>();
+        ArrayDeque<ForkTreeNode<T>> stack = new ArrayDeque<>();
+
+        List<ForkTreeNode<T>> rootsCopy = new ArrayList<>(roots);
+        Collections.reverse(rootsCopy);
+        stack.addAll(rootsCopy);
+
+        while (!stack.isEmpty()) {
+            ForkTreeNode<T> current = stack.pop();
+            nodes.add(current);
+
+            List<ForkTreeNode<T>> childrenCopy = new ArrayList<>(current.children);
+            Collections.reverse(childrenCopy);
+            stack.addAll(childrenCopy);
+        }
+
+        return nodes;
     }
 
     @Getter
