@@ -23,6 +23,7 @@ import java.util.function.Predicate;
  * The ForkTree class represents a data structure used to manage and track multiple branches.
  * The <code>isDescendentOf</code> predicate is a important parameter used in most methods to verify the ancestry
  * of nodes.
+ *
  * @param <T> the type of the data, that will be stored in the nodes
  */
 @Getter
@@ -35,7 +36,7 @@ public class ForkTree<T> {
     private BigInteger bestFinalizedNumber;
 
     /**
-     * Import a new node into the tree and returns if the node becomes root or not
+     * Import a new node into the tree and returns boolean if the node becomes root or not
      */
     public boolean importNode(Hash256 hash,
                               BigInteger number,
@@ -76,22 +77,7 @@ public class ForkTree<T> {
     }
 
     /**
-     * Attempts to finalize a node in the fork tree.
-     * <p>
-     * This method performs the following steps:
-     * <ol>
-     *   <li>Validates that the provided block number exceeds the current best finalized number.</li>
-     *   <li>Searches for a candidate node that qualifies for finalization based on:
-     *       <ul>
-     *         <li>The provided block hash and block number,</li>
-     *         <li>An ancestry check using the <code>isDescendantOf</code> function, and</li>
-     *         <li>A predicate on the node's data.</li>
-     *       </ul>
-     *   </li>
-     *   <li>If a candidate is found, finalizes it by removing the candidate from the tree and extracting its data.</li>
-     *   <li>Prunes the roots list to ensure only nodes consistent with the finalized block remain.</li>
-     * </ol>
-     * <p>
+     * Attempts to finalize a node.
      * If no candidate is found, the method returns <code>Optional.empty()</code>.
      */
     public Optional<T> finalizeNode(Hash256 hash,
@@ -109,18 +95,13 @@ public class ForkTree<T> {
 
     /**
      * Checks whether a candidate node for finalization is a root.
-     * <p>
-     * The method searches all nodes for one whose data satisfies the given predicate and whose hash is
-     * either equal to or an ancestor of the provided hash. It then ensures no child of that candidate,
-     * with a block number less than or equal to the provided number, would conflict with finalization.
-     * <p>
      * Returns Optional.of(true) if the candidate is a root, Optional.of(false) if it is not,
      * or Optional.empty() if no candidate qualifies.
      */
     public Optional<Boolean> checkIfFinalizationCandidateIsRoot(Hash256 hash,
-                                                     BigInteger number,
-                                                     BiPredicate<Hash256, Hash256> isDescendantOf,
-                                                     Predicate<T> predicate) throws ForkTreeException {
+                                                                BigInteger number,
+                                                                BiPredicate<Hash256, Hash256> isDescendantOf,
+                                                                Predicate<T> predicate) throws ForkTreeException {
 
         validateNumberExceedsFinalizedNumber(number);
 
@@ -142,7 +123,9 @@ public class ForkTree<T> {
         return nodeData;
     }
 
-
+    /**
+     * Validates that the provided block number exceeds the current best finalized number.
+     */
     private void validateNumberExceedsFinalizedNumber(BigInteger nodeNumber) throws ForkTreeException {
         if (Objects.nonNull(bestFinalizedNumber) && nodeNumber.compareTo(bestFinalizedNumber) <= 0) {
             throw new ForkTreeException("Cannot import or finalize a node " + nodeNumber +
@@ -150,6 +133,9 @@ public class ForkTree<T> {
         }
     }
 
+    /**
+     * Searches for a candidate node that qualifies for finalization.
+     */
     private Integer findCandidateIndex(Hash256 hash,
                                        BigInteger number,
                                        BiPredicate<Hash256, Hash256> isDescendantOf,
@@ -167,6 +153,9 @@ public class ForkTree<T> {
         return null;
     }
 
+    /**
+     * Validates that no child of a node would conflict with finalization.
+     */
     private void checkChildrenForConflictingDescendant(ForkTreeNode<T> node,
                                                        Hash256 hash,
                                                        BigInteger number,
@@ -174,6 +163,7 @@ public class ForkTree<T> {
             throws ForkTreeException {
 
         for (ForkTreeNode<T> child : node.children) {
+
             if (child.number.compareTo(number) <= 0 &&
                     (child.hash.equals(hash) || isDescendantOf.test(child.hash, hash))) {
 
@@ -184,6 +174,10 @@ public class ForkTree<T> {
         }
     }
 
+    /**
+     *  Finalizes by removing the candidate from the tree, change the roots to its children,
+     *  update the best finalized number and extracting its data.
+     */
     private Optional<T> finalizeCandidateIfPresent(Integer candidateIndex) {
 
         if (candidateIndex != null) {
@@ -271,8 +265,8 @@ public class ForkTree<T> {
      * node in the fork tree.
      */
     private ForkTreeNode<T> findParentForInsertion(Hash256 newHash,
-                                                  BigInteger newNumber,
-                                                  BiPredicate<Hash256, Hash256> isDescendentOf) {
+                                                   BigInteger newNumber,
+                                                   BiPredicate<Hash256, Hash256> isDescendentOf) {
 
         for (ForkTreeNode<T> root : roots) {
 
@@ -301,9 +295,9 @@ public class ForkTree<T> {
      * finding the matching child.
      */
     private ForkTreeNode<T> findDeepestAncestor(ForkTreeNode<T> root,
-                                               Hash256 newHash,
-                                               BigInteger newNumber,
-                                               BiPredicate<Hash256, Hash256> isDescendantOf) {
+                                                Hash256 newHash,
+                                                BigInteger newNumber,
+                                                BiPredicate<Hash256, Hash256> isDescendantOf) {
 
         ForkTreeNode<T> candidate = root;
         ArrayDeque<ForkTreeNode<T>> stack = new ArrayDeque<>();
@@ -375,8 +369,9 @@ public class ForkTree<T> {
 
         return result.iterator();
     }
+
     /**
-     * @return a list of all nodes including roots and their children
+     * Returns a list of all nodes including roots and their children
      */
     private List<ForkTreeNode<T>> getNodes() {
 
