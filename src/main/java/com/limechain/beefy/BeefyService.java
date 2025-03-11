@@ -89,7 +89,7 @@ public class BeefyService {
             found = retrieveMandatoryBlockAndCreateBeefySession(blockNumber, beefyState.getNextDigest());
         }
 
-        Map.Entry<BigInteger, BeefySession> currentSession = determineCurrentSession(blockNumber, found);
+        Map.Entry<BigInteger, BeefySession> currentSession = determineCurrentSessionOnJustification(blockNumber, found);
         if (Objects.isNull(currentSession)) {
             return;
         }
@@ -115,8 +115,8 @@ public class BeefyService {
         //TODO: Update state
     }
 
-    private Map.Entry<BigInteger, BeefySession> determineCurrentSession(BigInteger blockNumber,
-                                                                        Map<BigInteger, BeefySession> found) {
+    private Map.Entry<BigInteger, BeefySession> determineCurrentSessionOnJustification(BigInteger blockNumber,
+                                                                                       Map<BigInteger, BeefySession> found) {
 
         LinkedHashMap<BigInteger, BeefySession> beefySessions = beefyState.getSessions();
         // Initialize the current session with the last possible session that we have
