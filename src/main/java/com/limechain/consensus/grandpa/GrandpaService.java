@@ -137,7 +137,7 @@ public class GrandpaService {
         }
 
         GrandpaAuthoritySet authSetAtBlock = authSetOpt.get();
-        BigInteger newRoundNumber = round.getSetId().equals(authSetAtBlock.getSetId())
+        BigInteger newRoundNumber = round.getAuthoritySet().getSetId().equals(authSetAtBlock.getSetId())
                 ? round.getRoundNumber().add(BigInteger.ONE)
                 : BigInteger.ONE;
 
