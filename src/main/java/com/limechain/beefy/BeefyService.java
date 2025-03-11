@@ -89,15 +89,44 @@ public class BeefyService {
             found = retrieveMandatoryBlockAndCreateBeefySession(blockNumber, beefyState.getNextDigest());
         }
 
+        Map.Entry<BigInteger, BeefySession> currentSession = determineCurrentSession(blockNumber, found);
+        if (Objects.isNull(currentSession)) {
+            return;
+        }
+
+        BigInteger mandatoryBlock = found.isEmpty() ?
+                currentSession.getKey() : found.keySet().iterator().next();
+
+        BeefySession beefySession = found.isEmpty() ?
+                currentSession.getValue() : found.values().iterator().next();
+
+        //TODO: Validate justification
+
+        //TODO: Store justification in db if successfully verified
+
+        cleanUpSessionsAndRoundsOnJustification(currentSession, blockNumber);
+
+        LinkedHashMap<BigInteger, BeefySession> beefySessions = beefyState.getSessions();
+        if (!found.isEmpty()) {
+            // Store the newly found block and corresponding session, where authority change appeared
+            beefySessions.put(mandatoryBlock, beefySession);
+        }
+
+        //TODO: Update state
+    }
+
+    private Map.Entry<BigInteger, BeefySession> determineCurrentSession(BigInteger blockNumber,
+                                                                        Map<BigInteger, BeefySession> found) {
+
         LinkedHashMap<BigInteger, BeefySession> beefySessions = beefyState.getSessions();
         // Initialize the current session with the last possible session that we have
         Map.Entry<BigInteger, BeefySession> currentSession = beefySessions.lastEntry();
 
         // If no new mandatory block and corresponding session are being found for the current block
         if (found.isEmpty()) {
-            if (blockNumber.compareTo(beefyFinalized) <= 0) {
+            if (blockNumber.compareTo(beefyState.getBeefyFinalized()) <= 0) {
                 log.warning(String.format("Block: %d has already been finalized.", blockNumber));
-                return;
+                return null;
             }
             // The mandatory block of the beefy session, that is greater than the one the block corresponds to
             Optional<BigInteger> nextSessionMandatoryBlockOpt = getNextSessionMandatoryBlock(blockNumber);
@@ -107,7 +136,7 @@ public class BeefyService {
                     || nextSessionMandatoryBlockOpt.get().equals(beefySessions.firstEntry().getKey())) {
 
                 log.warning(String.format("No session found for the specified block: %d", blockNumber));
-                return;
+                return null;
             }
 
             BigInteger nextSessionMandatoryBlock = nextSessionMandatoryBlockOpt.get();
@@ -122,36 +151,11 @@ public class BeefyService {
                         blockNumber,
                         nextSessionMandatoryBlock
                 ));
-                return;
+                return null;
             }
             currentSession = currentSessionOpt.get();
         }
-
-        BigInteger mandatoryBlock = found.isEmpty() ?
-                currentSession.getKey() : found.keySet().iterator().next();
-
-        BeefySession beefySession = found.isEmpty() ?
-                currentSession.getValue() : found.values().iterator().next();
-
-        //TODO: Validate justification
-
-        //TODO: Store justification in db if successfully verified
-
-        BigInteger currentSessionMandatoryBlock = currentSession.getKey();
-        // Remove all sessions before the current one
-        beefySessions.keySet().removeIf(key -> key.compareTo(currentSessionMandatoryBlock) < 0);
-
-        if (!currentSession.equals(beefySessions.lastEntry())) {
-            Map<BigInteger, BeefyRound> currentSessionRounds = currentSession.getValue().getRounds();
-            currentSessionRounds.keySet().removeIf(key -> key.compareTo(blockNumber) < 0);
-        }
-
-        if (!found.isEmpty()) {
-            // Store the newly found block and corresponding session, where authority change appeared
-            beefySessions.put(mandatoryBlock, beefySession);
-        }
-
-        //TODO: Update state
+        return currentSession;
     }
 
     private Optional<BigInteger> getNextSessionMandatoryBlock(BigInteger blockNumber) {
@@ -169,6 +173,19 @@ public class BeefyService {
             previousEntry = entry;
         }
         return Optional.empty();
+    }
+
+    private void cleanUpSessionsAndRoundsOnJustification(Map.Entry<BigInteger, BeefySession> currentSession,
+                                                         BigInteger blockNumber) {
+        LinkedHashMap<BigInteger, BeefySession> beefySessions = beefyState.getSessions();
+        BigInteger currentSessionMandatoryBlock = currentSession.getKey();
+        // Remove all sessions before the current one
+        beefySessions.keySet().removeIf(key -> key.compareTo(currentSessionMandatoryBlock) < 0);
+
+        if (!currentSession.equals(beefySessions.lastEntry())) {
+            Map<BigInteger, BeefyRound> currentSessionRounds = currentSession.getValue().getRounds();
+            currentSessionRounds.keySet().removeIf(key -> key.compareTo(blockNumber) < 0);
+        }
     }
 
     /**
