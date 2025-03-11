@@ -4,13 +4,12 @@ import com.limechain.beefy.dto.ValidatorSet;
 import lombok.Value;
 
 import java.math.BigInteger;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Value
 public class BeefySession {
     ValidatorSet validatorSet;
-    Set<BigInteger> nonMandatoryBlockNumbers = Collections.synchronizedSet(new HashSet<>());
+    // Key is non-mandatory block
+    Map<BigInteger, BeefyRound> rounds = new ConcurrentHashMap();
 }
-
