@@ -14,10 +14,15 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
+/**
+ * The ForkTree class represents a data structure used to manage and track multiple branches.
+ * @param <T> the type of the data, that will be stored in the nodes
+ */
 @Getter
 @Setter
 @AllArgsConstructor
@@ -25,7 +30,7 @@ import java.util.function.Predicate;
 public class ForkTree<T> {
 
     private List<ForkTreeNode<T>> roots = new ArrayList<>();
-    private Optional<BigInteger> bestFinalizedNumber = Optional.empty(); //TODO: check if we can make that BigInteger
+    private BigInteger bestFinalizedNumber;
 
     /**
      * Import a new node into the tree
@@ -102,6 +107,7 @@ public class ForkTree<T> {
                 for (ForkTreeNode<T> child : node.children) {
                     if (child.number.compareTo(number) <= 0
                             && (child.hash.equals(hash) || isDescendantOf.test(child.hash, hash))) {
+                        //TODO: change the error message
                         throw new ForkTreeException("Cannot import or finalize a node " + number +
                                 "that is ancestor of the current finalized block " + bestFinalizedNumber);
                     }
@@ -115,7 +121,7 @@ public class ForkTree<T> {
     }
 
     private void validateFinalizedNumber(BigInteger number) throws ForkTreeException {
-        if (bestFinalizedNumber.isPresent() && number.compareTo(bestFinalizedNumber.get()) <= 0) {
+        if (Objects.nonNull(bestFinalizedNumber) && number.compareTo(bestFinalizedNumber) <= 0) {
             throw new ForkTreeException("Cannot import or finalize a node " + number +
                     "that is ancestor of the current finalized block " + bestFinalizedNumber);
         }
@@ -160,7 +166,7 @@ public class ForkTree<T> {
             ForkTreeNode<T> candidate = roots.remove(candidateIndex.intValue());
             T finalizedData = candidate.data;
             roots = candidate.children;
-            bestFinalizedNumber = Optional.of(candidate.number);
+            bestFinalizedNumber = candidate.number;
             return Optional.of(finalizedData);
         }
 
@@ -178,7 +184,7 @@ public class ForkTree<T> {
             }
         }
         roots = newRoots;
-        bestFinalizedNumber = Optional.of(number);
+        bestFinalizedNumber = number;
     }
 
     /**
@@ -298,7 +304,7 @@ public class ForkTree<T> {
 
         ForkTreeNode<T> node = roots.remove(index);
         roots = new ArrayList<>(node.children);
-        bestFinalizedNumber = Optional.of(node.number);
+        bestFinalizedNumber = node.number;
         return Optional.of(node.data);
     }
 
@@ -330,12 +336,12 @@ public class ForkTree<T> {
     }
 
     private List<ForkTreeNode<T>> getNodes() {
-        List<ForkTreeNode<T>> nodes = new ArrayList<>();
-        ArrayDeque<ForkTreeNode<T>> stack = new ArrayDeque<>();
 
         List<ForkTreeNode<T>> rootsCopy = new ArrayList<>(roots);
         Collections.reverse(rootsCopy);
-        stack.addAll(rootsCopy);
+
+        ArrayDeque<ForkTreeNode<T>> stack = new ArrayDeque<>(rootsCopy);
+        List<ForkTreeNode<T>> nodes = new ArrayList<>();
 
         while (!stack.isEmpty()) {
             ForkTreeNode<T> current = stack.pop();

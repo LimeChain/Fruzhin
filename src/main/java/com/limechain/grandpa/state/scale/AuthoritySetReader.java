@@ -40,8 +40,11 @@ public class AuthoritySetReader implements ScaleReader<AuthoritySet> {
         forkTree.setRoots(reader.read(new ListReader<>(
                 new ForkTreeNodeReader<>(PendingChangeReader.getInstance()))
         ));
+
         Optional<Long> bestFinalizedNumber = reader.readOptional(new UInt32Reader());
-        forkTree.setBestFinalizedNumber(bestFinalizedNumber.map(BigInteger::valueOf));
+        forkTree.setBestFinalizedNumber(
+                bestFinalizedNumber.map(BigInteger::valueOf).orElse(null)
+        );
 
         authoritySet.setPendingForcedChanges(reader.read(
                 new ListReader<>(PendingChangeReader.getInstance()))

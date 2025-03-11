@@ -61,7 +61,7 @@ class ForkTreeTest {
 
     @Test
     void testImportNodeWithBlockNumberSmallerThanBestFinalizedBlockShouldThrowRevertException() {
-        tree.setBestFinalizedNumber(Optional.of(BigInteger.TEN));
+        tree.setBestFinalizedNumber(BigInteger.TEN);
 
         Hash256 hashA = new Hash256(generateHash(1));
 
@@ -423,7 +423,7 @@ class ForkTreeTest {
         assertTrue(finalizedData.isPresent());
         assertEquals(DATA, finalizedData.get());
 
-        assertEquals(BigInteger.valueOf(10), tree.getBestFinalizedNumber().get());
+        assertEquals(BigInteger.valueOf(10), tree.getBestFinalizedNumber());
 
         assertEquals(1, tree.getRoots().size());
         assertEquals(hashB, tree.getRoots().get(0).getHash());
@@ -454,7 +454,7 @@ class ForkTreeTest {
         assertTrue(finalizedData.isPresent());
         assertEquals(DATA, finalizedData.get());
 
-        assertEquals(BigInteger.valueOf(40), tree.getBestFinalizedNumber().get());
+        assertEquals(BigInteger.valueOf(40), tree.getBestFinalizedNumber());
 
         assertEquals(1, tree.getRoots().size());
         assertEquals(hashB, tree.getRoots().get(0).getHash());
@@ -489,7 +489,7 @@ class ForkTreeTest {
         assertEquals(DATA, result);
         assertEquals(1, tree.getRoots().size());
         assertEquals(childNodeHash, tree.getRoots().get(0).getHash());
-        assertEquals(BigInteger.valueOf(10), tree.getBestFinalizedNumber().get());
+        assertEquals(BigInteger.valueOf(10), tree.getBestFinalizedNumber());
     }
 
     @Test
@@ -502,7 +502,7 @@ class ForkTreeTest {
                 tree.finalizeWithDescendantIf(hashNode, BigInteger.valueOf(20), TRUE_BIPREDICATE, t -> false);
 
         assertTrue(optResult.isEmpty());
-        assertEquals(BigInteger.valueOf(20), tree.getBestFinalizedNumber().get());
+        assertEquals(BigInteger.valueOf(20), tree.getBestFinalizedNumber());
     }
 
     @Test
@@ -525,7 +525,7 @@ class ForkTreeTest {
 
     @Test
     void testFinalizeWithDescendantIfLowerNumberThrows() {
-        tree.setBestFinalizedNumber(Optional.of(BigInteger.valueOf(30)));
+        tree.setBestFinalizedNumber(BigInteger.valueOf(30));
         Hash256 hashNode = new Hash256(generateHash(1));
 
         assertThrows(ForkTreeException.class, () ->

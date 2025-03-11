@@ -35,8 +35,12 @@ public class EpochChangesReader implements ScaleReader<EpochChanges> {
         ForkTree<PersistedEpochHeader> forkTree = new ForkTree<>();
         forkTree.setRoots(reader.read(new ListReader<>(
                         new ForkTreeNodeReader<>(PersistedEpochHeaderReader.getInstance()))));
+
         Optional<Long> bestFinalizedNumber = reader.readOptional(new UInt32Reader());
-        forkTree.setBestFinalizedNumber(bestFinalizedNumber.map(BigInteger::valueOf));
+        forkTree.setBestFinalizedNumber(
+                bestFinalizedNumber.map(BigInteger::valueOf)
+                        .orElse(null)
+        );
 
         Map<Pair<Hash256, BigInteger>, PersistedEpoch> epochs = new TreeMap<>();
         int epochsCount = reader.readCompactInt();
