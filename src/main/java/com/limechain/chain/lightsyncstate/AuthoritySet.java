@@ -1,6 +1,6 @@
 package com.limechain.chain.lightsyncstate;
 
-import com.limechain.consensus.dto.Authority;
+import com.limechain.consensus.grandpa.dto.GrandpaAuthoritySet;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.Getter;
 import lombok.Setter;
@@ -11,8 +11,8 @@ import java.math.BigInteger;
 @Getter
 @Setter
 public class AuthoritySet {
-    private Authority[] currentAuthorities;
-    private BigInteger setId;
+
+    private GrandpaAuthoritySet authoritySet;
     private ForkTree<PendingChange> pendingStandardChanges;
     private PendingChange[] pendingForcedChanges;
     private Pair<BigInteger, Hash256>[] authoritySetChanges;

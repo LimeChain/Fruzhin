@@ -1,9 +1,9 @@
 package com.limechain.babe.scale;
 
+import com.limechain.chain.lightsyncstate.BabeEpoch;
 import com.limechain.consensus.babe.dto.message.BabeConsensusMessage;
 import com.limechain.consensus.babe.dto.message.BabeConsensusMessageFormat;
 import com.limechain.consensus.babe.scale.message.BabeConsensusMessageReader;
-import com.limechain.chain.lightsyncstate.BabeEpoch;
 import com.limechain.utils.StringUtils;
 import com.limechain.utils.scale.ScaleUtils;
 import org.junit.jupiter.api.Test;

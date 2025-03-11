@@ -1,7 +1,7 @@
 package com.limechain.consensus.babe.coordinator;
 
-import com.limechain.consensus.babe.dto.Slot;
 import com.limechain.consensus.babe.EpochState;
+import com.limechain.consensus.babe.dto.Slot;
 import lombok.extern.java.Log;
 import org.springframework.stereotype.Component;
 

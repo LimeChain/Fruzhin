@@ -1,11 +1,11 @@
 package com.limechain.consensus.babe;
 
-import com.limechain.consensus.babe.dto.predigest.BabePreDigest;
-import com.limechain.consensus.babe.dto.predigest.PreDigestType;
+import com.limechain.chain.lightsyncstate.BabeEpoch;
 import com.limechain.consensus.babe.dto.message.EpochData;
 import com.limechain.consensus.babe.dto.message.EpochDescriptor;
+import com.limechain.consensus.babe.dto.predigest.BabePreDigest;
+import com.limechain.consensus.babe.dto.predigest.PreDigestType;
 import com.limechain.consensus.dto.Authority;
-import com.limechain.chain.lightsyncstate.BabeEpoch;
 import com.limechain.storage.crypto.KeyStore;
 import com.limechain.storage.crypto.KeyType;
 import com.limechain.utils.ByteArrayUtils;

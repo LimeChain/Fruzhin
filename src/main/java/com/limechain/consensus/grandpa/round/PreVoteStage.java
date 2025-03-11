@@ -1,8 +1,8 @@
 package com.limechain.consensus.grandpa.round;
 
-import com.limechain.exception.grandpa.GrandpaGenericException;
 import com.limechain.consensus.grandpa.dto.SubRound;
 import com.limechain.consensus.grandpa.dto.Vote;
+import com.limechain.exception.grandpa.GrandpaGenericException;
 import lombok.extern.java.Log;
 
 import java.util.concurrent.Executors;

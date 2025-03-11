@@ -1,16 +1,17 @@
 package com.limechain.consensus.grandpa.round;
 
 import com.limechain.consensus.dto.Authority;
-import com.limechain.exception.grandpa.EstimateExecutionException;
-import com.limechain.exception.grandpa.GhostExecutionException;
-import com.limechain.exception.grandpa.GrandpaGenericException;
-import com.limechain.exception.storage.BlockStorageGenericException;
 import com.limechain.consensus.grandpa.GrandpaService;
 import com.limechain.consensus.grandpa.GrandpaSetState;
+import com.limechain.consensus.grandpa.dto.GrandpaAuthoritySet;
 import com.limechain.consensus.grandpa.dto.RoundState;
 import com.limechain.consensus.grandpa.dto.SignedVote;
 import com.limechain.consensus.grandpa.dto.SubRound;
 import com.limechain.consensus.grandpa.dto.Vote;
+import com.limechain.exception.grandpa.EstimateExecutionException;
+import com.limechain.exception.grandpa.GhostExecutionException;
+import com.limechain.exception.grandpa.GrandpaGenericException;
+import com.limechain.exception.storage.BlockStorageGenericException;
 import com.limechain.network.PeerMessageCoordinator;
 import com.limechain.network.protocol.grandpa.GrandpaMessageHandler;
 import com.limechain.network.protocol.grandpa.messages.commit.CommitMessage;
@@ -59,9 +60,7 @@ public class GrandpaRound {
 
     private static final AsyncExecutor ASYNC_EXECUTOR = AsyncExecutor.withSingleThread();
 
-    // Copy of GrandpaSetState information at round creation
-    private BigInteger setId;
-    private List<Authority> authorities;
+    private GrandpaAuthoritySet authoritySet;
 
     private final BigInteger roundNumber;
     private final boolean isPrimaryVoter;
@@ -148,11 +147,11 @@ public class GrandpaRound {
 
         this.previous = previous;
         this.roundNumber = roundNumber;
-        this.setId = setId;
-        this.authorities = authorities;
         this.threshold = threshold;
         this.isPrimaryVoter = isPrimaryVoter;
         this.lastFinalizedBlock = lastFinalizedBlock;
+
+        this.authoritySet = new GrandpaAuthoritySet(setId, authorities);
     }
 
     public GrandpaRound(RoundState roundState,
@@ -160,8 +159,7 @@ public class GrandpaRound {
                         boolean isPrimaryVoter) {
 
         this.roundNumber = roundState.getRoundNumber();
-        this.setId = roundState.getAuthoritySet().getSetId();
-        this.authorities = roundState.getAuthoritySet().getAuthorities();
+        this.authoritySet = roundState.getAuthoritySet();
         this.lastFinalizedBlock = roundState.getLastFinalizedBlock();
         this.finalizedBlock = roundState.getFinalizedBlock();
         this.threshold = threshold;
@@ -224,7 +222,8 @@ public class GrandpaRound {
         shouldStartNextRound = shouldStartNextRound && isCompletable;
 
         if (shouldStartNextRound) {
-            log.fine(String.format("update: Starting next round from round #%d in set %d", this.roundNumber, setId));
+            log.fine(String.format("update: Starting next round from round #%d in set %d",
+                    this.roundNumber, this.authoritySet.getSetId()));
 
             ASYNC_EXECUTOR.executeAndForget(() -> Objects.requireNonNull(AppBean.getBean(GrandpaService.class))
                     .tryStartFromPreviousRound(this));
@@ -268,7 +267,7 @@ public class GrandpaRound {
     public void broadcastVoteMessage(Vote vote, SubRound subround) {
         FullVote fullVote = new FullVote();
         fullVote.setRound(roundNumber);
-        fullVote.setSetId(setId);
+        fullVote.setSetId(authoritySet.getSetId());
         fullVote.setVote(vote);
         fullVote.setStage(subround);
 
@@ -310,7 +309,7 @@ public class GrandpaRound {
         SignedVote[] preCommits = getPreCommits().values().toArray(new SignedVote[0]);
 
         CommitMessage commitMessage = new CommitMessage();
-        commitMessage.setSetId(setId);
+        commitMessage.setSetId(authoritySet.getSetId());
         commitMessage.setRoundNumber(roundNumber);
         commitMessage.setVote(Vote.fromBlockHeader(getBestFinalCandidate()));
         commitMessage.setPreCommits(preCommits);
@@ -393,7 +392,7 @@ public class GrandpaRound {
         }
 
         if (finalizedBlock != null) {
-            blockState.setFinalizedHash(finalizedBlock, createJustification(), setId);
+            blockState.setFinalizedHash(finalizedBlock, createJustification(), authoritySet.getSetId());
 
             // Persisting round data into the database when a block is finalized
             GrandpaSetState grandpaSetState = stateManager.getGrandpaSetState();
@@ -564,7 +563,7 @@ public class GrandpaRound {
 
         GrandpaSetState grandpaSetState = stateManager.getGrandpaSetState();
 
-        BigInteger totalAuthWeight = grandpaSetState.getAuthoritiesTotalWeight(authorities);
+        BigInteger totalAuthWeight = grandpaSetState.getAuthoritiesTotalWeight(authoritySet.getAuthorities());
         BigInteger totalPcWeight = getVoteWeight(preCommits.values());
 
         // Calculate how many more pre commit equivocations we are allowed to receive.

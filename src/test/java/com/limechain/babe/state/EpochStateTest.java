@@ -1,8 +1,8 @@
 package com.limechain.babe.state;
 
 
-import com.limechain.consensus.babe.dto.runtime.BabeApiConfiguration;
 import com.limechain.consensus.babe.EpochState;
+import com.limechain.consensus.babe.dto.runtime.BabeApiConfiguration;
 import com.limechain.runtime.Runtime;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

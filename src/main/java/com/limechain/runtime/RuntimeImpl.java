@@ -1,17 +1,17 @@
 package com.limechain.runtime;
 
+import com.limechain.chain.lightsyncstate.scale.AuthorityReader;
 import com.limechain.consensus.babe.dto.runtime.BabeApiConfiguration;
 import com.limechain.consensus.babe.dto.runtime.BlockEquivocationProof;
-import com.limechain.consensus.dto.runtime.OpaqueKeyOwnershipProof;
 import com.limechain.consensus.babe.scale.runtime.BabeApiConfigurationReader;
 import com.limechain.consensus.babe.scale.runtime.BlockEquivocationProofWriter;
-import com.limechain.consensus.scale.runtime.OpaqueKeyOwnershipProofReader;
 import com.limechain.consensus.dto.Authority;
-import com.limechain.chain.lightsyncstate.scale.AuthorityReader;
-import com.limechain.exception.scale.ScaleEncodingException;
+import com.limechain.consensus.dto.runtime.OpaqueKeyOwnershipProof;
 import com.limechain.consensus.grandpa.dto.runtime.GrandpaEquivocation;
-import com.limechain.network.protocol.blockannounce.scale.BlockHeaderScaleWriter;
 import com.limechain.consensus.grandpa.scale.runtime.GrandpaEquivocationScaleWriter;
+import com.limechain.consensus.scale.runtime.OpaqueKeyOwnershipProofReader;
+import com.limechain.exception.scale.ScaleEncodingException;
+import com.limechain.network.protocol.blockannounce.scale.BlockHeaderScaleWriter;
 import com.limechain.network.protocol.transaction.scale.TransactionReader;
 import com.limechain.network.protocol.warp.dto.Block;
 import com.limechain.network.protocol.warp.dto.BlockHeader;

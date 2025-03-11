@@ -1,8 +1,8 @@
 package com.limechain.sync.warpsync;
 
 import com.limechain.chain.ChainService;
-import com.limechain.consensus.dto.Authority;
 import com.limechain.chain.lightsyncstate.LightSyncState;
+import com.limechain.consensus.dto.Authority;
 import com.limechain.consensus.grandpa.GrandpaSetState;
 import com.limechain.network.NetworkService;
 import com.limechain.network.protocol.warp.dto.WarpSyncFragment;

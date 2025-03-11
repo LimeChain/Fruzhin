@@ -1,7 +1,7 @@
 package com.limechain.consensus.babe.dto.runtime;
 
-import com.limechain.consensus.dto.Authority;
 import com.limechain.chain.lightsyncstate.BabeEpoch;
+import com.limechain.consensus.dto.Authority;
 import lombok.Data;
 import org.javatuples.Pair;
 

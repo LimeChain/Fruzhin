@@ -1,10 +1,10 @@
 package com.limechain.babe;
 
 import com.limechain.consensus.babe.BlockProductionVerifier;
-import com.limechain.consensus.babe.dto.predigest.BabePreDigest;
-import com.limechain.consensus.babe.dto.predigest.PreDigestType;
 import com.limechain.consensus.babe.dto.message.EpochData;
 import com.limechain.consensus.babe.dto.message.EpochDescriptor;
+import com.limechain.consensus.babe.dto.predigest.BabePreDigest;
+import com.limechain.consensus.babe.dto.predigest.PreDigestType;
 import com.limechain.consensus.dto.Authority;
 import com.limechain.exception.misc.AuthorshipVerificationException;
 import com.limechain.network.protocol.warp.DigestHelper;

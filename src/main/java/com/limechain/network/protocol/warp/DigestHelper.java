@@ -1,8 +1,8 @@
 package com.limechain.network.protocol.warp;
 
 import com.limechain.consensus.babe.dto.message.BabeConsensusMessage;
-import com.limechain.consensus.babe.scale.message.BabeConsensusMessageReader;
 import com.limechain.consensus.babe.dto.predigest.BabePreDigest;
+import com.limechain.consensus.babe.scale.message.BabeConsensusMessageReader;
 import com.limechain.consensus.babe.scale.predigest.PreDigestReader;
 import com.limechain.consensus.beefy.dto.message.BeefyConsensusMessage;
 import com.limechain.consensus.beefy.scale.message.BeefyConsensusMessageReader;

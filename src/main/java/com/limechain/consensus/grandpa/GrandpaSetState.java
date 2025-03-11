@@ -52,8 +52,9 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
     private static final BigInteger SET_CHANGES_MAX = BigInteger.valueOf(3);
 
     private List<Authority> authorities;
-    private BigInteger disabledAuthority;
     private BigInteger setId;
+
+    private BigInteger disabledAuthority;
 
     private final BlockState blockState;
     private final KeyStore keyStore;
@@ -142,8 +143,9 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
     }
 
     public void setLightSyncState(LightSyncState initState) {
-        this.setId = initState.getGrandpaAuthoritySet().getSetId();
-        this.authorities = Arrays.asList(initState.getGrandpaAuthoritySet().getCurrentAuthorities());
+        GrandpaAuthoritySet authoritySet = initState.getGrandpaAuthoritySet().getAuthoritySet();
+        this.setId = authoritySet.getSetId();
+        this.authorities = authoritySet.getAuthorities();
     }
 
     /**

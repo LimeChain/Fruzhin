@@ -1,7 +1,7 @@
 package com.limechain.consensus.grandpa.scale.message;
 
-import com.limechain.consensus.dto.Authority;
 import com.limechain.chain.lightsyncstate.scale.AuthorityReader;
+import com.limechain.consensus.dto.Authority;
 import com.limechain.consensus.grandpa.dto.message.GrandpaConsensusMessage;
 import com.limechain.consensus.grandpa.dto.message.GrandpaConsensusMessageFormat;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
