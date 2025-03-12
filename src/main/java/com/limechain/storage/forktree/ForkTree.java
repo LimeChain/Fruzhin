@@ -396,20 +396,16 @@ public class ForkTree<T> {
     }
 
     @Getter
-    @Setter
-    @NoArgsConstructor
+    @AllArgsConstructor
     public static class ForkTreeNode<T> {
 
-        private Hash256 hash;
-        private BigInteger number;
-        private T data;
-        private List<ForkTreeNode<T>> children;
+        private final Hash256 hash;
+        private final BigInteger number;
+        private final T data;
+        private final List<ForkTreeNode<T>> children;
 
         public ForkTreeNode(Hash256 hash, BigInteger number, T data) {
-            this.hash = hash;
-            this.number = number;
-            this.data = data;
-            this.children = new ArrayList<>();
+            this(hash, number, data, new ArrayList<>());
         }
 
         /**
