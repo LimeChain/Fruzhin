@@ -1,6 +1,5 @@
-package com.limechain.babe;
+package com.limechain.consensus.babe;
 
-import com.limechain.consensus.babe.BlockProductionVerifier;
 import com.limechain.consensus.babe.dto.message.EpochData;
 import com.limechain.consensus.babe.dto.message.EpochDescriptor;
 import com.limechain.consensus.babe.dto.predigest.BabePreDigest;

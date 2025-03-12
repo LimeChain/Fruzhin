@@ -1,9 +1,7 @@
-package com.limechain.babe.scale;
+package com.limechain.consensus.babe.scale.predigest;
 
 import com.limechain.consensus.babe.dto.predigest.BabePreDigest;
 import com.limechain.consensus.babe.dto.predigest.PreDigestType;
-import com.limechain.consensus.babe.scale.predigest.PreDigestReader;
-import com.limechain.consensus.babe.scale.predigest.PreDigestWriter;
 import com.limechain.utils.StringUtils;
 import com.limechain.utils.scale.ScaleUtils;
 import org.junit.jupiter.api.Test;

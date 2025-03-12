@@ -1,6 +1,5 @@
-package com.limechain.babe;
+package com.limechain.consensus.babe;
 
-import com.limechain.consensus.babe.Authorship;
 import com.limechain.consensus.dto.Authority;
 import org.javatuples.Pair;
 import org.junit.jupiter.api.Test;
