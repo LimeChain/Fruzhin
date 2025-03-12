@@ -5,6 +5,7 @@ import com.limechain.chain.lightsyncstate.AuthoritySet;
 import com.limechain.chain.lightsyncstate.PendingChange;
 import com.limechain.storage.forktree.ForkTree;
 import com.limechain.storage.forktree.scale.ForkTreeNodeReader;
+import com.limechain.consensus.grandpa.dto.GrandpaAuthoritySet;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleReader;
 import io.emeraldpay.polkaj.scale.reader.ListReader;
@@ -15,6 +16,7 @@ import lombok.NoArgsConstructor;
 import org.javatuples.Pair;
 
 import java.math.BigInteger;
+import java.util.List;
 import java.util.Optional;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -30,11 +32,10 @@ public class AuthoritySetReader implements ScaleReader<AuthoritySet> {
     public AuthoritySet read(ScaleCodecReader reader) {
         AuthoritySet authoritySet = new AuthoritySet();
 
-        authoritySet.setCurrentAuthorities(
-                reader.read(new ListReader<>(AuthorityReader.getInstance())).toArray(Authority[]::new)
-        );
+        List<Authority> authorities = reader.read(new ListReader<>(AuthorityReader.getInstance()));
+        BigInteger setId = new UInt64Reader().read(reader);
 
-        authoritySet.setSetId(new UInt64Reader().read(reader));
+        authoritySet.setAuthoritySet(new GrandpaAuthoritySet(setId, authorities));
 
         ForkTree<PendingChange> forkTree = new ForkTree<>();
         forkTree.setRoots(reader.read(new ListReader<>(

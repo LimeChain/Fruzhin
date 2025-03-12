@@ -1,6 +1,6 @@
 package com.limechain.network.protocol.warp.dto;
 
-import com.limechain.grandpa.vote.SignedVote;
+import com.limechain.consensus.grandpa.dto.SignedVote;
 import com.limechain.network.protocol.grandpa.messages.catchup.res.CatchUpResMessage;
 import com.limechain.network.protocol.grandpa.messages.commit.CommitMessage;
 import io.emeraldpay.polkaj.types.Hash256;

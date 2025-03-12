@@ -1,8 +1,8 @@
 package com.limechain.state;
 
-import com.limechain.babe.state.EpochState;
-import com.limechain.beefy.state.BeefyState;
-import com.limechain.grandpa.state.GrandpaSetState;
+import com.limechain.consensus.babe.EpochState;
+import com.limechain.consensus.beefy.BeefyState;
+import com.limechain.consensus.grandpa.GrandpaSetState;
 import com.limechain.storage.block.state.BlockState;
 import com.limechain.sync.state.SyncState;
 import com.limechain.transaction.TransactionState;

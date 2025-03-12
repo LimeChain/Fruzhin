@@ -1,6 +1,6 @@
 plugins {
     id("java")
-    id("io.freefair.lombok") version "8.12.2"
+    id("io.freefair.lombok") version "8.12.2.1"
     id("org.springframework.boot") version "3.4.3"
     id("io.spring.dependency-management") version "1.1.7"
     id("application")
@@ -25,7 +25,7 @@ dependencies {
     implementation("org.rocksdb:rocksdbjni:9.10.0")
     compileOnly("org.projectlombok:lombok:1.18.36")
     implementation("org.projectlombok:lombok:1.18.36")
-    implementation("org.web3j:crypto:4.12.3")
+    implementation("org.web3j:crypto:4.13.0")
     implementation("com.dylibso.chicory:wasm:0.0.12")
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.12.0")
