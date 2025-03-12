@@ -1,8 +1,8 @@
 package com.limechain.grandpa.state.scale;
 
 import com.limechain.chain.lightsyncstate.scale.AuthorityReader;
-import com.limechain.storage.forktree.scale.ForkTreeNodeReader;
 import com.limechain.chain.lightsyncstate.scale.PendingChangeReader;
+import com.limechain.storage.forktree.scale.ForkTreeNodeReader;
 import com.limechain.grandpa.state.AuthoritySet;
 import com.limechain.storage.forktree.ForkTree;
 import com.limechain.chain.lightsyncstate.PendingChange;

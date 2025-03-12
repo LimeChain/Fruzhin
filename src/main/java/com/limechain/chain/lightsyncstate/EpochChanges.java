@@ -12,7 +12,7 @@ import java.util.Map;
 @Getter
 @Setter
 public class EpochChanges {
-    private ForkTree<PersistedEpochHeader> inner;
 
+    private ForkTree<PersistedEpochHeader> inner;
     private Map<Pair<Hash256, BigInteger>, PersistedEpoch> epochs;
 }
