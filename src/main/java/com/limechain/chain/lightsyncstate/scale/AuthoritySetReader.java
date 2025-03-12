@@ -1,11 +1,11 @@
 package com.limechain.chain.lightsyncstate.scale;
 
-import com.limechain.chain.lightsyncstate.Authority;
 import com.limechain.chain.lightsyncstate.AuthoritySet;
 import com.limechain.chain.lightsyncstate.PendingChange;
+import com.limechain.consensus.dto.Authority;
+import com.limechain.consensus.grandpa.dto.GrandpaAuthoritySet;
 import com.limechain.storage.forktree.ForkTree;
 import com.limechain.storage.forktree.scale.ForkTreeNodeReader;
-import com.limechain.consensus.grandpa.dto.GrandpaAuthoritySet;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleReader;
 import io.emeraldpay.polkaj.scale.reader.ListReader;
