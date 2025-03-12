@@ -1,6 +1,6 @@
 package com.limechain.utils.scale.writers;
 
-import com.limechain.babe.dto.InherentData;
+import com.limechain.consensus.babe.dto.InherentData;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.emeraldpay.polkaj.scale.ScaleWriter;
 import lombok.AccessLevel;

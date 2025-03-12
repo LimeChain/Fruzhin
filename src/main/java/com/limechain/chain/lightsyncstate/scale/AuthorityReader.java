@@ -1,6 +1,6 @@
 package com.limechain.chain.lightsyncstate.scale;
 
-import com.limechain.chain.lightsyncstate.Authority;
+import com.limechain.consensus.dto.Authority;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleReader;
 import io.emeraldpay.polkaj.scale.reader.UInt64Reader;

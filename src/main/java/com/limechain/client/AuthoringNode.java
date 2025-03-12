@@ -1,7 +1,7 @@
 package com.limechain.client;
 
-import com.limechain.babe.state.EpochState;
-import com.limechain.grandpa.state.GrandpaSetState;
+import com.limechain.consensus.babe.EpochState;
+import com.limechain.consensus.grandpa.GrandpaSetState;
 import com.limechain.network.NetworkService;
 import com.limechain.rpc.server.AppBean;
 import com.limechain.storage.block.state.BlockState;
