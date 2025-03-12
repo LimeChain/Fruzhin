@@ -1,9 +1,11 @@
 package com.limechain.chain.lightsyncstate.scale;
 
 import com.limechain.chain.lightsyncstate.AuthoritySet;
-import com.limechain.chain.lightsyncstate.ForkTree;
 import com.limechain.chain.lightsyncstate.PendingChange;
+import com.limechain.consensus.dto.Authority;
 import com.limechain.consensus.grandpa.dto.GrandpaAuthoritySet;
+import com.limechain.storage.forktree.ForkTree;
+import com.limechain.storage.forktree.scale.ForkTreeNodeReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleReader;
 import io.emeraldpay.polkaj.scale.reader.ListReader;
@@ -12,6 +14,10 @@ import io.emeraldpay.polkaj.scale.reader.UInt64Reader;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.javatuples.Pair;
+
+import java.math.BigInteger;
+import java.util.List;
+import java.util.Optional;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class AuthoritySetReader implements ScaleReader<AuthoritySet> {
@@ -26,16 +32,20 @@ public class AuthoritySetReader implements ScaleReader<AuthoritySet> {
     public AuthoritySet read(ScaleCodecReader reader) {
         AuthoritySet authoritySet = new AuthoritySet();
 
-        var authorities = reader.read(new ListReader<>(AuthorityReader.getInstance()));
-        var setId = new UInt64Reader().read(reader);
+        List<Authority> authorities = reader.read(new ListReader<>(AuthorityReader.getInstance()));
+        BigInteger setId = new UInt64Reader().read(reader);
 
         authoritySet.setAuthoritySet(new GrandpaAuthoritySet(setId, authorities));
 
-        var forkTree = new ForkTree<>();
+        ForkTree<PendingChange> forkTree = new ForkTree<>();
         forkTree.setRoots(reader.read(new ListReader<>(
                 new ForkTreeNodeReader<>(PendingChangeReader.getInstance()))
-        ).toArray(ForkTree.ForkTreeNode[]::new));
-        forkTree.setBestFinalizedNumber(reader.readOptional(new UInt32Reader()));
+        ));
+
+        Optional<Long> bestFinalizedNumber = reader.readOptional(new UInt32Reader());
+        forkTree.setBestFinalizedNumber(
+                bestFinalizedNumber.map(BigInteger::valueOf).orElse(null)
+        );
 
         authoritySet.setPendingForcedChanges(reader.read(
                 new ListReader<>(PendingChangeReader.getInstance())).toArray(PendingChange[]::new)

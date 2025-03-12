@@ -1,12 +1,13 @@
-package com.limechain.chain.lightsyncstate.scale;
+package com.limechain.storage.forktree.scale;
 
-import com.limechain.chain.lightsyncstate.ForkTree;
+import com.limechain.storage.forktree.ForkTree;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleReader;
 import io.emeraldpay.polkaj.scale.reader.ListReader;
 import io.emeraldpay.polkaj.types.Hash256;
 
 import java.math.BigInteger;
+import java.util.List;
 
 public class ForkTreeNodeReader<T> implements ScaleReader<ForkTree.ForkTreeNode<T>> {
     private final ScaleReader<T> dataReader;
@@ -17,16 +18,13 @@ public class ForkTreeNodeReader<T> implements ScaleReader<ForkTree.ForkTreeNode<
 
     @Override
     public ForkTree.ForkTreeNode<T> read(ScaleCodecReader reader) {
-        var node = new ForkTree.ForkTreeNode<T>();
-        node.setHash(new Hash256(reader.readUint256()));
-        node.setNumber(BigInteger.valueOf(reader.readUint32()));
 
-        node.setData(dataReader.read(reader));
+        Hash256 hash = new Hash256(reader.readUint256());
+        BigInteger number = BigInteger.valueOf(reader.readUint32());
+        T data = dataReader.read(reader);
+        List<ForkTree.ForkTreeNode<T>> children = reader
+                .read(new ListReader<>(new ForkTreeNodeReader<>(dataReader)));
 
-        node.setChildren(reader
-                .read(new ListReader<>(new ForkTreeNodeReader<>(dataReader)))
-                .toArray(ForkTree.ForkTreeNode[]::new)
-        );
-        return node;
+        return new ForkTree.ForkTreeNode(hash, number, data, children);
     }
 }
