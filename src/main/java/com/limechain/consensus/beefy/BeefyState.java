@@ -19,6 +19,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.java.Log;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
@@ -109,13 +110,15 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
             //Todo: In kagome fetching header.
             Pair<BigInteger, BeefyAuthoritySet> validatorsSet = detectAuthoritySetChange(
                     nextDigest,
-                    sessions.isEmpty() ? beefyGenesis : nextDigest
+                    sessions.isEmpty()
+                            ? beefyGenesis
+                            : nextDigest
             );
 
             if (validatorsSet != null) {
                 BigInteger sessionBlock = validatorsSet.getLeft();
                 BeefyAuthoritySet authoritySet = validatorsSet.getRight();
-                org.javatuples.Pair<byte[], byte[]> keyPair = keyStore.findKeyPair(authoritySet.getPublicKeys(), KeyType.BEEFY)
+                var keyPair = keyStore.findKeyPair(authoritySet.getPublicKeys(), KeyType.BEEFY)
                         .orElse(null);
                 if (keyPair == null) {
                     log.info(

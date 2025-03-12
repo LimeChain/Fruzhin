@@ -2,15 +2,14 @@ package com.limechain.consensus.beefy;
 
 import com.limechain.consensus.beefy.dto.BeefyAuthoritySet;
 import com.limechain.consensus.beefy.dto.BeefyPayloadId;
+import com.limechain.consensus.beefy.dto.BeefyRound;
+import com.limechain.consensus.beefy.dto.BeefySession;
 import com.limechain.consensus.beefy.dto.Commitment;
 import com.limechain.consensus.beefy.dto.PayloadElement;
-import com.limechain.beefy.dto.SignedCommitment;
 import com.limechain.consensus.beefy.dto.message.BeefyConsensusMessage;
-import com.limechain.beefy.state.BeefyRound;
-import com.limechain.beefy.state.BeefySession;
-import com.limechain.beefy.state.BeefyState;
 import com.limechain.exception.beefy.BeefyGenericException;
 import com.limechain.exception.storage.BlockStorageGenericException;
+import com.limechain.network.protocol.beefy.messages.justification.SignedCommitment;
 import com.limechain.network.protocol.warp.DigestHelper;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.state.StateManager;
@@ -284,11 +283,11 @@ public class BeefyService {
         for (BeefyConsensusMessage consensusMessage : DigestHelper.getBeefyConsensusMessages(blockHeader.getDigest())) {
             switch (consensusMessage.getFormat()) {
                 case BEEFY_CHANGED_AUTHORITIES -> {
-                    ValidatorSet validatorSet = new ValidatorSet(
-                            consensusMessage.getAuthorityPublicKeys(),
-                            consensusMessage.getAuthoritySetId()
+                    BeefyAuthoritySet validatorSet = new BeefyAuthoritySet(
+                            consensusMessage.getAuthoritySetId(),
+                            consensusMessage.getAuthorityPublicKeys()
                     );
-                    return Map.of(currentBlockNumber, new BeefySession(validatorSet));
+                    return Map.of(currentBlockNumber, new BeefySession(validatorSet, null));
                 }
                 case BEEFY_ON_DISABLED -> beefyState.setDisabledAuthority(consensusMessage.getDisabledAuthority());
             }
