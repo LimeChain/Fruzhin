@@ -1,7 +1,7 @@
 package com.limechain.network.protocol.grandpa.messages.vote;
 
-import com.limechain.grandpa.vote.SubRound;
-import com.limechain.grandpa.vote.Vote;
+import com.limechain.consensus.grandpa.dto.SubRound;
+import com.limechain.consensus.grandpa.dto.Vote;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

@@ -1,9 +1,9 @@
 package com.limechain.chain.lightsyncstate.scale;
 
-import com.limechain.chain.lightsyncstate.Authority;
 import com.limechain.chain.lightsyncstate.AuthoritySet;
 import com.limechain.chain.lightsyncstate.ForkTree;
 import com.limechain.chain.lightsyncstate.PendingChange;
+import com.limechain.consensus.grandpa.dto.GrandpaAuthoritySet;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleReader;
 import io.emeraldpay.polkaj.scale.reader.ListReader;
@@ -26,11 +26,10 @@ public class AuthoritySetReader implements ScaleReader<AuthoritySet> {
     public AuthoritySet read(ScaleCodecReader reader) {
         AuthoritySet authoritySet = new AuthoritySet();
 
-        authoritySet.setCurrentAuthorities(
-                reader.read(new ListReader<>(AuthorityReader.getInstance())).toArray(Authority[]::new)
-        );
+        var authorities = reader.read(new ListReader<>(AuthorityReader.getInstance()));
+        var setId = new UInt64Reader().read(reader);
 
-        authoritySet.setSetId(new UInt64Reader().read(reader));
+        authoritySet.setAuthoritySet(new GrandpaAuthoritySet(setId, authorities));
 
         var forkTree = new ForkTree<>();
         forkTree.setRoots(reader.read(new ListReader<>(
