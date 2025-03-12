@@ -1,6 +1,6 @@
 package com.limechain.network.protocol.grandpa.messages.vote;
 
-import com.limechain.grandpa.vote.SubRound;
+import com.limechain.consensus.grandpa.dto.SubRound;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleReader;
 import io.emeraldpay.polkaj.types.Hash256;

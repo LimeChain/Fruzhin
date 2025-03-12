@@ -1,7 +1,7 @@
 package com.limechain.network.protocol.grandpa.messages.commit;
 
-import com.limechain.grandpa.vote.SignedVote;
-import com.limechain.grandpa.vote.Vote;
+import com.limechain.consensus.grandpa.dto.SignedVote;
+import com.limechain.consensus.grandpa.dto.Vote;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.emeraldpay.polkaj.types.Hash256;

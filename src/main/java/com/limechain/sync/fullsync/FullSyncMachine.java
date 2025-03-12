@@ -1,12 +1,12 @@
 package com.limechain.sync.fullsync;
 
 import com.google.protobuf.ByteString;
-import com.limechain.babe.BabeService;
-import com.limechain.babe.coordinator.SlotCoordinator;
 import com.limechain.config.HostConfig;
+import com.limechain.consensus.babe.BabeService;
+import com.limechain.consensus.babe.coordinator.SlotCoordinator;
+import com.limechain.consensus.grandpa.GrandpaService;
 import com.limechain.exception.storage.BlockNodeNotFoundException;
 import com.limechain.exception.sync.BlockExecutionException;
-import com.limechain.grandpa.GrandpaService;
 import com.limechain.network.NetworkService;
 import com.limechain.network.PeerMessageCoordinator;
 import com.limechain.network.PeerRequester;

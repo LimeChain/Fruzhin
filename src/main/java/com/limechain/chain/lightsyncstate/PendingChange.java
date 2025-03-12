@@ -1,5 +1,6 @@
 package com.limechain.chain.lightsyncstate;
 
+import com.limechain.consensus.dto.Authority;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

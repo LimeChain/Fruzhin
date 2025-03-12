@@ -1,6 +1,6 @@
 package com.limechain.network.protocol.grandpa.messages.catchup.res;
 
-import com.limechain.grandpa.vote.SignedVote;
+import com.limechain.consensus.grandpa.dto.SignedVote;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
