@@ -51,12 +51,13 @@ public class VerifyJustificationAction implements WarpSyncAction {
     @Override
     public void handle(WarpSyncMachine sync) {
         try {
+
             // Executes scheduled or forced authority changes for the last finalized block.
-            boolean changeInAuthoritySet = stateManager.getGrandpaSetState().handleAuthoritySetChange(
-                    stateManager.getSyncState().getLastFinalizedBlockHash(),
-                    stateManager.getSyncState().getLastFinalizedBlockNumber(),
-                    false
-            );
+            boolean changeInAuthoritySet = stateManager.getGrandpaSetState()
+                    .applyForcedAuthoritySetChange(
+                            stateManager.getSyncState().getLastFinalizedBlockHash(),
+                            stateManager.getSyncState().getLastFinalizedBlockNumber()
+                    );
 
             if (warpSyncState.isWarpSyncFinished() && changeInAuthoritySet) {
                 new Thread(messageCoordinator::sendMessagesToPeers).start();

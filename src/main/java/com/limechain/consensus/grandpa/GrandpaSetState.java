@@ -191,27 +191,61 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
         }
     }
 
-    public boolean handleAuthoritySetChange(Hash256 hash, BigInteger number, boolean isFinalizedBlock) {
+    /**
+     * Apply forced authority set changes when a new block is imported
+     * if conditions are met . On block import, only forced changes are applicable.
+     *
+     * @param hash   The block hash.
+     * @param number The block number.
+     * @return true if a forced authority set change was applied; false otherwise.
+     */
+    public boolean applyForcedAuthoritySetChange(Hash256 hash, BigInteger number) {
 
-        Optional<PendingChange> forcedChange =
-                authoritySetChangeTracker.applyForcedChanges(hash, number, blockState::isDescendantOf);
+        Optional<PendingChange> forcedChange = Optional.empty();
 
-        PendingChange pendingChange = null;
-        if (forcedChange.isPresent()) {
-
-            pendingChange = forcedChange.get();
-            startNewSet(pendingChange.getNextAuthorities());
-
-        } else if (isFinalizedBlock) {
-
-            Optional<PendingChange> scheduledChange =
-                    authoritySetChangeTracker.applyScheduledChanges(hash, number, blockState::isDescendantOf);
-
-            if (scheduledChange.isPresent()) pendingChange = scheduledChange.get();
+        try {
+            forcedChange = authoritySetChangeTracker.applyForcedChanges(hash, number, blockState::isDescendantOf);
+        } catch (GrandpaGenericException e) {
+            log.warning("Error while applying forced change: " + e.getMessage());
         }
 
-        if (pendingChange != null) {
+        if (forcedChange.isPresent()) {
+            PendingChange pendingChange = forcedChange.get();
             startNewSet(pendingChange.getNextAuthorities());
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Apply forced/scheduled authority set changes when a block is
+     * finalized if conditions are met. On finalization, the method
+     * first checks for a forced change. If no forced change is found,
+     * it then checks for a scheduled change.
+     *
+     * @param hash   The block hash.
+     * @param number The block number.
+     * @return true if either a forced or scheduled authority set change was applied; false otherwise.
+     */
+    public boolean applyAuthoritySetChange(Hash256 hash, BigInteger number) {
+
+        // First try to apply a forced change.
+        if (applyForcedAuthoritySetChange(hash, number)) {
+            return true;
+        }
+
+        Optional<PendingChange> scheduledChange = Optional.empty();
+        try {
+            scheduledChange =
+                    authoritySetChangeTracker.applyScheduledChanges(hash, number, blockState::isDescendantOf);
+
+        } catch (GrandpaGenericException e) {
+            log.warning("Error while applying scheduled change: " + e.getMessage());
+        }
+
+        if (scheduledChange.isPresent()) {
+            startNewSet(scheduledChange.get().getNextAuthorities());
             return true;
         }
 

@@ -105,6 +105,8 @@ public class AuthoritySetChangeTracker {
                                                       BiPredicate<Hash256, Hash256> isDescendantOf)
             throws GrandpaGenericException {
 
+        PendingChange forcedChange = null;
+
         for (PendingChange change : pendingForcedChanges) {
 
             if (change.getEffectiveNumber().compareTo(bestBlockNumber) > 0) {
@@ -116,26 +118,35 @@ public class AuthoritySetChangeTracker {
 
                 checkForConflictingScheduledChange(change, isDescendantOf);
 
-                return Optional.of(change);
+                forcedChange = change;
+                break;
             }
+        }
+
+        // Remove the forced change matching the application criteria and return it
+        if (forcedChange != null) {
+            pendingForcedChanges.remove(forcedChange);
+            return Optional.of(forcedChange);
         }
 
         return Optional.empty();
     }
 
-    private void checkForConflictingScheduledChange(PendingChange change,
+    private void checkForConflictingScheduledChange(PendingChange forcedChange,
                                                     BiPredicate<Hash256, Hash256> isDescendantOf) {
 
-        BigInteger medianLastFinalized = change.getDelayKind().getMedianLastFinalized();
+        BigInteger medianLastFinalized = forcedChange.getDelayKind().getMedianLastFinalized();
 
         for (ForkTree.ForkTreeNode<PendingChange> forkTreeNode : pendingScheduledChanges.getRoots()) {
             PendingChange scheduledChange = forkTreeNode.getData();
 
             if (scheduledChange.getEffectiveNumber().compareTo(medianLastFinalized) <= 0 &&
-                    isDescendantOf.test(scheduledChange.getCanonHash(), change.getCanonHash())) {
+                    isDescendantOf.test(scheduledChange.getCanonHash(), forcedChange.getCanonHash())) {
+
+                pendingForcedChanges.remove(forcedChange);
 
                 throw new GrandpaGenericException("Applying forced authority set change at block " +
-                        change.getCanonHeight() + " while pending scheduled change at block " +
+                        forcedChange.getCanonHeight() + " while pending scheduled change at block " +
                         scheduledChange.getCanonHeight() + " exists."
                 );
             }
