@@ -132,23 +132,6 @@ public class AuthoritySetChangeTracker {
         pendingForcedChanges.add(idx, pendingChange);
     }
 
-    //TODO: Probably not needed
-    private Iterable<PendingChange> getAllPendingChanges() {
-        List<PendingChange> combined = new ArrayList<>();
-        combined.addAll(pendingScheduledChanges.getAll());
-        combined.addAll(pendingForcedChanges);
-        return combined;
-    }
-
-    //TODO: Probably not needed
-    private Optional<BigInteger> currentLimit(BigInteger min) {
-        return pendingScheduledChanges.getRoots().stream()
-                .map(ForkTree.ForkTreeNode::getData)
-                .map(PendingChange::getEffectiveNumber)
-                .filter(effectiveNumber -> effectiveNumber.compareTo(min) >= 0)
-                .min(Comparator.naturalOrder());
-    }
-
     //TODO: called on import block from makeAuthoritiesChanges method
     //TODO: Decrease the horizontal complexity of the method
     //TODO: After calling this method a new set should be started and the pending change should be added to the past changes
@@ -205,13 +188,16 @@ public class AuthoritySetChangeTracker {
     }
 
     //TODO: called on import block from makeAuthoritiesChanges method
-    public void enactScheduledChanges() {
+    public Optional<Boolean> enactScheduledChanges(Hash256 finalizedHash,
+                                                   BigInteger finalizedNumber,
+                                                   BiPredicate<Hash256, Hash256> isDescendantOf) throws ForkTreeException {
 
-    }
-
-    //TODO: Probably not needed
-    public void revert(Hash256 blockHash, BigInteger blockNumber) {
-        //TODO: ForkTree should support drainFilter in order this method to be implemented
+        return pendingScheduledChanges.checkIfFinalizationCandidateIsRoot(
+                finalizedHash,
+                finalizedNumber,
+                isDescendantOf,
+                change -> change.getEffectiveNumber().equals(finalizedNumber)
+        );
     }
 
     private void removeInvalidForcedAuthoritySetChanges(Hash256 finalizedHash,
@@ -229,6 +215,28 @@ public class AuthoritySetChangeTracker {
         }
 
         pendingForcedChanges = newForcedChanges;
+    }
+
+    //TODO: Probably not needed
+    private Iterable<PendingChange> getAllPendingChanges() {
+        List<PendingChange> combined = new ArrayList<>();
+        combined.addAll(pendingScheduledChanges.getAll());
+        combined.addAll(pendingForcedChanges);
+        return combined;
+    }
+
+    //TODO: Probably not needed
+    private Optional<BigInteger> currentLimit(BigInteger min) {
+        return pendingScheduledChanges.getRoots().stream()
+                .map(ForkTree.ForkTreeNode::getData)
+                .map(PendingChange::getEffectiveNumber)
+                .filter(effectiveNumber -> effectiveNumber.compareTo(min) >= 0)
+                .min(Comparator.naturalOrder());
+    }
+
+    //TODO: Probably not needed
+    public void revert(Hash256 blockHash, BigInteger blockNumber) {
+        //TODO: ForkTree should support drainFilter in order this method to be implemented
     }
 
     private boolean validateAuthorityList(List<Authority> authorities) {
