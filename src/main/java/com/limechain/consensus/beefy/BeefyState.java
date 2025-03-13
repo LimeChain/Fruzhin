@@ -82,7 +82,10 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
 
     @Override
     public void populateDataFromRuntime(Runtime runtime) {
-        //Todo: retrieve the validatorSet making call to beefyApi
+        this.authoritySet = runtime.getBeefyValidatorSet().orElseGet(() -> {
+            log.warning("BeefyValidatorSet is not available from runtime, setting authoritySet to null.");
+            return null;
+        });
     }
 
     @Override
@@ -209,7 +212,7 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
     private void loadPersistedState() {
         BigInteger setId = fetchAuthoritiesSetId();
         List<byte[]> authorities = fetchBeefyAuthorities(setId);
-        this.authoritySet = new BeefyAuthoritySet(setId, authorities);
+        this.authoritySet = new BeefyAuthoritySet(authorities, setId);
     }
 
     private BigInteger fetchAuthoritiesSetId() {

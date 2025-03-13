@@ -18,6 +18,7 @@ public enum RuntimeEndpoint {
     BABE_API_CONFIGURATION("BabeApi_configuration"),
     BABE_API_GENERATE_KEY_OWNERSHIP_PROOF("BabeApi_generate_key_ownership_proof"),
     BABE_API_SUBMIT_REPORT_EQUIVOCATION_UNSIGNED_EXTRINSIC("BabeApi_submit_report_equivocation_unsigned_extrinsic"),
+    BEEFY_API_VALIDATOR_SET("BeefyApi_validator_set"),
     BLOCKBUILDER_FINALIZE_BLOCK("BlockBuilder_finalize_block"),
     BLOCKBUILDER_CHECK_INHERENTS("BlockBuilder_check_inherents"),
     BLOCKBUILDER_APPLY_EXTRINISIC("BlockBuilder_apply_extrinsic"),

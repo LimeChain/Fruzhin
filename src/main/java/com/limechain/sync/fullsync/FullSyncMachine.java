@@ -4,6 +4,7 @@ import com.google.protobuf.ByteString;
 import com.limechain.config.HostConfig;
 import com.limechain.consensus.babe.BabeService;
 import com.limechain.consensus.babe.coordinator.SlotCoordinator;
+import com.limechain.consensus.beefy.BeefyService;
 import com.limechain.consensus.grandpa.GrandpaService;
 import com.limechain.exception.storage.BlockNodeNotFoundException;
 import com.limechain.exception.sync.BlockExecutionException;
@@ -67,6 +68,7 @@ public class FullSyncMachine {
     private final RuntimeBuilder runtimeBuilder = AppBean.getBean(RuntimeBuilder.class);
     private final SlotCoordinator slotCoordinator = AppBean.getBean(SlotCoordinator.class);
     private final GrandpaService grandpaService = AppBean.getBean(GrandpaService.class);
+    private final BeefyService beefyService = AppBean.getBean(BeefyService.class);
     private Runtime runtime = null;
 
     public FullSyncMachine(NetworkService networkService,
@@ -131,6 +133,7 @@ public class FullSyncMachine {
     private void finishFullSync() {
         stateManager.getEpochState().populateDataFromRuntime(runtime);
         stateManager.getGrandpaSetState().populateDataFromRuntime(runtime);
+        stateManager.getBeefyState().populateDataFromRuntime(runtime);
 
         if (NodeRole.AUTHORING.equals(hostConfig.getNodeRole())) {
             slotCoordinator.start(List.of(
