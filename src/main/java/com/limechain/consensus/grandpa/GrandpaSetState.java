@@ -203,15 +203,11 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
             startNewSet(pendingChange.getNextAuthorities());
 
         } else if (isFinalizedBlock) {
-            Optional<Boolean> shouldApplyScheduledChanges =
-                    authoritySetChangeTracker.enactScheduledChanges(hash, number, blockState::isDescendantOf);
 
-            if (shouldApplyScheduledChanges.isPresent() && shouldApplyScheduledChanges.get().equals(Boolean.TRUE)) {
-                Optional<PendingChange> scheduledChange =
-                        authoritySetChangeTracker.applyScheduledChanges(hash, number, blockState::isDescendantOf);
+            Optional<PendingChange> scheduledChange =
+                    authoritySetChangeTracker.applyScheduledChanges(hash, number, blockState::isDescendantOf);
 
-                if (scheduledChange.isPresent()) pendingChange = scheduledChange.get();
-            }
+            if (scheduledChange.isPresent()) pendingChange = scheduledChange.get();
         }
 
         if (pendingChange != null) {
