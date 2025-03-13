@@ -52,7 +52,7 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
 
     private GrandpaRound currentGrandpaRound;
 
-    private GrandpaAuthoritySet authoritySet;
+    private GrandpaAuthoritySet authoritySet = new GrandpaAuthoritySet();
     private AuthoritySetChangeTracker authoritySetChangeTracker = new AuthoritySetChangeTracker();
     private BigInteger disabledAuthority;
 
@@ -142,39 +142,10 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
         authoritySet.setAuthorities(initState.getGrandpaAuthoritySet().getAuthorities());
     }
 
-    /**
-     * Apply scheduled or forced authority set changes from the queue if present
-     *
-     * @param blockNumber required to determine if it's time to apply the change
-     */
-    public boolean handleAuthoritySetChange(BigInteger blockNumber) {
-//        AuthoritySetChange changeSetData = pendingSetChanges.peek();
-//
-//        boolean updated = false;
-//        while (changeSetData != null) {
-//
-//            if (changeSetData.getApplicationBlockNumber().compareTo(blockNumber) > 0) {
-//                break;
-//            }
-//
-//            startNewSet(changeSetData.getAuthorities());
-//            pendingSetChanges.poll();
-//            updated = true;
-//
-//            pastSetChanges.put(changeSetData.getApplicationBlockNumber(),
-//                    new AuthoritySet(this.setId, this.authorities));
-//
-//            changeSetData = pendingSetChanges.peek();
-//        }
-
-//        return updated;
-        return false;
-    }
-
     public void handleGrandpaConsensusMessage(GrandpaConsensusMessage consensusMessage, BlockHeader blockHeader) {
         switch (consensusMessage.getFormat()) {
-            case GRANDPA_SCHEDULED_CHANGE -> handleForcedAuthoritySetChange(consensusMessage, blockHeader);
-            case GRANDPA_FORCED_CHANGE -> handleScheduledAuthoritySetChange(consensusMessage, blockHeader);
+            case GRANDPA_SCHEDULED_CHANGE -> addForcedAuthoritySetChange(consensusMessage, blockHeader);
+            case GRANDPA_FORCED_CHANGE -> addScheduledAuthoritySetChange(consensusMessage, blockHeader);
             case GRANDPA_ON_DISABLED -> disabledAuthority = consensusMessage.getDisabledAuthority();
             case GRANDPA_PAUSE -> log.log(Level.SEVERE, "'PAUSE' grandpa message not implemented");
             case GRANDPA_RESUME -> log.log(Level.SEVERE, "'RESUME' grandpa message not implemented");
@@ -183,7 +154,7 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
         log.fine(String.format("Updated grandpa set config: %s", consensusMessage.getFormat().toString()));
     }
 
-    private void handleForcedAuthoritySetChange(GrandpaConsensusMessage consensusMessage, BlockHeader blockHeader) {
+    private void addForcedAuthoritySetChange(GrandpaConsensusMessage consensusMessage, BlockHeader blockHeader) {
 
         try {
 
@@ -202,7 +173,7 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
         }
     }
 
-    private void handleScheduledAuthoritySetChange(GrandpaConsensusMessage consensusMessage, BlockHeader blockHeader) {
+    private void addScheduledAuthoritySetChange(GrandpaConsensusMessage consensusMessage, BlockHeader blockHeader) {
 
         try {
 
@@ -218,6 +189,37 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
         } catch (GrandpaGenericException e) {
             log.warning("Error while importing new scheduled authority set change: " + e.getMessage());
         }
+    }
+
+    public boolean handleAuthoritySetChange(Hash256 hash, BigInteger number, boolean isFinalizedBlock) {
+
+        Optional<PendingChange> forcedChange =
+                authoritySetChangeTracker.applyForcedChanges(hash, number, blockState::isDescendantOf);
+
+        PendingChange pendingChange = null;
+        if (forcedChange.isPresent()) {
+
+            pendingChange = forcedChange.get();
+            startNewSet(pendingChange.getNextAuthorities());
+
+        } else if (isFinalizedBlock) {
+            Optional<Boolean> shouldApplyScheduledChanges =
+                    authoritySetChangeTracker.enactScheduledChanges(hash, number, blockState::isDescendantOf);
+
+            if (shouldApplyScheduledChanges.isPresent() && shouldApplyScheduledChanges.get().equals(Boolean.TRUE)) {
+                Optional<PendingChange> scheduledChange =
+                        authoritySetChangeTracker.applyScheduledChanges(hash, number, blockState::isDescendantOf);
+
+                if (scheduledChange.isPresent()) pendingChange = scheduledChange.get();
+            }
+        }
+
+        if (pendingChange != null) {
+            startNewSet(pendingChange.getNextAuthorities());
+            return true;
+        }
+
+        return false;
     }
 
     // We keep a maximum of 3 rounds at a time

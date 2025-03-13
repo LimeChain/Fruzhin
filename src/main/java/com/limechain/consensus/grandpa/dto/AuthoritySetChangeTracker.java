@@ -135,7 +135,7 @@ public class AuthoritySetChangeTracker {
     //TODO: called on import block from makeAuthoritiesChanges method
     //TODO: Decrease the horizontal complexity of the method
     //TODO: After calling this method a new set should be started and the pending change should be added to the past changes
-    private Optional<PendingChange> applyForcedChanges(Hash256 bestBlockHash,
+    public Optional<PendingChange> applyForcedChanges(Hash256 bestBlockHash,
                                                        BigInteger bestBlockNumber,
                                                        BiPredicate<Hash256, Hash256> isDescendantOf)
             throws GrandpaGenericException {
@@ -174,30 +174,40 @@ public class AuthoritySetChangeTracker {
     //TODO: called on finalizing block
     public Optional<PendingChange> applyScheduledChanges(Hash256 finalizedHash,
                                                          BigInteger finalizedNumber,
-                                                         BiPredicate<Hash256, Hash256> isDescendantOf)
-            throws ForkTreeException {
+                                                         BiPredicate<Hash256, Hash256> isDescendantOf) {
 
         removeInvalidForcedAuthoritySetChanges(finalizedHash, finalizedNumber, isDescendantOf);
 
-        return pendingScheduledChanges.finalizeNode(
-                finalizedHash,
-                finalizedNumber,
-                isDescendantOf,
-                pendingChange -> pendingChange.getEffectiveNumber().compareTo(finalizedNumber) <= 0
-        );
+        try {
+
+            return pendingScheduledChanges.finalizeNode(
+                    finalizedHash,
+                    finalizedNumber,
+                    isDescendantOf,
+                    pendingChange -> pendingChange.getEffectiveNumber().compareTo(finalizedNumber) <= 0
+            );
+
+        } catch (ForkTreeException e) {
+            throw new GrandpaGenericException(e.getMessage());
+        }
     }
 
-    //TODO: called on import block from makeAuthoritiesChanges method
     public Optional<Boolean> enactScheduledChanges(Hash256 finalizedHash,
                                                    BigInteger finalizedNumber,
-                                                   BiPredicate<Hash256, Hash256> isDescendantOf) throws ForkTreeException {
+                                                   BiPredicate<Hash256, Hash256> isDescendantOf) {
 
-        return pendingScheduledChanges.checkIfFinalizationCandidateIsRoot(
-                finalizedHash,
-                finalizedNumber,
-                isDescendantOf,
-                change -> change.getEffectiveNumber().equals(finalizedNumber)
-        );
+        try {
+
+            return pendingScheduledChanges.checkIfFinalizationCandidateIsRoot(
+                    finalizedHash,
+                    finalizedNumber,
+                    isDescendantOf,
+                    change -> change.getEffectiveNumber().equals(finalizedNumber)
+            );
+
+        } catch (ForkTreeException e) {
+            throw new GrandpaGenericException(e.getMessage());
+        }
     }
 
     private void removeInvalidForcedAuthoritySetChanges(Hash256 finalizedHash,

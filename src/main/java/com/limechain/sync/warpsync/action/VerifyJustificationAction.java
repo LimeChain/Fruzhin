@@ -52,13 +52,15 @@ public class VerifyJustificationAction implements WarpSyncAction {
     public void handle(WarpSyncMachine sync) {
         try {
             // Executes scheduled or forced authority changes for the last finalized block.
-            //TODO: uncomment
-//            boolean changeInAuthoritySet = stateManager.getGrandpaSetState().handleAuthoritySetChange(
-//                    stateManager.getSyncState().getLastFinalizedBlockNumber());
-//
-//            if (warpSyncState.isWarpSyncFinished() && changeInAuthoritySet) {
-//                new Thread(messageCoordinator::sendMessagesToPeers).start();
-//            }
+            boolean changeInAuthoritySet = stateManager.getGrandpaSetState().handleAuthoritySetChange(
+                    stateManager.getSyncState().getLastFinalizedBlockHash(),
+                    stateManager.getSyncState().getLastFinalizedBlockNumber(),
+                    false
+            );
+
+            if (warpSyncState.isWarpSyncFinished() && changeInAuthoritySet) {
+                new Thread(messageCoordinator::sendMessagesToPeers).start();
+            }
 
             WarpSyncFragment fragment = sync.getFragmentsQueue().poll();
             log.log(Level.INFO, "Verifying justification...");
@@ -84,11 +86,10 @@ public class VerifyJustificationAction implements WarpSyncAction {
     private void handleAuthorityChanges(WarpSyncFragment fragment) {
         BlockHeader header = fragment.getHeader();
 
-        //TODO: uncomment
-//        DigestHelper.getGrandpaConsensusMessages(header.getDigest())
-//                .forEach(cm -> stateManager.getGrandpaSetState().handleGrandpaConsensusMessage(
-//                        cm, header)
-//                );
+        DigestHelper.getGrandpaConsensusMessages(header.getDigest())
+                .forEach(cm -> stateManager.getGrandpaSetState().handleGrandpaConsensusMessage(
+                        cm, header)
+                );
 
         SyncState syncState = stateManager.getSyncState();
         log.log(Level.INFO, "Verified justification. Block hash is now at #"
