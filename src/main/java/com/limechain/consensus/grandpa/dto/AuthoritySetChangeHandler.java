@@ -28,6 +28,10 @@ public class AuthoritySetChangeHandler {
     private List<PendingChange> pendingForcedChanges = new ArrayList<>();
     private List<Pair<BigInteger, BigInteger>> authoritySetChanges = new ArrayList<>();
 
+    /**
+     * Adds a pending change to the handler. Depending of the delay kind of the pending change, it delegates to
+     * either a forced change or a scheduled change method.
+     */
     public void addPendingChange(PendingChange pendingChange, BiPredicate<Hash256, Hash256> isDescendantOf)
             throws GrandpaGenericException {
 
@@ -44,6 +48,9 @@ public class AuthoritySetChangeHandler {
         }
     }
 
+    /**
+     * Adds new scheduled change to the fork tree.
+     */
     private void addScheduledChange(PendingChange change, BiPredicate<Hash256, Hash256> isDescendantOf)
             throws GrandpaGenericException {
 
@@ -74,7 +81,7 @@ public class AuthoritySetChangeHandler {
         }
 
         // Create a comparator that orders PendingChange objects by effective number,
-        // and in case of a tie, by canonical height.
+        // and in case of a tie, by canonical height (block number).
         Comparator<PendingChange> comparator = Comparator
                 .comparing(PendingChange::getEffectiveNumber)
                 .thenComparing(PendingChange::getCanonHeight);
@@ -98,6 +105,11 @@ public class AuthoritySetChangeHandler {
         pendingForcedChanges.add(idx, pendingChange);
     }
 
+    /**
+     * Applies a forced authority set change that is applicable for the given block. Iterates over
+     * pending forced changes to find one with an effective number equal to the best blok number,
+     * checking for ancestry. If a conflicting scheduled change exists, the forced change is removed.
+     */
     public Optional<PendingChange> applyForcedChanges(Hash256 bestBlockHash,
                                                       BigInteger bestBlockNumber,
                                                       BiPredicate<Hash256, Hash256> isDescendantOf)
@@ -130,9 +142,17 @@ public class AuthoritySetChangeHandler {
         return Optional.empty();
     }
 
+    /**
+     * If any scheduled change in the pendingScheduledChanges has an effective number less than or equal to
+     * the median last finalized value of the forced change and is an ancestor of the forced change, the forced change
+     * isn't applied. This ensures that forced changes do not override scheduled changes that must be applied first,
+     * thus preserving the correct order of authority set transitions.
+     */
     private void checkForConflictingScheduledChange(PendingChange forcedChange,
                                                     BiPredicate<Hash256, Hash256> isDescendantOf) {
 
+        // The medianLastFinalized value acts as a threshold that helps determine the
+        // proper ordering of authority set changes.
         BigInteger medianLastFinalized = forcedChange.getDelayKind().getMedianLastFinalized();
 
         for (ForkTree.ForkTreeNode<PendingChange> forkTreeNode : pendingScheduledChanges.getRoots()) {
@@ -140,8 +160,6 @@ public class AuthoritySetChangeHandler {
 
             if (scheduledChange.getEffectiveNumber().compareTo(medianLastFinalized) <= 0 &&
                     isDescendantOf.test(scheduledChange.getCanonHash(), forcedChange.getCanonHash())) {
-
-                pendingForcedChanges.remove(forcedChange);
 
                 throw new GrandpaGenericException("Applying forced authority set change at block " +
                         forcedChange.getCanonHeight() + " while pending scheduled change at block " +
@@ -151,6 +169,10 @@ public class AuthoritySetChangeHandler {
         }
     }
 
+    /**
+     * Before applying scheduled change, it removes any forced changes that have become invalid,
+     * then finalizes a matching scheduled change.
+     */
     public Optional<PendingChange> applyScheduledChanges(Hash256 finalizedHash,
                                                          BigInteger finalizedNumber,
                                                          BiPredicate<Hash256, Hash256> isDescendantOf) {
@@ -171,6 +193,10 @@ public class AuthoritySetChangeHandler {
         }
     }
 
+    /**
+     * This method is used to make cleanup, that prevents those stale forced changes from interfering
+     * with the finalization of scheduled changes and keeps the state consistent
+     */
     private void removeInvalidForcedAuthoritySetChanges(Hash256 finalizedHash,
                                                         BigInteger finalizedNumber,
                                                         BiPredicate<Hash256, Hash256> isDescendantOf) {
