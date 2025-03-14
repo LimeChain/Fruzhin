@@ -397,6 +397,9 @@ public class GrandpaRound {
             GrandpaSetState grandpaSetState = stateManager.getGrandpaSetState();
             grandpaSetState.persistFinalizedRoundState(roundNumber);
 
+            // TODO: Remove this when FinalizationHandler (responsible for sending events on block finalization) is implemented.
+            grandpaSetState.applyAuthoritySetChange(finalizedBlock.getHash(), finalizedBlock.getBlockNumber());
+
             if (!isCommitMessageInArchive(Vote.fromBlockHeader(finalizedBlock))) {
                 broadcastCommitMessage();
             }

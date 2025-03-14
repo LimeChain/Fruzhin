@@ -206,17 +206,26 @@ public class GrandpaMessageHandler {
 
             BlockHeader bestBlockHeader;
             try {
+
                 bestBlockHeader = blockState.bestBlockHeader();
                 blockState.setFinalizedHash(bestBlockHeader,
                         null,
                         stateManager.getGrandpaSetState().getAuthoritySet().getSetId());
                 syncState.finalizeHeader(bestBlockHeader);
 
+                // TODO: Remove this when FinalizationHandler (responsible for sending events on block finalization) is implemented.
+                stateManager.getGrandpaSetState()
+                        .applyAuthoritySetChange(
+                                bestBlockHeader.getHash(),
+                                bestBlockHeader.getBlockNumber()
+                        );
+
                 log.info(String.format(
                         "handleCommitPreHead: Commit block #%d not in tree. Finalized best block with #%d and hash %s",
                         commitMessage.getVote().getBlockNumber(),
                         bestBlockHeader.getBlockNumber(),
                         bestBlockHeader.getHash()));
+
             } catch (HeaderNotFoundException e) {
                 log.warning("handleCommitPreHead: No block header found for best block.");
                 return;

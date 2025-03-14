@@ -134,6 +134,7 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
 
         persistNewSetState();
         updateAuthorityStatus();
+
         log.log(Level.INFO, "Successfully transitioned to authority set id: " + authoritySet.getSetId());
     }
 
@@ -211,7 +212,10 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
 
         if (forcedChange.isPresent()) {
             PendingChange pendingChange = forcedChange.get();
+
+            pastSetChanges.put(pendingChange.getEffectiveNumber(), authoritySet);
             startNewSet(pendingChange.getNextAuthorities());
+
             return true;
         }
 
@@ -245,7 +249,11 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
         }
 
         if (scheduledChange.isPresent()) {
-            startNewSet(scheduledChange.get().getNextAuthorities());
+            PendingChange pendingChange = scheduledChange.get();
+
+            pastSetChanges.put(pendingChange.getEffectiveNumber(), authoritySet);
+            startNewSet(pendingChange.getNextAuthorities());
+
             return true;
         }
 

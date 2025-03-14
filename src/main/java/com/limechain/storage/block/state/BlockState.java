@@ -769,7 +769,7 @@ public class BlockState extends AbstractState {
     public void setFinalizedHash(final BlockHeader header,
                                  @Nullable final Justification justification,
                                  final BigInteger setId) {
-        //TODO: call apply forced change and enact scheduled in every place where this method is called
+
         setFinalizedHash(header, setId, justification == null
                 ? BigInteger.ZERO
                 : justification.getRoundNumber());

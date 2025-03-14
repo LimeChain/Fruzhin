@@ -236,6 +236,13 @@ public class FullSyncMachine {
             if (blockState.getJustifications().isEmpty()) {
                 stateManager.getSyncState().finalizeHeader(blockHeader);
                 blockState.setFinalizedHash(blockHeader, null, BigInteger.ZERO);
+
+                // TODO: Remove this when FinalizationHandler (responsible for sending events on block finalization) is implemented.
+                stateManager.getGrandpaSetState()
+                        .applyAuthoritySetChange(
+                                blockHeader.getHash(),
+                                blockHeader.getBlockNumber()
+                        );
             }
         }
     }
