@@ -4,7 +4,7 @@ import com.limechain.ServiceConsensusState;
 import com.limechain.chain.lightsyncstate.LightSyncState;
 import com.limechain.chain.lightsyncstate.PendingChange;
 import com.limechain.consensus.dto.Authority;
-import com.limechain.consensus.grandpa.dto.AuthoritySetChangeTracker;
+import com.limechain.consensus.grandpa.dto.AuthoritySetChangeHandler;
 import com.limechain.consensus.grandpa.dto.GrandpaAuthoritySet;
 import com.limechain.consensus.grandpa.dto.SignedVote;
 import com.limechain.consensus.grandpa.dto.Vote;
@@ -53,7 +53,7 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
     private GrandpaRound currentGrandpaRound;
 
     private GrandpaAuthoritySet authoritySet = new GrandpaAuthoritySet();
-    private AuthoritySetChangeTracker authoritySetChangeTracker = new AuthoritySetChangeTracker();
+    private AuthoritySetChangeHandler authoritySetChangeHandler = new AuthoritySetChangeHandler();
     private BigInteger disabledAuthority;
 
     private final BlockState blockState;
@@ -130,7 +130,7 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
                 : BigInteger.ONE;
 
         this.authoritySet = new GrandpaAuthoritySet(setId, authorities);
-        this.authoritySetChangeTracker = new AuthoritySetChangeTracker();
+        this.authoritySetChangeHandler = new AuthoritySetChangeHandler();
 
         persistNewSetState();
         updateAuthorityStatus();
@@ -159,7 +159,7 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
 
         try {
 
-            authoritySetChangeTracker.addPendingChange(
+            authoritySetChangeHandler.addPendingChange(
                     PendingChange.buildForcedAuthoritySetChange(
                             consensusMessage.getAuthorities(),
                             consensusMessage.getDelay(),
@@ -178,7 +178,7 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
 
         try {
 
-            authoritySetChangeTracker.addPendingChange(
+            authoritySetChangeHandler.addPendingChange(
                     PendingChange.buildScheduledAuthoritySetChange(
                             consensusMessage.getAuthorities(),
                             consensusMessage.getDelay(),
@@ -205,7 +205,7 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
         Optional<PendingChange> forcedChange = Optional.empty();
 
         try {
-            forcedChange = authoritySetChangeTracker.applyForcedChanges(hash, number, blockState::isDescendantOf);
+            forcedChange = authoritySetChangeHandler.applyForcedChanges(hash, number, blockState::isDescendantOf);
         } catch (GrandpaGenericException e) {
             log.warning("Error while applying forced change: " + e.getMessage());
         }
@@ -242,7 +242,7 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
         Optional<PendingChange> scheduledChange = Optional.empty();
         try {
             scheduledChange =
-                    authoritySetChangeTracker.applyScheduledChanges(hash, number, blockState::isDescendantOf);
+                    authoritySetChangeHandler.applyScheduledChanges(hash, number, blockState::isDescendantOf);
 
         } catch (GrandpaGenericException e) {
             log.warning("Error while applying scheduled change: " + e.getMessage());

@@ -22,7 +22,7 @@ import java.util.function.BiPredicate;
 @Getter
 @Setter
 @NoArgsConstructor
-public class AuthoritySetChangeTracker {
+public class AuthoritySetChangeHandler {
 
     private ForkTree<PendingChange> pendingScheduledChanges = new ForkTree<>();
     private List<PendingChange> pendingForcedChanges = new ArrayList<>();
@@ -98,8 +98,6 @@ public class AuthoritySetChangeTracker {
         pendingForcedChanges.add(idx, pendingChange);
     }
 
-    //TODO: surround this with try catch and if it throws an error -> ?
-    //TODO: After calling this method a new set should be started and the pending change should be added to the past changes
     public Optional<PendingChange> applyForcedChanges(Hash256 bestBlockHash,
                                                       BigInteger bestBlockNumber,
                                                       BiPredicate<Hash256, Hash256> isDescendantOf)
@@ -153,8 +151,6 @@ public class AuthoritySetChangeTracker {
         }
     }
 
-    //TODO: called on finalizing block
-    //TODO: After calling this method a new set should be started and the pending change should be added to the past changes
     public Optional<PendingChange> applyScheduledChanges(Hash256 finalizedHash,
                                                          BigInteger finalizedNumber,
                                                          BiPredicate<Hash256, Hash256> isDescendantOf) {
