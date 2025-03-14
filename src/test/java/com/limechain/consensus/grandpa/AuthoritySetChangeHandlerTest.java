@@ -4,6 +4,7 @@ import com.limechain.chain.lightsyncstate.PendingChange;
 import com.limechain.consensus.dto.Authority;
 import com.limechain.consensus.grandpa.dto.AuthoritySetChangeHandler;
 import com.limechain.exception.grandpa.GrandpaGenericException;
+import com.limechain.storage.forktree.ForkTree;
 import io.emeraldpay.polkaj.types.Hash256;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -180,6 +181,7 @@ public class AuthoritySetChangeHandlerTest {
 
     @Test
     public void testKeepingTheOrderWhenAddingSecondForcedChange() throws Exception {
+
         PendingChange forcedChange = createPendingChange(
                 HASH_1,
                 BLOCK_NUMBER_TWO,
@@ -242,6 +244,7 @@ public class AuthoritySetChangeHandlerTest {
 
     @Test
     public void testAddForcedChangeWithInvalidAuthorityList() {
+
         List<Authority> authorities = List.of(new Authority(new byte[] {1}, BigInteger.ZERO));
 
         PendingChange forcedChange = createPendingChange(
@@ -257,6 +260,7 @@ public class AuthoritySetChangeHandlerTest {
 
     @Test
     public void testAddForcedChangeWithNullAuthorityList() {
+
         PendingChange forcedChange = createPendingChange(
                 HASH_1,
                 BLOCK_NUMBER_ONE,
@@ -270,6 +274,7 @@ public class AuthoritySetChangeHandlerTest {
 
     @Test
     public void testAddForcedChangeWithEmptyAuthorityList() {
+
         PendingChange forcedChange = createPendingChange(
                 HASH_1,
                 BLOCK_NUMBER_ONE,
@@ -279,6 +284,37 @@ public class AuthoritySetChangeHandlerTest {
         );
 
         assertThrows(GrandpaGenericException.class, () -> handler.addPendingChange(forcedChange, TRUE_BIPREDICATE));
+    }
+
+    @Test
+    public void testAddScheduledChangeSuccessfully() throws Exception {
+
+        PendingChange scheduledChange = createPendingChange(
+                HASH_1,
+                BLOCK_NUMBER_TWO,
+                DELAY_OF_ZERO,
+                firstAuthoritySet,
+                PendingChange.DelayKindEnum.FINALIZED
+        );
+
+        handler.addPendingChange(scheduledChange, TRUE_BIPREDICATE);
+
+        Class<?> clazz = handler.getClass();
+
+        Field field = clazz.getDeclaredField("pendingScheduledChanges");
+        field.setAccessible(true);
+        ForkTree<PendingChange> forkTree = (ForkTree<PendingChange>) field.get(handler);
+        forkTree.setBestFinalizedNumber(BLOCK_NUMBER_ONE);
+
+        assertEquals(1, forkTree.getRoots().size());
+
+        Optional<PendingChange> appliedScheduled = handler.applyScheduledChanges(
+                HASH_1,
+                BLOCK_NUMBER_TWO,
+                TRUE_BIPREDICATE
+        );
+
+        assertTrue(appliedScheduled.isPresent());
     }
 
     private void checkConditionAgainstForcedChangeList(PendingChange pendingChange, Predicate<List<PendingChange>> predicate)
