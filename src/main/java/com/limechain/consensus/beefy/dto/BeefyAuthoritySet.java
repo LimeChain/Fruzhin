@@ -8,6 +8,6 @@ import java.util.List;
 @Value
 public class BeefyAuthoritySet {
 
-    BigInteger setId;
     List<byte[]> publicKeys;
+    BigInteger setId;
 }
