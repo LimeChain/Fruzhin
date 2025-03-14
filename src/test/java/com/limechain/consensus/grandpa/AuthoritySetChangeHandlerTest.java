@@ -405,6 +405,9 @@ public class AuthoritySetChangeHandlerTest {
                         BLOCK_NUMBER_ONE,
                         TRUE_BIPREDICATE
                 ));
+
+        assertEquals(1, handler.getPendingForcedChanges().size());
+        assertEquals(1, handler.getPendingScheduledChanges().getRoots().size());
     }
 
     @Test
@@ -436,6 +439,9 @@ public class AuthoritySetChangeHandlerTest {
                         BLOCK_NUMBER_ONE,
                         TRUE_BIPREDICATE
                 ));
+
+        assertEquals(1, handler.getPendingForcedChanges().size());
+        assertEquals(1, handler.getPendingScheduledChanges().getRoots().size());
     }
 
     @Test
@@ -468,6 +474,51 @@ public class AuthoritySetChangeHandlerTest {
         );
 
         assertTrue(pendingChange.isPresent());
+        assertEquals(0, handler.getPendingForcedChanges().size());
+        assertEquals(1, handler.getPendingScheduledChanges().getRoots().size());
+    }
+
+    @Test
+    public void testRemoveInvalidForcedChanges() throws Exception {
+
+        PendingChange forcedValid = createPendingChange(
+                HASH_1,
+                BLOCK_NUMBER_TEN,
+                DELAY_OF_ZERO,
+                firstAuthoritySet,
+                PendingChange.DelayKindEnum.BEST
+        );
+
+        PendingChange forcedInvalid = createPendingChange(
+                HASH_2,
+                BLOCK_NUMBER_ONE,
+                DELAY_OF_ZERO,
+                firstAuthoritySet,
+                PendingChange.DelayKindEnum.BEST
+        );
+
+        handler.addPendingChange(forcedValid, TRUE_BIPREDICATE);
+        handler.addPendingChange(forcedInvalid, FALSE_BIPREDICATE);
+
+        PendingChange scheduledChange = createPendingChange(
+                HASH_3,
+                BLOCK_NUMBER_TWO,
+                DELAY_OF_ZERO,
+                firstAuthoritySet,
+                PendingChange.DelayKindEnum.FINALIZED
+        );
+
+        handler.addPendingChange(scheduledChange, TRUE_BIPREDICATE);
+
+        assertEquals(2, handler.getPendingForcedChanges().size());
+        assertEquals(1, handler.getPendingScheduledChanges().getRoots().size());
+
+        Optional<PendingChange> result =
+                handler.applyScheduledChanges(HASH_3, BLOCK_NUMBER_TWO, TRUE_BIPREDICATE);
+
+        assertEquals(1, handler.getPendingForcedChanges().size());
+        assertEquals(0, handler.getPendingScheduledChanges().getRoots().size());
+        assertTrue(result.isPresent());
     }
 
     private PendingChange createPendingChange(Hash256 hash,
