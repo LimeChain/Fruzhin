@@ -18,9 +18,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiPredicate;
-import java.util.function.Predicate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -65,7 +65,7 @@ public class AuthoritySetChangeHandlerTest {
 
         handler.addPendingChange(forcedChange, TRUE_BIPREDICATE);
 
-        checkConditionAgainstForcedChangeList(forcedChange, list -> list.contains(forcedChange));
+        assertTrue(handler.getPendingForcedChanges().contains(forcedChange));
 
         Optional<PendingChange> appliedForced = handler.applyForcedChanges(
                 HASH_1,
@@ -73,7 +73,7 @@ public class AuthoritySetChangeHandlerTest {
                 TRUE_BIPREDICATE
         );
 
-        checkConditionAgainstForcedChangeList(forcedChange, list -> !list.contains(forcedChange));
+        assertFalse(handler.getPendingForcedChanges().contains(forcedChange));
         assertTrue(appliedForced.isPresent());
         assertEquals(appliedForced.get().getNextAuthorities(), forcedChange.getNextAuthorities());
     }
@@ -91,7 +91,7 @@ public class AuthoritySetChangeHandlerTest {
 
         handler.addPendingChange(forcedChange, TRUE_BIPREDICATE);
 
-        checkConditionAgainstForcedChangeList(forcedChange, list -> list.contains(forcedChange));
+        assertTrue(handler.getPendingForcedChanges().contains(forcedChange));
 
         Optional<PendingChange> appliedForced = handler.applyForcedChanges(
                 HASH_1,
@@ -99,7 +99,7 @@ public class AuthoritySetChangeHandlerTest {
                 TRUE_BIPREDICATE
         );
 
-        checkConditionAgainstForcedChangeList(forcedChange, list -> !list.contains(forcedChange));
+        assertFalse(handler.getPendingForcedChanges().contains(forcedChange));
         assertTrue(appliedForced.isPresent());
         assertEquals(appliedForced.get().getNextAuthorities(), forcedChange.getNextAuthorities());
     }
@@ -117,10 +117,10 @@ public class AuthoritySetChangeHandlerTest {
 
         handler.addPendingChange(forcedChange, TRUE_BIPREDICATE);
 
-        checkConditionAgainstForcedChangeList(forcedChange, list -> list.contains(forcedChange));
+        assertTrue(handler.getPendingForcedChanges().contains(forcedChange));
 
         assertThrows(GrandpaGenericException.class, () -> handler.addPendingChange(forcedChange, TRUE_BIPREDICATE));
-        checkConditionAgainstForcedChangeList(forcedChange, list -> list.size() == 1);
+        assertEquals(1, handler.getPendingForcedChanges().size());
     }
 
     @Test
@@ -136,7 +136,7 @@ public class AuthoritySetChangeHandlerTest {
 
         handler.addPendingChange(forcedChange, TRUE_BIPREDICATE);
 
-        checkConditionAgainstForcedChangeList(forcedChange, list -> list.contains(forcedChange));
+        assertTrue(handler.getPendingForcedChanges().contains(forcedChange));
 
         PendingChange secondForcedChange = createPendingChange(
                 HASH_1,
@@ -146,8 +146,10 @@ public class AuthoritySetChangeHandlerTest {
                 PendingChange.DelayKindEnum.BEST
         );
 
-        assertThrows(GrandpaGenericException.class, () -> handler.addPendingChange(secondForcedChange, FALSE_BIPREDICATE));
-        checkConditionAgainstForcedChangeList(forcedChange, list -> list.size() == 1);
+        assertThrows(GrandpaGenericException.class, () ->
+                handler.addPendingChange(secondForcedChange, FALSE_BIPREDICATE));
+
+        assertEquals(1, handler.getPendingForcedChanges().size());
     }
 
     @Test
@@ -173,10 +175,10 @@ public class AuthoritySetChangeHandlerTest {
 
         handler.addPendingChange(secondForcedChange, FALSE_BIPREDICATE);
 
-        checkConditionAgainstForcedChangeList(forcedChange, list -> list.get(0).equals(secondForcedChange));
-        checkConditionAgainstForcedChangeList(forcedChange, list -> list.get(1).equals(forcedChange));
+        assertEquals(secondForcedChange, handler.getPendingForcedChanges().get(0));
+        assertEquals(forcedChange, handler.getPendingForcedChanges().get(1));
 
-        checkConditionAgainstForcedChangeList(forcedChange, list -> list.size() == 2);
+        assertEquals(2, handler.getPendingForcedChanges().size());
     }
 
     @Test
@@ -202,10 +204,10 @@ public class AuthoritySetChangeHandlerTest {
 
         handler.addPendingChange(secondForcedChange, FALSE_BIPREDICATE);
 
-        checkConditionAgainstForcedChangeList(forcedChange, list -> list.get(0).equals(forcedChange));
-        checkConditionAgainstForcedChangeList(forcedChange, list -> list.get(1).equals(secondForcedChange));
+        assertEquals(forcedChange, handler.getPendingForcedChanges().get(0));
+        assertEquals(secondForcedChange, handler.getPendingForcedChanges().get(1));
 
-        checkConditionAgainstForcedChangeList(forcedChange, list -> list.size() == 2);
+        assertEquals(2, handler.getPendingForcedChanges().size());
     }
 
     @Test
@@ -287,7 +289,7 @@ public class AuthoritySetChangeHandlerTest {
     }
 
     @Test
-    public void testAddScheduledChangeSuccessfully() throws Exception {
+    public void testAddAndApplyScheduledChangeSuccessfully() throws Exception {
 
         PendingChange scheduledChange = createPendingChange(
                 HASH_1,
@@ -317,16 +319,155 @@ public class AuthoritySetChangeHandlerTest {
         assertTrue(appliedScheduled.isPresent());
     }
 
-    private void checkConditionAgainstForcedChangeList(PendingChange pendingChange, Predicate<List<PendingChange>> predicate)
-            throws Exception {
+    @Test
+    public void testApplyForcedChangesWhenNoForcedChanges() {
+        Optional<PendingChange> pendingChange = handler.applyForcedChanges(HASH_1, BLOCK_NUMBER_ONE, TRUE_BIPREDICATE);
+        assertTrue(pendingChange.isEmpty());
+    }
 
-        Class<?> clazz = handler.getClass();
+    @Test
+    public void testApplyForcedChangesWhenEffectiveNumberGreater() {
 
-        Field field = clazz.getDeclaredField("pendingForcedChanges");
-        field.setAccessible(true);
-        List<PendingChange> pendingForcedChanges = (List<PendingChange>) field.get(handler);
+        PendingChange forcedChange = createPendingChange(
+                HASH_1,
+                BLOCK_NUMBER_ONE,
+                BLOCK_NUMBER_ONE,
+                List.of(new Authority(new byte[]{1}, BigInteger.ONE)),
+                PendingChange.DelayKindEnum.BEST);
 
-        assertTrue(predicate.test(pendingForcedChanges));
+        handler.addPendingChange(forcedChange, TRUE_BIPREDICATE);
+
+        Optional<PendingChange> result = handler.applyForcedChanges(
+                HASH_1,
+                BLOCK_NUMBER_ONE.subtract(BigInteger.ONE),
+                TRUE_BIPREDICATE
+        );
+
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    public void testApplyForcedChangesMatchAndNoConflict() {
+
+        PendingChange forcedChange = createPendingChange(
+                HASH_1,
+                BLOCK_NUMBER_ONE,
+                DELAY_OF_ZERO,
+                List.of(new Authority(new byte[]{1}, BigInteger.ONE)),
+                PendingChange.DelayKindEnum.BEST);
+
+        handler.addPendingChange(forcedChange, TRUE_BIPREDICATE);
+
+        Optional<PendingChange> result = handler.applyForcedChanges(
+                HASH_1,
+                BLOCK_NUMBER_ONE,
+                TRUE_BIPREDICATE
+        );
+
+        assertTrue(result.isPresent());
+        assertEquals(forcedChange.getNextAuthorities(), result.get().getNextAuthorities());
+
+        Optional<PendingChange> secondResult = handler.applyForcedChanges(
+                HASH_1,
+                BLOCK_NUMBER_ONE,
+                TRUE_BIPREDICATE
+        );
+
+        assertTrue(secondResult.isEmpty());
+    }
+
+    @Test
+    public void testApplyForcedChangesWithScheduledChangeEffectiveNumberEqualMedianLastFinalized() {
+
+        PendingChange forcedChange = createPendingChange(
+                HASH_1,
+                BLOCK_NUMBER_ONE,
+                DELAY_OF_ZERO,
+                firstAuthoritySet,
+                PendingChange.DelayKindEnum.BEST,
+                BLOCK_NUMBER_TWO
+        );
+
+        handler.addPendingChange(forcedChange, TRUE_BIPREDICATE);
+
+        PendingChange scheduledChange = createPendingChange(
+                HASH_2,
+                BLOCK_NUMBER_TWO,
+                DELAY_OF_ZERO,
+                firstAuthoritySet,
+                PendingChange.DelayKindEnum.FINALIZED);
+
+        handler.addPendingChange(scheduledChange, TRUE_BIPREDICATE);
+
+        assertThrows(GrandpaGenericException.class, () ->
+                handler.applyForcedChanges(
+                        HASH_1,
+                        BLOCK_NUMBER_ONE,
+                        TRUE_BIPREDICATE
+                ));
+    }
+
+    @Test
+    public void testApplyForcedChangesWithScheduledChangeAsAncestor() {
+
+        PendingChange forcedChange = createPendingChange(
+                HASH_1,
+                BLOCK_NUMBER_ONE,
+                DELAY_OF_ZERO,
+                firstAuthoritySet,
+                PendingChange.DelayKindEnum.BEST,
+                BLOCK_NUMBER_TWO
+        );
+
+        handler.addPendingChange(forcedChange, TRUE_BIPREDICATE);
+
+        PendingChange scheduledChange = createPendingChange(
+                HASH_2,
+                BLOCK_NUMBER_ONE,
+                DELAY_OF_ZERO,
+                firstAuthoritySet,
+                PendingChange.DelayKindEnum.FINALIZED);
+
+        handler.addPendingChange(scheduledChange, TRUE_BIPREDICATE);
+
+        assertThrows(GrandpaGenericException.class, () ->
+                handler.applyForcedChanges(
+                        HASH_1,
+                        BLOCK_NUMBER_ONE,
+                        TRUE_BIPREDICATE
+                ));
+    }
+
+    @Test
+    public void testApplyForcedChangesWithoutConflictingScheduledChange() {
+
+        PendingChange forcedChange = createPendingChange(
+                HASH_1,
+                BLOCK_NUMBER_ONE,
+                DELAY_OF_ZERO,
+                firstAuthoritySet,
+                PendingChange.DelayKindEnum.BEST,
+                BLOCK_NUMBER_TWO
+        );
+
+        handler.addPendingChange(forcedChange, TRUE_BIPREDICATE);
+
+        PendingChange scheduledChange = createPendingChange(
+                HASH_2,
+                BLOCK_NUMBER_ONE,
+                DELAY_OF_ZERO,
+                firstAuthoritySet,
+                PendingChange.DelayKindEnum.FINALIZED);
+
+        handler.addPendingChange(scheduledChange, TRUE_BIPREDICATE);
+
+        Optional<PendingChange> pendingChange = handler.applyForcedChanges(
+                HASH_1,
+                BLOCK_NUMBER_ONE,
+                FALSE_BIPREDICATE
+        );
+
+        assertTrue(pendingChange.isPresent());
     }
 
     private PendingChange createPendingChange(Hash256 hash,
@@ -334,6 +475,16 @@ public class AuthoritySetChangeHandlerTest {
                                               BigInteger delay,
                                               List<Authority> authorities,
                                               PendingChange.DelayKindEnum kind) {
+
+        return createPendingChange(hash, number, delay, authorities, kind, null);
+    }
+
+    private PendingChange createPendingChange(Hash256 hash,
+                                              BigInteger number,
+                                              BigInteger delay,
+                                              List<Authority> authorities,
+                                              PendingChange.DelayKindEnum kind,
+                                              BigInteger medianLastFinalized) {
 
         PendingChange change = new PendingChange();
 
@@ -343,6 +494,10 @@ public class AuthoritySetChangeHandlerTest {
         change.setDelay(delay);
 
         PendingChange.DelayKind delayKind = new PendingChange.DelayKind();
+        if (medianLastFinalized != null && kind.equals(PendingChange.DelayKindEnum.BEST)) {
+            delayKind.setMedianLastFinalized(medianLastFinalized);
+        }
+
         delayKind.setKind(kind);
 
         change.setDelayKind(delayKind);
