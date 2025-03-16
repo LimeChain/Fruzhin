@@ -123,7 +123,7 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
         return roundNumber.remainder(authoritiesCount);
     }
 
-    public void startNewSet(List<Authority> authorities) {
+    public void startNewSet(BigInteger effectiveNumber, List<Authority> authorities) {
 
         BigInteger setId = (authoritySet != null && authoritySet.getSetId() != null)
                 ? authoritySet.getSetId().add(BigInteger.ONE)
@@ -134,6 +134,8 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
 
         persistNewSetState();
         updateAuthorityStatus();
+
+        pastSetChanges.put(effectiveNumber, authoritySet);
 
         log.log(Level.INFO, "Successfully transitioned to authority set id: " + authoritySet.getSetId());
     }
@@ -211,10 +213,9 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
         }
 
         if (forcedChange.isPresent()) {
-            PendingChange pendingChange = forcedChange.get();
 
-            pastSetChanges.put(pendingChange.getEffectiveNumber(), authoritySet);
-            startNewSet(pendingChange.getNextAuthorities());
+            PendingChange pendingChange = forcedChange.get();
+            startNewSet(pendingChange.getEffectiveNumber(), pendingChange.getNextAuthorities());
 
             return true;
         }
@@ -249,10 +250,9 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
         }
 
         if (scheduledChange.isPresent()) {
-            PendingChange pendingChange = scheduledChange.get();
 
-            pastSetChanges.put(pendingChange.getEffectiveNumber(), authoritySet);
-            startNewSet(pendingChange.getNextAuthorities());
+            PendingChange pendingChange = scheduledChange.get();
+            startNewSet(pendingChange.getEffectiveNumber(), pendingChange.getNextAuthorities());
 
             return true;
         }

@@ -93,8 +93,7 @@ public class AuthoritySetChangeHandler {
                     "Pending change with the same effective number and canonHeight already exists"
             );
         } else {
-            // If binarySearch returns a negative value, invert it to get the correct insertion index.
-            // For example, if binarySearch returns -4, then the element should be inserted at index 3.
+            // Collections.binarySearch() returns –(insertionPoint + 1) when the element isn’t found
             idx = (-idx) - 1;
         }
 
@@ -106,7 +105,7 @@ public class AuthoritySetChangeHandler {
     /**
      * Applies a forced authority set change that is applicable for the given block. Iterates over
      * pending forced changes to find one with an effective number equal to the best blok number,
-     * checking for ancestry. If a conflicting scheduled change exists, the forced change is removed.
+     * checking for ancestry.
      */
     public Optional<PendingChange> applyForcedChanges(Hash256 bestBlockHash,
                                                       BigInteger bestBlockNumber,
@@ -193,7 +192,7 @@ public class AuthoritySetChangeHandler {
 
     /**
      * This method is used to make cleanup, that prevents those stale forced changes from interfering
-     * with the finalization of scheduled changes and keeps the state consistent
+     * with the finalization of scheduled changes
      */
     private void removeInvalidForcedAuthoritySetChanges(Hash256 finalizedHash,
                                                         BigInteger finalizedNumber,
