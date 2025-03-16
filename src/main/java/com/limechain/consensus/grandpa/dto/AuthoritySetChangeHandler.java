@@ -9,7 +9,6 @@ import io.emeraldpay.polkaj.types.Hash256;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.javatuples.Pair;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -26,7 +25,6 @@ public class AuthoritySetChangeHandler {
 
     private ForkTree<PendingChange> pendingScheduledChanges = new ForkTree<>();
     private List<PendingChange> pendingForcedChanges = new ArrayList<>();
-    private List<Pair<BigInteger, BigInteger>> authoritySetChanges = new ArrayList<>();
 
     /**
      * Adds a pending change to the handler. Depending of the delay kind of the pending change, it delegates to
