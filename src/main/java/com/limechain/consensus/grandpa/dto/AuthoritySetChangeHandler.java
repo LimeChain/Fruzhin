@@ -116,15 +116,21 @@ public class AuthoritySetChangeHandler {
 
         for (PendingChange change : pendingForcedChanges) {
 
+            // Pending changes are sorted by effective number and once a change with greater
+            // effective number is encountered we can simply break the loop and proceed further
             if (change.getEffectiveNumber().compareTo(bestBlockNumber) > 0) {
                 break;
             }
 
-            if (change.getEffectiveNumber().equals(bestBlockNumber) && (bestBlockHash.equals(change.getCanonHash())
-                    || isDescendantOf.test(change.getCanonHash(), bestBlockHash))) {
+            boolean blockNumberMatch = change.getEffectiveNumber().equals(bestBlockNumber);
+            boolean blockHashMatch = bestBlockHash.equals(change.getCanonHash());
+
+            // Calculating isDescendantOf only when needed in order to take advantage of if
+            // statement short circuit
+            if (blockNumberMatch && (blockHashMatch ||
+                    isDescendantOf.test(change.getCanonHash(), bestBlockHash))) {
 
                 checkForConflictingScheduledChange(change, isDescendantOf);
-
                 forcedChange = change;
                 break;
             }
