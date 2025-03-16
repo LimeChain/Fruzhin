@@ -284,8 +284,8 @@ public class BeefyService {
             switch (consensusMessage.getFormat()) {
                 case BEEFY_CHANGED_AUTHORITIES -> {
                     BeefyAuthoritySet validatorSet = new BeefyAuthoritySet(
-                            consensusMessage.getAuthoritySetId(),
-                            consensusMessage.getAuthorityPublicKeys()
+                            consensusMessage.getAuthorityPublicKeys(),
+                            consensusMessage.getAuthoritySetId()
                     );
                     return Map.of(currentBlockNumber, new BeefySession(validatorSet, null));
                 }

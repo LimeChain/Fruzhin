@@ -1,12 +1,8 @@
 package com.limechain.consensus.beefy;
 
 import com.limechain.ServiceConsensusState;
-import com.limechain.beefy.dto.SignedCommitment;
-import com.limechain.beefy.dto.ValidatorSet;
-import com.limechain.beefy.dto.VoteMessage;
 import com.limechain.consensus.beefy.dto.BeefyAuthoritySet;
 import com.limechain.consensus.beefy.dto.BeefySession;
-import com.limechain.consensus.beefy.dto.message.BeefyConsensusMessage;
 import com.limechain.network.protocol.beefy.messages.justification.SignedCommitment;
 import com.limechain.network.protocol.beefy.messages.vote.VoteMessage;
 import com.limechain.runtime.Runtime;
@@ -16,7 +12,6 @@ import com.limechain.storage.KVRepository;
 import com.limechain.storage.StateUtil;
 import com.limechain.storage.block.state.BlockState;
 import com.limechain.storage.crypto.KeyStore;
-import com.limechain.storage.crypto.KeyType;
 import io.micrometer.common.lang.Nullable;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
