@@ -151,8 +151,8 @@ public class AuthoritySetChangeHandler {
     private void checkForConflictingScheduledChange(PendingChange forcedChange,
                                                     BiPredicate<Hash256, Hash256> isDescendantOf) {
 
-        // The medianLastFinalized value acts as a threshold that helps determine the
-        // proper ordering of authority set changes.
+        // The median last finalized value (computed at change signaling from the runtime) serves as a threshold.
+        // It ensures that forced changes do not override scheduled changes that must be applied first.
         BigInteger medianLastFinalized = forcedChange.getDelayKind().getMedianLastFinalized();
 
         for (ForkTree.ForkTreeNode<PendingChange> forkTreeNode : pendingScheduledChanges.getRoots()) {
