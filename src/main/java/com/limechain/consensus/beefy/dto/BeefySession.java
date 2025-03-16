@@ -6,16 +6,16 @@ import lombok.Value;
 import org.javatuples.Pair;
 
 import java.math.BigInteger;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Value
 @RequiredArgsConstructor
 public class BeefySession {
 
     BeefyAuthoritySet authoritySet;
-    Set<BigInteger> nonMandatoryBlockNumbers = Collections.synchronizedSet(new HashSet<>());
+    // Key is non-mandatory block
+    Map<BigInteger, BeefyRound> rounds = new ConcurrentHashMap();
     @Nullable
     Pair<byte[], byte[]> beefyKeyPair;
 }
