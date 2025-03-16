@@ -1,6 +1,6 @@
-package com.limechain.beefy.state;
+package com.limechain.consensus.beefy.dto;
 
-import com.limechain.beefy.dto.VoteMessage;
+import com.limechain.network.protocol.beefy.messages.vote.VoteMessage;
 import lombok.Value;
 
 import java.util.Map;
