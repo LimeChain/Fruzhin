@@ -1,11 +1,11 @@
 package com.limechain.network.protocol.beefy.messages.vote;
 
 import com.limechain.consensus.beefy.dto.Commitment;
-import lombok.Data;
+import lombok.Value;
 
-@Data
+@Value
 public class VoteMessage {
-    private Commitment commitment;
-    private byte[] authorityId;
-    private byte[] signature;
+    Commitment commitment;
+    byte[] authorityId;
+    byte[] signature;
 }
