@@ -2,7 +2,6 @@ package com.limechain.consensus.beefy;
 
 import com.limechain.consensus.beefy.dto.BeefyAuthoritySet;
 import com.limechain.consensus.beefy.dto.BeefyPayloadId;
-import com.limechain.consensus.beefy.dto.BeefyRound;
 import com.limechain.consensus.beefy.dto.BeefySession;
 import com.limechain.consensus.beefy.dto.Commitment;
 import com.limechain.consensus.beefy.dto.PayloadElement;
@@ -20,7 +19,6 @@ import org.springframework.stereotype.Component;
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -120,21 +118,6 @@ public class BeefyService {
         var faulty = (numOfValidators.subtract(BigInteger.ONE)).divide(THRESHOLD_DENOMINATOR);
 
         return numOfValidators.subtract(faulty);
-    }
-
-    private void cleanUpSessionsAndRoundsOnJustification(BeefySession currentSession,
-                                                         BigInteger blockNumber) {
-        List<BeefySession> beefySessions = beefyState.getSessions();
-        BigInteger currentSessionMandatoryBlock = currentSession.getMandatoryBlock();
-        // Remove all sessions before the current one
-        beefySessions.removeIf(session -> session.getMandatoryBlock()
-                .compareTo(currentSessionMandatoryBlock) < 0
-        );
-
-        if (!currentSession.equals(beefySessions.getLast())) {
-            Map<Commitment, BeefyRound> currentSessionRounds = currentSession.getRounds();
-            currentSessionRounds.keySet().removeIf(key -> key.getBlockNumber().compareTo(blockNumber) < 0);
-        }
     }
 
     /**
