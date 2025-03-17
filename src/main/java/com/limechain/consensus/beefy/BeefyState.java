@@ -3,6 +3,7 @@ package com.limechain.consensus.beefy;
 import com.limechain.ServiceConsensusState;
 import com.limechain.consensus.beefy.dto.BeefyAuthoritySet;
 import com.limechain.consensus.beefy.dto.BeefySession;
+import com.limechain.consensus.beefy.dto.message.BeefyConsensusMessage;
 import com.limechain.network.protocol.beefy.messages.justification.SignedCommitment;
 import com.limechain.network.protocol.beefy.messages.vote.VoteMessage;
 import com.limechain.runtime.Runtime;
@@ -12,6 +13,7 @@ import com.limechain.storage.KVRepository;
 import com.limechain.storage.StateUtil;
 import com.limechain.storage.block.state.BlockState;
 import com.limechain.storage.crypto.KeyStore;
+import com.limechain.storage.crypto.KeyType;
 import io.micrometer.common.lang.Nullable;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -20,10 +22,9 @@ import lombok.extern.java.Log;
 import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Represents the state information required for managing BEEFY finality rounds
@@ -37,9 +38,6 @@ import java.util.Map;
 @Component
 @RequiredArgsConstructor
 public class BeefyState extends AbstractState implements ServiceConsensusState {
-
-    private static final BigInteger THRESHOLD_DENOMINATOR = BigInteger.valueOf(3);
-    private static final int MIN_BLOCK_DELTA = 1;
 
     private BeefyAuthoritySet authoritySet;
 
@@ -72,8 +70,8 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
     @Nullable
     private VoteMessage lastVote;
 
-    //mapper key is mandatory block number where authority set change appeared
-    private LinkedHashMap<BigInteger, BeefySession> sessions = new LinkedHashMap<>();
+    private List<BeefySession> sessions = Collections.synchronizedList(new ArrayList<BeefySession>());
+
 
     @Override
     public void populateDataFromRuntime(Runtime runtime) {
@@ -105,50 +103,34 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
         }
     }
 
-    public void vote() {
+    public void handleBeefyConsensusMessage(BeefyConsensusMessage consensusMessage, BigInteger blockNumber) {
+        switch (consensusMessage.getFormat()) {
+            case BEEFY_CHANGED_AUTHORITIES -> handleChangedBeefyAuthorities(consensusMessage, blockNumber);
+            case BEEFY_ON_DISABLED -> disabledAuthority = consensusMessage.getDisabledAuthority();
+        }
+    }
 
-        // Get the first session (round)
-        Map.Entry<BigInteger, BeefySession> sessionStart = sessions.firstEntry();
+    private void handleChangedBeefyAuthorities(BeefyConsensusMessage consensusMessage, BigInteger blockNumber) {
+        org.javatuples.Pair<byte[], byte[]> keyPair = keyStore.findKeyPair(
+                consensusMessage.getAuthorityPublicKeys(),
+                KeyType.BEEFY
+        ).orElse(null);
 
-        // If no session is found, exit the method
-        if (sessionStart == null) {
-            log.info("Vote BEEFY: No voting round started");
-            return;
+        if (keyPair == null) {
+            log.info(
+                    String.format("BEEFY: We are not chosen to vote in current session, block number: %s", blockNumber)
+            );
         }
 
-        BigInteger sessionStartBlock = sessionStart.getKey();
+        BeefySession beefySession = new BeefySession(
+                new BeefyAuthoritySet(consensusMessage.getAuthorityPublicKeys(), consensusMessage.getAuthoritySetId()),
+                blockNumber,
+                false,
+                null,
+                keyPair
+        );
 
-        // Calculate the target vote block number
-        BigInteger targetVoteBlockNumber;
-
-        // If the mandatory block (sessionStart) does not have a beefy justification yet, vote on it
-        if (beefyFinalized.compareTo(sessionStartBlock) < 0) {
-            log.info(String.format("Vote BEEFY: vote target - mandatory block: #%s%n", sessionStartBlock));
-            targetVoteBlockNumber = sessionStartBlock;
-        } else {
-            BigInteger diff = grandpaFinalized.subtract(beefyFinalized).max(BigInteger.ZERO).add(BigInteger.ONE);
-            int diffInt = diff.min(BigInteger.valueOf(Integer.MAX_VALUE)).intValue();
-            int nextPowerOfTwo = (Integer.bitCount(diffInt) == 1) ? diffInt : Integer.highestOneBit(diffInt) << 1;
-            int adjustedDiff = Math.max(MIN_BLOCK_DELTA, nextPowerOfTwo);
-
-            targetVoteBlockNumber = beefyFinalized.add(BigInteger.valueOf(adjustedDiff));
-
-            log.info(String.format("Vote BEEFY: vote target - diff: %d, next_power_of_two: %d, target block: #%s%n",
-                    diffInt, nextPowerOfTwo, targetVoteBlockNumber));
-        }
-
-        // Don't vote for targets until they've been finalized (`target` can be > `bestGrandpa` when `minDelta` is big enough).
-        // Also, ensure it's not voting on a block that has already been voted on.
-        if (targetVoteBlockNumber.compareTo(grandpaFinalized) > 0 || targetVoteBlockNumber.compareTo(lastVoted) <= 0) {
-            return; // No voting if target is beyond grandpa finalized or it's not a new block
-        }
-
-        // If it's a valid vote target, update the last voted block
-        lastVoted = targetVoteBlockNumber;
-
-        // TODO: Get Beefy Keys
-        // TODO: Create Commitment and signature
-        // TODO: Broadcast Vote Message
+        sessions.add(beefySession);
     }
 
     private void reportDoubleVoting(VoteMessage voteMessage) {

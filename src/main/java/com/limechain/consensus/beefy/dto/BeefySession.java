@@ -15,7 +15,15 @@ public class BeefySession {
 
     BeefyAuthoritySet authoritySet;
     // Key is non-mandatory block
-    Map<BigInteger, BeefyRound> rounds = new ConcurrentHashMap();
+    Map<Commitment, BeefyRound> rounds = new ConcurrentHashMap();
+
+    BigInteger mandatoryBlock;
+
+    boolean isMandatoryBlockFinalized;
+
+    @Nullable
+    BigInteger highestFinalizedForSession;
+
     @Nullable
     Pair<byte[], byte[]> beefyKeyPair;
 }
