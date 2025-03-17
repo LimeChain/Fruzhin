@@ -28,7 +28,7 @@ dependencies {
     implementation("org.web3j:crypto:4.13.0")
     implementation("com.dylibso.chicory:wasm:0.0.12")
 
-    testImplementation("org.junit.jupiter:junit-jupiter:5.12.0")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.12.1")
     testImplementation("org.mockito:mockito-core:5.16.0")
 
     // CLI
