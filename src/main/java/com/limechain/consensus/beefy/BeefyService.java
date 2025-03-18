@@ -6,7 +6,6 @@ import com.limechain.consensus.beefy.dto.BeefySession;
 import com.limechain.consensus.beefy.dto.Commitment;
 import com.limechain.consensus.beefy.dto.PayloadElement;
 import com.limechain.consensus.beefy.dto.message.BeefyConsensusMessage;
-import com.limechain.exception.beefy.BeefyGenericException;
 import com.limechain.exception.storage.BlockStorageGenericException;
 import com.limechain.network.protocol.warp.DigestHelper;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
@@ -26,7 +25,7 @@ import java.util.Optional;
 @Log
 @Component
 @RequiredArgsConstructor
-public class BeefyService {
+public class BeefyService implements FinalizedBlockChangeListener {
 
     private static final BigInteger THRESHOLD_DENOMINATOR = BigInteger.valueOf(3);
     private static final int MIN_BLOCK_DELTA = 1;
@@ -195,5 +194,12 @@ public class BeefyService {
         } else {
             return Pair.of(currentSession.getMandatoryBlock(), currentSession.getMandatoryBlock());
         }
+    }
+
+    @Override
+    public void finalizedBlockChanged(FinalizedBlockChangeEvent event) {
+        BeefyState beefyState = stateManager.getBeefyState();
+        beefyState.setGrandpaFinalized(event.getGrandpaFinalized().getBlockNumber());
+        beefyState.detectAuthoritySetChange(event.getBlockHeaders());
     }
 }

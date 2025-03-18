@@ -1,5 +1,8 @@
 package com.limechain.consensus.grandpa.round;
 
+import com.limechain.consensus.beefy.BeefyService;
+import com.limechain.consensus.beefy.event.FinalizedBlockChangeEvent;
+import com.limechain.consensus.beefy.event.FinalizedBlockChangeListener;
 import com.limechain.consensus.dto.Authority;
 import com.limechain.consensus.grandpa.GrandpaService;
 import com.limechain.consensus.grandpa.GrandpaSetState;
@@ -68,6 +71,9 @@ public class GrandpaRound {
 
     private GrandpaRound previous;
     private StageState stage = new StartStage();
+
+    private final FinalizedBlockChangeListener finalizedBlockChangeListener =
+            Objects.requireNonNull(AppBean.getBean(BeefyService.class));
 
     /**
      * Current finalized block at the start of the round.
@@ -392,6 +398,13 @@ public class GrandpaRound {
         }
 
         if (finalizedBlock != null) {
+            List<BlockHeader> blockHeaders = blockState
+                    .rangeInMemory(lastFinalizedBlock.getHash(), finalizedBlock.getHash())
+                    .stream()
+                    .map(BlockHeader::fromHash)
+                    .toList();
+            blockHeaders.removeFirst();
+
             blockState.setFinalizedHash(finalizedBlock, createJustification(), authoritySet.getSetId());
 
             // Persisting round data into the database when a block is finalized
@@ -405,6 +418,10 @@ public class GrandpaRound {
             if (onFinalizeHandler != null) {
                 onFinalizeHandler.run();
             }
+
+            FinalizedBlockChangeEvent event = new FinalizedBlockChangeEvent(
+                    this, blockHeaders, finalizedBlock);
+            finalizedBlockChangeListener.finalizedBlockChanged(event);
         }
     }
 
