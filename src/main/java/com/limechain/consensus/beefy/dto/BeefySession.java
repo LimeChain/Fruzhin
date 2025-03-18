@@ -1,22 +1,31 @@
 package com.limechain.consensus.beefy.dto;
 
 import jakarta.annotation.Nullable;
-import lombok.RequiredArgsConstructor;
-import lombok.Value;
+import lombok.Data;
+import lombok.Setter;
 import org.javatuples.Pair;
 
 import java.math.BigInteger;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 
-@Value
-@RequiredArgsConstructor
+@Data
 public class BeefySession {
 
-    BeefyAuthoritySet authoritySet;
-    Set<BigInteger> nonMandatoryBlockNumbers = Collections.synchronizedSet(new HashSet<>());
+    private final BeefyAuthoritySet authoritySet;
+
+    private Map<Commitment, BeefyRound> rounds = new HashMap<>();
+
+    private final BigInteger mandatoryBlock;
+
+    @Setter
+    private boolean isMandatoryBlockFinalized;
+
+    @Setter
     @Nullable
-    Pair<byte[], byte[]> beefyKeyPair;
+    private BigInteger highestFinalizedForSession;
+
+    @Nullable
+    private final Pair<byte[], byte[]> beefyKeyPair;
 }
 
