@@ -154,7 +154,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
 
     private Commitment getCommitment(BigInteger blockNumber, BigInteger setId) {
         BlockState blockState = stateManager.getBlockState();
-        BlockHeader blockHeader = null;
+        BlockHeader blockHeader;
         try {
             blockHeader = blockState.getHeaderByNumber(blockNumber);
         } catch (BlockStorageGenericException e) {
@@ -201,7 +201,6 @@ public class BeefyService implements FinalizedBlockChangeListener {
 
     @Override
     public void finalizedBlockChanged(FinalizedBlockChangeEvent event) {
-        BeefyState beefyState = stateManager.getBeefyState();
         beefyState.setGrandpaFinalized(event.getGrandpaFinalized().getBlockNumber());
         processConsensusMessages(event.getBlockHeaders());
     }
