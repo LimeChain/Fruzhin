@@ -4,7 +4,6 @@ import com.limechain.network.ConnectionManager;
 import com.limechain.network.protocol.base.BaseEngine;
 import com.limechain.network.protocol.beefy.messages.BeefyMessageType;
 import com.limechain.network.protocol.beefy.messages.vote.VoteMessageScaleReader;
-import com.limechain.network.protocol.grandpa.messages.vote.SignedMessageScaleReader;
 import com.limechain.rpc.server.AppBean;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.libp2p.core.PeerId;
@@ -112,9 +111,9 @@ public class BeefyEngine implements BaseEngine {
     }
 
     private void handleSignedCommitmentMessage(byte[] message, PeerId peerId) {
-        log.fine("We are here");
-        ScaleCodecReader reader = new ScaleCodecReader(message);
-        reader.read(SignedMessageScaleReader.getInstance());
+//        log.fine("We are here");
+//        ScaleCodecReader reader = new ScaleCodecReader(message);
+//        reader.read(SignedCommitmentScaleReader.getInstance());
     }
 
     private BeefyMessageType getBeefyMessageType(byte[] message) {

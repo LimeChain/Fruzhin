@@ -7,8 +7,6 @@ import io.emeraldpay.polkaj.scale.ScaleReader;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
-import java.io.ByteArrayOutputStream;
-
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class PayloadElementScaleReader implements ScaleReader<PayloadElement> {
     private static final PayloadElementScaleReader INSTANCE = new PayloadElementScaleReader();
@@ -21,16 +19,16 @@ public class PayloadElementScaleReader implements ScaleReader<PayloadElement> {
     @Override
     public PayloadElement read(ScaleCodecReader reader) {
         BeefyPayloadId payloadId = BeefyPayloadId.fromBytes(reader.readByteArray(PAYLOAD_ID_LENGTH));
-        byte[] dataBytes = readRemainingBytes(reader);
+        byte[] dataBytes = reader.readByteArray(27);
 
         return new PayloadElement(payloadId, dataBytes);
     }
 
-    private byte[] readRemainingBytes(ScaleCodecReader reader) {
-        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-        while (reader.hasNext()) {
-            buffer.write(reader.readByte());
-        }
-        return buffer.toByteArray();
-    }
+//    private byte[] readRemainingBytes(ScaleCodecReader reader) {
+//        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+//        while (reader.hasNext()) {
+//            buffer.write(reader.readByte());
+//        }
+//        return buffer.toByteArray();
+//    }
 }
