@@ -14,6 +14,7 @@ import com.limechain.state.StateManager;
 import com.limechain.storage.block.state.BlockState;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.java.Log;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
@@ -31,7 +32,6 @@ public class BeefyService {
     private static final int MIN_BLOCK_DELTA = 1;
 
     private final StateManager stateManager;
-    private final BeefyState beefyState;
 
     public void vote() {
         BeefyState beefyState = stateManager.getBeefyState();
@@ -130,6 +130,7 @@ public class BeefyService {
      * If a BEEFY_ON_DISABLED message is found, it updates the beefyState with the disabled authority information.
      */
     private void processConsensusMessages(List<BlockHeader> headers) {
+        BeefyState beefyState = stateManager.getBeefyState();
         BigInteger grandpaFinalized = beefyState.getGrandpaFinalized();
         if (Objects.isNull(grandpaFinalized)) {
             throw new BeefyGenericException("Grandpa finalized is not initialized yet.");
@@ -173,5 +174,26 @@ public class BeefyService {
         return DigestHelper.getBeefyConsensusMessages(blockHeader.getDigest())
                 .stream().map(BeefyConsensusMessage::getMmrRootHash)
                 .findFirst();
+    }
+
+    private Pair<BigInteger, BigInteger> findAcceptedBlocksInterval() {
+        BeefyState beefyState = stateManager.getBeefyState();
+
+        BeefySession currentSession = beefyState.getSessions().peekFirst();
+        if (currentSession == null) {
+            throw new BeefyGenericException("No beefy session exists.");
+        }
+
+        BigInteger beefyFinalized = beefyState.getBeefyFinalized();
+        if (beefyFinalized == null) {
+            throw new BeefyGenericException("Beefy finalized is not initialized yet.");
+        }
+
+        if (currentSession.isMandatoryBlockFinalized()) {
+            BigInteger lowerBlock = beefyFinalized.max(currentSession.getMandatoryBlock());
+            return Pair.of(lowerBlock, beefyState.getGrandpaFinalized());
+        } else {
+            return Pair.of(currentSession.getMandatoryBlock(), currentSession.getMandatoryBlock());
+        }
     }
 }
