@@ -179,21 +179,21 @@ public class BeefyService {
     private Pair<BigInteger, BigInteger> findAcceptedBlocksInterval() {
         BeefyState beefyState = stateManager.getBeefyState();
 
-        BeefySession lastSession = beefyState.getSessions().peekLast();
-        if (Objects.isNull(lastSession)) {
+        BeefySession currentSession = beefyState.getSessions().peekFirst();
+        if (currentSession == null) {
             throw new BeefyGenericException("No beefy session exists.");
         }
 
         BigInteger beefyFinalized = beefyState.getBeefyFinalized();
-        if (Objects.isNull(beefyFinalized)) {
+        if (beefyFinalized == null) {
             throw new BeefyGenericException("Beefy finalized is not initialized yet.");
         }
 
-        if (lastSession.isMandatoryBlockFinalized()) {
-            BigInteger lowerBlock = beefyState.getBeefyFinalized().max(lastSession.getMandatoryBlock());
+        if (currentSession.isMandatoryBlockFinalized()) {
+            BigInteger lowerBlock = beefyFinalized.max(currentSession.getMandatoryBlock());
             return Pair.of(lowerBlock, beefyState.getGrandpaFinalized());
         } else {
-            return Pair.of(lastSession.getMandatoryBlock(), lastSession.getMandatoryBlock());
+            return Pair.of(currentSession.getMandatoryBlock(), currentSession.getMandatoryBlock());
         }
     }
 }
