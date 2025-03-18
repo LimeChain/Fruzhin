@@ -22,8 +22,9 @@ import lombok.extern.java.Log;
 import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
+import java.util.ArrayDeque;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.List;
 
 /**
@@ -70,7 +71,7 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
     @Nullable
     private VoteMessage lastVote;
 
-    private List<BeefySession> sessions = Collections.synchronizedList(new ArrayList<BeefySession>());
+    private Deque<BeefySession> sessions = new ArrayDeque<>();
 
 
     @Override
@@ -125,8 +126,6 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
         BeefySession beefySession = new BeefySession(
                 new BeefyAuthoritySet(consensusMessage.getAuthorityPublicKeys(), consensusMessage.getAuthoritySetId()),
                 blockNumber,
-                false,
-                null,
                 keyPair
         );
 

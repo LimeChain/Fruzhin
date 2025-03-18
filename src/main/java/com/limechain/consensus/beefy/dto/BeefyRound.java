@@ -8,6 +8,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Value
 public class BeefyRound {
-    //mapper key is authority public key
+    //TODO: find an appropriate key for the 33 byte array
     Map<byte[], VoteMessage> signedVotes = new ConcurrentHashMap<>();
 }
