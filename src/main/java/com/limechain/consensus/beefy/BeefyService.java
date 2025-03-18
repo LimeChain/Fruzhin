@@ -6,6 +6,9 @@ import com.limechain.consensus.beefy.dto.BeefySession;
 import com.limechain.consensus.beefy.dto.Commitment;
 import com.limechain.consensus.beefy.dto.PayloadElement;
 import com.limechain.consensus.beefy.dto.message.BeefyConsensusMessage;
+import com.limechain.consensus.beefy.event.FinalizedBlockChangeEvent;
+import com.limechain.consensus.beefy.event.FinalizedBlockChangeListener;
+import com.limechain.exception.beefy.BeefyGenericException;
 import com.limechain.exception.storage.BlockStorageGenericException;
 import com.limechain.network.protocol.warp.DigestHelper;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
@@ -200,6 +203,6 @@ public class BeefyService implements FinalizedBlockChangeListener {
     public void finalizedBlockChanged(FinalizedBlockChangeEvent event) {
         BeefyState beefyState = stateManager.getBeefyState();
         beefyState.setGrandpaFinalized(event.getGrandpaFinalized().getBlockNumber());
-        beefyState.detectAuthoritySetChange(event.getBlockHeaders());
+        processConsensusMessages(event.getBlockHeaders());
     }
 }
