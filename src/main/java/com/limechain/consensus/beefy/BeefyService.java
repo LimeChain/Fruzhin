@@ -5,11 +5,13 @@ import com.limechain.consensus.beefy.dto.BeefyPayloadId;
 import com.limechain.consensus.beefy.dto.BeefySession;
 import com.limechain.consensus.beefy.dto.Commitment;
 import com.limechain.consensus.beefy.dto.PayloadElement;
+import com.limechain.consensus.beefy.dto.RoundAction;
 import com.limechain.consensus.beefy.dto.message.BeefyConsensusMessage;
 import com.limechain.consensus.beefy.event.FinalizedBlockChangeEvent;
 import com.limechain.consensus.beefy.event.FinalizedBlockChangeListener;
 import com.limechain.exception.beefy.BeefyGenericException;
 import com.limechain.exception.storage.BlockStorageGenericException;
+import com.limechain.network.protocol.beefy.messages.justification.SignedCommitment;
 import com.limechain.network.protocol.warp.DigestHelper;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.state.StateManager;
@@ -24,6 +26,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.logging.Level;
 
 @Log
 @Component
@@ -34,6 +37,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
     private static final int MIN_BLOCK_DELTA = 1;
 
     private final StateManager stateManager;
+    private final BeefyState beefyState;
 
     public void vote() {
         BeefyState beefyState = stateManager.getBeefyState();
@@ -166,7 +170,40 @@ public class BeefyService implements FinalizedBlockChangeListener {
                 .findFirst();
     }
 
-    private Pair<BigInteger, BigInteger> findAcceptedBlocksInterval() {
+    private void triageIncomingJustification(SignedCommitment signedCommitment) {
+        BigInteger blockNumber = signedCommitment.getCommitment().getBlockNumber();
+        RoundAction roundAction = determineRoundAction(blockNumber);
+
+        switch (roundAction) {
+            case RoundAction.PROCESS -> {
+                log.log(Level.INFO, "triageIncomingJustification: Process justification for round: " + blockNumber);
+                //TODO: finalize justification
+            }
+            case RoundAction.ENQUEUE -> {
+                log.log(Level.INFO, "triageIncomingJustification: Enqueue justification for round: " + blockNumber);
+                stateManager.getBeefyState().getPendingJustifications().put(blockNumber, signedCommitment);
+            }
+            case RoundAction.DROP -> {
+                log.log(Level.INFO, "triageIncomingJustification: Drop justification for round %d." + blockNumber);
+            }
+        }
+    }
+
+    private RoundAction determineRoundAction(BigInteger roundNumber) {
+        Pair<BigInteger, BigInteger> roundsInterval = findAcceptedRoundsInterval();
+        BigInteger startRoundNumber = roundsInterval.getLeft();
+        BigInteger endRoundNumber = roundsInterval.getRight();
+
+        if (roundNumber.compareTo(startRoundNumber) >= 0 && roundNumber.compareTo(endRoundNumber) <= 0) {
+            return RoundAction.PROCESS;
+        } else if (roundNumber.compareTo(endRoundNumber) > 0) {
+            return RoundAction.ENQUEUE;
+        } else {
+            return RoundAction.DROP;
+        }
+    }
+
+    private Pair<BigInteger, BigInteger> findAcceptedRoundsInterval() {
         BeefyState beefyState = stateManager.getBeefyState();
 
         BeefySession currentSession = beefyState.getSessions().peekFirst();
