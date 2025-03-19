@@ -6,6 +6,8 @@ import com.limechain.consensus.beefy.dto.BeefySession;
 import com.limechain.consensus.beefy.dto.Commitment;
 import com.limechain.consensus.beefy.dto.PayloadElement;
 import com.limechain.consensus.beefy.dto.message.BeefyConsensusMessage;
+import com.limechain.consensus.beefy.event.FinalizedBlockChangeEvent;
+import com.limechain.consensus.beefy.event.FinalizedBlockChangeListener;
 import com.limechain.exception.beefy.BeefyGenericException;
 import com.limechain.exception.storage.BlockStorageGenericException;
 import com.limechain.network.protocol.warp.DigestHelper;
@@ -26,7 +28,7 @@ import java.util.Optional;
 @Log
 @Component
 @RequiredArgsConstructor
-public class BeefyService {
+public class BeefyService implements FinalizedBlockChangeListener {
 
     private static final BigInteger THRESHOLD_DENOMINATOR = BigInteger.valueOf(3);
     private static final int MIN_BLOCK_DELTA = 1;
@@ -121,8 +123,7 @@ public class BeefyService {
     }
 
     /**
-     * Examines BEEFY authority consensus messages, within grandpaFinalized currently known for Beefy + 1
-     * and the new finalized block from Grandpa. It detects authority set changes or disabled authorities.
+     * Examines BEEFY authority consensus messages and detects authority set changes or disabled authorities.
      * <p>
      * Upon encountering BEEFY_CHANGED_AUTHORITIES message, it finds keyPair, based on public keys,
      * and extracts the authority set. New BeefySession is created and added to the collection.
@@ -130,17 +131,6 @@ public class BeefyService {
      * If a BEEFY_ON_DISABLED message is found, it updates the beefyState with the disabled authority information.
      */
     private void processConsensusMessages(List<BlockHeader> headers) {
-        BeefyState beefyState = stateManager.getBeefyState();
-        BigInteger grandpaFinalized = beefyState.getGrandpaFinalized();
-        if (Objects.isNull(grandpaFinalized)) {
-            throw new BeefyGenericException("Grandpa finalized is not initialized yet.");
-        }
-
-        BigInteger firstBlockNumber = headers.getFirst().getBlockNumber();
-        if (!firstBlockNumber.equals(grandpaFinalized.add(BigInteger.ONE))) {
-            throw new BeefyGenericException("First new block for BEEFY should be exactly 1 " +
-                    "greater than its currently known grandpaFinalized.");
-        }
 
         for (BlockHeader currentHeader : headers) {
             DigestHelper.getBeefyConsensusMessages(currentHeader.getDigest())
@@ -152,7 +142,7 @@ public class BeefyService {
 
     private Commitment getCommitment(BigInteger blockNumber, BigInteger setId) {
         BlockState blockState = stateManager.getBlockState();
-        BlockHeader blockHeader = null;
+        BlockHeader blockHeader;
         try {
             blockHeader = blockState.getHeaderByNumber(blockNumber);
         } catch (BlockStorageGenericException e) {
@@ -195,5 +185,11 @@ public class BeefyService {
         } else {
             return Pair.of(currentSession.getMandatoryBlock(), currentSession.getMandatoryBlock());
         }
+    }
+
+    @Override
+    public void finalizedBlockChanged(FinalizedBlockChangeEvent event) {
+        stateManager.getBeefyState().setGrandpaFinalized(event.getGrandpaFinalized().getBlockNumber());
+        processConsensusMessages(event.getBlockHeaders());
     }
 }
