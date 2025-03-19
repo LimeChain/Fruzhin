@@ -123,8 +123,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
     }
 
     /**
-     * Examines BEEFY authority consensus messages, within grandpaFinalized currently known for Beefy + 1
-     * and the new finalized block from Grandpa. It detects authority set changes or disabled authorities.
+     * Examines BEEFY authority consensus messages and detects authority set changes or disabled authorities.
      * <p>
      * Upon encountering BEEFY_CHANGED_AUTHORITIES message, it finds keyPair, based on public keys,
      * and extracts the authority set. New BeefySession is created and added to the collection.
@@ -132,17 +131,6 @@ public class BeefyService implements FinalizedBlockChangeListener {
      * If a BEEFY_ON_DISABLED message is found, it updates the beefyState with the disabled authority information.
      */
     private void processConsensusMessages(List<BlockHeader> headers) {
-        BeefyState beefyState = stateManager.getBeefyState();
-        BigInteger grandpaFinalized = beefyState.getGrandpaFinalized();
-        if (Objects.isNull(grandpaFinalized)) {
-            throw new BeefyGenericException("Grandpa finalized is not initialized yet.");
-        }
-
-        BigInteger firstBlockNumber = headers.getFirst().getBlockNumber();
-        if (!firstBlockNumber.equals(grandpaFinalized.add(BigInteger.ONE))) {
-            throw new BeefyGenericException("First new block for BEEFY should be exactly 1 " +
-                    "greater than its currently known grandpaFinalized.");
-        }
 
         for (BlockHeader currentHeader : headers) {
             DigestHelper.getBeefyConsensusMessages(currentHeader.getDigest())
@@ -201,7 +189,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
 
     @Override
     public void finalizedBlockChanged(FinalizedBlockChangeEvent event) {
-        beefyState.setGrandpaFinalized(event.getGrandpaFinalized().getBlockNumber());
+        stateManager.getBeefyState().setGrandpaFinalized(event.getGrandpaFinalized().getBlockNumber());
         processConsensusMessages(event.getBlockHeaders());
     }
 }

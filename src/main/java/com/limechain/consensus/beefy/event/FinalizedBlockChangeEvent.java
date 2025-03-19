@@ -9,6 +9,8 @@ import java.util.List;
 @Getter
 public class FinalizedBlockChangeEvent extends EventObject {
 
+    // List of block headers from the last GRANDPA finalized block (exclusive)
+    // to the new GRANDPA finalized block (inclusive)
     private final List<BlockHeader> blockHeaders;
     private final BlockHeader grandpaFinalized;
 
