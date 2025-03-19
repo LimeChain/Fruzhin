@@ -37,7 +37,6 @@ public class BeefyService implements FinalizedBlockChangeListener {
     private static final int MIN_BLOCK_DELTA = 1;
 
     private final StateManager stateManager;
-    private final BeefyState beefyState;
 
     public void vote() {
         BeefyState beefyState = stateManager.getBeefyState();
