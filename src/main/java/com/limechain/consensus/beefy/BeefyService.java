@@ -5,11 +5,13 @@ import com.limechain.consensus.beefy.dto.BeefyPayloadId;
 import com.limechain.consensus.beefy.dto.BeefySession;
 import com.limechain.consensus.beefy.dto.Commitment;
 import com.limechain.consensus.beefy.dto.PayloadElement;
+import com.limechain.consensus.beefy.dto.RoundAction;
 import com.limechain.consensus.beefy.dto.message.BeefyConsensusMessage;
 import com.limechain.consensus.beefy.event.FinalizedBlockChangeEvent;
 import com.limechain.consensus.beefy.event.FinalizedBlockChangeListener;
 import com.limechain.exception.beefy.BeefyGenericException;
 import com.limechain.exception.storage.BlockStorageGenericException;
+import com.limechain.network.protocol.beefy.messages.justification.SignedCommitment;
 import com.limechain.network.protocol.warp.DigestHelper;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.state.StateManager;
@@ -166,7 +168,40 @@ public class BeefyService implements FinalizedBlockChangeListener {
                 .findFirst();
     }
 
-    private Pair<BigInteger, BigInteger> findAcceptedBlocksInterval() {
+    private void triageIncomingJustification(SignedCommitment signedCommitment) {
+        BigInteger blockNumber = signedCommitment.getCommitment().getBlockNumber();
+        RoundAction roundAction = determineRoundAction(blockNumber);
+
+        switch (roundAction) {
+            case RoundAction.PROCESS -> {
+                log.fine(String.format("triageIncomingJustification: Process justification for round: %d.", blockNumber));
+                //TODO: finalize justification
+            }
+            case RoundAction.ENQUEUE -> {
+                log.fine(String.format("triageIncomingJustification: Enqueue justification for round: %d.", blockNumber));
+                stateManager.getBeefyState().getPendingJustifications().put(blockNumber, signedCommitment);
+            }
+            case RoundAction.DROP -> {
+                log.fine(String.format("triageIncomingJustification: Drop justification for round: %d.", blockNumber));
+            }
+        }
+    }
+
+    private RoundAction determineRoundAction(BigInteger roundNumber) {
+        Pair<BigInteger, BigInteger> roundsInterval = findAcceptedRoundsInterval();
+        BigInteger startRoundNumber = roundsInterval.getLeft();
+        BigInteger endRoundNumber = roundsInterval.getRight();
+
+        if (roundNumber.compareTo(startRoundNumber) >= 0 && roundNumber.compareTo(endRoundNumber) <= 0) {
+            return RoundAction.PROCESS;
+        } else if (roundNumber.compareTo(endRoundNumber) > 0) {
+            return RoundAction.ENQUEUE;
+        } else {
+            return RoundAction.DROP;
+        }
+    }
+
+    private Pair<BigInteger, BigInteger> findAcceptedRoundsInterval() {
         BeefyState beefyState = stateManager.getBeefyState();
 
         BeefySession currentSession = beefyState.getSessions().peekFirst();

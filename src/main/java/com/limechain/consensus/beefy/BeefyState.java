@@ -25,6 +25,7 @@ import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.Deque;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 /**
@@ -72,6 +73,8 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
     private VoteMessage lastVote;
 
     private Deque<BeefySession> sessions = new ArrayDeque<>();
+
+    private LinkedHashMap<BigInteger, SignedCommitment> pendingJustifications = new LinkedHashMap<>();
 
 
     @Override
