@@ -26,7 +26,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.logging.Level;
 
 @Log
 @Component
@@ -175,15 +174,15 @@ public class BeefyService implements FinalizedBlockChangeListener {
 
         switch (roundAction) {
             case RoundAction.PROCESS -> {
-                log.log(Level.INFO, "triageIncomingJustification: Process justification for round: " + blockNumber);
+                log.fine(String.format("triageIncomingJustification: Process justification for round: %d.", blockNumber));
                 //TODO: finalize justification
             }
             case RoundAction.ENQUEUE -> {
-                log.log(Level.INFO, "triageIncomingJustification: Enqueue justification for round: " + blockNumber);
+                log.fine(String.format("triageIncomingJustification: Enqueue justification for round: %d.", blockNumber));
                 stateManager.getBeefyState().getPendingJustifications().put(blockNumber, signedCommitment);
             }
             case RoundAction.DROP -> {
-                log.log(Level.INFO, "triageIncomingJustification: Drop justification for round %d." + blockNumber);
+                log.fine(String.format("triageIncomingJustification: Drop justification for round: %d.", blockNumber));
             }
         }
     }
