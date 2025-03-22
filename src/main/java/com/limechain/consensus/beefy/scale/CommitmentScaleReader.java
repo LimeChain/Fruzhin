@@ -1,5 +1,6 @@
-package com.limechain.network.protocol.beefy.messages.justification;
+package com.limechain.consensus.beefy.scale;
 
+import com.limechain.consensus.beefy.dto.BeefyPayloadId;
 import com.limechain.consensus.beefy.dto.Commitment;
 import com.limechain.consensus.beefy.dto.PayloadElement;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
@@ -12,10 +13,10 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.limechain.utils.StringUtils.hexToBytes;
-
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class CommitmentScaleReader implements ScaleReader<Commitment> {
+
+    private static final int BEEFY_PAYLOAD_ID_LENGTH = 2;
 
     private static final CommitmentScaleReader INSTANCE = new CommitmentScaleReader();
 
@@ -25,26 +26,23 @@ public class CommitmentScaleReader implements ScaleReader<Commitment> {
 
     @Override
     public Commitment read(ScaleCodecReader reader) {
-        String hex = "046d68343048656c6c6f20576f726c6421050000000000000000000000000000000000000000000000";
 
-        byte[] bytes = hexToBytes(hex);
-        ScaleCodecReader reader1 = new ScaleCodecReader(new byte[]{0x04});  // Encoded `1`
-        Integer decodedValue = reader1.readCompactInt();
+        int payloadCount = reader.readCompactInt();
+        List<PayloadElement> payloadElements = new ArrayList<>();
 
-//        reader.skip(1);
-        int size = reader.readCompactInt();
-        List<PayloadElement> result = new ArrayList<>();
+        for (int i = 0; i < payloadCount; ++i) {
 
-        for (int i = 0; i < size; ++i) {
-            result.add(reader.read(PayloadElementScaleReader.getInstance()));
+            BeefyPayloadId id = BeefyPayloadId.fromBytes(reader.readByteArray(BEEFY_PAYLOAD_ID_LENGTH));
+
+            int payloadLength = reader.readCompactInt();
+            byte[] payloadBytes = reader.readByteArray(payloadLength);
+
+            payloadElements.add(new PayloadElement(id, payloadBytes));
         }
-
-//        byte[] mmr = reader.readUint256();
 
         BigInteger blockNumber = BigInteger.valueOf(reader.readUint32());
         BigInteger authoritySetId = new UInt64Reader().read(reader);
 
-        return new Commitment(result, blockNumber, authoritySetId);
-//        return null;
+        return new Commitment(payloadElements, blockNumber, authoritySetId);
     }
 }
