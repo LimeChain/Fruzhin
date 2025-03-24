@@ -37,6 +37,12 @@ public class BeefyService implements FinalizedBlockChangeListener {
 
     private final StateManager stateManager;
 
+    @Override
+    public void finalizedBlockChanged(FinalizedBlockChangeEvent event) {
+        stateManager.getBeefyState().setGrandpaFinalized(event.getGrandpaFinalized().getBlockNumber());
+        processConsensusMessages(event.getBlockHeaders());
+    }
+
     public void vote() {
         BeefyState beefyState = stateManager.getBeefyState();
         // Get the first session (round)
@@ -175,7 +181,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
         switch (roundAction) {
             case RoundAction.PROCESS -> {
                 log.fine(String.format("triageIncomingJustification: Process justification for round: %d.", blockNumber));
-                //TODO: finalize justification
+                finalizeJustification(signedCommitment);
             }
             case RoundAction.ENQUEUE -> {
                 log.fine(String.format("triageIncomingJustification: Enqueue justification for round: %d.", blockNumber));
@@ -222,9 +228,50 @@ public class BeefyService implements FinalizedBlockChangeListener {
         }
     }
 
-    @Override
-    public void finalizedBlockChanged(FinalizedBlockChangeEvent event) {
-        stateManager.getBeefyState().setGrandpaFinalized(event.getGrandpaFinalized().getBlockNumber());
-        processConsensusMessages(event.getBlockHeaders());
+    private void finalizeJustification(SignedCommitment signedCommitment) {
+        BeefyState beefyState = stateManager.getBeefyState();
+        BigInteger blockNumber = signedCommitment.getCommitment().getBlockNumber();
+        if (blockNumber.compareTo(beefyState.getBeefyFinalized()) <= 0) {
+            log.fine(String.format("finalizeJustification: Round: %d has been already finalized.", blockNumber));
+            return;
+        }
+
+        finalizeBeefyRound(blockNumber);
+        beefyState.setBeefyFinalized(blockNumber);
+
+        //TODO: Persist beefy state
+    }
+
+    private void finalizeBeefyRound(BigInteger blockNumber) {
+        BeefyState beefyState = stateManager.getBeefyState();
+        BeefySession currentSession = beefyState.getSessions().peekFirst();
+        if (currentSession == null) {
+            throw new BeefyGenericException("No beefy session exists.");
+        }
+
+        // remove rounds <= round number of the incoming justification
+        currentSession.getRounds()
+                .keySet()
+                .removeIf(commitment -> commitment.getBlockNumber().compareTo(blockNumber) <= 0);
+
+        BigInteger highestFinalized = currentSession.getHighestFinalizedForSession();
+        highestFinalized = highestFinalized == null ? blockNumber : highestFinalized.max(blockNumber);
+        currentSession.setHighestFinalizedForSession(highestFinalized);
+
+        if (blockNumber.equals(currentSession.getMandatoryBlock())) {
+            currentSession.setMandatoryBlockFinalized(true);
+            log.fine(String.format("finalizeJustification: Finalize mandatory round: %d.", blockNumber));
+        } else {
+            log.fine(String.format("finalizeJustification: Finalize non-mandatory round: %d.", blockNumber));
+        }
+
+        removeFinishedSessions();
+    }
+
+    private void removeFinishedSessions() {
+        BeefyState beefyState = stateManager.getBeefyState();
+        if (beefyState.getSessions().size() > 1) {
+            beefyState.getSessions().removeIf(BeefySession::isMandatoryBlockFinalized);
+        }
     }
 }
