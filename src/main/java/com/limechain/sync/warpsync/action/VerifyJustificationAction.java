@@ -54,7 +54,7 @@ public class VerifyJustificationAction implements WarpSyncAction {
 
             // Executes scheduled or forced authority changes for the last finalized block.
             boolean changeInAuthoritySet = stateManager.getGrandpaSetState()
-                    .applyForcedAuthoritySetChange(
+                    .applyAuthoritySetChange(
                             stateManager.getSyncState().getLastFinalizedBlockHash(),
                             stateManager.getSyncState().getLastFinalizedBlockNumber()
                     );
@@ -78,6 +78,7 @@ public class VerifyJustificationAction implements WarpSyncAction {
 
             stateManager.getSyncState().finalizeHeader(fragment.getHeader());
             handleAuthorityChanges(fragment);
+
         } catch (Exception e) {
             log.log(Level.WARNING, "Error while verifying justification: " + e.getMessage());
             this.error = e;

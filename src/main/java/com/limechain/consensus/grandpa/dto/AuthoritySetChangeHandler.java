@@ -23,6 +23,8 @@ import java.util.function.BiPredicate;
 @NoArgsConstructor
 public class AuthoritySetChangeHandler {
 
+    private final Object lock = new Object();
+
     private ForkTree<PendingChange> pendingScheduledChanges = new ForkTree<>();
     private List<PendingChange> pendingForcedChanges = new ArrayList<>();
 
@@ -33,16 +35,19 @@ public class AuthoritySetChangeHandler {
     public void addPendingChange(PendingChange pendingChange, BiPredicate<Hash256, Hash256> isDescendantOf)
             throws GrandpaGenericException {
 
-        validateAuthorityList(pendingChange.getNextAuthorities());
+        synchronized (lock) {
 
-        PendingChange.DelayKind delayKind = Optional.ofNullable(pendingChange.getDelayKind())
-                .orElseThrow(() -> new GrandpaGenericException("Delay kind is null"));
-        PendingChange.DelayKindEnum delayKindEnum = Optional.ofNullable(delayKind.getKind())
-                .orElseThrow(() -> new GrandpaGenericException("Delay kind enum is null"));
+            validateAuthorityList(pendingChange.getNextAuthorities());
 
-        switch (delayKindEnum) {
-            case BEST -> addForcedChange(pendingChange, isDescendantOf);
-            case FINALIZED -> addScheduledChange(pendingChange, isDescendantOf);
+            PendingChange.DelayKind delayKind = Optional.ofNullable(pendingChange.getDelayKind())
+                    .orElseThrow(() -> new GrandpaGenericException("Delay kind is null"));
+            PendingChange.DelayKindEnum delayKindEnum = Optional.ofNullable(delayKind.getKind())
+                    .orElseThrow(() -> new GrandpaGenericException("Delay kind enum is null"));
+
+            switch (delayKindEnum) {
+                case BEST -> addForcedChange(pendingChange, isDescendantOf);
+                case FINALIZED -> addScheduledChange(pendingChange, isDescendantOf);
+            }
         }
     }
 
@@ -112,37 +117,40 @@ public class AuthoritySetChangeHandler {
                                                       BiPredicate<Hash256, Hash256> isDescendantOf)
             throws GrandpaGenericException {
 
-        PendingChange forcedChange = null;
+        synchronized (lock) {
 
-        for (PendingChange change : pendingForcedChanges) {
+            PendingChange forcedChange = null;
 
-            // Pending changes are sorted by effective number and once a change with greater
-            // effective number is encountered we can simply break the loop and proceed further
-            if (change.getEffectiveNumber().compareTo(bestBlockNumber) > 0) {
-                break;
+            for (PendingChange change : pendingForcedChanges) {
+
+                // Pending changes are sorted by effective number and once a change with greater
+                // effective number is encountered we can simply break the loop and proceed further
+                if (change.getEffectiveNumber().compareTo(bestBlockNumber) > 0) {
+                    break;
+                }
+
+                boolean blockNumberMatch = change.getEffectiveNumber().equals(bestBlockNumber);
+                boolean blockHashMatch = bestBlockHash.equals(change.getCanonHash());
+
+                // Calculating isDescendantOf only when needed in order to take advantage of if
+                // statement short circuit
+                if (blockNumberMatch && (blockHashMatch ||
+                        isDescendantOf.test(change.getCanonHash(), bestBlockHash))) {
+
+                    checkForConflictingScheduledChange(change, isDescendantOf);
+                    forcedChange = change;
+                    break;
+                }
             }
 
-            boolean blockNumberMatch = change.getEffectiveNumber().equals(bestBlockNumber);
-            boolean blockHashMatch = bestBlockHash.equals(change.getCanonHash());
-
-            // Calculating isDescendantOf only when needed in order to take advantage of if
-            // statement short circuit
-            if (blockNumberMatch && (blockHashMatch ||
-                    isDescendantOf.test(change.getCanonHash(), bestBlockHash))) {
-
-                checkForConflictingScheduledChange(change, isDescendantOf);
-                forcedChange = change;
-                break;
+            // Remove the forced change matching the application criteria and return it
+            if (forcedChange != null) {
+                pendingForcedChanges.remove(forcedChange);
+                return Optional.of(forcedChange);
             }
-        }
 
-        // Remove the forced change matching the application criteria and return it
-        if (forcedChange != null) {
-            pendingForcedChanges.remove(forcedChange);
-            return Optional.of(forcedChange);
+            return Optional.empty();
         }
-
-        return Optional.empty();
     }
 
     /**
@@ -180,19 +188,22 @@ public class AuthoritySetChangeHandler {
                                                          BigInteger finalizedNumber,
                                                          BiPredicate<Hash256, Hash256> isDescendantOf) {
 
-        removeInvalidForcedAuthoritySetChanges(finalizedHash, finalizedNumber, isDescendantOf);
+        synchronized (lock) {
 
-        try {
+            removeInvalidForcedAuthoritySetChanges(finalizedHash, finalizedNumber, isDescendantOf);
 
-            return pendingScheduledChanges.finalizeNode(
-                    finalizedHash,
-                    finalizedNumber,
-                    isDescendantOf,
-                    pendingChange -> pendingChange.getEffectiveNumber().compareTo(finalizedNumber) <= 0
-            );
+            try {
 
-        } catch (ForkTreeException e) {
-            throw new GrandpaGenericException(e.getMessage());
+                return pendingScheduledChanges.finalizeNode(
+                        finalizedHash,
+                        finalizedNumber,
+                        isDescendantOf,
+                        pendingChange -> pendingChange.getEffectiveNumber().compareTo(finalizedNumber) <= 0
+                );
+
+            } catch (ForkTreeException e) {
+                throw new GrandpaGenericException(e.getMessage());
+            }
         }
     }
 

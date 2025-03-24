@@ -346,15 +346,6 @@ public class BlockState extends AbstractState {
     }
 
     /**
-     * Adds block to the blocktree and stores it in the database with the current time as arrival time
-     *
-     * @param block the block to be added
-     */
-    public void addBlock(final Block block) {
-        addBlockWithArrivalTime(block, Instant.now());
-    }
-
-    /**
      * Adds block to the blocktree and stores it in the database with the given arrival time
      *
      * @param block       the block to be added
