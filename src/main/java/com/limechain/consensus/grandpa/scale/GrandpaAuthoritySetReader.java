@@ -1,4 +1,4 @@
-package com.limechain.grandpa.state.scale;
+package com.limechain.consensus.grandpa.scale;
 
 import com.limechain.chain.lightsyncstate.scale.AuthorityReader;
 import com.limechain.consensus.dto.Authority;
