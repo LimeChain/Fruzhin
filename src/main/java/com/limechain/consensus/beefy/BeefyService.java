@@ -50,7 +50,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
 
         // If no session is found, exit the method
         if (sessionStart == null) {
-            log.info("Vote BEEFY: No voting round started");
+            log.warning("Vote BEEFY: No voting round started");
             return;
         }
 
@@ -177,6 +177,9 @@ public class BeefyService implements FinalizedBlockChangeListener {
     private void triageIncomingJustification(SignedCommitment signedCommitment) {
         BigInteger blockNumber = signedCommitment.getCommitment().getBlockNumber();
         RoundAction roundAction = determineRoundAction(blockNumber);
+        if (roundAction == RoundAction.INVALID) {
+            return;
+        }
 
         switch (roundAction) {
             case RoundAction.PROCESS -> {
@@ -194,7 +197,13 @@ public class BeefyService implements FinalizedBlockChangeListener {
     }
 
     private RoundAction determineRoundAction(BigInteger roundNumber) {
-        Pair<BigInteger, BigInteger> roundsInterval = findAcceptedRoundsInterval();
+        Pair<BigInteger, BigInteger> roundsInterval = null;
+        try {
+            roundsInterval = findAcceptedRoundsInterval();
+        } catch (BeefyGenericException e) {
+            log.warning(String.format("determineRoundAction: Error while finding accepted rounds interval %s", e));
+            return RoundAction.INVALID;
+        }
         BigInteger startRoundNumber = roundsInterval.getLeft();
         BigInteger endRoundNumber = roundsInterval.getRight();
 
@@ -236,7 +245,12 @@ public class BeefyService implements FinalizedBlockChangeListener {
             return;
         }
 
-        finalizeBeefyRound(blockNumber);
+        try {
+            finalizeBeefyRound(blockNumber);
+        } catch (BeefyGenericException e) {
+            log.warning(String.format("finalizeJustification: Error while finalizing beefy round: %s", e));
+            return;
+        }
         beefyState.setBeefyFinalized(blockNumber);
 
         //TODO: Persist beefy state
