@@ -49,7 +49,7 @@ class GrandpaSetStateTest {
                 authority6, authority7, authority8, authority9, authority10
         );
 
-        grandpaSetState.startNewSet(authorities);
+        grandpaSetState.startNewSet(BigInteger.ONE, authorities);
 
         // Total weight: 10
         // Faulty: (10 - 1) / 3 = 3
@@ -63,9 +63,10 @@ class GrandpaSetStateTest {
         Authority authority2 = new Authority(Ed25519Utils.generateKeyPair().publicKey().bytes(), BigInteger.ONE);
         Authority authority3 = new Authority(Ed25519Utils.generateKeyPair().publicKey().bytes(), BigInteger.ONE);
 
-        grandpaSetState.startNewSet((List.of(
-                authority1, authority2, authority3
-        )));
+        grandpaSetState.startNewSet(
+                BigInteger.ONE,
+                List.of(authority1, authority2, authority3)
+        );
 
         // 4 % voters.size = 1
         assertEquals(BigInteger.ONE, grandpaSetState.derivePrimary(BigInteger.valueOf(4)));

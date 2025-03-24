@@ -1,6 +1,7 @@
 package com.limechain.sync.state;
 
 import com.limechain.chain.lightsyncstate.LightSyncState;
+import com.limechain.consensus.grandpa.GrandpaSetState;
 import com.limechain.constants.GenesisBlockHash;
 import com.limechain.exception.storage.HeaderNotFoundException;
 import com.limechain.network.protocol.grandpa.messages.commit.CommitMessage;
@@ -28,6 +29,8 @@ public class SyncState extends AbstractState {
     private final GenesisBlockHash genesisBlockHashCalculator;
     private final KVRepository<String, Object> repository;
     private final BlockState blockState;
+    // TODO: Remove this when FinalizationHandler (responsible for sending events on block finalization) is implemented.
+    private final GrandpaSetState grandpaSetState;
 
     private Hash256 lastFinalizedBlockHash;
     private Hash256 stateRoot;
@@ -84,7 +87,9 @@ public class SyncState extends AbstractState {
 
     public void finalizedCommitMessage(CommitMessage commitMessage) {
         try {
+
             BlockHeader blockHeader = blockState.getHeader(commitMessage.getVote().getBlockHash());
+
             if (blockHeader != null) {
                 if (!updateBlockState(commitMessage, blockHeader)) return;
 
@@ -94,6 +99,7 @@ public class SyncState extends AbstractState {
 
                 log.log(Level.INFO, "Reached block #" + lastFinalizedBlockNumber);
             }
+
         } catch (HeaderNotFoundException ignored) {
             log.fine("Received commit message for a block that is not in the block store");
         }
@@ -101,9 +107,17 @@ public class SyncState extends AbstractState {
 
     private boolean updateBlockState(CommitMessage commitMessage, BlockHeader blockHeader) {
         try {
+
             blockState.setFinalizedHash(blockHeader,
                     Justification.fromCommitMessage(commitMessage),
                     commitMessage.getSetId());
+
+            // TODO: Remove this when FinalizationHandler (responsible for sending events on block finalization) is implemented.
+            grandpaSetState.applyAuthoritySetChange(
+                    blockHeader.getHash(),
+                    blockHeader.getBlockNumber()
+            );
+
         } catch (RuntimeException e) {
             log.fine(e.getMessage());
             return false;
