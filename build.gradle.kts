@@ -1,6 +1,6 @@
 plugins {
     id("java")
-    id("io.freefair.lombok") version "8.12.2.1"
+    id("io.freefair.lombok") version "8.13"
     id("org.springframework.boot") version "3.4.3"
     id("io.spring.dependency-management") version "1.1.7"
     id("application")
@@ -28,8 +28,8 @@ dependencies {
     implementation("org.web3j:crypto:4.13.0")
     implementation("com.dylibso.chicory:wasm:0.0.12")
 
-    testImplementation("org.junit.jupiter:junit-jupiter:5.12.0")
-    testImplementation("org.mockito:mockito-core:5.16.0")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.12.1")
+    testImplementation("org.mockito:mockito-core:5.16.1")
 
     // CLI
     implementation("commons-cli:commons-cli:1.9.0")
@@ -46,7 +46,7 @@ dependencies {
     implementation("org.java-websocket:Java-WebSocket:1.6.0")
     implementation("org.javatuples:javatuples:1.2")
 
-    implementation("com.github.luben:zstd-jni:1.5.7-1")
+    implementation("com.github.luben:zstd-jni:1.5.7-2")
 
     // Prometheus
     implementation("io.prometheus:prometheus-metrics-core:1.3.6")
