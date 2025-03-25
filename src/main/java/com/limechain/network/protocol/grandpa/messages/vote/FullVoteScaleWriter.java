@@ -1,6 +1,6 @@
 package com.limechain.network.protocol.grandpa.messages.vote;
 
-import com.limechain.network.protocol.grandpa.messages.commit.VoteScaleWriter;
+import com.limechain.consensus.grandpa.scale.VoteScaleWriter;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.emeraldpay.polkaj.scale.ScaleWriter;
 import io.emeraldpay.polkaj.scale.writer.UInt64Writer;
@@ -16,7 +16,7 @@ public class FullVoteScaleWriter implements ScaleWriter<FullVote> {
 
     private FullVoteScaleWriter() {
         this.uint64Writer = new UInt64Writer();
-        this.voteScaleWriter = new VoteScaleWriter();
+        this.voteScaleWriter = VoteScaleWriter.getInstance();
     }
 
     public static FullVoteScaleWriter getInstance() {
