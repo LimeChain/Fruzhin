@@ -84,7 +84,7 @@ public class GrandpaMessageHandler {
         GrandpaSetState grandpaSetState = stateManager.getGrandpaSetState();
         BigInteger voteMessageSetId = voteMessage.getSetId();
 
-        if (!voteMessageSetId.equals(grandpaSetState.getSetId())) {
+        if (!voteMessageSetId.equals(grandpaSetState.getAuthoritySet().getSetId())) {
             throw new GrandpaGenericException("Vote message has a different setId.");
         }
 
@@ -157,9 +157,9 @@ public class GrandpaMessageHandler {
      * @param peerId        sender of the message
      */
     public synchronized void handleCommitMessage(CommitMessage commitMessage, PeerId peerId) {
-        if (!commitMessage.getSetId().equals(stateManager.getGrandpaSetState().getSetId())) {
+        if (!commitMessage.getSetId().equals(stateManager.getGrandpaSetState().getAuthoritySet().getSetId())) {
             log.fine(String.format("handleCommitMessage: Received commit set id, %d, doesn't match local set id, %d",
-                    commitMessage.getSetId(), stateManager.getGrandpaSetState().getSetId()));
+                    commitMessage.getSetId(), stateManager.getGrandpaSetState().getAuthoritySet().getSetId()));
             return;
         }
 
@@ -206,17 +206,26 @@ public class GrandpaMessageHandler {
 
             BlockHeader bestBlockHeader;
             try {
+
                 bestBlockHeader = blockState.bestBlockHeader();
                 blockState.setFinalizedHash(bestBlockHeader,
                         null,
-                        stateManager.getGrandpaSetState().getSetId());
+                        stateManager.getGrandpaSetState().getAuthoritySet().getSetId());
                 syncState.finalizeHeader(bestBlockHeader);
+
+                // TODO: Remove this when FinalizationHandler (responsible for sending events on block finalization) is implemented.
+                stateManager.getGrandpaSetState()
+                        .applyAuthoritySetChange(
+                                bestBlockHeader.getHash(),
+                                bestBlockHeader.getBlockNumber()
+                        );
 
                 log.info(String.format(
                         "handleCommitPreHead: Commit block #%d not in tree. Finalized best block with #%d and hash %s",
                         commitMessage.getVote().getBlockNumber(),
                         bestBlockHeader.getBlockNumber(),
                         bestBlockHeader.getHash()));
+
             } catch (HeaderNotFoundException e) {
                 log.warning("handleCommitPreHead: No block header found for best block.");
                 return;
@@ -263,7 +272,7 @@ public class GrandpaMessageHandler {
     public void initiateAndSendCatchUpRequest(NeighbourMessage neighbourMessage, PeerId peerId) {
         GrandpaSetState grandpaSetState = stateManager.getGrandpaSetState();
         // If peer has the same voter set id
-        if (neighbourMessage.getSetId().equals(grandpaSetState.getSetId())) {
+        if (neighbourMessage.getSetId().equals(grandpaSetState.getAuthoritySet().getSetId())) {
 
             // Check if needed to catch-up peer
             if (neighbourMessage.getRoundNumber().compareTo(
@@ -295,7 +304,7 @@ public class GrandpaMessageHandler {
             throw new GrandpaGenericException("Requesting catching up from a non-peer.");
         }
 
-        if (!catchUpReqMessage.getSetId().equals(grandpaSetState.getSetId())) {
+        if (!catchUpReqMessage.getSetId().equals(grandpaSetState.getAuthoritySet().getSetId())) {
             throw new GrandpaGenericException("Catch up message has a different setId.");
         }
 
@@ -312,7 +321,7 @@ public class GrandpaMessageHandler {
 
         CatchUpResMessage catchUpResMessage = CatchUpResMessage.builder()
                 .roundNumber(grandpaRound.getRoundNumber())
-                .setId(grandpaSetState.getSetId())
+                .setId(grandpaSetState.getAuthoritySet().getSetId())
                 .preCommits(preCommits)
                 .preVotes(preVotes)
                 .blockHash(finalizedBlockHeader.getHash())
@@ -341,7 +350,7 @@ public class GrandpaMessageHandler {
             throw new GrandpaGenericException("handleCatchUpResponse: Response from a non-peer.");
         }
 
-        if (!catchUpResMessage.getSetId().equals(grandpaSetState.getSetId())) {
+        if (!catchUpResMessage.getSetId().equals(grandpaSetState.getAuthoritySet().getSetId())) {
             throw new GrandpaGenericException("handleCatchUpResponse: Response has a different setId.");
         }
 

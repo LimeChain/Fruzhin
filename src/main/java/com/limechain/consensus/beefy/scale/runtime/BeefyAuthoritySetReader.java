@@ -1,4 +1,4 @@
-package com.limechain.consensus.beefy.scale;
+package com.limechain.consensus.beefy.scale.runtime;
 
 import com.limechain.consensus.beefy.dto.BeefyAuthoritySet;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;

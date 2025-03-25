@@ -34,7 +34,7 @@ class GrandpaConsensusMessageReaderTest {
         GrandpaConsensusMessage message = reader.read(new ScaleCodecReader(input));
         assertNotNull(message);
         assertEquals(GrandpaConsensusMessageFormat.GRANDPA_FORCED_CHANGE, message.getFormat());
-        assertEquals(BigInteger.valueOf(3), message.getAdditionalOffset());
+        assertEquals(BigInteger.valueOf(3), message.getMedialLastFinalized());
         assertNotNull(message.getAuthorities());
 
         assertEquals(1, message.getAuthorities().size());

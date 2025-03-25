@@ -1,6 +1,7 @@
 package com.limechain.chain.lightsyncstate;
 
-import com.limechain.chain.lightsyncstate.scale.AuthoritySetReader;
+import com.limechain.consensus.grandpa.dto.GrandpaAuthoritySet;
+import com.limechain.consensus.grandpa.scale.GrandpaAuthoritySetReader;
 import com.limechain.chain.lightsyncstate.scale.EpochChangesReader;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.network.protocol.warp.scale.reader.BlockHeaderReader;
@@ -12,9 +13,10 @@ import java.util.Map;
 
 @Getter
 public class LightSyncState {
+
     private BlockHeader finalizedBlockHeader;
     private EpochChanges epochChanges;
-    private AuthoritySet grandpaAuthoritySet;
+    private GrandpaAuthoritySet grandpaAuthoritySet;
 
     public static LightSyncState decode(Map<String, String> lightSyncState) {
         String header = lightSyncState.get("finalizedBlockHeader");
@@ -38,7 +40,7 @@ public class LightSyncState {
         state.epochChanges = EpochChangesReader.getInstance()
                 .read(new ScaleCodecReader(StringUtils.hexToBytes(epochChanges)));
 
-        state.grandpaAuthoritySet = AuthoritySetReader.getInstance()
+        state.grandpaAuthoritySet = GrandpaAuthoritySetReader.getInstance()
                 .read(new ScaleCodecReader(StringUtils.hexToBytes(grandpaAuthoritySet)));
 
         return state;

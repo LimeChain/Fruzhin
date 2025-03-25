@@ -629,8 +629,6 @@ class ForkTreeTest {
         rebalanceMethod.setAccessible(true);
         rebalanceMethod.invoke(tree);
     }
-    
-    
 
     private byte[] generateHash(int seed) {
         byte[] arr = new byte[32];

@@ -1,7 +1,7 @@
 plugins {
     id("java")
     id("io.freefair.lombok") version "8.13"
-    id("org.springframework.boot") version "3.4.3"
+    id("org.springframework.boot") version "3.4.4"
     id("io.spring.dependency-management") version "1.1.7"
     id("application")
 }
@@ -68,7 +68,7 @@ dependencies {
     implementation("com.github.LimeChain:jsonrpc4j:1.7.0")
 
     // Guava
-    implementation("com.google.guava:guava:33.4.0-jre")
+    implementation("com.google.guava:guava:33.4.5-jre")
 
     // Apache commons
     implementation("commons-io:commons-io:2.18.0")

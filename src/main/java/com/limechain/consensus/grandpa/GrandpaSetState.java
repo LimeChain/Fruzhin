@@ -2,13 +2,16 @@ package com.limechain.consensus.grandpa;
 
 import com.limechain.ServiceConsensusState;
 import com.limechain.chain.lightsyncstate.LightSyncState;
+import com.limechain.chain.lightsyncstate.PendingChange;
 import com.limechain.consensus.dto.Authority;
+import com.limechain.consensus.grandpa.dto.AuthoritySetChangeHandler;
 import com.limechain.consensus.grandpa.dto.GrandpaAuthoritySet;
 import com.limechain.consensus.grandpa.dto.SignedVote;
 import com.limechain.consensus.grandpa.dto.Vote;
 import com.limechain.consensus.grandpa.dto.message.GrandpaConsensusMessage;
 import com.limechain.consensus.grandpa.round.GrandpaRound;
 import com.limechain.exception.grandpa.GrandpaGenericException;
+import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.runtime.Runtime;
 import com.limechain.state.AbstractState;
 import com.limechain.storage.DBConstants;
@@ -17,9 +20,6 @@ import com.limechain.storage.StateUtil;
 import com.limechain.storage.block.state.BlockState;
 import com.limechain.storage.crypto.KeyStore;
 import com.limechain.storage.crypto.KeyType;
-import com.limechain.sync.warpsync.dto.AuthoritySetChange;
-import com.limechain.sync.warpsync.dto.ForcedAuthoritySetChange;
-import com.limechain.sync.warpsync.dto.ScheduledAuthoritySetChange;
 import io.emeraldpay.polkaj.types.Hash256;
 import io.libp2p.core.crypto.PubKey;
 import lombok.Getter;
@@ -34,7 +34,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.PriorityQueue;
 import java.util.logging.Level;
 
 /**
@@ -51,18 +50,15 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
     private static final BigInteger THRESHOLD_DENOMINATOR = BigInteger.valueOf(3);
     private static final BigInteger SET_CHANGES_MAX = BigInteger.valueOf(3);
 
-    private List<Authority> authorities;
-    private BigInteger setId;
+    private GrandpaRound currentGrandpaRound;
 
+    private GrandpaAuthoritySet authoritySet = new GrandpaAuthoritySet();
+    private AuthoritySetChangeHandler authoritySetChangeHandler = new AuthoritySetChangeHandler();
     private BigInteger disabledAuthority;
 
     private final BlockState blockState;
     private final KeyStore keyStore;
     private final KVRepository<String, Object> repository;
-
-    private final PriorityQueue<AuthoritySetChange> pendingSetChanges =
-            new PriorityQueue<>(AuthoritySetChange.getComparator());
-
     private final LinkedHashMap<BigInteger, GrandpaAuthoritySet> pastSetChanges = new LinkedHashMap<>() {
         @Override
         protected boolean removeEldestEntry(Map.Entry<BigInteger, GrandpaAuthoritySet> eldest) {
@@ -70,11 +66,9 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
         }
     };
 
-    private GrandpaRound currentGrandpaRound;
-
     @Override
     public void populateDataFromRuntime(Runtime runtime) {
-        this.authorities = runtime.getGrandpaApiAuthorities();
+        this.authoritySet.setAuthorities(runtime.getGrandpaApiAuthorities());
     }
 
     @Override
@@ -118,7 +112,6 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
         return totalWeight.subtract(faulty);
     }
 
-
     public BigInteger getAuthoritiesTotalWeight(List<Authority> authorities) {
         return authorities.stream()
                 .map(Authority::getWeight)
@@ -126,75 +119,145 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
     }
 
     public BigInteger derivePrimary(BigInteger roundNumber) {
-        var authoritiesCount = BigInteger.valueOf(authorities.size());
+        var authoritiesCount = BigInteger.valueOf(authoritySet.getAuthorities().size());
         return roundNumber.remainder(authoritiesCount);
     }
 
-    public void startNewSet(List<Authority> authorities) {
+    public void startNewSet(BigInteger effectiveNumber, List<Authority> authorities) {
 
-        this.setId = setId != null ? setId.add(BigInteger.ONE) : BigInteger.ONE;
-        this.authorities = authorities;
+        BigInteger setId = (authoritySet != null && authoritySet.getSetId() != null)
+                ? authoritySet.getSetId().add(BigInteger.ONE)
+                : BigInteger.ONE;
+
+        this.authoritySet = new GrandpaAuthoritySet(setId, authorities);
+        this.authoritySetChangeHandler = new AuthoritySetChangeHandler();
 
         persistNewSetState();
-
         updateAuthorityStatus();
 
-        log.log(Level.INFO, "Successfully transitioned to authority set id: " + setId);
+        pastSetChanges.put(effectiveNumber, authoritySet);
+
+        log.log(Level.INFO, "Successfully transitioned to authority set id: " + authoritySet.getSetId());
     }
 
     public void setLightSyncState(LightSyncState initState) {
-        GrandpaAuthoritySet authoritySet = initState.getGrandpaAuthoritySet().getAuthoritySet();
-        this.setId = authoritySet.getSetId();
-        this.authorities = authoritySet.getAuthorities();
+        authoritySet.setSetId(initState.getGrandpaAuthoritySet().getSetId());
+        authoritySet.setAuthorities(initState.getGrandpaAuthoritySet().getAuthorities());
     }
 
-    /**
-     * Apply scheduled or forced authority set changes from the queue if present
-     *
-     * @param blockNumber required to determine if it's time to apply the change
-     */
-    public boolean handleAuthoritySetChange(BigInteger blockNumber) {
-        AuthoritySetChange changeSetData = pendingSetChanges.peek();
-
-        boolean updated = false;
-        while (changeSetData != null) {
-
-            if (changeSetData.getApplicationBlockNumber().compareTo(blockNumber) > 0) {
-                break;
-            }
-
-            startNewSet(changeSetData.getAuthorities());
-            pendingSetChanges.poll();
-            updated = true;
-
-            pastSetChanges.put(changeSetData.getApplicationBlockNumber(),
-                    new GrandpaAuthoritySet(this.setId, this.authorities));
-
-            changeSetData = pendingSetChanges.peek();
-        }
-
-        return updated;
-    }
-
-    public void handleGrandpaConsensusMessage(GrandpaConsensusMessage consensusMessage, BigInteger currentBlockNumber) {
+    public void handleGrandpaConsensusMessage(GrandpaConsensusMessage consensusMessage, BlockHeader blockHeader) {
         switch (consensusMessage.getFormat()) {
-            case GRANDPA_SCHEDULED_CHANGE -> pendingSetChanges.add(new ScheduledAuthoritySetChange(
-                    consensusMessage.getAuthorities(),
-                    consensusMessage.getDelay(),
-                    currentBlockNumber
-            ));
-            case GRANDPA_FORCED_CHANGE -> pendingSetChanges.add(new ForcedAuthoritySetChange(
-                    consensusMessage.getAuthorities(),
-                    consensusMessage.getDelay(),
-                    consensusMessage.getAdditionalOffset(),
-                    currentBlockNumber
-            ));
+            case GRANDPA_SCHEDULED_CHANGE -> addForcedAuthoritySetChange(consensusMessage, blockHeader);
+            case GRANDPA_FORCED_CHANGE -> addScheduledAuthoritySetChange(consensusMessage, blockHeader);
             case GRANDPA_ON_DISABLED -> disabledAuthority = consensusMessage.getDisabledAuthority();
             case GRANDPA_PAUSE -> log.log(Level.SEVERE, "'PAUSE' grandpa message not implemented");
             case GRANDPA_RESUME -> log.log(Level.SEVERE, "'RESUME' grandpa message not implemented");
         }
 
         log.fine(String.format("Updated grandpa set config: %s", consensusMessage.getFormat().toString()));
+    }
+
+    private void addForcedAuthoritySetChange(GrandpaConsensusMessage consensusMessage, BlockHeader blockHeader) {
+
+        try {
+
+            authoritySetChangeHandler.addPendingChange(
+                    PendingChange.buildForcedAuthoritySetChange(
+                            consensusMessage.getAuthorities(),
+                            consensusMessage.getDelay(),
+                            blockHeader.getBlockNumber(),
+                            blockHeader.getHash(),
+                            consensusMessage.getMedialLastFinalized()
+                    ),
+                    blockState::isDescendantOf);
+
+        } catch (GrandpaGenericException e) {
+            log.warning("Error while importing new forced authority set change: " + e.getMessage());
+        }
+    }
+
+    private void addScheduledAuthoritySetChange(GrandpaConsensusMessage consensusMessage, BlockHeader blockHeader) {
+
+        try {
+
+            authoritySetChangeHandler.addPendingChange(
+                    PendingChange.buildScheduledAuthoritySetChange(
+                            consensusMessage.getAuthorities(),
+                            consensusMessage.getDelay(),
+                            blockHeader.getBlockNumber(),
+                            blockHeader.getHash()
+                    ),
+                    blockState::isDescendantOf);
+
+        } catch (GrandpaGenericException e) {
+            log.warning("Error while importing new scheduled authority set change: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Apply forced authority set changes when a new block is imported
+     * if conditions are met . On block import, only forced changes are applicable.
+     *
+     * @param hash   The block hash.
+     * @param number The block number.
+     * @return true if a forced authority set change was applied; false otherwise.
+     */
+    public boolean applyForcedAuthoritySetChange(Hash256 hash, BigInteger number) {
+
+        Optional<PendingChange> forcedChange = Optional.empty();
+
+        try {
+            forcedChange = authoritySetChangeHandler.applyForcedChanges(hash, number, blockState::isDescendantOf);
+        } catch (GrandpaGenericException e) {
+            log.warning("Error while applying forced change: " + e.getMessage());
+        }
+
+        if (forcedChange.isPresent()) {
+
+            PendingChange pendingChange = forcedChange.get();
+            startNewSet(pendingChange.getEffectiveNumber(), pendingChange.getNextAuthorities());
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Apply forced/scheduled authority set changes when a block is
+     * finalized if conditions are met. On finalization, the method
+     * first checks for a forced change. If no forced change is found,
+     * it then checks for a scheduled change.
+     *
+     * @param hash   The block hash.
+     * @param number The block number.
+     * @return true if either a forced or scheduled authority set change was applied; false otherwise.
+     */
+    public boolean applyAuthoritySetChange(Hash256 hash, BigInteger number) {
+
+        // First try to apply a forced change.
+        if (applyForcedAuthoritySetChange(hash, number)) {
+            return true;
+        }
+
+        Optional<PendingChange> scheduledChange = Optional.empty();
+        try {
+            scheduledChange =
+                    authoritySetChangeHandler.applyScheduledChanges(hash, number, blockState::isDescendantOf);
+
+        } catch (GrandpaGenericException e) {
+            log.warning("Error while applying scheduled change: " + e.getMessage());
+        }
+
+        if (scheduledChange.isPresent()) {
+
+            PendingChange pendingChange = scheduledChange.get();
+            startNewSet(pendingChange.getEffectiveNumber(), pendingChange.getNextAuthorities());
+
+            return true;
+        }
+
+        return false;
     }
 
     // We keep a maximum of 3 rounds at a time
@@ -227,16 +290,19 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
     }
 
     public void saveGrandpaAuthorities() {
-        repository.save(StateUtil.generateAuthorityKey(DBConstants.GRANDPA_AUTHORITY_SET, setId), authorities);
+        repository.save(StateUtil.generateAuthorityKey(
+                DBConstants.GRANDPA_AUTHORITY_SET, authoritySet.getSetId()), authoritySet.getAuthorities()
+        );
     }
 
     public Authority[] fetchGrandpaAuthorities() {
-        return repository.find(
-                StateUtil.generateAuthorityKey(DBConstants.GRANDPA_AUTHORITY_SET, setId), new Authority[0]);
+        return repository.find(StateUtil.generateAuthorityKey(
+                DBConstants.GRANDPA_AUTHORITY_SET, authoritySet.getSetId()), new Authority[0]
+        );
     }
 
     public void saveAuthoritySetId() {
-        repository.save(DBConstants.GRANDPA_SET_ID, setId);
+        repository.save(DBConstants.GRANDPA_SET_ID, authoritySet.getSetId());
     }
 
     public BigInteger fetchAuthoritiesSetId() {
@@ -254,39 +320,45 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
     public void savePreVotes(BigInteger roundNumber) {
         GrandpaRound round = getGrandpaRound(roundNumber);
         Map<Hash256, SignedVote> preVotes = round.getPreVotes();
-        repository.save(StateUtil.generatePreVotesKey(DBConstants.GRANDPA_PREVOTES, roundNumber, setId), preVotes);
+        repository.save(StateUtil.generatePreVotesKey(
+                DBConstants.GRANDPA_PREVOTES, roundNumber, authoritySet.getSetId()), preVotes
+        );
     }
 
     public Map<PubKey, Vote> fetchPreVotes(BigInteger roundNumber) {
-        return repository.find(StateUtil.generatePreVotesKey(DBConstants.GRANDPA_PREVOTES, roundNumber, setId),
-                Collections.emptyMap());
+        return repository.find(StateUtil.generatePreVotesKey(
+                DBConstants.GRANDPA_PREVOTES, roundNumber, authoritySet.getSetId()), Collections.emptyMap()
+        );
     }
 
     public void savePreCommits(BigInteger roundNumber) {
         GrandpaRound round = getGrandpaRound(roundNumber);
         Map<Hash256, SignedVote> preCommits = round.getPreCommits();
-        repository.save(StateUtil.generatePreCommitsKey(DBConstants.GRANDPA_PRECOMMITS, roundNumber, setId), preCommits);
+        repository.save(StateUtil.generatePreCommitsKey(
+                DBConstants.GRANDPA_PRECOMMITS, roundNumber, authoritySet.getSetId()), preCommits
+        );
     }
 
     public Map<PubKey, Vote> fetchPreCommits(BigInteger roundNumber) {
-        return repository.find(StateUtil.generatePreCommitsKey(DBConstants.GRANDPA_PRECOMMITS, roundNumber, setId),
-                Collections.emptyMap());
+        return repository.find(StateUtil.generatePreCommitsKey(
+                DBConstants.GRANDPA_PRECOMMITS, roundNumber, authoritySet.getSetId()), Collections.emptyMap()
+        );
     }
 
     public Optional<BigInteger> getAuthorityWeight(Hash256 authorityPublicKey) {
-        return authorities.stream()
+        return authoritySet.getAuthorities().stream()
                 .filter(authority -> new Hash256(authority.getPublicKey()).equals(authorityPublicKey))
                 .map(Authority::getWeight)
                 .findFirst();
     }
 
     private void loadPersistedState() {
-        this.setId = fetchAuthoritiesSetId();
-        this.authorities = Arrays.asList(fetchGrandpaAuthorities());
+        authoritySet.setSetId(fetchAuthoritiesSetId());
+        authoritySet.setAuthorities(Arrays.asList(fetchGrandpaAuthorities()));
     }
 
     private void updateAuthorityStatus() {
-        keyStore.findKeyPair(authorities.stream()
+        keyStore.findKeyPair(authoritySet.getAuthorities().stream()
                                 .map(Authority::getPublicKey)
                                 .toList(),
                         KeyType.GRANDPA)

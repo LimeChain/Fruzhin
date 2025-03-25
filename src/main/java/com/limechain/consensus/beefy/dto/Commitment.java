@@ -9,5 +9,5 @@ import java.util.List;
 public class Commitment {
     List<PayloadElement> payload;
     BigInteger blockNumber;
-    BigInteger validatorSetId;
+    BigInteger authoritySetId;
 }

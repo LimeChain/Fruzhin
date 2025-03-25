@@ -41,13 +41,13 @@ public class GrandpaConsensusMessageReader implements ScaleReader<GrandpaConsens
                 grandpaConsensusMessage.setDelay(delay);
             }
             case GRANDPA_FORCED_CHANGE -> {
-                BigInteger additionalOffset = BigInteger.valueOf(reader.readUint32());
+                BigInteger medialLastFinalized = BigInteger.valueOf(reader.readUint32());
                 List<Authority> authorities = reader.read(new ListReader<>(authorityReader));
                 BigInteger delay = BigInteger.valueOf(reader.readUint32());
 
                 grandpaConsensusMessage.setAuthorities(authorities);
                 grandpaConsensusMessage.setDelay(delay);
-                grandpaConsensusMessage.setAdditionalOffset(additionalOffset);
+                grandpaConsensusMessage.setMedialLastFinalized(medialLastFinalized);
             }
             case GRANDPA_ON_DISABLED -> grandpaConsensusMessage.setDisabledAuthority(new UInt64Reader().read(reader));
             case GRANDPA_PAUSE, GRANDPA_RESUME -> grandpaConsensusMessage.setDelay(
