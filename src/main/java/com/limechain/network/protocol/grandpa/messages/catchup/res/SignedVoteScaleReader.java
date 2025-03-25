@@ -1,7 +1,7 @@
 package com.limechain.network.protocol.grandpa.messages.catchup.res;
 
 import com.limechain.consensus.grandpa.dto.SignedVote;
-import com.limechain.network.protocol.grandpa.messages.commit.VoteScaleReader;
+import com.limechain.consensus.grandpa.scale.VoteScaleReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleReader;
 import io.emeraldpay.polkaj.types.Hash256;

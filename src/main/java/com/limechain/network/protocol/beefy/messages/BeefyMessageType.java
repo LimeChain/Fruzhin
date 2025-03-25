@@ -9,7 +9,7 @@ public enum BeefyMessageType {
 
     HANDSHAKE(-1),
     VOTE(0),
-    SIGNED_COMMITMENT(1);
+    JUSTIFICATION(1);
 
     private final int type;
 

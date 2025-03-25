@@ -6,7 +6,7 @@ import com.limechain.consensus.babe.dto.runtime.BlockEquivocationProof;
 import com.limechain.consensus.babe.scale.runtime.BabeApiConfigurationReader;
 import com.limechain.consensus.babe.scale.runtime.BlockEquivocationProofWriter;
 import com.limechain.consensus.beefy.dto.BeefyAuthoritySet;
-import com.limechain.consensus.beefy.scale.BeefyAuthoritySetReader;
+import com.limechain.consensus.beefy.scale.runtime.BeefyAuthoritySetReader;
 import com.limechain.consensus.dto.Authority;
 import com.limechain.consensus.dto.runtime.OpaqueKeyOwnershipProof;
 import com.limechain.consensus.grandpa.dto.runtime.GrandpaEquivocation;

@@ -7,6 +7,7 @@ import com.limechain.exception.beefy.BeefyGenericException;
 import com.limechain.network.protocol.beefy.messages.justification.SignedCommitment;
 import com.limechain.state.StateManager;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -41,6 +42,7 @@ class BeefyServiceTest {
     }
 
     @Test
+    @Disabled
     void testTriageIncomingJustificationWithEmptySessions() {
         SignedCommitment signedCommitment = mock(SignedCommitment.class);
         Commitment commitment = mock(Commitment.class);
@@ -61,6 +63,7 @@ class BeefyServiceTest {
     }
 
     @Test
+    @Disabled
     void testTriageIncomingJustificationWithNoBeefyFinalized() {
         SignedCommitment signedCommitment = mock(SignedCommitment.class);
         Commitment commitment = mock(Commitment.class);

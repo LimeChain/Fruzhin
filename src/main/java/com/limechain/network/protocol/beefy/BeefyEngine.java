@@ -97,16 +97,16 @@ public class BeefyEngine implements BaseEngine {
         switch (messageType) {
             case HANDSHAKE -> handleHandshake(message, peerId, stream);
             case VOTE -> handleVoteMessage(message, peerId);
-            case SIGNED_COMMITMENT -> handleSignedCommitmentMessage(message, peerId);
+            case JUSTIFICATION -> handleJustificationMessage(message, peerId);
         }
     }
 
     private void handleVoteMessage(byte[] message, PeerId peerId) {
-        //TODO
+        // TODO Implement handling.
     }
 
-    private void handleSignedCommitmentMessage(byte[] message, PeerId peerId) {
-        //TODO
+    private void handleJustificationMessage(byte[] message, PeerId peerId) {
+        // TODO Implement handling.
     }
 
     private BeefyMessageType getBeefyMessageType(byte[] message) {

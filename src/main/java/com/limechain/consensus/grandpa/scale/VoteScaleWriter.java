@@ -1,12 +1,15 @@
-package com.limechain.network.protocol.grandpa.messages.commit;
+package com.limechain.consensus.grandpa.scale;
 
 import com.limechain.consensus.grandpa.dto.Vote;
 import com.limechain.network.protocol.warp.scale.writer.BlockNumberWriter;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.emeraldpay.polkaj.scale.ScaleWriter;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
 import java.io.IOException;
 
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class VoteScaleWriter implements ScaleWriter<Vote> {
 
     private static final VoteScaleWriter INSTANCE = new VoteScaleWriter();

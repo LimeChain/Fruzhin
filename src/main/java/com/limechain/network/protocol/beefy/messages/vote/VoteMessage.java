@@ -1,13 +1,13 @@
 package com.limechain.network.protocol.beefy.messages.vote;
 
 import com.limechain.consensus.beefy.dto.Commitment;
-import lombok.Data;
+import lombok.Value;
 
 import java.io.Serializable;
 
-@Data
+@Value
 public class VoteMessage implements Serializable {
-    private Commitment commitment;
-    private byte[] authorityId;
-    private byte[] signature;
+    Commitment commitment;
+    byte[] authorityId;
+    byte[] signature;
 }

@@ -10,5 +10,5 @@ import java.util.List;
 public class Commitment implements Serializable {
     List<PayloadElement> payload;
     BigInteger blockNumber;
-    BigInteger validatorSetId;
+    BigInteger authoritySetId;
 }

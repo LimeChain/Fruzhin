@@ -1,5 +1,6 @@
 package com.limechain.network.protocol.grandpa.messages.commit;
 
+import com.limechain.consensus.grandpa.scale.VoteScaleReader;
 import com.limechain.exception.scale.WrongMessageTypeException;
 import com.limechain.network.protocol.grandpa.messages.GrandpaMessageType;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
