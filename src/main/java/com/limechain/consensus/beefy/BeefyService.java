@@ -251,9 +251,9 @@ public class BeefyService implements FinalizedBlockChangeListener {
             log.warning(String.format("finalizeJustification: Error while finalizing beefy round: %s", e));
             return;
         }
-        beefyState.setBeefyFinalized(blockNumber);
 
-        //TODO: Persist beefy state
+        beefyState.setBeefyFinalized(blockNumber);
+        beefyState.persistState();
     }
 
     private void finalizeBeefyRound(BigInteger blockNumber) {

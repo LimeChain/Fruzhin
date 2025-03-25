@@ -19,11 +19,11 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.java.Log;
+import org.javatuples.Pair;
 import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedHashMap;
@@ -123,7 +123,7 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
     }
 
     private void handleChangedBeefyAuthorities(BeefyConsensusMessage consensusMessage, BigInteger blockNumber) {
-        org.javatuples.Pair<byte[], byte[]> keyPair = keyStore.findKeyPair(
+        Pair<byte[], byte[]> keyPair = keyStore.findKeyPair(
                 consensusMessage.getAuthorityPublicKeys(),
                 KeyType.BEEFY
         ).orElse(null);
