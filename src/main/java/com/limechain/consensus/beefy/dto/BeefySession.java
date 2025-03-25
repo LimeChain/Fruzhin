@@ -1,5 +1,6 @@
 package com.limechain.consensus.beefy.dto;
 
+import com.limechain.network.protocol.beefy.messages.justification.SignedCommitment;
 import com.limechain.network.protocol.beefy.messages.vote.VoteMessage;
 import io.emeraldpay.polkaj.types.Hash264;
 import jakarta.annotation.Nullable;
@@ -9,18 +10,24 @@ import lombok.extern.java.Log;
 import org.javatuples.Pair;
 
 import java.math.BigInteger;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 @Data
 @Log
 public class BeefySession {
 
+    private static final BigInteger THRESHOLD_DENOMINATOR = BigInteger.valueOf(3);
+
     private final BeefyAuthoritySet authoritySet;
 
-    private Map<BigInteger, BeefyRound> rounds = new ConcurrentHashMap<>();
+    private Map<Commitment, BeefyRound> rounds = new ConcurrentHashMap<>();
 
-    private Map<Hash264, VoteMessage> previousVotes = new ConcurrentHashMap<>();
+    private Map<Pair<Hash264,BigInteger>, VoteMessage> previousVotes = new ConcurrentHashMap<>();
 
     private final BigInteger mandatoryBlock;
 
@@ -33,6 +40,83 @@ public class BeefySession {
 
     @Nullable
     private final Pair<byte[], byte[]> beefyKeyPair;
+
+
+    public VoteImportResult addVote(VoteMessage voteMessage) {
+        Commitment commitment = voteMessage.getCommitment();
+        byte[] authorityId = voteMessage.getAuthorityId();
+        BigInteger blockNumber = commitment.getBlockNumber();
+
+        if (blockNumber.compareTo(mandatoryBlock) < 0 ||
+                blockNumber.compareTo(highestFinalized) <= 0) {
+            log.info(String.format("Beefy: received vote for old stale round {%s}, ignoring", blockNumber));
+            return new VoteImportResult.Invalid();
+        } else if (!Objects.equals(commitment.getAuthoritySetId(), authoritySet.getSetId())) {
+            log.info(String.format("Beefy: expected set_id {%s}, ignoring vote {%s}", authoritySet.getSetId(), voteMessage));
+            return new VoteImportResult.Invalid();
+        } else if (!authoritySet.getPublicKeys().contains(authorityId)) {
+            log.info(String.format("Beefy: received vote {%s} from validator that is not in the validator set, ignoring", voteMessage));
+            return new VoteImportResult.Invalid();
+        }
+
+        Hash264 authorityIdHash = new Hash264(authorityId);
+        Pair<Hash264, BigInteger> voteKey = new Pair<>(authorityIdHash, blockNumber);
+
+        if (previousVotes.containsKey(voteKey)) {
+            VoteMessage previousVote = previousVotes.get(voteKey);
+            if (!previousVote.getCommitment().getPayload().equals(commitment.getPayload())) {
+                log.info(String.format("Beefy: Detected equivocated vote: 1st: {%s}, 2nd: {%s}", previousVote, voteMessage));
+                return new VoteImportResult.DoubleVoting(new DoubleVotingProof(previousVote, voteMessage));
+            }
+        } else {
+            previousVotes.put(voteKey, voteMessage);
+        }
+
+        BeefyRound round = rounds.computeIfAbsent(commitment, _ -> new BeefyRound());
+        if (round.addVote(authorityIdHash, voteMessage) &&
+                round.isDone(getThreshold())) {
+            rounds.remove(commitment);
+            log.info(String.format("Beefy: Round # {%s} concluded, finality_proof: ", blockNumber));
+            return new VoteImportResult.RoundConcluded(createSignedCommitment(round, commitment));
+        }
+        return new VoteImportResult.Ok();
+    }
+
+    public SignedCommitment createSignedCommitment(BeefyRound round, Commitment commitment) {
+        Map<Hash264, VoteMessage> signedVotes = round.getSignedVotes();
+
+        List<Optional<byte[]>> signatures = authoritySet.getPublicKeys().stream()
+                .map(key -> Optional.ofNullable(signedVotes.get(new Hash264(key)))
+                        .map(VoteMessage::getSignature))
+                .collect(Collectors.toList());
+
+        return new SignedCommitment(commitment, signatures);
+    }
+
+    /**
+     * The threshold is determined as the numOfValidators - (numOfValidators - 1) / 3
+     *
+     * @return minimum required validators for finality.
+     */
+    private BigInteger getThreshold() {
+
+        if (Objects.isNull(authoritySet)) {
+            log.warning("getThreshold: No authoritySet in BeefySession.");
+            return BigInteger.ZERO;
+        }
+
+        var validatorSize = authoritySet.getPublicKeys().size();
+
+        if (validatorSize == 0) {
+            log.warning("getThreshold: Validator set is empty.");
+            return BigInteger.ZERO;
+        }
+
+        var numOfValidators = BigInteger.valueOf(validatorSize);
+        var faulty = (numOfValidators.subtract(BigInteger.ONE)).divide(THRESHOLD_DENOMINATOR);
+
+        return numOfValidators.subtract(faulty);
+    }
 
     public void update(BigInteger blockNumber) {
         // remove rounds <= block number(round number)
