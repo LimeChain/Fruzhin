@@ -32,9 +32,7 @@ public class BeefySession {
 
     public void update(BigInteger blockNumber) {
         // remove rounds <= block number(round number)
-        rounds.keySet().removeIf(commitment ->
-                commitment.getBlockNumber().compareTo(blockNumber) <= 0
-        );
+        rounds.keySet().removeIf(commitment -> commitment.getBlockNumber().compareTo(blockNumber) <= 0);
 
         highestFinalized = (highestFinalized == null) ? blockNumber : highestFinalized.max(blockNumber);
 
