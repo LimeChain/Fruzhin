@@ -177,9 +177,6 @@ public class BeefyService implements FinalizedBlockChangeListener {
     private void triageIncomingJustification(SignedCommitment signedCommitment) {
         BigInteger blockNumber = signedCommitment.getCommitment().getBlockNumber();
         RoundAction roundAction = determineRoundAction(blockNumber);
-        if (roundAction == RoundAction.INVALID) {
-            return;
-        }
 
         switch (roundAction) {
             case RoundAction.PROCESS -> {
@@ -192,6 +189,9 @@ public class BeefyService implements FinalizedBlockChangeListener {
             }
             case RoundAction.DROP -> {
                 log.fine(String.format("triageIncomingJustification: Drop justification for round: %d.", blockNumber));
+            }
+            case RoundAction.INVALID -> {
+                log.fine(String.format("triageIncomingJustification: Invalidate justification for round: %d.", blockNumber));
             }
         }
     }
@@ -263,22 +263,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
             throw new BeefyGenericException("No beefy session exists.");
         }
 
-        // remove rounds <= round number of the incoming justification
-        currentSession.getRounds()
-                .keySet()
-                .removeIf(commitment -> commitment.getBlockNumber().compareTo(blockNumber) <= 0);
-
-        BigInteger highestFinalized = currentSession.getHighestFinalizedForSession();
-        highestFinalized = highestFinalized == null ? blockNumber : highestFinalized.max(blockNumber);
-        currentSession.setHighestFinalizedForSession(highestFinalized);
-
-        if (blockNumber.equals(currentSession.getMandatoryBlock())) {
-            currentSession.setMandatoryBlockFinalized(true);
-            log.fine(String.format("finalizeJustification: Finalize mandatory round: %d.", blockNumber));
-        } else {
-            log.fine(String.format("finalizeJustification: Finalize non-mandatory round: %d.", blockNumber));
-        }
-
+        currentSession.update(blockNumber);
         removeFinishedSessions();
     }
 
