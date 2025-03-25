@@ -5,12 +5,13 @@ import lombok.Data;
 import lombok.Setter;
 import org.javatuples.Pair;
 
+import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
 
 @Data
-public class BeefySession {
+public class BeefySession implements Serializable {
 
     private final BeefyAuthoritySet authoritySet;
 

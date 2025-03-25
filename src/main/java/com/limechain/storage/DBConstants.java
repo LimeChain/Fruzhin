@@ -46,6 +46,9 @@ public class DBConstants {
     public static final String BEEFY_SET_ID = "gs::beefySetId";
     public static final String BEEFY_DISABLED_AUTHORITY = "bs:beefyDisabledAuthority";
     public static final String BEEFY_FINALIZED = "bs:beefyFinalized";
+    public static final String BEEFY_GRANDPA_FINALIZED = "bs:grandpaFinalized";
     public static final String BEEFY_ROUND = "bs:beefyRound";
+    public static final String BEEFY_LAST_VOTED = "bs:lastVoted";
+    public static final String BEEFY_SESSiONS = "bs:sessions";
     public static final String BEEFY_JUSTIFICATION = "bs:justification";
 }

@@ -14,13 +14,17 @@ import java.util.Objects;
 public class FullNode extends HostNode {
 
     public FullNode() {
-        super(List.of(
+        super(
+                List.of(
                         Objects.requireNonNull(AppBean.getBean(NetworkService.class)),
-                        Objects.requireNonNull(AppBean.getBean(SyncService.class))),
+                        Objects.requireNonNull(AppBean.getBean(SyncService.class))
+                ),
                 List.of(
                         Objects.requireNonNull(AppBean.getBean(BlockState.class)),
                         Objects.requireNonNull(AppBean.getBean(SyncState.class)),
                         Objects.requireNonNull(AppBean.getBean(EpochState.class)),
-                        Objects.requireNonNull(AppBean.getBean(GrandpaSetState.class))));
+                        Objects.requireNonNull(AppBean.getBean(GrandpaSetState.class))
+                )
+        );
     }
 }

@@ -23,6 +23,7 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedHashMap;
@@ -60,6 +61,7 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
     @Nullable
     private BigInteger grandpaFinalized;
 
+    // TODO: Remove nextDigest or remove this comment
     /**
      * Tracks the next block number (digest) for which BEEFY should process votes or finalization.
      * Initialized as the maximum of beefyGenesis and beefyFinalized, or zero if genesis is unknown.
@@ -69,6 +71,7 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
     @Nullable
     private BigInteger lastVoted;
 
+    // TODO: Remove lastVote or remove this comment
     @Nullable
     private VoteMessage lastVote;
 
@@ -92,11 +95,16 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
 
     @Override
     public void persistState() {
-        persistBeefyAuthorities();
         persistAuthoritiesSetId();
-        persistRoundNumber(roundNumber);
+        persistBeefyAuthorities();
+        persistRoundNumber();
+        persistBeefyFinalized();
+        persistGrandpaFinalized();
+        persistLastVoted();
+        persistSessions();
     }
 
+    // TODO: Remove initializeNextDigest or remove this comment
     public void initializeNextDigest() {
         if (beefyGenesis != null) {
             nextDigest = beefyFinalized != null
@@ -143,7 +151,13 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
     private void loadPersistedState() {
         BigInteger setId = fetchAuthoritiesSetId();
         List<byte[]> authorities = fetchBeefyAuthorities(setId);
+
         this.authoritySet = new BeefyAuthoritySet(authorities, setId);
+        this.roundNumber = fetchRoundNumber();
+        this.beefyFinalized = fetchBeefyFinalized();
+        this.grandpaFinalized = fetchGrandpaFinalized();
+        this.lastVoted = fetchLastVoted();
+        this.sessions = fetchSessions();
     }
 
     private BigInteger fetchAuthoritiesSetId() {
@@ -153,7 +167,6 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
     private void persistAuthoritiesSetId() {
         repository.save(DBConstants.BEEFY_SET_ID, authoritySet.getSetId());
     }
-
 
     private List<byte[]> fetchBeefyAuthorities(BigInteger setId) {
         return repository.find(
@@ -169,24 +182,6 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
         );
     }
 
-    private BigInteger fetchDisabledAuthority(BigInteger setId) {
-        return repository.find(
-                StateUtil.generateBeefyDisabledAuthorityKey(
-                        DBConstants.BEEFY_DISABLED_AUTHORITY, setId
-                ),
-                BigInteger.ZERO
-        );
-    }
-
-    private void persistDisabledAuthority() {
-        repository.save(
-                StateUtil.generateBeefyDisabledAuthorityKey(
-                        DBConstants.BEEFY_DISABLED_AUTHORITY, authoritySet.getSetId()
-                ),
-                disabledAuthority
-        );
-    }
-
     private BigInteger fetchBeefyFinalized() {
         return repository.find(DBConstants.BEEFY_FINALIZED, BigInteger.ZERO);
     }
@@ -195,12 +190,36 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
         repository.save(DBConstants.BEEFY_FINALIZED, beefyFinalized);
     }
 
+    private BigInteger fetchGrandpaFinalized() {
+        return repository.find(DBConstants.BEEFY_GRANDPA_FINALIZED, BigInteger.ZERO);
+    }
+
+    private void persistGrandpaFinalized() {
+        repository.save(DBConstants.BEEFY_GRANDPA_FINALIZED, grandpaFinalized);
+    }
+
     private BigInteger fetchRoundNumber() {
         return repository.find(DBConstants.BEEFY_ROUND, BigInteger.ZERO);
     }
 
-    private void persistRoundNumber(BigInteger roundNumber) {
+    private void persistRoundNumber() {
         repository.save(DBConstants.BEEFY_ROUND, roundNumber);
+    }
+
+    private BigInteger fetchLastVoted() {
+        return repository.find(DBConstants.BEEFY_LAST_VOTED, BigInteger.ZERO);
+    }
+
+    private void persistLastVoted() {
+        repository.save(DBConstants.BEEFY_LAST_VOTED, lastVoted);
+    }
+
+    private Deque<BeefySession> fetchSessions() {
+        return repository.find(DBConstants.BEEFY_SESSiONS, new ArrayDeque<>());
+    }
+
+    private void persistSessions() {
+        repository.save(DBConstants.BEEFY_SESSiONS, sessions);
     }
 
     private SignedCommitment fetchJustification(BigInteger blockNumber) {
