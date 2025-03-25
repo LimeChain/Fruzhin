@@ -45,7 +45,7 @@ public class SignedCommitmentScaleReader implements ScaleReader<SignedCommitment
         int expectedCount = 0;
         for (byte b : signaturesFromBits) {
             // Treat bytes as unsigned. Same as rust implementation.
-            expectedCount += Integer.bitCount(b & 0xFF);
+            expectedCount += Integer.bitCount(Byte.toUnsignedInt(b));
         }
 
         // Read "validator_set_len".
@@ -85,7 +85,7 @@ public class SignedCommitmentScaleReader implements ScaleReader<SignedCommitment
             // "7 - i % 8" decide shift amount to match the bit index.
             // "1 << (7 - i % 8)" shifts.
             // "[i / 8] & (1 << (7 - i % 8)))" logical AND operation to check if the bit at selected index is 1.
-            if ((signaturesFromBits[i / 8] & (1 << (7 - i % 8))) != 0) {
+            if ((Byte.toUnsignedInt(signaturesFromBits[i / 8]) & (1 << (7 - i % 8))) != 0) {
                 signatures[i] = Optional.of(reader.readByteArray(EcdsaUtils.SIGNATURE_LEN));
             }
         }

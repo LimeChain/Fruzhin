@@ -15,7 +15,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-class VoteMessageScaleWriterTest {
+class SignedCommitmentScaleWriterTest {
 
     private static final String SCALE_ENCODED_JUST = "0x0101046d6880d7a4152645a6b797e86a8c697cc4744c9fb37af3103adc2b7" +
             "d09418e77c6c5b099b2a501222f000000000000046005000000080b539afa97682ef165a5a9882677c576b846eb14cff6a07ce64" +
@@ -35,9 +35,9 @@ class VoteMessageScaleWriterTest {
         PayloadElement payloadElement = new PayloadElement(BeefyPayloadId.MMR, payloadMmr);
         Commitment commitment = new Commitment(List.of(payloadElement), BLOCK_NUMBER, AUTHORITY_SET_ID);
 
-        SignedCommitment voteMessage = getSignedCommitment(commitment);
+        SignedCommitment signedCommitment = getSignedCommitment(commitment);
 
-        byte[] encoded = ScaleUtils.Encode.encode(writer, voteMessage);
+        byte[] encoded = ScaleUtils.Encode.encode(writer, signedCommitment);
 
         assertNotNull(encoded);
         assertEquals(SCALE_ENCODED_JUST, StringUtils.toHexWithPrefix(encoded));
