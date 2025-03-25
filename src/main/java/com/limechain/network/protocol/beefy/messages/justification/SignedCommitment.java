@@ -1,17 +1,13 @@
 package com.limechain.network.protocol.beefy.messages.justification;
 
 import com.limechain.consensus.beefy.dto.Commitment;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Value;
 
 import java.util.List;
 import java.util.Optional;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
+@Value
 public class SignedCommitment {
-    private Commitment commitment;
-    private List<Optional<byte[]>> signatures;
+    Commitment commitment;
+    List<Optional<byte[]>> signatures;
 }

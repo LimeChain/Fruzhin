@@ -206,7 +206,7 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
     private SignedCommitment fetchJustification(BigInteger blockNumber) {
         return repository.find(
                 StateUtil.generateBeefyJustificationKey(DBConstants.BEEFY_JUSTIFICATION, blockNumber),
-                new SignedCommitment()
+                null
         );
     }
 
