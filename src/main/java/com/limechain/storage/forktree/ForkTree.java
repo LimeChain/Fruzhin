@@ -23,7 +23,6 @@ import java.util.function.Predicate;
  * The ForkTree class represents a data structure used to manage and track multiple branches.
  * The <code>isDescendentOf</code> predicate is a important parameter used in most methods to verify the ancestry
  * of nodes.
- *
  * @param <T> the type of the data, that will be stored in the nodes
  */
 @Getter

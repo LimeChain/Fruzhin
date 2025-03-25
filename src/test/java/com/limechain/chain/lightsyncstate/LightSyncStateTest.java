@@ -11,6 +11,7 @@ import java.util.HashMap;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class LightSyncStateTest {
+
     @Test
     void decodeNetworks() throws IOException {
         var polkadot = executeDecoding("genesis/polkadot.json");

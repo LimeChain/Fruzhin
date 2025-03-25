@@ -156,7 +156,6 @@ public class GrandpaRound {
         this.threshold = threshold;
         this.isPrimaryVoter = isPrimaryVoter;
         this.lastFinalizedBlock = lastFinalizedBlock;
-
         this.authoritySet = new GrandpaAuthoritySet(setId, authorities);
     }
 
@@ -411,6 +410,9 @@ public class GrandpaRound {
             GrandpaSetState grandpaSetState = stateManager.getGrandpaSetState();
             grandpaSetState.persistFinalizedRoundState(roundNumber);
 
+            // TODO: Remove this when FinalizationHandler (responsible for sending events on block finalization) is implemented.
+            grandpaSetState.applyAuthoritySetChange(finalizedBlock.getHash(), finalizedBlock.getBlockNumber());
+
             if (!isCommitMessageInArchive(Vote.fromBlockHeader(finalizedBlock))) {
                 broadcastCommitMessage();
             }
@@ -580,7 +582,9 @@ public class GrandpaRound {
 
         GrandpaSetState grandpaSetState = stateManager.getGrandpaSetState();
 
-        BigInteger totalAuthWeight = grandpaSetState.getAuthoritiesTotalWeight(authoritySet.getAuthorities());
+        BigInteger totalAuthWeight = grandpaSetState.getAuthoritiesTotalWeight(
+                authoritySet.getAuthorities()
+        );
         BigInteger totalPcWeight = getVoteWeight(preCommits.values());
 
         // Calculate how many more pre commit equivocations we are allowed to receive.

@@ -51,9 +51,13 @@ public class VerifyJustificationAction implements WarpSyncAction {
     @Override
     public void handle(WarpSyncMachine sync) {
         try {
+
             // Executes scheduled or forced authority changes for the last finalized block.
-            boolean changeInAuthoritySet = stateManager.getGrandpaSetState().handleAuthoritySetChange(
-                    stateManager.getSyncState().getLastFinalizedBlockNumber());
+            boolean changeInAuthoritySet = stateManager.getGrandpaSetState()
+                    .applyAuthoritySetChange(
+                            stateManager.getSyncState().getLastFinalizedBlockHash(),
+                            stateManager.getSyncState().getLastFinalizedBlockNumber()
+                    );
 
             if (warpSyncState.isWarpSyncFinished() && changeInAuthoritySet) {
                 new Thread(messageCoordinator::sendMessagesToPeers).start();
@@ -74,6 +78,7 @@ public class VerifyJustificationAction implements WarpSyncAction {
 
             stateManager.getSyncState().finalizeHeader(fragment.getHeader());
             handleAuthorityChanges(fragment);
+
         } catch (Exception e) {
             log.log(Level.WARNING, "Error while verifying justification: " + e.getMessage());
             this.error = e;
@@ -85,7 +90,7 @@ public class VerifyJustificationAction implements WarpSyncAction {
 
         DigestHelper.getGrandpaConsensusMessages(header.getDigest())
                 .forEach(cm -> stateManager.getGrandpaSetState().handleGrandpaConsensusMessage(
-                        cm, header.getBlockNumber())
+                        cm, header)
                 );
 
         SyncState syncState = stateManager.getSyncState();
