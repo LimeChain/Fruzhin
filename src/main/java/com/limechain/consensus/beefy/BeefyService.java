@@ -37,6 +37,12 @@ public class BeefyService implements FinalizedBlockChangeListener {
 
     private final StateManager stateManager;
 
+    @Override
+    public void finalizedBlockChanged(FinalizedBlockChangeEvent event) {
+        stateManager.getBeefyState().setGrandpaFinalized(event.getGrandpaFinalized().getBlockNumber());
+        processConsensusMessages(event.getBlockHeaders());
+    }
+
     public void vote() {
         BeefyState beefyState = stateManager.getBeefyState();
         // Get the first session (round)
@@ -44,7 +50,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
 
         // If no session is found, exit the method
         if (sessionStart == null) {
-            log.info("Vote BEEFY: No voting round started");
+            log.warning("Vote BEEFY: No voting round started");
             return;
         }
 
@@ -175,7 +181,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
         switch (roundAction) {
             case RoundAction.PROCESS -> {
                 log.fine(String.format("triageIncomingJustification: Process justification for round: %d.", blockNumber));
-                //TODO: finalize justification
+                finalizeJustification(signedCommitment);
             }
             case RoundAction.ENQUEUE -> {
                 log.fine(String.format("triageIncomingJustification: Enqueue justification for round: %d.", blockNumber));
@@ -184,11 +190,20 @@ public class BeefyService implements FinalizedBlockChangeListener {
             case RoundAction.DROP -> {
                 log.fine(String.format("triageIncomingJustification: Drop justification for round: %d.", blockNumber));
             }
+            case RoundAction.INVALID -> {
+                log.fine(String.format("triageIncomingJustification: Invalidate justification for round: %d.", blockNumber));
+            }
         }
     }
 
     private RoundAction determineRoundAction(BigInteger roundNumber) {
-        Pair<BigInteger, BigInteger> roundsInterval = findAcceptedRoundsInterval();
+        Pair<BigInteger, BigInteger> roundsInterval = null;
+        try {
+            roundsInterval = findAcceptedRoundsInterval();
+        } catch (BeefyGenericException e) {
+            log.warning(String.format("determineRoundAction: Error while finding accepted rounds interval %s", e));
+            return RoundAction.INVALID;
+        }
         BigInteger startRoundNumber = roundsInterval.getLeft();
         BigInteger endRoundNumber = roundsInterval.getRight();
 
@@ -222,9 +237,40 @@ public class BeefyService implements FinalizedBlockChangeListener {
         }
     }
 
-    @Override
-    public void finalizedBlockChanged(FinalizedBlockChangeEvent event) {
-        stateManager.getBeefyState().setGrandpaFinalized(event.getGrandpaFinalized().getBlockNumber());
-        processConsensusMessages(event.getBlockHeaders());
+    private void finalizeJustification(SignedCommitment signedCommitment) {
+        BeefyState beefyState = stateManager.getBeefyState();
+        BigInteger blockNumber = signedCommitment.getCommitment().getBlockNumber();
+        if (blockNumber.compareTo(beefyState.getBeefyFinalized()) <= 0) {
+            log.fine(String.format("finalizeJustification: Round: %d has been already finalized.", blockNumber));
+            return;
+        }
+
+        try {
+            finalizeBeefyRound(blockNumber);
+        } catch (BeefyGenericException e) {
+            log.warning(String.format("finalizeJustification: Error while finalizing beefy round: %s", e));
+            return;
+        }
+        beefyState.setBeefyFinalized(blockNumber);
+
+        //TODO: Persist beefy state
+    }
+
+    private void finalizeBeefyRound(BigInteger blockNumber) {
+        BeefyState beefyState = stateManager.getBeefyState();
+        BeefySession currentSession = beefyState.getSessions().peekFirst();
+        if (currentSession == null) {
+            throw new BeefyGenericException("No beefy session exists.");
+        }
+
+        currentSession.update(blockNumber);
+        removeFinishedSessions();
+    }
+
+    private void removeFinishedSessions() {
+        BeefyState beefyState = stateManager.getBeefyState();
+        if (beefyState.getSessions().size() > 1) {
+            beefyState.getSessions().removeIf(BeefySession::isMandatoryBlockFinalized);
+        }
     }
 }
