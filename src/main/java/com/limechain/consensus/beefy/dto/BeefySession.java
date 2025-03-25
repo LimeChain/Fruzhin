@@ -1,5 +1,7 @@
 package com.limechain.consensus.beefy.dto;
 
+import com.limechain.network.protocol.beefy.messages.vote.VoteMessage;
+import io.emeraldpay.polkaj.types.Hash264;
 import jakarta.annotation.Nullable;
 import lombok.Data;
 import lombok.Setter;
@@ -7,8 +9,8 @@ import lombok.extern.java.Log;
 import org.javatuples.Pair;
 
 import java.math.BigInteger;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Data
 @Log
@@ -16,7 +18,9 @@ public class BeefySession {
 
     private final BeefyAuthoritySet authoritySet;
 
-    private Map<Commitment, BeefyRound> rounds = new HashMap<>();
+    private Map<BigInteger, BeefyRound> rounds = new ConcurrentHashMap<>();
+
+    private Map<Hash264, VoteMessage> previousVotes = new ConcurrentHashMap<>();
 
     private final BigInteger mandatoryBlock;
 

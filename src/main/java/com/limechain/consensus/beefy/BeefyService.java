@@ -2,6 +2,7 @@ package com.limechain.consensus.beefy;
 
 import com.limechain.consensus.beefy.dto.BeefyAuthoritySet;
 import com.limechain.consensus.beefy.dto.BeefyPayloadId;
+import com.limechain.consensus.beefy.dto.BeefyRound;
 import com.limechain.consensus.beefy.dto.BeefySession;
 import com.limechain.consensus.beefy.dto.Commitment;
 import com.limechain.consensus.beefy.dto.PayloadElement;
@@ -12,10 +13,12 @@ import com.limechain.consensus.beefy.event.FinalizedBlockChangeListener;
 import com.limechain.exception.beefy.BeefyGenericException;
 import com.limechain.exception.storage.BlockStorageGenericException;
 import com.limechain.network.protocol.beefy.messages.justification.SignedCommitment;
+import com.limechain.network.protocol.beefy.messages.vote.VoteMessage;
 import com.limechain.network.protocol.warp.DigestHelper;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.state.StateManager;
 import com.limechain.storage.block.state.BlockState;
+import io.emeraldpay.polkaj.types.Hash264;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.java.Log;
 import org.apache.commons.lang3.tuple.Pair;
@@ -24,6 +27,7 @@ import org.springframework.stereotype.Component;
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -104,16 +108,52 @@ public class BeefyService implements FinalizedBlockChangeListener {
         // TODO: Broadcast Vote Message
     }
 
+    private void handleVote(VoteMessage voteMessage) {
+        BeefyState beefyState = stateManager.getBeefyState();
+        BeefySession session = beefyState.getSessions().peekFirst();
+        Map<BigInteger, BeefyRound> rounds = session.getRounds();
+        BeefyAuthoritySet authoritySet = session.getAuthoritySet();
+        Commitment commitment = voteMessage.getCommitment();
+        byte[] authorityId = voteMessage.getAuthorityId();
+        BigInteger blockNumber = commitment.getBlockNumber();
+
+        if (blockNumber.compareTo(session.getMandatoryBlock()) < 0 ||
+                blockNumber.compareTo(session.getHighestFinalizedForSession()) <= 0) {
+            log.info(String.format("Beefy: received vote for old stale round {%s}, ignoring", blockNumber));
+            return;
+        } else if (!Objects.equals(commitment.getAuthoritySetId(), authoritySet.getSetId())) {
+            log.info(String.format("Beefy: expected set_id {%s}, ignoring vote {%s}", authoritySet.getSetId(), voteMessage));
+            return;
+        } else if (!authoritySet.getPublicKeys().contains(authorityId)) {
+            log.info(String.format("Beefy: received vote {%s} from validator that is not in the validator set, ignoring", voteMessage));
+            return;
+        }
+
+        //TODO: double voting check
+        //TODO: equivocation check
+        Hash264 authorityIdHash = new Hash264(authorityId);
+        session.getPreviousVotes().put(authorityIdHash, voteMessage);
+
+        BeefyRound round = rounds.computeIfAbsent(blockNumber, _ -> new BeefyRound());
+        if (round.addVote(authorityIdHash, voteMessage) &&
+                round.isDone(getThreshold(session))) {
+            rounds.remove(commitment.getBlockNumber());
+            log.info(String.format("Beefy: Round # {%s} concluded, finality_proof: ", blockNumber));
+            //TODO: generate finality proof
+        }
+    }
+
+
     /**
      * The threshold is determined as the numOfValidators - (numOfValidators - 1) / 3
      *
      * @return minimum required validators for finality.
      */
-    private BigInteger getThreshold() {
-        BeefyAuthoritySet authoritySet = stateManager.getBeefyState().getAuthoritySet();
+    private BigInteger getThreshold(BeefySession session) {
+        BeefyAuthoritySet authoritySet = session.getAuthoritySet();
 
         if (Objects.isNull(authoritySet)) {
-            log.warning("getThreshold: No authoritySet in BeefyState.");
+            log.warning("getThreshold: No authoritySet in BeefySession.");
             return BigInteger.ZERO;
         }
 
