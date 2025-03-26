@@ -26,7 +26,7 @@ class GrandpaSetStateTest {
     private KeyStore keyStore;
 
     @Mock
-    private KVRepository repository;
+    private GrandpaSetRepository repository;
 
     @Mock
     private BlockState blockState;
