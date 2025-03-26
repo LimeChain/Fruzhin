@@ -8,9 +8,6 @@ import com.limechain.network.protocol.beefy.messages.justification.SignedCommitm
 import com.limechain.network.protocol.beefy.messages.vote.VoteMessage;
 import com.limechain.runtime.Runtime;
 import com.limechain.state.AbstractState;
-import com.limechain.storage.DBConstants;
-import com.limechain.storage.KVRepository;
-import com.limechain.storage.StateUtil;
 import com.limechain.storage.block.state.BlockState;
 import com.limechain.storage.crypto.KeyStore;
 import com.limechain.storage.crypto.KeyType;
@@ -24,7 +21,6 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
 import java.util.ArrayDeque;
-import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -42,13 +38,13 @@ import java.util.List;
 @RequiredArgsConstructor
 public class BeefyState extends AbstractState implements ServiceConsensusState {
 
-    private BeefyAuthoritySet authoritySet;
+    private final BeefyStateRepository repository;
+    private final BlockState blockState;
+    private final KeyStore keyStore;
 
     private BigInteger disabledAuthority;
 
-    private final BlockState blockState;
-    private final KeyStore keyStore;
-    private final KVRepository<String, Object> repository;
+    private BeefyAuthoritySet authoritySet;
 
     private BigInteger roundNumber;
 
@@ -95,13 +91,14 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
 
     @Override
     public void persistState() {
-        persistAuthoritiesSetId();
-        persistBeefyAuthorities();
-        persistRoundNumber();
-        persistBeefyFinalized();
-        persistGrandpaFinalized();
-        persistLastVoted();
-        persistSessions();
+        repository.persistAuthoritiesSetId(authoritySet);
+        repository.persistBeefyAuthorities(authoritySet);
+        repository.persistRoundNumber(roundNumber);
+        repository.persistBeefyGenesis(beefyGenesis);
+        repository.persistBeefyFinalized(beefyFinalized);
+        repository.persistGrandpaFinalized(grandpaFinalized);
+        repository.persistLastVoted(lastVoted);
+        repository.persistSessions(sessions);
     }
 
     // TODO: Remove initializeNextDigest or remove this comment
@@ -149,98 +146,15 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
     }
 
     private void loadPersistedState() {
-        BigInteger setId = fetchAuthoritiesSetId();
-        List<byte[]> authorities = fetchBeefyAuthorities(setId);
+        BigInteger setId = repository.fetchAuthoritiesSetId();
+        List<byte[]> authorities = repository.fetchBeefyAuthorities(setId);
 
         this.authoritySet = new BeefyAuthoritySet(authorities, setId);
-        this.roundNumber = fetchRoundNumber();
-        this.beefyFinalized = fetchBeefyFinalized();
-        this.grandpaFinalized = fetchGrandpaFinalized();
-        this.lastVoted = fetchLastVoted();
-        this.sessions = fetchSessions();
-    }
-
-    private BigInteger fetchAuthoritiesSetId() {
-        return repository.find(DBConstants.BEEFY_SET_ID, BigInteger.ZERO);
-    }
-
-    private void persistAuthoritiesSetId() {
-        repository.save(DBConstants.BEEFY_SET_ID, authoritySet.getSetId());
-    }
-
-    private List<byte[]> fetchBeefyAuthorities(BigInteger setId) {
-        return repository.find(
-                StateUtil.generateAuthorityKey(DBConstants.BEEFY_AUTHORITY_SET, setId),
-                Collections.emptyList()
-        );
-    }
-
-    private void persistBeefyAuthorities() {
-        repository.save(
-                StateUtil.generateAuthorityKey(DBConstants.BEEFY_AUTHORITY_SET, authoritySet.getSetId()),
-                authoritySet.getPublicKeys()
-        );
-    }
-
-    private BigInteger fetchBeefyFinalized() {
-        return repository.find(DBConstants.BEEFY_FINALIZED, BigInteger.ZERO);
-    }
-
-    private void persistBeefyFinalized() {
-        repository.save(DBConstants.BEEFY_FINALIZED, beefyFinalized);
-    }
-
-    private BigInteger fetchGrandpaFinalized() {
-        return repository.find(DBConstants.BEEFY_GRANDPA_FINALIZED, BigInteger.ZERO);
-    }
-
-    private void persistGrandpaFinalized() {
-        repository.save(DBConstants.BEEFY_GRANDPA_FINALIZED, grandpaFinalized);
-    }
-
-    private BigInteger fetchBeefyGenesis() {
-        return repository.find(DBConstants.BEEFY_GENESIS, null);
-    }
-
-    private void persistBeefyGenesis() {
-        repository.save(DBConstants.BEEFY_GENESIS, beefyGenesis);
-    }
-
-    private BigInteger fetchRoundNumber() {
-        return repository.find(DBConstants.BEEFY_ROUND, BigInteger.ZERO);
-    }
-
-    private void persistRoundNumber() {
-        repository.save(DBConstants.BEEFY_ROUND, roundNumber);
-    }
-
-    private BigInteger fetchLastVoted() {
-        return repository.find(DBConstants.BEEFY_LAST_VOTED, BigInteger.ZERO);
-    }
-
-    private void persistLastVoted() {
-        repository.save(DBConstants.BEEFY_LAST_VOTED, lastVoted);
-    }
-
-    private Deque<BeefySession> fetchSessions() {
-        return repository.find(DBConstants.BEEFY_SESSIONS, new ArrayDeque<>());
-    }
-
-    private void persistSessions() {
-        repository.save(DBConstants.BEEFY_SESSIONS, sessions);
-    }
-
-    private SignedCommitment fetchJustification(BigInteger blockNumber) {
-        return repository.find(
-                StateUtil.generateBeefyJustificationKey(DBConstants.BEEFY_JUSTIFICATION, blockNumber),
-                null
-        );
-    }
-
-    private void persistJustification(BigInteger blockNumber, SignedCommitment justification) {
-        repository.save(
-                StateUtil.generateBeefyJustificationKey(DBConstants.BEEFY_JUSTIFICATION, blockNumber),
-                justification
-        );
+        this.roundNumber = repository.fetchRoundNumber();
+        this.beefyGenesis = repository.fetchBeefyGenesis();
+        this.beefyFinalized = repository.fetchBeefyFinalized();
+        this.grandpaFinalized = repository.fetchGrandpaFinalized();
+        this.lastVoted = repository.fetchLastVoted();
+        this.sessions = repository.fetchSessions();
     }
 }
