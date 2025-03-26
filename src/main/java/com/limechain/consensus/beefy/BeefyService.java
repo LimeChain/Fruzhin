@@ -110,6 +110,10 @@ public class BeefyService implements FinalizedBlockChangeListener {
         BeefySession session = beefyState.getSessions().peekFirst();
         BigInteger blockNumber = voteMessage.getCommitment().getBlockNumber();
 
+        if (session == null) {
+            throw new BeefyGenericException("No beefy session exists.");
+        }
+
         VoteImportResult result = session.addVote(voteMessage);
 
         switch (result) {
