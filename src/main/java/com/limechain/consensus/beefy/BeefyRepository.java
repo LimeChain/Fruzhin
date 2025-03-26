@@ -17,7 +17,7 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
-public class BeefyStateRepository {
+public class BeefyRepository {
 
     private final KVRepository<String, Object> repository;
 

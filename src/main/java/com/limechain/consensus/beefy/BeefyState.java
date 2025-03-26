@@ -38,7 +38,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class BeefyState extends AbstractState implements ServiceConsensusState {
 
-    private final BeefyStateRepository repository;
+    private final BeefyRepository repository;
     private final BlockState blockState;
     private final KeyStore keyStore;
 
