@@ -291,7 +291,7 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
                 .findFirst();
     }
 
-    public BigInteger fetchLatestRoundNumber() {
+    public BigInteger getLatestRoundNumber() {
         return repository.fetchLatestRoundNumber();
     }
 

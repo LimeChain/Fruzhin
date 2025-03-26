@@ -276,7 +276,7 @@ public class GrandpaMessageHandler {
 
             // Check if needed to catch-up peer
             if (neighbourMessage.getRoundNumber().compareTo(
-                    grandpaSetState.fetchLatestRoundNumber().add(CATCH_UP_THRESHOLD)) >= 0) {
+                    grandpaSetState.getLatestRoundNumber().add(CATCH_UP_THRESHOLD)) >= 0) {
                 log.log(Level.FINE, "Neighbor message indicates that the round of Peer " + peerId + " is ahead.");
 
                 CatchUpReqMessage catchUpReqMessage = CatchUpReqMessage.builder()
@@ -308,7 +308,7 @@ public class GrandpaMessageHandler {
             throw new GrandpaGenericException("Catch up message has a different setId.");
         }
 
-        if (catchUpReqMessage.getRound().compareTo(grandpaSetState.fetchLatestRoundNumber()) > 0) {
+        if (catchUpReqMessage.getRound().compareTo(grandpaSetState.getLatestRoundNumber()) > 0) {
             throw new GrandpaGenericException("Catching up on a round in the future.");
         }
 
