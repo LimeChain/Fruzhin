@@ -47,7 +47,8 @@ public class DBConstants {
     public static final String BEEFY_FINALIZED = "bs:beefyFinalized";
     public static final String BEEFY_GRANDPA_FINALIZED = "bs:grandpaFinalized";
     public static final String BEEFY_ROUND = "bs:beefyRound";
+    public static final String BEEFY_GENESIS = "bs:beefyGenesis";
     public static final String BEEFY_LAST_VOTED = "bs:lastVoted";
-    public static final String BEEFY_SESSiONS = "bs:sessions";
+    public static final String BEEFY_SESSIONS = "bs:sessions";
     public static final String BEEFY_JUSTIFICATION = "bs:justification";
 }

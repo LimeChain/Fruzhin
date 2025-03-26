@@ -198,6 +198,14 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
         repository.save(DBConstants.BEEFY_GRANDPA_FINALIZED, grandpaFinalized);
     }
 
+    private BigInteger fetchBeefyGenesis() {
+        return repository.find(DBConstants.BEEFY_GENESIS, null);
+    }
+
+    private void persistBeefyGenesis() {
+        repository.save(DBConstants.BEEFY_GENESIS, beefyGenesis);
+    }
+
     private BigInteger fetchRoundNumber() {
         return repository.find(DBConstants.BEEFY_ROUND, BigInteger.ZERO);
     }
@@ -215,11 +223,11 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
     }
 
     private Deque<BeefySession> fetchSessions() {
-        return repository.find(DBConstants.BEEFY_SESSiONS, new ArrayDeque<>());
+        return repository.find(DBConstants.BEEFY_SESSIONS, new ArrayDeque<>());
     }
 
     private void persistSessions() {
-        repository.save(DBConstants.BEEFY_SESSiONS, sessions);
+        repository.save(DBConstants.BEEFY_SESSIONS, sessions);
     }
 
     private SignedCommitment fetchJustification(BigInteger blockNumber) {
