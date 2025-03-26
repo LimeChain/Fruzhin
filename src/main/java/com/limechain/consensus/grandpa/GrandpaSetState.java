@@ -291,10 +291,6 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
                 .findFirst();
     }
 
-    public BigInteger getLatestRoundNumber() {
-        return repository.fetchLatestRoundNumber();
-    }
-
     private void loadPersistedState() {
         authoritySet.setSetId(repository.fetchAuthoritiesSetId());
         authoritySet.setAuthorities(Arrays.asList(repository.fetchGrandpaAuthorities(authoritySet)));
