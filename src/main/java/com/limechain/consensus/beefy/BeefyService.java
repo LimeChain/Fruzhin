@@ -39,6 +39,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
 
     @Override
     public void finalizedBlockChanged(FinalizedBlockChangeEvent event) {
+        //TODO:
         stateManager.getBeefyState().setGrandpaFinalized(event.getGrandpaFinalized().getBlockNumber());
         processConsensusMessages(event.getBlockHeaders());
     }
