@@ -1,17 +1,18 @@
 package com.limechain.consensus.beefy;
 
-import com.limechain.consensus.beefy.dto.BeefyAuthoritySet;
 import com.limechain.consensus.beefy.dto.BeefyPayloadId;
 import com.limechain.consensus.beefy.dto.BeefySession;
 import com.limechain.consensus.beefy.dto.Commitment;
 import com.limechain.consensus.beefy.dto.PayloadElement;
 import com.limechain.consensus.beefy.dto.RoundAction;
+import com.limechain.consensus.beefy.dto.VoteImportResult;
 import com.limechain.consensus.beefy.dto.message.BeefyConsensusMessage;
 import com.limechain.consensus.beefy.event.FinalizedBlockChangeEvent;
 import com.limechain.consensus.beefy.event.FinalizedBlockChangeListener;
 import com.limechain.exception.beefy.BeefyGenericException;
 import com.limechain.exception.storage.BlockStorageGenericException;
 import com.limechain.network.protocol.beefy.messages.justification.SignedCommitment;
+import com.limechain.network.protocol.beefy.messages.vote.VoteMessage;
 import com.limechain.network.protocol.warp.DigestHelper;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.state.StateManager;
@@ -32,7 +33,6 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class BeefyService implements FinalizedBlockChangeListener {
 
-    private static final BigInteger THRESHOLD_DENOMINATOR = BigInteger.valueOf(3);
     private static final int MIN_BLOCK_DELTA = 1;
 
     private final StateManager stateManager;
@@ -104,30 +104,34 @@ public class BeefyService implements FinalizedBlockChangeListener {
         // TODO: Broadcast Vote Message
     }
 
-    /**
-     * The threshold is determined as the numOfValidators - (numOfValidators - 1) / 3
-     *
-     * @return minimum required validators for finality.
-     */
-    private BigInteger getThreshold() {
-        BeefyAuthoritySet authoritySet = stateManager.getBeefyState().getAuthoritySet();
+    private Optional<SignedCommitment> handleVote(VoteMessage voteMessage) {
+        BeefyState beefyState = stateManager.getBeefyState();
+        BeefySession session = beefyState.getSessions().peekFirst();
+        BigInteger blockNumber = voteMessage.getCommitment().getBlockNumber();
 
-        if (Objects.isNull(authoritySet)) {
-            log.warning("getThreshold: No authoritySet in BeefyState.");
-            return BigInteger.ZERO;
+        if (session == null) {
+            throw new BeefyGenericException("No beefy session exists.");
         }
 
-        var validatorSize = authoritySet.getPublicKeys().size();
+        VoteImportResult result = session.addVote(voteMessage);
 
-        if (validatorSize == 0) {
-            log.warning("getThreshold: Validator set is empty.");
-            return BigInteger.ZERO;
+        switch (result) {
+            case VoteImportResult.RoundConcluded voteImportResult -> {
+                SignedCommitment signedCommitment = voteImportResult.signedCommitment();
+                finalizeJustification(signedCommitment);
+                return Optional.of(signedCommitment);
+            }
+            case VoteImportResult.Ok _ -> {
+                if (!session.isMandatoryBlockFinalized() && session.getMandatoryBlock().equals(blockNumber)) {
+                    //TODO: persist vote message
+                }
+            }
+            case VoteImportResult.DoubleVoting _ -> {
+                //TODO: report double voting
+            }
+            case VoteImportResult.Invalid _ -> log.info("handleVote: received an invalid/stale vote: " + voteMessage);
         }
-
-        var numOfValidators = BigInteger.valueOf(validatorSize);
-        var faulty = (numOfValidators.subtract(BigInteger.ONE)).divide(THRESHOLD_DENOMINATOR);
-
-        return numOfValidators.subtract(faulty);
+        return Optional.empty();
     }
 
     /**
@@ -172,6 +176,31 @@ public class BeefyService implements FinalizedBlockChangeListener {
         return DigestHelper.getBeefyConsensusMessages(blockHeader.getDigest())
                 .stream().map(BeefyConsensusMessage::getMmrRootHash)
                 .findFirst();
+    }
+
+    private void triageIncomingVote(VoteMessage voteMessage) {
+
+        BigInteger blockNumber = voteMessage.getCommitment().getBlockNumber();
+        RoundAction roundAction = determineRoundAction(blockNumber);
+
+        switch (roundAction) {
+            case RoundAction.PROCESS -> {
+                log.fine(String.format("triageIncomingVotes: Process vote %s  for round: %d.", voteMessage, blockNumber));
+                Optional<SignedCommitment> finalityProof = handleVote(voteMessage);
+                if (finalityProof.isPresent()) {
+                    //TODO: gossip vote message
+                }
+            }
+            case RoundAction.ENQUEUE -> {
+                log.fine(String.format("triageIncomingVotes: Unexpected vote: %s", voteMessage));
+            }
+            case RoundAction.DROP -> {
+                log.fine(String.format("triageIncomingVotes: Drop vote  %s for round: %d.", voteMessage, blockNumber));
+            }
+            case RoundAction.INVALID -> {
+                log.fine(String.format("triageIncomingVotes: Invalidate vote  %s for round: %d.", voteMessage, blockNumber));
+            }
+        }
     }
 
     private void triageIncomingJustification(SignedCommitment signedCommitment) {
