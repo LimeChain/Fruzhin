@@ -91,14 +91,14 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
 
     @Override
     public void persistState() {
-        repository.persistAuthoritiesSetId(authoritySet);
-        repository.persistBeefyAuthorities(authoritySet);
-        repository.persistRoundNumber(roundNumber);
-        repository.persistBeefyGenesis(beefyGenesis);
-        repository.persistBeefyFinalized(beefyFinalized);
-        repository.persistGrandpaFinalized(grandpaFinalized);
-        repository.persistLastVoted(lastVoted);
-        repository.persistSessions(sessions);
+        repository.saveAuthoritiesSetId(authoritySet);
+        repository.saveBeefyAuthorities(authoritySet);
+        repository.saveRoundNumber(roundNumber);
+        repository.saveBeefyGenesis(beefyGenesis);
+        repository.saveBeefyFinalized(beefyFinalized);
+        repository.saveGrandpaFinalized(grandpaFinalized);
+        repository.saveLastVoted(lastVoted);
+        repository.saveSessions(sessions);
     }
 
     // TODO: Remove initializeNextDigest or remove this comment

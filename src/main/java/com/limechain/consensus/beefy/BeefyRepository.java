@@ -25,7 +25,7 @@ public class BeefyRepository {
         return repository.find(DBConstants.BEEFY_SET_ID, BigInteger.ZERO);
     }
 
-    public void persistAuthoritiesSetId(BeefyAuthoritySet authoritySet) {
+    public void saveAuthoritiesSetId(BeefyAuthoritySet authoritySet) {
         repository.save(DBConstants.BEEFY_SET_ID, authoritySet.getSetId());
     }
 
@@ -36,7 +36,7 @@ public class BeefyRepository {
         );
     }
 
-    public void persistBeefyAuthorities(BeefyAuthoritySet authoritySet) {
+    public void saveBeefyAuthorities(BeefyAuthoritySet authoritySet) {
         repository.save(
                 StateUtil.generateAuthorityKey(DBConstants.BEEFY_AUTHORITY_SET, authoritySet.getSetId()),
                 authoritySet.getPublicKeys()
@@ -47,7 +47,7 @@ public class BeefyRepository {
         return repository.find(DBConstants.BEEFY_FINALIZED, BigInteger.ZERO);
     }
 
-    public void persistBeefyFinalized(BigInteger beefyFinalized) {
+    public void saveBeefyFinalized(BigInteger beefyFinalized) {
         repository.save(DBConstants.BEEFY_FINALIZED, beefyFinalized);
     }
 
@@ -55,7 +55,7 @@ public class BeefyRepository {
         return repository.find(DBConstants.BEEFY_GRANDPA_FINALIZED, BigInteger.ZERO);
     }
 
-    public void persistGrandpaFinalized(BigInteger grandpaFinalized) {
+    public void saveGrandpaFinalized(BigInteger grandpaFinalized) {
         repository.save(DBConstants.BEEFY_GRANDPA_FINALIZED, grandpaFinalized);
     }
 
@@ -63,7 +63,7 @@ public class BeefyRepository {
         return repository.find(DBConstants.BEEFY_GENESIS, null);
     }
 
-    public void persistBeefyGenesis(BigInteger beefyGenesis) {
+    public void saveBeefyGenesis(BigInteger beefyGenesis) {
         repository.save(DBConstants.BEEFY_GENESIS, beefyGenesis);
     }
 
@@ -71,7 +71,7 @@ public class BeefyRepository {
         return repository.find(DBConstants.BEEFY_ROUND, BigInteger.ZERO);
     }
 
-    public void persistRoundNumber(BigInteger roundNumber) {
+    public void saveRoundNumber(BigInteger roundNumber) {
         repository.save(DBConstants.BEEFY_ROUND, roundNumber);
     }
 
@@ -79,7 +79,7 @@ public class BeefyRepository {
         return repository.find(DBConstants.BEEFY_LAST_VOTED, BigInteger.ZERO);
     }
 
-    public void persistLastVoted(BigInteger lastVoted) {
+    public void saveLastVoted(BigInteger lastVoted) {
         repository.save(DBConstants.BEEFY_LAST_VOTED, lastVoted);
     }
 
@@ -87,7 +87,7 @@ public class BeefyRepository {
         return repository.find(DBConstants.BEEFY_SESSIONS, new ArrayDeque<>());
     }
 
-    public void persistSessions(Deque<BeefySession> sessions) {
+    public void saveSessions(Deque<BeefySession> sessions) {
         repository.save(DBConstants.BEEFY_SESSIONS, sessions);
     }
 
@@ -98,7 +98,7 @@ public class BeefyRepository {
         );
     }
 
-    public void persistJustification(BigInteger blockNumber, SignedCommitment justification) {
+    public void saveJustification(BigInteger blockNumber, SignedCommitment justification) {
         repository.save(
                 StateUtil.generateBeefyJustificationKey(DBConstants.BEEFY_JUSTIFICATION, blockNumber),
                 justification
