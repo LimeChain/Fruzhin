@@ -1,5 +1,6 @@
 package com.limechain.consensus.beefy.dto;
 
+import com.limechain.exception.beefy.BeefyGenericException;
 import com.limechain.network.protocol.beefy.messages.justification.SignedCommitment;
 import com.limechain.network.protocol.beefy.messages.vote.VoteMessage;
 import io.emeraldpay.polkaj.types.Hash264;
@@ -27,7 +28,7 @@ public class BeefySession {
 
     private Map<Commitment, BeefyRound> rounds = new ConcurrentHashMap<>();
 
-    private Map<Pair<Hash264,BigInteger>, VoteMessage> previousVotes = new ConcurrentHashMap<>();
+    private Map<Pair<Hash264, BigInteger>, VoteMessage> previousVotes = new ConcurrentHashMap<>();
 
     private final BigInteger mandatoryBlock;
 
@@ -49,13 +50,16 @@ public class BeefySession {
 
         if (blockNumber.compareTo(mandatoryBlock) < 0 ||
                 blockNumber.compareTo(highestFinalized) <= 0) {
-            log.info(String.format("Beefy: received vote for old stale round {%s}, ignoring", blockNumber));
+            log.fine(String.format("addVote: received vote for old stale round {%s}, ignoring",
+                    blockNumber));
             return new VoteImportResult.Invalid();
         } else if (!Objects.equals(commitment.getAuthoritySetId(), authoritySet.getSetId())) {
-            log.info(String.format("Beefy: expected set_id {%s}, ignoring vote {%s}", authoritySet.getSetId(), voteMessage));
+            log.fine(String.format("addVote: expected set_id {%s}, ignoring vote {%s}",
+                    authoritySet.getSetId(), voteMessage));
             return new VoteImportResult.Invalid();
         } else if (!authoritySet.getPublicKeys().contains(authorityId)) {
-            log.info(String.format("Beefy: received vote {%s} from validator that is not in the validator set, ignoring", voteMessage));
+            log.fine(String.format("addVote: received vote {%s} from validator that is not in the" +
+                            " validator set, ignoring", voteMessage));
             return new VoteImportResult.Invalid();
         }
 
@@ -65,7 +69,7 @@ public class BeefySession {
         if (previousVotes.containsKey(voteKey)) {
             VoteMessage previousVote = previousVotes.get(voteKey);
             if (!previousVote.getCommitment().getPayload().equals(commitment.getPayload())) {
-                log.info(String.format("Beefy: Detected equivocated vote: 1st: {%s}, 2nd: {%s}", previousVote, voteMessage));
+                log.info(String.format("addVote: Detected equivocated vote: 1st: {%s}, 2nd: {%s}", previousVote, voteMessage));
                 return new VoteImportResult.DoubleVoting(new DoubleVotingProof(previousVote, voteMessage));
             }
         } else {
@@ -76,13 +80,15 @@ public class BeefySession {
         if (round.addVote(authorityIdHash, voteMessage) &&
                 round.isDone(getThreshold())) {
             rounds.remove(commitment);
-            log.info(String.format("Beefy: Round # {%s} concluded, finality_proof: ", blockNumber));
+            log.info(String.format("addVote: Round # {%s} concluded, finality_proof: ", blockNumber));
             return new VoteImportResult.RoundConcluded(createSignedCommitment(round, commitment));
         }
+
         return new VoteImportResult.Ok();
     }
 
     public SignedCommitment createSignedCommitment(BeefyRound round, Commitment commitment) {
+
         Map<Hash264, VoteMessage> signedVotes = round.getSignedVotes();
 
         List<Optional<byte[]>> signatures = authoritySet.getPublicKeys().stream()
@@ -100,9 +106,8 @@ public class BeefySession {
      */
     private BigInteger getThreshold() {
 
-        if (Objects.isNull(authoritySet)) {
-            log.warning("getThreshold: No authoritySet in BeefySession.");
-            return BigInteger.ZERO;
+        if (authoritySet == null) {
+            throw new BeefyGenericException("getThreshold: No authoritySet in BeefySession.");
         }
 
         var validatorSize = authoritySet.getPublicKeys().size();

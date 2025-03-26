@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-
 @Log
 @Component
 @RequiredArgsConstructor
@@ -130,7 +129,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
             case VoteImportResult.DoubleVoting _ -> {
                 //TODO: report double voting
             }
-            case VoteImportResult.Invalid _ -> log.info("Beefy: received an invalid/stale vote: " + voteMessage);
+            case VoteImportResult.Invalid _ -> log.info("handleVote: received an invalid/stale vote: " + voteMessage);
         }
         return Optional.empty();
     }
@@ -180,6 +179,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
     }
 
     private void triageIncomingVote(VoteMessage voteMessage) {
+
         BigInteger blockNumber = voteMessage.getCommitment().getBlockNumber();
         RoundAction roundAction = determineRoundAction(blockNumber);
 
@@ -192,7 +192,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
                 }
             }
             case RoundAction.ENQUEUE -> {
-                log.warning(String.format("triageIncomingVotes: Unexpected vote: %s", voteMessage));
+                log.fine(String.format("triageIncomingVotes: Unexpected vote: %s", voteMessage));
             }
             case RoundAction.DROP -> {
                 log.fine(String.format("triageIncomingVotes: Drop vote  %s for round: %d.", voteMessage, blockNumber));

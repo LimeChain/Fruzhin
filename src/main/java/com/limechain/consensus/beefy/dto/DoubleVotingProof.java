@@ -1,12 +1,10 @@
 package com.limechain.consensus.beefy.dto;
 
 import com.limechain.network.protocol.beefy.messages.vote.VoteMessage;
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Value;
 
-@Data
-@AllArgsConstructor
+@Value
 public class DoubleVotingProof {
-    private VoteMessage first;
-    private VoteMessage second;
+    VoteMessage first;
+    VoteMessage second;
 }
