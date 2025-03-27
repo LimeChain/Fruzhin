@@ -93,7 +93,7 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
     public void persistState() {
         repository.saveAuthoritiesSetId(authoritySet);
         repository.saveBeefyAuthorities(authoritySet);
-        repository.saveRoundNumber(roundNumber);
+        repository.saveDisabledAuthority(authoritySet, disabledAuthority);
         repository.saveBeefyGenesis(beefyGenesis);
         repository.saveBeefyFinalized(beefyFinalized);
         repository.saveGrandpaFinalized(grandpaFinalized);
@@ -150,7 +150,7 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
         List<byte[]> authorities = repository.fetchBeefyAuthorities(setId);
 
         this.authoritySet = new BeefyAuthoritySet(authorities, setId);
-        this.roundNumber = repository.fetchRoundNumber();
+        this.disabledAuthority = repository.fetchDisabledAuthority(setId);
         this.beefyGenesis = repository.fetchBeefyGenesis();
         this.beefyFinalized = repository.fetchBeefyFinalized();
         this.grandpaFinalized = repository.fetchGrandpaFinalized();

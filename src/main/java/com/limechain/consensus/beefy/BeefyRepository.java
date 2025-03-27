@@ -43,6 +43,24 @@ public class BeefyRepository {
         );
     }
 
+    public BigInteger fetchDisabledAuthority(BigInteger setId) {
+        return repository.find(
+                StateUtil.generateBeefyDisabledAuthorityKey(
+                        DBConstants.BEEFY_DISABLED_AUTHORITY, setId
+                ),
+                null
+        );
+    }
+
+    public void saveDisabledAuthority(BeefyAuthoritySet authoritySet, BigInteger disabledAuthority) {
+        repository.save(
+                StateUtil.generateBeefyDisabledAuthorityKey(
+                        DBConstants.BEEFY_DISABLED_AUTHORITY, authoritySet.getSetId()
+                ),
+                disabledAuthority
+        );
+    }
+
     public BigInteger fetchBeefyFinalized() {
         return repository.find(DBConstants.BEEFY_FINALIZED, BigInteger.ZERO);
     }
@@ -65,14 +83,6 @@ public class BeefyRepository {
 
     public void saveBeefyGenesis(BigInteger beefyGenesis) {
         repository.save(DBConstants.BEEFY_GENESIS, beefyGenesis);
-    }
-
-    public BigInteger fetchRoundNumber() {
-        return repository.find(DBConstants.BEEFY_ROUND, BigInteger.ZERO);
-    }
-
-    public void saveRoundNumber(BigInteger roundNumber) {
-        repository.save(DBConstants.BEEFY_ROUND, roundNumber);
     }
 
     public BigInteger fetchLastVoted() {
