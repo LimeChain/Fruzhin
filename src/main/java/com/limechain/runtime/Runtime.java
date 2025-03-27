@@ -3,6 +3,7 @@ package com.limechain.runtime;
 import com.limechain.consensus.babe.dto.runtime.BabeApiConfiguration;
 import com.limechain.consensus.babe.dto.runtime.BlockEquivocationProof;
 import com.limechain.consensus.beefy.dto.BeefyAuthoritySet;
+import com.limechain.consensus.beefy.dto.DoubleVotingProof;
 import com.limechain.consensus.dto.Authority;
 import com.limechain.consensus.dto.runtime.OpaqueKeyOwnershipProof;
 import com.limechain.consensus.grandpa.dto.runtime.GrandpaEquivocation;
@@ -32,6 +33,10 @@ public interface Runtime {
     Optional<OpaqueKeyOwnershipProof> generateGrandpaKeyOwnershipProof(BigInteger authoritySetId, byte[] authorityPublicKey);
 
     void submitReportGrandpaEquivocationUnsignedExtrinsic(GrandpaEquivocation grandpaEquivocation, byte[] keyOwnershipProof);
+
+    Optional<OpaqueKeyOwnershipProof> generateBeefyKeyOwnershipProof(BigInteger authoritySetId, byte[] authorityPublicKey);
+
+    void submitReportBeefyDoubleVotingUnsignedExtrinsic(DoubleVotingProof doubleVotingProof, byte[] keyOwnershipProof);
 
     Optional<BeefyAuthoritySet> getBeefyValidatorSet();
 
