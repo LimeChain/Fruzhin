@@ -24,7 +24,9 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -233,7 +235,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
     private RoundAction determineRoundAction(BigInteger roundNumber) {
         Pair<BigInteger, BigInteger> roundsInterval = null;
         try {
-            roundsInterval = findAcceptedRoundsInterval();
+            roundsInterval = findAcceptedInterval();
         } catch (BeefyGenericException e) {
             log.warning(String.format("determineRoundAction: Error while finding accepted rounds interval %s", e));
             return RoundAction.INVALID;
@@ -250,7 +252,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
         }
     }
 
-    private Pair<BigInteger, BigInteger> findAcceptedRoundsInterval() {
+    private Pair<BigInteger, BigInteger> findAcceptedInterval() {
         BeefyState beefyState = stateManager.getBeefyState();
 
         BeefySession currentSession = beefyState.getSessions().peekFirst();
@@ -305,6 +307,43 @@ public class BeefyService implements FinalizedBlockChangeListener {
         BeefyState beefyState = stateManager.getBeefyState();
         if (beefyState.getSessions().size() > 1) {
             beefyState.getSessions().removeIf(BeefySession::isMandatoryBlockFinalized);
+        }
+    }
+
+    private void applyPendingJustifications(SignedCommitment signedCommitment) {
+        BeefyState beefyState = stateManager.getBeefyState();
+
+        Pair<BigInteger, BigInteger> roundsInterval = null;
+        try {
+            roundsInterval = findAcceptedInterval();
+        } catch (BeefyGenericException e) {
+            log.warning(String.format("determineRoundAction: Error while finding accepted rounds interval %s", e));
+            return;
+        }
+
+        BigInteger startRoundNumber = roundsInterval.getLeft();
+        BigInteger endRoundNumber = roundsInterval.getRight();
+
+
+        if (!beefyState.getPendingJustifications().isEmpty()) {
+            LinkedHashMap<BigInteger, SignedCommitment> stillPending = new LinkedHashMap<>();
+            LinkedHashMap<BigInteger, SignedCommitment> justificationsToProcess = new LinkedHashMap<>();
+
+            BigInteger splitKey = endRoundNumber.add(BigInteger.ONE);
+            for (Map.Entry<BigInteger, SignedCommitment> entry : beefyState.getPendingJustifications().entrySet()) {
+                BigInteger key = entry.getKey();
+
+                if (key.compareTo(splitKey) >= 0) {
+                    stillPending.put(key, entry.getValue());
+                }
+                if (key.compareTo(startRoundNumber) >= 0) {
+                    justificationsToProcess.put(key, entry.getValue());
+                }
+            }
+
+            // Replace the pendingJustifications map with still-pending ones
+            beefyState.getPendingJustifications().clear();
+            beefyState.getPendingJustifications().putAll(stillPending);
         }
     }
 }
