@@ -28,7 +28,6 @@ import java.math.BigInteger;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 @Log
@@ -327,9 +326,12 @@ public class BeefyService implements FinalizedBlockChangeListener {
     }
 
     private void applyPendingJustifications(SignedCommitment signedCommitment) {
+
         BeefyState beefyState = stateManager.getBeefyState();
 
-        Pair<BigInteger, BigInteger> roundsInterval = null;
+        if (beefyState.getPendingJustifications().isEmpty()) return;
+
+        Pair<BigInteger, BigInteger> roundsInterval;
         try {
             roundsInterval = findAcceptedInterval();
         } catch (BeefyGenericException e) {
@@ -337,29 +339,25 @@ public class BeefyService implements FinalizedBlockChangeListener {
             return;
         }
 
-        BigInteger startRoundNumber = roundsInterval.getValue0();
-        BigInteger endRoundNumber = roundsInterval.getValue1();
+        BigInteger start = roundsInterval.getValue0();
+        BigInteger end = roundsInterval.getValue1();
 
+        LinkedHashMap<BigInteger, SignedCommitment> stillPending = new LinkedHashMap<>();
+        LinkedHashMap<BigInteger, SignedCommitment> justificationsToProcess = new LinkedHashMap<>();
 
-        if (!beefyState.getPendingJustifications().isEmpty()) {
-            LinkedHashMap<BigInteger, SignedCommitment> stillPending = new LinkedHashMap<>();
-            LinkedHashMap<BigInteger, SignedCommitment> justificationsToProcess = new LinkedHashMap<>();
-
-            BigInteger splitKey = endRoundNumber.add(BigInteger.ONE);
-            for (Map.Entry<BigInteger, SignedCommitment> entry : beefyState.getPendingJustifications().entrySet()) {
-                BigInteger key = entry.getKey();
-
-                if (key.compareTo(splitKey) >= 0) {
-                    stillPending.put(key, entry.getValue());
-                }
-                if (key.compareTo(startRoundNumber) >= 0) {
-                    justificationsToProcess.put(key, entry.getValue());
-                }
+        beefyState.getPendingJustifications().forEach((key, value) -> {
+            if (key.compareTo(start) >= 0 && key.compareTo(end) <= 0) {
+                justificationsToProcess.put(key, value);
+            } else if (key.compareTo(end) > 0) {
+                stillPending.put(key, value);
             }
+        });
 
-            // Replace the pendingJustifications map with still-pending ones
-            beefyState.getPendingJustifications().clear();
-            beefyState.getPendingJustifications().putAll(stillPending);
-        }
+        // Update pendingJustification field in the state
+        beefyState.getPendingJustifications().clear();
+        beefyState.getPendingJustifications().putAll(stillPending);
+
+        // Process justification that are in the accepted interval
+        justificationsToProcess.values().forEach(this::finalizeJustification);
     }
 }
