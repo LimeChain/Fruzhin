@@ -3,6 +3,7 @@ package com.limechain.consensus.beefy;
 import com.limechain.consensus.beefy.dto.BeefyPayloadId;
 import com.limechain.consensus.beefy.dto.BeefySession;
 import com.limechain.consensus.beefy.dto.Commitment;
+import com.limechain.consensus.beefy.dto.DoubleVotingProof;
 import com.limechain.consensus.beefy.dto.PayloadElement;
 import com.limechain.consensus.beefy.dto.RoundAction;
 import com.limechain.consensus.beefy.dto.VoteImportResult;
@@ -15,6 +16,7 @@ import com.limechain.network.protocol.beefy.messages.justification.SignedCommitm
 import com.limechain.network.protocol.beefy.messages.vote.VoteMessage;
 import com.limechain.network.protocol.warp.DigestHelper;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
+import com.limechain.runtime.Runtime;
 import com.limechain.state.StateManager;
 import com.limechain.storage.block.state.BlockState;
 import lombok.RequiredArgsConstructor;
@@ -126,9 +128,8 @@ public class BeefyService implements FinalizedBlockChangeListener {
                     //TODO: persist vote message
                 }
             }
-            case VoteImportResult.DoubleVoting _ -> {
-                //TODO: report double voting
-            }
+            case VoteImportResult.DoubleVoting voteImportResult ->
+                    reportDoubleVoting(voteImportResult.doubleVotingProof());
             case VoteImportResult.Invalid _ -> log.info("handleVote: received an invalid/stale vote: " + voteMessage);
         }
         return Optional.empty();
@@ -294,6 +295,23 @@ public class BeefyService implements FinalizedBlockChangeListener {
 
         currentSession.update(blockNumber);
         removeFinishedSessions();
+    }
+
+    public void reportDoubleVoting(DoubleVotingProof doubleVotingProof) {
+
+        BlockState blockState = stateManager.getBlockState();
+        Runtime runtime = blockState.getRuntime(blockState.getHighestFinalizedHash());
+        runtime.generateBeefyKeyOwnershipProof(doubleVotingProof.getFirst().getCommitment().getAuthoritySetId(),
+                        doubleVotingProof.getFirst().getAuthorityId())
+                .ifPresentOrElse(
+                        key -> runtime.submitReportBeefyDoubleVotingUnsignedExtrinsic(
+                                doubleVotingProof, key.getProof()
+                        ),
+                        () -> log.warning(String.format(
+                                "reportDoubleVoting: Failed to report Beefy double voting for block number: %s.",
+                                doubleVotingProof.getFirst().getCommitment().getBlockNumber()
+                        ))
+                );
     }
 
     private void removeFinishedSessions() {

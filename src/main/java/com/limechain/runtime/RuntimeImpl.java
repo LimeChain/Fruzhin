@@ -6,7 +6,9 @@ import com.limechain.consensus.babe.dto.runtime.BlockEquivocationProof;
 import com.limechain.consensus.babe.scale.runtime.BabeApiConfigurationReader;
 import com.limechain.consensus.babe.scale.runtime.BlockEquivocationProofWriter;
 import com.limechain.consensus.beefy.dto.BeefyAuthoritySet;
+import com.limechain.consensus.beefy.dto.DoubleVotingProof;
 import com.limechain.consensus.beefy.scale.runtime.BeefyAuthoritySetReader;
+import com.limechain.consensus.beefy.scale.runtime.BeefyDoubleVotingProofScaleWriter;
 import com.limechain.consensus.dto.Authority;
 import com.limechain.consensus.dto.runtime.OpaqueKeyOwnershipProof;
 import com.limechain.consensus.grandpa.dto.runtime.GrandpaEquivocation;
@@ -112,6 +114,26 @@ public class RuntimeImpl implements Runtime {
             GrandpaEquivocationScaleWriter.getInstance().write(scaleCodecWriter, grandpaEquivocation);
             scaleCodecWriter.writeAsList(keyOwnershipProof);
             call(RuntimeEndpoint.GRANDPA_API_SUBMIT_REPORT_EQUIVOCATION_UNSIGNED_EXTRINSIC, buffer.toByteArray());
+        } catch (IOException e) {
+            throw new ScaleEncodingException("Unexpected exception while encoding.");
+        }
+    }
+
+    @Override
+    public Optional<OpaqueKeyOwnershipProof> generateBeefyKeyOwnershipProof(BigInteger authoritySetId, byte[] authorityPublicKey) {
+        byte[] encodedProof = ArrayUtils.addAll(ScaleUtils.Encode.encode(
+                new UInt64Writer(), authoritySetId), authorityPublicKey);
+        byte[] encodedResponse = call(RuntimeEndpoint.BEEFY_API_GENERATE_KEY_OWNERSHIP_PROOF, encodedProof);
+        return new ScaleCodecReader(encodedResponse).readOptional(OpaqueKeyOwnershipProofReader.getInstance());
+    }
+
+    @Override
+    public void submitReportBeefyDoubleVotingUnsignedExtrinsic(DoubleVotingProof doubleVotingProof, byte[] keyOwnershipProof) {
+        try (ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+             ScaleCodecWriter scaleCodecWriter = new ScaleCodecWriter(buffer)) {
+            BeefyDoubleVotingProofScaleWriter.getInstance().write(scaleCodecWriter, doubleVotingProof);
+            scaleCodecWriter.writeAsList(keyOwnershipProof);
+            call(RuntimeEndpoint.BEEFY_API_SUBMIT_REPORT_DOUBLE_VOTING_UNSIGNED_EXTRINSIC, buffer.toByteArray());
         } catch (IOException e) {
             throw new ScaleEncodingException("Unexpected exception while encoding.");
         }
