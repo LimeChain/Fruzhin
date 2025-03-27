@@ -354,8 +354,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
         });
 
         // Update pendingJustification field in the state
-        beefyState.getPendingJustifications().clear();
-        beefyState.getPendingJustifications().putAll(stillPending);
+        beefyState.setPendingJustifications(stillPending);
 
         // Process justification that are in the accepted interval
         justificationsToProcess.values().forEach(this::finalizeJustification);
