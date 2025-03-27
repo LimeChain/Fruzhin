@@ -15,10 +15,12 @@ import java.util.Objects;
 public class LightClient extends HostNode {
 
     public LightClient() {
-        super(List.of(
-                        Objects.requireNonNull(AppBean.getBean(NetworkService.class)),
-                        Objects.requireNonNull(AppBean.getBean(SyncService.class))),
+        super(
                 List.of(
-                        Objects.requireNonNull(AppBean.getBean(SyncState.class))));
+                        Objects.requireNonNull(AppBean.getBean(NetworkService.class)),
+                        Objects.requireNonNull(AppBean.getBean(SyncService.class))
+                ),
+                List.of(Objects.requireNonNull(AppBean.getBean(SyncState.class)))
+        );
     }
 }

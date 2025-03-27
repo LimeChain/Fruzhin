@@ -10,6 +10,7 @@ import lombok.Setter;
 import lombok.extern.java.Log;
 import org.javatuples.Pair;
 
+import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
@@ -20,7 +21,7 @@ import java.util.stream.Collectors;
 
 @Data
 @Log
-public class BeefySession {
+public class BeefySession implements Serializable {
 
     private static final BigInteger THRESHOLD_DENOMINATOR = BigInteger.valueOf(3);
 

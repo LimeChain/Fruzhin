@@ -39,8 +39,12 @@ public class BeefyService implements FinalizedBlockChangeListener {
 
     @Override
     public void finalizedBlockChanged(FinalizedBlockChangeEvent event) {
-        stateManager.getBeefyState().setGrandpaFinalized(event.getGrandpaFinalized().getBlockNumber());
+
+        BeefyState beefyState = stateManager.getBeefyState();
+
+        beefyState.setGrandpaFinalized(event.getGrandpaFinalized().getBlockNumber());
         processConsensusMessages(event.getBlockHeaders());
+        beefyState.persistState();
     }
 
     public void vote() {
@@ -98,6 +102,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
 
         // If it's a valid vote target, update the last voted block
         beefyState.setLastVoted(targetVoteBlockNumber);
+        beefyState.persistState();
 
         // TODO: Get Beefy Keys
         // TODO: Create Commitment and signature
@@ -123,7 +128,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
             }
             case VoteImportResult.Ok _ -> {
                 if (!session.isMandatoryBlockFinalized() && session.getMandatoryBlock().equals(blockNumber)) {
-                    //TODO: persist vote message
+                    stateManager.getBeefyState().persistState();
                 }
             }
             case VoteImportResult.DoubleVoting _ -> {
@@ -280,9 +285,9 @@ public class BeefyService implements FinalizedBlockChangeListener {
             log.warning(String.format("finalizeJustification: Error while finalizing beefy round: %s", e));
             return;
         }
-        beefyState.setBeefyFinalized(blockNumber);
 
-        //TODO: Persist beefy state
+        beefyState.setBeefyFinalized(blockNumber);
+        beefyState.persistState();
     }
 
     private void finalizeBeefyRound(BigInteger blockNumber) {
