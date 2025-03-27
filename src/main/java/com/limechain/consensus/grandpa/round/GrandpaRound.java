@@ -311,13 +311,13 @@ public class GrandpaRound {
      * 2. During attempt-to-finalize, broadcasting a commit message for the best candidate block of the current round.
      */
     public void broadcastCommitMessage() {
-        SignedVote[] preCommits = getPreCommits().values().toArray(new SignedVote[0]);
+        SignedVote[] preCommitsArray = getPreCommits().values().toArray(new SignedVote[0]);
 
         CommitMessage commitMessage = new CommitMessage();
         commitMessage.setSetId(authoritySet.getSetId());
         commitMessage.setRoundNumber(roundNumber);
         commitMessage.setVote(Vote.fromBlockHeader(getBestFinalCandidate()));
-        commitMessage.setPreCommits(preCommits);
+        commitMessage.setPreCommits(preCommitsArray);
 
         peerMessageCoordinator.sendCommitMessageToPeers(commitMessage);
     }
