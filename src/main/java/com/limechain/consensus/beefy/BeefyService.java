@@ -303,10 +303,10 @@ public class BeefyService implements FinalizedBlockChangeListener {
         Runtime runtime = blockState.getRuntime(blockState.getHighestFinalizedHash());
         runtime.generateBeefyKeyOwnershipProof(doubleVotingProof.getFirst().getCommitment().getAuthoritySetId(),
                         doubleVotingProof.getFirst().getAuthorityId())
-                .ifPresentOrElse(
-                        key -> runtime.submitReportBeefyDoubleVotingUnsignedExtrinsic(
-                                doubleVotingProof, key.getProof()
-                        ),
+                .ifPresentOrElse(key ->
+                                runtime.submitReportBeefyDoubleVotingUnsignedExtrinsic(
+                                        doubleVotingProof, key.getProof()
+                                ),
                         () -> log.warning(String.format(
                                 "reportDoubleVoting: Failed to report Beefy double voting for block number: %s.",
                                 doubleVotingProof.getFirst().getCommitment().getBlockNumber()

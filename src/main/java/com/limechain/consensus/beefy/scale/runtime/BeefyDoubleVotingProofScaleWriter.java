@@ -20,7 +20,7 @@ public class BeefyDoubleVotingProofScaleWriter implements ScaleWriter<DoubleVoti
 
     @Override
     public void write(ScaleCodecWriter writer, DoubleVotingProof doubleVotingProof) throws IOException {
-        VoteMessageScaleWriter.getInstance().write(writer, doubleVotingProof.getFirst());
-        VoteMessageScaleWriter.getInstance().write(writer, doubleVotingProof.getSecond());
+        writer.write(VoteMessageScaleWriter.getInstance(), doubleVotingProof.getFirst());
+        writer.write(VoteMessageScaleWriter.getInstance(), doubleVotingProof.getSecond());
     }
 }
