@@ -21,13 +21,13 @@ import com.limechain.state.StateManager;
 import com.limechain.storage.block.state.BlockState;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.java.Log;
-import org.apache.commons.lang3.tuple.Pair;
+import org.javatuples.Pair;
 import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 @Log
@@ -66,10 +66,6 @@ public class BeefyService implements FinalizedBlockChangeListener {
         BigInteger targetVoteBlockNumber;
 
         BigInteger beefyFinalized = beefyState.getBeefyFinalized();
-        if (Objects.isNull(beefyFinalized)) {
-            throw new BeefyGenericException("Beefy finalized is not initialized yet.");
-        }
-
         BigInteger grandpaFinalized = beefyState.getGrandpaFinalized();
 
         // If the mandatory block (sessionStart) does not have a beefy justification yet, vote on it
@@ -77,15 +73,13 @@ public class BeefyService implements FinalizedBlockChangeListener {
             log.info(String.format("Vote BEEFY: vote target - mandatory block: #%s%n", sessionStartBlock));
             targetVoteBlockNumber = sessionStartBlock;
         } else {
-            if (Objects.isNull(grandpaFinalized)) {
-                throw new BeefyGenericException("Grandpa finalized is not initialized yet.");
-            }
 
             BigInteger diff = grandpaFinalized
                     .subtract(beefyFinalized)
                     .max(BigInteger.ZERO)
                     .add(BigInteger.ONE);
-            int diffInt = diff.min(BigInteger.valueOf(Integer.MAX_VALUE)).intValue();
+
+            int diffInt = diff.min(BigInteger.valueOf(Integer.MAX_VALUE)).intValueExact();
             int nextPowerOfTwo = (Integer.bitCount(diffInt) == 1) ? diffInt : Integer.highestOneBit(diffInt) << 1;
             int adjustedDiff = Math.max(MIN_BLOCK_DELTA, nextPowerOfTwo);
 
@@ -95,11 +89,12 @@ public class BeefyService implements FinalizedBlockChangeListener {
                     diffInt, nextPowerOfTwo, targetVoteBlockNumber));
         }
 
-        // Don't vote for targets until they've been finalized (`target` can be > `bestGrandpa` when `minDelta` is big enough).
+        // Don't vote for targets until they've been finalized (`target` can be > `grandpaFinalized`
+        // when `MIN_BLOCK_DELTA` is big enough).
         // Also, ensure it's not voting on a block that has already been voted on.
         if (targetVoteBlockNumber.compareTo(grandpaFinalized) > 0
                 || targetVoteBlockNumber.compareTo(beefyState.getLastVoted()) <= 0) {
-            return; // No voting if target is beyond grandpa finalized or it's not a new block
+            return; // No voting if target is beyond grandpa finalized, or it's not a new block
         }
 
         // If it's a valid vote target, update the last voted block
@@ -210,6 +205,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
     }
 
     private void triageIncomingJustification(SignedCommitment signedCommitment) {
+
         BigInteger blockNumber = signedCommitment.getCommitment().getBlockNumber();
         RoundAction roundAction = determineRoundAction(blockNumber);
 
@@ -232,15 +228,17 @@ public class BeefyService implements FinalizedBlockChangeListener {
     }
 
     private RoundAction determineRoundAction(BigInteger roundNumber) {
+
         Pair<BigInteger, BigInteger> roundsInterval = null;
         try {
-            roundsInterval = findAcceptedRoundsInterval();
+            roundsInterval = findAcceptedInterval();
         } catch (BeefyGenericException e) {
             log.warning(String.format("determineRoundAction: Error while finding accepted rounds interval %s", e));
             return RoundAction.INVALID;
         }
-        BigInteger startRoundNumber = roundsInterval.getLeft();
-        BigInteger endRoundNumber = roundsInterval.getRight();
+
+        BigInteger startRoundNumber = roundsInterval.getValue0();
+        BigInteger endRoundNumber = roundsInterval.getValue1();
 
         if (roundNumber.compareTo(startRoundNumber) >= 0 && roundNumber.compareTo(endRoundNumber) <= 0) {
             return RoundAction.PROCESS;
@@ -251,7 +249,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
         }
     }
 
-    private Pair<BigInteger, BigInteger> findAcceptedRoundsInterval() {
+    private Pair<BigInteger, BigInteger> findAcceptedInterval() {
         BeefyState beefyState = stateManager.getBeefyState();
 
         BeefySession currentSession = beefyState.getSessions().peekFirst();
@@ -260,21 +258,20 @@ public class BeefyService implements FinalizedBlockChangeListener {
         }
 
         BigInteger beefyFinalized = beefyState.getBeefyFinalized();
-        if (beefyFinalized == null) {
-            throw new BeefyGenericException("Beefy finalized is not initialized yet.");
-        }
 
         if (currentSession.isMandatoryBlockFinalized()) {
             BigInteger lowerBlock = beefyFinalized.max(currentSession.getMandatoryBlock());
-            return Pair.of(lowerBlock, beefyState.getGrandpaFinalized());
+            return Pair.with(lowerBlock, beefyState.getGrandpaFinalized());
         } else {
-            return Pair.of(currentSession.getMandatoryBlock(), currentSession.getMandatoryBlock());
+            return Pair.with(currentSession.getMandatoryBlock(), currentSession.getMandatoryBlock());
         }
     }
 
     private void finalizeJustification(SignedCommitment signedCommitment) {
+
         BeefyState beefyState = stateManager.getBeefyState();
         BigInteger blockNumber = signedCommitment.getCommitment().getBlockNumber();
+
         if (blockNumber.compareTo(beefyState.getBeefyFinalized()) <= 0) {
             log.fine(String.format("finalizeJustification: Round: %d has been already finalized.", blockNumber));
             return;
@@ -292,8 +289,10 @@ public class BeefyService implements FinalizedBlockChangeListener {
     }
 
     private void finalizeBeefyRound(BigInteger blockNumber) {
+
         BeefyState beefyState = stateManager.getBeefyState();
         BeefySession currentSession = beefyState.getSessions().peekFirst();
+
         if (currentSession == null) {
             throw new BeefyGenericException("No beefy session exists.");
         }
@@ -324,5 +323,40 @@ public class BeefyService implements FinalizedBlockChangeListener {
         if (beefyState.getSessions().size() > 1) {
             beefyState.getSessions().removeIf(BeefySession::isMandatoryBlockFinalized);
         }
+    }
+
+    private void applyPendingJustifications(SignedCommitment signedCommitment) {
+
+        BeefyState beefyState = stateManager.getBeefyState();
+
+        if (beefyState.getPendingJustifications().isEmpty()) return;
+
+        Pair<BigInteger, BigInteger> roundsInterval;
+        try {
+            roundsInterval = findAcceptedInterval();
+        } catch (BeefyGenericException e) {
+            log.warning(String.format("determineRoundAction: Error while finding accepted rounds interval %s", e));
+            return;
+        }
+
+        BigInteger start = roundsInterval.getValue0();
+        BigInteger end = roundsInterval.getValue1();
+
+        LinkedHashMap<BigInteger, SignedCommitment> stillPending = new LinkedHashMap<>();
+        LinkedHashMap<BigInteger, SignedCommitment> justificationsToProcess = new LinkedHashMap<>();
+
+        beefyState.getPendingJustifications().forEach((key, value) -> {
+            if (key.compareTo(start) >= 0 && key.compareTo(end) <= 0) {
+                justificationsToProcess.put(key, value);
+            } else if (key.compareTo(end) > 0) {
+                stillPending.put(key, value);
+            }
+        });
+
+        // Update pendingJustification field in the state
+        beefyState.setPendingJustifications(stillPending);
+
+        // Process justification that are in the accepted interval
+        justificationsToProcess.values().forEach(this::finalizeJustification);
     }
 }

@@ -4,6 +4,7 @@ import com.limechain.ServiceConsensusState;
 import com.limechain.consensus.beefy.dto.BeefyAuthoritySet;
 import com.limechain.consensus.beefy.dto.BeefySession;
 import com.limechain.consensus.beefy.dto.message.BeefyConsensusMessage;
+import com.limechain.exception.beefy.BeefyGenericException;
 import com.limechain.network.protocol.beefy.messages.justification.SignedCommitment;
 import com.limechain.network.protocol.beefy.messages.vote.VoteMessage;
 import com.limechain.runtime.Runtime;
@@ -117,6 +118,16 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
             case BEEFY_CHANGED_AUTHORITIES -> handleChangedBeefyAuthorities(consensusMessage, blockNumber);
             case BEEFY_ON_DISABLED -> disabledAuthority = consensusMessage.getDisabledAuthority();
         }
+    }
+
+    public BigInteger getBeefyFinalized() {
+        if (beefyFinalized == null) throw new BeefyGenericException("Beefy finalized is not initialized yet.");
+        return beefyFinalized;
+    }
+
+    public BigInteger getGrandpaFinalized() {
+        if (grandpaFinalized == null) throw new BeefyGenericException("Grandpa finalized is not initialized yet.");
+        return grandpaFinalized;
     }
 
     private void handleChangedBeefyAuthorities(BeefyConsensusMessage consensusMessage, BigInteger blockNumber) {
