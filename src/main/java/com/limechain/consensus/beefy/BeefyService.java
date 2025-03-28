@@ -1,5 +1,6 @@
 package com.limechain.consensus.beefy;
 
+import com.limechain.consensus.beefy.dto.BeefyAuthoritySet;
 import com.limechain.consensus.beefy.dto.BeefyPayloadId;
 import com.limechain.consensus.beefy.dto.BeefySession;
 import com.limechain.consensus.beefy.dto.Commitment;
@@ -91,39 +92,39 @@ public class BeefyService implements FinalizedBlockChangeListener {
         beefyState.setLastVoted(targetVoteBlockNumber);
         beefyState.persistState();
 
-        // Can we make this check earlier in order to skip the execution of the most of the logic here
-        // TODO: Get Beefy Keys
+        VoteMessage voteMessage = createVoteMessageIfAuthorized(beefyState.getAuthoritySet(), targetVoteBlockNumber);
+        if (voteMessage == null) return;
+
+        Optional<SignedCommitment> signedCommitment = handleVote(voteMessage);
+        if (signedCommitment.isPresent()) {
+            // TODO: Broadcast Vote Message
+        }
+    }
+
+    private VoteMessage createVoteMessageIfAuthorized(BeefyAuthoritySet authoritySet,
+                                                      BigInteger targetVoteBlockNumber) {
+
         Optional<Pair<byte[], byte[]>> keyPair = keyStore.findKeyPair(
-                beefyState.getAuthoritySet().getPublicKeys(),
+                authoritySet.getPublicKeys(),
                 KeyType.BEEFY
         );
 
-        if (keyPair.isEmpty()) {
-            return;
-        }
-
-        // TODO: choose better name for this var
+        if (keyPair.isEmpty()) return null;
         byte[] publicKey = keyPair.get().getValue0();
         byte[] privateKey = keyPair.get().getValue1();
 
-        // TODO: Create Commitment and signature
-        Commitment commitment = getCommitment(targetVoteBlockNumber, beefyState.getAuthoritySet().getSetId());
+        Commitment commitment = getCommitment(targetVoteBlockNumber, authoritySet.getSetId());
         byte[] encodedCommitment = ScaleUtils.Encode.encode(CommitmentScaleWriter.getInstance(), commitment);
         byte[] hashedCommitment = HashUtils.hashWithKeccak256(encodedCommitment);
 
         byte[] signature = EcdsaUtils.signMessage(privateKey, hashedCommitment);
 
-        //TODO: write appropriate exception message
         if (signature == null) {
-            throw new BeefyGenericException("some kind of error");
+            throw new BeefyGenericException("Failed to generate signature for the commitment with block number: " +
+                    targetVoteBlockNumber);
         }
 
-        VoteMessage voteMessage = new VoteMessage(commitment, publicKey, signature);
-        Optional<SignedCommitment> signedCommitment = handleVote(voteMessage);
-
-        if (signedCommitment.isPresent()) {
-            // TODO: Broadcast Vote Message
-        }
+        return new VoteMessage(commitment, publicKey, signature);
     }
 
     private BigInteger calculateTargetVoteBlockNumber(BigInteger sessionStartBlock,
