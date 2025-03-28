@@ -179,7 +179,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
                 .findFirst();
     }
 
-    private void triageIncomingVote(VoteMessage voteMessage) {
+    public void triageIncomingVote(VoteMessage voteMessage) {
 
         BigInteger blockNumber = voteMessage.getCommitment().getBlockNumber();
         RoundAction roundAction = determineRoundAction(blockNumber);
