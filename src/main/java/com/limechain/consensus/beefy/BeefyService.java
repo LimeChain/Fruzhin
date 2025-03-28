@@ -10,6 +10,7 @@ import com.limechain.consensus.beefy.dto.VoteImportResult;
 import com.limechain.consensus.beefy.dto.message.BeefyConsensusMessage;
 import com.limechain.consensus.beefy.event.FinalizedBlockChangeEvent;
 import com.limechain.consensus.beefy.event.FinalizedBlockChangeListener;
+import com.limechain.consensus.beefy.scale.CommitmentScaleWriter;
 import com.limechain.exception.beefy.BeefyGenericException;
 import com.limechain.exception.storage.BlockStorageGenericException;
 import com.limechain.network.protocol.beefy.messages.justification.SignedCommitment;
@@ -19,6 +20,11 @@ import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.runtime.Runtime;
 import com.limechain.state.StateManager;
 import com.limechain.storage.block.state.BlockState;
+import com.limechain.storage.crypto.KeyStore;
+import com.limechain.storage.crypto.KeyType;
+import com.limechain.utils.EcdsaUtils;
+import com.limechain.utils.HashUtils;
+import com.limechain.utils.scale.ScaleUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.java.Log;
 import org.javatuples.Pair;
@@ -38,6 +44,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
     private static final int MIN_BLOCK_DELTA = 1;
 
     private final StateManager stateManager;
+    private final KeyStore keyStore;
 
     @Override
     public void finalizedBlockChanged(FinalizedBlockChangeEvent event) {
@@ -50,6 +57,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
     }
 
     public void vote() {
+
         BeefyState beefyState = stateManager.getBeefyState();
         // Get the first session (round)
         BeefySession sessionStart = beefyState.getSessions().getFirst();
@@ -61,12 +69,67 @@ public class BeefyService implements FinalizedBlockChangeListener {
         }
 
         BigInteger sessionStartBlock = sessionStart.getMandatoryBlock();
-
-        // Calculate the target vote block number
-        BigInteger targetVoteBlockNumber;
-
         BigInteger beefyFinalized = beefyState.getBeefyFinalized();
         BigInteger grandpaFinalized = beefyState.getGrandpaFinalized();
+
+        BigInteger targetVoteBlockNumber = calculateTargetVoteBlockNumber(
+                sessionStartBlock,
+                beefyFinalized,
+                grandpaFinalized
+        );
+
+        BigInteger lastVoted = beefyState.getLastVoted();
+
+        // Don't vote for targets until they've been finalized (`target` can be > `grandpaFinalized`
+        // when `MIN_BLOCK_DELTA` is big enough).
+        // Also, ensure it's not voting on a block that has already been voted on.
+        if (shouldSkipVote(targetVoteBlockNumber, grandpaFinalized, lastVoted)) {
+            return; // No voting if target is beyond grandpa finalized, or it's not a new block
+        }
+
+        // If it's a valid vote target, update the last voted block
+        beefyState.setLastVoted(targetVoteBlockNumber);
+        beefyState.persistState();
+
+        // Can we make this check earlier in order to skip the execution of the most of the logic here
+        // TODO: Get Beefy Keys
+        Optional<Pair<byte[], byte[]>> keyPair = keyStore.findKeyPair(
+                beefyState.getAuthoritySet().getPublicKeys(),
+                KeyType.BEEFY
+        );
+
+        if (keyPair.isEmpty()) {
+            return;
+        }
+
+        // TODO: choose better name for this var
+        byte[] publicKey = keyPair.get().getValue0();
+        byte[] privateKey = keyPair.get().getValue1();
+
+        // TODO: Create Commitment and signature
+        Commitment commitment = getCommitment(targetVoteBlockNumber, beefyState.getAuthoritySet().getSetId());
+        byte[] encodedCommitment = ScaleUtils.Encode.encode(CommitmentScaleWriter.getInstance(), commitment);
+        byte[] hashedCommitment = HashUtils.hashWithKeccak256(encodedCommitment);
+
+        byte[] signature = EcdsaUtils.signMessage(privateKey, hashedCommitment);
+
+        //TODO: write appropriate exception message
+        if (signature == null) {
+            throw new BeefyGenericException("some kind of error");
+        }
+
+        VoteMessage voteMessage = new VoteMessage(commitment, publicKey, signature);
+        Optional<SignedCommitment> signedCommitment = handleVote(voteMessage);
+
+        if (signedCommitment.isPresent()) {
+            // TODO: Broadcast Vote Message
+        }
+    }
+
+    private BigInteger calculateTargetVoteBlockNumber(BigInteger sessionStartBlock,
+                                                      BigInteger beefyFinalized,
+                                                      BigInteger grandpaFinalized) {
+        BigInteger targetVoteBlockNumber;
 
         // If the mandatory block (sessionStart) does not have a beefy justification yet, vote on it
         if (beefyFinalized.compareTo(sessionStartBlock) < 0) {
@@ -89,24 +152,19 @@ public class BeefyService implements FinalizedBlockChangeListener {
                     diffInt, nextPowerOfTwo, targetVoteBlockNumber));
         }
 
-        // Don't vote for targets until they've been finalized (`target` can be > `grandpaFinalized`
-        // when `MIN_BLOCK_DELTA` is big enough).
-        // Also, ensure it's not voting on a block that has already been voted on.
-        if (targetVoteBlockNumber.compareTo(grandpaFinalized) > 0
-                || targetVoteBlockNumber.compareTo(beefyState.getLastVoted()) <= 0) {
-            return; // No voting if target is beyond grandpa finalized, or it's not a new block
-        }
+        return targetVoteBlockNumber;
+    }
 
-        // If it's a valid vote target, update the last voted block
-        beefyState.setLastVoted(targetVoteBlockNumber);
-        beefyState.persistState();
+    private boolean shouldSkipVote(BigInteger targetVoteBlockNumber,
+                                   BigInteger grandpaFinalized,
+                                   BigInteger lastVoted) {
 
-        // TODO: Get Beefy Keys
-        // TODO: Create Commitment and signature
-        // TODO: Broadcast Vote Message
+        return targetVoteBlockNumber.compareTo(grandpaFinalized) > 0
+                || targetVoteBlockNumber.compareTo(lastVoted) <= 0;
     }
 
     private Optional<SignedCommitment> handleVote(VoteMessage voteMessage) {
+
         BeefyState beefyState = stateManager.getBeefyState();
         BeefySession session = beefyState.getSessions().peekFirst();
         BigInteger blockNumber = voteMessage.getCommitment().getBlockNumber();
@@ -154,8 +212,10 @@ public class BeefyService implements FinalizedBlockChangeListener {
     }
 
     private Commitment getCommitment(BigInteger blockNumber, BigInteger setId) {
+
         BlockState blockState = stateManager.getBlockState();
         BlockHeader blockHeader;
+
         try {
             blockHeader = blockState.getHeaderByNumber(blockNumber);
         } catch (BlockStorageGenericException e) {
@@ -163,11 +223,13 @@ public class BeefyService implements FinalizedBlockChangeListener {
                     "Exception: %s", blockNumber, e.getMessage()));
             return null;
         }
+
         Optional<byte[]> mmrHashOptional = extractMmrRootHash(blockHeader);
         if (mmrHashOptional.isEmpty()) {
             log.warning("extractMmrRootHash: Failed to retrieve mmr for the target block.");
             return null;
         }
+
         PayloadElement payloadElement = new PayloadElement(BeefyPayloadId.MMR, mmrHashOptional.get());
 
         return new Commitment(Collections.singletonList(payloadElement), blockNumber, setId);

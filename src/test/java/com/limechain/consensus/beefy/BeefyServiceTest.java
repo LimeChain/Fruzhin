@@ -6,6 +6,7 @@ import com.limechain.consensus.beefy.dto.RoundAction;
 import com.limechain.exception.beefy.BeefyGenericException;
 import com.limechain.network.protocol.beefy.messages.justification.SignedCommitment;
 import com.limechain.state.StateManager;
+import com.limechain.storage.crypto.KeyStore;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -32,13 +33,14 @@ class BeefyServiceTest {
     public static final BigInteger BEEFY_FINALIZED = BigInteger.ONE;
 
     private BeefyService beefyService;
+    private KeyStore keyStore;
 
     @Mock
     private StateManager stateManager;
 
     @BeforeEach
     void setUp() {
-        beefyService = Mockito.spy(new BeefyService(stateManager));
+        beefyService = Mockito.spy(new BeefyService(stateManager, keyStore));
     }
 
     @Test
