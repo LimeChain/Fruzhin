@@ -6,6 +6,7 @@ import com.limechain.network.protocol.beefy.messages.vote.VoteMessage;
 import com.limechain.runtime.hostapi.dto.Key;
 import com.limechain.runtime.hostapi.dto.VerifySignature;
 import com.limechain.utils.EcdsaUtils;
+import com.limechain.utils.HashUtils;
 import com.limechain.utils.scale.ScaleUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.java.Log;
@@ -33,8 +34,8 @@ public class BeefyMessageHandler {
 
     private boolean isVoteMessageValid(VoteMessage voteMessage) {
 
-        byte[] encodedCommitment = ScaleUtils.Encode.encode(CommitmentScaleWriter.getInstance(),
-                voteMessage.getCommitment());
+        byte[] encodedCommitment = HashUtils.hashWithKeccak256(ScaleUtils.Encode.encode(CommitmentScaleWriter.getInstance(),
+                voteMessage.getCommitment()));
 
         VerifySignature verifySignature = new VerifySignature(
                 voteMessage.getSignature(),
