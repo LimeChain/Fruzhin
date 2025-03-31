@@ -2,6 +2,7 @@ package com.limechain.network.protocol.beefy;
 
 import com.limechain.consensus.beefy.BeefyService;
 import com.limechain.consensus.beefy.scale.CommitmentScaleWriter;
+import com.limechain.network.protocol.beefy.messages.justification.SignedCommitment;
 import com.limechain.network.protocol.beefy.messages.vote.VoteMessage;
 import com.limechain.runtime.hostapi.dto.Key;
 import com.limechain.runtime.hostapi.dto.VerifySignature;
@@ -30,6 +31,11 @@ public class BeefyMessageHandler {
         }
 
         beefyService.triageIncomingVote(voteMessage);
+    }
+
+    public void handleSignedCommitment(SignedCommitment signedCommitment) {
+
+
     }
 
     private boolean isVoteMessageValid(VoteMessage voteMessage) {
