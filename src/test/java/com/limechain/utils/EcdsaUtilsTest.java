@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class EcdsaUtilsTest {
 
-    private final byte[] hashedMessage = HashUtils.hashWithBlake2b("This is test message".getBytes());
+    private final byte[] hashedMessage = HashUtils.hashWithKeccak256("This is test message".getBytes());
 
     @Test
     void generateSignVerify() {
