@@ -11,16 +11,16 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-public class VoteMessageScaleReader implements ScaleReader<VoteMessage> {
+public class BeefyVoteMessageScaleReader implements ScaleReader<BeefyVoteMessage> {
 
-    private static final VoteMessageScaleReader INSTANCE = new VoteMessageScaleReader();
+    private static final BeefyVoteMessageScaleReader INSTANCE = new BeefyVoteMessageScaleReader();
 
-    public static VoteMessageScaleReader getInstance() {
+    public static BeefyVoteMessageScaleReader getInstance() {
         return INSTANCE;
     }
 
     @Override
-    public VoteMessage read(ScaleCodecReader reader) {
+    public BeefyVoteMessage read(ScaleCodecReader reader) {
 
         int messageType = reader.readByte();
         if (messageType != BeefyMessageType.VOTE.getType()) {
@@ -32,6 +32,6 @@ public class VoteMessageScaleReader implements ScaleReader<VoteMessage> {
         byte[] authorityId = reader.readByteArray(EcdsaUtils.PUBLIC_KEY_COMPRESSED_LEN);
         byte[] signature = reader.readByteArray(EcdsaUtils.SIGNATURE_LEN);
 
-        return new VoteMessage(commitment, authorityId, signature);
+        return new BeefyVoteMessage(commitment, authorityId, signature);
     }
 }

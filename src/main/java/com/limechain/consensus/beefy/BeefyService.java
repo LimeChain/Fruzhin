@@ -14,8 +14,9 @@ import com.limechain.consensus.beefy.event.FinalizedBlockChangeListener;
 import com.limechain.consensus.beefy.scale.CommitmentScaleWriter;
 import com.limechain.exception.beefy.BeefyGenericException;
 import com.limechain.exception.storage.BlockStorageGenericException;
+import com.limechain.network.PeerMessageCoordinator;
 import com.limechain.network.protocol.beefy.messages.justification.SignedCommitment;
-import com.limechain.network.protocol.beefy.messages.vote.VoteMessage;
+import com.limechain.network.protocol.beefy.messages.vote.BeefyVoteMessage;
 import com.limechain.network.protocol.warp.DigestHelper;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.runtime.Runtime;
@@ -46,6 +47,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
 
     private final StateManager stateManager;
     private final KeyStore keyStore;
+    private final PeerMessageCoordinator peerMessageCoordinator;
 
     @Override
     public void finalizedBlockChanged(FinalizedBlockChangeEvent event) {
@@ -98,17 +100,19 @@ public class BeefyService implements FinalizedBlockChangeListener {
 
         if (keyPair == null) return;
 
-        VoteMessage voteMessage = createVoteMessage(beefyState.getAuthoritySet(), keyPair, targetVoteBlockNumber);
+        BeefyVoteMessage beefyVoteMessage = createVoteMessage(beefyState.getAuthoritySet(), keyPair, targetVoteBlockNumber);
 
-        Optional<SignedCommitment> signedCommitment = handleVote(voteMessage);
+        Optional<SignedCommitment> signedCommitment = handleVote(beefyVoteMessage);
         if (signedCommitment.isPresent()) {
-            // TODO: Broadcast Vote Message
+            // TODO: Broadcast Justification Message
+        } else {
+            peerMessageCoordinator.sendBeefyVoteMessageToPeers(beefyVoteMessage);
         }
     }
 
-    private VoteMessage createVoteMessage(BeefyAuthoritySet authoritySet,
-                                                      Pair<byte[], byte[]> keyPair,
-                                                      BigInteger targetVoteBlockNumber) {
+    private BeefyVoteMessage createVoteMessage(BeefyAuthoritySet authoritySet,
+                                               Pair<byte[], byte[]> keyPair,
+                                               BigInteger targetVoteBlockNumber) {
 
         byte[] publicKey = keyPair.getValue0();
         byte[] privateKey = keyPair.getValue1();
@@ -124,7 +128,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
                     targetVoteBlockNumber);
         }
 
-        return new VoteMessage(commitment, publicKey, signature);
+        return new BeefyVoteMessage(commitment, publicKey, signature);
     }
 
     private BigInteger calculateTargetVoteBlockNumber(BigInteger sessionStartBlock,
@@ -164,17 +168,17 @@ public class BeefyService implements FinalizedBlockChangeListener {
                 || targetVoteBlockNumber.compareTo(lastVoted) <= 0;
     }
 
-    private Optional<SignedCommitment> handleVote(VoteMessage voteMessage) {
+    private Optional<SignedCommitment> handleVote(BeefyVoteMessage beefyVoteMessage) {
 
         BeefyState beefyState = stateManager.getBeefyState();
         BeefySession session = beefyState.getSessions().peekFirst();
-        BigInteger blockNumber = voteMessage.getCommitment().getBlockNumber();
+        BigInteger blockNumber = beefyVoteMessage.getCommitment().getBlockNumber();
 
         if (session == null) {
             throw new BeefyGenericException("No beefy session exists.");
         }
 
-        VoteImportResult result = session.addVote(voteMessage);
+        VoteImportResult result = session.addVote(beefyVoteMessage);
 
         switch (result) {
             case VoteImportResult.RoundConcluded voteImportResult -> {
@@ -189,7 +193,8 @@ public class BeefyService implements FinalizedBlockChangeListener {
             }
             case VoteImportResult.DoubleVoting voteImportResult ->
                     reportDoubleVoting(voteImportResult.doubleVotingProof());
-            case VoteImportResult.Invalid _ -> log.info("handleVote: received an invalid/stale vote: " + voteMessage);
+            case VoteImportResult.Invalid _ ->
+                    log.info("handleVote: received an invalid/stale vote: " + beefyVoteMessage);
         }
         return Optional.empty();
     }
@@ -242,27 +247,27 @@ public class BeefyService implements FinalizedBlockChangeListener {
                 .findFirst();
     }
 
-    public void triageIncomingVote(VoteMessage voteMessage) {
+    public void triageIncomingVote(BeefyVoteMessage beefyVoteMessage) {
 
-        BigInteger blockNumber = voteMessage.getCommitment().getBlockNumber();
+        BigInteger blockNumber = beefyVoteMessage.getCommitment().getBlockNumber();
         RoundAction roundAction = determineRoundAction(blockNumber);
 
         switch (roundAction) {
             case RoundAction.PROCESS -> {
-                log.fine(String.format("triageIncomingVotes: Process vote %s  for round: %d.", voteMessage, blockNumber));
-                Optional<SignedCommitment> finalityProof = handleVote(voteMessage);
+                log.fine(String.format("triageIncomingVotes: Process vote %s  for round: %d.", beefyVoteMessage, blockNumber));
+                Optional<SignedCommitment> finalityProof = handleVote(beefyVoteMessage);
                 if (finalityProof.isPresent()) {
                     //TODO: gossip vote message
                 }
             }
             case RoundAction.ENQUEUE -> {
-                log.fine(String.format("triageIncomingVotes: Unexpected vote: %s", voteMessage));
+                log.fine(String.format("triageIncomingVotes: Unexpected vote: %s", beefyVoteMessage));
             }
             case RoundAction.DROP -> {
-                log.fine(String.format("triageIncomingVotes: Drop vote  %s for round: %d.", voteMessage, blockNumber));
+                log.fine(String.format("triageIncomingVotes: Drop vote  %s for round: %d.", beefyVoteMessage, blockNumber));
             }
             case RoundAction.INVALID -> {
-                log.fine(String.format("triageIncomingVotes: Invalidate vote  %s for round: %d.", voteMessage, blockNumber));
+                log.fine(String.format("triageIncomingVotes: Invalidate vote  %s for round: %d.", beefyVoteMessage, blockNumber));
             }
         }
     }

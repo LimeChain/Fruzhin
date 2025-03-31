@@ -6,6 +6,8 @@ import io.libp2p.core.Host;
 import io.libp2p.core.PeerId;
 import lombok.extern.java.Log;
 
+import java.util.Optional;
+
 /**
  * Service for sending messages on {@link Beefy} protocol.
  */
@@ -18,9 +20,21 @@ public class BeefyService extends NetworkService<Beefy> {
         this.protocol = new Beefy(protocolId, new BeefyProtocol());
     }
 
-    //TODO: write doc
+    /**
+     * Sends a beefy vote message to a peer. If there is no initiator stream opened with the peer,
+     * sends a handshake instead.
+     *
+     * @param us our host object
+     * @param peerId message receiver
+     * @param encodedMessage scale encoded representation of the BeefyVoteMessage object
+     */
     public void sendVoteMessage(Host us, PeerId peerId, byte[] encodedMessage) {
-        //TODO
+        Optional.ofNullable(connectionManager.getPeerInfo(peerId))
+                .map(p -> p.getBeefyStreams().getInitiator())
+                .ifPresentOrElse(
+                        stream -> new BeefyController(stream).sendVoteMessage(encodedMessage),
+                        () -> sendHandshake(us, peerId)
+                );
     }
 
     public void sendHandshake(Host us, PeerId peerId) {

@@ -6,7 +6,7 @@ import lombok.Value;
 import java.io.Serializable;
 
 @Value
-public class VoteMessage implements Serializable {
+public class BeefyVoteMessage implements Serializable {
     Commitment commitment;
     byte[] authorityId;
     byte[] signature;

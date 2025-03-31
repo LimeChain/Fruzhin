@@ -7,8 +7,9 @@ import com.limechain.consensus.beefy.dto.Commitment;
 import com.limechain.consensus.beefy.dto.RoundAction;
 import com.limechain.consensus.beefy.scale.CommitmentScaleWriter;
 import com.limechain.exception.beefy.BeefyGenericException;
+import com.limechain.network.PeerMessageCoordinator;
 import com.limechain.network.protocol.beefy.messages.justification.SignedCommitment;
-import com.limechain.network.protocol.beefy.messages.vote.VoteMessage;
+import com.limechain.network.protocol.beefy.messages.vote.BeefyVoteMessage;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.network.protocol.warp.dto.ConsensusEngine;
 import com.limechain.network.protocol.warp.dto.DigestType;
@@ -18,7 +19,6 @@ import com.limechain.runtime.hostapi.dto.VerifySignature;
 import com.limechain.state.StateManager;
 import com.limechain.storage.block.state.BlockState;
 import com.limechain.storage.crypto.KeyStore;
-import com.limechain.storage.crypto.KeyType;
 import com.limechain.utils.EcdsaUtils;
 import com.limechain.utils.HashUtils;
 import com.limechain.utils.scale.ScaleUtils;
@@ -38,7 +38,6 @@ import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.List;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -51,7 +50,6 @@ import static org.mockito.Mockito.when;
 class BeefyServiceTest {
 
     static final BigInteger MANDATORY_BLOCK_NUM = BigInteger.TWO;
-    static final BigInteger GRANDPA_FINALIZED = BigInteger.TEN;
     public static final BigInteger BEEFY_FINALIZED = BigInteger.ONE;
 
     private BeefyService beefyService;
@@ -62,9 +60,12 @@ class BeefyServiceTest {
     @Mock
     private KeyStore keyStore;
 
+    @Mock
+    private PeerMessageCoordinator peerMessageCoordinator;
+
     @BeforeEach
     void setUp() {
-        beefyService = Mockito.spy(new BeefyService(stateManager, keyStore));
+        beefyService = Mockito.spy(new BeefyService(stateManager, keyStore, peerMessageCoordinator));
     }
 
     @Test
@@ -190,8 +191,8 @@ class BeefyServiceTest {
         when(blockState.getHeaderByNumber(targetVoteBlockNumber))
                 .thenReturn(blockHeader);
 
-        VoteMessage voteMessage = callCreateVoteMessage(authoritySet, resultKeyPair, targetVoteBlockNumber);
-        Commitment commitment = voteMessage.getCommitment();
+        BeefyVoteMessage beefyVoteMessage = callCreateVoteMessage(authoritySet, resultKeyPair, targetVoteBlockNumber);
+        Commitment commitment = beefyVoteMessage.getCommitment();
 
         assertEquals(targetVoteBlockNumber, commitment.getBlockNumber());
         assertEquals(authoritySetId, commitment.getAuthoritySetId());
@@ -201,7 +202,7 @@ class BeefyServiceTest {
         byte[] hashedCommitment = HashUtils.hashWithKeccak256(encodedCommitment);
 
         VerifySignature signature = new VerifySignature(
-                voteMessage.getSignature(),
+                beefyVoteMessage.getSignature(),
                 hashedCommitment,
                 keyPair.component2().raw(),
                 Key.ECDSA
@@ -210,15 +211,15 @@ class BeefyServiceTest {
         assertTrue(EcdsaUtils.verifySignature(signature));
     }
 
-    private VoteMessage callCreateVoteMessage(BeefyAuthoritySet authoritySet,
-                                                          org.javatuples.Pair<byte[], byte[]> keyPair,
-                                                          BigInteger targetVoteBlockNumber)
+    private BeefyVoteMessage callCreateVoteMessage(BeefyAuthoritySet authoritySet,
+                                                   org.javatuples.Pair<byte[], byte[]> keyPair,
+                                                   BigInteger targetVoteBlockNumber)
             throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
 
         Method method = BeefyService.class.getDeclaredMethod(
                 "createVoteMessage", BeefyAuthoritySet.class, org.javatuples.Pair.class, BigInteger.class);
         method.setAccessible(true);
-        return (VoteMessage) method.invoke(beefyService, authoritySet, keyPair, targetVoteBlockNumber);
+        return (BeefyVoteMessage) method.invoke(beefyService, authoritySet, keyPair, targetVoteBlockNumber);
     }
 
     private RoundAction triageIncomingJustification(SignedCommitment signedCommitment)

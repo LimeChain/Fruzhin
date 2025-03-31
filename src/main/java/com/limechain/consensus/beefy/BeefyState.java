@@ -6,7 +6,7 @@ import com.limechain.consensus.beefy.dto.BeefySession;
 import com.limechain.consensus.beefy.dto.message.BeefyConsensusMessage;
 import com.limechain.exception.beefy.BeefyGenericException;
 import com.limechain.network.protocol.beefy.messages.justification.SignedCommitment;
-import com.limechain.network.protocol.beefy.messages.vote.VoteMessage;
+import com.limechain.network.protocol.beefy.messages.vote.BeefyVoteMessage;
 import com.limechain.runtime.Runtime;
 import com.limechain.state.AbstractState;
 import com.limechain.storage.block.state.BlockState;
@@ -70,7 +70,7 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
 
     // TODO: Remove lastVote or remove this comment
     @Nullable
-    private VoteMessage lastVote;
+    private BeefyVoteMessage lastVote;
 
     private Deque<BeefySession> sessions = new ArrayDeque<>();
 
@@ -151,7 +151,7 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
         sessions.add(beefySession);
     }
 
-    private void reportDoubleVoting(VoteMessage voteMessage) {
+    private void reportDoubleVoting(BeefyVoteMessage beefyVoteMessage) {
         //Todo: Generate key ownership proof
         //Todo: Submit report double voting to Beefy api path
     }

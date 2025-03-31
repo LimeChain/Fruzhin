@@ -3,8 +3,8 @@ package com.limechain.network.protocol.beefy;
 import com.limechain.network.ConnectionManager;
 import com.limechain.network.protocol.base.BaseEngine;
 import com.limechain.network.protocol.beefy.messages.BeefyMessageType;
-import com.limechain.network.protocol.beefy.messages.vote.VoteMessage;
-import com.limechain.network.protocol.beefy.messages.vote.VoteMessageScaleReader;
+import com.limechain.network.protocol.beefy.messages.vote.BeefyVoteMessage;
+import com.limechain.network.protocol.beefy.messages.vote.BeefyVoteMessageScaleReader;
 import com.limechain.rpc.server.AppBean;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.libp2p.core.PeerId;
@@ -74,6 +74,17 @@ public class BeefyEngine implements BaseEngine {
         stream.writeAndFlush(handshake);
     }
 
+    /**
+     * Send our BEEFY vote message from {@link BeefyService} on a given <b>responder</b> stream.
+     *
+     * @param stream             <b>responder</b> stream to write the message to
+     * @param encodedBeefyVoteMessage scale encoded BeefyVoteMessage object
+     */
+    public void writeBeefyVoteMessage(Stream stream, byte[] encodedBeefyVoteMessage) {
+        log.log(Level.FINE, "Sending vote message to peer " + stream.remotePeerId());
+        stream.writeAndFlush(encodedBeefyVoteMessage);
+    }
+
     private void handleInitiatorStreamMessage(BeefyMessageType messageType, Stream stream) {
 
         PeerId peerId = stream.remotePeerId();
@@ -106,10 +117,10 @@ public class BeefyEngine implements BaseEngine {
 
     private void handleVoteMessage(byte[] message, PeerId peerId) {
         ScaleCodecReader reader = new ScaleCodecReader(message);
-        VoteMessage voteMessage = reader.read(VoteMessageScaleReader.getInstance());
-        log.info("Beefy: Received vote message from Peer " + peerId + "\n" + voteMessage);
+        BeefyVoteMessage beefyVoteMessage = reader.read(BeefyVoteMessageScaleReader.getInstance());
+        log.info("Beefy: Received vote message from Peer " + peerId + "\n" + beefyVoteMessage);
 
-        beefyMessageHandler.handleVoteMessage(voteMessage);
+        beefyMessageHandler.handleVoteMessage(beefyVoteMessage);
     }
 
     private void handleJustificationMessage(byte[] message, PeerId peerId) {

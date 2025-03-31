@@ -2,7 +2,7 @@ package com.limechain.network.protocol.beefy;
 
 import com.limechain.consensus.beefy.BeefyService;
 import com.limechain.consensus.beefy.scale.CommitmentScaleWriter;
-import com.limechain.network.protocol.beefy.messages.vote.VoteMessage;
+import com.limechain.network.protocol.beefy.messages.vote.BeefyVoteMessage;
 import com.limechain.runtime.hostapi.dto.Key;
 import com.limechain.runtime.hostapi.dto.VerifySignature;
 import com.limechain.utils.EcdsaUtils;
@@ -19,28 +19,28 @@ public class BeefyMessageHandler {
 
     private final BeefyService beefyService;
 
-    public void handleVoteMessage(VoteMessage voteMessage) {
+    public void handleVoteMessage(BeefyVoteMessage beefyVoteMessage) {
 
-        if (!isVoteMessageValid(voteMessage)) {
+        if (!isVoteMessageValid(beefyVoteMessage)) {
             log.warning(String.format(
                     "handleBeefyVoteMessage: Invalid vote message for round %s, set %s",
-                    voteMessage.getCommitment().getBlockNumber(), voteMessage.getCommitment().getAuthoritySetId()
+                    beefyVoteMessage.getCommitment().getBlockNumber(), beefyVoteMessage.getCommitment().getAuthoritySetId()
             ));
             return;
         }
 
-        beefyService.triageIncomingVote(voteMessage);
+        beefyService.triageIncomingVote(beefyVoteMessage);
     }
 
-    private boolean isVoteMessageValid(VoteMessage voteMessage) {
+    private boolean isVoteMessageValid(BeefyVoteMessage beefyVoteMessage) {
 
         byte[] encodedCommitment = HashUtils.hashWithKeccak256(ScaleUtils.Encode.encode(CommitmentScaleWriter.getInstance(),
-                voteMessage.getCommitment()));
+                beefyVoteMessage.getCommitment()));
 
         VerifySignature verifySignature = new VerifySignature(
-                voteMessage.getSignature(),
+                beefyVoteMessage.getSignature(),
                 encodedCommitment,
-                voteMessage.getAuthorityId(),
+                beefyVoteMessage.getAuthorityId(),
                 Key.ECDSA);
 
         return EcdsaUtils.verifySignature(verifySignature);

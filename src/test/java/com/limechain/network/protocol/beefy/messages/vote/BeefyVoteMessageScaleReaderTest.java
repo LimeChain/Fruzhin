@@ -13,7 +13,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-class VoteMessageScaleReaderTest {
+class BeefyVoteMessageScaleReaderTest {
 
     private static final String SCALE_ENCODED_VOTE = "0x00046d68802929adcd6f4f60f87f9090382fe842d1dddd7cb6b338fd0e35" +
             "c42bf8240cc6ab4abaa401b62e000000000000024b1b43b9ddd8a8abf9bd503bf9b42602a7ddae6941a6c904b8e76b7a3d6331" +
@@ -23,13 +23,13 @@ class VoteMessageScaleReaderTest {
     private static final BigInteger BLOCK_NUMBER = BigInteger.valueOf(27572810);
     private static final BigInteger AUTHORITY_SET_ID = BigInteger.valueOf(11958);
 
-    private final VoteMessageScaleReader reader = VoteMessageScaleReader.getInstance();
+    private final BeefyVoteMessageScaleReader reader = BeefyVoteMessageScaleReader.getInstance();
 
     @Test
     void testRead() {
         byte[] testData = StringUtils.hexToBytes(SCALE_ENCODED_VOTE);
 
-        VoteMessage decoded = ScaleUtils.Decode.decode(testData, reader);
+        BeefyVoteMessage decoded = ScaleUtils.Decode.decode(testData, reader);
 
         assertNotNull(decoded);
 

@@ -2,7 +2,7 @@ package com.limechain.consensus.beefy.dto;
 
 import com.limechain.exception.beefy.BeefyGenericException;
 import com.limechain.network.protocol.beefy.messages.justification.SignedCommitment;
-import com.limechain.network.protocol.beefy.messages.vote.VoteMessage;
+import com.limechain.network.protocol.beefy.messages.vote.BeefyVoteMessage;
 import io.emeraldpay.polkaj.types.Hash264;
 import jakarta.annotation.Nullable;
 import lombok.Data;
@@ -17,7 +17,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 @Data
 @Log
@@ -29,7 +28,7 @@ public class BeefySession implements Serializable {
 
     private Map<Commitment, BeefyRound> rounds = new ConcurrentHashMap<>();
 
-    private Map<Pair<Hash264, BigInteger>, VoteMessage> previousVotes = new ConcurrentHashMap<>();
+    private Map<Pair<Hash264, BigInteger>, BeefyVoteMessage> previousVotes = new ConcurrentHashMap<>();
 
     private final BigInteger mandatoryBlock;
 
@@ -44,9 +43,9 @@ public class BeefySession implements Serializable {
     private final Pair<byte[], byte[]> beefyKeyPair;
 
 
-    public VoteImportResult addVote(VoteMessage voteMessage) {
-        Commitment commitment = voteMessage.getCommitment();
-        byte[] authorityId = voteMessage.getAuthorityId();
+    public VoteImportResult addVote(BeefyVoteMessage beefyVoteMessage) {
+        Commitment commitment = beefyVoteMessage.getCommitment();
+        byte[] authorityId = beefyVoteMessage.getAuthorityId();
         BigInteger blockNumber = commitment.getBlockNumber();
 
         if (blockNumber.compareTo(mandatoryBlock) < 0 ||
@@ -56,11 +55,11 @@ public class BeefySession implements Serializable {
             return new VoteImportResult.Invalid();
         } else if (!Objects.equals(commitment.getAuthoritySetId(), authoritySet.getSetId())) {
             log.fine(String.format("addVote: expected set_id {%s}, ignoring vote {%s}",
-                    authoritySet.getSetId(), voteMessage));
+                    authoritySet.getSetId(), beefyVoteMessage));
             return new VoteImportResult.Invalid();
         } else if (!authoritySet.getPublicKeys().contains(authorityId)) {
             log.fine(String.format("addVote: received vote {%s} from validator that is not in the" +
-                            " validator set, ignoring", voteMessage));
+                            " validator set, ignoring", beefyVoteMessage));
             return new VoteImportResult.Invalid();
         }
 
@@ -68,17 +67,21 @@ public class BeefySession implements Serializable {
         Pair<Hash264, BigInteger> voteKey = new Pair<>(authorityIdHash, blockNumber);
 
         if (previousVotes.containsKey(voteKey)) {
-            VoteMessage previousVote = previousVotes.get(voteKey);
+
+            BeefyVoteMessage previousVote = previousVotes.get(voteKey);
             if (!previousVote.getCommitment().getPayload().equals(commitment.getPayload())) {
-                log.info(String.format("addVote: Detected equivocated vote: 1st: {%s}, 2nd: {%s}", previousVote, voteMessage));
-                return new VoteImportResult.DoubleVoting(new DoubleVotingProof(previousVote, voteMessage));
+
+                log.info(String.format(
+                        "addVote: Detected equivocated vote: 1st: {%s}, 2nd: {%s}", previousVote, beefyVoteMessage)
+                );
+                return new VoteImportResult.DoubleVoting(new DoubleVotingProof(previousVote, beefyVoteMessage));
             }
         } else {
-            previousVotes.put(voteKey, voteMessage);
+            previousVotes.put(voteKey, beefyVoteMessage);
         }
 
         BeefyRound round = rounds.computeIfAbsent(commitment, _ -> new BeefyRound());
-        if (round.addVote(authorityIdHash, voteMessage) &&
+        if (round.addVote(authorityIdHash, beefyVoteMessage) &&
                 round.isDone(getThreshold())) {
             rounds.remove(commitment);
             log.info(String.format("addVote: Round # {%s} concluded, finality_proof: ", blockNumber));
@@ -90,12 +93,12 @@ public class BeefySession implements Serializable {
 
     public SignedCommitment createSignedCommitment(BeefyRound round, Commitment commitment) {
 
-        Map<Hash264, VoteMessage> signedVotes = round.getSignedVotes();
+        Map<Hash264, BeefyVoteMessage> signedVotes = round.getSignedVotes();
 
         List<Optional<byte[]>> signatures = authoritySet.getPublicKeys().stream()
                 .map(key -> Optional.ofNullable(signedVotes.get(new Hash264(key)))
-                        .map(VoteMessage::getSignature))
-                .collect(Collectors.toList());
+                        .map(BeefyVoteMessage::getSignature))
+                .toList();
 
         return new SignedCommitment(commitment, signatures);
     }
