@@ -186,13 +186,11 @@ class BeefyServiceTest {
         BlockHeader blockHeader = new BlockHeader();
         blockHeader.setDigest(new HeaderDigest[]{beefyDigest});
 
-        when(keyStore.findKeyPair(authoritySet.getPublicKeys(), KeyType.BEEFY))
-                .thenReturn(Optional.of(resultKeyPair));
         when(stateManager.getBlockState()).thenReturn(blockState);
         when(blockState.getHeaderByNumber(targetVoteBlockNumber))
                 .thenReturn(blockHeader);
 
-        VoteMessage voteMessage = callCreateVoteMessageIfAuthorized(authoritySet, targetVoteBlockNumber);
+        VoteMessage voteMessage = callCreateVoteMessage(authoritySet, resultKeyPair, targetVoteBlockNumber);
         Commitment commitment = voteMessage.getCommitment();
 
         assertEquals(targetVoteBlockNumber, commitment.getBlockNumber());
@@ -212,17 +210,15 @@ class BeefyServiceTest {
         assertTrue(EcdsaUtils.verifySignature(signature));
     }
 
-    private VoteMessage callCreateVoteMessageIfAuthorized(BeefyAuthoritySet authoritySet,
+    private VoteMessage callCreateVoteMessage(BeefyAuthoritySet authoritySet,
+                                                          org.javatuples.Pair<byte[], byte[]> keyPair,
                                                           BigInteger targetVoteBlockNumber)
             throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
 
         Method method = BeefyService.class.getDeclaredMethod(
-                "createVoteMessageIfAuthorized",
-                BeefyAuthoritySet.class,
-                BigInteger.class
-        );
+                "createVoteMessage", BeefyAuthoritySet.class, org.javatuples.Pair.class, BigInteger.class);
         method.setAccessible(true);
-        return (VoteMessage) method.invoke(beefyService, authoritySet, targetVoteBlockNumber);
+        return (VoteMessage) method.invoke(beefyService, authoritySet, keyPair, targetVoteBlockNumber);
     }
 
     private RoundAction triageIncomingJustification(SignedCommitment signedCommitment)

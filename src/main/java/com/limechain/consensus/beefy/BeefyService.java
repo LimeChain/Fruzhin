@@ -92,8 +92,13 @@ public class BeefyService implements FinalizedBlockChangeListener {
         beefyState.setLastVoted(targetVoteBlockNumber);
         beefyState.persistState();
 
-        VoteMessage voteMessage = createVoteMessageIfAuthorized(beefyState.getAuthoritySet(), targetVoteBlockNumber);
-        if (voteMessage == null) return;
+        Pair<byte[], byte[]> keyPair =
+                keyStore.findKeyPair(beefyState.getAuthoritySet().getPublicKeys(), KeyType.BEEFY)
+                .orElse(null);
+
+        if (keyPair == null) return;
+
+        VoteMessage voteMessage = createVoteMessage(beefyState.getAuthoritySet(), keyPair, targetVoteBlockNumber);
 
         Optional<SignedCommitment> signedCommitment = handleVote(voteMessage);
         if (signedCommitment.isPresent()) {
@@ -101,17 +106,12 @@ public class BeefyService implements FinalizedBlockChangeListener {
         }
     }
 
-    private VoteMessage createVoteMessageIfAuthorized(BeefyAuthoritySet authoritySet,
+    private VoteMessage createVoteMessage(BeefyAuthoritySet authoritySet,
+                                                      Pair<byte[], byte[]> keyPair,
                                                       BigInteger targetVoteBlockNumber) {
 
-        Optional<Pair<byte[], byte[]>> keyPair = keyStore.findKeyPair(
-                authoritySet.getPublicKeys(),
-                KeyType.BEEFY
-        );
-
-        if (keyPair.isEmpty()) return null;
-        byte[] publicKey = keyPair.get().getValue0();
-        byte[] privateKey = keyPair.get().getValue1();
+        byte[] publicKey = keyPair.getValue0();
+        byte[] privateKey = keyPair.getValue1();
 
         Commitment commitment = getCommitment(targetVoteBlockNumber, authoritySet.getSetId());
         byte[] encodedCommitment = ScaleUtils.Encode.encode(CommitmentScaleWriter.getInstance(), commitment);
