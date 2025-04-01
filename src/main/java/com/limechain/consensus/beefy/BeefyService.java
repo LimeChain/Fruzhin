@@ -173,7 +173,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
         BigInteger blockNumber = voteMessage.getCommitment().getBlockNumber();
 
         if (session == null) {
-            throw new BeefyGenericException("No beefy session exists.");
+            throw new BeefyGenericException("handleVote: No beefy session exists.");
         }
 
         VoteImportResult result = session.addVote(voteMessage);
@@ -254,7 +254,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
                 log.fine(String.format("triageIncomingVotes: Process vote %s  for round: %d.", voteMessage, blockNumber));
                 Optional<SignedCommitment> finalityProof = handleVote(voteMessage);
                 if (finalityProof.isPresent()) {
-                    //TODO: gossip vote message
+                    //TODO: gossip justification message
                 }
             }
             case RoundAction.ENQUEUE -> {
