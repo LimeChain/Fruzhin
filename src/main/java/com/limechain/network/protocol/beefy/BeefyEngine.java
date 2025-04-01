@@ -9,7 +9,6 @@ import com.limechain.network.protocol.beefy.messages.vote.VoteMessage;
 import com.limechain.network.protocol.beefy.messages.vote.VoteMessageScaleReader;
 import com.limechain.rpc.server.AppBean;
 import com.limechain.utils.scale.ScaleUtils;
-import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.libp2p.core.PeerId;
 import io.libp2p.core.Stream;
 import lombok.extern.java.Log;
@@ -108,8 +107,8 @@ public class BeefyEngine implements BaseEngine {
     }
 
     private void handleVoteMessage(byte[] message, PeerId peerId) {
-        ScaleCodecReader reader = new ScaleCodecReader(message);
-        VoteMessage voteMessage = reader.read(VoteMessageScaleReader.getInstance());
+        VoteMessage voteMessage = ScaleUtils.Decode.decode(message,
+                VoteMessageScaleReader.getInstance());
         log.info("Beefy: Received vote message from Peer " + peerId + "\n" + voteMessage);
 
         beefyMessageHandler.handleVoteMessage(voteMessage);
