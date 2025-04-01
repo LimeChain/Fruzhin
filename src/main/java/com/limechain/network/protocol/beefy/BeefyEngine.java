@@ -117,10 +117,10 @@ public class BeefyEngine implements BaseEngine {
 
     private void handleVoteMessage(byte[] message, PeerId peerId) {
         ScaleCodecReader reader = new ScaleCodecReader(message);
-        BeefyVoteMessage beefyVoteMessage = reader.read(BeefyVoteMessageScaleReader.getInstance());
-        log.info("Beefy: Received vote message from Peer " + peerId + "\n" + beefyVoteMessage);
+        BeefyVoteMessage voteMessage = reader.read(BeefyVoteMessageScaleReader.getInstance());
+        log.info("Beefy: Received vote message from Peer " + peerId + "\n" + voteMessage);
 
-        beefyMessageHandler.handleVoteMessage(beefyVoteMessage);
+        beefyMessageHandler.handleVoteMessage(voteMessage);
     }
 
     private void handleJustificationMessage(byte[] message, PeerId peerId) {
