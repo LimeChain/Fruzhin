@@ -23,7 +23,7 @@ import com.limechain.rpc.server.AppBean;
 import com.limechain.state.AbstractState;
 import com.limechain.sync.SyncMode;
 import com.limechain.sync.warpsync.WarpSyncState;
-import io.emeraldpay.polkaj.scale.ScaleCodecReader;
+import com.limechain.utils.scale.ScaleUtils;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.libp2p.core.PeerId;
 import io.libp2p.core.Stream;
@@ -228,8 +228,12 @@ public class GrandpaEngine implements BaseEngine {
     }
 
     private void handleNeighbourMessage(byte[] message, Stream stream) {
-        ScaleCodecReader reader = new ScaleCodecReader(message);
-        NeighbourMessage neighbourMessage = reader.read(NeighbourMessageScaleReader.getInstance());
+
+        NeighbourMessage neighbourMessage = ScaleUtils.Decode.decode(
+                message,
+                NeighbourMessageScaleReader.getInstance()
+        );
+
         log.log(Level.FINE, "Received neighbour message from Peer " + stream.remotePeerId() + "\n" + neighbourMessage);
         // TODO: We need to actually update our peer's infos on each message.
         writeNeighbourMessage(stream, stream.remotePeerId());
@@ -240,16 +244,13 @@ public class GrandpaEngine implements BaseEngine {
     }
 
     private void handleVoteMessage(byte[] message, PeerId peerId) {
-        ScaleCodecReader reader = new ScaleCodecReader(message);
-        VoteMessage voteMessage = reader.read(VoteMessageScaleReader.getInstance());
+        VoteMessage voteMessage = ScaleUtils.Decode.decode(message, VoteMessageScaleReader.getInstance());
         log.log(Level.INFO, "Received vote message from Peer " + peerId + "\n" + voteMessage);
-
         grandpaMessageHandler.handleVoteMessage(voteMessage);
     }
 
     private void handleCommitMessage(byte[] message, PeerId peerId) {
-        ScaleCodecReader reader = new ScaleCodecReader(message);
-        CommitMessage commitMessage = reader.read(CommitMessageScaleReader.getInstance());
+        CommitMessage commitMessage = ScaleUtils.Decode.decode(message, CommitMessageScaleReader.getInstance());
         log.log(Level.INFO, "Received commit message from Peer " + peerId +
                 " " + commitMessage.getRoundNumber() +
                 " " + commitMessage.getSetId());
@@ -258,16 +259,24 @@ public class GrandpaEngine implements BaseEngine {
     }
 
     private void handleCatchupRequestMessage(byte[] message, PeerId peerId) {
-        ScaleCodecReader reader = new ScaleCodecReader(message);
-        CatchUpReqMessage catchUpReqMessage = reader.read(CatchUpReqMessageScaleReader.getInstance());
+
+        CatchUpReqMessage catchUpReqMessage = ScaleUtils.Decode.decode(
+                message,
+                CatchUpReqMessageScaleReader.getInstance()
+        );
+
         log.log(Level.INFO, "Received catch up request message from Peer " + peerId + "\n" + catchUpReqMessage);
 
         grandpaMessageHandler.initiateAndSendCatchUpResponse(peerId, catchUpReqMessage, connectionManager::getPeerIds);
     }
 
     private void handleCatchupResponseMessage(byte[] message, PeerId peerId) {
-        ScaleCodecReader reader = new ScaleCodecReader(message);
-        CatchUpResMessage catchUpResMessage = reader.read(CatchUpResMessageScaleReader.getInstance());
+
+        CatchUpResMessage catchUpResMessage = ScaleUtils.Decode.decode(
+                message,
+                CatchUpResMessageScaleReader.getInstance()
+        );
+
         log.log(Level.INFO, "Received catch up response message from Peer " + peerId + "\n" + catchUpResMessage);
 
         grandpaMessageHandler.handleCatchUpResponse(peerId, catchUpResMessage, connectionManager::getPeerIds);

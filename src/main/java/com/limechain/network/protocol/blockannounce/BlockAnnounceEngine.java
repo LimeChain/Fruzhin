@@ -15,7 +15,6 @@ import com.limechain.storage.block.state.BlockState;
 import com.limechain.sync.warpsync.WarpSyncState;
 import com.limechain.utils.async.AsyncExecutor;
 import com.limechain.utils.scale.ScaleUtils;
-import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.libp2p.core.PeerId;
 import io.libp2p.core.Stream;
@@ -54,8 +53,11 @@ public class BlockAnnounceEngine implements BaseEngine {
             stream.close();
         }
 
-        ScaleCodecReader reader = new ScaleCodecReader(message);
-        BlockAnnounceHandshake handshake = reader.read(BlockAnnounceHandshakeScaleReader.getInstance());
+        BlockAnnounceHandshake handshake = ScaleUtils.Decode.decode(
+                message,
+                BlockAnnounceHandshakeScaleReader.getInstance()
+        );
+
         connectionManager.addBlockAnnounceStream(stream);
         connectionManager.updatePeer(peerId, handshake);
         log.log(Level.INFO, "Received handshake from " + peerId + "\n" + handshake);

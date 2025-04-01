@@ -10,7 +10,7 @@ import com.limechain.sync.warpsync.WarpSyncState;
 import com.limechain.transaction.TransactionProcessor;
 import com.limechain.transaction.dto.ExtrinsicArray;
 import com.limechain.utils.async.AsyncExecutor;
-import io.emeraldpay.polkaj.scale.ScaleCodecReader;
+import com.limechain.utils.scale.ScaleUtils;
 import io.libp2p.core.PeerId;
 import io.libp2p.core.Stream;
 import lombok.extern.java.Log;
@@ -143,8 +143,7 @@ public class TransactionEngine implements BaseEngine {
             return;
         }
 
-        ScaleCodecReader reader = new ScaleCodecReader(message);
-        ExtrinsicArray transactions = reader.read(TransactionReader.getInstance());
+        ExtrinsicArray transactions = ScaleUtils.Decode.decode(message, TransactionReader.getInstance());
         log.log(Level.FINE, "Received " + transactions.getExtrinsics().length + " transactions from Peer "
                 + stream.remotePeerId());
 
