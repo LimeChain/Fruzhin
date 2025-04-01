@@ -204,7 +204,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
         }
     }
 
-    private void triageIncomingJustification(SignedCommitment signedCommitment) {
+    public void triageIncomingJustification(SignedCommitment signedCommitment) {
 
         BigInteger blockNumber = signedCommitment.getCommitment().getBlockNumber();
         RoundAction roundAction = determineRoundAction(blockNumber);
