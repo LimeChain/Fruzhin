@@ -100,12 +100,10 @@ public class BeefyService implements FinalizedBlockChangeListener {
                 targetVoteBlockNumber
         );
 
-        Optional<SignedCommitment> signedCommitment = handleVote(voteMessage);
-        if (signedCommitment.isPresent()) {
-            // TODO: Broadcast Justification Message
-        } else {
-            peerMessageCoordinator.sendBeefyVoteMessageToPeers(voteMessage);
-        }
+        handleVote(voteMessage).ifPresentOrElse(
+                peerMessageCoordinator::sendSignedCommitmentToPeers,
+                () -> peerMessageCoordinator.sendBeefyVoteMessageToPeers(voteMessage)
+        );
     }
 
     private BeefyVoteMessage createVoteMessage(BeefyAuthoritySet authoritySet,
@@ -251,11 +249,12 @@ public class BeefyService implements FinalizedBlockChangeListener {
 
         switch (roundAction) {
             case RoundAction.PROCESS -> {
-                log.fine(String.format("triageIncomingVotes: Process vote %s  for round: %d.", voteMessage, blockNumber));
-                Optional<SignedCommitment> finalityProof = handleVote(voteMessage);
-                if (finalityProof.isPresent()) {
-                    //TODO: gossip justification message
-                }
+                log.fine(String.format("triageIncomingVotes: Process vote %s for round: %d.", voteMessage, blockNumber));
+
+                handleVote(voteMessage).ifPresentOrElse(
+                        peerMessageCoordinator::sendSignedCommitmentToPeers,
+                        () -> peerMessageCoordinator.sendBeefyVoteMessageToPeers(voteMessage)
+                );
             }
             case RoundAction.ENQUEUE -> {
                 log.fine(String.format("triageIncomingVotes: Unexpected vote: %s", voteMessage));
