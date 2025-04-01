@@ -92,13 +92,14 @@ public class BeefyService implements FinalizedBlockChangeListener {
         beefyState.setLastVoted(targetVoteBlockNumber);
         beefyState.persistState();
 
-        Pair<byte[], byte[]> keyPair =
-                keyStore.findKeyPair(beefyState.getAuthoritySet().getPublicKeys(), KeyType.BEEFY)
-                .orElse(null);
-
+        Pair<byte[], byte[]> keyPair = sessionStart.getBeefyKeyPair();
         if (keyPair == null) return;
 
-        VoteMessage voteMessage = createVoteMessage(beefyState.getAuthoritySet(), keyPair, targetVoteBlockNumber);
+        VoteMessage voteMessage = createVoteMessage(
+                sessionStart.getAuthoritySet(),
+                keyPair,
+                targetVoteBlockNumber
+        );
 
         Optional<SignedCommitment> signedCommitment = handleVote(voteMessage);
         if (signedCommitment.isPresent()) {
