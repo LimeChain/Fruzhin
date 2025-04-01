@@ -22,7 +22,6 @@ import com.limechain.runtime.Runtime;
 import com.limechain.state.StateManager;
 import com.limechain.storage.block.state.BlockState;
 import com.limechain.storage.crypto.KeyStore;
-import com.limechain.storage.crypto.KeyType;
 import com.limechain.utils.EcdsaUtils;
 import com.limechain.utils.HashUtils;
 import com.limechain.utils.scale.ScaleUtils;
@@ -108,8 +107,8 @@ public class BeefyService implements FinalizedBlockChangeListener {
     }
 
     private VoteMessage createVoteMessage(BeefyAuthoritySet authoritySet,
-                                                      Pair<byte[], byte[]> keyPair,
-                                                      BigInteger targetVoteBlockNumber) {
+                                          Pair<byte[], byte[]> keyPair,
+                                          BigInteger targetVoteBlockNumber) {
 
         byte[] publicKey = keyPair.getValue0();
         byte[] privateKey = keyPair.getValue1();
@@ -121,8 +120,8 @@ public class BeefyService implements FinalizedBlockChangeListener {
         byte[] signature = EcdsaUtils.signMessage(privateKey, hashedCommitment);
 
         if (signature == null) {
-            throw new BeefyGenericException("Failed to generate signature for the commitment with block number: " +
-                    targetVoteBlockNumber);
+            throw new BeefyGenericException("createVoteMessage: Failed to generate signature for the commitment " +
+                    "with block number: " + targetVoteBlockNumber);
         }
 
         return new VoteMessage(commitment, publicKey, signature);
