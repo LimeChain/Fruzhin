@@ -61,12 +61,13 @@ public class BeefyMessageHandler {
 
         Commitment commitment = signedCommitment.getCommitment();
         List<Optional<byte[]>> signatures = signedCommitment.getSignatures();
-        BeefyAuthoritySet authoritySet = beefyState.getAuthoritySet();
         BeefySession beefySession = beefyState.getSessions().peekFirst();
 
         if (beefySession == null) {
             throw new BeefyGenericException("No active Beefy session found.");
         }
+
+        BeefyAuthoritySet authoritySet = beefySession.getAuthoritySet();
 
         if (commitment.getBlockNumber().compareTo(beefySession.getMandatoryBlock()) < 0 ||
                 signatures.size() != authoritySet.getPublicKeys().size() ||
@@ -74,11 +75,20 @@ public class BeefyMessageHandler {
             return false;
         }
 
+        BigInteger validSignaturesCount = countValidSignatures(commitment, authoritySet, signatures);
+        return validSignaturesCount.compareTo(beefySession.getThreshold()) >= 0;
+    }
+
+
+    private BigInteger countValidSignatures(Commitment commitment,
+                                            BeefyAuthoritySet authoritySet,
+                                            List<Optional<byte[]>> signatures) {
+
         byte[] encodedCommitment = HashUtils.hashWithKeccak256(
                 ScaleUtils.Encode.encode(CommitmentScaleWriter.getInstance(), commitment)
         );
 
-        int validSignaturesCount = 0;
+        BigInteger validSignaturesCount = BigInteger.ZERO;
         List<byte[]> publicKeys = authoritySet.getPublicKeys();
 
         for (int i = 0; i < publicKeys.size(); i++) {
@@ -94,11 +104,11 @@ public class BeefyMessageHandler {
             );
 
             if (EcdsaUtils.verifySignature(verifySignature)) {
-                validSignaturesCount++;
+                validSignaturesCount = validSignaturesCount.add(BigInteger.ONE);
             }
         }
 
-        return BigInteger.valueOf(validSignaturesCount).compareTo(beefySession.getThreshold()) >= 0;
+        return validSignaturesCount;
     }
 
     private boolean isVoteMessageValid(VoteMessage voteMessage) {

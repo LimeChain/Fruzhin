@@ -8,6 +8,7 @@ import com.limechain.network.protocol.beefy.messages.justification.SignedCommitm
 import com.limechain.network.protocol.beefy.messages.vote.VoteMessage;
 import com.limechain.network.protocol.beefy.messages.vote.VoteMessageScaleReader;
 import com.limechain.rpc.server.AppBean;
+import com.limechain.utils.scale.ScaleUtils;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.libp2p.core.PeerId;
 import io.libp2p.core.Stream;
@@ -115,8 +116,8 @@ public class BeefyEngine implements BaseEngine {
     }
 
     private void handleJustificationMessage(byte[] message, PeerId peerId) {
-        ScaleCodecReader reader = new ScaleCodecReader(message);
-        SignedCommitment signedCommitment = reader.read(SignedCommitmentScaleReader.getInstance());
+        SignedCommitment signedCommitment = ScaleUtils.Decode.decode(message,
+                SignedCommitmentScaleReader.getInstance());
         log.info("Beefy: Received justification from Peer " + peerId + "\n" + signedCommitment);
 
         beefyMessageHandler.handleSignedCommitment(signedCommitment);
