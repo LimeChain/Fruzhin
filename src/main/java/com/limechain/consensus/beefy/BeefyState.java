@@ -151,7 +151,7 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
         sessions.add(beefySession);
     }
 
-    private void reportDoubleVoting(BeefyVoteMessage beefyVoteMessage) {
+    private void reportDoubleVoting(BeefyVoteMessage voteMessage) {
         //Todo: Generate key ownership proof
         //Todo: Submit report double voting to Beefy api path
     }

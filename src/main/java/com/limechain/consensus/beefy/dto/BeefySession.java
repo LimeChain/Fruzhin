@@ -43,9 +43,9 @@ public class BeefySession implements Serializable {
     private final Pair<byte[], byte[]> beefyKeyPair;
 
 
-    public VoteImportResult addVote(BeefyVoteMessage beefyVoteMessage) {
-        Commitment commitment = beefyVoteMessage.getCommitment();
-        byte[] authorityId = beefyVoteMessage.getAuthorityId();
+    public VoteImportResult addVote(BeefyVoteMessage voteMessage) {
+        Commitment commitment = voteMessage.getCommitment();
+        byte[] authorityId = voteMessage.getAuthorityId();
         BigInteger blockNumber = commitment.getBlockNumber();
 
         if (blockNumber.compareTo(mandatoryBlock) < 0 ||
@@ -55,11 +55,11 @@ public class BeefySession implements Serializable {
             return new VoteImportResult.Invalid();
         } else if (!Objects.equals(commitment.getAuthoritySetId(), authoritySet.getSetId())) {
             log.fine(String.format("addVote: expected set_id {%s}, ignoring vote {%s}",
-                    authoritySet.getSetId(), beefyVoteMessage));
+                    authoritySet.getSetId(), voteMessage));
             return new VoteImportResult.Invalid();
         } else if (!authoritySet.getPublicKeys().contains(authorityId)) {
             log.fine(String.format("addVote: received vote {%s} from validator that is not in the" +
-                            " validator set, ignoring", beefyVoteMessage));
+                            " validator set, ignoring", voteMessage));
             return new VoteImportResult.Invalid();
         }
 
@@ -72,16 +72,16 @@ public class BeefySession implements Serializable {
             if (!previousVote.getCommitment().getPayload().equals(commitment.getPayload())) {
 
                 log.info(String.format(
-                        "addVote: Detected equivocated vote: 1st: {%s}, 2nd: {%s}", previousVote, beefyVoteMessage)
+                        "addVote: Detected equivocated vote: 1st: {%s}, 2nd: {%s}", previousVote, voteMessage)
                 );
-                return new VoteImportResult.DoubleVoting(new DoubleVotingProof(previousVote, beefyVoteMessage));
+                return new VoteImportResult.DoubleVoting(new DoubleVotingProof(previousVote, voteMessage));
             }
         } else {
-            previousVotes.put(voteKey, beefyVoteMessage);
+            previousVotes.put(voteKey, voteMessage);
         }
 
         BeefyRound round = rounds.computeIfAbsent(commitment, _ -> new BeefyRound());
-        if (round.addVote(authorityIdHash, beefyVoteMessage) &&
+        if (round.addVote(authorityIdHash, voteMessage) &&
                 round.isDone(getThreshold())) {
             rounds.remove(commitment);
             log.info(String.format("addVote: Round # {%s} concluded, finality_proof: ", blockNumber));

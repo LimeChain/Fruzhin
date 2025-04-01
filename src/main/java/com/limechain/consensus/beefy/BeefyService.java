@@ -100,13 +100,13 @@ public class BeefyService implements FinalizedBlockChangeListener {
 
         if (keyPair == null) return;
 
-        BeefyVoteMessage beefyVoteMessage = createVoteMessage(beefyState.getAuthoritySet(), keyPair, targetVoteBlockNumber);
+        BeefyVoteMessage voteMessage = createVoteMessage(beefyState.getAuthoritySet(), keyPair, targetVoteBlockNumber);
 
-        Optional<SignedCommitment> signedCommitment = handleVote(beefyVoteMessage);
+        Optional<SignedCommitment> signedCommitment = handleVote(voteMessage);
         if (signedCommitment.isPresent()) {
             // TODO: Broadcast Justification Message
         } else {
-            peerMessageCoordinator.sendBeefyVoteMessageToPeers(beefyVoteMessage);
+            peerMessageCoordinator.sendBeefyVoteMessageToPeers(voteMessage);
         }
     }
 
@@ -168,17 +168,17 @@ public class BeefyService implements FinalizedBlockChangeListener {
                 || targetVoteBlockNumber.compareTo(lastVoted) <= 0;
     }
 
-    private Optional<SignedCommitment> handleVote(BeefyVoteMessage beefyVoteMessage) {
+    private Optional<SignedCommitment> handleVote(BeefyVoteMessage voteMessage) {
 
         BeefyState beefyState = stateManager.getBeefyState();
         BeefySession session = beefyState.getSessions().peekFirst();
-        BigInteger blockNumber = beefyVoteMessage.getCommitment().getBlockNumber();
+        BigInteger blockNumber = voteMessage.getCommitment().getBlockNumber();
 
         if (session == null) {
             throw new BeefyGenericException("No beefy session exists.");
         }
 
-        VoteImportResult result = session.addVote(beefyVoteMessage);
+        VoteImportResult result = session.addVote(voteMessage);
 
         switch (result) {
             case VoteImportResult.RoundConcluded voteImportResult -> {
@@ -194,7 +194,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
             case VoteImportResult.DoubleVoting voteImportResult ->
                     reportDoubleVoting(voteImportResult.doubleVotingProof());
             case VoteImportResult.Invalid _ ->
-                    log.info("handleVote: received an invalid/stale vote: " + beefyVoteMessage);
+                    log.info("handleVote: received an invalid/stale vote: " + voteMessage);
         }
         return Optional.empty();
     }
@@ -247,27 +247,27 @@ public class BeefyService implements FinalizedBlockChangeListener {
                 .findFirst();
     }
 
-    public void triageIncomingVote(BeefyVoteMessage beefyVoteMessage) {
+    public void triageIncomingVote(BeefyVoteMessage voteMessage) {
 
-        BigInteger blockNumber = beefyVoteMessage.getCommitment().getBlockNumber();
+        BigInteger blockNumber = voteMessage.getCommitment().getBlockNumber();
         RoundAction roundAction = determineRoundAction(blockNumber);
 
         switch (roundAction) {
             case RoundAction.PROCESS -> {
-                log.fine(String.format("triageIncomingVotes: Process vote %s  for round: %d.", beefyVoteMessage, blockNumber));
-                Optional<SignedCommitment> finalityProof = handleVote(beefyVoteMessage);
+                log.fine(String.format("triageIncomingVotes: Process vote %s  for round: %d.", voteMessage, blockNumber));
+                Optional<SignedCommitment> finalityProof = handleVote(voteMessage);
                 if (finalityProof.isPresent()) {
                     //TODO: gossip vote message
                 }
             }
             case RoundAction.ENQUEUE -> {
-                log.fine(String.format("triageIncomingVotes: Unexpected vote: %s", beefyVoteMessage));
+                log.fine(String.format("triageIncomingVotes: Unexpected vote: %s", voteMessage));
             }
             case RoundAction.DROP -> {
-                log.fine(String.format("triageIncomingVotes: Drop vote  %s for round: %d.", beefyVoteMessage, blockNumber));
+                log.fine(String.format("triageIncomingVotes: Drop vote  %s for round: %d.", voteMessage, blockNumber));
             }
             case RoundAction.INVALID -> {
-                log.fine(String.format("triageIncomingVotes: Invalidate vote  %s for round: %d.", beefyVoteMessage, blockNumber));
+                log.fine(String.format("triageIncomingVotes: Invalidate vote  %s for round: %d.", voteMessage, blockNumber));
             }
         }
     }

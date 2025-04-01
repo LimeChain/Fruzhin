@@ -191,8 +191,8 @@ class BeefyServiceTest {
         when(blockState.getHeaderByNumber(targetVoteBlockNumber))
                 .thenReturn(blockHeader);
 
-        BeefyVoteMessage beefyVoteMessage = callCreateVoteMessage(authoritySet, resultKeyPair, targetVoteBlockNumber);
-        Commitment commitment = beefyVoteMessage.getCommitment();
+        BeefyVoteMessage voteMessage = callCreateVoteMessage(authoritySet, resultKeyPair, targetVoteBlockNumber);
+        Commitment commitment = voteMessage.getCommitment();
 
         assertEquals(targetVoteBlockNumber, commitment.getBlockNumber());
         assertEquals(authoritySetId, commitment.getAuthoritySetId());
@@ -202,7 +202,7 @@ class BeefyServiceTest {
         byte[] hashedCommitment = HashUtils.hashWithKeccak256(encodedCommitment);
 
         VerifySignature signature = new VerifySignature(
-                beefyVoteMessage.getSignature(),
+                voteMessage.getSignature(),
                 hashedCommitment,
                 keyPair.component2().raw(),
                 Key.ECDSA

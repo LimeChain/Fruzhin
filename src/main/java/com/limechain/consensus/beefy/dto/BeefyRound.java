@@ -12,8 +12,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class BeefyRound {
     Map<Hash264, BeefyVoteMessage> signedVotes = new ConcurrentHashMap<>();
 
-    public boolean addVote(Hash264 authorityId, BeefyVoteMessage beefyVoteMessage) {
-        return signedVotes.putIfAbsent(authorityId, beefyVoteMessage) == null;
+    public boolean addVote(Hash264 authorityId, BeefyVoteMessage voteMessage) {
+        return signedVotes.putIfAbsent(authorityId, voteMessage) == null;
     }
 
     public boolean isDone(BigInteger threshold) {

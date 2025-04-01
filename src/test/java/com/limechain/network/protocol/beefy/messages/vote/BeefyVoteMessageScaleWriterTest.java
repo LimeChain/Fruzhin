@@ -32,9 +32,9 @@ class BeefyVoteMessageScaleWriterTest {
         PayloadElement payloadElement = new PayloadElement(BeefyPayloadId.MMR, payloadMmr);
         Commitment commitment = new Commitment(List.of(payloadElement), BLOCK_NUMBER, AUTHORITY_SET_ID);
 
-        BeefyVoteMessage beefyVoteMessage = getVoteMessage(commitment);
+        BeefyVoteMessage voteMessage = getVoteMessage(commitment);
 
-        byte[] encoded = ScaleUtils.Encode.encode(writer, beefyVoteMessage);
+        byte[] encoded = ScaleUtils.Encode.encode(writer, voteMessage);
 
         assertNotNull(encoded);
         assertEquals(SCALE_ENCODED_VOTE, StringUtils.toHexWithPrefix(encoded));

@@ -19,28 +19,29 @@ public class BeefyMessageHandler {
 
     private final BeefyService beefyService;
 
-    public void handleVoteMessage(BeefyVoteMessage beefyVoteMessage) {
+    public void handleVoteMessage(BeefyVoteMessage voteMessage) {
 
-        if (!isVoteMessageValid(beefyVoteMessage)) {
+        if (!isVoteMessageValid(voteMessage)) {
             log.warning(String.format(
                     "handleBeefyVoteMessage: Invalid vote message for round %s, set %s",
-                    beefyVoteMessage.getCommitment().getBlockNumber(), beefyVoteMessage.getCommitment().getAuthoritySetId()
+                    voteMessage.getCommitment().getBlockNumber(),
+                    voteMessage.getCommitment().getAuthoritySetId()
             ));
             return;
         }
 
-        beefyService.triageIncomingVote(beefyVoteMessage);
+        beefyService.triageIncomingVote(voteMessage);
     }
 
-    private boolean isVoteMessageValid(BeefyVoteMessage beefyVoteMessage) {
+    private boolean isVoteMessageValid(BeefyVoteMessage voteMessage) {
 
         byte[] encodedCommitment = HashUtils.hashWithKeccak256(ScaleUtils.Encode.encode(CommitmentScaleWriter.getInstance(),
-                beefyVoteMessage.getCommitment()));
+                voteMessage.getCommitment()));
 
         VerifySignature verifySignature = new VerifySignature(
-                beefyVoteMessage.getSignature(),
+                voteMessage.getSignature(),
                 encodedCommitment,
-                beefyVoteMessage.getAuthorityId(),
+                voteMessage.getAuthorityId(),
                 Key.ECDSA);
 
         return EcdsaUtils.verifySignature(verifySignature);

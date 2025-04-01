@@ -19,11 +19,11 @@ public class BeefyVoteMessageScaleWriter implements ScaleWriter<BeefyVoteMessage
     }
 
     @Override
-    public void write(ScaleCodecWriter writer, BeefyVoteMessage beefyVoteMessage) throws IOException {
+    public void write(ScaleCodecWriter writer, BeefyVoteMessage voteMessage) throws IOException {
 
         writer.writeByte(BeefyMessageType.VOTE.getType());
-        writer.write(CommitmentScaleWriter.getInstance(), beefyVoteMessage.getCommitment());
-        writer.writeByteArray(beefyVoteMessage.getAuthorityId());
-        writer.writeByteArray(beefyVoteMessage.getSignature());
+        writer.write(CommitmentScaleWriter.getInstance(), voteMessage.getCommitment());
+        writer.writeByteArray(voteMessage.getAuthorityId());
+        writer.writeByteArray(voteMessage.getSignature());
     }
 }
