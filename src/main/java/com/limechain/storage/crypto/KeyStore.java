@@ -47,7 +47,7 @@ public class KeyStore {
     }
 
     /**
-     * Searches for a {@link io.emeraldpay.polkaj.schnorrkel.Schnorrkel.KeyPair} within the provided list of authPubKeys
+     * Searches for a public - private key pair within the provided list of authPubKeys
      * and retrieves the corresponding key pair if available.
      *
      * @param authPubKeys the list of authPubKeys to search for the key pair.
@@ -64,7 +64,10 @@ public class KeyStore {
     }
 
     /**
-     * Retrieves a {@link io.emeraldpay.polkaj.schnorrkel.Schnorrkel.KeyPair} from the store.
+     * Retrieves a public - private key pair from the store.
+     * SR25519 type for BABE
+     * ED25519 type for GRANDPA
+     * ECDSA type for BEEFY
      *
      * @param type      the algorithm type that the key is used for.
      * @param publicKey the pubKey used as a key to retrieve a privKey from the store.

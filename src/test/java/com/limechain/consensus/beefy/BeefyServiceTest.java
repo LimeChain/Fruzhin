@@ -1,11 +1,30 @@
 package com.limechain.consensus.beefy;
 
+import com.limechain.consensus.beefy.dto.BeefyAuthoritySet;
+import com.limechain.consensus.beefy.dto.BeefyPayloadId;
 import com.limechain.consensus.beefy.dto.BeefySession;
 import com.limechain.consensus.beefy.dto.Commitment;
 import com.limechain.consensus.beefy.dto.RoundAction;
+import com.limechain.consensus.beefy.scale.CommitmentScaleWriter;
 import com.limechain.exception.beefy.BeefyGenericException;
 import com.limechain.network.protocol.beefy.messages.justification.SignedCommitment;
+import com.limechain.network.protocol.beefy.messages.vote.VoteMessage;
+import com.limechain.network.protocol.warp.dto.BlockHeader;
+import com.limechain.network.protocol.warp.dto.ConsensusEngine;
+import com.limechain.network.protocol.warp.dto.DigestType;
+import com.limechain.network.protocol.warp.dto.HeaderDigest;
+import com.limechain.runtime.hostapi.dto.Key;
+import com.limechain.runtime.hostapi.dto.VerifySignature;
 import com.limechain.state.StateManager;
+import com.limechain.storage.block.state.BlockState;
+import com.limechain.storage.crypto.KeyStore;
+import com.limechain.storage.crypto.KeyType;
+import com.limechain.utils.EcdsaUtils;
+import com.limechain.utils.HashUtils;
+import com.limechain.utils.scale.ScaleUtils;
+import io.libp2p.core.crypto.PrivKey;
+import io.libp2p.core.crypto.PubKey;
+import kotlin.Pair;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -18,9 +37,13 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.util.ArrayDeque;
+import java.util.List;
+import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -36,9 +59,12 @@ class BeefyServiceTest {
     @Mock
     private StateManager stateManager;
 
+    @Mock
+    private KeyStore keyStore;
+
     @BeforeEach
     void setUp() {
-        beefyService = Mockito.spy(new BeefyService(stateManager));
+        beefyService = Mockito.spy(new BeefyService(stateManager, keyStore));
     }
 
     @Test
@@ -130,6 +156,69 @@ class BeefyServiceTest {
         when(mockedBeefySession1.getMandatoryBlock()).thenReturn(MANDATORY_BLOCK_NUM);
 
         triageIncomingJustification(signedCommitment);
+    }
+
+    @Test
+    void testCreateVoteMessageIfAuthorized()
+            throws InvocationTargetException, NoSuchMethodException, IllegalAccessException {
+
+        BigInteger authoritySetId = BigInteger.ONE;
+        BigInteger targetVoteBlockNumber = BigInteger.TWO;
+
+        Pair<PrivKey, PubKey> keyPair = EcdsaUtils.generateKeyPair();
+        BeefyAuthoritySet authoritySet = new BeefyAuthoritySet(List.of(keyPair.component2().bytes()), authoritySetId);
+        org.javatuples.Pair<byte[], byte[]> resultKeyPair = new org.javatuples.Pair<>(
+                keyPair.component2().raw(),
+                keyPair.component1().raw()
+        );
+
+        BlockState blockState = mock(BlockState.class);
+
+        HeaderDigest beefyDigest = new HeaderDigest();
+        beefyDigest.setType(DigestType.CONSENSUS_MESSAGE);
+        beefyDigest.setId(ConsensusEngine.BEEFY);
+        // Adding MMR message
+        beefyDigest.setMessage(new byte[]{
+                3, 94, -64, -78, -126, -46, 119, 76, 75, 107, 114, 113, -71, -79, 14, 95,
+                -84, 6, 45, 115, 47, -57, 32, -66, -17, -86, -7, 41, -54, -127, 0, 32, 6
+        });
+
+        BlockHeader blockHeader = new BlockHeader();
+        blockHeader.setDigest(new HeaderDigest[]{beefyDigest});
+
+        when(stateManager.getBlockState()).thenReturn(blockState);
+        when(blockState.getHeaderByNumber(targetVoteBlockNumber))
+                .thenReturn(blockHeader);
+
+        VoteMessage voteMessage = callCreateVoteMessage(authoritySet, resultKeyPair, targetVoteBlockNumber);
+        Commitment commitment = voteMessage.getCommitment();
+
+        assertEquals(targetVoteBlockNumber, commitment.getBlockNumber());
+        assertEquals(authoritySetId, commitment.getAuthoritySetId());
+        assertEquals(BeefyPayloadId.MMR, commitment.getPayload().get(0).getPayloadId());
+
+        byte[] encodedCommitment = ScaleUtils.Encode.encode(CommitmentScaleWriter.getInstance(), commitment);
+        byte[] hashedCommitment = HashUtils.hashWithKeccak256(encodedCommitment);
+
+        VerifySignature signature = new VerifySignature(
+                voteMessage.getSignature(),
+                hashedCommitment,
+                keyPair.component2().raw(),
+                Key.ECDSA
+        );
+
+        assertTrue(EcdsaUtils.verifySignature(signature));
+    }
+
+    private VoteMessage callCreateVoteMessage(BeefyAuthoritySet authoritySet,
+                                                          org.javatuples.Pair<byte[], byte[]> keyPair,
+                                                          BigInteger targetVoteBlockNumber)
+            throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+
+        Method method = BeefyService.class.getDeclaredMethod(
+                "createVoteMessage", BeefyAuthoritySet.class, org.javatuples.Pair.class, BigInteger.class);
+        method.setAccessible(true);
+        return (VoteMessage) method.invoke(beefyService, authoritySet, keyPair, targetVoteBlockNumber);
     }
 
     private RoundAction triageIncomingJustification(SignedCommitment signedCommitment)
