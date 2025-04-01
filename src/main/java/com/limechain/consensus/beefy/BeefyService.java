@@ -191,8 +191,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
             }
             case VoteImportResult.DoubleVoting voteImportResult ->
                     reportDoubleVoting(voteImportResult.doubleVotingProof());
-            case VoteImportResult.Invalid _ ->
-                    log.info("handleVote: received an invalid/stale vote: " + voteMessage);
+            case VoteImportResult.Invalid _ -> log.info("handleVote: received an invalid/stale vote: " + voteMessage);
         }
         return Optional.empty();
     }
