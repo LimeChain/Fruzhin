@@ -22,8 +22,6 @@ import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.runtime.Runtime;
 import com.limechain.state.StateManager;
 import com.limechain.storage.block.state.BlockState;
-import com.limechain.storage.crypto.KeyStore;
-import com.limechain.storage.crypto.KeyType;
 import com.limechain.utils.EcdsaUtils;
 import com.limechain.utils.HashUtils;
 import com.limechain.utils.scale.ScaleUtils;
@@ -46,7 +44,6 @@ public class BeefyService implements FinalizedBlockChangeListener {
     private static final int MIN_BLOCK_DELTA = 1;
 
     private final StateManager stateManager;
-    private final KeyStore keyStore;
     private final PeerMessageCoordinator peerMessageCoordinator;
 
     @Override
@@ -94,13 +91,14 @@ public class BeefyService implements FinalizedBlockChangeListener {
         beefyState.setLastVoted(targetVoteBlockNumber);
         beefyState.persistState();
 
-        Pair<byte[], byte[]> keyPair =
-                keyStore.findKeyPair(beefyState.getAuthoritySet().getPublicKeys(), KeyType.BEEFY)
-                .orElse(null);
-
+        Pair<byte[], byte[]> keyPair = sessionStart.getBeefyKeyPair();
         if (keyPair == null) return;
 
-        BeefyVoteMessage voteMessage = createVoteMessage(beefyState.getAuthoritySet(), keyPair, targetVoteBlockNumber);
+        BeefyVoteMessage voteMessage = createVoteMessage(
+                sessionStart.getAuthoritySet(),
+                keyPair,
+                targetVoteBlockNumber
+        );
 
         Optional<SignedCommitment> signedCommitment = handleVote(voteMessage);
         if (signedCommitment.isPresent()) {
@@ -124,8 +122,8 @@ public class BeefyService implements FinalizedBlockChangeListener {
         byte[] signature = EcdsaUtils.signMessage(privateKey, hashedCommitment);
 
         if (signature == null) {
-            throw new BeefyGenericException("Failed to generate signature for the commitment with block number: " +
-                    targetVoteBlockNumber);
+            throw new BeefyGenericException("createVoteMessage: Failed to generate signature for the commitment " +
+                    "with block number: " + targetVoteBlockNumber);
         }
 
         return new BeefyVoteMessage(commitment, publicKey, signature);

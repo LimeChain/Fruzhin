@@ -18,7 +18,6 @@ import com.limechain.runtime.hostapi.dto.Key;
 import com.limechain.runtime.hostapi.dto.VerifySignature;
 import com.limechain.state.StateManager;
 import com.limechain.storage.block.state.BlockState;
-import com.limechain.storage.crypto.KeyStore;
 import com.limechain.utils.EcdsaUtils;
 import com.limechain.utils.HashUtils;
 import com.limechain.utils.scale.ScaleUtils;
@@ -58,14 +57,11 @@ class BeefyServiceTest {
     private StateManager stateManager;
 
     @Mock
-    private KeyStore keyStore;
-
-    @Mock
     private PeerMessageCoordinator peerMessageCoordinator;
 
     @BeforeEach
     void setUp() {
-        beefyService = Mockito.spy(new BeefyService(stateManager, keyStore, peerMessageCoordinator));
+        beefyService = Mockito.spy(new BeefyService(stateManager, peerMessageCoordinator));
     }
 
     @Test
@@ -212,8 +208,8 @@ class BeefyServiceTest {
     }
 
     private BeefyVoteMessage callCreateVoteMessage(BeefyAuthoritySet authoritySet,
-                                                   org.javatuples.Pair<byte[], byte[]> keyPair,
-                                                   BigInteger targetVoteBlockNumber)
+                                                          org.javatuples.Pair<byte[], byte[]> keyPair,
+                                                          BigInteger targetVoteBlockNumber)
             throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
 
         Method method = BeefyService.class.getDeclaredMethod(
