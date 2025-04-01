@@ -3,10 +3,12 @@ package com.limechain.network.protocol.beefy;
 import com.limechain.network.ConnectionManager;
 import com.limechain.network.protocol.base.BaseEngine;
 import com.limechain.network.protocol.beefy.messages.BeefyMessageType;
+import com.limechain.network.protocol.beefy.messages.justification.SignedCommitment;
+import com.limechain.network.protocol.beefy.messages.justification.SignedCommitmentScaleReader;
 import com.limechain.network.protocol.beefy.messages.vote.BeefyVoteMessage;
 import com.limechain.network.protocol.beefy.messages.vote.BeefyVoteMessageScaleReader;
 import com.limechain.rpc.server.AppBean;
-import io.emeraldpay.polkaj.scale.ScaleCodecReader;
+import com.limechain.utils.scale.ScaleUtils;
 import io.libp2p.core.PeerId;
 import io.libp2p.core.Stream;
 import lombok.extern.java.Log;
@@ -116,15 +118,15 @@ public class BeefyEngine implements BaseEngine {
     }
 
     private void handleVoteMessage(byte[] message, PeerId peerId) {
-        ScaleCodecReader reader = new ScaleCodecReader(message);
-        BeefyVoteMessage voteMessage = reader.read(BeefyVoteMessageScaleReader.getInstance());
+        BeefyVoteMessage voteMessage = ScaleUtils.Decode.decode(message, BeefyVoteMessageScaleReader.getInstance());
         log.info("Beefy: Received vote message from Peer " + peerId + "\n" + voteMessage);
-
         beefyMessageHandler.handleVoteMessage(voteMessage);
     }
 
     private void handleJustificationMessage(byte[] message, PeerId peerId) {
-        // TODO Implement handling.
+        SignedCommitment signedCommitment = ScaleUtils.Decode.decode(message, SignedCommitmentScaleReader.getInstance());
+        log.info("Beefy: Received justification from Peer " + peerId + "\n" + signedCommitment);
+        beefyMessageHandler.handleSignedCommitment(signedCommitment);
     }
 
     private BeefyMessageType getBeefyMessageType(byte[] message) {

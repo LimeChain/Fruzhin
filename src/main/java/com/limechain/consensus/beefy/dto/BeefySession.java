@@ -108,7 +108,7 @@ public class BeefySession implements Serializable {
      *
      * @return minimum required validators for finality.
      */
-    private BigInteger getThreshold() {
+    public BigInteger getThreshold() {
 
         if (authoritySet == null) {
             throw new BeefyGenericException("getThreshold: No authoritySet in BeefySession.");
