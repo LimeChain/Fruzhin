@@ -2,7 +2,6 @@ package com.limechain.network.protocol.grandpa;
 
 import com.limechain.config.HostConfig;
 import com.limechain.consensus.grandpa.GrandpaService;
-import com.limechain.exception.scale.ScaleEncodingException;
 import com.limechain.network.ConnectionManager;
 import com.limechain.network.protocol.base.BaseEngine;
 import com.limechain.network.protocol.blockannounce.NodeRole;
@@ -24,13 +23,10 @@ import com.limechain.state.AbstractState;
 import com.limechain.sync.SyncMode;
 import com.limechain.sync.warpsync.WarpSyncState;
 import com.limechain.utils.scale.ScaleUtils;
-import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.libp2p.core.PeerId;
 import io.libp2p.core.Stream;
 import lombok.extern.java.Log;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.util.logging.Level;
 
 /**
@@ -121,15 +117,14 @@ public class GrandpaEngine implements BaseEngine {
      * @param peerId peer to send to
      */
     public void writeNeighbourMessage(Stream stream, PeerId peerId) {
-        ByteArrayOutputStream buf = new ByteArrayOutputStream();
-        try (ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
-            writer.write(NeighbourMessageScaleWriter.getInstance(), ProtocolMessageBuilder.buildNeighbourMessage());
-        } catch (IOException e) {
-            throw new ScaleEncodingException(e);
-        }
+
+        byte[] encoded = ScaleUtils.Encode.encode(
+                NeighbourMessageScaleWriter.getInstance(),
+                ProtocolMessageBuilder.buildNeighbourMessage()
+        );
 
         log.log(Level.FINE, "Sending neighbour message to Peer " + peerId);
-        stream.writeAndFlush(buf.toByteArray());
+        stream.writeAndFlush(encoded);
     }
 
     /**
