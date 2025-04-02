@@ -45,6 +45,7 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
 
     private BigInteger disabledAuthority;
 
+    //TODO: remove authority set from here
     private BeefyAuthoritySet authoritySet;
 
     private BigInteger roundNumber;
