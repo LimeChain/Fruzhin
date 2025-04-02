@@ -456,14 +456,14 @@ public class BeefyService implements FinalizedBlockChangeListener {
 
         if (blockNumber.compareTo(start) < 0 || blockNumber.compareTo(end) > 0) {
             log.warning(String.format(
-                    "isBeefyMessageAcceptable: Rejected — block %d outside accepted round range [%d, %d].",
+                    "isBeefyMessageAcceptable: Rejected beefy message — block %d outside accepted round range [%d, %d].",
                     blockNumber, start, end
             ));
             return false;
         }
 
         log.fine(String.format(
-                "isBeefyMessageAcceptable: Accepted — block %d is within round range [%d, %d] and set ID %d.",
+                "isBeefyMessageAcceptable: Accepted beefy message — block %d is within round range [%d, %d] and set ID %d.",
                 blockNumber, start, end, setId
         ));
         return true;
