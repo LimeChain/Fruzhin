@@ -1,7 +1,7 @@
 package com.limechain.consensus.beefy.scale.runtime;
 
 import com.limechain.consensus.beefy.dto.DoubleVotingProof;
-import com.limechain.network.protocol.beefy.messages.vote.VoteMessageScaleWriter;
+import com.limechain.network.protocol.beefy.messages.vote.BeefyVoteMessageScaleWriter;
 import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.emeraldpay.polkaj.scale.ScaleWriter;
 
@@ -20,7 +20,7 @@ public class BeefyDoubleVotingProofScaleWriter implements ScaleWriter<DoubleVoti
 
     @Override
     public void write(ScaleCodecWriter writer, DoubleVotingProof doubleVotingProof) throws IOException {
-        writer.write(VoteMessageScaleWriter.getInstance(), doubleVotingProof.getFirst());
-        writer.write(VoteMessageScaleWriter.getInstance(), doubleVotingProof.getSecond());
+        writer.write(BeefyVoteMessageScaleWriter.getInstance(), doubleVotingProof.getFirst());
+        writer.write(BeefyVoteMessageScaleWriter.getInstance(), doubleVotingProof.getSecond());
     }
 }

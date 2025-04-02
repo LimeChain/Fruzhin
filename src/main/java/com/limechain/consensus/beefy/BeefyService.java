@@ -14,14 +14,14 @@ import com.limechain.consensus.beefy.event.FinalizedBlockChangeListener;
 import com.limechain.consensus.beefy.scale.CommitmentScaleWriter;
 import com.limechain.exception.beefy.BeefyGenericException;
 import com.limechain.exception.storage.BlockStorageGenericException;
+import com.limechain.network.PeerMessageCoordinator;
 import com.limechain.network.protocol.beefy.messages.justification.SignedCommitment;
-import com.limechain.network.protocol.beefy.messages.vote.VoteMessage;
+import com.limechain.network.protocol.beefy.messages.vote.BeefyVoteMessage;
 import com.limechain.network.protocol.warp.DigestHelper;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.runtime.Runtime;
 import com.limechain.state.StateManager;
 import com.limechain.storage.block.state.BlockState;
-import com.limechain.storage.crypto.KeyStore;
 import com.limechain.utils.EcdsaUtils;
 import com.limechain.utils.HashUtils;
 import com.limechain.utils.scale.ScaleUtils;
@@ -44,7 +44,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
     private static final int MIN_BLOCK_DELTA = 1;
 
     private final StateManager stateManager;
-    private final KeyStore keyStore;
+    private final PeerMessageCoordinator peerMessageCoordinator;
 
     @Override
     public void finalizedBlockChanged(FinalizedBlockChangeEvent event) {
@@ -94,21 +94,21 @@ public class BeefyService implements FinalizedBlockChangeListener {
         Pair<byte[], byte[]> keyPair = sessionStart.getBeefyKeyPair();
         if (keyPair == null) return;
 
-        VoteMessage voteMessage = createVoteMessage(
+        BeefyVoteMessage voteMessage = createVoteMessage(
                 sessionStart.getAuthoritySet(),
                 keyPair,
                 targetVoteBlockNumber
         );
 
-        Optional<SignedCommitment> signedCommitment = handleVote(voteMessage);
-        if (signedCommitment.isPresent()) {
-            // TODO: Broadcast Vote Message
-        }
+        handleVote(voteMessage).ifPresentOrElse(
+                peerMessageCoordinator::sendSignedCommitmentToPeers,
+                () -> peerMessageCoordinator.sendBeefyVoteMessageToPeers(voteMessage)
+        );
     }
 
-    private VoteMessage createVoteMessage(BeefyAuthoritySet authoritySet,
-                                          Pair<byte[], byte[]> keyPair,
-                                          BigInteger targetVoteBlockNumber) {
+    private BeefyVoteMessage createVoteMessage(BeefyAuthoritySet authoritySet,
+                                               Pair<byte[], byte[]> keyPair,
+                                               BigInteger targetVoteBlockNumber) {
 
         byte[] publicKey = keyPair.getValue0();
         byte[] privateKey = keyPair.getValue1();
@@ -124,7 +124,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
                     "with block number: " + targetVoteBlockNumber);
         }
 
-        return new VoteMessage(commitment, publicKey, signature);
+        return new BeefyVoteMessage(commitment, publicKey, signature);
     }
 
     private BigInteger calculateTargetVoteBlockNumber(BigInteger sessionStartBlock,
@@ -164,14 +164,14 @@ public class BeefyService implements FinalizedBlockChangeListener {
                 || targetVoteBlockNumber.compareTo(lastVoted) <= 0;
     }
 
-    private Optional<SignedCommitment> handleVote(VoteMessage voteMessage) {
+    private Optional<SignedCommitment> handleVote(BeefyVoteMessage voteMessage) {
 
         BeefyState beefyState = stateManager.getBeefyState();
         BeefySession session = beefyState.getSessions().peekFirst();
         BigInteger blockNumber = voteMessage.getCommitment().getBlockNumber();
 
         if (session == null) {
-            throw new BeefyGenericException("No beefy session exists.");
+            throw new BeefyGenericException("handleVote: No beefy session exists.");
         }
 
         VoteImportResult result = session.addVote(voteMessage);
@@ -242,18 +242,19 @@ public class BeefyService implements FinalizedBlockChangeListener {
                 .findFirst();
     }
 
-    public void triageIncomingVote(VoteMessage voteMessage) {
+    public void triageIncomingVote(BeefyVoteMessage voteMessage) {
 
         BigInteger blockNumber = voteMessage.getCommitment().getBlockNumber();
         RoundAction roundAction = determineRoundAction(blockNumber);
 
         switch (roundAction) {
             case RoundAction.PROCESS -> {
-                log.fine(String.format("triageIncomingVotes: Process vote %s  for round: %d.", voteMessage, blockNumber));
-                Optional<SignedCommitment> finalityProof = handleVote(voteMessage);
-                if (finalityProof.isPresent()) {
-                    //TODO: gossip vote message
-                }
+                log.fine(String.format("triageIncomingVotes: Process vote %s for round: %d.", voteMessage, blockNumber));
+
+                handleVote(voteMessage).ifPresentOrElse(
+                        peerMessageCoordinator::sendSignedCommitmentToPeers,
+                        () -> peerMessageCoordinator.sendBeefyVoteMessageToPeers(voteMessage)
+                );
             }
             case RoundAction.ENQUEUE -> {
                 log.fine(String.format("triageIncomingVotes: Unexpected vote: %s", voteMessage));
