@@ -12,7 +12,10 @@ public class BeefyController extends BaseController<BeefyEngine> {
         super(stream, new BeefyEngine());
     }
 
-    public void sendVoteMessage() {
-        //TODO
+    /**
+     * Sends a beefy vote message over the controller stream
+     */
+    public void sendVoteMessage(byte[] encodedBeefyVoteMessage) {
+        engine.writeBeefyVoteMessage(stream, encodedBeefyVoteMessage);
     }
 }

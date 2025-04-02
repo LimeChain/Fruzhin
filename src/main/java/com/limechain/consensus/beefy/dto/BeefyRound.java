@@ -1,6 +1,6 @@
 package com.limechain.consensus.beefy.dto;
 
-import com.limechain.network.protocol.beefy.messages.vote.VoteMessage;
+import com.limechain.network.protocol.beefy.messages.vote.BeefyVoteMessage;
 import io.emeraldpay.polkaj.types.Hash264;
 import lombok.Value;
 
@@ -10,9 +10,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Value
 public class BeefyRound {
-    Map<Hash264, VoteMessage> signedVotes = new ConcurrentHashMap<>();
+    Map<Hash264, BeefyVoteMessage> signedVotes = new ConcurrentHashMap<>();
 
-    public boolean addVote(Hash264 authorityId, VoteMessage voteMessage) {
+    public boolean addVote(Hash264 authorityId, BeefyVoteMessage voteMessage) {
         return signedVotes.putIfAbsent(authorityId, voteMessage) == null;
     }
 

@@ -10,16 +10,16 @@ import lombok.NoArgsConstructor;
 import java.io.IOException;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-public class VoteMessageScaleWriter implements ScaleWriter<VoteMessage> {
+public class BeefyVoteMessageScaleWriter implements ScaleWriter<BeefyVoteMessage> {
 
-    private static final VoteMessageScaleWriter INSTANCE = new VoteMessageScaleWriter();
+    private static final BeefyVoteMessageScaleWriter INSTANCE = new BeefyVoteMessageScaleWriter();
 
-    public static VoteMessageScaleWriter getInstance() {
+    public static BeefyVoteMessageScaleWriter getInstance() {
         return INSTANCE;
     }
 
     @Override
-    public void write(ScaleCodecWriter writer, VoteMessage voteMessage) throws IOException {
+    public void write(ScaleCodecWriter writer, BeefyVoteMessage voteMessage) throws IOException {
 
         writer.writeByte(BeefyMessageType.VOTE.getType());
         writer.write(CommitmentScaleWriter.getInstance(), voteMessage.getCommitment());

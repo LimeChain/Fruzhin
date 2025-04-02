@@ -8,7 +8,7 @@ import com.limechain.consensus.beefy.dto.Commitment;
 import com.limechain.consensus.beefy.scale.CommitmentScaleWriter;
 import com.limechain.exception.beefy.BeefyGenericException;
 import com.limechain.network.protocol.beefy.messages.justification.SignedCommitment;
-import com.limechain.network.protocol.beefy.messages.vote.VoteMessage;
+import com.limechain.network.protocol.beefy.messages.vote.BeefyVoteMessage;
 import com.limechain.runtime.hostapi.dto.Key;
 import com.limechain.runtime.hostapi.dto.VerifySignature;
 import com.limechain.state.StateManager;
@@ -34,7 +34,7 @@ public class BeefyMessageHandler {
     private final BeefyService beefyService;
     private final StateManager stateManager;
 
-    public void handleVoteMessage(VoteMessage voteMessage) {
+    public void handleVoteMessage(BeefyVoteMessage voteMessage) {
         BeefyState beefyState = stateManager.getBeefyState();
         Commitment commitment = voteMessage.getCommitment();
 
@@ -139,7 +139,7 @@ public class BeefyMessageHandler {
         return validSignaturesCount;
     }
 
-    private boolean isVoteMessageValid(VoteMessage voteMessage) {
+    private boolean isVoteMessageValid(BeefyVoteMessage voteMessage) {
 
         byte[] encodedCommitment = HashUtils.hashWithKeccak256(ScaleUtils.Encode.encode(CommitmentScaleWriter.getInstance(),
                 voteMessage.getCommitment()));

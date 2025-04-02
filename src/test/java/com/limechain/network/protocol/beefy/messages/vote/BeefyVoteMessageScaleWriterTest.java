@@ -13,7 +13,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-class VoteMessageScaleWriterTest {
+class BeefyVoteMessageScaleWriterTest {
 
     private static final String SCALE_ENCODED_VOTE = "0x00046d68802929adcd6f4f60f87f9090382fe842d1dddd7cb6b338fd0e35" +
             "c42bf8240cc6ab4abaa401b62e000000000000024b1b43b9ddd8a8abf9bd503bf9b42602a7ddae6941a6c904b8e76b7a3d6331" +
@@ -23,7 +23,7 @@ class VoteMessageScaleWriterTest {
     private static final BigInteger BLOCK_NUMBER = BigInteger.valueOf(27572810);
     private static final BigInteger AUTHORITY_SET_ID = BigInteger.valueOf(11958);
 
-    private final VoteMessageScaleWriter writer = VoteMessageScaleWriter.getInstance();
+    private final BeefyVoteMessageScaleWriter writer = BeefyVoteMessageScaleWriter.getInstance();
 
     @Test
     void testWrite() {
@@ -32,7 +32,7 @@ class VoteMessageScaleWriterTest {
         PayloadElement payloadElement = new PayloadElement(BeefyPayloadId.MMR, payloadMmr);
         Commitment commitment = new Commitment(List.of(payloadElement), BLOCK_NUMBER, AUTHORITY_SET_ID);
 
-        VoteMessage voteMessage = getVoteMessage(commitment);
+        BeefyVoteMessage voteMessage = getVoteMessage(commitment);
 
         byte[] encoded = ScaleUtils.Encode.encode(writer, voteMessage);
 
@@ -40,7 +40,7 @@ class VoteMessageScaleWriterTest {
         assertEquals(SCALE_ENCODED_VOTE, StringUtils.toHexWithPrefix(encoded));
     }
 
-    private static VoteMessage getVoteMessage(Commitment commitment) {
+    private static BeefyVoteMessage getVoteMessage(Commitment commitment) {
         byte[] authoritySetId = new byte[]{2, 75, 27, 67, -71, -35, -40, -88, -85, -7, -67, 80, 59, -7, -76, 38,
                 2, -89, -35, -82, 105, 65, -90, -55, 4, -72, -25, 107, 122, 61, 99, 49, -38};
         byte[] signature = new byte[]{-59, 40, 4, -7, -94, 66, 9, 61, 11, -60, 62, -121, -20, 43, 127, -64, 40, 53,
@@ -48,6 +48,6 @@ class VoteMessageScaleWriterTest {
                 80, 117, 54, -69, -85, 38, 24, -28, -100, -13, -108, 37, -63, 114, -44, -64, -25, -48, -96, 78, 126,
                 -67, 97, -76, 95, 1};
 
-        return new VoteMessage(commitment, authoritySetId, signature);
+        return new BeefyVoteMessage(commitment, authoritySetId, signature);
     }
 }

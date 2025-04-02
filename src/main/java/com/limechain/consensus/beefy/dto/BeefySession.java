@@ -2,7 +2,7 @@ package com.limechain.consensus.beefy.dto;
 
 import com.limechain.exception.beefy.BeefyGenericException;
 import com.limechain.network.protocol.beefy.messages.justification.SignedCommitment;
-import com.limechain.network.protocol.beefy.messages.vote.VoteMessage;
+import com.limechain.network.protocol.beefy.messages.vote.BeefyVoteMessage;
 import io.emeraldpay.polkaj.types.Hash264;
 import jakarta.annotation.Nullable;
 import lombok.Data;
@@ -17,7 +17,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 @Data
 @Log
@@ -29,7 +28,7 @@ public class BeefySession implements Serializable {
 
     private Map<Commitment, BeefyRound> rounds = new ConcurrentHashMap<>();
 
-    private Map<Pair<Hash264, BigInteger>, VoteMessage> previousVotes = new ConcurrentHashMap<>();
+    private Map<Pair<Hash264, BigInteger>, BeefyVoteMessage> previousVotes = new ConcurrentHashMap<>();
 
     private final BigInteger mandatoryBlock;
 
@@ -44,7 +43,7 @@ public class BeefySession implements Serializable {
     private final Pair<byte[], byte[]> beefyKeyPair;
 
 
-    public VoteImportResult addVote(VoteMessage voteMessage) {
+    public VoteImportResult addVote(BeefyVoteMessage voteMessage) {
         Commitment commitment = voteMessage.getCommitment();
         byte[] authorityId = voteMessage.getAuthorityId();
         BigInteger blockNumber = commitment.getBlockNumber();
@@ -68,9 +67,13 @@ public class BeefySession implements Serializable {
         Pair<Hash264, BigInteger> voteKey = new Pair<>(authorityIdHash, blockNumber);
 
         if (previousVotes.containsKey(voteKey)) {
-            VoteMessage previousVote = previousVotes.get(voteKey);
+
+            BeefyVoteMessage previousVote = previousVotes.get(voteKey);
             if (!previousVote.getCommitment().getPayload().equals(commitment.getPayload())) {
-                log.info(String.format("addVote: Detected equivocated vote: 1st: {%s}, 2nd: {%s}", previousVote, voteMessage));
+
+                log.info(String.format(
+                        "addVote: Detected equivocated vote: 1st: {%s}, 2nd: {%s}", previousVote, voteMessage)
+                );
                 return new VoteImportResult.DoubleVoting(new DoubleVotingProof(previousVote, voteMessage));
             }
         } else {
@@ -90,12 +93,12 @@ public class BeefySession implements Serializable {
 
     public SignedCommitment createSignedCommitment(BeefyRound round, Commitment commitment) {
 
-        Map<Hash264, VoteMessage> signedVotes = round.getSignedVotes();
+        Map<Hash264, BeefyVoteMessage> signedVotes = round.getSignedVotes();
 
         List<Optional<byte[]>> signatures = authoritySet.getPublicKeys().stream()
                 .map(key -> Optional.ofNullable(signedVotes.get(new Hash264(key)))
-                        .map(VoteMessage::getSignature))
-                .collect(Collectors.toList());
+                        .map(BeefyVoteMessage::getSignature))
+                .toList();
 
         return new SignedCommitment(commitment, signatures);
     }
