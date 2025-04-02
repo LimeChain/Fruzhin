@@ -2,6 +2,7 @@ package com.limechain.network;
 
 import com.limechain.network.kad.KademliaService;
 import com.limechain.network.protocol.beefy.messages.justification.SignedCommitment;
+import com.limechain.network.protocol.beefy.messages.justification.SignedCommitmentScaleWriter;
 import com.limechain.network.protocol.beefy.messages.vote.BeefyVoteMessage;
 import com.limechain.network.protocol.beefy.messages.vote.BeefyVoteMessageScaleWriter;
 import com.limechain.network.protocol.blockannounce.NodeRole;
@@ -136,13 +137,16 @@ public class PeerMessageCoordinator {
 
     public void sendBeefyVoteMessageToPeers(BeefyVoteMessage voteMessage) {
         byte[] scaleMessage = ScaleUtils.Encode.encode(BeefyVoteMessageScaleWriter.getInstance(), voteMessage);
-        sendMessageToActivePeers(peerId -> asyncExecutor.executeAndForget(() -> network.getBeefyService().sendVoteMessage(
+        sendMessageToActivePeers(peerId -> asyncExecutor.executeAndForget(() -> network.getBeefyService().sendMessage(
                 network.getHost(), peerId, scaleMessage
         )));
     }
 
     public void sendSignedCommitmentToPeers(SignedCommitment signedCommitment) {
-        //TODO: implement
+        byte[] scaleMessage = ScaleUtils.Encode.encode(SignedCommitmentScaleWriter.getInstance(), signedCommitment);
+        sendMessageToActivePeers(peerId -> asyncExecutor.executeAndForget(() -> network.getBeefyService().sendMessage(
+                network.getHost(), peerId, scaleMessage
+        )));
     }
 
     private void sendMessageToActivePeers(Consumer<PeerId> messageAction) {

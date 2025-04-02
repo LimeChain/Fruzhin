@@ -21,18 +21,21 @@ public class BeefyService extends NetworkService<Beefy> {
     }
 
     /**
-     * Sends a beefy vote message to a peer. If there is no initiator stream opened with the peer,
+     * Sends a BEEFY message to a peer.
+     * <p>
+     * Sends both vote messages and signed commitments, as both are transmitted over
+     * the same initiator stream. If there is no initiator stream opened with the peer,
      * sends a handshake instead.
-     *
-     * @param us our host object
-     * @param peerId message receiver
-     * @param encodedMessage scale encoded representation of the BeefyVoteMessage object
+     * </p>
+     * @param us our host object.
+     * @param peerId the message receiver.
+     * @param encodedMessage a scale encoded representation of either a BeefyVoteMessage or a SignedCommitment.
      */
-    public void sendVoteMessage(Host us, PeerId peerId, byte[] encodedMessage) {
+    public void sendMessage(Host us, PeerId peerId, byte[] encodedMessage) {
         Optional.ofNullable(connectionManager.getPeerInfo(peerId))
                 .map(p -> p.getBeefyStreams().getInitiator())
                 .ifPresentOrElse(
-                        stream -> new BeefyController(stream).sendVoteMessage(encodedMessage),
+                        stream -> new BeefyController(stream).sendMessage(encodedMessage),
                         () -> sendHandshake(us, peerId)
                 );
     }
