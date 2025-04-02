@@ -1,20 +1,17 @@
 package com.limechain.network.protocol.warp;
 
-import com.limechain.exception.scale.ScaleEncodingException;
 import com.limechain.network.encoding.Leb128LengthFrameDecoder;
 import com.limechain.network.encoding.Leb128LengthFrameEncoder;
 import com.limechain.network.protocol.warp.dto.WarpSyncRequest;
 import com.limechain.network.protocol.warp.dto.WarpSyncResponse;
 import com.limechain.network.protocol.warp.encoding.WarpSyncResponseDecoder;
 import com.limechain.network.protocol.warp.scale.writer.WarpSyncRequestWriter;
-import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
+import com.limechain.utils.scale.ScaleUtils;
 import io.libp2p.core.Stream;
 import io.libp2p.protocol.ProtocolHandler;
 import io.libp2p.protocol.ProtocolMessageHandler;
 import io.netty.handler.codec.bytes.ByteArrayEncoder;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -58,15 +55,12 @@ public class WarpSyncProtocol extends ProtocolHandler<WarpSyncController> {
 
         @Override
         public CompletableFuture<WarpSyncResponse> send(WarpSyncRequest req) {
-            ByteArrayOutputStream buf = new ByteArrayOutputStream();
-            try (ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
-                writer.write(WarpSyncRequestWriter.getInstance(), req);
-            } catch (IOException e) {
-                throw new ScaleEncodingException(e);
-            }
+
+            byte[] encoded = ScaleUtils.Encode.encode(WarpSyncRequestWriter.getInstance(), req);
             CompletableFuture<WarpSyncResponse> res = new CompletableFuture<>();
             queue.add(res);
-            stream.writeAndFlush(buf.toByteArray());
+            stream.writeAndFlush(encoded);
+
             return res;
         }
 

@@ -6,7 +6,7 @@ import com.limechain.consensus.grandpa.scale.GrandpaAuthoritySetReader;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.network.protocol.warp.scale.reader.BlockHeaderReader;
 import com.limechain.utils.StringUtils;
-import io.emeraldpay.polkaj.scale.ScaleCodecReader;
+import com.limechain.utils.scale.ScaleUtils;
 import lombok.Getter;
 
 import java.util.Map;
@@ -34,14 +34,21 @@ public class LightSyncState {
         }
 
         var state = new LightSyncState();
-        state.finalizedBlockHeader = BlockHeaderReader.getInstance()
-                .read(new ScaleCodecReader(StringUtils.hexToBytes(header)));
 
-        state.epochChanges = EpochChangesReader.getInstance()
-                .read(new ScaleCodecReader(StringUtils.hexToBytes(epochChanges)));
+        state.finalizedBlockHeader = ScaleUtils.Decode.decode(
+                StringUtils.hexToBytes(header),
+                BlockHeaderReader.getInstance()
+        );
 
-        state.grandpaAuthoritySet = GrandpaAuthoritySetReader.getInstance()
-                .read(new ScaleCodecReader(StringUtils.hexToBytes(grandpaAuthoritySet)));
+        state.epochChanges = ScaleUtils.Decode.decode(
+                StringUtils.hexToBytes(epochChanges),
+                EpochChangesReader.getInstance()
+        );
+
+        state.grandpaAuthoritySet = ScaleUtils.Decode.decode(
+                StringUtils.hexToBytes(grandpaAuthoritySet),
+                GrandpaAuthoritySetReader.getInstance()
+        );
 
         return state;
     }

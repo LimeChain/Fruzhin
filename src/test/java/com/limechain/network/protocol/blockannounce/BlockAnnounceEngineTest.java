@@ -107,12 +107,10 @@ class BlockAnnounceEngineTest {
         when(handshakeBuilder.getBlockAnnounceHandshake()).thenReturn(getBlockAnnounceHandshake());
         try (
                 MockedConstruction<ScaleCodecReader> readerMock = mockConstruction(ScaleCodecReader.class);
-                MockedConstruction<ScaleCodecWriter> writerMock = mockConstruction(ScaleCodecWriter.class)
+                MockedConstruction<BlockAnnounceHandshakeScaleWriter> writerMock = mockConstruction(BlockAnnounceHandshakeScaleWriter.class);
         ) {
             blockAnnounceEngine.receiveRequest(message, stream);
-            ScaleCodecWriter writer = writerMock.constructed().getFirst();
 
-            verify(writer).write(any(BlockAnnounceHandshakeScaleWriter.class), eq(getBlockAnnounceHandshake()));
             verify(stream).writeAndFlush(any());
         }
     }

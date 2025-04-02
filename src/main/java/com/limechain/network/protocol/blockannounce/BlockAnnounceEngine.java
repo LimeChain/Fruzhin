@@ -1,6 +1,5 @@
 package com.limechain.network.protocol.blockannounce;
 
-import com.limechain.exception.scale.ScaleEncodingException;
 import com.limechain.network.ConnectionManager;
 import com.limechain.network.protocol.base.BaseEngine;
 import com.limechain.network.protocol.blockannounce.messages.BlockAnnounceHandshake;
@@ -15,14 +14,10 @@ import com.limechain.storage.block.state.BlockState;
 import com.limechain.sync.warpsync.WarpSyncState;
 import com.limechain.utils.async.AsyncExecutor;
 import com.limechain.utils.scale.ScaleUtils;
-import io.emeraldpay.polkaj.scale.ScaleCodecReader;
-import io.emeraldpay.polkaj.scale.ScaleCodecWriter;
 import io.libp2p.core.PeerId;
 import io.libp2p.core.Stream;
 import lombok.extern.java.Log;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.time.Instant;
 import java.util.logging.Level;
 
@@ -54,8 +49,11 @@ public class BlockAnnounceEngine implements BaseEngine {
             stream.close();
         }
 
-        ScaleCodecReader reader = new ScaleCodecReader(message);
-        BlockAnnounceHandshake handshake = reader.read(BlockAnnounceHandshakeScaleReader.getInstance());
+        BlockAnnounceHandshake handshake = ScaleUtils.Decode.decode(
+                message,
+                BlockAnnounceHandshakeScaleReader.getInstance()
+        );
+
         connectionManager.addBlockAnnounceStream(stream);
         connectionManager.updatePeer(peerId, handshake);
         log.log(Level.INFO, "Received handshake from " + peerId + "\n" + handshake);
@@ -85,18 +83,14 @@ public class BlockAnnounceEngine implements BaseEngine {
 
     @Override
     public void writeHandshakeToStream(Stream stream, PeerId peerId) {
-        ByteArrayOutputStream buf = new ByteArrayOutputStream();
-        try (ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
-            writer.write(
-                    BlockAnnounceHandshakeScaleWriter.getInstance(),
-                    handshakeBuilder.getBlockAnnounceHandshake()
-            );
-        } catch (IOException e) {
-            throw new ScaleEncodingException(e);
-        }
+
+        byte[] encoded = ScaleUtils.Encode.encode(
+                BlockAnnounceHandshakeScaleWriter.getInstance(),
+                handshakeBuilder.getBlockAnnounceHandshake()
+        );
 
         log.log(Level.INFO, "Sending handshake to " + peerId);
-        stream.writeAndFlush(buf.toByteArray());
+        stream.writeAndFlush(encoded);
     }
 
     public void writeBlockAnnounceMessage(Stream stream, PeerId peerId, byte[] encodedBlockAnnounceMessage) {
