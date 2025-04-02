@@ -297,7 +297,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
         try {
             roundsInterval = findAcceptedInterval();
         } catch (BeefyGenericException e) {
-            log.warning(String.format("determineRoundAction: Error while finding accepted rounds interval %s", e));
+            log.fine(String.format("determineRoundAction: Error while finding accepted rounds interval %s", e));
             return RoundAction.INVALID;
         }
 

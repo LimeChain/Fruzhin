@@ -1,8 +1,8 @@
 package com.limechain.chain.lightsyncstate;
 
+import com.limechain.chain.lightsyncstate.scale.EpochChangesReader;
 import com.limechain.consensus.grandpa.dto.GrandpaAuthoritySet;
 import com.limechain.consensus.grandpa.scale.GrandpaAuthoritySetReader;
-import com.limechain.chain.lightsyncstate.scale.EpochChangesReader;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.network.protocol.warp.scale.reader.BlockHeaderReader;
 import com.limechain.utils.StringUtils;

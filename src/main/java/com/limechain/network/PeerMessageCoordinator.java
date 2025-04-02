@@ -57,7 +57,7 @@ public class PeerMessageCoordinator {
                     network.getGrandpaService().sendHandshake(network.getHost(), peerId));
 
             asyncExecutor.executeAndForget(() ->
-                    network.getBeefyService().sendHandshake(network.getHost(), peerId));
+                    network.getBeefyNotificationService().sendHandshake(network.getHost(), peerId));
 
             if (network.getNodeRole().equals(NodeRole.AUTHORING)) {
                 asyncExecutor.executeAndForget(() ->
@@ -136,9 +136,10 @@ public class PeerMessageCoordinator {
 
     public void sendBeefyVoteMessageToPeers(BeefyVoteMessage voteMessage) {
         byte[] scaleMessage = ScaleUtils.Encode.encode(BeefyVoteMessageScaleWriter.getInstance(), voteMessage);
-        sendMessageToActivePeers(peerId -> asyncExecutor.executeAndForget(() -> network.getBeefyService().sendVoteMessage(
-                network.getHost(), peerId, scaleMessage
-        )));
+        sendMessageToActivePeers(peerId -> asyncExecutor.executeAndForget(() ->
+                network.getBeefyNotificationService().sendVoteMessage(
+                        network.getHost(), peerId, scaleMessage
+                )));
     }
 
     public void sendSignedCommitmentToPeers(SignedCommitment signedCommitment) {

@@ -1,7 +1,8 @@
-package com.limechain.network.protocol.beefy;
+package com.limechain.network.protocol.beefy.notification;
 
 import com.limechain.network.ConnectionManager;
 import com.limechain.network.protocol.base.BaseEngine;
+import com.limechain.network.protocol.beefy.BeefyMessageHandler;
 import com.limechain.network.protocol.beefy.messages.BeefyMessageType;
 import com.limechain.network.protocol.beefy.messages.justification.SignedCommitment;
 import com.limechain.network.protocol.beefy.messages.justification.SignedCommitmentScaleReader;
@@ -16,17 +17,17 @@ import lombok.extern.java.Log;
 import java.util.logging.Level;
 
 /**
- * Engine for handling transactions on BEEFY streams
+ * Engine for handling transactions on BEEFY notification streams
  */
 @Log
-public class BeefyEngine implements BaseEngine {
+public class BeefyNotificationEngine implements BaseEngine {
 
     private static final int HANDSHAKE_LENGTH = 1;
 
     protected ConnectionManager connectionManager;
     protected BeefyMessageHandler beefyMessageHandler;
 
-    public BeefyEngine() {
+    public BeefyNotificationEngine() {
         connectionManager = ConnectionManager.getInstance();
         beefyMessageHandler = AppBean.getBean(BeefyMessageHandler.class);
     }
@@ -77,9 +78,9 @@ public class BeefyEngine implements BaseEngine {
     }
 
     /**
-     * Send our BEEFY vote message from {@link BeefyService} on a given <b>responder</b> stream.
+     * Send our BEEFY vote message from {@link BeefyNotificationService} on a given <b>responder</b> stream.
      *
-     * @param stream             <b>responder</b> stream to write the message to
+     * @param stream                  <b>responder</b> stream to write the message to
      * @param encodedBeefyVoteMessage scale encoded BeefyVoteMessage object
      */
     public void writeBeefyVoteMessage(Stream stream, byte[] encodedBeefyVoteMessage) {
