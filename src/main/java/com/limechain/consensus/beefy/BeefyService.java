@@ -434,6 +434,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
                             "Rejected beefy message — block %d is earlier than current session's mandatory block %d.",
                     blockNumber, mandatoryBlock
             ));
+
             return false;
         }
 
@@ -444,6 +445,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
                     "isBeefyMessageAcceptable: Rejected beefy message — authority set ID mismatch. Expected: %d, got: %d.",
                     setId, commitmentSetId
             ));
+
             return false;
         }
 
@@ -459,6 +461,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
                     "isBeefyMessageAcceptable: Rejected beefy message — block %d outside accepted round range [%d, %d].",
                     blockNumber, start, end
             ));
+
             return false;
         }
 
@@ -466,6 +469,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
                 "isBeefyMessageAcceptable: Accepted beefy message — block %d is within round range [%d, %d] and set ID %d.",
                 blockNumber, start, end, setId
         ));
+
         return true;
     }
 }

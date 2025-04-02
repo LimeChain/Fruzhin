@@ -35,28 +35,27 @@ public class BeefyMessageHandler {
     private final StateManager stateManager;
 
     public void handleVoteMessage(BeefyVoteMessage voteMessage) {
+
         BeefyState beefyState = stateManager.getBeefyState();
         Commitment commitment = voteMessage.getCommitment();
 
-        boolean hasExistingSession = !beefyState.getSessions().isEmpty();
-        if (hasExistingSession && !beefyService.isBeefyMessageAcceptable(commitment)) {
+        if (beefyState.getSessions().isEmpty() || !beefyService.isBeefyMessageAcceptable(commitment)) {
             return;
         }
 
         synchronized (lock) {
+            BeefySession currentSession = beefyState.getSessions().peekFirst();
             Hash264 authorityIdHash = new Hash264(voteMessage.getAuthorityId());
             BigInteger blockNumber = voteMessage.getCommitment().getBlockNumber();
             Pair<Hash264, BigInteger> voteKey = Pair.with(authorityIdHash, blockNumber);
 
-            if (hasExistingSession) {
-                BeefySession currentSession = beefyState.getSessions().peekFirst();
-                if (currentSession.getPreviousVotes().containsKey(voteKey)) {
-                    log.fine(String.format(
-                            "handleBeefyVoteMessage: Skipping already known vote message from authority: %s for block: %s.",
-                            authorityIdHash, blockNumber
-                    ));
-                }
+            if (currentSession.getPreviousVotes().containsKey(voteKey)) {
+                log.fine(String.format(
+                        "handleBeefyVoteMessage: Skipping already known vote message from authority: %s for block: %s.",
+                        authorityIdHash, blockNumber
+                ));
             }
+
             if (!isVoteMessageValid(voteMessage)) {
                 log.warning(String.format(
                         "handleBeefyVoteMessage: Invalid vote message for round %s, set %s",
@@ -69,8 +68,9 @@ public class BeefyMessageHandler {
     }
 
     public void handleSignedCommitment(SignedCommitment signedCommitment) {
+
         BeefyState beefyState = stateManager.getBeefyState();
-        if (!beefyState.getSessions().isEmpty() && !beefyService.isBeefyMessageAcceptable(signedCommitment.getCommitment())) {
+        if (beefyState.getSessions().isEmpty() || !beefyService.isBeefyMessageAcceptable(signedCommitment.getCommitment())) {
             return;
         }
 
