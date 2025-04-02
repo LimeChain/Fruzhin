@@ -18,7 +18,6 @@ import com.limechain.runtime.hostapi.dto.VerifySignature;
 import com.limechain.state.StateManager;
 import com.limechain.storage.block.state.BlockState;
 import com.limechain.storage.crypto.KeyStore;
-import com.limechain.storage.crypto.KeyType;
 import com.limechain.utils.EcdsaUtils;
 import com.limechain.utils.HashUtils;
 import com.limechain.utils.scale.ScaleUtils;
@@ -38,7 +37,6 @@ import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.List;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -151,7 +149,6 @@ class BeefyServiceTest {
         when(stateManager.getBeefyState()).thenReturn(mockBeefyState);
         when(mockBeefyState.getSessions()).thenReturn(mockedBeefySessions);
         when(mockBeefyState.getSessions().peekFirst()).thenReturn(mockedBeefySession1);
-        when(mockBeefyState.getBeefyFinalized()).thenReturn(BEEFY_FINALIZED);
         when(mockedBeefySession1.isMandatoryBlockFinalized()).thenReturn(false);
         when(mockedBeefySession1.getMandatoryBlock()).thenReturn(MANDATORY_BLOCK_NUM);
 

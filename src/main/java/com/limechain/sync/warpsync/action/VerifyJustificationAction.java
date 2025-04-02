@@ -92,6 +92,11 @@ public class VerifyJustificationAction implements WarpSyncAction {
                 .forEach(cm -> stateManager.getGrandpaSetState().handleGrandpaConsensusMessage(
                         cm, header)
                 );
+        //TODO think of a better way to initialize a beefy session with the last mandatory block.
+        DigestHelper.getBeefyConsensusMessages(header.getDigest())
+                .forEach(cm -> stateManager.getBeefyState().handleBeefyConsensusMessage(
+                        cm, header.getBlockNumber())
+                );
 
         SyncState syncState = stateManager.getSyncState();
         log.log(Level.INFO, "Verified justification. Block hash is now at #"

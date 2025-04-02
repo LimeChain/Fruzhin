@@ -11,11 +11,14 @@ import com.limechain.network.protocol.beefy.messages.justification.SignedCommitm
 import com.limechain.network.protocol.beefy.messages.vote.VoteMessage;
 import com.limechain.runtime.hostapi.dto.Key;
 import com.limechain.runtime.hostapi.dto.VerifySignature;
+import com.limechain.state.StateManager;
 import com.limechain.utils.EcdsaUtils;
 import com.limechain.utils.HashUtils;
 import com.limechain.utils.scale.ScaleUtils;
+import io.emeraldpay.polkaj.types.Hash264;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.java.Log;
+import org.javatuples.Pair;
 import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
@@ -26,25 +29,50 @@ import java.util.Optional;
 @RequiredArgsConstructor
 @Component
 public class BeefyMessageHandler {
+    private final Object lock = new Object();
 
     private final BeefyService beefyService;
-
-    private final BeefyState beefyState;
+    private final StateManager stateManager;
 
     public void handleVoteMessage(VoteMessage voteMessage) {
+        BeefyState beefyState = stateManager.getBeefyState();
+        Commitment commitment = voteMessage.getCommitment();
 
-        if (!isVoteMessageValid(voteMessage)) {
-            log.warning(String.format(
-                    "handleBeefyVoteMessage: Invalid vote message for round %s, set %s",
-                    voteMessage.getCommitment().getBlockNumber(), voteMessage.getCommitment().getAuthoritySetId()
-            ));
+        boolean hasExistingSession = !beefyState.getSessions().isEmpty();
+        if (hasExistingSession && !beefyService.isBeefyMessageAcceptable(commitment)) {
             return;
         }
 
-        beefyService.triageIncomingVote(voteMessage);
+        synchronized (lock) {
+            Hash264 authorityIdHash = new Hash264(voteMessage.getAuthorityId());
+            BigInteger blockNumber = voteMessage.getCommitment().getBlockNumber();
+            Pair<Hash264, BigInteger> voteKey = Pair.with(authorityIdHash, blockNumber);
+
+            if (hasExistingSession) {
+                BeefySession currentSession = beefyState.getSessions().peekFirst();
+                if (currentSession.getPreviousVotes().containsKey(voteKey)) {
+                    log.fine(String.format(
+                            "handleBeefyVoteMessage: Skipping already known vote message from authority: %s for block: %s.",
+                            authorityIdHash, blockNumber
+                    ));
+                }
+            }
+            if (!isVoteMessageValid(voteMessage)) {
+                log.warning(String.format(
+                        "handleBeefyVoteMessage: Invalid vote message for round %s, set %s",
+                        commitment.getBlockNumber(), commitment.getAuthoritySetId()
+                ));
+                return;
+            }
+            beefyService.triageIncomingVote(voteMessage);
+        }
     }
 
     public void handleSignedCommitment(SignedCommitment signedCommitment) {
+        BeefyState beefyState = stateManager.getBeefyState();
+        if (!beefyState.getSessions().isEmpty() && !beefyService.isBeefyMessageAcceptable(signedCommitment.getCommitment())) {
+            return;
+        }
 
         if (!isJustificationValid(signedCommitment)) {
             log.warning(String.format(
@@ -58,7 +86,7 @@ public class BeefyMessageHandler {
     }
 
     private boolean isJustificationValid(SignedCommitment signedCommitment) {
-
+        BeefyState beefyState = stateManager.getBeefyState();
         Commitment commitment = signedCommitment.getCommitment();
         List<Optional<byte[]>> signatures = signedCommitment.getSignatures();
         BeefySession beefySession = beefyState.getSessions().peekFirst();
