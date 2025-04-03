@@ -4,6 +4,7 @@ import com.limechain.chain.lightsyncstate.LightSyncState;
 import com.limechain.consensus.grandpa.GrandpaSetState;
 import com.limechain.constants.GenesisBlockHash;
 import com.limechain.exception.storage.HeaderNotFoundException;
+import com.limechain.network.PeerMessageCoordinator;
 import com.limechain.network.protocol.grandpa.messages.commit.CommitMessage;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.network.protocol.warp.dto.Justification;
@@ -31,6 +32,7 @@ public class SyncState extends AbstractState {
     private final BlockState blockState;
     // TODO: Remove this when FinalizationHandler (responsible for sending events on block finalization) is implemented.
     private final GrandpaSetState grandpaSetState;
+    private final PeerMessageCoordinator peerMessageCoordinator;
 
     private Hash256 lastFinalizedBlockHash;
     private Hash256 stateRoot;
@@ -98,6 +100,8 @@ public class SyncState extends AbstractState {
                 this.lastFinalizedBlockNumber = commitMessage.getVote().getBlockNumber();
 
                 log.log(Level.INFO, "Reached block #" + lastFinalizedBlockNumber);
+
+                peerMessageCoordinator.sendNeighborMessageToPeers();
             }
 
         } catch (HeaderNotFoundException ignored) {

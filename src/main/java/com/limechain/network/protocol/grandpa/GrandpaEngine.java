@@ -231,7 +231,6 @@ public class GrandpaEngine implements BaseEngine {
 
         log.log(Level.FINE, "Received neighbour message from Peer " + stream.remotePeerId() + "\n" + neighbourMessage);
         // TODO: We need to actually update our peer's infos on each message.
-        writeNeighbourMessage(stream, stream.remotePeerId());
 
         if (SyncMode.HEAD.equals(AbstractState.getSyncMode()) && AbstractState.isActiveAuthority()) {
             grandpaMessageHandler.initiateAndSendCatchUpRequest(neighbourMessage, stream.remotePeerId());

@@ -143,6 +143,8 @@ public class FullSyncMachine {
         }
 
         AbstractState.setSyncMode(SyncMode.HEAD);
+
+        messageCoordinator.sendNeighborMessageToPeers();
     }
 
     private TrieStructure<NodeData> loadStateAtBlockFromPeer(Hash256 lastFinalizedBlockHash) {
