@@ -47,7 +47,7 @@ public class BlockHeader implements Serializable {
         return HashUtils.hashWithBlake2b(scaleEncoded);
     }
 
-    // TODO We cannot do this as the blake2b hashing is irreversible.
+    // TODO Change usages with BlockState.getHeader(hash).
     public static BlockHeader fromHash(Hash256 hash) {
         return ScaleUtils.Decode.decode(hash.getBytes(), BlockHeaderReader.getInstance());
     }
