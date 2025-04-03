@@ -486,6 +486,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
                 vote();
             } catch (Exception e) {
                 log.warning("Exception in Beefy main loop, restarting in 1 second " + e.getMessage());
+              //TODO: handle restarting of main loop
             }
         }, 0, 1, TimeUnit.SECONDS);
     }
