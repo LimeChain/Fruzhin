@@ -480,9 +480,13 @@ public class BeefyService implements FinalizedBlockChangeListener {
 
         log.info("runBeefy: Started Beefy Service main loop");
         ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-        scheduler.scheduleAtFixedRate(() -> {
-            applyPendingJustifications();
-            vote();
-        }, 0, 1, TimeUnit.MILLISECONDS);
+        scheduler.scheduleWithFixedDelay(() -> {
+            try {
+                applyPendingJustifications();
+                vote();
+            } catch (Exception e) {
+                log.warning("Exception in Beefy main loop, restarting in 1 second " + e.getMessage());
+            }
+        }, 0, 1, TimeUnit.SECONDS);
     }
 }
