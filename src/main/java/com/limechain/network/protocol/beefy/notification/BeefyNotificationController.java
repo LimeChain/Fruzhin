@@ -13,9 +13,14 @@ public class BeefyNotificationController extends BaseController<BeefyNotificatio
     }
 
     /**
-     * Sends a beefy vote message over the controller stream
+     * Sends a BEEFY message over the controller stream.
+     * <p>
+     * Since both vote messages and signed commitments are transmitted over the same stream,
+     * there is no need for separate logic after the message is encoded.
+     * </p>
+     * @param encodedMessage the encoded BEEFY message to send, which can be either a vote message or a signed commitment.
      */
-    public void sendVoteMessage(byte[] encodedBeefyVoteMessage) {
-        engine.writeBeefyVoteMessage(stream, encodedBeefyVoteMessage);
+    public void sendMessage(byte[] encodedMessage) {
+        engine.writeMessage(stream, encodedMessage);
     }
 }
