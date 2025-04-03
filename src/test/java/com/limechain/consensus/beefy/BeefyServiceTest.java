@@ -148,7 +148,6 @@ class BeefyServiceTest {
         when(stateManager.getBeefyState()).thenReturn(mockBeefyState);
         when(mockBeefyState.getSessions()).thenReturn(mockedBeefySessions);
         when(mockBeefyState.getSessions().peekFirst()).thenReturn(mockedBeefySession1);
-        when(mockBeefyState.getBeefyFinalized()).thenReturn(BEEFY_FINALIZED);
         when(mockedBeefySession1.isMandatoryBlockFinalized()).thenReturn(false);
         when(mockedBeefySession1.getMandatoryBlock()).thenReturn(MANDATORY_BLOCK_NUM);
 

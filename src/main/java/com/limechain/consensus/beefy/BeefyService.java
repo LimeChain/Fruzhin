@@ -46,6 +46,8 @@ public class BeefyService implements FinalizedBlockChangeListener {
     private final StateManager stateManager;
     private final PeerMessageCoordinator peerMessageCoordinator;
 
+    private Pair<BigInteger, BigInteger> cachedAcceptedInterval;
+
     @Override
     public void finalizedBlockChanged(FinalizedBlockChangeEvent event) {
 
@@ -54,6 +56,9 @@ public class BeefyService implements FinalizedBlockChangeListener {
         beefyState.setGrandpaFinalized(event.getGrandpaFinalized().getBlockNumber());
         processConsensusMessages(event.getBlockHeaders());
         beefyState.persistState();
+
+        // update beefy message cached interval
+        cachedAcceptedInterval = findAcceptedInterval();
     }
 
     public void vote() {
@@ -194,6 +199,23 @@ public class BeefyService implements FinalizedBlockChangeListener {
         return Optional.empty();
     }
 
+    private void reportDoubleVoting(DoubleVotingProof doubleVotingProof) {
+
+        BlockState blockState = stateManager.getBlockState();
+        Runtime runtime = blockState.getRuntime(blockState.getHighestFinalizedHash());
+        runtime.generateBeefyKeyOwnershipProof(doubleVotingProof.getFirst().getCommitment().getAuthoritySetId(),
+                        doubleVotingProof.getFirst().getAuthorityId())
+                .ifPresentOrElse(key ->
+                                runtime.submitReportBeefyDoubleVotingUnsignedExtrinsic(
+                                        doubleVotingProof, key.getProof()
+                                ),
+                        () -> log.warning(String.format(
+                                "reportDoubleVoting: Failed to report Beefy double voting for block number: %s.",
+                                doubleVotingProof.getFirst().getCommitment().getBlockNumber()
+                        ))
+                );
+    }
+
     /**
      * Examines BEEFY authority consensus messages and detects authority set changes or disabled authorities.
      * <p>
@@ -292,15 +314,13 @@ public class BeefyService implements FinalizedBlockChangeListener {
     }
 
     private RoundAction determineRoundAction(BigInteger roundNumber) {
+        BeefyState beefyState = stateManager.getBeefyState();
 
-        Pair<BigInteger, BigInteger> roundsInterval = null;
-        try {
-            roundsInterval = findAcceptedInterval();
-        } catch (BeefyGenericException e) {
-            log.warning(String.format("determineRoundAction: Error while finding accepted rounds interval %s", e));
+        if (beefyState.getSessions().isEmpty()) {
+            log.warning("determineRoundAction: No beefy session exists.");
             return RoundAction.INVALID;
         }
-
+        Pair<BigInteger, BigInteger> roundsInterval = findAcceptedInterval();
         BigInteger startRoundNumber = roundsInterval.getValue0();
         BigInteger endRoundNumber = roundsInterval.getValue1();
 
@@ -315,24 +335,18 @@ public class BeefyService implements FinalizedBlockChangeListener {
 
     private Pair<BigInteger, BigInteger> findAcceptedInterval() {
         BeefyState beefyState = stateManager.getBeefyState();
-
         BeefySession currentSession = beefyState.getSessions().peekFirst();
-        if (currentSession == null) {
-            throw new BeefyGenericException("No beefy session exists.");
-        }
-
-        BigInteger beefyFinalized = beefyState.getBeefyFinalized();
+        BigInteger mandatoryBlock = currentSession.getMandatoryBlock();
 
         if (currentSession.isMandatoryBlockFinalized()) {
-            BigInteger lowerBlock = beefyFinalized.max(currentSession.getMandatoryBlock());
+            BigInteger lowerBlock = beefyState.getBeefyFinalized().max(currentSession.getMandatoryBlock());
             return Pair.with(lowerBlock, beefyState.getGrandpaFinalized());
         } else {
-            return Pair.with(currentSession.getMandatoryBlock(), currentSession.getMandatoryBlock());
+            return Pair.with(mandatoryBlock, mandatoryBlock);
         }
     }
 
     private void finalizeJustification(SignedCommitment signedCommitment) {
-
         BeefyState beefyState = stateManager.getBeefyState();
         BigInteger blockNumber = signedCommitment.getCommitment().getBlockNumber();
 
@@ -344,12 +358,15 @@ public class BeefyService implements FinalizedBlockChangeListener {
         try {
             finalizeBeefyRound(blockNumber);
         } catch (BeefyGenericException e) {
-            log.warning(String.format("finalizeJustification: Error while finalizing beefy round: %s", e));
+            log.warning(String.format("finalizeJustification: Error while finalizing beefy round: %s", e.getMessage()));
             return;
         }
 
         beefyState.setBeefyFinalized(blockNumber);
         beefyState.persistState();
+
+        // update beefy message cached interval
+        cachedAcceptedInterval = findAcceptedInterval();
     }
 
     private void finalizeBeefyRound(BigInteger blockNumber) {
@@ -365,23 +382,6 @@ public class BeefyService implements FinalizedBlockChangeListener {
         removeFinishedSessions();
     }
 
-    public void reportDoubleVoting(DoubleVotingProof doubleVotingProof) {
-
-        BlockState blockState = stateManager.getBlockState();
-        Runtime runtime = blockState.getRuntime(blockState.getHighestFinalizedHash());
-        runtime.generateBeefyKeyOwnershipProof(doubleVotingProof.getFirst().getCommitment().getAuthoritySetId(),
-                        doubleVotingProof.getFirst().getAuthorityId())
-                .ifPresentOrElse(key ->
-                                runtime.submitReportBeefyDoubleVotingUnsignedExtrinsic(
-                                        doubleVotingProof, key.getProof()
-                                ),
-                        () -> log.warning(String.format(
-                                "reportDoubleVoting: Failed to report Beefy double voting for block number: %s.",
-                                doubleVotingProof.getFirst().getCommitment().getBlockNumber()
-                        ))
-                );
-    }
-
     private void removeFinishedSessions() {
         BeefyState beefyState = stateManager.getBeefyState();
         if (beefyState.getSessions().size() > 1) {
@@ -395,14 +395,12 @@ public class BeefyService implements FinalizedBlockChangeListener {
 
         if (beefyState.getPendingJustifications().isEmpty()) return;
 
-        Pair<BigInteger, BigInteger> roundsInterval;
-        try {
-            roundsInterval = findAcceptedInterval();
-        } catch (BeefyGenericException e) {
-            log.warning(String.format("determineRoundAction: Error while finding accepted rounds interval %s", e));
+        if (beefyState.getSessions().isEmpty()) {
+            log.warning("applyPendingJustifications: No session exists.");
             return;
         }
 
+        Pair<BigInteger, BigInteger> roundsInterval = findAcceptedInterval();
         BigInteger start = roundsInterval.getValue0();
         BigInteger end = roundsInterval.getValue1();
 
@@ -422,5 +420,56 @@ public class BeefyService implements FinalizedBlockChangeListener {
 
         // Process justification that are in the accepted interval
         justificationsToProcess.values().forEach(this::finalizeJustification);
+    }
+
+    public boolean isBeefyMessageAcceptable(Commitment commitment) {
+        BeefyState beefyState = stateManager.getBeefyState();
+        BigInteger blockNumber = commitment.getBlockNumber();
+        BeefySession currentSession = beefyState.getSessions().peekFirst();
+
+        BigInteger mandatoryBlock = currentSession.getMandatoryBlock();
+        if (blockNumber.compareTo(mandatoryBlock) < 0) {
+            log.warning(String.format(
+                    "isBeefyMessageAcceptable: " +
+                            "Rejected beefy message — block %d is earlier than current session's mandatory block %d.",
+                    blockNumber, mandatoryBlock
+            ));
+
+            return false;
+        }
+
+        BigInteger setId = currentSession.getAuthoritySet().getSetId();
+        BigInteger commitmentSetId = commitment.getAuthoritySetId();
+        if (!setId.equals(commitmentSetId)) {
+            log.warning(String.format(
+                    "isBeefyMessageAcceptable: Rejected beefy message — authority set ID mismatch. Expected: %d, got: %d.",
+                    setId, commitmentSetId
+            ));
+
+            return false;
+        }
+
+        if (cachedAcceptedInterval == null) {
+            cachedAcceptedInterval = findAcceptedInterval();
+        }
+
+        BigInteger start = cachedAcceptedInterval.getValue0();
+        BigInteger end = cachedAcceptedInterval.getValue1();
+
+        if (blockNumber.compareTo(start) < 0 || blockNumber.compareTo(end) > 0) {
+            log.warning(String.format(
+                    "isBeefyMessageAcceptable: Rejected beefy message — block %d outside accepted round range [%d, %d].",
+                    blockNumber, start, end
+            ));
+
+            return false;
+        }
+
+        log.fine(String.format(
+                "isBeefyMessageAcceptable: Accepted beefy message — block %d is within round range [%d, %d] and set ID %d.",
+                blockNumber, start, end, setId
+        ));
+
+        return true;
     }
 }
