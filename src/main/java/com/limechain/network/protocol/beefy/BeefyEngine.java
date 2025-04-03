@@ -86,7 +86,8 @@ public class BeefyEngine implements BaseEngine {
      * @param encodedMessage the scale encoded BEEFY message to send (either a vote message or a signed commitment).
      */
     public void writeMessage(Stream stream, byte[] encodedMessage) {
-        log.log(Level.FINE, "Sending beefy message to peer " + stream.remotePeerId());
+        BeefyMessageType type = BeefyMessageType.getByType(encodedMessage[0]);
+        log.log(Level.FINE, "Sending beefy " + type + " to peer " + stream.remotePeerId());
         stream.writeAndFlush(encodedMessage);
     }
 
