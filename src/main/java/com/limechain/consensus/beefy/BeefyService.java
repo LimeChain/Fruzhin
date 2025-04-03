@@ -35,6 +35,9 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @Log
 @Component
@@ -389,7 +392,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
         }
     }
 
-    private void applyPendingJustifications(SignedCommitment signedCommitment) {
+    private void applyPendingJustifications() {
 
         BeefyState beefyState = stateManager.getBeefyState();
 
@@ -471,5 +474,20 @@ public class BeefyService implements FinalizedBlockChangeListener {
         ));
 
         return true;
+    }
+
+    public void run() {
+
+        log.info("runBeefy: Started Beefy Service main loop");
+        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+        scheduler.scheduleWithFixedDelay(() -> {
+            try {
+                applyPendingJustifications();
+                vote();
+            } catch (Exception e) {
+                log.warning("Exception in Beefy main loop, restarting in 1 second " + e.getMessage());
+              //TODO: handle restarting of main loop
+            }
+        }, 0, 1, TimeUnit.MILLISECONDS);
     }
 }
