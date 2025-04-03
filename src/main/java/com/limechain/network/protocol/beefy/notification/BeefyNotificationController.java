@@ -1,15 +1,15 @@
-package com.limechain.network.protocol.beefy;
+package com.limechain.network.protocol.beefy.notification;
 
 import com.limechain.network.protocol.base.BaseController;
 import io.libp2p.core.Stream;
 
 /**
- * A controller for sending message on a BEEFY stream
+ * A controller for sending message on a BEEFY notification stream
  */
-public class BeefyController extends BaseController<BeefyEngine> {
+public class BeefyNotificationController extends BaseController<BeefyNotificationEngine> {
 
-    public BeefyController(Stream stream) {
-        super(stream, new BeefyEngine());
+    public BeefyNotificationController(Stream stream) {
+        super(stream, new BeefyNotificationEngine());
     }
 
     /**

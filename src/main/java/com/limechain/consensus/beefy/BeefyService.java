@@ -317,7 +317,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
         BeefyState beefyState = stateManager.getBeefyState();
 
         if (beefyState.getSessions().isEmpty()) {
-            log.warning("determineRoundAction: No beefy session exists.");
+            log.fine("determineRoundAction: No beefy session exists.");
             return RoundAction.INVALID;
         }
         Pair<BigInteger, BigInteger> roundsInterval = findAcceptedInterval();

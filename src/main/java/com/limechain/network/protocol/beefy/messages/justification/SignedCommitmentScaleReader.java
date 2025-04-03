@@ -31,8 +31,16 @@ public class SignedCommitmentScaleReader implements ScaleReader<SignedCommitment
 
     @Override
     public SignedCommitment read(ScaleCodecReader reader) {
+        return readInner(reader, true);
+    }
 
-        verifyTypes(reader);
+    public SignedCommitment readNonGossiped(ScaleCodecReader reader) {
+        return readInner(reader, false);
+    }
+
+    private SignedCommitment readInner(ScaleCodecReader reader, boolean isGossipMessage) {
+
+        verifyTypes(reader, isGossipMessage);
 
         // Read "commitment" field.
         Commitment commitment = reader.read(CommitmentScaleReader.getInstance());
@@ -93,19 +101,23 @@ public class SignedCommitmentScaleReader implements ScaleReader<SignedCommitment
         return Arrays.stream(signatures).toList();
     }
 
-    private static void verifyTypes(ScaleCodecReader reader) {
-        int messageType = reader.readByte();
-        if (messageType != BeefyMessageType.JUSTIFICATION.getType()) {
-            throw new WrongMessageTypeException(
-                    String.format("verifyTypes: Trying to read message of type %d as a beefy vote message.",
-                            messageType));
+    private static void verifyTypes(ScaleCodecReader reader, boolean isGossipMessage) {
+
+        // Only messages from notification/gossip streams a prefixed with their message type.
+        if (isGossipMessage) {
+            int messageType = reader.readByte();
+            if (messageType != BeefyMessageType.JUSTIFICATION.getType()) {
+                throw new WrongMessageTypeException(
+                        String.format("verifyTypes: Trying to read message of type %d as a beefy vote message.",
+                                messageType));
+            }
         }
 
         int version = reader.readByte();
         if (version != BeefyJustificationVersion.V1.getVersion()) {
             throw new WrongMessageTypeException(
                     String.format("verifyTypes: Trying to read justification of version %d as version 1.",
-                            messageType));
+                            version));
         }
     }
 }

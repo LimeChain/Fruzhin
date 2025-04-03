@@ -1,4 +1,4 @@
-package com.limechain.network.protocol.beefy;
+package com.limechain.network.protocol.beefy.notification;
 
 import com.limechain.network.protocol.BaseUtils;
 import io.libp2p.core.PeerId;
@@ -14,26 +14,26 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class BeefyControllerTest {
+class BeefyNotificationControllerTest {
 
     @InjectMocks
-    private BeefyController beefyController;
+    private BeefyNotificationController beefyNotificationController;
     @Mock
     private Stream stream;
     @Mock
     private PeerId peerId;
     @Mock
-    private BeefyEngine engine;
+    private BeefyNotificationEngine engine;
 
     @BeforeEach
     void setup() throws NoSuchFieldException, IllegalAccessException {
-        BaseUtils.setProtectedEngineField(beefyController, engine);
+        BaseUtils.setProtectedEngineField(beefyNotificationController, engine);
     }
 
     @Test
     void sendHandshake() {
         when(stream.remotePeerId()).thenReturn(peerId);
-        beefyController.sendHandshake();
+        beefyNotificationController.sendHandshake();
         verify(engine).writeHandshakeToStream(stream, peerId);
     }
 }

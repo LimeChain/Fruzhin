@@ -1,4 +1,4 @@
-package com.limechain.network.protocol.beefy;
+package com.limechain.network.protocol.beefy.notification;
 
 import com.limechain.network.ConnectionManager;
 import com.limechain.network.protocol.base.BaseProtocol;
@@ -11,10 +11,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.logging.Level;
 
 /**
- * Handler for BEEFY protocol messages and streams
+ * Handler for BEEFY notification protocol messages and streams
  */
 @Log
-public class BeefyProtocol extends BaseProtocol<BeefyController, BeefyProtocol.NotificationHandler> {
+public class BeefyNotificationProtocol extends BaseProtocol<BeefyNotificationController, BeefyNotificationProtocol.NotificationHandler> {
 
     private static final long TRAFFIC_LIMIT = Long.MAX_VALUE;
 
@@ -23,19 +23,19 @@ public class BeefyProtocol extends BaseProtocol<BeefyController, BeefyProtocol.N
      * This is a global decreasing limit for the protocol, that gets reduced by the size of each message.
      * In the future it should be changed to a per-message limit
      */
-    public BeefyProtocol() {
+    public BeefyNotificationProtocol() {
         super(TRAFFIC_LIMIT, TRAFFIC_LIMIT);
     }
 
     @Override
-    protected BeefyProtocol.NotificationHandler createNotificationHandler(Stream stream) {
-        return new BeefyProtocol.NotificationHandler(stream);
+    protected BeefyNotificationProtocol.NotificationHandler createNotificationHandler(Stream stream) {
+        return new BeefyNotificationProtocol.NotificationHandler(stream);
     }
 
     /**
      * Handler for notifications received on the BEEFY protocol
      */
-    static class NotificationHandler extends BeefyController implements ProtocolMessageHandler<ByteBuf> {
+    static class NotificationHandler extends BeefyNotificationController implements ProtocolMessageHandler<ByteBuf> {
 
         ConnectionManager connectionManager = ConnectionManager.getInstance();
 
