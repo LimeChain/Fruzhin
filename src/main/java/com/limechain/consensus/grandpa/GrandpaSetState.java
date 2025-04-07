@@ -71,6 +71,8 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
     }
 
     // persists data connected to the current round which may not be finalized
+    @Override
+    @PreDestroy
     public void persistState() {
         GrandpaRound currentRound = getCurrentGrandpaRound();
         BigInteger roundNumber = currentRound != null ? currentRound.getRoundNumber() : null;
