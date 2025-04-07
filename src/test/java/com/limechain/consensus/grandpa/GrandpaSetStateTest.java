@@ -1,7 +1,7 @@
 package com.limechain.consensus.grandpa;
 
 import com.limechain.consensus.dto.Authority;
-import com.limechain.storage.KVRepository;
+import com.limechain.network.PeerMessageCoordinator;
 import com.limechain.storage.block.state.BlockState;
 import com.limechain.storage.crypto.KeyStore;
 import com.limechain.utils.Ed25519Utils;
@@ -30,6 +30,9 @@ class GrandpaSetStateTest {
 
     @Mock
     private BlockState blockState;
+
+    @Mock
+    private PeerMessageCoordinator peerMessageCoordinator;
 
     @Test
     void testGetThreshold() {
