@@ -26,7 +26,6 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.function.Consumer;
 
 /**
  * Represents the state information required for managing BEEFY finality rounds
@@ -101,13 +100,11 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
             repository.saveBeefyAuthorities(authoritySet);
             repository.saveDisabledAuthority(authoritySet, disabledAuthority);
         }
-
-        // Save other non-null values if needed
-        saveIfNotNull(repository::saveBeefyGenesis, beefyGenesis);
-        saveIfNotNull(repository::saveBeefyFinalized, beefyFinalized);
-        saveIfNotNull(repository::saveGrandpaFinalized, grandpaFinalized);
-        saveIfNotNull(repository::saveLastVoted, lastVoted);
-        saveIfNotNull(repository::saveSessions, sessions);
+        repository.saveBeefyGenesis(beefyGenesis);
+        repository.saveBeefyFinalized(beefyFinalized);
+        repository.saveGrandpaFinalized(grandpaFinalized);
+        repository.saveLastVoted(lastVoted);
+        repository.saveSessions(sessions);
     }
 
     // TODO: Remove initializeNextDigest or remove this comment
@@ -175,11 +172,5 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
         this.grandpaFinalized = repository.fetchGrandpaFinalized();
         this.lastVoted = repository.fetchLastVoted();
         this.sessions = repository.fetchSessions();
-    }
-
-    private <T> void saveIfNotNull(Consumer<T> saveMethod, T value) {
-        if (value != null) {
-            saveMethod.accept(value);
-        }
     }
 }

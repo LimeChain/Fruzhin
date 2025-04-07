@@ -14,6 +14,7 @@ import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
+import java.util.function.Consumer;
 
 @Component
 @RequiredArgsConstructor
@@ -66,7 +67,7 @@ public class BeefyRepository {
     }
 
     public void saveBeefyFinalized(BigInteger beefyFinalized) {
-        repository.save(DBConstants.BEEFY_FINALIZED, beefyFinalized);
+        saveIfNotNull(val -> repository.save(DBConstants.BEEFY_FINALIZED, val), beefyFinalized);
     }
 
     public BigInteger fetchGrandpaFinalized() {
@@ -74,7 +75,7 @@ public class BeefyRepository {
     }
 
     public void saveGrandpaFinalized(BigInteger grandpaFinalized) {
-        repository.save(DBConstants.BEEFY_GRANDPA_FINALIZED, grandpaFinalized);
+        saveIfNotNull(val -> repository.save(DBConstants.BEEFY_GRANDPA_FINALIZED, val), grandpaFinalized);
     }
 
     public BigInteger fetchBeefyGenesis() {
@@ -82,7 +83,7 @@ public class BeefyRepository {
     }
 
     public void saveBeefyGenesis(BigInteger beefyGenesis) {
-        repository.save(DBConstants.BEEFY_GENESIS, beefyGenesis);
+        saveIfNotNull(val -> repository.save(DBConstants.BEEFY_GENESIS, val), beefyGenesis);
     }
 
     public BigInteger fetchLastVoted() {
@@ -90,7 +91,7 @@ public class BeefyRepository {
     }
 
     public void saveLastVoted(BigInteger lastVoted) {
-        repository.save(DBConstants.BEEFY_LAST_VOTED, lastVoted);
+        saveIfNotNull(val -> repository.save(DBConstants.BEEFY_LAST_VOTED, val), lastVoted);
     }
 
     public Deque<BeefySession> fetchSessions() {
@@ -98,7 +99,7 @@ public class BeefyRepository {
     }
 
     public void saveSessions(Deque<BeefySession> sessions) {
-        repository.save(DBConstants.BEEFY_SESSIONS, sessions);
+        saveIfNotNull(val -> repository.save(DBConstants.BEEFY_SESSIONS, val), sessions);
     }
 
     public SignedCommitment fetchJustification(BigInteger blockNumber) {
@@ -109,9 +110,17 @@ public class BeefyRepository {
     }
 
     public void saveJustification(BigInteger blockNumber, SignedCommitment justification) {
-        repository.save(
-                StateUtil.generateBeefyJustificationKey(DBConstants.BEEFY_JUSTIFICATION, blockNumber),
-                justification
-        );
+        if (justification != null) {
+            repository.save(
+                    StateUtil.generateBeefyJustificationKey(DBConstants.BEEFY_JUSTIFICATION, blockNumber),
+                    justification
+            );
+        }
+    }
+
+    private <T> void saveIfNotNull(Consumer<T> saveMethod, T value) {
+        if (value != null) {
+            saveMethod.accept(value);
+        }
     }
 }
