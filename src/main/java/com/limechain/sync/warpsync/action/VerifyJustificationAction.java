@@ -50,7 +50,7 @@ public class VerifyJustificationAction implements WarpSyncAction {
         try {
 
             // Executes scheduled or forced authority changes for the last finalized block.
-            boolean changeInAuthoritySet = stateManager.getGrandpaSetState()
+            stateManager.getGrandpaSetState()
                     .applyAuthoritySetChange(
                             stateManager.getSyncState().getLastFinalizedBlockHash(),
                             stateManager.getSyncState().getLastFinalizedBlockNumber()
