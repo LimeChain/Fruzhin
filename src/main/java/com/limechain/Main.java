@@ -62,7 +62,7 @@ public class Main {
             prometheusServer.stop();
             rpcApp.stop(); // NOTE: rpcApp is responsible for stopping everything that could've been started
 
-            System.out.printf("\uD83D\uDED1Stopped %s client!%n", nodeRole);
+            System.out.printf("Stopped %s client!%n", nodeRole);
             System.exit(0);
         });
     }
