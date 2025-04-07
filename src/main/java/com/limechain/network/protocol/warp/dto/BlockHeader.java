@@ -47,6 +47,7 @@ public class BlockHeader implements Serializable {
         return HashUtils.hashWithBlake2b(scaleEncoded);
     }
 
+    // TODO Change usages with BlockState.getHeader(hash).
     public static BlockHeader fromHash(Hash256 hash) {
         return ScaleUtils.Decode.decode(hash.getBytes(), BlockHeaderReader.getInstance());
     }

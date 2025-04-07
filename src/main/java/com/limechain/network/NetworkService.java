@@ -7,7 +7,8 @@ import com.limechain.cli.CliArguments;
 import com.limechain.config.HostConfig;
 import com.limechain.constants.GenesisBlockHash;
 import com.limechain.network.kad.KademliaService;
-import com.limechain.network.protocol.beefy.BeefyService;
+import com.limechain.network.protocol.beefy.notification.BeefyNotificationService;
+import com.limechain.network.protocol.beefy.requestresponse.BeefyJustificationService;
 import com.limechain.network.protocol.blockannounce.BlockAnnounceService;
 import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.network.protocol.grandpa.GrandpaService;
@@ -66,20 +67,24 @@ public class NetworkService implements NodeService {
 
     private final String[] bootNodes;
     private final ConnectionManager connectionManager;
-    private KademliaService kademliaService;
     private Host host;
 
+    // Non-Polkadot protocols.
+    private Ping ping;
+    private KademliaService kademliaService;
+
+    // Request-response protocols.
     private SyncService syncService;
     private StateService stateService;
     private WarpSyncService warpSyncService;
     private LightMessagesService lightMessagesService;
+    private BeefyJustificationService beefyJustificationService;
 
+    // Notification protocols.
     private TransactionsService transactionsService;
     private BlockAnnounceService blockAnnounceService;
     private GrandpaService grandpaService;
-    private BeefyService beefyService;
-
-    private Ping ping;
+    private BeefyNotificationService beefyNotificationService;
 
     private PeerId currentSelectedPeer;
     private int bootPeerIndex = 0;
@@ -258,34 +263,43 @@ public class NetworkService implements NodeService {
         String warpProtocolId = ProtocolUtils.getWarpSyncProtocol(protocolId);
         String lightProtocolId = ProtocolUtils.getLightMessageProtocol(protocolId);
         String syncProtocolId = ProtocolUtils.getSyncProtocol(protocolId);
+        String beefyJustificationProtocolId = ProtocolUtils.getBeefyJustificationProtocol(
+                genesisBlockHashWithoutPrefix);
         String stateProtocolId = ProtocolUtils.getStateProtocol(protocolId);
         String transactionsProtocolId = ProtocolUtils.getTransactionsProtocol(protocolId);
         String blockAnnounceProtocolId = ProtocolUtils.getBlockAnnounceProtocol(protocolId);
         String grandpaProtocolId = ProtocolUtils.getGrandpaProtocol(protocolId, legacyProtocol);
-        String beefyProtocolId = ProtocolUtils.getBeefyProtocol(genesisBlockHashWithoutPrefix);
+        String beefyNotificationProtocolId = ProtocolUtils.getBeefyNotificationProtocol(genesisBlockHashWithoutPrefix);
 
+        // Non-Polkadot protocols.
+        ping = new Ping(pingProtocol, new PingProtocol());
         kademliaService = new KademliaService(kadProtocolId, hostId, isLocalEnabled, clientMode);
-        lightMessagesService = new LightMessagesService(lightProtocolId);
-        warpSyncService = new WarpSyncService(warpProtocolId);
+
+        // Request-response protocols.
         syncService = new SyncService(syncProtocolId);
         stateService = new StateService(stateProtocolId);
+        warpSyncService = new WarpSyncService(warpProtocolId);
+        lightMessagesService = new LightMessagesService(lightProtocolId);
+        beefyJustificationService = new BeefyJustificationService(beefyJustificationProtocolId);
+
+        // Notification protocols.
         transactionsService = new TransactionsService(transactionsProtocolId);
         blockAnnounceService = new BlockAnnounceService(blockAnnounceProtocolId);
         grandpaService = new GrandpaService(grandpaProtocolId);
-        beefyService = new BeefyService(beefyProtocolId);
-        ping = new Ping(pingProtocol, new PingProtocol());
+        beefyNotificationService = new BeefyNotificationService(beefyNotificationProtocolId);
 
         hostBuilder.addProtocols(
                 List.of(
                         ping,
                         kademliaService.getProtocol(),
-                        lightMessagesService.getProtocol(),
-                        warpSyncService.getProtocol(),
                         syncService.getProtocol(),
                         stateService.getProtocol(),
+                        warpSyncService.getProtocol(),
+                        lightMessagesService.getProtocol(),
+                        beefyJustificationService.getProtocol(),
                         blockAnnounceService.getProtocol(),
                         grandpaService.getProtocol(),
-                        beefyService.getProtocol()
+                        beefyNotificationService.getProtocol()
                 )
         );
 

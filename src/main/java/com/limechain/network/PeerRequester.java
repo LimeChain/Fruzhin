@@ -2,6 +2,7 @@ package com.limechain.network;
 
 import com.google.protobuf.ByteString;
 import com.limechain.exception.global.ExecutionFailedException;
+import com.limechain.network.protocol.beefy.messages.justification.SignedCommitment;
 import com.limechain.network.protocol.lightclient.pb.LightClientMessage;
 import com.limechain.network.protocol.sync.BlockRequestDto;
 import com.limechain.network.protocol.sync.BlockRequestField;
@@ -19,6 +20,7 @@ import io.emeraldpay.polkaj.types.Hash256;
 import lombok.extern.java.Log;
 import org.springframework.stereotype.Component;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -178,6 +180,23 @@ public class PeerRequester {
                     throw new ExecutionFailedException(e);
                 });
 
+    }
+
+    //</editor-fold>
+
+    //<editor-fold desc="Beefy justification requests">
+
+    public CompletableFuture<SignedCommitment> makeBeefyJustificationRequest(BigInteger from) {
+        return asyncExecutor.executeAsync(() ->
+                        network.getBeefyJustificationService().getProtocol().remoteJustificationRequest(
+                                network.getHost(),
+                                network.getCurrentSelectedPeer(),
+                                from
+                        ))
+                .exceptionally(e -> {
+                    log.fine("There was an issue in the beefy justification request: " + e.getMessage());
+                    throw new ExecutionFailedException(e);
+                });
     }
 
     //</editor-fold>

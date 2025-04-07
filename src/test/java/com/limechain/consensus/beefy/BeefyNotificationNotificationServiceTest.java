@@ -46,7 +46,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class BeefyServiceTest {
+class BeefyNotificationNotificationServiceTest {
 
     static final BigInteger MANDATORY_BLOCK_NUM = BigInteger.TWO;
     public static final BigInteger BEEFY_FINALIZED = BigInteger.ONE;
@@ -207,8 +207,8 @@ class BeefyServiceTest {
     }
 
     private BeefyVoteMessage callCreateVoteMessage(BeefyAuthoritySet authoritySet,
-                                                          org.javatuples.Pair<byte[], byte[]> keyPair,
-                                                          BigInteger targetVoteBlockNumber)
+                                              org.javatuples.Pair<byte[], byte[]> keyPair,
+                                              BigInteger targetVoteBlockNumber)
             throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
 
         Method method = BeefyService.class.getDeclaredMethod(

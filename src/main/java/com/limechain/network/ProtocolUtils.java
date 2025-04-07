@@ -42,7 +42,14 @@ public final class ProtocolUtils {
     // NOTE: Beefy was likely not part of the original protocols and therefore
     // only operates with the genesis hash. As a result, it does not support
     // the {chainId}/beefy/2 format.
-    public static String getBeefyProtocol(String genesisBlockHash) {
+    public static String getBeefyNotificationProtocol(String genesisBlockHash) {
         return String.format("/%s/beefy/2", genesisBlockHash);
+    }
+
+    // NOTE: Beefy was likely not part of the original protocols and therefore
+    // only operates with the genesis hash. As a result, it does not support
+    // the {chainId}/beefy/justifications/1 format.
+    public static String getBeefyJustificationProtocol(String genesisBlockHash) {
+        return String.format("/%s/beefy/justifications/1", genesisBlockHash);
     }
 }

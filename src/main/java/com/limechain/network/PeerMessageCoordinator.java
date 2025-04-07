@@ -2,6 +2,7 @@ package com.limechain.network;
 
 import com.limechain.network.kad.KademliaService;
 import com.limechain.network.protocol.beefy.messages.justification.SignedCommitment;
+import com.limechain.network.protocol.beefy.messages.justification.SignedCommitmentScaleWriter;
 import com.limechain.network.protocol.beefy.messages.vote.BeefyVoteMessage;
 import com.limechain.network.protocol.beefy.messages.vote.BeefyVoteMessageScaleWriter;
 import com.limechain.network.protocol.blockannounce.NodeRole;
@@ -59,7 +60,7 @@ public class PeerMessageCoordinator {
                     network.getGrandpaService().sendHandshake(network.getHost(), peerId));
 
             asyncExecutor.executeAndForget(() ->
-                    network.getBeefyService().sendHandshake(network.getHost(), peerId));
+                    network.getBeefyNotificationService().sendHandshake(network.getHost(), peerId));
 
             if (network.getNodeRole().equals(NodeRole.AUTHORING)) {
                 asyncExecutor.executeAndForget(() ->
@@ -73,10 +74,8 @@ public class PeerMessageCoordinator {
         if (AbstractState.getSyncMode() != SyncMode.HEAD) {
             return;
         }
-        sendMessageToActivePeers(peerId -> {
-            asyncExecutor.executeAndForget(() ->
-                    network.getGrandpaService().sendNeighbourMessage(network.getHost(), peerId));
-        });
+        sendMessageToActivePeers(peerId -> asyncExecutor.executeAndForget(() ->
+                network.getGrandpaService().sendNeighbourMessage(network.getHost(), peerId)));
     }
 
     public void sendBlockAnnounceMessageExcludingPeer(BlockAnnounceMessage message, PeerId excluding) {
@@ -115,11 +114,8 @@ public class PeerMessageCoordinator {
 
     public void sendCommitMessageToPeers(CommitMessage commitMessage) {
         byte[] scaleMessage = ScaleUtils.Encode.encode(CommitMessageScaleWriter.getInstance(), commitMessage);
-        sendMessageToActivePeers(peerId -> {
-            asyncExecutor.executeAndForget(() -> network.getGrandpaService().sendCommitMessage(
-                    network.getHost(), peerId, scaleMessage
-            ));
-        });
+        sendMessageToActivePeers(peerId -> asyncExecutor.executeAndForget(() ->
+                network.getGrandpaService().sendCommitMessage(network.getHost(), peerId, scaleMessage)));
     }
 
     public void sendCatchUpRequestToPeer(PeerId peerId, CatchUpReqMessage catchUpReqMessage) {
@@ -134,20 +130,20 @@ public class PeerMessageCoordinator {
 
     public void sendVoteMessageToPeers(VoteMessage voteMessage) {
         byte[] scaleMessage = ScaleUtils.Encode.encode(VoteMessageScaleWriter.getInstance(), voteMessage);
-        sendMessageToActivePeers(peerId -> asyncExecutor.executeAndForget(() -> network.getGrandpaService().sendVoteMessage(
-                network.getHost(), peerId, scaleMessage
-        )));
+        sendMessageToActivePeers(peerId -> asyncExecutor.executeAndForget(() ->
+                network.getGrandpaService().sendVoteMessage(network.getHost(), peerId, scaleMessage)));
     }
 
     public void sendBeefyVoteMessageToPeers(BeefyVoteMessage voteMessage) {
         byte[] scaleMessage = ScaleUtils.Encode.encode(BeefyVoteMessageScaleWriter.getInstance(), voteMessage);
-        sendMessageToActivePeers(peerId -> asyncExecutor.executeAndForget(() -> network.getBeefyService().sendVoteMessage(
-                network.getHost(), peerId, scaleMessage
-        )));
+        sendMessageToActivePeers(peerId -> asyncExecutor.executeAndForget(() ->
+                network.getBeefyNotificationService().sendMessage(network.getHost(), peerId, scaleMessage)));
     }
 
     public void sendSignedCommitmentToPeers(SignedCommitment signedCommitment) {
-        //TODO: implement
+        byte[] scaleMessage = ScaleUtils.Encode.encode(SignedCommitmentScaleWriter.getInstance(), signedCommitment);
+        sendMessageToActivePeers(peerId -> asyncExecutor.executeAndForget(() ->
+                network.getBeefyNotificationService().sendMessage(network.getHost(), peerId, scaleMessage)));
     }
 
     private void sendMessageToActivePeers(Consumer<PeerId> messageAction) {
