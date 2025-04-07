@@ -23,8 +23,8 @@ repositories {
 dependencies {
     implementation("net.openhft:zero-allocation-hashing:0.27ea0")
     implementation("org.rocksdb:rocksdbjni:9.10.0")
-    compileOnly("org.projectlombok:lombok:1.18.36")
-    implementation("org.projectlombok:lombok:1.18.36")
+    compileOnly("org.projectlombok:lombok:1.18.38")
+    implementation("org.projectlombok:lombok:1.18.38")
     implementation("org.web3j:crypto:4.13.0")
     implementation("com.dylibso.chicory:wasm:0.0.12")
 
