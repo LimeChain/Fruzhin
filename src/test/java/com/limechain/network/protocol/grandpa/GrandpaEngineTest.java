@@ -97,8 +97,11 @@ class GrandpaEngineTest {
     void receiveHandshakeOnInitiatorStreamShouldAddStreamToConnection() {
         try (MockedStatic<ProtocolMessageBuilder> builder = mockStatic(ProtocolMessageBuilder.class)) {
             byte[] message = new byte[]{2};
+            PeerInfo peerInfo = createPeerInfo();
+
             when(stream.isInitiator()).thenReturn(true);
             when(stream.remotePeerId()).thenReturn(peerId);
+            when(connectionManager.getPeerInfo(peerId)).thenReturn(peerInfo);
             builder.when(ProtocolMessageBuilder::buildNeighbourMessage).thenReturn(neighbourMessage);
 
             grandpaEngine.receiveRequest(message, stream);
@@ -111,7 +114,11 @@ class GrandpaEngineTest {
     void receiveHandshakeOnInitiatorStreamShouldSendNeighbourMessageBack() {
         try (MockedStatic<ProtocolMessageBuilder> builder = mockStatic(ProtocolMessageBuilder.class)) {
             byte[] message = new byte[]{2};
+            PeerInfo peerInfo = createPeerInfo();
+
             when(stream.isInitiator()).thenReturn(true);
+            when(stream.remotePeerId()).thenReturn(peerId);
+            when(connectionManager.getPeerInfo(peerId)).thenReturn(peerInfo);
             builder.when(ProtocolMessageBuilder::buildNeighbourMessage).thenReturn(neighbourMessage);
 
             grandpaEngine.receiveRequest(message, stream);
@@ -304,6 +311,9 @@ class GrandpaEngineTest {
     @Test
     void writeNeighbourMessage() {
         try (MockedStatic<ProtocolMessageBuilder> builder = mockStatic(ProtocolMessageBuilder.class)) {
+            PeerInfo peerInfo = createPeerInfo();
+
+            when(connectionManager.getPeerInfo(peerId)).thenReturn(peerInfo);
             builder.when(ProtocolMessageBuilder::buildNeighbourMessage).thenReturn(neighbourMessage);
 
             grandpaEngine.writeNeighbourMessage(stream, peerId);
@@ -316,5 +326,12 @@ class GrandpaEngineTest {
     void writeCommitMessage() {
         grandpaEngine.writeCommitMessage(stream, encodedCommitMessage);
         verify(stream).writeAndFlush(encodedCommitMessage);
+    }
+
+    private PeerInfo createPeerInfo() {
+        PeerInfo peerInfo = new PeerInfo();
+        peerInfo.setSetId(BigInteger.ONE);
+        peerInfo.setNodeRole(NodeRole.AUTHORING.getValue());
+        return peerInfo;
     }
 }
