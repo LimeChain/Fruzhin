@@ -121,8 +121,10 @@ public class GrandpaEngine implements BaseEngine {
         PeerInfo peerInfo = connectionManager.getPeerInfo(peerId);
         NeighbourMessage neighbourMessage = ProtocolMessageBuilder.buildNeighbourMessage();
 
-        if (neighbourMessage.getSetId().compareTo(peerInfo.getSetId()) == 0 &&
-                connectionManager.checkIfPeerIsLightNode(peerId)) {
+        boolean sameSetId = peerInfo.getSetId() != null
+                && neighbourMessage.getSetId().compareTo(peerInfo.getSetId()) == 0;
+
+        if (sameSetId && connectionManager.checkIfPeerIsLightNode(peerId)) {
             return;
         }
 
@@ -242,15 +244,18 @@ public class GrandpaEngine implements BaseEngine {
 
         log.log(Level.FINE, "Received neighbour message from Peer " + peerId + "\n" + neighbourMessage);
 
-        if (neighbourMessage.getSetId().compareTo(peerInfo.getSetId()) < 0) {
-            //TODO: Lower the reputation of the peer.
-        }
+        if (peerInfo.getSetId() != null && peerInfo.getRoundNumber() != null) {
+            if (neighbourMessage.getSetId().compareTo(peerInfo.getSetId()) < 0) {
+                //TODO: Lower the reputation of the peer.
+            }
 
-        if (neighbourMessage.getSetId().compareTo(peerInfo.getSetId()) == 0 &&
-                neighbourMessage.getRoundNumber().compareTo(peerInfo.getRoundNumber()) < 0) {
-            //TODO: Lower the reputation of the peer.
+            if (neighbourMessage.getSetId().compareTo(peerInfo.getSetId()) == 0 &&
+                    neighbourMessage.getRoundNumber().compareTo(peerInfo.getRoundNumber()) < 0) {
+                //TODO: Lower the reputation of the peer.
+            }
         }
         connectionManager.updatePeer(peerId, neighbourMessage);
+
 
         if (SyncMode.HEAD.equals(AbstractState.getSyncMode()) && AbstractState.isActiveAuthority()) {
             grandpaMessageHandler.initiateAndSendCatchUpRequest(neighbourMessage, peerId);
