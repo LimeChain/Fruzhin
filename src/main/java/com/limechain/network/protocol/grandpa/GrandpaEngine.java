@@ -3,6 +3,7 @@ package com.limechain.network.protocol.grandpa;
 import com.limechain.config.HostConfig;
 import com.limechain.consensus.grandpa.GrandpaService;
 import com.limechain.network.ConnectionManager;
+import com.limechain.network.dto.PeerInfo;
 import com.limechain.network.protocol.base.BaseEngine;
 import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.network.protocol.grandpa.messages.GrandpaMessageType;
@@ -111,16 +112,23 @@ public class GrandpaEngine implements BaseEngine {
     }
 
     /**
-     * Send our GRANDPA neighbour message from {@link WarpSyncState} on a given <b>responder</b> stream.
+     * Send our GRANDPA neighbour message on a given <b>responder</b> stream.
      *
      * @param stream <b>responder</b> stream to write the message to
      * @param peerId peer to send to
      */
     public void writeNeighbourMessage(Stream stream, PeerId peerId) {
+        PeerInfo peerInfo = connectionManager.getPeerInfo(peerId);
+        NeighbourMessage neighbourMessage = ProtocolMessageBuilder.buildNeighbourMessage();
+
+        if (neighbourMessage.getSetId().compareTo(peerInfo.getSetId()) == 0 &&
+                connectionManager.checkIfPeerIsLightNode(peerId)) {
+            return;
+        }
 
         byte[] encoded = ScaleUtils.Encode.encode(
                 NeighbourMessageScaleWriter.getInstance(),
-                ProtocolMessageBuilder.buildNeighbourMessage()
+                neighbourMessage
         );
 
         log.log(Level.FINE, "Sending neighbour message to Peer " + peerId);
@@ -224,16 +232,28 @@ public class GrandpaEngine implements BaseEngine {
 
     private void handleNeighbourMessage(byte[] message, Stream stream) {
 
+        PeerId peerId = stream.remotePeerId();
+        PeerInfo peerInfo = connectionManager.getPeerInfo(peerId);
+
         NeighbourMessage neighbourMessage = ScaleUtils.Decode.decode(
                 message,
                 NeighbourMessageScaleReader.getInstance()
         );
 
-        log.log(Level.FINE, "Received neighbour message from Peer " + stream.remotePeerId() + "\n" + neighbourMessage);
-        // TODO: We need to actually update our peer's infos on each message.
+        log.log(Level.FINE, "Received neighbour message from Peer " + peerId + "\n" + neighbourMessage);
+
+        if (neighbourMessage.getSetId().compareTo(peerInfo.getSetId()) < 0) {
+            //TODO: Lower the reputation of the peer.
+        }
+
+        if (neighbourMessage.getSetId().compareTo(peerInfo.getSetId()) == 0 &&
+                neighbourMessage.getRoundNumber().compareTo(peerInfo.getRoundNumber()) < 0) {
+            //TODO: Lower the reputation of the peer.
+        }
+        connectionManager.updatePeer(peerId, neighbourMessage);
 
         if (SyncMode.HEAD.equals(AbstractState.getSyncMode()) && AbstractState.isActiveAuthority()) {
-            grandpaMessageHandler.initiateAndSendCatchUpRequest(neighbourMessage, stream.remotePeerId());
+            grandpaMessageHandler.initiateAndSendCatchUpRequest(neighbourMessage, peerId);
         }
     }
 
