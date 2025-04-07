@@ -16,6 +16,7 @@ import com.limechain.storage.block.state.BlockState;
 import com.limechain.storage.crypto.KeyStore;
 import com.limechain.storage.crypto.KeyType;
 import io.emeraldpay.polkaj.types.Hash256;
+import jakarta.annotation.PreDestroy;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.java.Log;
@@ -70,13 +71,25 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
     }
 
     // persists data connected to the current round which may not be finalized
-    @Override
     public void persistState() {
+        GrandpaRound currentRound = getCurrentGrandpaRound();
+        BigInteger roundNumber = currentRound != null ? currentRound.getRoundNumber() : null;
+
+        if (roundNumber != null) {
+            repository.saveLatestRoundNumber(roundNumber);
+        }
+
+        if (authoritySet == null) {
+            return;
+        }
+
         repository.saveGrandpaAuthorities(authoritySet);
         repository.saveAuthoritySetId(authoritySet);
-        repository.saveLatestRoundNumber(getCurrentGrandpaRound().getRoundNumber());
-        repository.savePreCommits(authoritySet, getCurrentGrandpaRound());
-        repository.savePreVotes(authoritySet, getCurrentGrandpaRound());
+
+        if (roundNumber != null) {
+            repository.savePreCommits(authoritySet, currentRound);
+            repository.savePreVotes(authoritySet, currentRound);
+        }
     }
 
     // Persisting of the round data should happen when a round is finalized
