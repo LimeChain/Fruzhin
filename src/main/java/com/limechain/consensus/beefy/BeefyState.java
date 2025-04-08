@@ -13,6 +13,7 @@ import com.limechain.storage.block.state.BlockState;
 import com.limechain.storage.crypto.KeyStore;
 import com.limechain.storage.crypto.KeyType;
 import io.micrometer.common.lang.Nullable;
+import jakarta.annotation.PreDestroy;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -92,10 +93,13 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
     }
 
     @Override
+    @PreDestroy
     public void persistState() {
-        repository.saveAuthoritiesSetId(authoritySet);
-        repository.saveBeefyAuthorities(authoritySet);
-        repository.saveDisabledAuthority(authoritySet, disabledAuthority);
+        if (authoritySet != null) {
+            repository.saveAuthoritiesSetId(authoritySet);
+            repository.saveBeefyAuthorities(authoritySet);
+            repository.saveDisabledAuthority(authoritySet, disabledAuthority);
+        }
         repository.saveBeefyGenesis(beefyGenesis);
         repository.saveBeefyFinalized(beefyFinalized);
         repository.saveGrandpaFinalized(grandpaFinalized);
