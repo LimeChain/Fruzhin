@@ -110,12 +110,8 @@ public class BeefyRepository {
     }
 
     public void saveJustification(BigInteger blockNumber, SignedCommitment justification) {
-        if (justification != null) {
-            repository.save(
-                    StateUtil.generateBeefyJustificationKey(DBConstants.BEEFY_JUSTIFICATION, blockNumber),
-                    justification
-            );
-        }
+        String key = StateUtil.generateBeefyJustificationKey(DBConstants.BEEFY_JUSTIFICATION, blockNumber);
+        saveIfNotNull(val -> repository.save(key, val), justification);
     }
 
     private <T> void saveIfNotNull(Consumer<T> saveMethod, T value) {
