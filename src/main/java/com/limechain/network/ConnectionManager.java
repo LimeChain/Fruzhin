@@ -309,11 +309,21 @@ public class ConnectionManager {
     }
 
     public boolean checkIfPeerIsAuthorNode(PeerId peerId) {
-        return NodeRole.AUTHORING.getValue().equals(getPeerInfo(peerId).getNodeRole());
+        return Optional.ofNullable(getPeerInfo(peerId))
+                .map(peerInfo -> NodeRole.AUTHORING.getValue().equals(peerInfo.getNodeRole()))
+                .orElseGet(() -> {
+                    log.info(String.format("checkIfPeerIsAuthorNode: Peer %s is missing.", peerId));
+                    return false;
+                });
     }
 
     public boolean checkIfPeerIsLightNode(PeerId peerId) {
-        return NodeRole.LIGHT.getValue().equals(getPeerInfo(peerId).getNodeRole());
+        return Optional.ofNullable(getPeerInfo(peerId))
+                .map(peerInfo -> NodeRole.LIGHT.getValue().equals(peerInfo.getNodeRole()))
+                .orElseGet(() -> {
+                    log.info(String.format("checkIfPeerIsLightNode: Peer %s is missing.", peerId));
+                    return false;
+                });
     }
 
     private void closeProtocolStream(final ProtocolStreams streams) {

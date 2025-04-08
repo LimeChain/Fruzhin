@@ -17,8 +17,6 @@ import com.limechain.network.protocol.grandpa.messages.commit.CommitMessageScale
 import com.limechain.network.protocol.grandpa.messages.vote.VoteMessage;
 import com.limechain.network.protocol.grandpa.messages.vote.VoteMessageScaleWriter;
 import com.limechain.network.protocol.transaction.scale.TransactionWriter;
-import com.limechain.state.AbstractState;
-import com.limechain.sync.SyncMode;
 import com.limechain.transaction.dto.Extrinsic;
 import com.limechain.transaction.dto.ExtrinsicArray;
 import com.limechain.utils.async.AsyncExecutor;
@@ -69,11 +67,8 @@ public class PeerMessageCoordinator {
         });
     }
 
-    @Scheduled(fixedRate = 5, timeUnit = TimeUnit.MINUTES)
+    @Scheduled(fixedRate = 5, initialDelay = 5, timeUnit = TimeUnit.MINUTES)
     public void sendNeighborMessageToPeers() {
-        if (AbstractState.getSyncMode() != SyncMode.HEAD) {
-            return;
-        }
         sendMessageToActivePeers(peerId -> asyncExecutor.executeAndForget(() ->
                 network.getGrandpaService().sendNeighbourMessage(network.getHost(), peerId)));
     }

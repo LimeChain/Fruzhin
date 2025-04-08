@@ -119,10 +119,14 @@ public class GrandpaEngine implements BaseEngine {
      */
     public void writeNeighbourMessage(Stream stream, PeerId peerId) {
         PeerInfo peerInfo = connectionManager.getPeerInfo(peerId);
+        if (peerInfo == null) {
+            log.info(String.format("writeNeighbourMessage: Peer %s is missing.", peerId));
+            return;
+        }
+
         NeighbourMessage neighbourMessage = ProtocolMessageBuilder.buildNeighbourMessage();
 
-        boolean sameSetId = peerInfo.getSetId() != null
-                && neighbourMessage.getSetId().compareTo(peerInfo.getSetId()) == 0;
+        boolean sameSetId = neighbourMessage.getSetId().equals(peerInfo.getSetId());
 
         if (sameSetId && connectionManager.checkIfPeerIsLightNode(peerId)) {
             return;
@@ -236,13 +240,17 @@ public class GrandpaEngine implements BaseEngine {
 
         PeerId peerId = stream.remotePeerId();
         PeerInfo peerInfo = connectionManager.getPeerInfo(peerId);
+        if (peerInfo == null) {
+            log.info(String.format("handleNeighbourMessage: Peer %s is missing.", peerId));
+            return;
+        }
 
         NeighbourMessage neighbourMessage = ScaleUtils.Decode.decode(
                 message,
                 NeighbourMessageScaleReader.getInstance()
         );
 
-        log.log(Level.FINE, "Received neighbour message from Peer " + peerId + "\n" + neighbourMessage);
+        log.fine(String.format("Received neighbour message from Peer %s \n %s.", peerId, neighbourMessage));
 
         if (peerInfo.getSetId() != null && peerInfo.getRoundNumber() != null) {
             if (neighbourMessage.getSetId().compareTo(peerInfo.getSetId()) < 0) {

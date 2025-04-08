@@ -31,7 +31,6 @@ public class SyncService implements NodeService {
                     AbstractState.setSyncMode(SyncMode.HEAD);
                     messageCoordinator.handshakeBootNodes();
                     messageCoordinator.handshakePeers();
-                    messageCoordinator.sendNeighborMessageToPeers();
                 });
                 warpSyncMachine.start();
             }
