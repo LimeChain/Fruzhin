@@ -6,6 +6,7 @@ import com.limechain.network.dto.ProtocolStreams;
 import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.network.protocol.blockannounce.messages.BlockAnnounceHandshake;
 import com.limechain.network.protocol.blockannounce.messages.BlockAnnounceMessage;
+import com.limechain.network.protocol.grandpa.messages.neighbour.NeighbourMessage;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import io.libp2p.core.PeerId;
 import io.libp2p.core.Stream;
@@ -48,6 +49,7 @@ public class ConnectionManager {
 
     /**
      * Adds a Transaction stream to the peer info. Peer id is retrieved from the stream.
+     *
      * @param stream stream to be added
      */
     public void addTransactionsStream(Stream stream) {
@@ -74,6 +76,7 @@ public class ConnectionManager {
 
     /**
      * Adds a BEEFY stream to the peer info. Peer id is retrieved from the stream.
+     *
      * @param stream stream to be added
      */
     public void addBeefyStream(Stream stream) {
@@ -136,6 +139,7 @@ public class ConnectionManager {
 
     /**
      * Removes a BEEFY stream from the peer info. Peer id is retrieved from the stream
+     *
      * @param stream stream to be closed
      */
     public void closeBeefyStream(Stream stream) {
@@ -201,6 +205,24 @@ public class ConnectionManager {
     }
 
     /**
+     * Updates peer info (set id, round number and last finalized block) based on a Neighbor Message.
+     *
+     * @param peerId           peer to be updated
+     * @param neighbourMessage message
+     */
+    public void updatePeer(PeerId peerId, NeighbourMessage neighbourMessage) {
+        PeerInfo peerInfo = peers.get(peerId);
+        if (peerInfo == null) {
+            log.log(Level.WARNING, "Trying to update missing peer " + peerId);
+            return;
+        }
+
+        peerInfo.setSetId(neighbourMessage.getSetId());
+        peerInfo.setRoundNumber(neighbourMessage.getRoundNumber());
+        peerInfo.setLastFinalizedBlock(neighbourMessage.getLastFinalizedBlock());
+    }
+
+    /**
      * Checks if we have an open Transactions responder stream with a peer.
      *
      * @param peerId peer to check
@@ -232,6 +254,7 @@ public class ConnectionManager {
 
     /**
      * Checks if we have an open BEEFY responder steam with a peer
+     *
      * @param peerId peer to check
      * @return do peer info and BEEFY responder steam exist
      */
@@ -285,6 +308,24 @@ public class ConnectionManager {
         log.info(String.format("removePeer: removed %s", peerId));
     }
 
+    public boolean checkIfPeerIsAuthorNode(PeerId peerId) {
+        return Optional.ofNullable(getPeerInfo(peerId))
+                .map(peerInfo -> NodeRole.AUTHORING.getValue().equals(peerInfo.getNodeRole()))
+                .orElseGet(() -> {
+                    log.info(String.format("checkIfPeerIsAuthorNode: Peer %s is missing.", peerId));
+                    return false;
+                });
+    }
+
+    public boolean checkIfPeerIsLightNode(PeerId peerId) {
+        return Optional.ofNullable(getPeerInfo(peerId))
+                .map(peerInfo -> NodeRole.LIGHT.getValue().equals(peerInfo.getNodeRole()))
+                .orElseGet(() -> {
+                    log.info(String.format("checkIfPeerIsLightNode: Peer %s is missing.", peerId));
+                    return false;
+                });
+    }
+
     private void closeProtocolStream(final ProtocolStreams streams) {
         if (streams == null) return;
         if (streams.getInitiator() != null) {
@@ -293,9 +334,5 @@ public class ConnectionManager {
         if (streams.getResponder() != null) {
             streams.getResponder().close();
         }
-    }
-
-    public boolean checkIfPeerIsAuthorNode(PeerId peerId) {
-        return NodeRole.AUTHORING.getValue().equals(getPeerInfo(peerId).getNodeRole());
     }
 }

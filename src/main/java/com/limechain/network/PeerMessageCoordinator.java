@@ -68,7 +68,7 @@ public class PeerMessageCoordinator {
     }
 
     @Scheduled(fixedRate = 5, initialDelay = 5, timeUnit = TimeUnit.MINUTES)
-    public void sendMessagesToPeers() {
+    public void sendNeighborMessageToPeers() {
         sendMessageToActivePeers(peerId -> asyncExecutor.executeAndForget(() ->
                 network.getGrandpaService().sendNeighbourMessage(network.getHost(), peerId)));
     }

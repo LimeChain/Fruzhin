@@ -421,6 +421,8 @@ public class GrandpaRound {
                 onFinalizeHandler.run();
             }
 
+            peerMessageCoordinator.sendNeighborMessageToPeers();
+
             FinalizedBlockChangeEvent event = new FinalizedBlockChangeEvent(
                     this, blockHeaders, finalizedBlock);
             finalizedBlockChangeListener.finalizedBlockChanged(event);

@@ -14,9 +14,9 @@ public class StartStage implements StageState {
 
         log.fine(String.format("Round %d started.", round.getRoundNumber()));
 
-        // TODO: Send neighbor message.
-
         round.setStartTime(Instant.now());
+
+        round.getPeerMessageCoordinator().sendNeighborMessageToPeers();
 
         GrandpaRound previous = round.getPrevious();
         if (round.isPrimaryVoter() && previous != null) {

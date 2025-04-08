@@ -25,7 +25,11 @@ public class PeerInfo {
     private Hash256 genesisBlockHash;
     private BigInteger latestBlock = BigInteger.ZERO;
 
-    public String getNodeRoleName(){
+    private BigInteger setId;
+    private BigInteger roundNumber;
+    private BigInteger lastFinalizedBlock;
+
+    public String getNodeRoleName() {
         return Arrays
                 .stream(NodeRole.values())
                 .filter(role -> role.getValue() == nodeRole)
@@ -42,5 +46,4 @@ public class PeerInfo {
             case BEEFY -> beefyStreams;
         };
     }
-
 }

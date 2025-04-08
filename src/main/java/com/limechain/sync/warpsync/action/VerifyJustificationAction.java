@@ -1,7 +1,6 @@
 package com.limechain.sync.warpsync.action;
 
 import com.limechain.exception.sync.JustificationVerificationException;
-import com.limechain.network.PeerMessageCoordinator;
 import com.limechain.network.protocol.warp.DigestHelper;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.network.protocol.warp.dto.WarpSyncFragment;
@@ -23,12 +22,10 @@ public class VerifyJustificationAction implements WarpSyncAction {
     private final WarpSyncState warpSyncState;
     private final StateManager stateManager;
     private Exception error;
-    private final PeerMessageCoordinator messageCoordinator;
 
     public VerifyJustificationAction() {
         this.stateManager = AppBean.getBean(StateManager.class);
         this.warpSyncState = AppBean.getBean(WarpSyncState.class);
-        this.messageCoordinator = AppBean.getBean(PeerMessageCoordinator.class);
     }
 
     @Override
@@ -53,15 +50,11 @@ public class VerifyJustificationAction implements WarpSyncAction {
         try {
 
             // Executes scheduled or forced authority changes for the last finalized block.
-            boolean changeInAuthoritySet = stateManager.getGrandpaSetState()
+            stateManager.getGrandpaSetState()
                     .applyAuthoritySetChange(
                             stateManager.getSyncState().getLastFinalizedBlockHash(),
                             stateManager.getSyncState().getLastFinalizedBlockNumber()
                     );
-
-            if (warpSyncState.isWarpSyncFinished() && changeInAuthoritySet) {
-                new Thread(messageCoordinator::sendMessagesToPeers).start();
-            }
 
             WarpSyncFragment fragment = sync.getFragmentsQueue().poll();
             log.log(Level.INFO, "Verifying justification...");

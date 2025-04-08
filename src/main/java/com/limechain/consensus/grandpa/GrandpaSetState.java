@@ -9,6 +9,7 @@ import com.limechain.consensus.grandpa.dto.GrandpaAuthoritySet;
 import com.limechain.consensus.grandpa.dto.message.GrandpaConsensusMessage;
 import com.limechain.consensus.grandpa.round.GrandpaRound;
 import com.limechain.exception.grandpa.GrandpaGenericException;
+import com.limechain.network.PeerMessageCoordinator;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.runtime.Runtime;
 import com.limechain.state.AbstractState;
@@ -43,6 +44,7 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
 
     private static final BigInteger THRESHOLD_DENOMINATOR = BigInteger.valueOf(3);
     private static final BigInteger SET_CHANGES_MAX = BigInteger.valueOf(3);
+    private final PeerMessageCoordinator peerMessageCoordinator;
 
     private GrandpaRound currentGrandpaRound;
 
@@ -148,6 +150,8 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
         pastSetChanges.put(effectiveNumber, authoritySet);
 
         log.log(Level.INFO, "Successfully transitioned to authority set id: " + authoritySet.getSetId());
+
+        peerMessageCoordinator.sendNeighborMessageToPeers();
     }
 
     public void setLightSyncState(LightSyncState initState) {
