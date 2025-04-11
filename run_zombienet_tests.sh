@@ -22,21 +22,18 @@ echo ""
 echo "🔧 Applying local dev setup (chainspec copy)..."
 bash ./local_dev.sh
 
-echo ""
-echo "🧟 Running Zombienet test: 0001"
-nix run github:paritytech/zombienet -- test -p native ./zombienet/0001-light-client-header-verification.zndsl
+tests=(
+  "0001-light-client-header-verification.zndsl"
+  "0002-peer-discovery.zndsl"
+  "0003-block-execution.zndsl"
+)
 
-echo ""
-echo "🧟 Running Zombienet test: 0002"
-nix run github:paritytech/zombienet -- test -p native ./zombienet/0002-peer-discovery.zndsl
-
-echo ""
-echo "🧟 Running Zombienet test: 0003"
-nix run github:paritytech/zombienet -- test -p native ./zombienet/0003-block-execution.zndsl
+for test in "${tests[@]}"; do
+  echo ""
+  echo "🧟 Running Zombienet test: $test"
+  nix run github:paritytech/zombienet -- test -p native ./zombienet/"$test"
+done
 
 echo ""
 echo "🧹 Shutting down Substrate node..."
 docker stop substrate-node
-
-echo ""
-echo "✅ All tests complete. Node container stopped."
