@@ -50,6 +50,7 @@ public class Cli {
     private static final String RPC_PORT = "rpc-port";
     private static final String LISTEN_ADDRESS = "listen-addr";
     private static final String BASE_PATH = "base-path";
+    public static final String UNSAFE_RPC_EXTERNAL = "unsafe-rpc-external";
     /**
      * Holds CLI options
      */
@@ -169,6 +170,8 @@ public class Cli {
         Option rpcPort = new Option(null, RPC_PORT, true, "");
         Option listenAddress = new Option(null, LISTEN_ADDRESS, true, "");
         Option basePath = new Option(null, BASE_PATH, true, "");
+        Option unsafeRpcExternalOption = new Option(null, UNSAFE_RPC_EXTERNAL, false, "");
+
 
         networkOption.setRequired(false);
         dbPathOption.setRequired(false);
@@ -190,6 +193,8 @@ public class Cli {
         rpcPort.setRequired(false);
         listenAddress.setRequired(false);
         basePath.setRequired(false);
+        unsafeRpcExternalOption.setRequired(false);
+
 
         result.addOption(networkOption);
         result.addOption(dbPathOption);
@@ -211,6 +216,8 @@ public class Cli {
         result.addOption(rpcPort);
         result.addOption(listenAddress);
         result.addOption(basePath);
+        result.addOption(unsafeRpcExternalOption);
+
         return result;
     }
 

@@ -1,7 +1,7 @@
 [relaychain]
 chain = "westend-local"
 default_command = "java -jar build/libs/fruzhin-0.1.0.jar"
-default_args = ["-n westend -dbc --node-mode light"]
+default_args = ["-n westend -dbc --node-mode light --sync-mode warp"]
 chain_spec_path = "genesis/westend-raw.json"
 
 [[relaychain.nodes]]
