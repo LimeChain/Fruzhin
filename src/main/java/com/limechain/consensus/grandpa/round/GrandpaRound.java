@@ -28,6 +28,7 @@ import com.limechain.rpc.server.AppBean;
 import com.limechain.state.AbstractState;
 import com.limechain.state.StateManager;
 import com.limechain.storage.block.state.BlockState;
+import com.limechain.sync.state.SyncState;
 import com.limechain.utils.Ed25519Utils;
 import com.limechain.utils.async.AsyncExecutor;
 import com.limechain.utils.scale.ScaleUtils;
@@ -422,6 +423,9 @@ public class GrandpaRound {
             }
 
             peerMessageCoordinator.sendNeighborMessageToPeers();
+
+            SyncState syncState = stateManager.getSyncState();
+            syncState.finalizeHeader(finalizedBlock);
 
             FinalizedBlockChangeEvent event = new FinalizedBlockChangeEvent(
                     this, blockHeaders, finalizedBlock);
