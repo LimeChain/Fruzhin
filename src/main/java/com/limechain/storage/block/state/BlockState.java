@@ -14,6 +14,7 @@ import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.network.protocol.warp.dto.Justification;
 import com.limechain.network.protocol.warp.scale.reader.BlockBodyReader;
 import com.limechain.network.protocol.warp.scale.writer.BlockBodyWriter;
+import com.limechain.prometheus.PrometheusServer;
 import com.limechain.rpc.subscriptions.chainsub.ChainSub;
 import com.limechain.runtime.Runtime;
 import com.limechain.state.AbstractState;
@@ -53,14 +54,20 @@ public class BlockState extends AbstractState {
     private final Map<Hash256, Block> unfinalizedBlocks;
     private final Map<Hash256, Justification> justifications;
     private final BlockHeader genesisBlockHeader;
+    private final PrometheusServer prometheusServer;
+
     private BlockTree blockTree;
     private Hash256 lastFinalized;
 
-    public BlockState(KVRepository<String, Object> db, GenesisBlockHash genesisBlockHash) {
+    public BlockState(KVRepository<String, Object> db,
+                      GenesisBlockHash genesisBlockHash,
+                      PrometheusServer prometheusServer) {
+
         this.db = db;
-        unfinalizedBlocks = new HashMap<>();
-        justifications = new HashMap<>();
-        genesisBlockHeader = genesisBlockHash.getGenesisBlockHeader();
+        this.prometheusServer = prometheusServer;
+        this.unfinalizedBlocks = new HashMap<>();
+        this.justifications = new HashMap<>();
+        this.genesisBlockHeader = genesisBlockHash.getGenesisBlockHeader();
     }
 
     @Override
@@ -362,7 +369,9 @@ public class BlockState extends AbstractState {
 
         if (!unfinalizedBlocks.containsKey(block.getHeader().getHash())) {
             ChainSub.getInstance().notifyNewChainHead(block.getHeader());
+            prometheusServer.emitBestBlock(block.getHeader().getBlockNumber());
         }
+
         // Store block in unfinalized blocks
         unfinalizedBlocks.put(block.getHeader().getHash(), block);
     }

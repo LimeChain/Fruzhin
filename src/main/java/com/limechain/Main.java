@@ -5,7 +5,6 @@ import com.limechain.client.FullNode;
 import com.limechain.client.HostNode;
 import com.limechain.client.LightClient;
 import com.limechain.config.HostConfig;
-import com.limechain.exception.misc.PrometheusServerStartException;
 import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.prometheus.PrometheusServer;
 import com.limechain.rpc.server.AppBean;
@@ -26,12 +25,8 @@ public class Main {
 
         HostConfig hostConfig = AppBean.getBean(HostConfig.class);
 
-        PrometheusServer prometheusServer = new PrometheusServer(hostConfig.getPrometheusPort());
-        try {
-            prometheusServer.start();
-        } catch (IOException e) {
-            throw new PrometheusServerStartException(e);
-        }
+        PrometheusServer prometheusServer = AppBean.getBean(PrometheusServer.class);
+        prometheusServer.start();
 
         // Figure out what client role we want to start
         final NodeRole nodeRole = hostConfig.getNodeRole();
@@ -52,7 +47,6 @@ public class Main {
             }
         }
 
-        prometheusServer.emitStartTime();
         // Start the client
         // NOTE: This starts the beans the client would need - mutates the global context
         client.start();
