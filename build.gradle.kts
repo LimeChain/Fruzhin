@@ -25,7 +25,7 @@ dependencies {
     implementation("org.rocksdb:rocksdbjni:9.10.0")
     compileOnly("org.projectlombok:lombok:1.18.38")
     implementation("org.projectlombok:lombok:1.18.38")
-    implementation("org.web3j:crypto:4.13.0")
+    implementation("org.web3j:crypto:4.14.0")
     implementation("com.dylibso.chicory:wasm:0.0.12")
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.12.2")
