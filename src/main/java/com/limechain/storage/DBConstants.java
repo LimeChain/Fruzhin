@@ -40,6 +40,11 @@ public class DBConstants {
     public static final String LATEST_ROUND = "gs::latestRound";
     public static final String GRANDPA_PREVOTES = "gs:grandpaPreVotes";
     public static final String GRANDPA_PRECOMMITS = "gs:grandpaPreCommits";
+    public static final String GRANDPA_PRECOMMIT_EQUIVOCATIONS = "gs:grandpaPreVoteEquivocations";
+    public static final String GRANDPA_PREVOTE_EQUIVOCATIONS = "gs:grandpaPreCommitEquivocations";
+    public static final String GRANDPA_PRIMARY_VOTE = "gs:grandpaPrimaryVote";
+    public static final String GRANDPA_IS_PRIMARY_VOTER = "gs:grandpaIsPrimaryVoter";
+    public static final String LAST_FINALIZED_BLOCK = "ss::lastFinalizedBlock";
 
     //BeefyState keys
     public static final String BEEFY_AUTHORITY_SET = "gs::beefyAuthoritySet";

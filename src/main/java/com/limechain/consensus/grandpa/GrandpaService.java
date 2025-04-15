@@ -103,11 +103,16 @@ public class GrandpaService {
 
         if (lastFinalized.getBlockNumber().compareTo(BigInteger.ZERO) > 0) {
             Optional<Justification> justificationOpt = blockState.getJustification(lastFinalized.getHash());
-            justificationOpt.ifPresent(justification -> {
-                if (!isFirstBlockOfSet(lastFinalized.getBlockNumber())) {
-                    stateBuilder.roundNumber(justification.getRoundNumber().add(BigInteger.ONE));
-                }
-            });
+
+            if (justificationOpt.isEmpty()) {
+                playCurrentRound();
+                return;
+            }
+
+            Justification justification = justificationOpt.get();
+            if (!isFirstBlockOfSet(lastFinalized.getBlockNumber())) {
+                stateBuilder.roundNumber(justification.getRoundNumber().add(BigInteger.ONE));
+            }
         }
 
         GrandpaRound currentRound = createInitialRound(stateBuilder.build());

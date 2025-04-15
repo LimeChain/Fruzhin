@@ -13,6 +13,7 @@ import com.limechain.storage.DBConstants;
 import com.limechain.storage.KVRepository;
 import com.limechain.storage.block.state.BlockState;
 import io.emeraldpay.polkaj.types.Hash256;
+import jakarta.annotation.PreDestroy;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.java.Log;
@@ -66,15 +67,17 @@ public class SyncState extends AbstractState {
     }
 
     private void loadFromDatabase() {
+        this.genesisBlockHash = genesisBlockHashCalculator.getGenesisHash();
         this.lastFinalizedBlockNumber = repository.find(DBConstants.LAST_FINALIZED_BLOCK_NUMBER, BigInteger.ZERO);
-        this.lastFinalizedBlockHash = new Hash256(
-                repository.find(DBConstants.LAST_FINALIZED_BLOCK_HASH, genesisBlockHash.getBytes()));
-        byte[] stateRootBytes = repository.find(DBConstants.STATE_ROOT, null);
-        this.stateRoot = stateRootBytes != null ? new Hash256(stateRootBytes) : genesisBlockHashCalculator
+        this.lastFinalizedBlockHash = repository.find(DBConstants.LAST_FINALIZED_BLOCK_HASH,
+                        genesisBlockHashCalculator.getGenesisHash());
+        Hash256 stateRootBytes = repository.find(DBConstants.STATE_ROOT, null);
+        this.stateRoot = stateRootBytes != null ? stateRootBytes : genesisBlockHashCalculator
                 .getGenesisBlockHeader().getStateRoot();
     }
 
     @Override
+    @PreDestroy
     public void persistState() {
         repository.save(DBConstants.LAST_FINALIZED_BLOCK_NUMBER, lastFinalizedBlockNumber);
         repository.save(DBConstants.LAST_FINALIZED_BLOCK_HASH, lastFinalizedBlockHash);
@@ -85,6 +88,7 @@ public class SyncState extends AbstractState {
         this.lastFinalizedBlockNumber = header.getBlockNumber();
         this.lastFinalizedBlockHash = header.getHash();
         this.stateRoot = header.getStateRoot();
+        persistState();
     }
 
     public void finalizedCommitMessage(CommitMessage commitMessage) {

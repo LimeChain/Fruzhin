@@ -6,6 +6,9 @@ import com.limechain.chain.lightsyncstate.PendingChange;
 import com.limechain.consensus.dto.Authority;
 import com.limechain.consensus.grandpa.dto.AuthoritySetChangeHandler;
 import com.limechain.consensus.grandpa.dto.GrandpaAuthoritySet;
+import com.limechain.consensus.grandpa.dto.RoundState;
+import com.limechain.consensus.grandpa.dto.SignedVote;
+import com.limechain.consensus.grandpa.dto.Vote;
 import com.limechain.consensus.grandpa.dto.message.GrandpaConsensusMessage;
 import com.limechain.consensus.grandpa.round.GrandpaRound;
 import com.limechain.exception.grandpa.GrandpaGenericException;
@@ -94,16 +97,28 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
             repository.savePreCommits(authoritySet, currentRound);
             repository.savePreVotes(authoritySet, currentRound);
         }
+
+        persistRound(authoritySet, roundNumber);
     }
 
     // Persisting of the round data should happen when a round is finalized
     // Round 0 from every set is finalized instantly after creation
     public void persistFinalizedRoundState(BigInteger roundNumber) {
         repository.saveLatestRoundNumber(roundNumber);
+        persistRound(authoritySet, roundNumber);
+    }
 
-        GrandpaRound grandpaRound = getGrandpaRound(roundNumber);
-        repository.savePreCommits(authoritySet, grandpaRound);
-        repository.savePreVotes(authoritySet, grandpaRound);
+    private void persistRound(GrandpaAuthoritySet authoritySet, BigInteger roundNumber) {
+        GrandpaRound round = getGrandpaRound(roundNumber);
+        if (round == null) return;
+
+        repository.savePreVotes(authoritySet, round);
+        repository.savePreCommits(authoritySet, round);
+        repository.savePreVoteEquivocations(authoritySet, round);
+        repository.savePreCommitEquivocations(authoritySet, round);
+        repository.savePrimaryVote(authoritySet, round);
+        repository.saveIsPrimaryVoter(authoritySet, round);
+        repository.saveLastFinalizedBlock(authoritySet, round);
     }
 
     // persists set data into the database
@@ -313,6 +328,36 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
     private void loadPersistedState() {
         authoritySet.setSetId(repository.fetchAuthoritiesSetId());
         authoritySet.setAuthorities(Arrays.asList(repository.fetchGrandpaAuthorities(authoritySet)));
+        BigInteger latestRoundNumber = repository.fetchLatestRoundNumber();
+        Vote primaryVote = repository.fetchPrimaryVote(authoritySet, latestRoundNumber);
+        boolean isPrimaryVoter = repository.fetchIsPrimaryVoter(authoritySet, latestRoundNumber) != null;
+        Map<Hash256, SignedVote> preVotes = repository.fetchPreVotes(authoritySet, latestRoundNumber);
+        Map<Hash256, SignedVote> preCommits = repository.fetchPreCommits(authoritySet, latestRoundNumber);
+        Map<Hash256, List<SignedVote>> preVoteEquivocations = repository.fetchPreVoteEquivocations(authoritySet,
+                latestRoundNumber);
+        Map<Hash256, List<SignedVote>> preCommitEquivocations = repository.fetchPreCommitEquivocations(authoritySet,
+                latestRoundNumber);
+        BlockHeader lastFinalized = repository.fetchLastFinalizedBlock(authoritySet, latestRoundNumber);
+
+        RoundState.RoundStateBuilder stateBuilder = RoundState.builder()
+                .roundNumber(BigInteger.ONE)
+                .lastFinalizedBlock(lastFinalized)
+                .authoritySet(authoritySet);
+
+        GrandpaRound loadedGrandpaRound = new GrandpaRound(stateBuilder.build(),
+                getThreshold(authoritySet.getAuthorities()),
+                isPrimaryVoter);
+
+        if (isPrimaryVoter) {
+            loadedGrandpaRound.setPrimaryVote(primaryVote);
+        }
+
+        loadedGrandpaRound.setPreCommits(preCommits);
+        loadedGrandpaRound.setPreVotes(preVotes);
+        loadedGrandpaRound.setPcEquivocations(preCommitEquivocations);
+        loadedGrandpaRound.setPvEquivocations(preVoteEquivocations);
+
+        this.currentGrandpaRound = loadedGrandpaRound;
     }
 
     private void updateAuthorityStatus() {
