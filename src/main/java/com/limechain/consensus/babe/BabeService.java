@@ -256,7 +256,9 @@ public class BabeService implements SlotChangeListener {
             throw new BlockStorageGenericException("Could not get best block header");
         }
 
-        boolean parentIsGenesis = blockState.getGenesisBlockHeader().getHash().equals(parentHeader.getHash());
+        boolean parentIsGenesis = blockState.getGenesisBlockHash().getGenesisHash()
+                .equals(parentHeader.getHash());
+
         if (!parentIsGenesis) {
             BigInteger bestBlockSlotNum = DigestHelper.getBabePreRuntimeDigest(parentHeader.getDigest())
                     .orElseThrow(() ->

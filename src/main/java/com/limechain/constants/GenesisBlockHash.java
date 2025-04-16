@@ -2,6 +2,7 @@ package com.limechain.constants;
 
 import com.google.protobuf.ByteString;
 import com.limechain.chain.ChainService;
+import com.limechain.exception.global.RuntimeCodeException;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.network.protocol.warp.dto.HeaderDigest;
 import com.limechain.trie.TrieStructureFactory;
@@ -14,6 +15,7 @@ import lombok.Getter;
 import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 /**
@@ -54,6 +56,18 @@ public class GenesisBlockHash {
         blockHeader.setDigest(new HeaderDigest[0]);
 
         return blockHeader;
+    }
+
+    public byte[] getRuntimeWasmFromGenesis() {
+        //TODO: change this to one of other used :code examples
+        ByteString key = ByteString.copyFrom(":code".getBytes(StandardCharsets.UTF_8));
+        ByteString wasm = genesisStorage.get(key);
+
+        if (wasm == null) {
+            throw new RuntimeCodeException("Genesis storage is missing the :code key");
+        }
+
+        return wasm.toByteArray();
     }
 
     /**
