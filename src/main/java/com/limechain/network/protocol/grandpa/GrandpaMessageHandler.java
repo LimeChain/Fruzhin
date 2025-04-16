@@ -10,8 +10,6 @@ import com.limechain.consensus.grandpa.dto.Vote;
 import com.limechain.consensus.grandpa.dto.runtime.GrandpaEquivocation;
 import com.limechain.consensus.grandpa.round.GrandpaRound;
 import com.limechain.exception.grandpa.GrandpaGenericException;
-import com.limechain.exception.storage.HeaderNotFoundException;
-import com.limechain.exception.storage.LowerThanRootException;
 import com.limechain.exception.sync.JustificationVerificationException;
 import com.limechain.network.PeerMessageCoordinator;
 import com.limechain.network.protocol.grandpa.messages.catchup.req.CatchUpReqMessage;
@@ -32,7 +30,6 @@ import com.limechain.state.StateManager;
 import com.limechain.storage.block.state.BlockState;
 import com.limechain.sync.JustificationVerifier;
 import com.limechain.sync.SyncMode;
-import com.limechain.sync.state.SyncState;
 import com.limechain.utils.Ed25519Utils;
 import com.limechain.utils.async.AsyncExecutor;
 import com.limechain.utils.scale.ScaleUtils;
@@ -88,7 +85,6 @@ public class GrandpaMessageHandler {
             throw new GrandpaGenericException("Vote message has a different setId.");
         }
 
-        // TODO: If we're not an active authority no round will be playing. We should only verify and broadcast.
         BigInteger voteMessageRoundNumber = voteMessage.getRound();
 
         GrandpaRound currentRound = grandpaSetState.getCurrentGrandpaRound();
@@ -184,83 +180,31 @@ public class GrandpaMessageHandler {
         }
 
         if (!SyncMode.HEAD.equals(AbstractState.getSyncMode())) {
-            handleCommitPreHead(commitMessage);
-        } else {
-            handleCommitAtHead(commitMessage);
-        }
-    }
 
-    /**
-     * Handles commit messages during the process of syncing.<br>
-     * If the block from the commit message is present in the block tree it is finalized, otherwise the best block is
-     * finalized since it is an ancestor of the one in the message. This is only always true during syncing.
-     *
-     * @param commitMessage the message received via the grandpa sub-stream.
-     */
-    private void handleCommitPreHead(CommitMessage commitMessage) {
-
-        BlockState blockState = stateManager.getBlockState();
-        SyncState syncState = stateManager.getSyncState();
-
-        if (!blockState.hasHeader(commitMessage.getVote().getBlockHash())) {
-
-            BlockHeader bestBlockHeader;
-            try {
-
-                bestBlockHeader = blockState.bestBlockHeader();
-                blockState.setFinalizedHash(bestBlockHeader,
-                        null,
-                        stateManager.getGrandpaSetState().getAuthoritySet().getSetId());
-                syncState.finalizeHeader(bestBlockHeader);
-
-                // TODO: Remove this when FinalizationHandler (responsible for sending events on block finalization) is implemented.
-                stateManager.getGrandpaSetState()
-                        .applyAuthoritySetChange(
-                                bestBlockHeader.getHash(),
-                                bestBlockHeader.getBlockNumber()
-                        );
-
-                log.info(String.format(
-                        "handleCommitPreHead: Commit block #%d not in tree. Finalized best block with #%d and hash %s",
-                        commitMessage.getVote().getBlockNumber(),
-                        bestBlockHeader.getBlockNumber(),
-                        bestBlockHeader.getHash()));
-
-            } catch (HeaderNotFoundException e) {
-                log.warning("handleCommitPreHead: No block header found for best block.");
+            if (stateManager.getBlockState().getJustifications().containsKey(commitMessage.getVote().getBlockHash())) {
+                log.fine("handleCommitMessage: Skipping...");
                 return;
-            } catch (LowerThanRootException e) {
-                log.warning("handleCommitPreHead: Lower than root exception for best block.");
             }
 
-            blockState.getJustifications()
+            log.fine(String.format("handleCommitMessage: Adding justification for block #%d with has %s",
+                    commitMessage.getVote().getBlockNumber(),
+                    commitMessage.getVote().getBlockHash()));
+            stateManager.getBlockState().getJustifications()
                     .put(commitMessage.getVote().getBlockHash(), Justification.fromCommitMessage(commitMessage));
-
-            return;
+        } else {
+            log.fine(String.format("handleCommitMessage: Finalizing commit message for round #%d and block #%d",
+                    commitMessage.getRoundNumber(),
+                    commitMessage.getVote().getBlockNumber()));
+            finalizeCommitMessage(commitMessage);
         }
-
-        syncState.finalizedCommitMessage(commitMessage);
-        log.info(String.format(
-                "handleCommitPreHead: Finalized block with #%d and hash %s",
-                commitMessage.getVote().getBlockNumber(), commitMessage.getVote().getBlockHash()));
     }
 
-    /**
-     * Handles commit messages when the node is at the head of the chain.<br>
-     *
-     * @param commitMessage the message
-     */
-    private void handleCommitAtHead(CommitMessage commitMessage) {
-
-        if (AbstractState.isActiveAuthority()) {
-            // TODO: When we receive a grandpa justification we should apply it and create an appropriate round.
-            return;
+    private void finalizeCommitMessage(CommitMessage commitMessage) {
+        try {
+            grandpaService.finalizeJustification(Justification.fromCommitMessage(commitMessage));
+        } catch (GrandpaGenericException e) {
+            log.warning(String.format("handleCommitPreHead: %s", e.getMessage()));
         }
-
-        stateManager.getSyncState().finalizedCommitMessage(commitMessage);
-        log.fine(String.format(
-                "handleCommitAtHead: Finalized block with #%d and hash %s",
-                commitMessage.getVote().getBlockNumber(), commitMessage.getVote().getBlockHash()));
     }
 
     /**
@@ -376,7 +320,7 @@ public class GrandpaMessageHandler {
             RoundState roundState = RoundState.builder()
                     .roundNumber(catchUpResMessage.getRoundNumber())
                     .lastFinalizedBlock(round.getLastFinalizedBlock())
-                    .finalizedBlock(BlockHeader.fromHash(catchUpResMessage.getBlockHash()))
+                    .finalizedBlock(blockState.getHeader(catchUpResMessage.getBlockHash()))
                     .build();
 
             Optional<GrandpaAuthoritySet> authSetOpt = grandpaService.getAuthoritiesForBlock(
@@ -514,18 +458,18 @@ public class GrandpaMessageHandler {
                 );
     }
 
-    private void setPreVotesAndPvEquivocations(GrandpaRound grandpaRound, SignedVote[] votes) {
+    public static void setPreVotesAndPvEquivocations(GrandpaRound grandpaRound, SignedVote[] votes) {
         setVotesAndEquivocations(grandpaRound, votes, GrandpaRound::setPreVotes, GrandpaRound::setPvEquivocations);
     }
 
-    private void setPreCommitsAndPcEquivocations(GrandpaRound grandpaRound, SignedVote[] votes) {
+    public static void setPreCommitsAndPcEquivocations(GrandpaRound grandpaRound, SignedVote[] votes) {
         setVotesAndEquivocations(grandpaRound, votes, GrandpaRound::setPreCommits, GrandpaRound::setPcEquivocations);
     }
 
-    private void setVotesAndEquivocations(GrandpaRound grandpaRound,
-                                          SignedVote[] votes,
-                                          BiConsumer<GrandpaRound, Map<Hash256, SignedVote>> setUniqueVotes,
-                                          BiConsumer<GrandpaRound, Map<Hash256, List<SignedVote>>> setEquivocations) {
+    private static void setVotesAndEquivocations(GrandpaRound grandpaRound,
+                                                 SignedVote[] votes,
+                                                 BiConsumer<GrandpaRound, Map<Hash256, SignedVote>> setUniqueVotes,
+                                                 BiConsumer<GrandpaRound, Map<Hash256, List<SignedVote>>> setEquivocations) {
 
         // Group votes by AuthorityPublicKey
         Map<Hash256, List<SignedVote>> voteCount = Arrays.stream(votes)

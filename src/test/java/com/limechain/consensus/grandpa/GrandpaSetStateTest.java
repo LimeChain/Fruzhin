@@ -1,5 +1,6 @@
 package com.limechain.consensus.grandpa;
 
+import com.limechain.chain.lightsyncstate.PendingChange;
 import com.limechain.consensus.dto.Authority;
 import com.limechain.network.PeerMessageCoordinator;
 import com.limechain.storage.block.state.BlockState;
@@ -52,7 +53,7 @@ class GrandpaSetStateTest {
                 authority6, authority7, authority8, authority9, authority10
         );
 
-        grandpaSetState.startNewSet(BigInteger.ONE, authorities);
+        grandpaSetState.startNewSet(new PendingChange(), authorities);
 
         // Total weight: 10
         // Faulty: (10 - 1) / 3 = 3
@@ -67,7 +68,7 @@ class GrandpaSetStateTest {
         Authority authority3 = new Authority(Ed25519Utils.generateKeyPair().publicKey().bytes(), BigInteger.ONE);
 
         grandpaSetState.startNewSet(
-                BigInteger.ONE,
+                new PendingChange(),
                 List.of(authority1, authority2, authority3)
         );
 

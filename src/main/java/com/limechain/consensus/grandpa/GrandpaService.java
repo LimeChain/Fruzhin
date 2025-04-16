@@ -4,13 +4,17 @@ import com.limechain.consensus.grandpa.dto.GrandpaAuthoritySet;
 import com.limechain.consensus.grandpa.dto.RoundState;
 import com.limechain.consensus.grandpa.round.GrandpaRound;
 import com.limechain.exception.grandpa.GrandpaGenericException;
+import com.limechain.exception.grandpa.GrandpaJustificationException;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.network.protocol.warp.dto.Justification;
 import com.limechain.state.AbstractState;
 import com.limechain.state.StateManager;
 import com.limechain.storage.block.state.BlockState;
+import io.emeraldpay.polkaj.types.Hash256;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.java.Log;
+import org.javatuples.Pair;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
@@ -70,9 +74,10 @@ public class GrandpaService {
 
         GrandpaSetState grandpaSetState = stateManager.getGrandpaSetState();
 
-        for (Map.Entry<BigInteger, GrandpaAuthoritySet> entry : grandpaSetState.getPastSetChanges().entrySet()) {
+        for (Map.Entry<Pair<Hash256, BigInteger>, GrandpaAuthoritySet> entry :
+                grandpaSetState.getSetChanges().entrySet()) {
 
-            if (entry.getKey().compareTo(blockNumber) <= 0) {
+            if (entry.getKey().getValue1().compareTo(blockNumber) <= 0) {
                 authorities = entry.getValue();
             } else {
                 break;
@@ -80,6 +85,100 @@ public class GrandpaService {
         }
 
         return Optional.ofNullable(authorities);
+    }
+
+    public void finalizeJustification(Justification justification) {
+
+        GrandpaSetState grandpaSetState = stateManager.getGrandpaSetState();
+        BlockState blockState = stateManager.getBlockState();
+
+        Optional<GrandpaAuthoritySet> authoritiesOptional = getAuthoritiesForBlock(justification.getTargetBlock());
+        if (authoritiesOptional.isEmpty()) {
+            throw new GrandpaJustificationException(String.format("No grandpa authorities found for block: %d",
+                    justification.getTargetBlock()));
+        }
+
+        GrandpaAuthoritySet authoritiesForBlock = authoritiesOptional.get();
+        GrandpaRound justificationRound = grandpaSetState.getGrandpaRound(justification.getRoundNumber());
+
+        // If there is an ongoing round for the received justification we can directly proceed to finalizing it.
+        // Otherwise, we have 2 options:
+        // We have an ongoing round whose number is equal to the received justification's number - 1.
+        // We don't find a round that corresponds to the justification, nor it's previous number.
+        boolean shouldUpdateCurrentRound = false;
+        if (justificationRound == null) {
+            log.info("finalizeJustification: No round for justification.");
+            BlockHeader lastFinalized = blockState.getHighestFinalizedHeader();
+            if (lastFinalized.getBlockNumber().compareTo(justification.getTargetBlock()) > 0) {
+                throw new GrandpaJustificationException("Trying to apply grandpa justification for past block.");
+            }
+
+            GrandpaRound previousRound = grandpaSetState.getGrandpaRound(justification.getRoundNumber()
+                    .subtract(BigInteger.ONE));
+
+            if (previousRound != null) {
+
+                // If we find the previous round we can use it to create the round corresponding to the justification.
+                justificationRound = createNextRound(previousRound);
+
+                log.fine(String.format("finalizeJustification: Created new round #%d for set %d from previous.",
+                        justificationRound.getRoundNumber(),
+                        justificationRound.getAuthoritySet().getSetId()));
+            } else {
+
+                // If we do not have a previous/nor a corresponding round we have to create one from the justification.
+                // In other words, we jump to the justification.
+                justificationRound = initRoundFromJustification(justification, lastFinalized, authoritiesForBlock);
+
+                log.fine(String.format("finalizeJustification: Created new initial round #%d for set %d.",
+                        justificationRound.getRoundNumber(),
+                        justificationRound.getAuthoritySet().getSetId()));
+            }
+
+            shouldUpdateCurrentRound = true;
+        }
+
+        if (shouldUpdateCurrentRound) {
+
+            // Finalize currently ongoing round since it should be before the justification round.
+            GrandpaRound current = grandpaSetState.getCurrentGrandpaRound();
+            if (current != null && current.getRoundNumber().compareTo(justificationRound.getRoundNumber()) < 0) {
+                grandpaSetState.getCurrentGrandpaRound().complete();
+            }
+            grandpaSetState.addNewGrandpaRound(justificationRound);
+        }
+
+        // Finalize the round corresponding to the justification.
+        justificationRound.finalizeJustification(justification);
+        // Start next round from the justification round.
+        tryStartFromPreviousRound(justificationRound);
+    }
+
+    @NotNull
+    private GrandpaRound initRoundFromJustification(Justification justification,
+                                                    BlockHeader lastFinalized,
+                                                    GrandpaAuthoritySet authoritiesForBlock) {
+
+        GrandpaSetState grandpaSetState = stateManager.getGrandpaSetState();
+        BlockState blockState = stateManager.getBlockState();
+
+        RoundState roundState = RoundState.builder()
+                .roundNumber(justification.getRoundNumber())
+                .lastFinalizedBlock(lastFinalized)
+                .finalizedBlock(blockState.getHeader(justification.getTargetHash()))
+                .authoritySet(authoritiesForBlock)
+                .build();
+
+        GrandpaAuthoritySet currentAuthSet = grandpaSetState.getAuthoritySet();
+        if (roundState.getAuthoritySet().getSetId().compareTo(currentAuthSet.getSetId()) < 0) {
+            throw new GrandpaJustificationException("Trying to apply grandpa justification for past set.");
+        }
+        Pair<BigInteger, BigInteger> roundSetIdPair = blockState.getHighestRoundAndSetID();
+        if (roundState.getRoundNumber().compareTo(roundSetIdPair.getValue0()) < 0) {
+            throw new GrandpaJustificationException("Trying to apply grandpa justification for past round.");
+        }
+
+        return createInitialRound(roundState);
     }
 
     private void tryStartFromLastFinalizedBlock() {
@@ -115,8 +214,14 @@ public class GrandpaService {
             }
         }
 
-        GrandpaRound currentRound = createInitialRound(stateBuilder.build());
-        grandpaSetState.addNewGrandpaRound(currentRound);
+        RoundState roundState = stateBuilder.build();
+        GrandpaRound currentRound = grandpaSetState.getCurrentGrandpaRound();
+        if (currentRound != null && currentRound.getRoundNumber().compareTo(roundState.getRoundNumber()) == 0) {
+            return;
+        }
+
+        GrandpaRound initialRound = createInitialRound(stateBuilder.build());
+        grandpaSetState.addNewGrandpaRound(initialRound);
         playCurrentRound();
     }
 
@@ -126,13 +231,17 @@ public class GrandpaService {
         }
     }
 
-    private GrandpaRound createNextRound(GrandpaRound round) {
+    private GrandpaRound createNextRound(GrandpaRound previousRound) {
 
         GrandpaSetState grandpaSetState = stateManager.getGrandpaSetState();
 
-        BlockHeader lastFinalized = round.getFinalizedBlock() == null
-                ? round.getLastFinalizedBlock()
-                : round.getFinalizedBlock();
+
+        BlockHeader lastFinalized;
+        try {
+            lastFinalized = previousRound.getFinalizedBlock();
+        } catch (GrandpaGenericException e) {
+            lastFinalized = previousRound.getLastFinalizedBlock();
+        }
 
         Optional<GrandpaAuthoritySet> authSetOpt = getAuthoritiesForBlock(lastFinalized.getBlockNumber());
         if (authSetOpt.isEmpty()) {
@@ -142,11 +251,11 @@ public class GrandpaService {
         }
 
         GrandpaAuthoritySet authSetAtBlock = authSetOpt.get();
-        BigInteger newRoundNumber = round.getAuthoritySet().getSetId().equals(authSetAtBlock.getSetId())
-                ? round.getRoundNumber().add(BigInteger.ONE)
+        BigInteger newRoundNumber = previousRound.getAuthoritySet().getSetId().equals(authSetAtBlock.getSetId())
+                ? previousRound.getRoundNumber().add(BigInteger.ONE)
                 : BigInteger.ONE;
 
-        return new GrandpaRound(round,
+        return new GrandpaRound(previousRound,
                 newRoundNumber,
                 authSetAtBlock.getSetId(),
                 authSetAtBlock.getAuthorities(),
@@ -176,11 +285,11 @@ public class GrandpaService {
 
     private boolean isFirstBlockOfSet(BigInteger blockNumber) {
 
-        var pastSetChanges = stateManager.getGrandpaSetState().getPastSetChanges();
+        var pastSetChanges = stateManager.getGrandpaSetState().getSetChanges();
 
-        for (Map.Entry<BigInteger, GrandpaAuthoritySet> entry : pastSetChanges.reversed().entrySet()) {
+        for (Map.Entry<Pair<Hash256, BigInteger>, GrandpaAuthoritySet> entry : pastSetChanges.reversed().entrySet()) {
 
-            if (entry.getKey().compareTo(blockNumber) == 0) {
+            if (entry.getKey().getValue1().compareTo(blockNumber) == 0) {
                 return true;
             }
         }

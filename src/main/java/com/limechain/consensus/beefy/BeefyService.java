@@ -77,8 +77,8 @@ public class BeefyService implements FinalizedBlockChangeListener {
         }
 
         BigInteger sessionStartBlock = sessionStart.getMandatoryBlock();
-        BigInteger beefyFinalized = beefyState.getBeefyFinalized();
         BigInteger grandpaFinalized = beefyState.getGrandpaFinalized();
+        BigInteger beefyFinalized = beefyState.getBeefyFinalized();
 
         BigInteger targetVoteBlockNumber = calculateTargetVoteBlockNumber(
                 sessionStartBlock,
@@ -432,7 +432,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
 
         BigInteger mandatoryBlock = currentSession.getMandatoryBlock();
         if (blockNumber.compareTo(mandatoryBlock) < 0) {
-            log.warning(String.format(
+            log.fine(String.format(
                     "isBeefyMessageAcceptable: " +
                             "Rejected beefy message — block %d is earlier than current session's mandatory block %d.",
                     blockNumber, mandatoryBlock
@@ -444,7 +444,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
         BigInteger setId = currentSession.getAuthoritySet().getSetId();
         BigInteger commitmentSetId = commitment.getAuthoritySetId();
         if (!setId.equals(commitmentSetId)) {
-            log.warning(String.format(
+            log.fine(String.format(
                     "isBeefyMessageAcceptable: Rejected beefy message — authority set ID mismatch. Expected: %d, got: %d.",
                     setId, commitmentSetId
             ));
@@ -460,7 +460,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
         BigInteger end = cachedAcceptedInterval.getValue1();
 
         if (blockNumber.compareTo(start) < 0 || blockNumber.compareTo(end) > 0) {
-            log.warning(String.format(
+            log.fine(String.format(
                     "isBeefyMessageAcceptable: Rejected beefy message — block %d outside accepted round range [%d, %d].",
                     blockNumber, start, end
             ));
@@ -476,9 +476,9 @@ public class BeefyService implements FinalizedBlockChangeListener {
         return true;
     }
 
-    public void run() {
+    public void start() {
 
-        log.info("runBeefy: Started Beefy Service main loop");
+        log.info("start: Started Beefy Service main loop");
         ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
         scheduler.scheduleWithFixedDelay(() -> {
             try {

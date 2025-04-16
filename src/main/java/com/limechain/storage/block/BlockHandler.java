@@ -201,7 +201,7 @@ public class BlockHandler {
             blockHeaders.remove(block.getHeader().getHash());
 
             if (block.getHeader().getBlockNumber().compareTo(
-                    stateManager.getSyncState().getLastFinalizedBlockNumber()) <= 0) {
+                    stateManager.getBlockState().bestBlockNumber()) <= 0) {
                 continue;
             }
 

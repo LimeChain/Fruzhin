@@ -127,6 +127,12 @@ public class FullSyncMachine {
             receivedBlocks = requester.requestBlocks(BlockRequestField.ALL, startNumber, blocksToFetch).join();
         }
 
+        BlockState blockState = stateManager.getBlockState();
+        var lastJustificationEntry = blockState.getJustifications().lastEntry();
+        if (lastJustificationEntry != null) {
+            grandpaService.finalizeJustification(lastJustificationEntry.getValue());
+        }
+
         finishFullSync();
     }
 
@@ -139,8 +145,9 @@ public class FullSyncMachine {
             slotCoordinator.start(List.of(
                     AppBean.getBean(BabeService.class)
             ));
-            grandpaService.start();
         }
+        grandpaService.start();
+        beefyService.start();
 
         AbstractState.setSyncMode(SyncMode.HEAD);
     }
@@ -236,17 +243,43 @@ public class FullSyncMachine {
                 blockState.storeRuntime(blockHeader.getHash(), runtime);
             }
 
-            if (blockState.getJustifications().isEmpty()) {
-                stateManager.getSyncState().finalizeHeader(blockHeader);
-                blockState.setFinalizedHash(blockHeader, null, BigInteger.ZERO);
+            finalizeDuringSync(blockHeader);
+        }
+    }
 
-                // TODO: Remove this when FinalizationHandler (responsible for sending events on block finalization) is implemented.
-                stateManager.getGrandpaSetState()
-                        .applyAuthoritySetChange(
-                                blockHeader.getHash(),
-                                blockHeader.getBlockNumber()
-                        );
-            }
+    /**
+     * Finalizes blocks during the full sync process. A block is finalized under two conditions:<br>
+     * - There are no received grandpa justifications. In a working node this would moslty happen if we are not at the
+     * latest grandpa set.<br>
+     * - The block number is lower than the latest received grandpa justification.
+     *
+     * @param blockHeader the block header that could be finalized.
+     */
+    private void finalizeDuringSync(BlockHeader blockHeader) {
+
+        BlockState blockState = stateManager.getBlockState();
+
+        boolean lowerThanJustif = false;
+
+        var latestJustification = blockState.getJustifications().lastEntry();
+        if (latestJustification != null) {
+            lowerThanJustif = latestJustification.getValue().getTargetBlock()
+                    .compareTo(blockHeader.getBlockNumber()) > 0;
+        }
+
+        if (blockState.getJustifications().isEmpty() || lowerThanJustif) {
+            blockState.finalizeBlock(blockHeader, null, BigInteger.ZERO);
+            stateManager.getSyncState().finalizeBlock(blockHeader);
+
+            stateManager.getGrandpaSetState()
+                    .applyAuthoritySetChange(
+                            blockHeader.getHash(),
+                            blockHeader.getBlockNumber()
+                    );
+
+            log.fine(String.format("finalizeIfNeeded: Finalizing block #%d with hash %s",
+                    blockHeader.getBlockNumber(),
+                    blockHeader.getHash()));
         }
     }
 
