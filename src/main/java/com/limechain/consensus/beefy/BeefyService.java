@@ -432,7 +432,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
 
         BigInteger mandatoryBlock = currentSession.getMandatoryBlock();
         if (blockNumber.compareTo(mandatoryBlock) < 0) {
-            log.fine(String.format(
+            log.warning(String.format(
                     "isBeefyMessageAcceptable: " +
                             "Rejected beefy message — block %d is earlier than current session's mandatory block %d.",
                     blockNumber, mandatoryBlock
@@ -444,7 +444,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
         BigInteger setId = currentSession.getAuthoritySet().getSetId();
         BigInteger commitmentSetId = commitment.getAuthoritySetId();
         if (!setId.equals(commitmentSetId)) {
-            log.fine(String.format(
+            log.warning(String.format(
                     "isBeefyMessageAcceptable: Rejected beefy message — authority set ID mismatch. Expected: %d, got: %d.",
                     setId, commitmentSetId
             ));
@@ -460,7 +460,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
         BigInteger end = cachedAcceptedInterval.getValue1();
 
         if (blockNumber.compareTo(start) < 0 || blockNumber.compareTo(end) > 0) {
-            log.fine(String.format(
+            log.warning(String.format(
                     "isBeefyMessageAcceptable: Rejected beefy message — block %d outside accepted round range [%d, %d].",
                     blockNumber, start, end
             ));
@@ -468,7 +468,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
             return false;
         }
 
-        log.fine(String.format(
+        log.warning(String.format(
                 "isBeefyMessageAcceptable: Accepted beefy message — block %d is within round range [%d, %d] and set ID %d.",
                 blockNumber, start, end, setId
         ));

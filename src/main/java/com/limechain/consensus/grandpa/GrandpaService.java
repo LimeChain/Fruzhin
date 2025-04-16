@@ -107,7 +107,6 @@ public class GrandpaService {
         // We don't find a round that corresponds to the justification, nor it's previous number.
         boolean shouldUpdateCurrentRound = false;
         if (justificationRound == null) {
-            log.info("finalizeJustification: No round for justification.");
             BlockHeader lastFinalized = blockState.getHighestFinalizedHeader();
             if (lastFinalized.getBlockNumber().compareTo(justification.getTargetBlock()) > 0) {
                 throw new GrandpaJustificationException("Trying to apply grandpa justification for past block.");
