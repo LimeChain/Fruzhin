@@ -22,7 +22,7 @@ repositories {
 
 dependencies {
     implementation("net.openhft:zero-allocation-hashing:0.27ea0")
-    implementation("org.rocksdb:rocksdbjni:9.10.0")
+    implementation("org.rocksdb:rocksdbjni:10.0.1")
     compileOnly("org.projectlombok:lombok:1.18.38")
     implementation("org.projectlombok:lombok:1.18.38")
     implementation("org.web3j:crypto:4.14.0")
@@ -68,7 +68,7 @@ dependencies {
     implementation("com.github.LimeChain:jsonrpc4j:1.7.0")
 
     // Guava
-    implementation("com.google.guava:guava:33.4.7-jre")
+    implementation("com.google.guava:guava:33.4.8-jre")
 
     // Apache commons
     implementation("commons-io:commons-io:2.19.0")
