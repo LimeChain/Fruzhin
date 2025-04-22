@@ -131,8 +131,12 @@ public class BeefyMessageHandler {
                     maybeSignature.get(), encodedCommitment, authorityId, Key.ECDSA
             );
 
-            if (EcdsaUtils.verifySignature(verifySignature)) {
-                validSignaturesCount = validSignaturesCount.add(BigInteger.ONE);
+            try {
+                if (EcdsaUtils.verifySignature(verifySignature)) {
+                    validSignaturesCount = validSignaturesCount.add(BigInteger.ONE);
+                }
+            } catch (IllegalArgumentException e) {
+                log.fine("countValidSignatures: Failed to verify signature: " + e.getMessage());
             }
         }
 

@@ -2,6 +2,7 @@ package com.limechain.sync.warpsync;
 
 import com.limechain.chain.ChainService;
 import com.limechain.chain.lightsyncstate.LightSyncState;
+import com.limechain.consensus.beefy.BeefyState;
 import com.limechain.consensus.dto.Authority;
 import com.limechain.consensus.grandpa.GrandpaSetState;
 import com.limechain.network.NetworkService;
@@ -108,10 +109,12 @@ public class WarpSyncMachine {
     private void finishWarpSync() {
         SyncState syncState = stateManager.getSyncState();
         BlockState blockState = stateManager.getBlockState();
+        BeefyState beefyState = stateManager.getBeefyState();
 
         this.warpState.setWarpSyncFinished(true);
 
         blockState.setupPostWarpSync(syncState.getLastFinalizedBlockHash(), syncState.getLastFinalizedBlockNumber());
+        beefyState.setupPostWarpSync();
 
         log.info("Warp sync finished.");
         this.onFinishCallbacks.forEach(executor::submit);

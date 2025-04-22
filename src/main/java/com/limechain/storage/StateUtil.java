@@ -37,6 +37,18 @@ public class StateUtil {
         return prepareKey(preCommitsKey, roundNumber.toString(), setId.toString());
     }
 
+    public String generatePrimaryVoteKey(String primaryVoteKey, BigInteger roundNumber, BigInteger setId) {
+        return prepareKey(primaryVoteKey, roundNumber.toString(), setId.toString());
+    }
+
+    public String generateIsPrimaryVoterKey(String isPrimaryVoterKey, BigInteger roundNumber, BigInteger setId) {
+        return prepareKey(isPrimaryVoterKey, roundNumber.toString(), setId.toString());
+    }
+
+    public String generateLastFinalizedBlockKey(String prevBestFinalCandidateKey, BigInteger roundNumber, BigInteger setId) {
+        return prepareKey(prevBestFinalCandidateKey, roundNumber.toString(), setId.toString());
+    }
+
     public String generateBeefyJustificationKey(String justificationKey, BigInteger blockNumber) {
         return prepareKey(justificationKey, blockNumber.toString());
     }

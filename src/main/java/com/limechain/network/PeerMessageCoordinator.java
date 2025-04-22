@@ -107,6 +107,7 @@ public class PeerMessageCoordinator {
         });
     }
 
+    // TODO We currently don't broadcast externally incoming grandpa messages.
     public void sendCommitMessageToPeers(CommitMessage commitMessage) {
         byte[] scaleMessage = ScaleUtils.Encode.encode(CommitMessageScaleWriter.getInstance(), commitMessage);
         sendMessageToActivePeers(peerId -> asyncExecutor.executeAndForget(() ->

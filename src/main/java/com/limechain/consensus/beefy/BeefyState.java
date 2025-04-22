@@ -5,8 +5,11 @@ import com.limechain.consensus.beefy.dto.BeefyAuthoritySet;
 import com.limechain.consensus.beefy.dto.BeefySession;
 import com.limechain.consensus.beefy.dto.message.BeefyConsensusMessage;
 import com.limechain.exception.beefy.BeefyGenericException;
+import com.limechain.network.PeerRequester;
+import com.limechain.network.protocol.beefy.BeefyMessageHandler;
 import com.limechain.network.protocol.beefy.messages.justification.SignedCommitment;
 import com.limechain.network.protocol.beefy.messages.vote.BeefyVoteMessage;
+import com.limechain.rpc.server.AppBean;
 import com.limechain.runtime.Runtime;
 import com.limechain.state.AbstractState;
 import com.limechain.storage.block.state.BlockState;
@@ -78,7 +81,6 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
 
     private LinkedHashMap<BigInteger, SignedCommitment> pendingJustifications = new LinkedHashMap<>();
 
-
     @Override
     public void populateDataFromRuntime(Runtime runtime) {
         this.authoritySet = runtime.getBeefyValidatorSet().orElseGet(() -> {
@@ -133,6 +135,21 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
     public BigInteger getGrandpaFinalized() {
         if (grandpaFinalized == null) throw new BeefyGenericException("Grandpa finalized is not initialized yet.");
         return grandpaFinalized;
+    }
+
+    public void setupPostWarpSync() {
+        if (sessions.isEmpty()) {
+            log.fine("Beefy state has no sessions.");
+            return;
+        }
+
+        BeefySession last = sessions.getLast();
+        sessions.clear();
+        sessions.addLast(last);
+
+        AppBean.getBean(PeerRequester.class).makeBeefyJustificationRequest(last.getMandatoryBlock())
+                .thenAccept(r ->
+                        AppBean.getBean(BeefyMessageHandler.class).handleSignedCommitment(r));
     }
 
     private void handleChangedBeefyAuthorities(BeefyConsensusMessage consensusMessage, BigInteger blockNumber) {

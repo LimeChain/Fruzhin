@@ -54,12 +54,8 @@ public class BeefyRepository {
     }
 
     public void saveDisabledAuthority(BeefyAuthoritySet authoritySet, BigInteger disabledAuthority) {
-        repository.save(
-                StateUtil.generateBeefyDisabledAuthorityKey(
-                        DBConstants.BEEFY_DISABLED_AUTHORITY, authoritySet.getSetId()
-                ),
-                disabledAuthority
-        );
+        String key = StateUtil.generateAuthorityKey(DBConstants.BEEFY_AUTHORITY_SET, authoritySet.getSetId());
+        saveIfNotNull(val -> repository.save(key, val), disabledAuthority);
     }
 
     public BigInteger fetchBeefyFinalized() {

@@ -49,11 +49,12 @@ public class VerifyJustificationAction implements WarpSyncAction {
     public void handle(WarpSyncMachine sync) {
         try {
 
+            SyncState syncState = stateManager.getSyncState();
             // Executes scheduled or forced authority changes for the last finalized block.
             stateManager.getGrandpaSetState()
                     .applyAuthoritySetChange(
-                            stateManager.getSyncState().getLastFinalizedBlockHash(),
-                            stateManager.getSyncState().getLastFinalizedBlockNumber()
+                            syncState.getLastFinalizedBlockHash(),
+                            syncState.getLastFinalizedBlockNumber()
                     );
 
             WarpSyncFragment fragment = sync.getFragmentsQueue().poll();
@@ -69,8 +70,8 @@ public class VerifyJustificationAction implements WarpSyncAction {
                 throw new JustificationVerificationException("Justification could not be verified.");
             }
 
-            stateManager.getSyncState().finalizeHeader(fragment.getHeader());
-            handleAuthorityChanges(fragment);
+            syncState.finalizeBlock(fragment.getHeader());
+            handleConsensusMessages(fragment);
 
         } catch (Exception e) {
             log.log(Level.WARNING, "Error while verifying justification: " + e.getMessage());
@@ -78,12 +79,16 @@ public class VerifyJustificationAction implements WarpSyncAction {
         }
     }
 
-    private void handleAuthorityChanges(WarpSyncFragment fragment) {
+    private void handleConsensusMessages(WarpSyncFragment fragment) {
         BlockHeader header = fragment.getHeader();
 
         DigestHelper.getGrandpaConsensusMessages(header.getDigest())
                 .forEach(cm -> stateManager.getGrandpaSetState().handleGrandpaConsensusMessage(
                         cm, header)
+                );
+        DigestHelper.getBeefyConsensusMessages(header.getDigest())
+                .forEach(cm -> stateManager.getBeefyState().handleBeefyConsensusMessage(
+                        cm, header.getBlockNumber())
                 );
 
         SyncState syncState = stateManager.getSyncState();

@@ -1,7 +1,6 @@
 package com.limechain.network.protocol.warp.dto;
 
 import com.limechain.network.protocol.blockannounce.scale.BlockHeaderScaleWriter;
-import com.limechain.network.protocol.warp.scale.reader.BlockHeaderReader;
 import com.limechain.utils.HashUtils;
 import com.limechain.utils.scale.ScaleUtils;
 import io.emeraldpay.polkaj.types.Hash256;
@@ -45,10 +44,5 @@ public class BlockHeader implements Serializable {
                         : BlockHeaderScaleWriter.getInstance()::writeUnsealed,
                 this);
         return HashUtils.hashWithBlake2b(scaleEncoded);
-    }
-
-    // TODO Change usages with BlockState.getHeader(hash).
-    public static BlockHeader fromHash(Hash256 hash) {
-        return ScaleUtils.Decode.decode(hash.getBytes(), BlockHeaderReader.getInstance());
     }
 }

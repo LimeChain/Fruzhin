@@ -1,26 +1,21 @@
 package com.limechain.sync.state;
 
 import com.limechain.chain.lightsyncstate.LightSyncState;
-import com.limechain.consensus.grandpa.GrandpaSetState;
 import com.limechain.constants.GenesisBlockHash;
-import com.limechain.exception.storage.HeaderNotFoundException;
 import com.limechain.network.PeerMessageCoordinator;
-import com.limechain.network.protocol.grandpa.messages.commit.CommitMessage;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
-import com.limechain.network.protocol.warp.dto.Justification;
 import com.limechain.prometheus.PrometheusServer;
 import com.limechain.state.AbstractState;
 import com.limechain.storage.DBConstants;
 import com.limechain.storage.KVRepository;
-import com.limechain.storage.block.state.BlockState;
 import io.emeraldpay.polkaj.types.Hash256;
+import jakarta.annotation.PreDestroy;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.java.Log;
 import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
-import java.util.logging.Level;
 
 @Log
 @Getter
@@ -30,9 +25,6 @@ public class SyncState extends AbstractState {
 
     private final GenesisBlockHash genesisBlockHashCalculator;
     private final KVRepository<String, Object> repository;
-    private final BlockState blockState;
-    // TODO: Remove this when FinalizationHandler (responsible for sending events on block finalization) is implemented.
-    private final GrandpaSetState grandpaSetState;
     private final PeerMessageCoordinator peerMessageCoordinator;
     private final PrometheusServer prometheusServer;
 
@@ -72,70 +64,31 @@ public class SyncState extends AbstractState {
                 repository.find(DBConstants.LAST_FINALIZED_BLOCK_NUMBER, BigInteger.ZERO)
         );
 
-        this.lastFinalizedBlockHash = new Hash256(
-                repository.find(DBConstants.LAST_FINALIZED_BLOCK_HASH, genesisBlockHash.getBytes()));
-        byte[] stateRootBytes = repository.find(DBConstants.STATE_ROOT, null);
-        this.stateRoot = stateRootBytes != null ? new Hash256(stateRootBytes) : genesisBlockHashCalculator
+        this.genesisBlockHash = genesisBlockHashCalculator.getGenesisHash();
+        this.lastFinalizedBlockHash = repository.find(DBConstants.LAST_FINALIZED_BLOCK_HASH,
+                genesisBlockHashCalculator.getGenesisHash());
+        Hash256 stateRootBytes = repository.find(DBConstants.STATE_ROOT, null);
+        this.stateRoot = stateRootBytes != null ? stateRootBytes : genesisBlockHashCalculator
                 .getGenesisBlockHeader().getStateRoot();
     }
 
     @Override
+    @PreDestroy
     public void persistState() {
         repository.save(DBConstants.LAST_FINALIZED_BLOCK_NUMBER, lastFinalizedBlockNumber);
         repository.save(DBConstants.LAST_FINALIZED_BLOCK_HASH, lastFinalizedBlockHash);
         repository.save(DBConstants.STATE_ROOT, stateRoot);
     }
 
-    public void finalizeHeader(BlockHeader header) {
+    public void finalizeBlock(BlockHeader header) {
         setLastFinalizedBlockNumber(header.getBlockNumber());
         this.lastFinalizedBlockHash = header.getHash();
         this.stateRoot = header.getStateRoot();
-    }
-
-    public void finalizedCommitMessage(CommitMessage commitMessage) {
-        try {
-
-            BlockHeader blockHeader = blockState.getHeader(commitMessage.getVote().getBlockHash());
-
-            if (blockHeader != null) {
-                if (!updateBlockState(commitMessage, blockHeader)) return;
-
-                this.stateRoot = blockHeader.getStateRoot();
-                this.lastFinalizedBlockHash = commitMessage.getVote().getBlockHash();
-                setLastFinalizedBlockNumber(commitMessage.getVote().getBlockNumber());
-
-                log.log(Level.INFO, "Reached block #" + lastFinalizedBlockNumber);
-
-                peerMessageCoordinator.sendNeighborMessageToPeers();
-            }
-
-        } catch (HeaderNotFoundException ignored) {
-            log.fine("Received commit message for a block that is not in the block store");
-        }
-    }
-
-    private boolean updateBlockState(CommitMessage commitMessage, BlockHeader blockHeader) {
-        try {
-
-            blockState.setFinalizedHash(blockHeader,
-                    Justification.fromCommitMessage(commitMessage),
-                    commitMessage.getSetId());
-
-            // TODO: Remove this when FinalizationHandler (responsible for sending events on block finalization) is implemented.
-            grandpaSetState.applyAuthoritySetChange(
-                    blockHeader.getHash(),
-                    blockHeader.getBlockNumber()
-            );
-
-        } catch (RuntimeException e) {
-            log.fine(e.getMessage());
-            return false;
-        }
-        return true;
+        persistState();
     }
 
     public void setLightSyncState(LightSyncState initState) {
-        finalizeHeader(initState.getFinalizedBlockHeader());
+        finalizeBlock(initState.getFinalizedBlockHeader());
     }
 
     // setter method for updating prometheus metrics
