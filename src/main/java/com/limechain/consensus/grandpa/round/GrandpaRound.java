@@ -14,6 +14,7 @@ import com.limechain.consensus.grandpa.dto.Vote;
 import com.limechain.exception.grandpa.EstimateExecutionException;
 import com.limechain.exception.grandpa.GhostExecutionException;
 import com.limechain.exception.grandpa.GrandpaGenericException;
+import com.limechain.exception.grandpa.GrandpaJustificationException;
 import com.limechain.exception.storage.BlockStorageGenericException;
 import com.limechain.network.PeerMessageCoordinator;
 import com.limechain.network.protocol.grandpa.GrandpaMessageHandler;
@@ -53,6 +54,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Log
 @Getter
@@ -72,6 +74,7 @@ public class GrandpaRound {
 
     private GrandpaRound previous;
     private StageState stage = new StartStage();
+    boolean isStarted;
 
     private final FinalizedBlockChangeListener finalizedBlockChangeListener =
             Objects.requireNonNull(AppBean.getBean(BeefyService.class));
@@ -188,7 +191,11 @@ public class GrandpaRound {
     }
 
     public void play() {
+
+        if (isStarted) log.fine("play: Round already started.");
+
         stage.start(this);
+        isStarted = true;
     }
 
     public void complete() {
@@ -196,7 +203,9 @@ public class GrandpaRound {
         stage.start(this);
     }
 
-    public void update(boolean isPrevRoundChanged, boolean isPreVoteChanged, boolean isPreCommitChanged) {
+    public synchronized void update(boolean isPrevRoundChanged,
+                                    boolean isPreVoteChanged,
+                                    boolean isPreCommitChanged) {
 
         boolean shouldUpdateGhost = isPrevRoundChanged || isPreVoteChanged;
         boolean shouldUpdateEstimate = isPreCommitChanged;
@@ -219,7 +228,7 @@ public class GrandpaRound {
             updateNextRound();
         }
 
-        boolean shouldStartNextRound = true;
+        boolean shouldStartNextRound = false;
 
         if (previous != null) {
             shouldStartNextRound = previous.finalizedBlock != null;
@@ -234,6 +243,30 @@ public class GrandpaRound {
             ASYNC_EXECUTOR.executeAndForget(() -> Objects.requireNonNull(AppBean.getBean(GrandpaService.class))
                     .tryStartFromPreviousRound(this));
         }
+    }
+
+    public void finalizeJustification(Justification justification) {
+
+        BlockState blockState = stateManager.getBlockState();
+
+        GrandpaMessageHandler.setPreCommitsAndPcEquivocations(this, justification.getSignedVotes());
+        update(false, false, true);
+
+        if (finalizedBlock == null) {
+            BigInteger pcWeight = getVoteWeight(preCommits.values());
+            if (pcWeight.compareTo(threshold) >= 0) {
+                finalizedBlock = findBestFinalCandidate(weight -> weight.compareTo(threshold) >= 0,
+                        SubRound.PRE_COMMIT,
+                        blockState.getHeader(justification.getTargetHash()));
+
+                assert finalizedBlock != null;
+            } else {
+                throw new GrandpaJustificationException("The round is not finalizable with this justification.");
+            }
+        }
+
+        attemptToFinalize();
+        complete();
     }
 
     /**
@@ -391,6 +424,7 @@ public class GrandpaRound {
     void attemptToFinalize() {
 
         BlockState blockState = stateManager.getBlockState();
+        SyncState syncState = stateManager.getSyncState();
 
         if (stage instanceof CompletedStage) {
             log.fine("attemptToFinalize: round is already complete.");
@@ -401,17 +435,20 @@ public class GrandpaRound {
             List<BlockHeader> blockHeaders = blockState
                     .rangeInMemory(lastFinalizedBlock.getHash(), finalizedBlock.getHash())
                     .stream()
-                    .map(BlockHeader::fromHash)
-                    .toList();
-            blockHeaders.removeFirst();
+                    .map(blockState::getHeader)
+                    .collect(Collectors.toCollection(ArrayList::new));
 
-            blockState.setFinalizedHash(finalizedBlock, createJustification(), authoritySet.getSetId());
+            if (blockHeaders.size() > 1) {
+                blockHeaders.removeFirst();
+            }
+
+            blockState.finalizeBlock(finalizedBlock, createJustification(), authoritySet.getSetId());
+            syncState.finalizeBlock(finalizedBlock);
 
             // Persisting round data into the database when a block is finalized
             GrandpaSetState grandpaSetState = stateManager.getGrandpaSetState();
-            grandpaSetState.persistFinalizedRoundState(roundNumber);
+            grandpaSetState.persistFinalizedRoundState(this);
 
-            // TODO: Remove this when FinalizationHandler (responsible for sending events on block finalization) is implemented.
             grandpaSetState.applyAuthoritySetChange(finalizedBlock.getHash(), finalizedBlock.getBlockNumber());
 
             if (!isCommitMessageInArchive(Vote.fromBlockHeader(finalizedBlock))) {
@@ -423,9 +460,6 @@ public class GrandpaRound {
             }
 
             peerMessageCoordinator.sendNeighborMessageToPeers();
-
-            SyncState syncState = stateManager.getSyncState();
-            syncState.finalizeHeader(finalizedBlock);
 
             FinalizedBlockChangeEvent event = new FinalizedBlockChangeEvent(
                     this, blockHeaders, finalizedBlock);
@@ -491,7 +525,6 @@ public class GrandpaRound {
             log.fine("updateEstimate: pre commit weight is lower than threshold");
             return false;
         }
-
 
         try {
             Function<BigInteger, Boolean> condition = getPotentialCondition();
@@ -575,7 +608,7 @@ public class GrandpaRound {
                 blockHash = lowestCommonAncestor;
             }
 
-            BlockHeader header = BlockHeader.fromHash(blockHash);
+            BlockHeader header = blockState.getHeader(blockHash);
             if (header.getBlockNumber().compareTo(bestFinalCandidate.getBlockNumber()) > 0) {
                 bestFinalCandidate = header;
             }
@@ -656,7 +689,7 @@ public class GrandpaRound {
             BigInteger number = entry.getValue();
 
             if (number.compareTo(highest.getBlockNumber()) > 0) {
-                highest = BlockHeader.fromHash(currentHash);
+                highest = stateManager.getBlockState().getHeader(currentHash);
             }
         }
 

@@ -1,17 +1,12 @@
 package com.limechain.sync.state;
 
 import com.limechain.chain.lightsyncstate.LightSyncState;
-import com.limechain.consensus.grandpa.GrandpaSetState;
 import com.limechain.constants.GenesisBlockHash;
-import com.limechain.exception.storage.HeaderNotFoundException;
 import com.limechain.network.PeerMessageCoordinator;
-import com.limechain.network.protocol.grandpa.messages.commit.CommitMessage;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
-import com.limechain.network.protocol.warp.dto.Justification;
 import com.limechain.state.AbstractState;
 import com.limechain.storage.DBConstants;
 import com.limechain.storage.KVRepository;
-import com.limechain.storage.block.state.BlockState;
 import io.emeraldpay.polkaj.types.Hash256;
 import jakarta.annotation.PreDestroy;
 import lombok.Getter;
@@ -20,7 +15,6 @@ import lombok.extern.java.Log;
 import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
-import java.util.logging.Level;
 
 @Log
 @Getter
@@ -30,9 +24,6 @@ public class SyncState extends AbstractState {
 
     private final GenesisBlockHash genesisBlockHashCalculator;
     private final KVRepository<String, Object> repository;
-    private final BlockState blockState;
-    // TODO: Remove this when FinalizationHandler (responsible for sending events on block finalization) is implemented.
-    private final GrandpaSetState grandpaSetState;
     private final PeerMessageCoordinator peerMessageCoordinator;
 
     private Hash256 lastFinalizedBlockHash;
@@ -70,7 +61,7 @@ public class SyncState extends AbstractState {
         this.genesisBlockHash = genesisBlockHashCalculator.getGenesisHash();
         this.lastFinalizedBlockNumber = repository.find(DBConstants.LAST_FINALIZED_BLOCK_NUMBER, BigInteger.ZERO);
         this.lastFinalizedBlockHash = repository.find(DBConstants.LAST_FINALIZED_BLOCK_HASH,
-                        genesisBlockHashCalculator.getGenesisHash());
+                genesisBlockHashCalculator.getGenesisHash());
         Hash256 stateRootBytes = repository.find(DBConstants.STATE_ROOT, null);
         this.stateRoot = stateRootBytes != null ? stateRootBytes : genesisBlockHashCalculator
                 .getGenesisBlockHeader().getStateRoot();
@@ -84,56 +75,14 @@ public class SyncState extends AbstractState {
         repository.save(DBConstants.STATE_ROOT, stateRoot);
     }
 
-    public void finalizeHeader(BlockHeader header) {
+    public void finalizeBlock(BlockHeader header) {
         this.lastFinalizedBlockNumber = header.getBlockNumber();
         this.lastFinalizedBlockHash = header.getHash();
         this.stateRoot = header.getStateRoot();
         persistState();
     }
 
-    public void finalizedCommitMessage(CommitMessage commitMessage) {
-        try {
-
-            BlockHeader blockHeader = blockState.getHeader(commitMessage.getVote().getBlockHash());
-
-            if (blockHeader != null) {
-                if (!updateBlockState(commitMessage, blockHeader)) return;
-
-                this.stateRoot = blockHeader.getStateRoot();
-                this.lastFinalizedBlockHash = commitMessage.getVote().getBlockHash();
-                this.lastFinalizedBlockNumber = commitMessage.getVote().getBlockNumber();
-
-                log.log(Level.INFO, "Reached block #" + lastFinalizedBlockNumber);
-
-                peerMessageCoordinator.sendNeighborMessageToPeers();
-            }
-
-        } catch (HeaderNotFoundException ignored) {
-            log.fine("Received commit message for a block that is not in the block store");
-        }
-    }
-
-    private boolean updateBlockState(CommitMessage commitMessage, BlockHeader blockHeader) {
-        try {
-
-            blockState.setFinalizedHash(blockHeader,
-                    Justification.fromCommitMessage(commitMessage),
-                    commitMessage.getSetId());
-
-            // TODO: Remove this when FinalizationHandler (responsible for sending events on block finalization) is implemented.
-            grandpaSetState.applyAuthoritySetChange(
-                    blockHeader.getHash(),
-                    blockHeader.getBlockNumber()
-            );
-
-        } catch (RuntimeException e) {
-            log.fine(e.getMessage());
-            return false;
-        }
-        return true;
-    }
-
     public void setLightSyncState(LightSyncState initState) {
-        finalizeHeader(initState.getFinalizedBlockHeader());
+        finalizeBlock(initState.getFinalizedBlockHeader());
     }
 }

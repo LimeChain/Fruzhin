@@ -34,6 +34,7 @@ import java.math.BigInteger;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -51,7 +52,7 @@ public class BlockState extends AbstractState {
     private final KVRepository<String, Object> db;
 
     private final Map<Hash256, Block> unfinalizedBlocks;
-    private final Map<Hash256, Justification> justifications;
+    private final LinkedHashMap<Hash256, Justification> justifications;
     private final BlockHeader genesisBlockHeader;
     private BlockTree blockTree;
     private Hash256 lastFinalized;
@@ -59,7 +60,7 @@ public class BlockState extends AbstractState {
     public BlockState(KVRepository<String, Object> db, GenesisBlockHash genesisBlockHash) {
         this.db = db;
         unfinalizedBlocks = new HashMap<>();
-        justifications = new HashMap<>();
+        justifications = new LinkedHashMap<>();
         genesisBlockHeader = genesisBlockHash.getGenesisBlockHeader();
     }
 
@@ -81,7 +82,7 @@ public class BlockState extends AbstractState {
         setBlockBody(genesisBlockHash, new BlockBody(new ArrayList<>()));
 
         //set the latest finalized head to the genesis header
-        setFinalizedHash(genesisBlockHeader, BigInteger.ZERO, BigInteger.ZERO);
+        finalizeBlock(genesisBlockHeader, BigInteger.ZERO, BigInteger.ZERO);
     }
 
     @Override
@@ -757,11 +758,11 @@ public class BlockState extends AbstractState {
     }
 
     /* Block finalization */
-    public void setFinalizedHash(final BlockHeader header,
-                                 @Nullable final Justification justification,
-                                 final BigInteger setId) {
+    public void finalizeBlock(final BlockHeader header,
+                              @Nullable final Justification justification,
+                              final BigInteger setId) {
 
-        setFinalizedHash(header, setId, justification == null
+        finalizeBlock(header, setId, justification == null
                 ? BigInteger.ZERO
                 : justification.getRoundNumber());
     }
@@ -774,7 +775,7 @@ public class BlockState extends AbstractState {
      * @param setId  The set ID of the finalized block.
      * @throws BlockNodeNotFoundException if the block corresponding to the provided hash is not found.
      */
-    private void setFinalizedHash(final BlockHeader header, final BigInteger setId, final BigInteger round) {
+    private void finalizeBlock(final BlockHeader header, final BigInteger setId, final BigInteger round) {
         Hash256 hash = header.getHash();
         if (!hasHeader(hash)) {
             throw new BlockNodeNotFoundException("Cannot finalise unknown block " + hash);

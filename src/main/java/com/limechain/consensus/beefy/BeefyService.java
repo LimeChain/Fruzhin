@@ -77,8 +77,8 @@ public class BeefyService implements FinalizedBlockChangeListener {
         }
 
         BigInteger sessionStartBlock = sessionStart.getMandatoryBlock();
-        BigInteger beefyFinalized = beefyState.getBeefyFinalized();
         BigInteger grandpaFinalized = beefyState.getGrandpaFinalized();
+        BigInteger beefyFinalized = beefyState.getBeefyFinalized();
 
         BigInteger targetVoteBlockNumber = calculateTargetVoteBlockNumber(
                 sessionStartBlock,
@@ -476,9 +476,9 @@ public class BeefyService implements FinalizedBlockChangeListener {
         return true;
     }
 
-    public void run() {
+    public void start() {
 
-        log.info("runBeefy: Started Beefy Service main loop");
+        log.info("start: Started Beefy Service main loop");
         ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
         scheduler.scheduleWithFixedDelay(() -> {
             try {
