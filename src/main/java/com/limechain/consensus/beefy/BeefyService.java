@@ -468,7 +468,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
             return false;
         }
 
-        log.warning(String.format(
+        log.fine(String.format(
                 "isBeefyMessageAcceptable: Accepted beefy message — block %d is within round range [%d, %d] and set ID %d.",
                 blockNumber, start, end, setId
         ));
