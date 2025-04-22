@@ -108,25 +108,25 @@ public class FullSyncMachine {
             return;
         }
 
-        stateManager.getBlockState().storeRuntime(lastFinalizedBlockHash, runtime);
-
-        int startNumber = syncState.getLastFinalizedBlockNumber()
-                .add(BigInteger.ONE)
-                .intValueExact();
-
-        messageCoordinator.handshakeBootNodes();
-        messageCoordinator.handshakePeers();
-
-        int blocksToFetch = 100;
-        List<Block> receivedBlocks = requester.requestBlocks(BlockRequestField.ALL, startNumber, blocksToFetch).join();
-
-        while (!receivedBlocks.isEmpty()) {
-            executeBlocks(receivedBlocks, trieAccessor);
-            log.info("Executed blocks from " + receivedBlocks.getFirst().getHeader().getBlockNumber()
-                    + " to " + receivedBlocks.getLast().getHeader().getBlockNumber());
-            startNumber += receivedBlocks.size();
-            receivedBlocks = requester.requestBlocks(BlockRequestField.ALL, startNumber, blocksToFetch).join();
-        }
+//        stateManager.getBlockState().storeRuntime(lastFinalizedBlockHash, runtime);
+//
+//        int startNumber = syncState.getLastFinalizedBlockNumber()
+//                .add(BigInteger.ONE)
+//                .intValueExact();
+//
+//        messageCoordinator.handshakeBootNodes();
+//        messageCoordinator.handshakePeers();
+//
+//        int blocksToFetch = 100;
+//        List<Block> receivedBlocks = requester.requestBlocks(BlockRequestField.ALL, startNumber, blocksToFetch).join();
+//
+//        while (!receivedBlocks.isEmpty()) {
+//            executeBlocks(receivedBlocks, trieAccessor);
+//            log.info("Executed blocks from " + receivedBlocks.getFirst().getHeader().getBlockNumber()
+//                    + " to " + receivedBlocks.getLast().getHeader().getBlockNumber());
+//            startNumber += receivedBlocks.size();
+//            receivedBlocks = requester.requestBlocks(BlockRequestField.ALL, startNumber, blocksToFetch).join();
+//        }
 
         finishFullSync();
     }
