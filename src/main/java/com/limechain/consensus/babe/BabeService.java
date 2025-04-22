@@ -88,7 +88,7 @@ public class BabeService implements SlotChangeListener {
     }
 
     private void handleSlot(Slot slot, BabePreDigest preDigest) {
-        log.fine(String.format("Producing block for slot %s in epoch %s.",
+        log.info(String.format("Producing block for slot %s in epoch %s.",
                 slot.getNumber(), slot.getEpochIndex()));
 
         Block block;
@@ -292,6 +292,13 @@ public class BabeService implements SlotChangeListener {
             asyncExecutor.executeAndForget(() -> handleSlot(slot, preDigest));
         }
 
+        var bestBlockHash = stateManager.getBlockState().bestBlockHash();
+
+        if (bestBlockHash.equals(stateManager.getBlockState().getGenesisBlockHash().getGenesisHash())) {
+            BigInteger nextEpochIndex = slot.getEpochIndex().add(BigInteger.ONE);
+            executeEpochLottery(nextEpochIndex);
+        }
+        // TODO: We should probably have check if this is the genesis if yes then to execute epoch lottery
         if (event.isLastSlotFromCurrentEpoch()) {
             BigInteger nextEpochIndex = slot.getEpochIndex().add(BigInteger.ONE);
             executeEpochLottery(nextEpochIndex);

@@ -70,6 +70,12 @@ public class GrandpaService {
 
         GrandpaSetState grandpaSetState = stateManager.getGrandpaSetState();
 
+        // We can add directly the authorities from the genesis in order to have them as the first authority set
+        // TODO: add a comment that this is genesis case
+        if (grandpaSetState.getPastSetChanges().isEmpty()) {
+            return Optional.of(grandpaSetState.getAuthoritySet());
+        }
+
         for (Map.Entry<BigInteger, GrandpaAuthoritySet> entry : grandpaSetState.getPastSetChanges().entrySet()) {
 
             if (entry.getKey().compareTo(blockNumber) <= 0) {

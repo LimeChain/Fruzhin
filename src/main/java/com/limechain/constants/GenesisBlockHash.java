@@ -25,6 +25,7 @@ import java.util.Map;
 @Component
 @Getter
 public class GenesisBlockHash {
+
     private final Hash256 genesisHash;
     private final Map<ByteString, ByteString> genesisStorage;
     private final TrieStructure<NodeData> genesisTrie;
@@ -59,7 +60,6 @@ public class GenesisBlockHash {
     }
 
     public byte[] getRuntimeWasmFromGenesis() {
-        //TODO: change this to one of other used :code examples
         ByteString key = ByteString.copyFrom(":code".getBytes(StandardCharsets.UTF_8));
         ByteString wasm = genesisStorage.get(key);
 
