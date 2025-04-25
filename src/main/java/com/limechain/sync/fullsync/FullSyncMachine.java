@@ -94,14 +94,14 @@ public class FullSyncMachine {
 
         if (!trieStorage.merkleValueExists(stateRoot)) {
             //TODO Sync improvements: This does not work on polkadot chain.
-            loadStateAtBlockFromPeer(lastFinalizedBlockHash);
+            loadStateAtBlockFromPeer(lastFinalizedBlockHash, trieAccessor);
         }
 
-        runtime = runtimeBuilder.buildRuntimeFromState(trieAccessor);
-        StateVersion runtimeStateVersion = runtime.getCachedVersion().getStateVersion();
-        trieAccessor.setCurrentStateVersion(runtimeStateVersion);
+        //    runtime = runtimeBuilder.buildRuntimeFromState(trieAccessor);
+//        StateVersion runtimeStateVersion = runtime.getCachedVersion().getStateVersion();
+        trieAccessor.setCurrentStateVersion(StateVersion.V1);
 
-        byte[] calculatedMerkleRoot = trieAccessor.getMerkleRoot(runtimeStateVersion);
+        byte[] calculatedMerkleRoot = trieAccessor.getMerkleRoot(StateVersion.V1);
         if (!stateRoot.equals(new Hash256(calculatedMerkleRoot))) {
             log.info("State root is not equal to the one in the trie, cannot start full sync");
             return;
@@ -145,12 +145,25 @@ public class FullSyncMachine {
         AbstractState.setSyncMode(SyncMode.HEAD);
     }
 
-    private TrieStructure<NodeData> loadStateAtBlockFromPeer(Hash256 lastFinalizedBlockHash) {
+    private TrieStructure<NodeData> loadStateAtBlockFromPeer(Hash256 lastFinalizedBlockHash, DiskTrieAccessor trieAccessor) {
         log.info("Loading state at block from peer");
         Map<ByteString, ByteString> kvps = makeStateRequest(lastFinalizedBlockHash);
 
+        // when call trieStructure.node(//key) -> it returns NodeHandle entry
+        //                                     -> it returns Vacant entry
+        //
+        // when in kusama network and call Nibbles.fromBytes(":code".getBytes()) it has such key and value!
+        // when in polkadot network and call Nibbles.fromBytes(":code".getBytes()) it has such key and value!
+
+
+        //  trieStorage.getByKeyFromMerkle(trieStructure.nodes.storage.get(size - 1).userData.merkleValue, Nibbles.fromBytes(":code".getBytes()));
+        //   trieStructure.node(Nibbles.fromBytes(":code".getBytes())).asNodeHandle().getNodeIndex();
         TrieStructure<NodeData> trieStructure = TrieStructureFactory.buildFromKVPs(kvps);
         trieStorage.insertTrieStorage(trieStructure);
+        // after trie structure is inserted in trie storage -> when we call db.find(//key - tn: + merkleValue)
+        // on both kusama and polkadot we have a stored value in db!
+        //   byte[] merkleValue = trieStructure.node(Nibbles.fromBytes(":code".getBytes())).asNodeHandle().getUserData().merkleValue;
+
         log.info("State at block loaded from peer");
 
         kvps.clear();
@@ -160,12 +173,12 @@ public class FullSyncMachine {
     private Map<ByteString, ByteString> makeStateRequest(Hash256 lastFinalizedBlockHash) {
         Map<ByteString, ByteString> kvps = new HashMap<>();
 
-        ByteString start = ByteString.EMPTY;
-
+        ByteString start = ByteString.fromHex("074b65e262fcd5bd9c785caf7f42e00a29f2dc2b64e354002faef2a81f1aa8bb468cfbd3f67e03452e832420d3d2a3c42cca4d2db7e7086fa0994264a6f901a533c23bfc9c99357962ccfcb0beb5565f0b00");
         while (true) {
             final SyncMessage.StateResponse response;
             try {
-                response = requester.requestState(lastFinalizedBlockHash.toString(), start).join();
+                log.info("HERE REQUEST");
+                response = requester.requestState("0x1e319da89bcb99f923760ed101bf6533c277b890e592b85b04da4bf995b5ee88", start).join();
             } catch (Exception ex) {
                 if (!this.networkService.updateCurrentSelectedPeerWithNextBootnode()) {
                     this.networkService.updateCurrentSelectedPeer();

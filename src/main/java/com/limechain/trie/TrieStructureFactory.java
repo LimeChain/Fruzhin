@@ -17,8 +17,12 @@ import com.limechain.trie.structure.nibble.Nibbles;
 import com.limechain.utils.HashUtils;
 import com.limechain.utils.StringUtils;
 import lombok.experimental.UtilityClass;
+import org.apache.tomcat.util.buf.HexUtils;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -63,10 +67,24 @@ public class TrieStructureFactory {
     public TrieStructure<NodeData> buildTrieStructure(Map<ByteString, ByteString> mainStorage, StateVersion version) {
         TrieStructure<NodeData> trie = new TrieStructure<>();
 
-        for (var entry : mainStorage.entrySet()) {
-            Nibbles key = Nibbles.fromBytes(entry.getKey().toByteArray());
-            byte[] value = entry.getValue().toByteArray();
-            trie.insertNode(key, new NodeData(value), version);
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("hex_pairs_polkadot.txt"))) {
+            List<String> pairs = new ArrayList<>();
+
+            for (var entry : mainStorage.entrySet()) {
+                Nibbles key = Nibbles.fromBytes(entry.getKey().toByteArray());
+                String hexKey = key.toLowerHexString();
+                byte[] value = entry.getValue().toByteArray();
+                String hexValue = HexUtils.toHexString(value);
+
+                // Wrap keys and values in double quotes
+                pairs.add("[\"0x" + hexKey + "\",\"0x" + hexValue + "\"]");
+
+                trie.insertNode(key, new NodeData(value), version);
+            }
+
+            writer.write("[" + String.join(",", pairs) + "]");
+        } catch (IOException e) {
+            e.printStackTrace(); // Handle or log error appropriately
         }
 
         return trie;
@@ -145,7 +163,7 @@ public class TrieStructureFactory {
                 nodeHandle.isRootNode());
 
         if (userData.getMerkleValue() != null &&
-            Bytes.asList(userData.getMerkleValue()).equals(Bytes.asList(merkleValue))) {
+                Bytes.asList(userData.getMerkleValue()).equals(Bytes.asList(merkleValue))) {
             return false;
         } else {
             userData.setMerkleValue(merkleValue);

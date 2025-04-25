@@ -297,16 +297,16 @@ public class NetworkService implements NodeService {
                         warpSyncService.getProtocol(),
                         lightMessagesService.getProtocol(),
                         beefyJustificationService.getProtocol(),
-                        blockAnnounceService.getProtocol(),
-                        grandpaService.getProtocol(),
-                        beefyNotificationService.getProtocol()
+                        blockAnnounceService.getProtocol()
+//                        grandpaService.getProtocol(),
+//                        beefyNotificationService.getProtocol()
                 )
         );
 
         if (nodeRole == NodeRole.AUTHORING) {
             hostBuilder.addProtocols(
                     List.of(
-                            transactionsService.getProtocol()
+//                            transactionsService.getProtocol()
                     )
             );
         }

@@ -15,6 +15,7 @@ import com.limechain.storage.block.state.BlockState;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.extern.java.Log;
 import org.springframework.stereotype.Component;
 
@@ -34,8 +35,11 @@ public class SyncState extends AbstractState {
     private final GrandpaSetState grandpaSetState;
     private final PeerMessageCoordinator peerMessageCoordinator;
 
+    @Setter
     private Hash256 lastFinalizedBlockHash;
+    @Setter
     private Hash256 stateRoot;
+    @Setter
     private BigInteger lastFinalizedBlockNumber;
     private BigInteger startingBlock;
 
