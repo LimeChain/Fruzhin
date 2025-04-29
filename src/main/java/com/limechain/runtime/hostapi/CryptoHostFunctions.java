@@ -111,7 +111,7 @@ public class CryptoHostFunctions implements PartialHostApi {
                 }),
                 newImportObjectPair(Endpoint.ext_crypto_sr25519_verify_version_2, argv -> {
                     // NOTE: Intentionally does the same as V1, see: https://spec.polkadot.network/chap-host-api#sect-ext-crypto-sr25519-verify
-                    return sr25519VerifyV1(argv.get(0).intValue(), new RuntimePointerSize(argv.get(1)), argv.get(2).intValue());
+                    return sr25519VerifyV2(argv.get(0).intValue(), new RuntimePointerSize(argv.get(1)), argv.get(2).intValue());
                 }),
                 newImportObjectPair(Endpoint.ext_crypto_sr25519_batch_verify_version_1, argv -> {
                     return sr25519BatchVerifyV1(
@@ -398,7 +398,8 @@ public class CryptoHostFunctions implements PartialHostApi {
     }
 
     /**
-     * Verifies an sr25519 signature.
+     * Verifies deprecated construction of a `Signature` from a slice of bytes
+     * without checking the bit distinguishing from ed25519
      *
      * @param signature a pointer to the buffer containing the 64-byte signature.
      * @param message   a pointer-size to the message that is to be verified.
@@ -407,6 +408,22 @@ public class CryptoHostFunctions implements PartialHostApi {
      */
     public int sr25519VerifyV1(int signature, RuntimePointerSize message, int publicKey) {
         log.log(Level.FINEST, "sr25519VerifyV1");
+
+        VerifySignature verifiedSignature = internalGetVerifySignature(signature, message, publicKey, Key.SR25519);
+
+        return Sr25519Utils.verifyDeprecated(verifiedSignature) ? 1 : 0;
+    }
+
+    /**
+     * Verifies an sr25519 signature.
+     *
+     * @param signature a pointer to the buffer containing the 64-byte signature.
+     * @param message   a pointer-size to the message that is to be verified.
+     * @param publicKey a pointer to the buffer containing the 256-bit public key.
+     * @return a i32 integer value equal to 1 if the signature is valid or a value equal to 0 if otherwise.
+     */
+    public int sr25519VerifyV2(int signature, RuntimePointerSize message, int publicKey) {
+        log.log(Level.FINEST, "sr25519VerifyV2");
 
         VerifySignature verifiedSignature = internalGetVerifySignature(signature, message, publicKey, Key.SR25519);
 
