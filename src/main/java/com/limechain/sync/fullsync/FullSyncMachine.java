@@ -12,7 +12,6 @@ import com.limechain.network.NetworkService;
 import com.limechain.network.PeerMessageCoordinator;
 import com.limechain.network.PeerRequester;
 import com.limechain.network.protocol.blockannounce.NodeRole;
-import com.limechain.network.protocol.sync.BlockRequestField;
 import com.limechain.network.protocol.sync.pb.SyncMessage;
 import com.limechain.network.protocol.warp.dto.Block;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
@@ -68,6 +67,7 @@ public class FullSyncMachine {
     private final TrieStorage trieStorage = AppBean.getBean(TrieStorage.class);
     private final RuntimeBuilder runtimeBuilder = AppBean.getBean(RuntimeBuilder.class);
     private final SlotCoordinator slotCoordinator = AppBean.getBean(SlotCoordinator.class);
+    private final BabeService babeService = AppBean.getBean(BabeService.class);
     private final GrandpaService grandpaService = AppBean.getBean(GrandpaService.class);
     private final BeefyService beefyService = AppBean.getBean(BeefyService.class);
     private Runtime runtime = null;
@@ -108,7 +108,7 @@ public class FullSyncMachine {
             return;
         }
 
-//        stateManager.getBlockState().storeRuntime(lastFinalizedBlockHash, runtime);
+        stateManager.getBlockState().storeRuntime(lastFinalizedBlockHash, runtime);
 //
 //        int startNumber = syncState.getLastFinalizedBlockNumber()
 //                .add(BigInteger.ONE)
@@ -139,6 +139,7 @@ public class FullSyncMachine {
 
     private void finishFullSync() {
 
+        //TODO: Add a way of injecting keys from text file like in gossamer and polkadot-sdk
         var author = AppBean.getBean(AuthorRPCImpl.class);
         author.authorInsertKey(
                 "gran",
@@ -163,9 +164,7 @@ public class FullSyncMachine {
         stateManager.getBeefyState().populateDataFromRuntime(runtime);
 
         if (NodeRole.AUTHORING.equals(hostConfig.getNodeRole())) {
-            slotCoordinator.start(List.of(
-                    AppBean.getBean(BabeService.class)
-            ));
+            slotCoordinator.start(List.of(babeService));
         }
         grandpaService.start();
         beefyService.start();

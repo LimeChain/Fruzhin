@@ -68,8 +68,8 @@ public class EpochState extends AbstractState implements ServiceConsensusState {
     }
 
     public void switchEpoch() {
-        currentEpochData = nextEpochData;
-        currentEpochDescriptor = nextEpochDescriptor;
+        if (nextEpochData != null) currentEpochData = nextEpochData;
+        if (nextEpochDescriptor != null) currentEpochDescriptor = nextEpochDescriptor;
     }
 
     public void setGenesisSlotNumber(BigInteger retrievedGenesisSlotNumber) {

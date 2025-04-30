@@ -4,8 +4,10 @@ import com.limechain.consensus.babe.coordinator.SlotChangeEvent;
 import com.limechain.consensus.babe.coordinator.SlotChangeListener;
 import com.limechain.consensus.babe.dto.InherentData;
 import com.limechain.consensus.babe.dto.InherentType;
+import com.limechain.consensus.babe.dto.ParachainInherentData;
 import com.limechain.consensus.babe.dto.Slot;
 import com.limechain.consensus.babe.dto.predigest.BabePreDigest;
+import com.limechain.consensus.babe.scale.predigest.ParachainInherentDataWriter;
 import com.limechain.consensus.babe.scale.predigest.PreDigestWriter;
 import com.limechain.consensus.dto.Authority;
 import com.limechain.exception.misc.BabeGenericException;
@@ -43,7 +45,6 @@ import org.springframework.stereotype.Component;
 import java.math.BigInteger;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -72,14 +73,20 @@ public class BabeService implements SlotChangeListener {
         this.blockHandler = blockHandler;
     }
 
-    private void executeEpochLottery(BigInteger epochIndex) {
+    private void executeEpochLottery(BigInteger epochIndex, BigInteger currentSlotNumber) {
+
         EpochState epochState = stateManager.getEpochState();
         var epochStartSlotNumber = epochState.getEpochStartSlotNumber(epochIndex);
         var epochEndSlotNumber = epochStartSlotNumber.add(epochState.getEpochLength());
 
-        for (BigInteger slot = epochStartSlotNumber;
+        var start = currentSlotNumber.compareTo(epochStartSlotNumber) > 0
+                ? currentSlotNumber
+                : epochStartSlotNumber;
+
+        for (BigInteger slot = start;
              slot.compareTo(epochEndSlotNumber) < 0;
              slot = slot.add(BigInteger.ONE)) {
+
             BabePreDigest babePreDigest = Authorship.claimSlot(epochState, slot, keyStore);
             if (babePreDigest != null) {
                 slotToPreRuntimeDigest.put(slot, babePreDigest);
@@ -88,13 +95,13 @@ public class BabeService implements SlotChangeListener {
     }
 
     private void handleSlot(Slot slot, BabePreDigest preDigest) {
-        log.info(String.format("Producing block for slot %s in epoch %s.",
-                slot.getNumber(), slot.getEpochIndex()));
 
         Block block;
         try {
             BlockHeader parentHeader = getParentBlockHeader(slot.getNumber());
             block = produceBlock(parentHeader, slot, preDigest);
+            log.info(String.format("Producing block for slot %s in epoch %s.", slot.getNumber(), slot.getEpochIndex()));
+
         } catch (Exception e) {
             log.warning(String.format("Exception producing block: %s", e.getMessage()));
             return;
@@ -106,7 +113,8 @@ public class BabeService implements SlotChangeListener {
     private Block produceBlock(BlockHeader parentHeader, Slot slot, BabePreDigest preDigest) {
         BlockHeader newBlockHeader = new BlockHeader();
         newBlockHeader.setParentHash(parentHeader.getHash());
-        newBlockHeader.setBlockNumber(slot.getNumber().add(BigInteger.ONE));
+        newBlockHeader.setBlockNumber(parentHeader.getBlockNumber().add(BigInteger.ONE));
+        newBlockHeader.setDigest(producePreRuntimeDigest(newBlockHeader, preDigest));
 
         BlockState blockState = stateManager.getBlockState();
         Runtime runtime = blockState.getRuntime(parentHeader.getHash());
@@ -115,7 +123,7 @@ public class BabeService implements SlotChangeListener {
 
         log.fine("Initialized block via runtime call.");
 
-        ExtrinsicArray inherents = produceBlockInherents(slot, newRuntime);
+        ExtrinsicArray inherents = produceBlockInherents(slot, newRuntime, parentHeader);
         log.fine("Finished with inherents for block.");
 
         List<ValidTransaction> transactions = produceBlockTransactions(slot, newRuntime);
@@ -130,7 +138,8 @@ public class BabeService implements SlotChangeListener {
         }
         log.fine("Finished with finalizing block.");
 
-        finalizedHeader.setDigest(produceDigests(finalizedHeader, preDigest));
+        finalizedHeader.setDigest(produceSealDigest(finalizedHeader, preDigest));
+
         log.fine("Finished with digests for block.");
 
         List<Extrinsic> bodyExtrinsics = new ArrayList<>(Arrays.asList(inherents.getExtrinsics()));
@@ -145,29 +154,48 @@ public class BabeService implements SlotChangeListener {
         return new Block(finalizedHeader, body);
     }
 
-    private HeaderDigest[] produceDigests(BlockHeader header, BabePreDigest digest) {
-        // Make a copy of the digests from the header.
-        int length = header.getDigest().length;
-        HeaderDigest[] newDigests = Arrays.copyOf(header.getDigest(), length + 2);
+    private HeaderDigest[] producePreRuntimeDigest(BlockHeader header, BabePreDigest digest) {
 
-        // Setup pre-digest.
+        HeaderDigest[] existingDigests = header.getDigest();
+        int length = existingDigests != null
+                ? existingDigests.length
+                : 0;
+
+        HeaderDigest[] updatedDigests = existingDigests != null
+                ? Arrays.copyOf(existingDigests, length + 1)
+                : new HeaderDigest[1];
+
         HeaderDigest preDigest = new HeaderDigest();
         preDigest.setId(ConsensusEngine.BABE);
         preDigest.setType(DigestType.PRE_RUNTIME);
         preDigest.setMessage(ScaleUtils.Encode.encode(PreDigestWriter.getInstance(), digest));
 
-        newDigests[length + 1] = preDigest;
+        updatedDigests[length] = preDigest;
+        return updatedDigests;
+    }
 
-        Authority auth = stateManager.getEpochState().getCurrentEpochData().getAuthorities()
-                .get((int) digest.getAuthorityIndex());
+    private HeaderDigest[] produceSealDigest(BlockHeader header, BabePreDigest digest) {
 
-        Schnorrkel.KeyPair keyPair = keyStore.getKeyPair(KeyType.BABE, auth.getPublicKey())
+        HeaderDigest[] existingDigests = header.getDigest();
+        int length = existingDigests != null
+                ? existingDigests.length
+                : 0;
+
+        HeaderDigest[] updatedDigests = existingDigests != null
+                ? Arrays.copyOf(existingDigests, length + 1)
+                : new HeaderDigest[1];
+
+        Authority authority = stateManager.getEpochState()
+                .getCurrentEpochData()
+                .getAuthorities()
+                .get((int) digest.getAuthorityIndex()); // this is not self casting
+
+        Schnorrkel.KeyPair keyPair = keyStore.getKeyPair(KeyType.BABE, authority.getPublicKey())
                 .map(keyStore::convertToSchnorrKeypair)
-                .orElseThrow(() -> new KeyStoreException("No KeyPair found for provided pub key."));
+                .orElseThrow(() -> new KeyStoreException("No key pair found for provided public key."));
 
-        newDigests[length + 2] = DigestHelper.buildSealHeaderDigest(header, keyPair);
-
-        return newDigests;
+        updatedDigests[length] = DigestHelper.buildSealHeaderDigest(header, keyPair);
+        return updatedDigests;
     }
 
     private List<ValidTransaction> produceBlockTransactions(Slot slot, Runtime runtime) {
@@ -186,7 +214,7 @@ public class BabeService implements SlotChangeListener {
         while (timeout.isPositive()) {
             timeout = Duration.between(Instant.now(), slotEnd);
             // Next-Ready-Extrinsic
-            ValidTransaction transaction = transactionState.pollTransactionWithTimer(timeout.get(ChronoUnit.MILLIS));
+            ValidTransaction transaction = transactionState.pollTransactionWithTimer(timeout.toMillis());
 
             boolean isTimedOut = transaction == null;
             if (isTimedOut) {
@@ -221,19 +249,24 @@ public class BabeService implements SlotChangeListener {
         return toAdd;
     }
 
-    private ExtrinsicArray produceBlockInherents(Slot slot, Runtime runtime) {
+    private ExtrinsicArray produceBlockInherents(Slot slot, Runtime runtime, BlockHeader parentHeader) {
         InherentData inherentData = new InherentData();
 
-        inherentData.getData().put(InherentType.TIMESTAMP0.toByteArray(),
-                ScaleUtils.Encode.encode(new UInt64Writer(), BigInteger.valueOf(slot.getStart().toEpochMilli())));
+        BigInteger timestamp = BigInteger.valueOf(slot.getStart().toEpochMilli());
+        BigInteger slotNumber = slot.getNumber();
+        ParachainInherentData parachainInherentData = new ParachainInherentData(parentHeader);
 
-        inherentData.getData().put(InherentType.BABESLOT.toByteArray(),
-                ScaleUtils.Encode.encode(new UInt64Writer(), slot.getNumber()));
+        var encodedTimestamp = ScaleUtils.Encode.encode(new UInt64Writer(), timestamp);
+        var encodedSlotNumber = ScaleUtils.Encode.encode(new UInt64Writer(), slotNumber);
+        var encodedParachainInherentData = ScaleUtils.Encode.encode(ParachainInherentDataWriter.getInstance(),
+                parachainInherentData);
+
+        inherentData.getData().put(InherentType.TIMESTAMP0, encodedTimestamp);
+        inherentData.getData().put(InherentType.BABESLOT, encodedSlotNumber);
 
         // Empty till we find out what this exactly is used for.
-        inherentData.getData().put(InherentType.PARACHN0.toByteArray(), new byte[]{});
-        // Empty till we find out what this exactly is used for.
-        inherentData.getData().put(InherentType.NEWHEADS.toByteArray(), new byte[]{});
+        inherentData.getData().put(InherentType.PARACHN0, encodedParachainInherentData);
+        inherentData.getData().put(InherentType.NEWHEADS, new byte[]{0});
 
         ExtrinsicArray inherentExtrinsics = runtime.inherentExtrinsics(inherentData);
 
@@ -292,16 +325,16 @@ public class BabeService implements SlotChangeListener {
             asyncExecutor.executeAndForget(() -> handleSlot(slot, preDigest));
         }
 
-        var bestBlockHash = stateManager.getBlockState().bestBlockHash();
-
-        if (bestBlockHash.equals(stateManager.getBlockState().getGenesisBlockHash().getGenesisHash())) {
-            BigInteger nextEpochIndex = slot.getEpochIndex().add(BigInteger.ONE);
-            executeEpochLottery(nextEpochIndex);
+        // This check is intended when the node is running on network without any blocks
+        BlockState blockState = stateManager.getBlockState();
+        if (slotToPreRuntimeDigest.isEmpty() &&
+                blockState.getGenesisBlockHash().getGenesisHash().equals(blockState.getLastFinalized())) {
+            executeEpochLottery(BigInteger.ZERO, slot.getNumber());
         }
-        // TODO: We should probably have check if this is the genesis if yes then to execute epoch lottery
+
         if (event.isLastSlotFromCurrentEpoch()) {
             BigInteger nextEpochIndex = slot.getEpochIndex().add(BigInteger.ONE);
-            executeEpochLottery(nextEpochIndex);
+            executeEpochLottery(nextEpochIndex, BigInteger.ZERO);
         }
     }
 }
