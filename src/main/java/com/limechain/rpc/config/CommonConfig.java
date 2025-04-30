@@ -40,6 +40,7 @@ import java.util.List;
 @Configuration
 @EnableScheduling
 public class CommonConfig {
+
     @Bean
     public static AutoJsonRpcServiceImplExporter autoJsonRpcServiceImplExporter() {
         final var jsonService = new AutoJsonRpcServiceImplExporter();
@@ -138,5 +139,4 @@ public class CommonConfig {
     public GenesisBlockHash genesisBlockHash(ChainService chainService) {
         return new GenesisBlockHash(chainService);
     }
-
 }

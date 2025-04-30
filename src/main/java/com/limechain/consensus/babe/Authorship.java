@@ -35,6 +35,7 @@ public class Authorship {
         EpochData nextEpochData = epochState.getNextEpochData() != null
                 ? epochState.getNextEpochData()
                 : epochState.getCurrentEpochData();
+
         EpochDescriptor nextEpochDescriptor = epochState.getNextEpochDescriptor() != null
                 ? epochState.getNextEpochDescriptor()
                 : epochState.getCurrentEpochDescriptor();

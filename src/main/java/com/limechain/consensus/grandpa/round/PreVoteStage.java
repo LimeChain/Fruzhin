@@ -29,7 +29,7 @@ public class PreVoteStage implements StageState {
             }
         });
 
-        log.info(String.format("Round #{}: Start prevote stage", round.getRoundNumber()));
+        log.info(String.format("Round #%d: Start prevote stage", round.getRoundNumber()));
         long delay = (DURATION * 2) - (System.currentTimeMillis() - round.getStartTime().toEpochMilli());
 
         round.setOnStageTimerHandler(Executors.newScheduledThreadPool(1));

@@ -13,5 +13,5 @@ public class InherentData {
     /**
      * The key are the bytes of an {@link InherentType} and the value are scale encoded bytes. Retains insertion order.
      */
-    private final LinkedHashMap<byte[], byte[]> data = new LinkedHashMap<>();
+    private final LinkedHashMap<InherentType, byte[]> data = new LinkedHashMap<>();
 }

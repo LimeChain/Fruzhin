@@ -178,7 +178,6 @@ public class RuntimeImpl implements Runtime {
         return ScaleUtils.Decode.decode(encodedResponse, BlockHeaderReader.getInstance());
     }
 
-
     @Override
     public byte[] checkInherents(Block block, InherentData inherentData) {
         byte[] encodedRequest = serializeCheckInherentsParameter(block, inherentData);
