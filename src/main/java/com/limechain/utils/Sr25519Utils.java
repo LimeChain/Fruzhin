@@ -81,4 +81,21 @@ public class Sr25519Utils {
             return false;
         }
     }
+
+    /**
+     * Verifies deprecated construction of a `Signature` from a slice of bytes
+     * without checking the bit distinguishing from ed25519
+     * @param signature signature to be verified
+     * @return true if signature is valid, false otherwise
+     */
+    public static boolean verifyDeprecated(final VerifySignature signature) {
+        try {
+            Schnorrkel schnorrkel = Schnorrkel.getInstance();
+            Schnorrkel.PublicKey publicKey = new Schnorrkel.PublicKey(signature.getPublicKeyData());
+            return schnorrkel.verifyDeprecated(signature.getSignatureData(), signature.getMessageData(), publicKey);
+        } catch (SchnorrkelException e) {
+            log.log(Level.WARNING, e.getMessage(), e);
+            return false;
+        }
+    }
 }
