@@ -66,7 +66,7 @@ public class BlockProductionVerifier implements SlotChangeListener {
         }
 
         // TODO Key should be available before the start of the method so that we avoid duplicate code.
-        byte[] authorityPublicKey = getAuthority(authorities, (int) preDigest.getAuthorityIndex())
+        byte[] authorityPublicKey = getAuthority(authorities, preDigest.getAuthorityIndexAsInt())
                 .getPublicKey();
         byte[] signatureData = sealDigest.getMessage();
         VerifySignature signature = new VerifySignature(
@@ -96,7 +96,7 @@ public class BlockProductionVerifier implements SlotChangeListener {
             case BABE_PRIMARY -> {
                 VrfOutputAndProof vrfOutputAndProof = VrfOutputAndProof.wrap(
                         preDigest.getVrfOutput(), preDigest.getVrfProof());
-                return isPrimarySlotWinnerValid((int) preDigest.getAuthorityIndex(),
+                return isPrimarySlotWinnerValid(preDigest.getAuthorityIndexAsInt(),
                         preDigest.getSlotNumber(),
                         authorities,
                         randomness,
@@ -107,7 +107,7 @@ public class BlockProductionVerifier implements SlotChangeListener {
             case BABE_SECONDARY_VRF -> {
                 VrfOutputAndProof vrfOutputAndProof = VrfOutputAndProof.wrap(
                         preDigest.getVrfOutput(), preDigest.getVrfProof());
-                return isSecondaryVrfSlotWinnerValid((int) preDigest.getAuthorityIndex(),
+                return isSecondaryVrfSlotWinnerValid(preDigest.getAuthorityIndexAsInt(),
                         preDigest.getSlotNumber(),
                         authorities,
                         randomness,
@@ -115,7 +115,7 @@ public class BlockProductionVerifier implements SlotChangeListener {
                         vrfOutputAndProof);
             }
             case BABE_SECONDARY_PLAIN -> {
-                return isSecondaryPlainSlotWinnerValid((int) preDigest.getAuthorityIndex(),
+                return isSecondaryPlainSlotWinnerValid(preDigest.getAuthorityIndexAsInt(),
                         preDigest.getSlotNumber(),
                         authorities,
                         randomness);

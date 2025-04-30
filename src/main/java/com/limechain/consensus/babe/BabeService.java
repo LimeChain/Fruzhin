@@ -188,7 +188,7 @@ public class BabeService implements SlotChangeListener {
         Authority authority = stateManager.getEpochState()
                 .getCurrentEpochData()
                 .getAuthorities()
-                .get((int) digest.getAuthorityIndex()); // this is not self casting
+                .get(digest.getAuthorityIndexAsInt());
 
         Schnorrkel.KeyPair keyPair = keyStore.getKeyPair(KeyType.BABE, authority.getPublicKey())
                 .map(keyStore::convertToSchnorrKeypair)
