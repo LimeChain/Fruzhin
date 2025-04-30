@@ -188,7 +188,7 @@ public class BabeService implements SlotChangeListener {
         Authority authority = stateManager.getEpochState()
                 .getCurrentEpochData()
                 .getAuthorities()
-                .get(requireValidIntIndex(digest.getAuthorityIndex()));
+                .get(digest.getAuthorityIndexAsInt());
 
         Schnorrkel.KeyPair keyPair = keyStore.getKeyPair(KeyType.BABE, authority.getPublicKey())
                 .map(keyStore::convertToSchnorrKeypair)
@@ -196,14 +196,6 @@ public class BabeService implements SlotChangeListener {
 
         updatedDigests[length] = DigestHelper.buildSealHeaderDigest(header, keyPair);
         return updatedDigests;
-    }
-
-    private int requireValidIntIndex(long index) {
-        if (index < 0 || index > Integer.MAX_VALUE) {
-            throw new IllegalArgumentException("Authority index out of valid int range: " + index);
-        }
-
-        return (int) index;
     }
 
     private List<ValidTransaction> produceBlockTransactions(Slot slot, Runtime runtime) {
