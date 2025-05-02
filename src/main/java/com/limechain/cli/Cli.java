@@ -33,7 +33,7 @@ public class Cli {
     public static final String RPC_METHODS = "rpc-methods";
     private static final String DB_RECREATE = "db-recreate";
     private static final String NODE_MODE = "node-mode";
-    private static final String NO_LEGACY_PROTOCOLS = "no-legacy-protocols";
+    private static final String USE_LEGACY_PROTOCOLS = "use-legacy-protocols";
     private static final String SYNC_MODE = "sync-mode";
     private static final String PROMETHEUS_PORT = "prometheus-port";
     // The cli arguments below are added so that Zombienet tests can run.
@@ -116,13 +116,13 @@ public class Cli {
             // TODO: separation of enums; this NodeRole enum is used for blockannounce
             //       what does running the node in NodeMode NONE mean?
             String nodeMode = cmd.getOptionValue(NODE_MODE, NodeRole.FULL.toString());
-            boolean noLegacyProtocols = cmd.hasOption(NO_LEGACY_PROTOCOLS);
+            boolean useLegacyProtocols = cmd.hasOption(USE_LEGACY_PROTOCOLS);
             SyncMode syncMode = parseSyncMode(cmd);
             boolean isPublic = cmd.hasOption(PUBLIC_RPC);
             RpcMethods rpcMethods = parseRpcMethods(cmd, isPublic);
             boolean unsafeEnabled = rpcMethods == RpcMethods.UNSAFE;
             int prometheusPort = Integer.parseInt(cmd.getOptionValue(PROMETHEUS_PORT, "9090"));
-            return new CliArguments(network, dbPath, dbRecreate, nodeKey, nodeMode, noLegacyProtocols, syncMode,
+            return new CliArguments(network, dbPath, dbRecreate, nodeKey, nodeMode, useLegacyProtocols, syncMode,
                     unsafeEnabled, prometheusPort);
         } catch (ParseException e) {
             formatter.printHelp("Specify the network name - " + String.join(", ", validChains), options);
@@ -143,7 +143,7 @@ public class Cli {
         Option nodeKey = new Option(null, NODE_KEY, true, "\nHEX for secret Ed25519 key");
         Option nodeMode = new Option("mode", NODE_MODE, true, "\nNode mode (light/full). " +
                 "Full by default.");
-        Option noLegacyProtocols = new Option(null, NO_LEGACY_PROTOCOLS, false,
+        Option useLegacyProtocols = new Option(null, USE_LEGACY_PROTOCOLS, false,
                 "\nDoesn't use legacy protocols if set");
         Option syncMode = new Option(null, SYNC_MODE, true,
                 "\nSync mode (warp/full) - warp by default");
@@ -175,7 +175,7 @@ public class Cli {
         dbClean.setRequired(false);
         nodeKey.setRequired(false);
         nodeMode.setRequired(false);
-        noLegacyProtocols.setRequired(false);
+        useLegacyProtocols.setRequired(false);
         syncMode.setRequired(false);
         publicRpc.setRequired(false);
         rpcMethods.setRequired(false);
@@ -196,7 +196,7 @@ public class Cli {
         result.addOption(dbClean);
         result.addOption(nodeKey);
         result.addOption(nodeMode);
-        result.addOption(noLegacyProtocols);
+        result.addOption(useLegacyProtocols);
         result.addOption(syncMode);
         result.addOption(publicRpc);
         result.addOption(rpcMethods);

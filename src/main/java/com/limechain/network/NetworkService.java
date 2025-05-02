@@ -251,24 +251,28 @@ public class NetworkService implements NodeService {
         log.info("Current peerId " + hostBuilder.getPeerId().toString());
         Multihash hostId = Multihash.deserialize(hostBuilder.getPeerId().getBytes());
 
-        String pingProtocol = ProtocolUtils.PING_PROTOCOL;
-        String chainId = chainService.getChainSpec().getProtocolId();
-        boolean legacyProtocol = !cliArgs.noLegacyProtocols();
+        boolean legacyProtocol = cliArgs.useLegacyProtocols();
         String genesisBlockHashWithoutPrefix = StringUtils.remove0xPrefix(genesisBlockHash.getGenesisHash().toString());
-        String protocolId = legacyProtocol ?
-                chainId :
-                genesisBlockHashWithoutPrefix;
+        // The legacy approach was to use the protocol id from the chain spec. The newer approach is to use the
+        // genesis block hash instead.
+        String chainId = legacyProtocol
+                ? chainService.getChainSpec().getProtocolId()
+                : genesisBlockHashWithoutPrefix;
 
+        // Non-Polkadot protocols.
         String kadProtocolId = ProtocolUtils.getKadProtocol(chainId);
-        String warpProtocolId = ProtocolUtils.getWarpSyncProtocol(protocolId);
-        String lightProtocolId = ProtocolUtils.getLightMessageProtocol(protocolId);
-        String syncProtocolId = ProtocolUtils.getSyncProtocol(protocolId);
+        String pingProtocol = ProtocolUtils.PING_PROTOCOL;
+        // Request-response protocols.
+        String syncProtocolId = ProtocolUtils.getSyncProtocol(chainId);
+        String stateProtocolId = ProtocolUtils.getStateProtocol(chainId);
+        String warpProtocolId = ProtocolUtils.getWarpSyncProtocol(chainId);
+        String lightProtocolId = ProtocolUtils.getLightMessageProtocol(chainId);
         String beefyJustificationProtocolId = ProtocolUtils.getBeefyJustificationProtocol(
                 genesisBlockHashWithoutPrefix);
-        String stateProtocolId = ProtocolUtils.getStateProtocol(protocolId);
-        String transactionsProtocolId = ProtocolUtils.getTransactionsProtocol(protocolId);
-        String blockAnnounceProtocolId = ProtocolUtils.getBlockAnnounceProtocol(protocolId);
-        String grandpaProtocolId = ProtocolUtils.getGrandpaProtocol(protocolId, legacyProtocol);
+        // Notification protocols.
+        String transactionsProtocolId = ProtocolUtils.getTransactionsProtocol(chainId);
+        String blockAnnounceProtocolId = ProtocolUtils.getBlockAnnounceProtocol(chainId);
+        String grandpaProtocolId = ProtocolUtils.getGrandpaProtocol(chainId, legacyProtocol);
         String beefyNotificationProtocolId = ProtocolUtils.getBeefyNotificationProtocol(genesisBlockHashWithoutPrefix);
 
         // Non-Polkadot protocols.
