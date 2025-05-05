@@ -188,28 +188,28 @@ public class NetworkService implements NodeService {
      * Periodically searches for new peers, connects to them and sends a block announce handshake so that we start
      * communication.
      */
-    @Scheduled(fixedDelay = 10, initialDelay = 30, timeUnit = TimeUnit.SECONDS)
-    private void updatePeers() {
-        if (!started) {
-            return;
-        }
-
-        log.log(Level.INFO, String.format("findPeers: connected peers: %s", getPeersCount()));
-        log.log(Level.INFO, "findPeers: searching for peers...");
-
-        kademliaService.findNewPeers();
-
-        if (this.currentSelectedPeer == null) {
-            updateCurrentSelectedPeer();
-        }
-
-        host.getStreams().stream()
-                .map(Stream::remotePeerId)
-                .distinct()
-                .filter(id -> !connectionManager.getPeerIds().contains(id))
-                .forEach(peerId ->
-                        asyncExecutor.executeAndForget(() -> blockAnnounceService.sendHandshake(host, peerId)));
-    }
+//    @Scheduled(fixedDelay = 10, initialDelay = 30, timeUnit = TimeUnit.SECONDS)
+//    private void updatePeers() {
+//        if (!started) {
+//            return;
+//        }
+//
+//        log.log(Level.INFO, String.format("findPeers: connected peers: %s", getPeersCount()));
+//        log.log(Level.INFO, "findPeers: searching for peers...");
+//
+//        kademliaService.findNewPeers();
+//
+//        if (this.currentSelectedPeer == null) {
+//            updateCurrentSelectedPeer();
+//        }
+//
+//        host.getStreams().stream()
+//                .map(Stream::remotePeerId)
+//                .distinct()
+//                .filter(id -> !connectionManager.getPeerIds().contains(id))
+//                .forEach(peerId ->
+//                        asyncExecutor.executeAndForget(() -> blockAnnounceService.sendHandshake(host, peerId)));
+//    }
 
     // TODO: Fix ping requests being rejected because of the "timeoutScheduler" inside of Ping.kt.
     @Scheduled(fixedDelay = 1, timeUnit = TimeUnit.MINUTES)

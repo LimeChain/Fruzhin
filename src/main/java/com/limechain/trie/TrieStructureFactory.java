@@ -17,6 +17,7 @@ import com.limechain.trie.structure.nibble.Nibbles;
 import com.limechain.utils.HashUtils;
 import com.limechain.utils.StringUtils;
 import lombok.experimental.UtilityClass;
+import org.javatuples.Pair;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -33,10 +34,22 @@ public class TrieStructureFactory {
      * @param entries - the key-value pairs that make up the actual data being stored
      * @return - a TrieStructure with calculated merkle values
      */
+    public TrieStructure<NodeData> buildFromKVPsTest(List<Pair<ByteString, ByteString>> test) {
+//        StateVersion stateVersion = getRuntimeStateVersion(entries);
+
+        System.out.println("here1");
+        TrieStructure<NodeData> trie = buildTrieStructureTest(test, StateVersion.V1);
+        System.out.println("here2");
+        calculateMerkleValues(trie, HashUtils::hashWithBlake2b);
+        return trie;
+    }
+
     public TrieStructure<NodeData> buildFromKVPs(Map<ByteString, ByteString> entries) {
         StateVersion stateVersion = getRuntimeStateVersion(entries);
 
+        System.out.println("here1");
         TrieStructure<NodeData> trie = buildTrieStructure(entries, stateVersion);
+        System.out.println("here2");
         calculateMerkleValues(trie, HashUtils::hashWithBlake2b);
         return trie;
     }
@@ -64,8 +77,22 @@ public class TrieStructureFactory {
         TrieStructure<NodeData> trie = new TrieStructure<>();
 
         for (var entry : mainStorage.entrySet()) {
+            System.out.println("here1");
             Nibbles key = Nibbles.fromBytes(entry.getKey().toByteArray());
             byte[] value = entry.getValue().toByteArray();
+            trie.insertNode(key, new NodeData(value), version);
+        }
+
+        return trie;
+    }
+
+    public TrieStructure<NodeData> buildTrieStructureTest(List<Pair<ByteString, ByteString>> test, StateVersion version) {
+        TrieStructure<NodeData> trie = new TrieStructure<>();
+
+        for (var entry : test) {
+            System.out.println("here1");
+            Nibbles key = Nibbles.fromBytes(entry.getValue0().toByteArray());
+            byte[] value = entry.getValue1().toByteArray();
             trie.insertNode(key, new NodeData(value), version);
         }
 

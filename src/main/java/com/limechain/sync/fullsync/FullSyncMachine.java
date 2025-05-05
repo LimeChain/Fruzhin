@@ -1,5 +1,7 @@
 package com.limechain.sync.fullsync;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.protobuf.ByteString;
 import com.limechain.config.HostConfig;
 import com.limechain.consensus.babe.BabeService;
@@ -40,15 +42,23 @@ import com.limechain.utils.scale.readers.PairReader;
 import io.emeraldpay.polkaj.scale.reader.ListReader;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.Getter;
+import lombok.SneakyThrows;
 import lombok.extern.java.Log;
 import org.apache.commons.lang3.ArrayUtils;
+import org.javatuples.Pair;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * FullSyncMachine is responsible for executing full synchronization of blocks.
@@ -86,6 +96,8 @@ public class FullSyncMachine {
     }
 
     public void start() {
+        ByteString test = ByteString.fromHex("074b65e262fcd5bd9c785caf7f42e00a29f2dc2b64e354002faef2a81f1aa8bb468cfbd3f67e03452e832420d3d2a3c42cca4d2db7e7086fa0994264a6f901a533c23bfc9c9935797c466c66d061f1692200");
+
         SyncState syncState = stateManager.getSyncState();
         Hash256 stateRoot = syncState.getStateRoot();
         Hash256 lastFinalizedBlockHash = syncState.getLastFinalizedBlockHash();
@@ -153,15 +165,80 @@ public class FullSyncMachine {
     }
 
     private TrieStructure<NodeData> loadStateAtBlockFromPeer(Hash256 lastFinalizedBlockHash) {
-        log.info("Loading state at block from peer");
-        Map<ByteString, ByteString> kvps = makeStateRequest(lastFinalizedBlockHash);
 
-        TrieStructure<NodeData> trieStructure = TrieStructureFactory.buildFromKVPs(kvps);
+        log.info("test");
+
+        List<Pair<ByteString, ByteString>> test = new ArrayList<>();
+
+        var test1 = loadKeyValuePairs();
+        log.info(test1.size() + " key pairs loaded");
+
+        for (List<String> s : test1) {
+            test.add(Pair.with(ByteString.fromHex(s.get(0)), ByteString.fromHex(s.get(1))));
+        }
+
+        test1 = null;
+        log.info(test.size() + " key pairs loaded");
+
+//        Map<ByteString, ByteString> test = loadKeyValuePairs().stream()
+//                .map(e -> Map.entry(ByteString.fromHex(e.get(0)), ByteString.fromHex(e.get(1))))
+//                .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
+
+        TrieStructure<NodeData> trieStructure = TrieStructureFactory.buildFromKVPsTest(test);
         trieStorage.insertTrieStorage(trieStructure);
         log.info("State at block loaded from peer");
 
-        kvps.clear();
+//        kvps.clear();
         return trieStructure;
+    }
+
+    @SneakyThrows
+    public static List<List<String>> loadKeyValuePairs() {
+        ObjectMapper mapper = new ObjectMapper();
+
+        // Read the JSON as List<List<String>>
+        List<List<String>> arrayOfPairs = parseArrayFile();
+
+        return arrayOfPairs;
+    }
+
+    public static List<List<String>> parseArrayFile() throws IOException {
+        List<List<String>> result = new ArrayList<>();
+        try (BufferedReader reader = new BufferedReader(new FileReader("genesis/polkadot_state_dump_first.json"))) {
+            int ch;
+            boolean inQuote = false;
+            boolean inInnerArray = false;
+            StringBuilder currentValue = new StringBuilder();
+            List<String> currentPair = new ArrayList<>(2);
+
+            while ((ch = reader.read()) != -1) {
+                char c = (char) ch;
+
+                if (c == '[' && !inQuote) {
+                    if (!inInnerArray) {
+                        inInnerArray = true;
+                        currentPair = new ArrayList<>(2);
+                    }
+                } else if (c == ']' && !inQuote) {
+                    if (inInnerArray) {
+                        if (currentPair.size() == 2) {
+                            result.add(currentPair);
+                        }
+                        inInnerArray = false;
+                    }
+                } else if (c == '\"') {
+                    inQuote = !inQuote;
+                    if (!inQuote) {
+                        currentPair.add(currentValue.toString());
+                        currentValue.setLength(0);
+                    }
+                } else if (inQuote) {
+                    currentValue.append(c);
+                }
+            }
+        }
+
+        return result;
     }
 
     private Map<ByteString, ByteString> makeStateRequest(Hash256 lastFinalizedBlockHash) {
