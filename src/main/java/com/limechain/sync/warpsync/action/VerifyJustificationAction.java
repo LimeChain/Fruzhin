@@ -86,10 +86,14 @@ public class VerifyJustificationAction implements WarpSyncAction {
                 .forEach(cm -> stateManager.getGrandpaSetState().handleGrandpaConsensusMessage(
                         cm, header)
                 );
+
         DigestHelper.getBeefyConsensusMessages(header.getDigest())
                 .forEach(cm -> stateManager.getBeefyState().handleBeefyConsensusMessage(
                         cm, header.getBlockNumber())
                 );
+
+        DigestHelper.getBabeConsensusMessages(header.getDigest())
+                .forEach(cm -> stateManager.getEpochState().updateNextEpochConfig(cm));
 
         SyncState syncState = stateManager.getSyncState();
         log.log(Level.INFO, "Verified justification. Block hash is now at #"

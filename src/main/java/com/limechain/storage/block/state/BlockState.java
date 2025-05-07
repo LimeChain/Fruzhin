@@ -14,8 +14,10 @@ import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.network.protocol.warp.dto.Justification;
 import com.limechain.network.protocol.warp.scale.reader.BlockBodyReader;
 import com.limechain.network.protocol.warp.scale.writer.BlockBodyWriter;
+import com.limechain.rpc.server.AppBean;
 import com.limechain.rpc.subscriptions.chainsub.ChainSub;
 import com.limechain.runtime.Runtime;
+import com.limechain.runtime.RuntimeBuilder;
 import com.limechain.state.AbstractState;
 import com.limechain.storage.DBConstants;
 import com.limechain.storage.KVRepository;
@@ -53,15 +55,17 @@ public class BlockState extends AbstractState {
 
     private final Map<Hash256, Block> unfinalizedBlocks;
     private final LinkedHashMap<Hash256, Justification> justifications;
-    private final BlockHeader genesisBlockHeader;
+    private final GenesisBlockHash genesisBlockHash;
     private BlockTree blockTree;
     private Hash256 lastFinalized;
 
-    public BlockState(KVRepository<String, Object> db, GenesisBlockHash genesisBlockHash) {
+    public BlockState(KVRepository<String, Object> db,
+                      GenesisBlockHash genesisBlockHash) {
+
         this.db = db;
-        unfinalizedBlocks = new HashMap<>();
-        justifications = new LinkedHashMap<>();
-        genesisBlockHeader = genesisBlockHash.getGenesisBlockHeader();
+        this.unfinalizedBlocks = new HashMap<>();
+        this.justifications = new LinkedHashMap<>();
+        this.genesisBlockHash = genesisBlockHash;
     }
 
     @Override
@@ -71,18 +75,24 @@ public class BlockState extends AbstractState {
         }
         initialized = true;
 
-        blockTree = new BlockTree(genesisBlockHeader);
+        Hash256 genesisHash = genesisBlockHash.getGenesisHash();
+        BlockHeader genesisHeader = genesisBlockHash.getGenesisBlockHeader();
 
-        Hash256 genesisBlockHash = genesisBlockHeader.getHash();
-        lastFinalized = genesisBlockHash;
+        blockTree = new BlockTree(genesisHeader);
+        lastFinalized = genesisHash;
 
-        setArrivalTime(genesisBlockHash, Instant.now());
-        setHeader(genesisBlockHeader);
-        db.save(BlockStateHelper.headerHashKey(genesisBlockHeader.getBlockNumber()), genesisBlockHash);
-        setBlockBody(genesisBlockHash, new BlockBody(new ArrayList<>()));
+        setArrivalTime(genesisHash, Instant.now());
+        setHeader(genesisHeader);
+        db.save(BlockStateHelper.headerHashKey(genesisHeader.getBlockNumber()), genesisHash);
+        setBlockBody(genesisHash, new BlockBody(new ArrayList<>()));
 
         //set the latest finalized head to the genesis header
-        finalizeBlock(genesisBlockHeader, BigInteger.ZERO, BigInteger.ZERO);
+        finalizeBlock(genesisHeader, BigInteger.ZERO, BigInteger.ZERO);
+
+        RuntimeBuilder runtimeBuilder = AppBean.getBean(RuntimeBuilder.class);
+        byte[] genesisRuntimeWasm = genesisBlockHash.getRuntimeWasmFromGenesis();
+        Runtime runtime = runtimeBuilder.buildRuntime(genesisRuntimeWasm);
+        storeRuntime(genesisHash, runtime);
     }
 
     @Override
@@ -364,6 +374,7 @@ public class BlockState extends AbstractState {
         if (!unfinalizedBlocks.containsKey(block.getHeader().getHash())) {
             ChainSub.getInstance().notifyNewChainHead(block.getHeader());
         }
+
         // Store block in unfinalized blocks
         unfinalizedBlocks.put(block.getHeader().getHash(), block);
     }
@@ -781,7 +792,7 @@ public class BlockState extends AbstractState {
             throw new BlockNodeNotFoundException("Cannot finalise unknown block " + hash);
         }
 
-        if (!hash.equals(genesisBlockHeader.getHash())
+        if (!hash.equals(genesisBlockHash.getGenesisHash())
                 && getHighestFinalizedNumber().compareTo(header.getBlockNumber()) >= 0) {
             throw new LowerThanRootException("Finalized block with number "
                     + header.getBlockNumber() + " is lower than root");
@@ -806,8 +817,8 @@ public class BlockState extends AbstractState {
 
         // if nothing was previously finalized, set the first slot of the network to the
         // slot number of block 1, which is now being set as final
-        if (Objects.equals(this.lastFinalized, genesisBlockHeader.getHash())
-                && Objects.equals(hash, genesisBlockHeader.getHash())) {
+        if (Objects.equals(this.lastFinalized, genesisBlockHash.getGenesisHash())
+                && Objects.equals(hash, genesisBlockHash.getGenesisHash())) {
             //TODO: Implement when BABE is implemented - setFirstSlotOnFinalisation
         }
 
@@ -912,7 +923,7 @@ public class BlockState extends AbstractState {
         List<Hash256> subchain = rangeInMemory(lastFinalized, currentFinalizedHash);
 
         for (Hash256 subchainHash : subchain) {
-            if (Objects.equals(subchainHash, genesisBlockHeader.getHash())) {
+            if (Objects.equals(subchainHash, genesisBlockHash.getGenesisHash())) {
                 continue;
             }
 
