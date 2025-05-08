@@ -134,9 +134,9 @@ public class BlockHandler {
             }
 
             newRuntime.executeBlock(block);
-            log.fine(String.format("Executed block No: %s with hash: %s.",
+            log.info(String.format("Executed block No: %s with hash: %s.",
                     block.getHeader().getBlockNumber(), header.getHash()));
-            blockState.storeRuntime(header.getHash(), runtime);
+            blockState.storeRuntime(header.getHash(), newRuntime);
 
             asyncExecutor.executeAndForget(() -> transactionProcessor.maintainTransactionPool(block));
         } catch (Exception e) {
