@@ -12,7 +12,7 @@ public class StartStage implements StageState {
     @Override
     public void start(GrandpaRound round) {
 
-        log.fine(String.format("Round %d started.", round.getRoundNumber()));
+        log.info(String.format("Round %d started.", round.getRoundNumber()));
 
         round.setStartTime(Instant.now());
 
@@ -24,7 +24,7 @@ public class StartStage implements StageState {
             round.getPrevious().broadcastCommitMessage();
 
             if (previous.getBestFinalCandidate().getBlockNumber()
-                    .compareTo(round.getLastFinalizedBlock().getBlockNumber()) > 0) {
+                    .compareTo(round.getLastFinalizedBlock().getBlockNumber()) >= 0) {
                 doProposal(round);
             }
         }
@@ -35,7 +35,7 @@ public class StartStage implements StageState {
     @Override
     public void end(GrandpaRound round) {
 
-        log.fine(String.format("Round %d ended start stage.", round.getRoundNumber()));
+        log.info(String.format("Round %d ended start stage.", round.getRoundNumber()));
         round.switchStage();
     }
 

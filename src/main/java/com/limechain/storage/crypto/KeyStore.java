@@ -1,6 +1,7 @@
 package com.limechain.storage.crypto;
 
 import com.limechain.storage.KVRepository;
+import com.limechain.utils.StringUtils;
 import io.emeraldpay.polkaj.schnorrkel.Schnorrkel;
 import lombok.extern.java.Log;
 import org.javatuples.Pair;
@@ -99,6 +100,6 @@ public class KeyStore {
      * @return The constructed key string.
      */
     private String getKey(KeyType keyType, byte[] key) {
-        return new String(keyType.getBytes()).concat(new String(key));
+        return new String(keyType.getBytes()).concat(StringUtils.toHexWithPrefix(key));
     }
 }
