@@ -30,7 +30,7 @@ class CliTest {
         assertTrue(options.hasOption("node-key"));
         assertTrue(options.hasOption("node-mode"));
         assertTrue(options.hasOption("mode"));
-        assertTrue(options.hasOption("no-legacy-protocols"));
+        assertTrue(options.hasOption("use-legacy-protocols"));
         assertTrue(options.hasOption("sync-mode"));
         assertTrue(options.hasOption("public-rpc"));
         assertTrue(options.hasOption("rpc-methods"));

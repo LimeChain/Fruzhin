@@ -23,8 +23,8 @@ public final class ProtocolUtils {
         return String.format("/%s/state/2", chainId);
     }
 
-    public static String getKadProtocol(String chainId) {
-        return String.format("/%s/kad", chainId);
+    public static String getKadProtocol(String genesisBlockHash) {
+        return String.format("/%s/kad", genesisBlockHash);
     }
 
     public static String getTransactionsProtocol(String chainId) {
