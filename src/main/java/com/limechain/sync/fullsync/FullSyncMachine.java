@@ -30,6 +30,7 @@ import com.limechain.storage.trie.TrieStorage;
 import com.limechain.sync.SyncMode;
 import com.limechain.sync.fullsync.inherents.InherentData;
 import com.limechain.sync.state.SyncState;
+import com.limechain.sync.state.SyncStateRequesterRpc;
 import com.limechain.trie.DiskTrieAccessor;
 import com.limechain.trie.TrieAccessor;
 import com.limechain.trie.TrieStructureFactory;
@@ -69,6 +70,7 @@ public class FullSyncMachine {
     private final SlotCoordinator slotCoordinator = AppBean.getBean(SlotCoordinator.class);
     private final GrandpaService grandpaService = AppBean.getBean(GrandpaService.class);
     private final BeefyService beefyService = AppBean.getBean(BeefyService.class);
+    private final SyncStateRequesterRpc syncStateRequesterRpc = AppBean.getBean(SyncStateRequesterRpc.class);
     private Runtime runtime = null;
 
     public FullSyncMachine(NetworkService networkService,
@@ -154,7 +156,7 @@ public class FullSyncMachine {
 
     private TrieStructure<NodeData> loadStateAtBlockFromPeer(Hash256 lastFinalizedBlockHash) {
         log.info("Loading state at block from peer");
-        Map<ByteString, ByteString> kvps = makeStateRequest(lastFinalizedBlockHash);
+        Map<ByteString, ByteString> kvps = syncStateRequesterRpc.requestState(lastFinalizedBlockHash.toString());
 
         TrieStructure<NodeData> trieStructure = TrieStructureFactory.buildFromKVPs(kvps);
         trieStorage.insertTrieStorage(trieStructure);
