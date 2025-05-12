@@ -81,6 +81,7 @@ public class SyncStateRequesterRpc {
                                 MAX_KEY_RETRIES));
 
                         if (retryCount >= MAX_KEY_RETRIES) {
+                            //Todo: In future we may think of requesting state for different block instead of aborting.
                             log.severe("startStateRetrieval: Aborting - too many empty key list responses");
                             System.exit(1);
                         }
@@ -105,6 +106,7 @@ public class SyncStateRequesterRpc {
                             e.getMessage()));
 
                     if (retryCount >= MAX_KEY_RETRIES) {
+                        //Todo: In future we may think of requesting state for different block instead of aborting.
                         log.severe(String.format("startStateRetrieval: Fatal - could not retrieve keys after %d attempts",
                                 MAX_VALUE_RETRIES));
 
@@ -182,6 +184,7 @@ public class SyncStateRequesterRpc {
             }
         }
         if (value == null) {
+            //Todo: In future we may think of requesting state for different block instead of aborting.
             log.severe(String.format("retrieveAndStoreValue: Fatal - could not retrieve value for key %s after %d attempts",
                     key,
                     MAX_VALUE_RETRIES)
