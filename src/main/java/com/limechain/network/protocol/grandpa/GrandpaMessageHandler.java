@@ -139,7 +139,11 @@ public class GrandpaMessageHandler {
                 grandpaRound.getPreCommits().put(authorityPublicKey, receivedSignedVote);
                 grandpaRound.update(false, false, true);
             }
-            case SubRound.PRIMARY_PROPOSAL -> grandpaRound.setPrimaryVote(receivedSignedVote.getVote());
+            case SubRound.PRIMARY_PROPOSAL -> {
+                grandpaRound.setPrimaryVote(receivedSignedVote.getVote());
+                grandpaRound.getPreVotes().put(authorityPublicKey, receivedSignedVote);
+                grandpaRound.update(false, true, false);
+            }
             default -> throw new GrandpaGenericException("Unknown subround: " + subround);
         }
     }

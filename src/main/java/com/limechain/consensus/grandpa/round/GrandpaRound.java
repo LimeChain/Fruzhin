@@ -213,11 +213,9 @@ public class GrandpaRound {
         if (shouldUpdateGhost) {
             shouldUpdateEstimate = updateGrandpaGhost();
 
-            if (grandpaGhost != null) {
+            if (grandpaGhost != null && stage instanceof PreCommitStage) {
                 ASYNC_EXECUTOR.executeAndForget(() -> {
-                    if (stage instanceof PreCommitStage) {
-                        stage.end(this);
-                    }
+                    stage.end(this);
                 });
             }
         }
@@ -232,6 +230,9 @@ public class GrandpaRound {
 
         if (previous != null) {
             shouldStartNextRound = previous.finalizedBlock != null;
+        } else {
+            // at the genesis -> round number is equal to one
+            shouldStartNextRound = roundNumber.equals(BigInteger.ONE);
         }
 
         shouldStartNextRound = shouldStartNextRound && isCompletable;
@@ -280,7 +281,7 @@ public class GrandpaRound {
      */
     public Vote findBestPreVoteCandidate() {
 
-        BlockHeader choiceHeader = getGrandpaGhost();
+        BlockHeader choiceHeader = getSafeBlockBetweenFinalizedAndBest();
 
         if (primaryVote != null) {
             BigInteger primaryBlockNumber = primaryVote.getBlockNumber();
@@ -296,6 +297,39 @@ public class GrandpaRound {
         preVoteChoice = choiceVote;
 
         return choiceVote;
+    }
+
+    /**
+     * Returns a 'safe block' between the last finalized and best block, based on a 3/4 rounded-up rule:
+     * lastFinalized + ceil(3/4 * (best - lastFinalized)). This helps avoid voting for the tip of the chain.
+     * When the block gap is greater than 3, the tip is deliberately avoided to reduce fork risk.
+     * For gaps of 3 or less, selecting the tip is acceptable to avoid delaying progress.
+     *
+     * @return BlockHeader of the safe block
+     */
+    public BlockHeader getSafeBlockBetweenFinalizedAndBest() {
+
+        BlockState blockState = stateManager.getBlockState();
+        BlockHeader bestBlock = blockState.bestBlockHeader();
+
+        BigInteger finalizedNumber = lastFinalizedBlock.getBlockNumber();
+        BigInteger bestNumber = bestBlock.getBlockNumber();
+
+        BigInteger diff = bestNumber.subtract(finalizedNumber);
+
+        // (x * 3 + 3) / 4 is common round up (ceil) operation when using integer division.
+        BigInteger threeFourths = diff.multiply(BigInteger.valueOf(3))
+                .add(BigInteger.valueOf(3))
+                .divide(BigInteger.valueOf(4));
+
+        BigInteger safeNumber = finalizedNumber.add(threeFourths);
+
+        BlockHeader current = bestBlock;
+        while (current != null && current.getBlockNumber().compareTo(safeNumber) > 0) {
+            current = blockState.getHeader(current.getParentHash());
+        }
+
+        return current;
     }
 
     /**
@@ -442,7 +476,12 @@ public class GrandpaRound {
                 blockHeaders.removeFirst();
             }
 
-            blockState.finalizeBlock(finalizedBlock, createJustification(), authoritySet.getSetId());
+            try {
+                blockState.finalizeBlock(finalizedBlock, createJustification(), authoritySet.getSetId());
+            } catch (BlockStorageGenericException e) {
+                log.warning("Block cannot be finalized: " + e.getMessage());
+            }
+
             syncState.finalizeBlock(finalizedBlock);
 
             // Persisting round data into the database when a block is finalized
@@ -461,9 +500,10 @@ public class GrandpaRound {
 
             peerMessageCoordinator.sendNeighborMessageToPeers();
 
-            FinalizedBlockChangeEvent event = new FinalizedBlockChangeEvent(
-                    this, blockHeaders, finalizedBlock);
-            finalizedBlockChangeListener.finalizedBlockChanged(event);
+            //TODO: Following code will be adjusted after the refactoring of Beefy
+//            FinalizedBlockChangeEvent event = new FinalizedBlockChangeEvent(
+//                    this, blockHeaders, finalizedBlock);
+//            finalizedBlockChangeListener.finalizedBlockChanged(event);
         }
     }
 

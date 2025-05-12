@@ -13,6 +13,7 @@ public class PreCommitStage implements StageState {
 
     @Override
     public void start(GrandpaRound round) {
+
         log.info(String.format("Round %d started pre-commit stage.", round.getRoundNumber()));
 
         if (round.isCompletable()) {
@@ -47,8 +48,8 @@ public class PreCommitStage implements StageState {
             Vote grandpaGhost = Vote.fromBlockHeader(round.getGrandpaGhost());
             log.info(String.format("Round %d ended pre-commit stage.", round.getRoundNumber()));
 
-            round.broadcastVoteMessage(grandpaGhost, SubRound.PRE_COMMIT);
             round.setOnFinalizeHandler(null);
+            round.broadcastVoteMessage(grandpaGhost, SubRound.PRE_COMMIT);
             round.switchStage();
 
         } catch (GrandpaGenericException e) {

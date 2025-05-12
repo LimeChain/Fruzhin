@@ -29,12 +29,12 @@ public class PreVoteStage implements StageState {
             }
         });
 
-        log.info(String.format("Round #%d: Start prevote stage", round.getRoundNumber()));
+        log.info(String.format("Round %d Start prevote stage", round.getRoundNumber()));
         long delay = (DURATION * 2) - (System.currentTimeMillis() - round.getStartTime().toEpochMilli());
 
         round.setOnStageTimerHandler(Executors.newScheduledThreadPool(1));
         round.getOnStageTimerHandler().schedule(() -> {
-            log.info(String.format("Round %d: Time of prevote stage is out", round.getRoundNumber()));
+            log.info(String.format("Round %d Time of prevote stage is out", round.getRoundNumber()));
             end(round);
         }, delay, TimeUnit.MILLISECONDS);
     }
