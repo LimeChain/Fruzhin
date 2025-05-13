@@ -79,8 +79,7 @@ public class GrandpaService {
 
         GrandpaSetState grandpaSetState = stateManager.getGrandpaSetState();
 
-        // We can add directly the authorities from the genesis in order to have them as the first authority set
-        // TODO: This may make the authority set changes to fail -> check it
+        // On the genesis we have empty set changes collection, so we should take the authorities from the chain spec
         if (grandpaSetState.getSetChanges().isEmpty()) {
             return Optional.of(grandpaSetState.getAuthoritySet());
         }
