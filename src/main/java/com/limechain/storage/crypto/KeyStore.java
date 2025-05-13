@@ -100,6 +100,6 @@ public class KeyStore {
      * @return The constructed key string.
      */
     private String getKey(KeyType keyType, byte[] key) {
-        return new String(keyType.getBytes()).concat(StringUtils.toHexWithPrefix(key));
+        return new String(keyType.getBytes()).concat(new String(key));
     }
 }
