@@ -8,10 +8,10 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 @Log
-public class StateSyncRpcClient extends AbstractRpcClient {
+public class SyncStateRpcClient extends AbstractRpcClient {
     private final Map<WebSocketClient, CompletableFuture<String>> responseMap;
 
-    public StateSyncRpcClient(URI serverUri,
+    public SyncStateRpcClient(URI serverUri,
                               Map<WebSocketClient, CompletableFuture<String>> responseMap) {
         super(serverUri);
         this.responseMap = responseMap;

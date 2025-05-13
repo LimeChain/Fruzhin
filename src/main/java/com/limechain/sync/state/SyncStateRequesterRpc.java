@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.protobuf.ByteString;
 import com.limechain.config.HostConfig;
-import com.limechain.rpc.client.StateSyncRpcClient;
+import com.limechain.rpc.client.SyncStateRpcClient;
 import com.limechain.utils.StringUtils;
 import lombok.extern.java.Log;
 import org.java_websocket.client.WebSocketClient;
@@ -72,7 +72,7 @@ public class SyncStateRequesterRpc {
 
     private static final ObjectMapper mapper = new ObjectMapper();
 
-    private final BlockingQueue<StateSyncRpcClient> clientPool = new LinkedBlockingQueue<>();
+    private final BlockingQueue<SyncStateRpcClient> clientPool = new LinkedBlockingQueue<>();
     private final Map<WebSocketClient, CompletableFuture<String>> responseMap = new ConcurrentHashMap<>();
     private String wsUrl;
 
@@ -269,7 +269,7 @@ public class SyncStateRequesterRpc {
      */
     private void initializeWebSocketPool() throws Exception {
         for (int i = 0; i < CONNECTION_POOL_SIZE; i++) {
-            StateSyncRpcClient client = new StateSyncRpcClient(new URI(wsUrl), responseMap);
+            SyncStateRpcClient client = new SyncStateRpcClient(new URI(wsUrl), responseMap);
             client.setConnectionLostTimeout(WS_TIMEOUT_SECONDS);
 
             if (!client.connectBlocking(WS_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
@@ -332,7 +332,7 @@ public class SyncStateRequesterRpc {
      * Takes a WebSocket client from the pool, sends a request, waits for the response.
      */
     private String sendRequestWithPooledClient(String methodName, String[] args) throws Exception {
-        StateSyncRpcClient client = clientPool.take();
+        SyncStateRpcClient client = clientPool.take();
         CompletableFuture<String> future = new CompletableFuture<>();
         responseMap.put(client, future);
 
