@@ -26,6 +26,34 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+/**
+ * SyncStateRequesterRpc is a service responsible for retrieving the full blockchain state (key-value pairs)
+ * from a node via RPC WebSocket API.
+ * <p>
+ * It ensures complete retrieval by:
+ * - Paged requests to fetch all keys.
+ * - Individual value requests for each key.
+ * - Retrying multiple times in case of temporary failures.
+ * - Aborting the program if critical failures happen.
+ * <p>
+ * This approach guarantees correctness compared to the protocol-based warp sync, which failed due to missing or malformed key/value data.
+ * <p>
+ * <p>
+ * ------------------
+ * High-Level Workflow:
+ * ------------------
+ * <p>
+ * 1. Initialize a pool of WebSocket clients.
+ * 2. Fetch all state keys using `state_getKeysPaged` in batches.
+ * 3. For each key, retrieve its corresponding value using `state_getStorage`.
+ * 4. Retry failed operations a limited number of times.
+ * 5. If critical errors occur (e.g., persistent missing keys/values), abort the program.
+ * 6. Finally, return the full validated key-value map.
+ * <p>
+ * Threads:
+ * - One thread fetches key batches sequentially.
+ * - A virtual thread pool fetches values for keys in parallel for efficiency.
+ */
 @Component
 @Log
 public class SyncStateRequesterRpc {
@@ -37,6 +65,11 @@ public class SyncStateRequesterRpc {
     private static final int MAX_VALUE_RETRIES = 100;
     private static final int WS_TIMEOUT_SECONDS = 30;
     private static final int CONNECTION_POOL_SIZE = 100;
+    private static final int SLEEP_BETWEEN_RETRIES = 5000;
+    private static final int SLEEP_AFTER_EMPTY_KEYS = 1000;
+    private static final long LOG_INTERVAL = 20000;
+    private long lastLogTime = System.currentTimeMillis();
+
     private static final ObjectMapper mapper = new ObjectMapper();
 
     private final BlockingQueue<StateSyncRpcClient> clientPool = new LinkedBlockingQueue<>();
@@ -48,10 +81,14 @@ public class SyncStateRequesterRpc {
         this.wsUrl = hostConfig.getNodeSynckPath();
     }
 
+    /**
+     * Initializes connections and starts the retrieval process
+     *
+     * @param blockHash is the last finalized block hash for which we want the full state
+     */
     public Map<ByteString, ByteString> requestState(String blockHash) {
         try {
             initializeWebSocketPool();
-            log.info("requestState: Starting state retrieval for block: " + blockHash);
             return startStateRetrieval(blockHash);
         } catch (Exception e) {
             log.severe(String.format("requestState: Error in requestState: %s", e.getMessage()));
@@ -61,7 +98,19 @@ public class SyncStateRequesterRpc {
         }
     }
 
+    /**
+     * Main retrieval loop.
+     * <p>
+     * Repeatedly:
+     * - Fetches the next batch of keys.
+     * - Fetches values for these keys in parallel.
+     * - If we get less than BATCH_SIZE keys, we assume we are done.
+     * <p>
+     * Retry behavior:
+     * - If a batch fetch fails, we retry up to MAX_KEY_RETRIES times before aborting.
+     */
     public Map<ByteString, ByteString> startStateRetrieval(String blockHash) {
+        ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
         Map<String, String> stateData = new ConcurrentHashMap<>();
         String lastKey = null;
         int retryCount = 0;
@@ -85,14 +134,21 @@ public class SyncStateRequesterRpc {
                             log.severe("startStateRetrieval: Aborting - too many empty key list responses");
                             System.exit(1);
                         }
-                        Thread.sleep(1000);
+                        Thread.sleep(SLEEP_AFTER_EMPTY_KEYS);
                         continue;
                     }
 
-                    ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
+                    // Process the keys in parallel (each fetches its own value)
                     processKeysBatch(keys, executor, stateData, blockHash);
+                    long now = System.currentTimeMillis();
 
-                    lastKey = keys.getLast();
+                    if (now - lastLogTime >= LOG_INTERVAL) {
+                        log.info(String.format("Progress: %d keys processed with values.",
+                                stateData.size()));
+                        lastLogTime = now;
+                    }
+
+                    lastKey = keys.getLast(); // Use last key from previous batch as start for next
                     retryCount = 0;
 
                     if (keys.size() < BATCH_SIZE) {
@@ -112,13 +168,14 @@ public class SyncStateRequesterRpc {
 
                         System.exit(1);
                     }
-                    Thread.sleep(5000);
+                    Thread.sleep(SLEEP_BETWEEN_RETRIES);
                 }
             }
 
             log.info(String.format("startStateRetrieval: Completed - %d total keys and their valid values.",
                     stateData.size()));
 
+            // Final return: Hex-encoded keys and values wrapped in ByteString
             return stateData.entrySet().stream()
                     .filter(entry -> entry.getValue() != null)
                     .collect(Collectors.toMap(
@@ -128,16 +185,12 @@ public class SyncStateRequesterRpc {
         } catch (Exception e) {
             log.severe(String.format("startStateRetrieval: Error in collectState: %s", e.getMessage()));
             return Collections.emptyMap();
-        } finally {
-            for (WebSocketClient client : clientPool) {
-                try {
-                    client.close();
-                } catch (Exception ignored) {
-                }
-            }
         }
     }
 
+    /**
+     * Takes a batch of keys and retrieves their corresponding values in parallel.
+     */
     private void processKeysBatch(List<String> keys,
                                   ExecutorService executor,
                                   Map<String, String> stateData,
@@ -156,6 +209,12 @@ public class SyncStateRequesterRpc {
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
     }
 
+    /**
+     * Attempts to fetch the value for a given key.
+     * <p>
+     * Retries if null response received or any error occurs.
+     * Aborts program if retrieval fails after MAX_VALUE_RETRIES.
+     */
     private void retrieveAndStoreValue(String key, String blockHash, Map<String, String> stateData) {
         int attempts = 0;
         String value = null;
@@ -176,7 +235,7 @@ public class SyncStateRequesterRpc {
             }
             attempts++;
             try {
-                Thread.sleep(5000);
+                Thread.sleep(SLEEP_BETWEEN_RETRIES);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 log.severe("retrieveAndStoreValue: Interrupted during retry sleep");
@@ -194,6 +253,9 @@ public class SyncStateRequesterRpc {
         stateData.put(key, value);
     }
 
+    /**
+     * Initializes multiple WebSocket clients and adds them to the client pool for reuse.
+     */
     private void initializeWebSocketPool() throws Exception {
         for (int i = 0; i < CONNECTION_POOL_SIZE; i++) {
             StateSyncRpcClient client = new StateSyncRpcClient(new URI(wsUrl), responseMap);
@@ -211,42 +273,53 @@ public class SyncStateRequesterRpc {
         for (WebSocketClient client : clientPool) {
             try {
                 client.close();
-            } catch (Exception ignored) {
+            } catch (Exception e) {
+                log.warning("closeAllClients: Failed to close WebSocketClient: " + e.getMessage());
             }
         }
     }
 
+    /**
+     * RPC call to retrieve a batch of keys.
+     */
     private List<String> getKeysPaged(String startKey, String blockHash) throws Exception {
-        String response = sendRequestWithPooledClient(GET_KEYS_PAGED_METHOD_NAME, new String[]{
-                        PREFIX,
-                        String.valueOf(BATCH_SIZE),
-                        startKey,
-                        blockHash
-                }
+        String response = sendRequestWithPooledClient(
+                GET_KEYS_PAGED_METHOD_NAME,
+                new String[]{PREFIX, String.valueOf(BATCH_SIZE), startKey, blockHash}
         );
         JsonNode result = getJsonNode(response);
-
-        if (result == null) return Collections.emptyList();
 
         return mapper.convertValue(result, List.class);
     }
 
+    /**
+     * RPC call to retrieve the value of a single key.
+     */
     private String getStorage(String key, String blockHash) throws Exception {
-        String response = sendRequestWithPooledClient(GET_STORAGE_METHOD_NAME, new String[]{
-                        key,
-                        blockHash
-                }
+        String response = sendRequestWithPooledClient(
+                GET_STORAGE_METHOD_NAME,
+                new String[]{key, blockHash}
         );
         JsonNode result = getJsonNode(response);
 
-        return result != null && !result.isNull() ? result.asText() : null;
+        return result.isNull() ? null : result.asText();
     }
 
-    private static JsonNode getJsonNode(String response) throws JsonProcessingException {
-        JsonNode responseNode = mapper.readTree(response);
-        return responseNode.get("result");
+    /**
+     * Validates and extracts the 'result' part of a JSON-RPC response.
+     * Throws if missing to avoid silent failures.
+     */
+    private JsonNode getJsonNode(String response) throws JsonProcessingException {
+        JsonNode root = mapper.readTree(response);
+        if (root == null || !root.has("result")) {
+            throw new IllegalStateException("Invalid JSON response: missing result field");
+        }
+        return root.get("result");
     }
 
+    /**
+     * Takes a WebSocket client from the pool, sends a request, waits for the response.
+     */
     private String sendRequestWithPooledClient(String methodName, String[] args) throws Exception {
         StateSyncRpcClient client = clientPool.take();
         CompletableFuture<String> future = new CompletableFuture<>();

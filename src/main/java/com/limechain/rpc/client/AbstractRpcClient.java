@@ -13,6 +13,7 @@ import java.util.logging.Level;
  */
 @Log
 public abstract class AbstractRpcClient extends WebSocketClient {
+    public static final String REG_EXPRESSION_NUMBER = "-?\\d+(\\.\\d+)?";
 
     protected AbstractRpcClient(URI serverURI) {
         super(serverURI);
@@ -50,9 +51,41 @@ public abstract class AbstractRpcClient extends WebSocketClient {
      * @param params method parameters
      */
     public void send(String method, String[] params) {
-        String message =
-                "{\"id\":1,\"jsonrpc\":\"2.0\",\"method\":\"" + method + "\",\"params\":[" + String.join(",", params) +
-                        "]}";
-        super.send(message);
+        String payload = buildRpcRequest(method, params);
+        super.send(payload);
+    }
+
+    private String buildRpcRequest(String method, String[] params) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("{")
+                .append("\"id\":1, ")
+                .append("\"jsonrpc\":\"2.0\", ")
+                .append("\"method\":\"").append(method).append("\", ")
+                .append("\"params\":[");
+
+        for (int i = 0; i < params.length; i++) {
+            builder.append(serializeParam(params[i]));
+            if (i < params.length - 1) {
+                builder.append(", ");
+            }
+        }
+
+        builder.append("]}");
+        return builder.toString();
+    }
+
+    private String serializeParam(String param) {
+        if (param == null) {
+            return "null";
+        }
+        if (isNumeric(param)) {
+            return param;
+        }
+        return "\"" + param + "\"";
+    }
+
+
+    private boolean isNumeric(String str) {
+        return str.matches(REG_EXPRESSION_NUMBER);
     }
 }

@@ -28,31 +28,4 @@ public class StateSyncRpcClient extends AbstractRpcClient {
         CompletableFuture<String> future = responseMap.remove(this);
         if (future != null && !future.isDone()) future.completeExceptionally(ex);
     }
-
-
-    @Override
-    public void send(String method, String[] params) {
-        StringBuilder builder = new StringBuilder();
-        builder.append("{\"id\":1, \"jsonrpc\":\"2.0\", \"method\": \"")
-                .append(method)
-                .append("\", \"params\":[");
-
-        for (int i = 0; i < params.length; i++) {
-            String param = params[i];
-            if (param == null) {
-                builder.append("null");
-            } else if (param.matches("-?\\d+(\\.\\d+)?")) { // check if it's a number
-                builder.append(param);
-            } else {
-                builder.append("\"").append(param).append("\"");
-            }
-
-            if (i < params.length - 1) {
-                builder.append(", ");
-            }
-        }
-
-        builder.append("]}");
-        super.send(builder.toString());
-    }
 }
