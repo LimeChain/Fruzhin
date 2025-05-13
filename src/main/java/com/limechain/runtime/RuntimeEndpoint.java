@@ -21,6 +21,7 @@ public enum RuntimeEndpoint {
     BEEFY_API_GENERATE_KEY_OWNERSHIP_PROOF("BeefyApi_generate_key_ownership_proof"),
     BEEFY_API_SUBMIT_REPORT_DOUBLE_VOTING_UNSIGNED_EXTRINSIC("BeefyApi_submit_report_double_voting_unsigned_extrinsic"),
     BEEFY_API_VALIDATOR_SET("BeefyApi_validator_set"),
+    BEEFY_API_BEEFY_GENESIS("BeefyApi_beefy_genesis"),
     BLOCKBUILDER_FINALIZE_BLOCK("BlockBuilder_finalize_block"),
     BLOCKBUILDER_CHECK_INHERENTS("BlockBuilder_check_inherents"),
     BLOCKBUILDER_APPLY_EXTRINISIC("BlockBuilder_apply_extrinsic"),

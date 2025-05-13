@@ -28,7 +28,7 @@ public class StateMessages extends StrictProtocolBinding<StateController> {
 
             return controller
                     .sendStateRequest(StringUtils.remove0xPrefix(blockHash), after)
-                    .get(10, TimeUnit.SECONDS);
+                    .get(20, TimeUnit.SECONDS);
         } catch (ExecutionException | TimeoutException | IllegalStateException e) {
             log.log(Level.SEVERE, "Error while sending remote state: ", e);
             throw new ExecutionFailedException(e);

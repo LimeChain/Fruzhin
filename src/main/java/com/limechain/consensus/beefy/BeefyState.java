@@ -57,8 +57,7 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
     @Nullable
     private BigInteger beefyGenesis;
 
-    @Nullable
-    private BigInteger beefyFinalized;
+    private BigInteger beefyFinalized = BigInteger.ZERO;
 
     @Nullable
     private BigInteger grandpaFinalized;
@@ -83,10 +82,8 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
 
     @Override
     public void populateDataFromRuntime(Runtime runtime) {
-        this.authoritySet = runtime.getBeefyValidatorSet().orElseGet(() -> {
-            log.warning("BeefyValidatorSet is not available from runtime, setting authoritySet to null.");
-            return null;
-        });
+        this.beefyGenesis = runtime.getBeefyGenesis().orElse(null);
+        this.authoritySet = runtime.getBeefyValidatorSet().orElse(null);
     }
 
     @Override
@@ -125,11 +122,6 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
             case BEEFY_CHANGED_AUTHORITIES -> handleChangedBeefyAuthorities(consensusMessage, blockNumber);
             case BEEFY_ON_DISABLED -> disabledAuthority = consensusMessage.getDisabledAuthority();
         }
-    }
-
-    public BigInteger getBeefyFinalized() {
-        if (beefyFinalized == null) throw new BeefyGenericException("Beefy finalized is not initialized yet.");
-        return beefyFinalized;
     }
 
     public BigInteger getGrandpaFinalized() {

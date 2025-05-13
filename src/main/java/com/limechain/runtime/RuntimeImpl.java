@@ -14,6 +14,7 @@ import com.limechain.consensus.dto.runtime.OpaqueKeyOwnershipProof;
 import com.limechain.consensus.grandpa.dto.runtime.GrandpaEquivocation;
 import com.limechain.consensus.grandpa.scale.runtime.GrandpaEquivocationScaleWriter;
 import com.limechain.consensus.scale.runtime.OpaqueKeyOwnershipProofReader;
+import com.limechain.exception.global.RuntimeCallException;
 import com.limechain.exception.scale.ScaleEncodingException;
 import com.limechain.network.protocol.blockannounce.scale.BlockHeaderScaleWriter;
 import com.limechain.network.protocol.transaction.scale.TransactionReader;
@@ -98,6 +99,13 @@ public class RuntimeImpl implements Runtime {
     }
 
     @Override
+    public List<Authority> getGrandpaApiAuthorities() {
+        return ScaleUtils.Decode.decode(
+                call(RuntimeEndpoint.GRANDPA_API_GRANDPA_AUTHORITIES), new ListReader<>(AuthorityReader.getInstance())
+        );
+    }
+
+    @Override
     public Optional<OpaqueKeyOwnershipProof> generateGrandpaKeyOwnershipProof(BigInteger authoritySetId,
                                                                               byte[] authorityPublicKey) {
         byte[] encodedProof = ArrayUtils.addAll(ScaleUtils.Encode.encode(
@@ -142,7 +150,17 @@ public class RuntimeImpl implements Runtime {
     @Override
     public Optional<BeefyAuthoritySet> getBeefyValidatorSet() {
         byte[] encodedResponse = call(RuntimeEndpoint.BEEFY_API_VALIDATOR_SET);
-        return new ScaleCodecReader(encodedResponse).readOptional(BeefyAuthoritySetReader.getInstance());
+        return encodedResponse == null
+                ? Optional.empty()
+                : new ScaleCodecReader(encodedResponse).readOptional(BeefyAuthoritySetReader.getInstance());
+    }
+
+    @Override
+    public Optional<BigInteger> getBeefyGenesis() {
+        byte[] encodedResponse = call(RuntimeEndpoint.BEEFY_API_BEEFY_GENESIS);
+        return encodedResponse == null
+                ? Optional.empty()
+                : new ScaleCodecReader(encodedResponse).readOptional(ScaleCodecReader.UINT32).map(BigInteger::valueOf);
     }
 
     @Override
@@ -264,7 +282,12 @@ public class RuntimeImpl implements Runtime {
      */
     @Nullable
     private synchronized byte[] call(RuntimeEndpoint function) {
-        return callInner(function, new RuntimePointerSize(0, 0));
+        try {
+            return callInner(function, new RuntimePointerSize(0, 0));
+        } catch (RuntimeCallException e) {
+            log.warning(String.format("call: Couldn't execute runtime call %s: %s", function, e.getMessage()));
+            return null;
+        }
     }
 
     /**
@@ -275,11 +298,15 @@ public class RuntimeImpl implements Runtime {
      */
     @Nullable
     private synchronized byte[] callAndBackup(RuntimeEndpoint function) {
-        context.trieAccessor.prepareBackup();
-        byte[] result = callInner(function, new RuntimePointerSize(0, 0));
-        context.trieAccessor.backup();
-
-        return result;
+        try {
+            context.trieAccessor.prepareBackup();
+            return callInner(function, new RuntimePointerSize(0, 0));
+        } catch (RuntimeCallException e) {
+            log.warning(String.format("callAndBackup: Couldn't execute runtime call %s: %s", function, e.getMessage()));
+            return null;
+        } finally {
+            context.trieAccessor.backup();
+        }
     }
 
     /**
@@ -291,7 +318,12 @@ public class RuntimeImpl implements Runtime {
      */
     @Nullable
     private synchronized byte[] call(RuntimeEndpoint function, @NotNull byte[] parameter) {
-        return callInner(function, context.getSharedMemory().writeData(parameter));
+        try {
+            return callInner(function, context.getSharedMemory().writeData(parameter));
+        } catch (RuntimeCallException e) {
+            log.warning(String.format("call: Couldn't execute runtime call %s: %s", function, e.getMessage()));
+            return null;
+        }
     }
 
     /**
@@ -303,38 +335,38 @@ public class RuntimeImpl implements Runtime {
      */
     @Nullable
     private synchronized byte[] callAndBackup(RuntimeEndpoint function, @NotNull byte[] parameter) {
-        context.trieAccessor.prepareBackup();
-        byte[] result = callInner(function, context.getSharedMemory().writeData(parameter));
-        context.trieAccessor.backup();
-
-        return result;
+        try {
+            context.trieAccessor.prepareBackup();
+            return callInner(function, context.getSharedMemory().writeData(parameter));
+        } catch (RuntimeCallException e) {
+            log.warning(String.format("callAndBackup: Couldn't execute runtime call %s: %s", function, e.getMessage()));
+            return null;
+        } finally {
+            context.trieAccessor.backup();
+        }
     }
 
     @Nullable
     private byte[] callInner(RuntimeEndpoint function, RuntimePointerSize parameterPtrSize) {
         String functionName = function.getName();
         log.log(Level.FINE, "Making a runtime call: " + functionName);
-        Object[] response = instance.exports.getFunction(functionName)
-                .apply(parameterPtrSize.pointer(), parameterPtrSize.size());
+        try {
+            Object[] response = instance.exports.getFunction(functionName)
+                    .apply(parameterPtrSize.pointer(), parameterPtrSize.size());
 
-        if (response == null) {
-            return null;
+            if (response == null) {
+                return null;
+            }
+
+            RuntimePointerSize responsePtrSize = new RuntimePointerSize((long) response[0]);
+            return context.getSharedMemory().readData(responsePtrSize);
+        } catch (Exception e) {
+            throw new RuntimeCallException(e.getMessage());
         }
-
-        RuntimePointerSize responsePtrSize = new RuntimePointerSize((long) response[0]);
-        return context.getSharedMemory().readData(responsePtrSize);
     }
 
     private Optional<byte[]> findStorageValue(Nibbles key) {
         return this.context.trieAccessor.findStorageValue(key);
     }
-
-    @Override
-    public List<Authority> getGrandpaApiAuthorities() {
-        return ScaleUtils.Decode.decode(
-                call(RuntimeEndpoint.GRANDPA_API_GRANDPA_AUTHORITIES), new ListReader<>(AuthorityReader.getInstance())
-        );
-    }
-
 }
 

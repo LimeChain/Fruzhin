@@ -150,7 +150,7 @@ public class NetworkService implements NodeService {
     }
 
     public boolean updateCurrentSelectedPeerWithNextBootnode() {
-        if (bootPeerIndex > kademliaService.getBootNodePeerIds().size())
+        if (bootPeerIndex >= kademliaService.getBootNodePeerIds().size())
             return false;
         this.currentSelectedPeer = this.kademliaService.getBootNodePeerIds().get(bootPeerIndex);
         bootPeerIndex++;
@@ -169,6 +169,7 @@ public class NetworkService implements NodeService {
         if (connectionManager.getPeerIds().isEmpty()) return;
         this.currentSelectedPeer = connectionManager.getPeerIds().stream()
                 .skip(RANDOM.nextInt(connectionManager.getPeerIds().size())).findAny().orElse(null);
+        log.log(Level.INFO, "Current selected peer: " + this.currentSelectedPeer);
     }
 
     public String getPeerId() {

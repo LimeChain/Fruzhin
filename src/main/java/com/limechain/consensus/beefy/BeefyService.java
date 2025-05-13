@@ -34,6 +34,7 @@ import java.math.BigInteger;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -91,7 +92,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
         // Don't vote for targets until they've been finalized (`target` can be > `grandpaFinalized`
         // when `MIN_BLOCK_DELTA` is big enough).
         // Also, ensure it's not voting on a block that has already been voted on.
-        if (shouldSkipVote(targetVoteBlockNumber, grandpaFinalized, lastVoted)) {
+        if (lastVoted != null && shouldSkipVote(targetVoteBlockNumber, grandpaFinalized, lastVoted)) {
             return; // No voting if target is beyond grandpa finalized, or it's not a new block
         }
 
@@ -337,7 +338,12 @@ public class BeefyService implements FinalizedBlockChangeListener {
     }
 
     private Pair<BigInteger, BigInteger> findAcceptedInterval() {
+
         BeefyState beefyState = stateManager.getBeefyState();
+        if (beefyState.getSessions().isEmpty()) {
+            return new Pair<>(BigInteger.ZERO, BigInteger.ZERO);
+        }
+
         BeefySession currentSession = beefyState.getSessions().peekFirst();
         BigInteger mandatoryBlock = currentSession.getMandatoryBlock();
 
@@ -482,12 +488,50 @@ public class BeefyService implements FinalizedBlockChangeListener {
         ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
         scheduler.scheduleWithFixedDelay(() -> {
             try {
-                applyPendingJustifications();
-                vote();
+                if (shouldRun()) {
+                    applyPendingJustifications();
+                    vote();
+                }
             } catch (Exception e) {
                 log.warning("Exception in Beefy main loop, restarting in 1 second " + e.getMessage());
-              //TODO: handle restarting of main loop
+                //TODO: handle restarting of main loop
             }
         }, 0, 1, TimeUnit.MILLISECONDS);
+    }
+
+    private boolean shouldRun() {
+
+        BeefyState beefyState = stateManager.getBeefyState();
+        BlockState blockState = stateManager.getBlockState();
+
+        BlockHeader lastFinalized = blockState.getHighestFinalizedHeader();
+        Runtime runtime = blockState.getRuntime(lastFinalized.getHash());
+
+        BigInteger currentGenesis = beefyState.getBeefyGenesis();
+        BigInteger newGenesis = runtime.getBeefyGenesis().orElse(null);
+        if (!Objects.equals(newGenesis, currentGenesis)) {
+
+            beefyState.setLastVote(null);
+            if (newGenesis != null) {
+
+                if (beefyState.getBeefyFinalized().compareTo(newGenesis) < 0) {
+                    beefyState.setBeefyFinalized(BigInteger.ZERO);
+                }
+                beefyState.getSessions()
+                        .removeIf(session -> session.getMandatoryBlock().compareTo(newGenesis) < 0);
+                beefyState.getPendingJustifications().entrySet()
+                        .removeIf(entry ->
+                                entry.getValue().getCommitment().getBlockNumber().compareTo(newGenesis) < 0);
+            } else {
+                beefyState.getSessions().clear();
+                beefyState.getPendingJustifications().clear();
+            }
+        }
+
+        if (newGenesis == null) {
+            return false;
+        }
+
+        return lastFinalized.getBlockNumber().compareTo(newGenesis) >= 0;
     }
 }

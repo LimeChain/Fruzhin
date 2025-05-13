@@ -776,6 +776,7 @@ public class BlockState extends AbstractState {
         finalizeBlock(header, setId, justification == null
                 ? BigInteger.ZERO
                 : justification.getRoundNumber());
+        log.info(String.format("Finalized block in block state: %s %d", header.getHash(), header.getBlockNumber()));
     }
 
     /**
