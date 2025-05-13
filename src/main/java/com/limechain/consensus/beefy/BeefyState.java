@@ -57,8 +57,7 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
     @Nullable
     private BigInteger beefyGenesis;
 
-    @Nullable
-    private BigInteger beefyFinalized;
+    private BigInteger beefyFinalized = BigInteger.ZERO;
 
     @Nullable
     private BigInteger grandpaFinalized;
@@ -83,10 +82,8 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
 
     @Override
     public void populateDataFromRuntime(Runtime runtime) {
-        this.authoritySet = runtime.getBeefyValidatorSet().orElseGet(() -> {
-            log.warning("BeefyValidatorSet is not available from runtime, setting authoritySet to null.");
-            return null;
-        });
+        this.beefyGenesis = runtime.getBeefyGenesis().orElse(null);
+        this.authoritySet = runtime.getBeefyValidatorSet().orElse(null);
     }
 
     @Override
@@ -122,14 +119,13 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
 
     public void handleBeefyConsensusMessage(BeefyConsensusMessage consensusMessage, BigInteger blockNumber) {
         switch (consensusMessage.getFormat()) {
-            case BEEFY_CHANGED_AUTHORITIES -> handleChangedBeefyAuthorities(consensusMessage, blockNumber);
+            case BEEFY_CHANGED_AUTHORITIES -> handleChangedBeefyAuthorities(
+                    consensusMessage.getAuthorityPublicKeys(),
+                    consensusMessage.getAuthoritySetId(),
+                    blockNumber
+            );
             case BEEFY_ON_DISABLED -> disabledAuthority = consensusMessage.getDisabledAuthority();
         }
-    }
-
-    public BigInteger getBeefyFinalized() {
-        if (beefyFinalized == null) throw new BeefyGenericException("Beefy finalized is not initialized yet.");
-        return beefyFinalized;
     }
 
     public BigInteger getGrandpaFinalized() {
@@ -150,6 +146,30 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
         AppBean.getBean(PeerRequester.class).makeBeefyJustificationRequest(last.getMandatoryBlock())
                 .thenAccept(r ->
                         AppBean.getBean(BeefyMessageHandler.class).handleSignedCommitment(r));
+    }
+
+    public void handleChangedBeefyAuthorities(List<byte[]> authorityPublicKeys,
+                                               BigInteger authoritySetId,
+                                               BigInteger blockNumber) {
+
+        Pair<byte[], byte[]> keyPair = keyStore.findKeyPair(
+                authorityPublicKeys,
+                KeyType.BEEFY
+        ).orElse(null);
+
+        if (keyPair == null) {
+            log.info(
+                    String.format("BEEFY: We are not chosen to vote in current session, block number: %s", blockNumber)
+            );
+        }
+
+        BeefySession beefySession = new BeefySession(
+                new BeefyAuthoritySet(authorityPublicKeys, authoritySetId),
+                blockNumber,
+                keyPair
+        );
+
+        sessions.add(beefySession);
     }
 
     private void handleChangedBeefyAuthorities(BeefyConsensusMessage consensusMessage, BigInteger blockNumber) {

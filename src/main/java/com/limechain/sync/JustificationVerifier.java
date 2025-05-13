@@ -73,7 +73,7 @@ public class JustificationVerifier {
             return false;
         }
 
-        log.log(Level.INFO, "All signatures were verified successfully");
+        log.log(Level.FINE, "All signatures were verified successfully");
 
         return true;
     }

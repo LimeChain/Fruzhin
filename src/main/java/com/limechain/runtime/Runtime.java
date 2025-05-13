@@ -30,6 +30,8 @@ public interface Runtime {
 
     void submitReportBabeEquivocationUnsignedExtrinsic(BlockEquivocationProof blockEquivocationProof, byte[] keyOwnershipProof);
 
+    List<Authority> getGrandpaApiAuthorities();
+
     Optional<OpaqueKeyOwnershipProof> generateGrandpaKeyOwnershipProof(BigInteger authoritySetId, byte[] authorityPublicKey);
 
     void submitReportGrandpaEquivocationUnsignedExtrinsic(GrandpaEquivocation grandpaEquivocation, byte[] keyOwnershipProof);
@@ -39,6 +41,8 @@ public interface Runtime {
     void submitReportBeefyDoubleVotingUnsignedExtrinsic(DoubleVotingProof doubleVotingProof, byte[] keyOwnershipProof);
 
     Optional<BeefyAuthoritySet> getBeefyValidatorSet();
+
+    Optional<BigInteger> getBeefyGenesis();
 
     List<DecodedKey> decodeSessionKeys(String sessionKeys);
 
@@ -72,7 +76,5 @@ public interface Runtime {
     void persistsChanges();
 
     void close();
-
-    List<Authority> getGrandpaApiAuthorities();
 
 }

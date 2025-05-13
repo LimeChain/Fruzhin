@@ -153,11 +153,11 @@ public class FullSyncMachine {
                 "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"
         );
 
-//        author.authorInsertKey(
-//                "beef",
-//                "0xcb6df9de1efca7a3998a8ead4e02159d5fa99c3e0d4fd6432667390bb4726854",
-//                "0x020a1091341fe5664bfa1782d5e04779689068c916b04cb365ec3153755684d9a1"
-//        );
+        author.authorInsertKey(
+                "beef",
+                "0xcb6df9de1efca7a3998a8ead4e02159d5fa99c3e0d4fd6432667390bb4726854",
+                "0x020a1091341fe5664bfa1782d5e04779689068c916b04cb365ec3153755684d9a1"
+        );
 
         stateManager.getEpochState().populateDataFromRuntime(runtime);
         stateManager.getGrandpaSetState().populateDataFromRuntime(runtime);
@@ -192,6 +192,7 @@ public class FullSyncMachine {
         while (true) {
             final SyncMessage.StateResponse response;
             try {
+                log.info("HERE REQUEST");
                 response = requester.requestState(lastFinalizedBlockHash.toString(), start).join();
             } catch (Exception ex) {
                 if (!this.networkService.updateCurrentSelectedPeerWithNextBootnode()) {

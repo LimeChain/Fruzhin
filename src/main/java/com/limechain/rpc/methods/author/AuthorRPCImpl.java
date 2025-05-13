@@ -15,7 +15,10 @@ import com.limechain.utils.scale.ScaleUtils;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.schnorrkel.Schnorrkel;
 import io.emeraldpay.polkaj.schnorrkel.SchnorrkelException;
+import io.libp2p.core.crypto.PrivKey;
+import io.libp2p.core.crypto.PubKey;
 import io.libp2p.crypto.keys.Ed25519PrivateKey;
+import io.libp2p.crypto.keys.Secp256k1Kt;
 import lombok.RequiredArgsConstructor;
 import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters;
 import org.javatuples.Pair;
@@ -120,6 +123,12 @@ public class AuthorRPCImpl {
                 generatedPublicKey = sr25519KeyPair.getPublicKey();
                 break;
 
+            case ECDSA:
+                var ecdsaKeyPair = generateEcdsaKeyPair(suri);
+                privateKey = ecdsaKeyPair.getValue0().raw();
+                generatedPublicKey = ecdsaKeyPair.getValue1().raw();
+                break;
+
             default:
                 throw new IllegalArgumentException("Key type not supported");
         }
@@ -153,6 +162,12 @@ public class AuthorRPCImpl {
         } catch (SchnorrkelException e) {
             throw new IllegalStateException(e.getMessage());
         }
+    }
+
+    private Pair<PrivKey, PubKey> generateEcdsaKeyPair(byte[] suri) {
+        PrivKey privKey = Secp256k1Kt.unmarshalSecp256k1PrivateKey(suri);
+        PubKey pubKey = privKey.publicKey();
+        return new Pair<>(privKey, pubKey);
     }
 
     private void validatePublicKey(byte[] generatedPublicKey, byte[] publicKey) {
