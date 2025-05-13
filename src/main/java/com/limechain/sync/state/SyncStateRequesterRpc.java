@@ -160,6 +160,11 @@ public class SyncStateRequesterRpc {
                     log.severe(String.format("startStateRetrieval: Error fetching batch (attempt %d): %s",
                             retryCount,
                             e.getMessage()));
+                    if (e instanceof InterruptedException) {
+                        Thread.currentThread().interrupt();
+                        log.severe("startStateRetrieval: Interrupted during fetching batch, aborting...");
+                        System.exit(1);
+                    }
 
                     if (retryCount >= MAX_KEY_RETRIES) {
                         //Todo: In future we may think of requesting state for different block instead of aborting.
@@ -183,7 +188,13 @@ public class SyncStateRequesterRpc {
                             entry -> ByteString.fromHex(StringUtils.remove0xPrefix(entry.getValue()))
                     ));
         } catch (Exception e) {
-            log.severe(String.format("startStateRetrieval: Error in collectState: %s", e.getMessage()));
+            if (e instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+                log.severe("startStateRetrieval: Interrupted during fetching batch, aborting...");
+                System.exit(1);
+            }
+
+            log.severe(String.format("startStateRetrieval: Error in startStateRetrieval: %s", e.getMessage()));
             return Collections.emptyMap();
         }
     }
