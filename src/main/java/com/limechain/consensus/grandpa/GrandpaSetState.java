@@ -68,7 +68,9 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
 
     @Override
     public void populateDataFromRuntime(Runtime runtime) {
+        this.authoritySet.setSetId(BigInteger.ZERO);
         this.authoritySet.setAuthorities(runtime.getGrandpaApiAuthorities());
+        updateAuthorityStatus();
     }
 
     @Override
@@ -335,6 +337,8 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
     private void loadPersistedState() {
         authoritySet.setSetId(repository.fetchAuthoritiesSetId());
         authoritySet.setAuthorities(Arrays.asList(repository.fetchGrandpaAuthorities(authoritySet)));
+        updateAuthorityStatus();
+
         BigInteger latestRoundNumber = repository.fetchLatestRoundNumber();
         Vote primaryVote = repository.fetchPrimaryVote(authoritySet, latestRoundNumber);
         boolean isPrimaryVoter = repository.fetchIsPrimaryVoter(authoritySet, latestRoundNumber) != null;
