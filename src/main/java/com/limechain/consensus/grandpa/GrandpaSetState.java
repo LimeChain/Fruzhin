@@ -274,6 +274,11 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
             return true;
         }
 
+        // Check if there are any pending authority set changes in the fork tree
+        if (authoritySetChangeHandler.getPendingScheduledChanges().getAll().isEmpty()) {
+            return false;
+        }
+
         Optional<PendingChange> scheduledChange = Optional.empty();
         try {
             scheduledChange =

@@ -128,7 +128,7 @@ public class ForkTree<T> {
     private void validateNumberExceedsFinalizedNumber(BigInteger nodeNumber) throws ForkTreeException {
         if (Objects.nonNull(bestFinalizedNumber) && nodeNumber.compareTo(bestFinalizedNumber) <= 0) {
             throw new ForkTreeException("Cannot import or finalize a node " + nodeNumber +
-                    "that is ancestor of the current finalized block " + bestFinalizedNumber);
+                    " that is ancestor of the current finalized block " + bestFinalizedNumber);
         }
     }
 
