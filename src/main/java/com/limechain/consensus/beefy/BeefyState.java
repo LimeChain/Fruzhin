@@ -5,6 +5,7 @@ import com.limechain.consensus.beefy.dto.BeefyAuthoritySet;
 import com.limechain.consensus.beefy.dto.BeefySession;
 import com.limechain.consensus.beefy.dto.message.BeefyConsensusMessage;
 import com.limechain.exception.beefy.BeefyGenericException;
+import com.limechain.exception.global.ExecutionFailedException;
 import com.limechain.network.PeerRequester;
 import com.limechain.network.protocol.beefy.BeefyMessageHandler;
 import com.limechain.network.protocol.beefy.messages.justification.SignedCommitment;
@@ -145,9 +146,18 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
         sessions.clear();
         sessions.addLast(last);
 
-        AppBean.getBean(PeerRequester.class).makeBeefyJustificationRequest(last.getMandatoryBlock())
-                .thenAccept(r ->
-                        AppBean.getBean(BeefyMessageHandler.class).handleSignedCommitment(r));
+        requestJustification(last.getMandatoryBlock());
+    }
+
+    public void requestJustification(BigInteger blockNumber) {
+        try {
+            AppBean.getBean(PeerRequester.class).makeBeefyJustificationRequest(blockNumber)
+                    .thenAccept(r ->
+                            AppBean.getBean(BeefyMessageHandler.class).handleSignedCommitment(r));
+            log.fine(String.format("requestJustification: Requested justification for block %s.", blockNumber));
+        } catch (ExecutionFailedException e) {
+            log.warning(String.format("requestJustification: Failed request %s", e.getMessage()));
+        }
     }
 
     public void handleChangedBeefyAuthorities(List<byte[]> authorityPublicKeys,

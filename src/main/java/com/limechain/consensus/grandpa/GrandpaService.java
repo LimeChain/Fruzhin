@@ -81,7 +81,10 @@ public class GrandpaService {
 
         // On the genesis we have empty set changes collection, so we should take the authorities from the chain spec
         if (grandpaSetState.getSetChanges().isEmpty()) {
-            return Optional.of(grandpaSetState.getAuthoritySet());
+            grandpaSetState.getSetChanges().put(
+                    Pair.with(stateManager.getSyncState().getGenesisBlockHash(), BigInteger.ZERO),
+                    grandpaSetState.getAuthoritySet()
+            );
         }
 
         for (Map.Entry<Pair<Hash256, BigInteger>, GrandpaAuthoritySet> entry :

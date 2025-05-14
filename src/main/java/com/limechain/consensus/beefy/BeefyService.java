@@ -416,6 +416,11 @@ public class BeefyService implements FinalizedBlockChangeListener {
 
         // update beefy message cached interval
         cachedAcceptedInterval = findAcceptedInterval();
+
+        BeefySession session = beefyState.getSessions().peekFirst();
+        if (session.isMandatoryBlockFinalized()) {
+            beefyState.requestJustification(session.getMandatoryBlock());
+        }
     }
 
     private void finalizeBeefyRound(BigInteger blockNumber) {

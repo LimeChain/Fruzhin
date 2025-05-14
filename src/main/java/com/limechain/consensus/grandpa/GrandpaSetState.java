@@ -153,6 +153,11 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
 
     public void startNewSet(PendingChange pendingChange, List<Authority> authorities) {
 
+        //TODO: REMOVE!!!
+        authorities = authorities.stream()
+                .filter(a -> Arrays.equals(a.getPublicKey(), AbstractState.getGrandpaKeyPair().getValue0()))
+                .toList();
+
         BigInteger setId = (authoritySet != null && authoritySet.getSetId() != null)
                 ? authoritySet.getSetId().add(BigInteger.ONE)
                 : BigInteger.ONE;
