@@ -26,7 +26,7 @@ public class SyncMessages extends StrictProtocolBinding<SyncController> {
             SyncMessage.BlockResponse response = controller
                     .sendBlockRequest(blockRequest.getFields(), blockRequest.getHash(), blockRequest.getNumber(),
                             blockRequest.getDirection(), blockRequest.getMaxBlocks())
-                    .get(2, TimeUnit.SECONDS);
+                    .get(10, TimeUnit.SECONDS);
             log.log(Level.FINE, "Received blocks: " + response.getBlocksCount());
             return response;
         } catch (ExecutionException | TimeoutException | IllegalStateException e) {
