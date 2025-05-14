@@ -16,8 +16,6 @@ import com.limechain.network.protocol.sync.BlockRequestField;
 import com.limechain.network.protocol.sync.pb.SyncMessage;
 import com.limechain.network.protocol.warp.dto.Block;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
-import com.limechain.network.protocol.warp.dto.DigestType;
-import com.limechain.network.protocol.warp.dto.HeaderDigest;
 import com.limechain.rpc.server.AppBean;
 import com.limechain.runtime.Runtime;
 import com.limechain.runtime.RuntimeBuilder;
@@ -45,7 +43,6 @@ import org.apache.commons.lang3.ArrayUtils;
 
 import java.math.BigInteger;
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -208,11 +205,15 @@ public class FullSyncMachine {
         for (Block block : receivedBlockDatas) {
             log.info("Block number to be executed is " + block.getHeader().getBlockNumber());
 
+            BlockHeader blockHeader = block.getHeader();
+            Runtime newRuntime = runtimeBuilder.copyRuntime(runtime);
+            trieAccessor.setCurrentStateVersion(newRuntime.getCachedVersion().getStateVersion());
+
             // Check the block for valid inherents
             // NOTE: This is only relevant for block production.
             //  We will need this functionality in near future,
             //  but we don't need it when importing blocks for the full sync.
-            boolean goodToExecute = this.checkInherents(block);
+            boolean goodToExecute = this.checkInherents(block, newRuntime);
 
             log.fine("Block is good to execute: " + goodToExecute);
 
@@ -222,7 +223,7 @@ public class FullSyncMachine {
             }
 
             // Actually execute the block and persist changes
-            runtime.executeBlock(block);
+            newRuntime.executeBlock(block);
             log.fine("Block executed successfully");
 
             try {
@@ -232,17 +233,8 @@ public class FullSyncMachine {
                         + " which has no parent in block state.");
             }
 
-            BlockHeader blockHeader = block.getHeader();
-            boolean blockUpdatedRuntime = Arrays.stream(blockHeader.getDigest())
-                    .map(HeaderDigest::getType)
-                    .anyMatch(type -> type.equals(DigestType.RUN_ENV_UPDATED));
-
-            if (blockUpdatedRuntime) {
-                log.info("Runtime updated, updating the runtime code");
-                runtime = runtimeBuilder.buildRuntimeFromState(trieAccessor);
-                trieAccessor.setCurrentStateVersion(runtime.getCachedVersion().getStateVersion());
-                blockState.storeRuntime(blockHeader.getHash(), runtime);
-            }
+            blockState.storeRuntime(blockHeader.getHash(), newRuntime);
+            runtime = newRuntime;
 
             finalizeDuringSync(blockHeader);
         }
@@ -284,7 +276,7 @@ public class FullSyncMachine {
         }
     }
 
-    private boolean checkInherents(Block block) {
+    private boolean checkInherents(Block block, Runtime runtime) {
         // Call BlockBuilder_check_inherents to check the inherents of the block
         InherentData inherents = new InherentData(System.currentTimeMillis());
         byte[] checkInherentsOutput = runtime.checkInherents(block, inherents);
