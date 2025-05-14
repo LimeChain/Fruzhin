@@ -465,15 +465,12 @@ public class GrandpaRound {
             return;
         }
 
-        log.info("attemptToFinalize: HERE1");
         if (finalizedBlock != null) {
-            log.info("attemptToFinalize: HERE2");
             List<BlockHeader> blockHeaders = blockState
                     .rangeInMemory(lastFinalizedBlock.getHash(), finalizedBlock.getHash())
                     .stream()
                     .map(blockState::getHeader)
                     .collect(Collectors.toCollection(ArrayList::new));
-            log.info("attemptToFinalize: HERE3");
 
             if (blockHeaders.size() > 1) {
                 blockHeaders.removeFirst();
@@ -484,21 +481,18 @@ public class GrandpaRound {
                 syncState.finalizeBlock(finalizedBlock);
             } catch (BlockStorageGenericException e) {
                 log.warning("Block cannot be finalized: " + e.getMessage());
+                return;
             }
-
-            log.info("attemptToFinalize: HERE4");
 
             // Persisting round data into the database when a block is finalized
             GrandpaSetState grandpaSetState = stateManager.getGrandpaSetState();
             grandpaSetState.persistFinalizedRoundState(this);
-            log.info("attemptToFinalize: HERE5");
 
             grandpaSetState.applyAuthoritySetChange(finalizedBlock.getHash(), finalizedBlock.getBlockNumber());
 
             if (!isCommitMessageInArchive(Vote.fromBlockHeader(finalizedBlock))) {
                 broadcastCommitMessage();
             }
-            log.info("attemptToFinalize: HERE6");
 
             if (onFinalizeHandler != null) {
                 onFinalizeHandler.run();
@@ -509,7 +503,6 @@ public class GrandpaRound {
             FinalizedBlockChangeEvent event = new FinalizedBlockChangeEvent(
                     this, blockHeaders, finalizedBlock);
             finalizedBlockChangeListener.finalizedBlockChanged(event);
-            log.info("attemptToFinalize: HERE7");
         }
     }
 

@@ -9,6 +9,7 @@ import com.limechain.consensus.beefy.dto.PayloadElement;
 import com.limechain.consensus.beefy.dto.RoundAction;
 import com.limechain.consensus.beefy.dto.VoteImportResult;
 import com.limechain.consensus.beefy.dto.message.BeefyConsensusMessage;
+import com.limechain.consensus.beefy.dto.message.BeefyConsensusMessageFormat;
 import com.limechain.consensus.beefy.event.FinalizedBlockChangeEvent;
 import com.limechain.consensus.beefy.event.FinalizedBlockChangeListener;
 import com.limechain.consensus.beefy.scale.CommitmentScaleWriter;
@@ -45,7 +46,7 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class BeefyService implements FinalizedBlockChangeListener {
 
-    private static final int MIN_BLOCK_DELTA = 1;
+    private static final int MIN_BLOCK_DELTA = 8;
 
     private final StateManager stateManager;
     private final PeerMessageCoordinator peerMessageCoordinator;
@@ -56,6 +57,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
     public void finalizedBlockChanged(FinalizedBlockChangeEvent event) {
 
         BeefyState beefyState = stateManager.getBeefyState();
+        BlockState blockState = stateManager.getBlockState();
 
         beefyState.setGrandpaFinalized(event.getGrandpaFinalized().getBlockNumber());
 
@@ -69,6 +71,31 @@ public class BeefyService implements FinalizedBlockChangeListener {
             processConsensusMessages(event.getBlockHeaders());
         }
 
+        Runtime runtime = blockState.getRuntime(event.getGrandpaFinalized().getHash());
+        BigInteger newGenesis = runtime.getBeefyGenesis().orElse(null);
+
+        if (!Objects.equals(newGenesis, beefyState.getBeefyGenesis())) {
+
+            beefyState.setLastVote(null);
+            if (newGenesis != null) {
+
+                if (beefyState.getBeefyFinalized().compareTo(newGenesis) < 0) {
+                    beefyState.setBeefyFinalized(BigInteger.ZERO);
+                }
+
+                beefyState.getSessions()
+                        .removeIf(session -> session.getMandatoryBlock().compareTo(newGenesis) < 0);
+                beefyState.getPendingJustifications().entrySet()
+                        .removeIf(entry ->
+                                entry.getValue().getCommitment().getBlockNumber().compareTo(newGenesis) < 0);
+            } else {
+                beefyState.getSessions().clear();
+                beefyState.getPendingJustifications().clear();
+            }
+
+            beefyState.setBeefyGenesis(newGenesis);
+        }
+
         beefyState.persistState();
 
         // update beefy message cached interval
@@ -79,6 +106,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
 
         BeefyState beefyState = stateManager.getBeefyState();
         // Get the first session (round)
+        if (beefyState.getSessions().isEmpty()) return;
         BeefySession sessionStart = beefyState.getSessions().getFirst();
 
         // If no session is found, exit the method
@@ -91,24 +119,21 @@ public class BeefyService implements FinalizedBlockChangeListener {
         BigInteger grandpaFinalized = beefyState.getGrandpaFinalized();
         BigInteger beefyFinalized = beefyState.getBeefyFinalized();
 
-        BigInteger targetVoteBlockNumber = calculateTargetVoteBlockNumber(
-                sessionStartBlock,
-                beefyFinalized,
-                grandpaFinalized
-        );
+        BigInteger targetVoteBlockNumber = beefyState.getTargetVoteBlockNumber();
 
         BigInteger lastVoted = beefyState.getLastVoted();
-
         // Don't vote for targets until they've been finalized (`target` can be > `grandpaFinalized`
         // when `MIN_BLOCK_DELTA` is big enough).
         // Also, ensure it's not voting on a block that has already been voted on.
         if (lastVoted != null && shouldSkipVote(targetVoteBlockNumber, grandpaFinalized, lastVoted)) {
+            beefyState.setTargetVoteBlockNumber(
+                    calculateTargetVoteBlockNumber(
+                            sessionStartBlock,
+                            beefyFinalized,
+                            grandpaFinalized
+                    ));
             return; // No voting if target is beyond grandpa finalized, or it's not a new block
         }
-
-        // If it's a valid vote target, update the last voted block
-        beefyState.setLastVoted(targetVoteBlockNumber);
-        beefyState.persistState();
 
         Pair<byte[], byte[]> keyPair = sessionStart.getBeefyKeyPair();
         if (keyPair == null) return;
@@ -123,6 +148,10 @@ public class BeefyService implements FinalizedBlockChangeListener {
                 peerMessageCoordinator::sendSignedCommitmentToPeers,
                 () -> peerMessageCoordinator.sendBeefyVoteMessageToPeers(voteMessage)
         );
+
+        // If it's a valid vote target, update the last voted block
+        beefyState.setLastVoted(targetVoteBlockNumber);
+        beefyState.persistState();
     }
 
     private BeefyVoteMessage createVoteMessage(BeefyAuthoritySet authoritySet,
@@ -273,8 +302,9 @@ public class BeefyService implements FinalizedBlockChangeListener {
     }
 
     private Optional<byte[]> extractMmrRootHash(BlockHeader blockHeader) {
-        return DigestHelper.getBeefyConsensusMessages(blockHeader.getDigest())
-                .stream().map(BeefyConsensusMessage::getMmrRootHash)
+        return DigestHelper.getBeefyConsensusMessages(blockHeader.getDigest()).stream()
+                .filter(cm -> BeefyConsensusMessageFormat.BEEFY_MMR_ROOT.equals(cm.getFormat()))
+                .map(BeefyConsensusMessage::getMmrRootHash)
                 .findFirst();
     }
 
@@ -514,37 +544,13 @@ public class BeefyService implements FinalizedBlockChangeListener {
         BeefyState beefyState = stateManager.getBeefyState();
         BlockState blockState = stateManager.getBlockState();
 
-        BigInteger currentGenesis = beefyState.getBeefyGenesis();
-
+        BigInteger beefyGenesis = beefyState.getBeefyGenesis();
         BlockHeader lastFinalized = blockState.getHighestFinalizedHeader();
-        Runtime runtime = blockState.getRuntime(lastFinalized.getHash());
-        BigInteger newGenesis = runtime.getBeefyGenesis().orElse(null);
 
-        log.info("newGenesis " + newGenesis);
-        log.info("currentGenesis " + currentGenesis);
-        if (!Objects.equals(newGenesis, currentGenesis)) {
-
-            beefyState.setLastVote(null);
-            if (newGenesis != null) {
-
-                if (beefyState.getBeefyFinalized().compareTo(newGenesis) < 0) {
-                    beefyState.setBeefyFinalized(BigInteger.ZERO);
-                }
-                beefyState.getSessions()
-                        .removeIf(session -> session.getMandatoryBlock().compareTo(newGenesis) < 0);
-                beefyState.getPendingJustifications().entrySet()
-                        .removeIf(entry ->
-                                entry.getValue().getCommitment().getBlockNumber().compareTo(newGenesis) < 0);
-            } else {
-                beefyState.getSessions().clear();
-                beefyState.getPendingJustifications().clear();
-            }
-        }
-
-        if (newGenesis == null) {
+        if (beefyGenesis == null) {
             return false;
         }
 
-        return lastFinalized.getBlockNumber().compareTo(newGenesis) >= 0;
+        return lastFinalized.getBlockNumber().compareTo(beefyGenesis) >= 0;
     }
 }

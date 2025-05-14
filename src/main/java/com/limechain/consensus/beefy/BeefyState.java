@@ -70,7 +70,9 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
     private BigInteger nextDigest;
 
     @Nullable
-    private BigInteger lastVoted;
+    private BigInteger lastVoted = BigInteger.ZERO;
+
+    private BigInteger targetVoteBlockNumber = BigInteger.ZERO;
 
     // TODO: Remove lastVote or remove this comment
     @Nullable
@@ -165,27 +167,6 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
 
         BeefySession beefySession = new BeefySession(
                 new BeefyAuthoritySet(authorityPublicKeys, authoritySetId),
-                blockNumber,
-                keyPair
-        );
-
-        sessions.add(beefySession);
-    }
-
-    private void handleChangedBeefyAuthorities(BeefyConsensusMessage consensusMessage, BigInteger blockNumber) {
-        Pair<byte[], byte[]> keyPair = keyStore.findKeyPair(
-                consensusMessage.getAuthorityPublicKeys(),
-                KeyType.BEEFY
-        ).orElse(null);
-
-        if (keyPair == null) {
-            log.info(
-                    String.format("BEEFY: We are not chosen to vote in current session, block number: %s", blockNumber)
-            );
-        }
-
-        BeefySession beefySession = new BeefySession(
-                new BeefyAuthoritySet(consensusMessage.getAuthorityPublicKeys(), consensusMessage.getAuthoritySetId()),
                 blockNumber,
                 keyPair
         );
