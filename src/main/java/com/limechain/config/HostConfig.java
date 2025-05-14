@@ -107,9 +107,9 @@ public class HostConfig {
      */
     public String getNodeSynckPath() {
         return switch (chain) {
-            case POLKADOT, LOCAL -> polkadotNodePath;
+            case POLKADOT -> polkadotNodePath;
             case KUSAMA -> kusamaNodePath;
-            case WESTEND -> westendNodePath;
+            case WESTEND, LOCAL -> westendNodePath;
         };
     }
 }

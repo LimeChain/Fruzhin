@@ -1,6 +1,7 @@
 package com.limechain.rpc.client;
 
 import lombok.extern.java.Log;
+import org.apache.commons.lang3.StringUtils;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 
@@ -13,7 +14,6 @@ import java.util.logging.Level;
  */
 @Log
 public abstract class AbstractRpcClient extends WebSocketClient {
-    public static final String REG_EXPRESSION_NUMBER = "-?\\d+(\\.\\d+)?";
 
     protected AbstractRpcClient(URI serverURI) {
         super(serverURI);
@@ -78,14 +78,9 @@ public abstract class AbstractRpcClient extends WebSocketClient {
         if (param == null) {
             return "null";
         }
-        if (isNumeric(param)) {
+        if (StringUtils.isNumeric(param)) {
             return param;
         }
         return "\"" + param + "\"";
-    }
-
-
-    private boolean isNumeric(String str) {
-        return str.matches(REG_EXPRESSION_NUMBER);
     }
 }
