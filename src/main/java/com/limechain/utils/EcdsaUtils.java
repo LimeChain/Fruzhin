@@ -22,11 +22,13 @@ public class EcdsaUtils {
     public static final int SIGNATURE_LEN = 65;
     public static final int PUBLIC_KEY_PURE_LEN = 65;
     public static final int PUBLIC_KEY_TRIM_LEN = 64;
+    public static final int PUBLIC_KEY_MISSING_LEADING_ZERO_LENGTH = 63;
     public static final int PUBLIC_KEY_COMPRESSED_LEN = 33;
     public static final int HASHED_MESSAGE_LEN = 32;
 
     /**
      * Generates Secp256k1 key pair using the Secp256k1 library from libp2p
+     *
      * @return Secp256k1 Private key (32 bytes) and Public key (33 or 65 bytes)
      */
     public static Pair<PrivKey, PubKey> generateKeyPair() {
@@ -36,6 +38,7 @@ public class EcdsaUtils {
     /**
      * Generates Secp256k1 key pair from mnemonic phrase using the Bip32ECKeyPair library from web3j and then
      * converting it to Secp256k1 key pair using the Secp256k1 library from libp2p to get the KeyPair
+     *
      * @param mnemonic BIP-39 12 or 24 word mnemonic phrase
      * @return Secp256k1 Private key (32 bytes) and Public key (33 or 65 bytes)
      */
@@ -52,8 +55,9 @@ public class EcdsaUtils {
     /**
      * Signs message with Secp256k1 private key using the Bip32ECKeyPair library from web3j and splitting the signature
      * data to R S and V
+     *
      * @param privateKey 32 bytes Secp256k1 private key
-     * @param message message to be signed
+     * @param message    message to be signed
      * @return 65 bytes Secp256k1 signature {R (32 bytes), S (32 bytes), V (1 byte)}
      */
     public static byte[] signMessage(final byte[] privateKey, final byte[] message) {
@@ -73,6 +77,7 @@ public class EcdsaUtils {
     /**
      * Verifies Secp256k1 signature using the Bip32ECKeyPair library from web3j to recover public key from signature
      * and then comparing it to the public key from the verify signature object
+     *
      * @param sig signature to be verified
      * @return true if the signature is valid, false otherwise
      */
@@ -85,9 +90,10 @@ public class EcdsaUtils {
 
     /**
      * Recovers public key from signature
+     *
      * @param signatureData 65 bytes Secp256k1 signature {R (32 bytes), S (32 bytes), V (1 byte)}
-     * @param messageData signed message
-     * @param compressed true if the public key should be compressed, false otherwise
+     * @param messageData   signed message
+     * @param compressed    true if the public key should be compressed, false otherwise
      * @return 33 or 65 bytes Secp256k1 public key
      */
     public static byte[] recoverPublicKeyFromSignature(byte[] signatureData, byte[] messageData, boolean compressed) {
@@ -104,10 +110,18 @@ public class EcdsaUtils {
 
         byte[] fullPubKey = Sign.recoverFromSignature(recId, sig, messageData).toByteArray();
 
+        // If the recovered public key is only 63 bytes, it means a leading 0x00 byte was omitted
+        // when BigInteger was serialized via toByteArray(), which minimizes size by dropping unnecessary leading zeros.
+        if (fullPubKey.length == PUBLIC_KEY_MISSING_LEADING_ZERO_LENGTH) {
+            byte[] paddedKey = new byte[PUBLIC_KEY_TRIM_LEN];
+            System.arraycopy(fullPubKey, 0, paddedKey, 1, fullPubKey.length);
+            fullPubKey = paddedKey;
+        }
+
         if (compressed) {
             return compressPublicKey(fullPubKey);
         } else {
-            if(fullPubKey.length == PUBLIC_KEY_PURE_LEN){
+            if (fullPubKey.length == PUBLIC_KEY_PURE_LEN) {
                 return Arrays.copyOfRange(fullPubKey, 1, fullPubKey.length);
             }
             return fullPubKey;
@@ -116,6 +130,7 @@ public class EcdsaUtils {
 
     /**
      * Compresses public key
+     *
      * @param publicKey 64 or 65 bytes Secp256k1 public key (web3j generates 64 public key because it is always 4 and
      *                  not needed, but Secp256k1 requires 65 bytes public key to be able to compress it)
      * @return 33 bytes Secp256k1 public key
