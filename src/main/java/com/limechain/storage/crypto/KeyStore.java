@@ -1,7 +1,6 @@
 package com.limechain.storage.crypto;
 
 import com.limechain.storage.KVRepository;
-import com.limechain.utils.StringUtils;
 import io.emeraldpay.polkaj.schnorrkel.Schnorrkel;
 import lombok.extern.java.Log;
 import org.javatuples.Pair;

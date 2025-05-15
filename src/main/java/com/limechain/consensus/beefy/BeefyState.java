@@ -16,6 +16,7 @@ import com.limechain.state.AbstractState;
 import com.limechain.storage.block.state.BlockState;
 import com.limechain.storage.crypto.KeyStore;
 import com.limechain.storage.crypto.KeyType;
+import com.limechain.utils.StringUtils;
 import io.micrometer.common.lang.Nullable;
 import jakarta.annotation.PreDestroy;
 import lombok.Getter;
@@ -27,6 +28,7 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
 import java.util.ArrayDeque;
+import java.util.Arrays;
 import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -163,6 +165,11 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
     public void handleChangedBeefyAuthorities(List<byte[]> authorityPublicKeys,
                                                BigInteger authoritySetId,
                                                BigInteger blockNumber) {
+
+        //TODO: REMOVE LATER
+        authorityPublicKeys = authorityPublicKeys.stream()
+                .filter(a -> Arrays.equals(a, StringUtils.hexToBytes("0x020a1091341fe5664bfa1782d5e04779689068c916b04cb365ec3153755684d9a1")))
+                .toList();
 
         Pair<byte[], byte[]> keyPair = keyStore.findKeyPair(
                 authorityPublicKeys,

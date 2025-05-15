@@ -31,6 +31,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AuthorRPCImpl {
 
+    private static final String SURI_ENV_SUFFIX = "_SURI";
+    private static final String PUBLIC_KEY_ENV_SUFFIX = "_PUB_KEY";
+
     private final BlockState blockState;
     private final TransactionProcessor transactionProcessor;
     private final KeyStore keyStore;
@@ -60,6 +63,27 @@ public class AuthorRPCImpl {
 
         keyStore.put(parsedKeyType, StringUtils.hexToBytes(publicKey), privateKey);
         return publicKey;
+    }
+
+    public void authorInsertKeysFromEnv() {
+
+        List<KeyType> keyTypes = List.of(
+                KeyType.BABE,
+                KeyType.GRANDPA,
+                KeyType.BEEFY
+        );
+
+        for (KeyType keyType : keyTypes) {
+            var name = new String(keyType.getBytes());
+            var nameUppercase = name.toUpperCase();
+
+            var suri = System.getenv(nameUppercase + SURI_ENV_SUFFIX);
+            var pubKey = System.getenv(nameUppercase + PUBLIC_KEY_ENV_SUFFIX);
+
+            if (suri != null && pubKey != null) {
+                authorInsertKey(name, suri, pubKey);
+            }
+        }
     }
 
     public Boolean authorHasKey(String publicKey, String keyType) {
