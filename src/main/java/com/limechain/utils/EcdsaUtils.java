@@ -22,7 +22,6 @@ public class EcdsaUtils {
     public static final int SIGNATURE_LEN = 65;
     public static final int PUBLIC_KEY_PURE_LEN = 65;
     public static final int PUBLIC_KEY_TRIM_LEN = 64;
-    public static final int PUBLIC_KEY_MISSING_LEADING_ZERO_LENGTH = 63;
     public static final int PUBLIC_KEY_COMPRESSED_LEN = 33;
     public static final int HASHED_MESSAGE_LEN = 32;
 
@@ -110,11 +109,12 @@ public class EcdsaUtils {
 
         byte[] fullPubKey = Sign.recoverFromSignature(recId, sig, messageData).toByteArray();
 
-        // If the recovered public key is only 63 bytes, it means a leading 0x00 byte was omitted
-        // when BigInteger was serialized via toByteArray(), which minimizes size by dropping unnecessary leading zeros.
-        if (fullPubKey.length == PUBLIC_KEY_MISSING_LEADING_ZERO_LENGTH) {
+        // If the recovered public key length is less than 64 bytes, it means one or more leading 0x00 bytes
+        // were stripped during BigInteger.toByteArray(), which minimizes size by dropping unnecessary leading zeros.
+        if (fullPubKey.length < PUBLIC_KEY_TRIM_LEN) {
             byte[] paddedKey = new byte[PUBLIC_KEY_TRIM_LEN];
-            System.arraycopy(fullPubKey, 0, paddedKey, 1, fullPubKey.length);
+            int destPos = PUBLIC_KEY_TRIM_LEN - fullPubKey.length;
+            System.arraycopy(fullPubKey, 0, paddedKey, destPos, fullPubKey.length);
             fullPubKey = paddedKey;
         }
 
