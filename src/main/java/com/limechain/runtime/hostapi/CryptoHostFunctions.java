@@ -41,6 +41,8 @@ import java.util.Set;
 import java.util.logging.Level;
 
 import static com.limechain.runtime.hostapi.PartialHostApi.newImportObjectPair;
+import static com.limechain.utils.EcdsaUtils.PRIVATE_KEY_LEN;
+import static com.limechain.utils.EcdsaUtils.PUBLIC_KEY_COMPRESSED_LEN;
 
 /**
  * Implementations of the Crypto HostAPI functions
@@ -515,7 +517,13 @@ public class CryptoHostFunctions implements PartialHostApi {
             keyPair = EcdsaUtils.generateKeyPair();
         }
 
-        keyStore.put(pair.getKeyType(), keyPair.getSecond().raw(), keyPair.getFirst().raw());
+        byte[] publicKey = keyPair.getSecond().raw();
+        byte[] privateKey = keyPair.getFirst().raw();
+
+        publicKey = EcdsaUtils.normalizeKeyLength(publicKey, PUBLIC_KEY_COMPRESSED_LEN);
+        privateKey = EcdsaUtils.normalizeKeyLength(privateKey, PRIVATE_KEY_LEN);
+
+        keyStore.put(pair.getKeyType(), publicKey, privateKey);
         return sharedMemory.writeData(keyPair.getSecond().raw()).pointer();
     }
 

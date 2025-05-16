@@ -24,6 +24,7 @@ public class EcdsaUtils {
     public static final int PUBLIC_KEY_TRIM_LEN = 64;
     public static final int PUBLIC_KEY_COMPRESSED_LEN = 33;
     public static final int HASHED_MESSAGE_LEN = 32;
+    public static final int PRIVATE_KEY_LEN = 32;
 
     /**
      * Generates Secp256k1 key pair using the Secp256k1 library from libp2p
@@ -108,24 +109,53 @@ public class EcdsaUtils {
                 new ECDSASignature(new BigInteger(1, r), new BigInteger(1, s));
 
         byte[] fullPubKey = Sign.recoverFromSignature(recId, sig, messageData).toByteArray();
-
-        // If the recovered public key length is less than 64 bytes, it means one or more leading 0x00 bytes
-        // were stripped during BigInteger.toByteArray(), which minimizes size by dropping unnecessary leading zeros.
-        if (fullPubKey.length < PUBLIC_KEY_TRIM_LEN) {
-            byte[] paddedKey = new byte[PUBLIC_KEY_TRIM_LEN];
-            int destPos = PUBLIC_KEY_TRIM_LEN - fullPubKey.length;
-            System.arraycopy(fullPubKey, 0, paddedKey, destPos, fullPubKey.length);
-            fullPubKey = paddedKey;
-        }
+        fullPubKey = normalizeKeyLength(fullPubKey, PUBLIC_KEY_TRIM_LEN);
 
         if (compressed) {
             return compressPublicKey(fullPubKey);
         } else {
-            if (fullPubKey.length == PUBLIC_KEY_PURE_LEN) {
-                return Arrays.copyOfRange(fullPubKey, 1, fullPubKey.length);
-            }
             return fullPubKey;
         }
+    }
+
+    /**
+     * Normalizes a byte array to a fixed length.
+     * <p>
+     * If the input is longer, it means leading bytes are stripped.
+     * If shorter, it is left-padded with 0x00, toByteArray() minimizes size by dropping unnecessary leading zeros
+     *
+     * @param key            The input byte array.
+     * @param expectedLength The desired fixed length.
+     * @return A new byte array of exactly {@code expectedLength} bytes.
+     */
+    public static byte[] normalizeKeyLength(byte[] key, int expectedLength) {
+        if (key.length == expectedLength) {
+            return key;
+        }
+
+        byte[] normalized = new byte[expectedLength];
+
+        if (key.length > expectedLength) {
+            // Strip leading bytes (e.g. BigInteger sign byte)
+            System.arraycopy(
+                    key,
+                    key.length - expectedLength,
+                    normalized,
+                    0,
+                    expectedLength
+            );
+        } else {
+            // Pad with leading zeros
+            System.arraycopy(
+                    key,
+                    0,
+                    normalized,
+                    expectedLength - key.length,
+                    key.length
+            );
+        }
+
+        return normalized;
     }
 
     /**
@@ -136,12 +166,7 @@ public class EcdsaUtils {
      * @return 33 bytes Secp256k1 public key
      */
     private static byte[] compressPublicKey(byte[] publicKey) {
-        byte[] key = new byte[PUBLIC_KEY_PURE_LEN];
-        if (publicKey.length == PUBLIC_KEY_TRIM_LEN) {
-            System.arraycopy(publicKey, 0, key, 1, 64);
-        } else {
-            key = publicKey;
-        }
+        byte[] key = normalizeKeyLength(publicKey, PUBLIC_KEY_PURE_LEN);
         key[0] = 4;
         ECPoint point = Sign.CURVE_PARAMS.getCurve().decodePoint(key);
 
