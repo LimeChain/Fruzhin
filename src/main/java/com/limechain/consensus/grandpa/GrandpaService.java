@@ -10,6 +10,7 @@ import com.limechain.network.protocol.warp.dto.Justification;
 import com.limechain.state.AbstractState;
 import com.limechain.state.StateManager;
 import com.limechain.storage.block.state.BlockState;
+import com.limechain.utils.async.AsyncExecutor;
 import io.emeraldpay.polkaj.types.Hash256;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.java.Log;
@@ -31,14 +32,16 @@ public class GrandpaService {
 
     public void start() {
 
-        try {
-            tryStartFromLastFinalizedBlock();
+        AsyncExecutor.withSingleThread().executeAndForget(() -> {
+            try {
+                tryStartFromLastFinalizedBlock();
 
-            log.info(String.format("start: Grandpa service started with round #%d",
-                    stateManager.getGrandpaSetState().getCurrentGrandpaRound().getRoundNumber()));
-        } catch (RuntimeException e) {
-            log.warning(String.format("start: There was an error when starting grandpa: %s", e.getMessage()));
-        }
+                log.info(String.format("start: Grandpa service started with round #%d",
+                        stateManager.getGrandpaSetState().getCurrentGrandpaRound().getRoundNumber()));
+            } catch (RuntimeException e) {
+                log.warning(String.format("start: There was an error when starting grandpa: %s", e.getMessage()));
+            }
+        });
     }
 
     public void tryStartFromPreviousRound(GrandpaRound prevRound) {
@@ -64,15 +67,25 @@ public class GrandpaService {
         GrandpaSetState grandpaSetState = stateManager.getGrandpaSetState();
         GrandpaAuthoritySet authoritySet = roundState.getAuthoritySet();
 
-        return new GrandpaRound(roundState,
+        return new GrandpaRound(
+                roundState,
                 grandpaSetState.getThreshold(authoritySet.getAuthorities()),
-                isPrimary(roundState.getRoundNumber(), authoritySet));
+                isPrimary(roundState.getRoundNumber(), authoritySet)
+        );
     }
 
     public Optional<GrandpaAuthoritySet> getAuthoritiesForBlock(BigInteger blockNumber) {
         GrandpaAuthoritySet authorities = null;
 
         GrandpaSetState grandpaSetState = stateManager.getGrandpaSetState();
+
+        // In the genesis set we should take the authorities from the chain spec
+        if (BigInteger.ZERO.equals(grandpaSetState.getAuthoritySet().getSetId())) {
+            grandpaSetState.getSetChanges().putIfAbsent(
+                    Pair.with(stateManager.getSyncState().getGenesisBlockHash(), BigInteger.ZERO),
+                    grandpaSetState.getAuthoritySet()
+            );
+        }
 
         for (Map.Entry<Pair<Hash256, BigInteger>, GrandpaAuthoritySet> entry :
                 grandpaSetState.getSetChanges().entrySet()) {

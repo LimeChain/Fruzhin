@@ -19,12 +19,15 @@ public class StartStage implements StageState {
         round.getPeerMessageCoordinator().sendNeighborMessageToPeers();
 
         GrandpaRound previous = round.getPrevious();
-        if (round.isPrimaryVoter() && previous != null) {
+        if (round.isPrimaryVoter()) {
             log.fine("We are a primary voter for round " + round.getRoundNumber());
-            round.getPrevious().broadcastCommitMessage();
 
-            if (previous.getBestFinalCandidate().getBlockNumber()
-                    .compareTo(round.getLastFinalizedBlock().getBlockNumber()) > 0) {
+            if (previous != null) {
+                round.getPrevious().broadcastCommitMessage();
+            }
+
+            if (round.getBestFinalCandidate().getBlockNumber()
+                    .compareTo(round.getLastFinalizedBlock().getBlockNumber()) >= 0) {
                 doProposal(round);
             }
         }
@@ -46,10 +49,8 @@ public class StartStage implements StageState {
             return;
         }
 
-        Vote primaryVote = Vote.fromBlockHeader(round.getPrevious().getBestFinalCandidate());
+        Vote primaryVote = Vote.fromBlockHeader(round.getBestFinalCandidate());
         round.setPrimaryVote(primaryVote);
-
-        //TODO onProposal method
         round.broadcastVoteMessage(primaryVote, SubRound.PRIMARY_PROPOSAL);
     }
 }

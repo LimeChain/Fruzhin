@@ -68,6 +68,7 @@ public class FullSyncMachine {
     private final TrieStorage trieStorage = AppBean.getBean(TrieStorage.class);
     private final RuntimeBuilder runtimeBuilder = AppBean.getBean(RuntimeBuilder.class);
     private final SlotCoordinator slotCoordinator = AppBean.getBean(SlotCoordinator.class);
+    private final BabeService babeService = AppBean.getBean(BabeService.class);
     private final GrandpaService grandpaService = AppBean.getBean(GrandpaService.class);
     private final BeefyService beefyService = AppBean.getBean(BeefyService.class);
     private final SyncStateRequesterRpc syncStateRequesterRpc = AppBean.getBean(SyncStateRequesterRpc.class);
@@ -144,9 +145,7 @@ public class FullSyncMachine {
         stateManager.getBeefyState().populateDataFromRuntime(runtime);
 
         if (NodeRole.AUTHORING.equals(hostConfig.getNodeRole())) {
-            slotCoordinator.start(List.of(
-                    AppBean.getBean(BabeService.class)
-            ));
+            slotCoordinator.start(List.of(babeService));
         }
         grandpaService.start();
         beefyService.start();
