@@ -70,7 +70,8 @@ public class BeefyMessageHandler {
     public void handleSignedCommitment(SignedCommitment signedCommitment) {
 
         BeefyState beefyState = stateManager.getBeefyState();
-        if (beefyState.getSessions().isEmpty() || !beefyService.isBeefyMessageAcceptable(signedCommitment.getCommitment())) {
+        if (beefyState.getSessions().isEmpty() ||
+                !beefyService.isBeefyMessageAcceptable(signedCommitment.getCommitment())) {
             return;
         }
 
