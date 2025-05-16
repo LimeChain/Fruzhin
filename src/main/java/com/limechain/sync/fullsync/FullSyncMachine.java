@@ -13,6 +13,7 @@ import com.limechain.network.PeerMessageCoordinator;
 import com.limechain.network.PeerRequester;
 import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.network.protocol.sync.pb.SyncMessage;
+import com.limechain.network.protocol.warp.DigestHelper;
 import com.limechain.network.protocol.warp.dto.Block;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.rpc.server.AppBean;
@@ -105,7 +106,7 @@ public class FullSyncMachine {
         }
 
         stateManager.getBlockState().storeRuntime(lastFinalizedBlockHash, runtime);
-//
+// TODO: UNCOMMENT
 //        int startNumber = syncState.getLastFinalizedBlockNumber()
 //                .add(BigInteger.ONE)
 //                .intValueExact();
@@ -266,6 +267,11 @@ public class FullSyncMachine {
                     .applyAuthoritySetChange(
                             blockHeader.getHash(),
                             blockHeader.getBlockNumber()
+                    );
+
+            DigestHelper.getBeefyConsensusMessages(blockHeader.getDigest())
+                    .forEach(cm -> stateManager.getBeefyState().handleBeefyConsensusMessage(
+                            cm, blockHeader.getBlockNumber())
                     );
 
             log.fine(String.format("finalizeIfNeeded: Finalizing block #%d with hash %s",

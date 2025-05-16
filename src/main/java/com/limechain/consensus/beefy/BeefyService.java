@@ -106,15 +106,12 @@ public class BeefyService implements FinalizedBlockChangeListener {
 
         BeefyState beefyState = stateManager.getBeefyState();
         // Get the first session (round)
-        if (beefyState.getSessions().isEmpty()) return;
-        BeefySession sessionStart = beefyState.getSessions().getFirst();
-
-        // If no session is found, exit the method
-        if (sessionStart == null) {
-            log.warning("Vote BEEFY: No voting round started");
+        if (beefyState.getSessions().isEmpty()) {
+            log.warning("vote: No session exists.");
             return;
         }
 
+        BeefySession sessionStart = beefyState.getSessions().peekFirst();
         BigInteger sessionStartBlock = sessionStart.getMandatoryBlock();
         BigInteger grandpaFinalized = beefyState.getGrandpaFinalized();
         BigInteger beefyFinalized = beefyState.getBeefyFinalized();
@@ -197,7 +194,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
 
             targetVoteBlockNumber = beefyFinalized.add(BigInteger.valueOf(adjustedDiff));
 
-            log.info(String.format("Vote BEEFY: vote target - diff: %d, next_power_of_two: %d, target block: #%s%n",
+            log.fine(String.format("Vote BEEFY: vote target - diff: %d, next_power_of_two: %d, target block: #%s%n",
                     diffInt, nextPowerOfTwo, targetVoteBlockNumber));
         }
 
@@ -411,16 +408,12 @@ public class BeefyService implements FinalizedBlockChangeListener {
             return;
         }
 
+        log.info(String.format("finalizeJustification: Round: %d has been finalized.", blockNumber));
         beefyState.setBeefyFinalized(blockNumber);
         beefyState.persistState();
 
         // update beefy message cached interval
         cachedAcceptedInterval = findAcceptedInterval();
-
-        BeefySession session = beefyState.getSessions().peekFirst();
-        if (session.isMandatoryBlockFinalized()) {
-            beefyState.requestJustification(session.getMandatoryBlock());
-        }
     }
 
     private void finalizeBeefyRound(BigInteger blockNumber) {
@@ -476,6 +469,22 @@ public class BeefyService implements FinalizedBlockChangeListener {
         justificationsToProcess.values().forEach(this::finalizeJustification);
     }
 
+    private void requestMandatoryJustification() {
+
+        BeefyState beefyState = stateManager.getBeefyState();
+
+        if (beefyState.getSessions().isEmpty()) {
+            log.warning("requestMandatoryJustification: No session exists.");
+            return;
+        }
+
+        BeefySession session = beefyState.getSessions().peekFirst();
+        if (!session.isMandatoryBlockFinalized()) {
+            log.info(String.format("requestMandatoryJustification: Session %s is not mandatory.", session.getMandatoryBlock()));
+            beefyState.requestJustification(session.getMandatoryBlock());
+        }
+    }
+
     public boolean isBeefyMessageAcceptable(Commitment commitment) {
         BeefyState beefyState = stateManager.getBeefyState();
         BigInteger blockNumber = commitment.getBlockNumber();
@@ -483,7 +492,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
 
         BigInteger mandatoryBlock = currentSession.getMandatoryBlock();
         if (blockNumber.compareTo(mandatoryBlock) < 0) {
-            log.warning(String.format(
+            log.fine(String.format(
                     "isBeefyMessageAcceptable: " +
                             "Rejected beefy message — block %d is earlier than current session's mandatory block %d.",
                     blockNumber, mandatoryBlock
@@ -495,7 +504,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
         BigInteger setId = currentSession.getAuthoritySet().getSetId();
         BigInteger commitmentSetId = commitment.getAuthoritySetId();
         if (!setId.equals(commitmentSetId)) {
-            log.warning(String.format(
+            log.fine(String.format(
                     "isBeefyMessageAcceptable: Rejected beefy message — authority set ID mismatch. Expected: %d, got: %d.",
                     setId, commitmentSetId
             ));
@@ -511,7 +520,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
         BigInteger end = cachedAcceptedInterval.getValue1();
 
         if (blockNumber.compareTo(start) < 0 || blockNumber.compareTo(end) > 0) {
-            log.warning(String.format(
+            log.fine(String.format(
                     "isBeefyMessageAcceptable: Rejected beefy message — block %d outside accepted round range [%d, %d].",
                     blockNumber, start, end
             ));
@@ -536,6 +545,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
                 if (shouldRun()) {
                     applyPendingJustifications();
                     vote();
+                    requestMandatoryJustification();
                 }
             } catch (Exception e) {
                 log.warning("Exception in Beefy main loop, restarting in 1 second " + e.getMessage());
@@ -553,6 +563,10 @@ public class BeefyService implements FinalizedBlockChangeListener {
         BlockHeader lastFinalized = blockState.getHighestFinalizedHeader();
 
         if (beefyGenesis == null) {
+            return false;
+        }
+
+        if (beefyState.getSessions().isEmpty()) {
             return false;
         }
 
