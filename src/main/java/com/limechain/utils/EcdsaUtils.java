@@ -136,7 +136,7 @@ public class EcdsaUtils {
         byte[] normalized = new byte[expectedLength];
 
         if (key.length > expectedLength) {
-            // Strip leading bytes (e.g. BigInteger sign byte)
+            // Strip leading bytes
             System.arraycopy(
                     key,
                     key.length - expectedLength,
