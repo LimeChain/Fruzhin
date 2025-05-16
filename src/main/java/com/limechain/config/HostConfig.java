@@ -52,6 +52,13 @@ public class HostConfig {
     @Value("${genesis.path.local}")
     private String localGenesisPath;
 
+    @Value("${sync.state.path.polkadot}")
+    private String polkadotNodePath;
+    @Value("${sync.state.path.kusama}")
+    private String kusamaNodePath;
+    @Value("${sync.state.path.westend}")
+    private String westendNodePath;
+
     public HostConfig(CliArguments cliArguments) {
         this.rocksDbPath = cliArguments.dbPath();
         this.dbRecreate = cliArguments.dbRecreate();
@@ -89,6 +96,20 @@ public class HostConfig {
             case KUSAMA -> kusamaGenesisPath;
             case WESTEND -> westendGenesisPath;
             case LOCAL -> localGenesisPath;
+        };
+    }
+
+    /**
+     * Gets the path to peer node based on the chain the node is configured
+     * Intended to be used when syncing state after warp sync
+     *
+     * @return genesis(chain spec) file path
+     */
+    public String getNodeSynckPath() {
+        return switch (chain) {
+            case POLKADOT -> polkadotNodePath;
+            case KUSAMA -> kusamaNodePath;
+            case WESTEND, LOCAL -> westendNodePath;
         };
     }
 }

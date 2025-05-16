@@ -470,7 +470,7 @@ public class GrandpaRound {
                 blockState.finalizeBlock(finalizedBlock, createJustification(), authoritySet.getSetId());
                 syncState.finalizeBlock(finalizedBlock);
             } catch (BlockStorageGenericException e) {
-                log.warning("Block cannot be finalized: " + e.getMessage());
+                log.warning(String.format("Block cannot be finalized: %s", e.getMessage()));
                 return;
             }
 
