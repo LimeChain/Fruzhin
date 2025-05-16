@@ -478,11 +478,10 @@ public class GrandpaRound {
 
             try {
                 blockState.finalizeBlock(finalizedBlock, createJustification(), authoritySet.getSetId());
+                syncState.finalizeBlock(finalizedBlock);
             } catch (BlockStorageGenericException e) {
                 log.warning("Block cannot be finalized: " + e.getMessage());
             }
-
-            syncState.finalizeBlock(finalizedBlock);
 
             // Persisting round data into the database when a block is finalized
             GrandpaSetState grandpaSetState = stateManager.getGrandpaSetState();
