@@ -231,8 +231,8 @@ public class GrandpaRound {
         if (previous != null) {
             shouldStartNextRound = previous.finalizedBlock != null;
         } else {
-            // at the genesis -> round number is equal to one
-            shouldStartNextRound = roundNumber.equals(BigInteger.ONE);
+            // If this is the genesis round, allow starting the next round
+            shouldStartNextRound = isGenesisRound();
         }
 
         shouldStartNextRound = shouldStartNextRound && isCompletable;
@@ -933,5 +933,11 @@ public class GrandpaRound {
         if (nextRound != null) {
             nextRound.update(true, false, false);
         }
+    }
+
+    private boolean isGenesisRound() {
+        return previous == null &&
+                BigInteger.ZERO.equals(authoritySet.getSetId()) &&
+                BigInteger.ONE.equals(roundNumber);
     }
 }
