@@ -68,6 +68,8 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
 
     @Override
     public void populateDataFromRuntime(Runtime runtime) {
+        //TODO: Ask Yordan how to handle that because now in the genesis set the setId isn't 0 but null
+        this.authoritySet.setSetId(BigInteger.ZERO);
         this.authoritySet.setAuthorities(runtime.getGrandpaApiAuthorities());
         updateAuthorityStatus();
     }
@@ -151,11 +153,6 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
     }
 
     public void startNewSet(PendingChange pendingChange, List<Authority> authorities) {
-
-        //TODO: REMOVE!!!
-        authorities = authorities.stream()
-                .filter(a -> Arrays.equals(a.getPublicKey(), AbstractState.getGrandpaKeyPair().getValue0()))
-                .toList();
 
         BigInteger setId = (authoritySet != null && authoritySet.getSetId() != null)
                 ? authoritySet.getSetId().add(BigInteger.ONE)

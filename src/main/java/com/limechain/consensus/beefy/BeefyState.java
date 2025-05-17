@@ -153,9 +153,9 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
 
     public void requestJustification(BigInteger blockNumber) {
         try {
-            AppBean.getBean(PeerRequester.class).makeBeefyJustificationRequest(blockNumber)
-                    .thenAccept(r ->
-                            AppBean.getBean(BeefyMessageHandler.class).handleSignedCommitment(r));
+//            AppBean.getBean(PeerRequester.class).makeBeefyJustificationRequest(blockNumber)
+//                    .thenAccept(r ->
+//                            AppBean.getBean(BeefyMessageHandler.class).handleSignedCommitment(r));
             log.fine(String.format("requestJustification: Requested justification for block %s.", blockNumber));
         } catch (ExecutionFailedException e) {
             log.warning(String.format("requestJustification: Failed request %s", e.getMessage()));
@@ -165,11 +165,6 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
     public void handleChangedBeefyAuthorities(List<byte[]> authorityPublicKeys,
                                                BigInteger authoritySetId,
                                                BigInteger blockNumber) {
-
-        //TODO: REMOVE LATER
-        authorityPublicKeys = authorityPublicKeys.stream()
-                .filter(a -> Arrays.equals(a, StringUtils.hexToBytes("0x020a1091341fe5664bfa1782d5e04779689068c916b04cb365ec3153755684d9a1")))
-                .toList();
 
         Pair<byte[], byte[]> keyPair = keyStore.findKeyPair(
                 authorityPublicKeys,

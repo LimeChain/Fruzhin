@@ -179,7 +179,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
 
         // If the mandatory block (sessionStart) does not have a beefy justification yet, vote on it
         if (beefyFinalized.compareTo(sessionStartBlock) < 0) {
-            log.info(String.format("x - mandatory block: #%s%n", sessionStartBlock));
+//            log.info(String.format("x - mandatory block: #%s%n", sessionStartBlock));
             targetVoteBlockNumber = sessionStartBlock;
         } else {
 
@@ -194,8 +194,8 @@ public class BeefyService implements FinalizedBlockChangeListener {
 
             targetVoteBlockNumber = beefyFinalized.add(BigInteger.valueOf(adjustedDiff));
 
-            log.fine(String.format("Vote BEEFY: vote target - diff: %d, next_power_of_two: %d, target block: #%s%n",
-                    diffInt, nextPowerOfTwo, targetVoteBlockNumber));
+//            log.fine(String.format("Vote BEEFY: vote target - diff: %d, next_power_of_two: %d, target block: #%s%n",
+//                    diffInt, nextPowerOfTwo, targetVoteBlockNumber));
         }
 
         return targetVoteBlockNumber;
@@ -480,8 +480,8 @@ public class BeefyService implements FinalizedBlockChangeListener {
 
         BeefySession session = beefyState.getSessions().peekFirst();
         if (!session.isMandatoryBlockFinalized()) {
-            log.info(String.format("requestMandatoryJustification: Session %s is not mandatory.", session.getMandatoryBlock()));
-            beefyState.requestJustification(session.getMandatoryBlock());
+//            log.info(String.format("requestMandatoryJustification: Session %s is not mandatory.", session.getMandatoryBlock()));
+//            beefyState.requestJustification(session.getMandatoryBlock());
         }
     }
 
