@@ -118,16 +118,16 @@ public class NetworkService implements NodeService {
     @SneakyThrows
     @Override
     public void start() {
+
+        if (chain.equals(Chain.LOCAL) && bootNodes.length == 0) {
+            log.info("No bootnodes configured for local chain — network service will not be started");
+            return;
+        }
+
         log.log(Level.INFO, "Starting network module...");
         kademliaService.connectBootNodes(this.bootNodes);
         started = true;
         log.log(Level.INFO, "Started network module!");
-
-        //TODO: Remove later
-        if (chain.equals(Chain.LOCAL)) {
-            log.info("Skipping connecting to other peers");
-            return;
-        }
 
         // Wait for peers
         while (true) {

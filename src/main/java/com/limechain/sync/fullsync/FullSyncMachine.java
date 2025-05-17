@@ -12,6 +12,7 @@ import com.limechain.network.NetworkService;
 import com.limechain.network.PeerMessageCoordinator;
 import com.limechain.network.PeerRequester;
 import com.limechain.network.protocol.blockannounce.NodeRole;
+import com.limechain.network.protocol.sync.BlockRequestField;
 import com.limechain.network.protocol.sync.pb.SyncMessage;
 import com.limechain.network.protocol.warp.DigestHelper;
 import com.limechain.network.protocol.warp.dto.Block;
@@ -108,24 +109,27 @@ public class FullSyncMachine {
         }
 
         stateManager.getBlockState().storeRuntime(lastFinalizedBlockHash, runtime);
-// TODO: UNCOMMENT
-//        int startNumber = syncState.getLastFinalizedBlockNumber()
-//                .add(BigInteger.ONE)
-//                .intValueExact();
-//
-//        messageCoordinator.handshakeBootNodes();
-//        messageCoordinator.handshakePeers();
-//
-//        int blocksToFetch = 100;
-//        List<Block> receivedBlocks = requester.requestBlocks(BlockRequestField.ALL, startNumber, blocksToFetch).join();
-//
-//        while (!receivedBlocks.isEmpty()) {
-//            executeBlocks(receivedBlocks, trieAccessor);
-//            log.info("Executed blocks from " + receivedBlocks.getFirst().getHeader().getBlockNumber()
-//                    + " to " + receivedBlocks.getLast().getHeader().getBlockNumber());
-//            startNumber += receivedBlocks.size();
-//            receivedBlocks = requester.requestBlocks(BlockRequestField.ALL, startNumber, blocksToFetch).join();
-//        }
+
+        if (networkService.isStarted()) {
+
+            messageCoordinator.handshakeBootNodes();
+            messageCoordinator.handshakePeers();
+
+            int startNumber = syncState.getLastFinalizedBlockNumber()
+                    .add(BigInteger.ONE)
+                    .intValueExact();
+
+            int blocksToFetch = 100;
+            List<Block> receivedBlocks = requester.requestBlocks(BlockRequestField.ALL, startNumber, blocksToFetch).join();
+
+            while (!receivedBlocks.isEmpty()) {
+                executeBlocks(receivedBlocks, trieAccessor);
+                log.info("Executed blocks from " + receivedBlocks.getFirst().getHeader().getBlockNumber()
+                        + " to " + receivedBlocks.getLast().getHeader().getBlockNumber());
+                startNumber += receivedBlocks.size();
+                receivedBlocks = requester.requestBlocks(BlockRequestField.ALL, startNumber, blocksToFetch).join();
+            }
+        }
 
         BlockState blockState = stateManager.getBlockState();
         var lastJustificationEntry = blockState.getJustifications().lastEntry();
