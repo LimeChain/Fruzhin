@@ -1,6 +1,5 @@
 package com.limechain.runtime.hostapi;
 
-import com.limechain.exception.scale.ScaleEncodingException;
 import com.limechain.runtime.Runtime;
 import com.limechain.runtime.RuntimeFactory;
 import com.limechain.runtime.SharedMemory;
@@ -12,11 +11,8 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.extern.java.Log;
 import org.apache.tomcat.util.buf.HexUtils;
-import org.springframework.lang.Nullable;
 import org.wasmer.ImportObject;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -114,10 +110,10 @@ public class MiscellaneousHostFunctions implements PartialHostApi {
             byte[] runtimeVersionData = ScaleUtils.Encode.encode(
                     RuntimeVersionWriter.getInstance(), runtime.getCachedVersion());
 
-            versionOption = scaleEncodedOption(runtimeVersionData);
+            versionOption = ScaleUtils.Encode.encodeOptional(ScaleCodecWriter::writeAsList, runtimeVersionData);
         } catch (UnsatisfiedLinkError e) {
             log.severe(String.format("Error loading wasm module: %s", e.getMessage()));
-            versionOption = scaleEncodedOption(null);
+            versionOption = ScaleUtils.Encode.encodeOptional(ScaleCodecWriter::writeAsList, null);
         }
 
         return sharedMemory.writeData(versionOption);
@@ -180,15 +176,5 @@ public class MiscellaneousHostFunctions implements PartialHostApi {
      */
     public int maxLevelV1() {
         return 4;
-    }
-
-    private byte[] scaleEncodedOption(@Nullable byte[] data) {
-        ByteArrayOutputStream buf = new ByteArrayOutputStream();
-        try (ScaleCodecWriter writer = new ScaleCodecWriter(buf)) {
-            writer.writeOptional(ScaleCodecWriter::writeByteArray, data);
-        } catch (IOException e) {
-            throw new ScaleEncodingException(e);
-        }
-        return buf.toByteArray();
     }
 }

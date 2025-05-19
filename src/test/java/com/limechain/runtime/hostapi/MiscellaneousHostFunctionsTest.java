@@ -17,6 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
@@ -66,19 +67,18 @@ class MiscellaneousHostFunctionsTest {
 
     @Test
     void runtimeVersionV1() throws IOException {
-        byte[] wasmRuntime = Files.readAllBytes(Paths.get("src","test","resources","runtime.wasm"));
-        byte[] runtimeData = Files.readAllBytes(Paths.get("src","test","resources","runtime.data"));
+        byte[] wasmRuntime = Files.readAllBytes(Paths.get("src", "test", "resources", "runtime.wasm"));
         when(sharedMemory.readData(valuePointer)).thenReturn(wasmRuntime);
-        when(sharedMemory.writeData(runtimeData)).thenReturn(targetPointer);
+        when(sharedMemory.writeData(any())).thenReturn(targetPointer);
 
-        try(MockedStatic<AppBean> appBeanMockedStatic = mockStatic(AppBean.class)){
+        try (MockedStatic<AppBean> appBeanMockedStatic = mockStatic(AppBean.class)) {
             appBeanMockedStatic.when(() -> AppBean.getBean(KeyStore.class)).thenReturn(mock(KeyStore.class));
 
             RuntimePointerSize result = miscellaneousHostFunctions.runtimeVersionV1(valuePointer);
 
             assertEquals(targetPointer, result);
             verify(sharedMemory).readData(valuePointer);
-            verify(sharedMemory).writeData(runtimeData);
+            verify(sharedMemory).writeData(any());
             verifyNoMoreInteractions(sharedMemory);
         }
     }

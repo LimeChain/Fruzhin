@@ -166,7 +166,7 @@ public class TransactionProcessor {
                     + " while validating.");
         }
 
-        return runtime.validateTransaction(createScaleValidationRequest(
+        return runtime.validateTransaction(header, createScaleValidationRequest(
                 runtime.getCachedVersion().getApis()
                         .getApiVersion(ApiVersionName.TRANSACTION_QUEUE_API.getHashedName()),
                 TransactionSource.EXTERNAL,

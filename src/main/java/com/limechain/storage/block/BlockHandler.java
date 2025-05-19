@@ -13,8 +13,8 @@ import com.limechain.network.protocol.sync.BlockRequestField;
 import com.limechain.network.protocol.warp.DigestHelper;
 import com.limechain.network.protocol.warp.dto.Block;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
+import com.limechain.runtime.CodeChangeChecker;
 import com.limechain.runtime.Runtime;
-import com.limechain.runtime.RuntimeBuilder;
 import com.limechain.state.AbstractState;
 import com.limechain.state.StateManager;
 import com.limechain.storage.block.state.BlockState;
@@ -43,10 +43,10 @@ public class BlockHandler {
     private final PeerRequester requester;
     private final PeerMessageCoordinator messageCoordinator;
 
-    private final RuntimeBuilder builder;
     private final HostConfig hostConfig;
     private final TransactionProcessor transactionProcessor;
     private final BlockProductionVerifier verifier;
+    private final CodeChangeChecker codeChangeChecker;
 
     private final AsyncExecutor asyncExecutor;
 
@@ -55,9 +55,10 @@ public class BlockHandler {
 
     public BlockHandler(StateManager stateManager,
                         PeerRequester requester,
-                        RuntimeBuilder builder,
                         HostConfig hostConfig,
                         TransactionProcessor transactionProcessor,
+                        BlockProductionVerifier verifier,
+                        CodeChangeChecker codeChangeChecker,
                         PeerMessageCoordinator messageCoordinator) {
 
         this.stateManager = stateManager;
@@ -65,10 +66,10 @@ public class BlockHandler {
         this.requester = requester;
         this.messageCoordinator = messageCoordinator;
 
-        this.builder = builder;
         this.hostConfig = hostConfig;
         this.transactionProcessor = transactionProcessor;
-        this.verifier = new BlockProductionVerifier();
+        this.verifier = verifier;
+        this.codeChangeChecker = codeChangeChecker;
 
         asyncExecutor = AsyncExecutor.withPoolSize(10);
         blockHeaders = new HashMap<>();
@@ -125,10 +126,9 @@ public class BlockHandler {
 
             BlockState blockState = stateManager.getBlockState();
             Runtime runtime = blockState.getRuntime(header.getParentHash());
-            Runtime newRuntime = builder.copyRuntime(runtime);
 
             EpochState epochState = stateManager.getEpochState();
-            if (!verifier.isAuthorshipValid(newRuntime,
+            if (!verifier.isAuthorshipValid(runtime,
                     header,
                     epochState.getCurrentEpochData(),
                     epochState.getCurrentEpochDescriptor(),
@@ -136,11 +136,13 @@ public class BlockHandler {
                 return;
             }
 
-            newRuntime.executeBlock(block);
+            runtime.executeBlock(header, block);
             log.info(String.format("Executed block #%d %s.",
                     block.getHeader().getBlockNumber(), header.getPrintableHash()));
 
-            blockState.storeRuntime(header.getHash(), newRuntime);
+            codeChangeChecker.checkRuntimeCodeChange(header).ifPresent(_ ->
+                    log.fine(String.format(
+                            "Runtime update detected for block: %s", block.getHeader().getBlockNumber())));
 
             asyncExecutor.executeAndForget(() -> transactionProcessor.maintainTransactionPool(block));
         } catch (Exception e) {
@@ -192,7 +194,7 @@ public class BlockHandler {
         asyncExecutor.executeAndForget(() -> {
             Block block = requestBlock(blockHeader);
             pendingBlocksQueue.add(Pair.with(arrivalTime, block));
-            log.fine(String.format("Added block to queue #%d (%s)",
+            log.info(String.format("Added block to queue #%d (%s)",
                     block.getHeader().getBlockNumber(),
                     block.getHeader().getPrintableHash()));
         });

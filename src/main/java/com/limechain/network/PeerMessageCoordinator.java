@@ -1,11 +1,9 @@
 package com.limechain.network;
 
-import com.limechain.network.kad.KademliaService;
 import com.limechain.network.protocol.beefy.messages.justification.SignedCommitment;
 import com.limechain.network.protocol.beefy.messages.justification.SignedCommitmentScaleWriter;
 import com.limechain.network.protocol.beefy.messages.vote.BeefyVoteMessage;
 import com.limechain.network.protocol.beefy.messages.vote.BeefyVoteMessageScaleWriter;
-import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.network.protocol.blockannounce.messages.BlockAnnounceMessage;
 import com.limechain.network.protocol.blockannounce.scale.BlockAnnounceMessageScaleWriter;
 import com.limechain.network.protocol.grandpa.messages.catchup.req.CatchUpReqMessage;
@@ -41,30 +39,6 @@ public class PeerMessageCoordinator {
         this.network = network;
 
         asyncExecutor = AsyncExecutor.withPoolSize(THREAD_POOL_SIZE);
-    }
-
-    public void handshakeBootNodes() {
-        KademliaService kademliaService = network.getKademliaService();
-        kademliaService.getBootNodePeerIds()
-                .stream()
-                .distinct()
-                .forEach(p -> asyncExecutor.executeAndForget(() ->
-                        network.getBlockAnnounceService().sendHandshake(kademliaService.getHost(), p)));
-    }
-
-    public void handshakePeers() {
-        sendMessageToActivePeers(peerId -> {
-            asyncExecutor.executeAndForget(() ->
-                    network.getGrandpaService().sendHandshake(network.getHost(), peerId));
-
-            asyncExecutor.executeAndForget(() ->
-                    network.getBeefyNotificationService().sendHandshake(network.getHost(), peerId));
-
-            if (network.getNodeRole().equals(NodeRole.AUTHORING)) {
-                asyncExecutor.executeAndForget(() ->
-                        network.getTransactionsService().sendHandshake(network.getHost(), peerId));
-            }
-        });
     }
 
     @Scheduled(fixedRate = 5, initialDelay = 5, timeUnit = TimeUnit.MINUTES)

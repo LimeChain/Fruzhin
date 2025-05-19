@@ -24,6 +24,7 @@ import com.limechain.network.protocol.warp.scale.reader.BlockHeaderReader;
 import com.limechain.network.protocol.warp.scale.writer.BlockBodyWriter;
 import com.limechain.rpc.methods.author.dto.DecodedKey;
 import com.limechain.rpc.methods.author.dto.DecodedKeysReader;
+import com.limechain.rpc.server.AppBean;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import com.limechain.runtime.version.RuntimeVersion;
 import com.limechain.runtime.version.scale.RuntimeVersionReader;
@@ -34,10 +35,11 @@ import com.limechain.transaction.dto.Extrinsic;
 import com.limechain.transaction.dto.ExtrinsicArray;
 import com.limechain.transaction.dto.TransactionValidationRequest;
 import com.limechain.transaction.dto.TransactionValidationResponse;
+import com.limechain.trie.DiskTrieAccessor;
+import com.limechain.trie.TrieAccessorStorage;
 import com.limechain.trie.structure.nibble.Nibbles;
 import com.limechain.utils.ByteArrayUtils;
 import com.limechain.utils.LittleEndianUtils;
-import com.limechain.utils.StringUtils;
 import com.limechain.utils.scale.ScaleUtils;
 import com.limechain.utils.scale.readers.ApplyExtrinsicResultReader;
 import com.limechain.utils.scale.readers.TransactionValidationReader;
@@ -70,194 +72,198 @@ public class RuntimeImpl implements Runtime {
     Context context;
     Instance instance;
 
+    private final TrieAccessorStorage accessorStorage = AppBean.getBean(TrieAccessorStorage.class);
+
     @Override
-    public BabeApiConfiguration getBabeApiConfiguration() {
-        return ScaleUtils.Decode.decode(call(RuntimeEndpoint.BABE_API_CONFIGURATION), BabeApiConfigurationReader.getInstance());
+    public synchronized BabeApiConfiguration getBabeApiConfiguration(BlockHeader header) {
+        return ScaleUtils.Decode.decode(call(header, RuntimeEndpoint.BABE_API_CONFIGURATION), BabeApiConfigurationReader.getInstance());
     }
 
     @Override
-    public Optional<OpaqueKeyOwnershipProof> generateBabeKeyOwnershipProof(BigInteger slotNumber,
-                                                                           byte[] authorityPublicKey) {
+    public synchronized Optional<OpaqueKeyOwnershipProof> generateBabeKeyOwnershipProof(BlockHeader header, BigInteger slotNumber,
+                                                                                        byte[] authorityPublicKey) {
         byte[] encodedProof = ArrayUtils.addAll(ScaleUtils.Encode.encode(
                 new UInt64Writer(), slotNumber), authorityPublicKey);
-        byte[] encodedResponse = call(RuntimeEndpoint.BABE_API_GENERATE_KEY_OWNERSHIP_PROOF, encodedProof);
+        byte[] encodedResponse = call(header, RuntimeEndpoint.BABE_API_GENERATE_KEY_OWNERSHIP_PROOF, encodedProof);
         return new ScaleCodecReader(encodedResponse).readOptional(OpaqueKeyOwnershipProofReader.getInstance());
     }
 
     @Override
-    public void submitReportBabeEquivocationUnsignedExtrinsic(BlockEquivocationProof blockEquivocationProof,
-                                                              byte[] keyOwnershipProof) {
+    public synchronized void submitReportBabeEquivocationUnsignedExtrinsic(BlockHeader header, BlockEquivocationProof blockEquivocationProof,
+                                                                           byte[] keyOwnershipProof) {
         try (ByteArrayOutputStream buffer = new ByteArrayOutputStream();
              ScaleCodecWriter scaleCodecWriter = new ScaleCodecWriter(buffer)) {
             BlockEquivocationProofWriter.getInstance().write(scaleCodecWriter, blockEquivocationProof);
             scaleCodecWriter.writeAsList(keyOwnershipProof);
-            call(RuntimeEndpoint.BABE_API_SUBMIT_REPORT_EQUIVOCATION_UNSIGNED_EXTRINSIC, buffer.toByteArray());
+            call(header, RuntimeEndpoint.BABE_API_SUBMIT_REPORT_EQUIVOCATION_UNSIGNED_EXTRINSIC, buffer.toByteArray());
         } catch (IOException e) {
             throw new ScaleEncodingException("Unexpected exception while encoding.");
         }
     }
 
     @Override
-    public List<Authority> getGrandpaApiAuthorities() {
+    public synchronized List<Authority> getGrandpaApiAuthorities(BlockHeader header) {
         return ScaleUtils.Decode.decode(
-                call(RuntimeEndpoint.GRANDPA_API_GRANDPA_AUTHORITIES), new ListReader<>(AuthorityReader.getInstance())
+                call(header, RuntimeEndpoint.GRANDPA_API_GRANDPA_AUTHORITIES), new ListReader<>(AuthorityReader.getInstance())
         );
     }
 
     @Override
-    public Optional<OpaqueKeyOwnershipProof> generateGrandpaKeyOwnershipProof(BigInteger authoritySetId,
-                                                                              byte[] authorityPublicKey) {
+    public synchronized Optional<OpaqueKeyOwnershipProof> generateGrandpaKeyOwnershipProof(BlockHeader header, BigInteger authoritySetId, byte[] authorityPublicKey) {
         byte[] encodedProof = ArrayUtils.addAll(ScaleUtils.Encode.encode(
                 new UInt64Writer(), authoritySetId), authorityPublicKey);
-        byte[] encodedResponse = call(RuntimeEndpoint.GRANDPA_API_GENERATE_KEY_OWNERSHIP_PROOF, encodedProof);
+        byte[] encodedResponse = call(header, RuntimeEndpoint.GRANDPA_API_GENERATE_KEY_OWNERSHIP_PROOF, encodedProof);
         return new ScaleCodecReader(encodedResponse).readOptional(OpaqueKeyOwnershipProofReader.getInstance());
     }
 
     @Override
-    public void submitReportGrandpaEquivocationUnsignedExtrinsic(GrandpaEquivocation grandpaEquivocation,
-                                                                 byte[] keyOwnershipProof) {
+    public synchronized void submitReportGrandpaEquivocationUnsignedExtrinsic(BlockHeader header, GrandpaEquivocation grandpaEquivocation, byte[] keyOwnershipProof) {
         try (ByteArrayOutputStream buffer = new ByteArrayOutputStream();
              ScaleCodecWriter scaleCodecWriter = new ScaleCodecWriter(buffer)) {
             GrandpaEquivocationScaleWriter.getInstance().write(scaleCodecWriter, grandpaEquivocation);
             scaleCodecWriter.writeAsList(keyOwnershipProof);
-            call(RuntimeEndpoint.GRANDPA_API_SUBMIT_REPORT_EQUIVOCATION_UNSIGNED_EXTRINSIC, buffer.toByteArray());
+            call(header, RuntimeEndpoint.GRANDPA_API_SUBMIT_REPORT_EQUIVOCATION_UNSIGNED_EXTRINSIC, buffer.toByteArray());
         } catch (IOException e) {
             throw new ScaleEncodingException("Unexpected exception while encoding.");
         }
     }
 
     @Override
-    public Optional<OpaqueKeyOwnershipProof> generateBeefyKeyOwnershipProof(BigInteger authoritySetId, byte[] authorityPublicKey) {
+    public synchronized Optional<OpaqueKeyOwnershipProof> generateBeefyKeyOwnershipProof(BlockHeader header, BigInteger authoritySetId, byte[] authorityPublicKey) {
         byte[] encodedProof = ArrayUtils.addAll(ScaleUtils.Encode.encode(
                 new UInt64Writer(), authoritySetId), authorityPublicKey);
-        byte[] encodedResponse = call(RuntimeEndpoint.BEEFY_API_GENERATE_KEY_OWNERSHIP_PROOF, encodedProof);
+        byte[] encodedResponse = call(header, RuntimeEndpoint.BEEFY_API_GENERATE_KEY_OWNERSHIP_PROOF, encodedProof);
         return new ScaleCodecReader(encodedResponse).readOptional(OpaqueKeyOwnershipProofReader.getInstance());
     }
 
     @Override
-    public void submitReportBeefyDoubleVotingUnsignedExtrinsic(DoubleVotingProof doubleVotingProof, byte[] keyOwnershipProof) {
+    public synchronized void submitReportBeefyDoubleVotingUnsignedExtrinsic(BlockHeader header, DoubleVotingProof doubleVotingProof, byte[] keyOwnershipProof) {
         try (ByteArrayOutputStream buffer = new ByteArrayOutputStream();
              ScaleCodecWriter scaleCodecWriter = new ScaleCodecWriter(buffer)) {
             BeefyDoubleVotingProofScaleWriter.getInstance().write(scaleCodecWriter, doubleVotingProof);
             scaleCodecWriter.writeAsList(keyOwnershipProof);
-            call(RuntimeEndpoint.BEEFY_API_SUBMIT_REPORT_DOUBLE_VOTING_UNSIGNED_EXTRINSIC, buffer.toByteArray());
+            call(header, RuntimeEndpoint.BEEFY_API_SUBMIT_REPORT_DOUBLE_VOTING_UNSIGNED_EXTRINSIC, buffer.toByteArray());
         } catch (IOException e) {
             throw new ScaleEncodingException("Unexpected exception while encoding.");
         }
     }
 
     @Override
-    public Optional<BeefyAuthoritySet> getBeefyValidatorSet() {
-        byte[] encodedResponse = call(RuntimeEndpoint.BEEFY_API_VALIDATOR_SET);
+    public synchronized Optional<BeefyAuthoritySet> getBeefyValidatorSet(BlockHeader header) {
+        byte[] encodedResponse = call(header, RuntimeEndpoint.BEEFY_API_VALIDATOR_SET);
         return encodedResponse == null
                 ? Optional.empty()
                 : new ScaleCodecReader(encodedResponse).readOptional(BeefyAuthoritySetReader.getInstance());
     }
 
     @Override
-    public Optional<BigInteger> getBeefyGenesis() {
-        byte[] encodedResponse = call(RuntimeEndpoint.BEEFY_API_BEEFY_GENESIS);
+    public synchronized Optional<BigInteger> getBeefyGenesis(BlockHeader header) {
+        byte[] encodedResponse = call(header, RuntimeEndpoint.BEEFY_API_BEEFY_GENESIS);
         return encodedResponse == null
                 ? Optional.empty()
                 : new ScaleCodecReader(encodedResponse).readOptional(ScaleCodecReader.UINT32).map(BigInteger::valueOf);
     }
 
     @Override
-    public List<DecodedKey> decodeSessionKeys(String sessionKeys) {
+    public synchronized List<DecodedKey> decodeSessionKeys(BlockHeader header, String sessionKeys) {
         byte[] encodedRequest = ScaleUtils.Encode.encode(
-                ScaleCodecWriter::writeByteArray, StringUtils.hexToBytes(sessionKeys));
-        byte[] encodedResponse = call(RuntimeEndpoint.SESSION_KEYS_DECODE_SESSION_KEYS, encodedRequest);
-
+                ScaleCodecWriter::writeByteArray, com.limechain.utils.StringUtils.hexToBytes(sessionKeys));
+        byte[] encodedResponse = call(header, RuntimeEndpoint.SESSION_KEYS_DECODE_SESSION_KEYS, encodedRequest);
         return ScaleUtils.Decode.decode(encodedResponse, DecodedKeysReader.getInstance());
     }
 
     @Override
-    public RuntimeVersion getCachedVersion() {
+    public synchronized RuntimeVersion getCachedVersion() {
         return context.getRuntimeVersion();
     }
 
     @Override
-    public RuntimeVersion getVersion() {
-        return ScaleUtils.Decode.decode(call(RuntimeEndpoint.CORE_VERSION), RuntimeVersionReader.getInstance());
+    public synchronized RuntimeVersion getVersion(BlockHeader header) {
+        return ScaleUtils.Decode.decode(call(header, RuntimeEndpoint.CORE_VERSION), RuntimeVersionReader.getInstance());
     }
 
     @Override
-    public TransactionValidationResponse validateTransaction(TransactionValidationRequest request) {
+    public synchronized TransactionValidationResponse validateTransaction(BlockHeader header, TransactionValidationRequest request) {
         byte[] encodedRequest = ScaleUtils.Encode.encode(TransactionValidationWriter.getInstance(), request);
-        byte[] encodedResponse = callAndBackup(RuntimeEndpoint.TRANSACTION_QUEUE_VALIDATE_TRANSACTION, encodedRequest);
+        byte[] encodedResponse = callAndBackup(header, RuntimeEndpoint.TRANSACTION_QUEUE_VALIDATE_TRANSACTION, encodedRequest);
 
         return ScaleUtils.Decode.decode(encodedResponse, TransactionValidationReader.getInstance());
     }
 
     @Override
-    public BlockHeader finalizeBlock() {
-        byte[] encodedResponse = call(RuntimeEndpoint.BLOCKBUILDER_FINALIZE_BLOCK);
+    public synchronized BlockHeader finalizeBlock(BlockHeader header) {
+        byte[] encodedResponse = call(header, RuntimeEndpoint.BLOCKBUILDER_FINALIZE_BLOCK);
         return ScaleUtils.Decode.decode(encodedResponse, BlockHeaderReader.getInstance());
     }
 
     @Override
-    public byte[] checkInherents(Block block, InherentData inherentData) {
+    public synchronized byte[] checkInherents(BlockHeader header, Block block, InherentData inherentData) {
         byte[] encodedRequest = serializeCheckInherentsParameter(block, inherentData);
-        return call(RuntimeEndpoint.BLOCKBUILDER_CHECK_INHERENTS, encodedRequest);
+        return call(header, RuntimeEndpoint.BLOCKBUILDER_CHECK_INHERENTS, encodedRequest);
     }
 
     @Override
-    public ApplyExtrinsicResult applyExtrinsic(Extrinsic extrinsic) {
+    public synchronized ApplyExtrinsicResult applyExtrinsic(BlockHeader header, Extrinsic extrinsic) {
         byte[] encodedRequest = ScaleUtils.Encode.encodeAsListOfBytes(ByteArrayUtils.toIterable(extrinsic.getData()));
-        byte[] encodedResponse = call(RuntimeEndpoint.BLOCKBUILDER_APPLY_EXTRINISIC, encodedRequest);
+        byte[] encodedResponse = call(header, RuntimeEndpoint.BLOCKBUILDER_APPLY_EXTRINISIC, encodedRequest);
 
         return ScaleUtils.Decode.decode(encodedResponse, ApplyExtrinsicResultReader.getInstance());
     }
 
     @Override
-    public ExtrinsicArray inherentExtrinsics(com.limechain.consensus.babe.dto.InherentData inherentData) {
+    public synchronized ExtrinsicArray inherentExtrinsics(BlockHeader header, com.limechain.consensus.babe.dto.InherentData inherentData) {
         byte[] encodedRequest = ScaleUtils.Encode.encode(BlockInherentsWriter.getInstance(), inherentData);
-        byte[] encodedResponse = call(RuntimeEndpoint.BLOCKBUILDER_INHERENT_EXTRINISICS, encodedRequest);
+        byte[] encodedResponse = call(header, RuntimeEndpoint.BLOCKBUILDER_INHERENT_EXTRINISICS, encodedRequest);
 
         return ScaleUtils.Decode.decode(encodedResponse, TransactionReader.getInstance());
     }
 
     @Override
-    public byte[] generateSessionKeys(byte[] scaleSeed) {
+    public synchronized byte[] generateSessionKeys(BlockHeader header, byte[] scaleSeed) {
         byte[] encodedRequest = ScaleUtils.Encode.encodeOptional(ScaleCodecWriter::writeByteArray, scaleSeed);
-        return call(RuntimeEndpoint.SESSION_KEYS_GENERATE_SESSION_KEYS, encodedRequest);
+        return call(header, RuntimeEndpoint.SESSION_KEYS_GENERATE_SESSION_KEYS, encodedRequest);
     }
 
     @Override
-    public byte[] getMetadata() {
-        return call(RuntimeEndpoint.METADATA_METADATA);
+    public synchronized byte[] getMetadata(BlockHeader header) {
+        return call(header, RuntimeEndpoint.METADATA_METADATA);
     }
 
     @Override
-    public void executeBlock(Block block) {
+    public synchronized void executeBlock(BlockHeader header, Block block) {
         byte[] param = serializeExecuteBlockParameter(block);
-        call(RuntimeEndpoint.CORE_EXECUTE_BLOCK, param);
+        call(header, RuntimeEndpoint.CORE_EXECUTE_BLOCK, param);
     }
 
     @Override
-    public void initializeBlock(BlockHeader blockHeader) {
+    public synchronized void initializeBlock(BlockHeader header, BlockHeader blockHeader) {
         byte[] encHeader = ScaleUtils.Encode.encode(BlockHeaderScaleWriter.getInstance(), blockHeader);
-        call(RuntimeEndpoint.CORE_INITIALIZE_BLOCK, encHeader);
+        call(header, RuntimeEndpoint.CORE_INITIALIZE_BLOCK, encHeader);
     }
 
     @Override
-    public BigInteger getGenesisSlotNumber() {
-        var optGenesisSlotBytes = this.findStorageValue(RuntimeStorageKey.GENESIS_SLOT.getNibbles());
+    public synchronized BigInteger getGenesisSlotNumber(BlockHeader header) {
+        var optGenesisSlotBytes = this.findStorageValue(header, RuntimeStorageKey.GENESIS_SLOT.getNibbles());
         return optGenesisSlotBytes.map(LittleEndianUtils::fromLittleEndianByteArray).orElse(null);
     }
 
     @Override
-    public synchronized void persistsChanges() {
-        context.getTrieAccessor().persistChanges();
+    public synchronized Optional<byte[]> getRuntimeCode(BlockHeader header) {
+        return this.findStorageValue(header, RuntimeStorageKey.CODE.getNibbles());
     }
 
     @Override
-    public void close() {
+    public synchronized void persistsChanges(BlockHeader header) {
+        accessorStorage.get(header.getHash()).persistChanges();
+    }
+
+    @Override
+    public synchronized void close() {
         module.close();
         instance.close();
     }
 
-    private byte[] serializeExecuteBlockParameter(Block block) {
+    private synchronized byte[] serializeExecuteBlockParameter(Block block) {
         byte[] encodedUnsealedHeader = ScaleUtils.Encode.encode(
                 BlockHeaderScaleWriter.getInstance()::writeUnsealed,
                 block.getHeader()
@@ -267,7 +273,7 @@ public class RuntimeImpl implements Runtime {
         return ArrayUtils.addAll(encodedUnsealedHeader, encodedBody);
     }
 
-    private byte[] serializeCheckInherentsParameter(Block block, InherentData inherentData) {
+    private synchronized byte[] serializeCheckInherentsParameter(Block block, InherentData inherentData) {
         byte[] executeBlockParameter = serializeExecuteBlockParameter(block);
         byte[] scaleEncodedInherentData = ScaleUtils.Encode.encode(InherentDataWriter.getInstance(), inherentData);
         return ArrayUtils.addAll(executeBlockParameter, scaleEncodedInherentData);
@@ -280,43 +286,22 @@ public class RuntimeImpl implements Runtime {
      * @return the SCALE encoded response
      */
     @Nullable
-    private synchronized byte[] call(RuntimeEndpoint function) {
+    private synchronized byte[] call(@Nullable BlockHeader header, RuntimeEndpoint function) {
         try {
-            return callInner(function, new RuntimePointerSize(0, 0));
+            return call(header, function, new byte[0]);
         } catch (RuntimeCallException e) {
             log.warning(String.format("call: Couldn't execute runtime call %s: %s", function, e.getMessage()));
             return null;
         }
     }
 
-    /**
-     * Calls an exported runtime function with no parameters and backup state changes.
-     *
-     * @param function the name Runtime function to call
-     * @return the SCALE encoded response
-     */
     @Nullable
-    private synchronized byte[] callAndBackup(RuntimeEndpoint function) {
-        try {
-            context.trieAccessor.prepareBackup();
-            return callInner(function, new RuntimePointerSize(0, 0));
-        } catch (RuntimeCallException e) {
-            log.warning(String.format("callAndBackup: Couldn't execute runtime call %s: %s", function, e.getMessage()));
-            return null;
-        } finally {
-            context.trieAccessor.backup();
+    private synchronized byte[] call(@Nullable BlockHeader header, RuntimeEndpoint function, byte[] parameter) {
+        if (header != null) {
+            DiskTrieAccessor parentAccessor = accessorStorage.get(header.getParentHash());
+            DiskTrieAccessor newAccessor = accessorStorage.appendStorage(header.getHash(), parentAccessor);
+            context.setTrieAccessor(newAccessor);
         }
-    }
-
-    /**
-     * Calls an exported runtime function with parameters.
-     *
-     * @param function  the name Runtime function to call
-     * @param parameter the SCALE encoded tuple of parameters
-     * @return the SCALE encoded response
-     */
-    @Nullable
-    private synchronized byte[] call(RuntimeEndpoint function, @NotNull byte[] parameter) {
         try {
             return callInner(function, context.getSharedMemory().writeData(parameter));
         } catch (RuntimeCallException e) {
@@ -325,17 +310,17 @@ public class RuntimeImpl implements Runtime {
         }
     }
 
-    /**
-     * Calls an exported runtime function with parameters and backup state changes.
-     *
-     * @param function  the name Runtime function to call
-     * @param parameter the SCALE encoded tuple of parameters
-     * @return the SCALE encoded response
-     */
     @Nullable
-    private synchronized byte[] callAndBackup(RuntimeEndpoint function, @NotNull byte[] parameter) {
+    private synchronized byte[] callAndBackup(@Nullable BlockHeader header,
+                                              RuntimeEndpoint function,
+                                              @NotNull byte[] parameter) {
         try {
-            context.trieAccessor.prepareBackup();
+            if (header != null) {
+                DiskTrieAccessor parentAccessor = accessorStorage.get(header.getParentHash());
+                DiskTrieAccessor newAccessor = accessorStorage.appendStorage(header.getHash(), parentAccessor);
+                context.setTrieAccessor(newAccessor);
+            }
+            context.getTrieAccessor().prepareBackup();
             return callInner(function, context.getSharedMemory().writeData(parameter));
         } catch (RuntimeCallException e) {
             log.warning(String.format("callAndBackup: Couldn't execute runtime call %s: %s", function, e.getMessage()));
@@ -346,7 +331,7 @@ public class RuntimeImpl implements Runtime {
     }
 
     @Nullable
-    private byte[] callInner(RuntimeEndpoint function, RuntimePointerSize parameterPtrSize) {
+    private synchronized byte[] callInner(RuntimeEndpoint function, RuntimePointerSize parameterPtrSize) {
         String functionName = function.getName();
         log.finest(String.format("Making a runtime call: %s", functionName));
         try {
@@ -355,8 +340,8 @@ public class RuntimeImpl implements Runtime {
 
             if (response == null) {
                 return null;
-            }
 
+            }
             RuntimePointerSize responsePtrSize = new RuntimePointerSize((long) response[0]);
             return context.getSharedMemory().readData(responsePtrSize);
         } catch (Exception e) {
@@ -364,8 +349,13 @@ public class RuntimeImpl implements Runtime {
         }
     }
 
-    private Optional<byte[]> findStorageValue(Nibbles key) {
-        return this.context.trieAccessor.findStorageValue(key);
+    private synchronized Optional<byte[]> findStorageValue(@Nullable BlockHeader header, Nibbles key) {
+        if (header != null) {
+            DiskTrieAccessor parentAccessor = accessorStorage.get(header.getParentHash());
+            DiskTrieAccessor newAccessor = accessorStorage.appendStorage(header.getHash(), parentAccessor);
+            context.setTrieAccessor(newAccessor);
+        }
+        return context.getTrieAccessor().findStorageValue(key);
     }
 }
 

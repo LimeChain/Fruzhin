@@ -58,7 +58,7 @@ class BlockExecutorTest {
         Block block = getKusamaFirstBlock();
 
         // Execute it successfully
-        assertDoesNotThrow(() -> genesisRuntime.executeBlock(block),
+        assertDoesNotThrow(() -> genesisRuntime.executeBlock(null, block),
             "Executing the first block of Kusama must be successful.");
     }
 

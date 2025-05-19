@@ -7,6 +7,7 @@ import com.limechain.cli.CliArguments;
 import com.limechain.config.HostConfig;
 import com.limechain.config.SystemInfo;
 import com.limechain.consensus.babe.EpochState;
+import com.limechain.consensus.babe.coordinator.SlotChangeListener;
 import com.limechain.consensus.beefy.BeefyState;
 import com.limechain.consensus.grandpa.GrandpaSetState;
 import com.limechain.constants.GenesisBlockHash;
@@ -14,6 +15,7 @@ import com.limechain.network.NetworkService;
 import com.limechain.network.PeerMessageCoordinator;
 import com.limechain.network.PeerRequester;
 import com.limechain.rpc.server.UnsafeInterceptor;
+import com.limechain.runtime.CodeChangeChecker;
 import com.limechain.runtime.RuntimeBuilder;
 import com.limechain.state.StateManager;
 import com.limechain.storage.DBInitializer;
@@ -27,6 +29,7 @@ import com.limechain.sync.state.SyncState;
 import com.limechain.sync.warpsync.WarpSyncMachine;
 import com.limechain.sync.warpsync.WarpSyncState;
 import com.limechain.transaction.TransactionState;
+import com.limechain.trie.TrieAccessorStorage;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -70,6 +73,11 @@ public class CommonConfig {
     @Bean
     public TrieStorage trieStorage(KVRepository<String, Object> repository) {
         return new TrieStorage(repository);
+    }
+
+    @Bean
+    public TrieAccessorStorage trieServiceStorage(TrieStorage repository, StateManager stateManager) {
+        return new TrieAccessorStorage(repository, stateManager);
     }
 
     @Bean
@@ -131,8 +139,19 @@ public class CommonConfig {
                                            StateManager stateManager,
                                            PeerRequester requester,
                                            PeerMessageCoordinator coordinator,
-                                           BlockHandler blockHandler) {
-        return new FullSyncMachine(network, stateManager, requester, coordinator, blockHandler, hostConfig);
+                                           BlockHandler blockHandler,
+                                           TrieAccessorStorage trieAccessorStorage,
+                                           CodeChangeChecker codeChangeChecker,
+                                           List<SlotChangeListener> slotChangeListeners) {
+        return new FullSyncMachine(network,
+                stateManager,
+                requester,
+                coordinator,
+                blockHandler,
+                trieAccessorStorage,
+                codeChangeChecker,
+                slotChangeListeners,
+                hostConfig);
     }
 
     @Bean

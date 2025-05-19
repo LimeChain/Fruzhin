@@ -24,6 +24,7 @@ import com.limechain.storage.DBConstants;
 import com.limechain.storage.KVRepository;
 import com.limechain.storage.block.tree.BlockNode;
 import com.limechain.storage.block.tree.BlockTree;
+import com.limechain.trie.TrieAccessorStorage;
 import com.limechain.utils.scale.ScaleUtils;
 import io.emeraldpay.polkaj.types.Hash256;
 import jakarta.annotation.Nullable;
@@ -52,11 +53,13 @@ import java.util.Optional;
 @Component
 public class BlockState extends AbstractState {
 
+    private final static BigInteger JUSTIFICATIONS_MAX_LENGTH = BigInteger.valueOf(25);
+
     private final KVRepository<String, Object> db;
 
     private final Map<Hash256, Block> unfinalizedBlocks;
-    private final LinkedHashMap<Hash256, Justification> justifications;
     private final GenesisBlockHash genesisBlockHash;
+    private final LinkedHashMap<Hash256, Justification> justifications;
     private final PrometheusServer prometheusServer;
     private BlockTree blockTree;
     private Hash256 lastFinalized;
@@ -68,8 +71,14 @@ public class BlockState extends AbstractState {
         this.db = db;
         this.prometheusServer = prometheusServer;
         this.unfinalizedBlocks = new HashMap<>();
-        this.justifications = new LinkedHashMap<>();
         this.genesisBlockHash = genesisBlockHash;
+
+        this.justifications = new LinkedHashMap<>() {
+            @Override
+            protected boolean removeEldestEntry(Map.Entry<Hash256, Justification> eldest) {
+                return JUSTIFICATIONS_MAX_LENGTH.compareTo(BigInteger.valueOf(size())) <= 0;
+            }
+        };
     }
 
     @Override
@@ -723,7 +732,7 @@ public class BlockState extends AbstractState {
      * @return runtime for the block
      * @throws BlockStorageGenericException if the block node is not found in the block tree.
      */
-    public Runtime getRuntime(final Hash256 blockHash) {
+    public synchronized Runtime getRuntime(final Hash256 blockHash) {
         try {
             return blockTree.getBlockRuntime(blockHash);
         } catch (BlockNodeNotFoundException e) {
@@ -823,6 +832,7 @@ public class BlockState extends AbstractState {
             //Notify that we have finalized a block
         }
 
+        AppBean.getBean(TrieAccessorStorage.class).prune(header.getHash());
         List<Hash256> pruned = blockTree.prune(hash);
 
         for (Hash256 prunedHash : pruned) {
@@ -953,7 +963,7 @@ public class BlockState extends AbstractState {
             setHeader(block.getHeader());
             setBlockBody(subchainHash, block.getBody());
 
-            getRuntime(block.getHeader().getHash()).persistsChanges();
+            getRuntime(subchainHash).persistsChanges(block.getHeader());
 
             Instant arrivalTime = blockTree.getArrivalTime(subchainHash);
             setArrivalTime(subchainHash, arrivalTime);

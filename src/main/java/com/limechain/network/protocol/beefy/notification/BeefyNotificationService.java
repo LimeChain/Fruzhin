@@ -45,7 +45,7 @@ public class BeefyNotificationService extends NetworkService<BeefyNotification> 
             BeefyNotificationController controller = this.protocol.dialPeer(us, peerId, us.getAddressBook());
             controller.sendHandshake();
         } catch (Exception e) {
-            log.warning("Failed to send Beefy handshake to " + peerId);
+            log.fine("Failed to send Beefy handshake to " + peerId);
         }
     }
 }

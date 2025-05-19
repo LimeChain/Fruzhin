@@ -37,6 +37,6 @@ public class RuntimeVersionWriter implements ScaleWriter<RuntimeVersion> {
         }
 
         // Write the state version if it's present. Older runtimes miss this field, so StateVersion 0 is to be presumed.
-        scaleCodecWriter.writeByte(runtimeVersion.getStateVersion().asInt());
+        scaleCodecWriter.writeUint32(runtimeVersion.getStateVersion().asInt());
     }
 }
