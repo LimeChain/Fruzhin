@@ -153,9 +153,9 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
 
     public void requestJustification(BigInteger blockNumber) {
         try {
-//            AppBean.getBean(PeerRequester.class).makeBeefyJustificationRequest(blockNumber)
-//                    .thenAccept(r ->
-//                            AppBean.getBean(BeefyMessageHandler.class).handleSignedCommitment(r));
+            AppBean.getBean(PeerRequester.class).makeBeefyJustificationRequest(blockNumber)
+                    .thenAccept(r ->
+                            AppBean.getBean(BeefyMessageHandler.class).handleSignedCommitment(r));
             log.fine(String.format("requestJustification: Requested justification for block %s.", blockNumber));
         } catch (ExecutionFailedException e) {
             log.warning(String.format("requestJustification: Failed request %s", e.getMessage()));
