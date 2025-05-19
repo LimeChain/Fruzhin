@@ -12,7 +12,7 @@ public class StartStage implements StageState {
     @Override
     public void start(GrandpaRound round) {
 
-        log.info(String.format("Round %d started.", round.getRoundNumber()));
+        log.fine(String.format("Round %d started.", round.getRoundNumber()));
 
         round.setStartTime(Instant.now());
 

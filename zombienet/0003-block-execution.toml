@@ -1,6 +1,3 @@
-[settings]
-timeout = 65
-
 [relaychain]
 chain = "westend-local"
 default_command = "java -jar build/libs/fruzhin-0.1.0.jar"

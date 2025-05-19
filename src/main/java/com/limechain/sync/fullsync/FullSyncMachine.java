@@ -171,7 +171,6 @@ public class FullSyncMachine {
         while (true) {
             final SyncMessage.StateResponse response;
             try {
-                log.info("HERE REQUEST");
                 response = requester.requestState(lastFinalizedBlockHash.toString(), start).join();
             } catch (Exception ex) {
                 if (!this.networkService.updateCurrentSelectedPeerWithNextBootnode()) {

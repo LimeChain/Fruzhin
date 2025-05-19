@@ -23,7 +23,7 @@ public class PreVoteStage implements StageState {
         }
 
         round.setOnFinalizeHandler(() -> {
-            log.info(String.format("Round %d is completable", round.getRoundNumber()));
+            log.fine(String.format("Round %d is completable", round.getRoundNumber()));
             if (round.isCompletable()) {
                 end(round);
             }
@@ -50,7 +50,7 @@ public class PreVoteStage implements StageState {
             round.broadcastVoteMessage(bestPreVoteCandidate, SubRound.PRE_VOTE);
             round.switchStage();
         } catch (GrandpaGenericException e) {
-            log.info(String.format("Round %d cannot end prevote stage now: %s", round.getRoundNumber(), e.getMessage()));
+            log.fine(String.format("Round %d cannot end prevote stage now: %s", round.getRoundNumber(), e.getMessage()));
         }
     }
 }

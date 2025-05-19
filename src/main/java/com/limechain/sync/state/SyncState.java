@@ -4,7 +4,6 @@ import com.limechain.chain.lightsyncstate.LightSyncState;
 import com.limechain.constants.GenesisBlockHash;
 import com.limechain.network.PeerMessageCoordinator;
 import com.limechain.network.protocol.warp.dto.BlockHeader;
-import com.limechain.prometheus.PrometheusServer;
 import com.limechain.state.AbstractState;
 import com.limechain.storage.DBConstants;
 import com.limechain.storage.KVRepository;
@@ -26,7 +25,6 @@ public class SyncState extends AbstractState {
     private final GenesisBlockHash genesisBlockHashCalculator;
     private final KVRepository<String, Object> repository;
     private final PeerMessageCoordinator peerMessageCoordinator;
-    private final PrometheusServer prometheusServer;
 
     private Hash256 lastFinalizedBlockHash;
     private Hash256 stateRoot;
@@ -42,8 +40,8 @@ public class SyncState extends AbstractState {
         }
         initialized = true;
 
-        setLastFinalizedBlockNumber(BigInteger.ZERO);
         genesisBlockHash = genesisBlockHashCalculator.getGenesisHash();
+        lastFinalizedBlockNumber = BigInteger.ZERO;
         lastFinalizedBlockHash = new Hash256(genesisBlockHash.getBytes());
         startingBlock = this.lastFinalizedBlockNumber;
         stateRoot = genesisBlockHashCalculator.getGenesisBlockHeader().getStateRoot();
@@ -60,11 +58,8 @@ public class SyncState extends AbstractState {
     }
 
     private void loadFromDatabase() {
-        setLastFinalizedBlockNumber(
-                repository.find(DBConstants.LAST_FINALIZED_BLOCK_NUMBER, BigInteger.ZERO)
-        );
-
         this.genesisBlockHash = genesisBlockHashCalculator.getGenesisHash();
+        this.lastFinalizedBlockNumber = repository.find(DBConstants.LAST_FINALIZED_BLOCK_NUMBER, BigInteger.ZERO);
         this.lastFinalizedBlockHash = repository.find(DBConstants.LAST_FINALIZED_BLOCK_HASH,
                 genesisBlockHashCalculator.getGenesisHash());
         Hash256 stateRootBytes = repository.find(DBConstants.STATE_ROOT, null);
@@ -81,20 +76,13 @@ public class SyncState extends AbstractState {
     }
 
     public void finalizeBlock(BlockHeader header) {
-        setLastFinalizedBlockNumber(header.getBlockNumber());
+        this.lastFinalizedBlockNumber = header.getBlockNumber();
         this.lastFinalizedBlockHash = header.getHash();
         this.stateRoot = header.getStateRoot();
         persistState();
-        log.info(String.format("Finalized block in sync state: %s %d", header.getHash(), header.getBlockNumber()));
     }
 
     public void setLightSyncState(LightSyncState initState) {
         finalizeBlock(initState.getFinalizedBlockHeader());
-    }
-
-    // setter method for updating prometheus metrics
-    private void setLastFinalizedBlockNumber(BigInteger finalizedBlockNumber) {
-        this.lastFinalizedBlockNumber = finalizedBlockNumber;
-        prometheusServer.emitFinalizedBlock(lastFinalizedBlockNumber);
     }
 }

@@ -24,8 +24,7 @@ import java.util.Map;
         "com.limechain.runtime",
         "com.limechain.storage",
         "com.limechain.sync.state",
-        "com.limechain.transaction",
-        "com.limechain.prometheus"
+        "com.limechain.transaction"
 })
 public class RpcApp {
 

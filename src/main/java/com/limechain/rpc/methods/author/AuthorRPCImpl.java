@@ -15,10 +15,7 @@ import com.limechain.utils.scale.ScaleUtils;
 import io.emeraldpay.polkaj.scale.ScaleCodecReader;
 import io.emeraldpay.polkaj.schnorrkel.Schnorrkel;
 import io.emeraldpay.polkaj.schnorrkel.SchnorrkelException;
-import io.libp2p.core.crypto.PrivKey;
-import io.libp2p.core.crypto.PubKey;
 import io.libp2p.crypto.keys.Ed25519PrivateKey;
-import io.libp2p.crypto.keys.Secp256k1Kt;
 import lombok.RequiredArgsConstructor;
 import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters;
 import org.javatuples.Pair;
@@ -30,9 +27,6 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class AuthorRPCImpl {
-
-    private static final String SURI_ENV_SUFFIX = "_SURI";
-    private static final String PUBLIC_KEY_ENV_SUFFIX = "_PUB_KEY";
 
     private final BlockState blockState;
     private final TransactionProcessor transactionProcessor;
@@ -63,27 +57,6 @@ public class AuthorRPCImpl {
 
         keyStore.put(parsedKeyType, StringUtils.hexToBytes(publicKey), privateKey);
         return publicKey;
-    }
-
-    public void authorInsertKeysFromEnv() {
-
-        List<KeyType> keyTypes = List.of(
-                KeyType.BABE,
-                KeyType.GRANDPA,
-                KeyType.BEEFY
-        );
-
-        for (KeyType keyType : keyTypes) {
-            var name = new String(keyType.getBytes());
-            var nameUppercase = name.toUpperCase();
-
-            var suri = System.getenv(nameUppercase + SURI_ENV_SUFFIX);
-            var pubKey = System.getenv(nameUppercase + PUBLIC_KEY_ENV_SUFFIX);
-
-            if (suri != null && pubKey != null) {
-                authorInsertKey(name, suri, pubKey);
-            }
-        }
     }
 
     public Boolean authorHasKey(String publicKey, String keyType) {
@@ -147,12 +120,6 @@ public class AuthorRPCImpl {
                 generatedPublicKey = sr25519KeyPair.getPublicKey();
                 break;
 
-            case ECDSA:
-                var ecdsaKeyPair = generateEcdsaKeyPair(suri);
-                privateKey = ecdsaKeyPair.getValue0().raw();
-                generatedPublicKey = ecdsaKeyPair.getValue1().raw();
-                break;
-
             default:
                 throw new IllegalArgumentException("Key type not supported");
         }
@@ -186,12 +153,6 @@ public class AuthorRPCImpl {
         } catch (SchnorrkelException e) {
             throw new IllegalStateException(e.getMessage());
         }
-    }
-
-    private Pair<PrivKey, PubKey> generateEcdsaKeyPair(byte[] suri) {
-        PrivKey privKey = Secp256k1Kt.unmarshalSecp256k1PrivateKey(suri);
-        PubKey pubKey = privKey.publicKey();
-        return new Pair<>(privKey, pubKey);
     }
 
     private void validatePublicKey(byte[] generatedPublicKey, byte[] publicKey) {

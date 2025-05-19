@@ -5,9 +5,9 @@ import com.limechain.client.FullNode;
 import com.limechain.client.HostNode;
 import com.limechain.client.LightClient;
 import com.limechain.config.HostConfig;
+import com.limechain.exception.misc.PrometheusServerStartException;
 import com.limechain.network.protocol.blockannounce.NodeRole;
 import com.limechain.prometheus.PrometheusServer;
-import com.limechain.rpc.methods.author.AuthorRPCImpl;
 import com.limechain.rpc.server.AppBean;
 import com.limechain.rpc.server.RpcApp;
 import lombok.extern.java.Log;
@@ -24,15 +24,16 @@ public class Main {
         RpcApp rpcApp = new RpcApp();
         rpcApp.start(args);
 
-        // Load and insert keys into the keystore from env variables
-        AuthorRPCImpl authorRPC = AppBean.getBean(AuthorRPCImpl.class);
-        authorRPC.authorInsertKeysFromEnv();
+        HostConfig hostConfig = AppBean.getBean(HostConfig.class);
 
-        PrometheusServer prometheusServer = AppBean.getBean(PrometheusServer.class);
-        prometheusServer.start();
+        PrometheusServer prometheusServer = new PrometheusServer(hostConfig.getPrometheusPort());
+        try {
+            prometheusServer.start();
+        } catch (IOException e) {
+            throw new PrometheusServerStartException(e);
+        }
 
         // Figure out what client role we want to start
-        HostConfig hostConfig = AppBean.getBean(HostConfig.class);
         final NodeRole nodeRole = hostConfig.getNodeRole();
         HostNode client;
 
@@ -51,6 +52,7 @@ public class Main {
             }
         }
 
+        prometheusServer.emitStartTime();
         // Start the client
         // NOTE: This starts the beans the client would need - mutates the global context
         client.start();

@@ -181,7 +181,7 @@ public class BlockTree {
 
         BlockNode startBlockNode = getNode(startHash);
         if (startBlockNode == null) {
-            throw new BlockNodeNotFoundException("Start node not found"); //TODO: Add break point
+            throw new BlockNodeNotFoundException("Start node not found");
         }
 
         return accumulateHashesInDescendingOrder(endBlockNode, startBlockNode);
@@ -333,7 +333,7 @@ public class BlockTree {
 
         BlockNode parentBlockNode = getNode(parent);
         if (parentBlockNode == null) {
-            throw new BlockNodeNotFoundException("Start node not found: " + parent); //TODO: Add break point
+            throw new BlockNodeNotFoundException("Start node not found: " + parent);
         }
 
         BlockNode childBlockNode = getNode(child);

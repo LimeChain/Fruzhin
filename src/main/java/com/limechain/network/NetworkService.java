@@ -123,12 +123,6 @@ public class NetworkService implements NodeService {
         started = true;
         log.log(Level.INFO, "Started network module!");
 
-        //TODO: Remove later
-        if (chain.equals(Chain.LOCAL)) {
-            log.info("Skipping connecting to other peers");
-            return;
-        }
-
         // Wait for peers
         while (true) {
             if (!kademliaService.getBootNodePeerIds().isEmpty()) {
