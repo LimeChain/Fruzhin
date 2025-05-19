@@ -1,4 +1,4 @@
-Description: BABE block production test
+Description: GRANDPA finalization and round transitions test
 Network: ./0004-single-validator.toml
 Creds: config
 
