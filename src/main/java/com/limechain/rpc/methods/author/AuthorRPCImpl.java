@@ -81,7 +81,6 @@ public class AuthorRPCImpl {
             var pubKey = System.getenv(nameUppercase + PUBLIC_KEY_ENV_SUFFIX);
 
             if (suri != null && pubKey != null) {
-                System.out.println("Inserting " + name + " suri: " + suri + " key: " + pubKey);
                 authorInsertKey(name, suri, pubKey);
             }
         }

@@ -89,7 +89,6 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
     public void populateDataFromRuntime(Runtime runtime) {
         this.beefyGenesis = runtime.getBeefyGenesis().orElse(null);
         this.authoritySet = runtime.getBeefyValidatorSet().orElse(null);
-        System.out.println("Number of beefy authorities: " +  authoritySet.getPublicKeys().size());
     }
 
     @Override
@@ -166,8 +165,6 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
     public void handleChangedBeefyAuthorities(List<byte[]> authorityPublicKeys,
                                                BigInteger authoritySetId,
                                                BigInteger blockNumber) {
-
-        System.out.println("Number of beefy authorities: " +  authorityPublicKeys.size());
 
         Pair<byte[], byte[]> keyPair = keyStore.findKeyPair(
                 authorityPublicKeys,

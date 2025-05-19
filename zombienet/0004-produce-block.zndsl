@@ -1,7 +1,0 @@
-Description: Block production
-Network: ./0004-produce-block.toml
-Creds: config
-
-# metrics
-alice: log line contains "Producing block for slot" within 60 seconds
-alice: log line contains "Finalized block in block state" within 6000 seconds

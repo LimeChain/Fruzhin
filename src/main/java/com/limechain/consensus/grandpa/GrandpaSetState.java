@@ -69,7 +69,6 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
     @Override
     public void populateDataFromRuntime(Runtime runtime) {
         this.authoritySet.setAuthorities(runtime.getGrandpaApiAuthorities());
-        System.out.println("Number of grandpa authorities: " + authoritySet.getAuthorities().size());
         updateAuthorityStatus();
     }
 
@@ -156,8 +155,6 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
         BigInteger setId = (authoritySet != null && authoritySet.getSetId() != null)
                 ? authoritySet.getSetId().add(BigInteger.ONE)
                 : BigInteger.ONE;
-
-        System.out.println("Number of grandpa authorities: " +  authorities.size());
 
         this.authoritySet = new GrandpaAuthoritySet(setId, authorities);
         this.authoritySetChangeHandler = new AuthoritySetChangeHandler();
