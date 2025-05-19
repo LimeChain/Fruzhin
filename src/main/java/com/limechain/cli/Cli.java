@@ -51,6 +51,7 @@ public class Cli {
     private static final String LISTEN_ADDRESS = "listen-addr";
     private static final String BASE_PATH = "base-path";
     public static final String UNSAFE_RPC_EXTERNAL = "unsafe-rpc-external";
+    public static final String VALIDATOR = "validator";
     /**
      * Holds CLI options
      */
@@ -171,6 +172,7 @@ public class Cli {
         Option listenAddress = new Option(null, LISTEN_ADDRESS, true, "");
         Option basePath = new Option(null, BASE_PATH, true, "");
         Option unsafeRpcExternalOption = new Option(null, UNSAFE_RPC_EXTERNAL, false, "");
+        Option validator = new Option(null, VALIDATOR, false, "");
 
 
         networkOption.setRequired(false);
@@ -194,6 +196,7 @@ public class Cli {
         listenAddress.setRequired(false);
         basePath.setRequired(false);
         unsafeRpcExternalOption.setRequired(false);
+        validator.setRequired(false);
 
 
         result.addOption(networkOption);
@@ -217,6 +220,7 @@ public class Cli {
         result.addOption(listenAddress);
         result.addOption(basePath);
         result.addOption(unsafeRpcExternalOption);
+        result.addOption(validator);
 
         return result;
     }
