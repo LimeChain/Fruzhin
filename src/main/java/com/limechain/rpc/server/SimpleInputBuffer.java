@@ -7,7 +7,6 @@ import org.apache.tomcat.util.net.ApplicationBufferHandler;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.util.logging.Level;
 
 @Log
 class SimpleInputBuffer implements InputBuffer {
@@ -29,7 +28,7 @@ class SimpleInputBuffer implements InputBuffer {
         try {
             return messageStream.available();
         } catch (IOException e) {
-            log.log(Level.SEVERE, "Error while checking available bytes", e);
+            log.severe(String.format("Error while checking available bytes %s", e.getMessage()));
         }
         return 0;
     }

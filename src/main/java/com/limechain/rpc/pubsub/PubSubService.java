@@ -14,7 +14,6 @@ import java.util.EnumMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Queue;
-import java.util.logging.Level;
 
 /**
  * A singleton mediator class standing between {@link com.limechain.rpc.pubsub.publisher.Publisher}
@@ -69,7 +68,7 @@ public class PubSubService {
             return subscriberChannel.addSubscriber(session);
         }
 
-        log.log(Level.WARNING, "Didn't subscribe session to topic. Topic doesn't exist: " + topic.getValue());
+        log.warning(String.format("Didn't subscribe session to topic. Topic doesn't exist: %s", topic.getValue()));
         return null;
     }
 
