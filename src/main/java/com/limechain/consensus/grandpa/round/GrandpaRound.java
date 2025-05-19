@@ -231,8 +231,8 @@ public class GrandpaRound {
         if (previous != null) {
             shouldStartNextRound = previous.finalizedBlock != null;
         } else {
-            // at the genesis -> round number is equal to one
-            shouldStartNextRound = roundNumber.equals(BigInteger.ONE);
+            // If this is the genesis round, allow starting the next round
+            shouldStartNextRound = isGenesisRound();
         }
 
         shouldStartNextRound = shouldStartNextRound && isCompletable;
@@ -451,7 +451,7 @@ public class GrandpaRound {
         SyncState syncState = stateManager.getSyncState();
 
         if (stage instanceof CompletedStage) {
-            log.info("attemptToFinalize: round is already complete.");
+            log.fine("attemptToFinalize: round is already complete.");
             return;
         }
 
@@ -470,7 +470,7 @@ public class GrandpaRound {
                 blockState.finalizeBlock(finalizedBlock, createJustification(), authoritySet.getSetId());
                 syncState.finalizeBlock(finalizedBlock);
             } catch (BlockStorageGenericException e) {
-                log.warning("Block cannot be finalized: " + e.getMessage());
+                log.warning(String.format("Block cannot be finalized: %s", e.getMessage()));
                 return;
             }
 
@@ -933,5 +933,11 @@ public class GrandpaRound {
         if (nextRound != null) {
             nextRound.update(true, false, false);
         }
+    }
+
+    private boolean isGenesisRound() {
+        return previous == null &&
+                BigInteger.ZERO.equals(authoritySet.getSetId()) &&
+                BigInteger.ONE.equals(roundNumber);
     }
 }

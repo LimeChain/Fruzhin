@@ -1,6 +1,7 @@
 package com.limechain.rpc.client;
 
 import lombok.extern.java.Log;
+import org.apache.commons.lang3.StringUtils;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 
@@ -50,9 +51,36 @@ public abstract class AbstractRpcClient extends WebSocketClient {
      * @param params method parameters
      */
     public void send(String method, String[] params) {
-        String message =
-                "{\"id\":1,\"jsonrpc\":\"2.0\",\"method\":\"" + method + "\",\"params\":[" + String.join(",", params) +
-                        "]}";
-        super.send(message);
+        String payload = buildRpcRequest(method, params);
+        super.send(payload);
+    }
+
+    private String buildRpcRequest(String method, String[] params) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("{")
+                .append("\"id\":1, ")
+                .append("\"jsonrpc\":\"2.0\", ")
+                .append("\"method\":\"").append(method).append("\", ")
+                .append("\"params\":[");
+
+        for (int i = 0; i < params.length; i++) {
+            builder.append(serializeParam(params[i]));
+            if (i < params.length - 1) {
+                builder.append(", ");
+            }
+        }
+
+        builder.append("]}");
+        return builder.toString();
+    }
+
+    private String serializeParam(String param) {
+        if (param == null) {
+            return "null";
+        }
+        if (StringUtils.isNumeric(param)) {
+            return param;
+        }
+        return "\"" + param + "\"";
     }
 }
