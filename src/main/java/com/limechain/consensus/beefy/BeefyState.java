@@ -166,11 +166,6 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
                                                BigInteger authoritySetId,
                                                BigInteger blockNumber) {
 
-        //TODO: REMOVE LATER
-        authorityPublicKeys = authorityPublicKeys.stream()
-                .filter(a -> Arrays.equals(a, StringUtils.hexToBytes("0x020a1091341fe5664bfa1782d5e04779689068c916b04cb365ec3153755684d9a1")))
-                .toList();
-
         Pair<byte[], byte[]> keyPair = keyStore.findKeyPair(
                 authorityPublicKeys,
                 KeyType.BEEFY
