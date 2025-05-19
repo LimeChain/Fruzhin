@@ -22,7 +22,7 @@ repositories {
 
 dependencies {
     implementation("net.openhft:zero-allocation-hashing:0.27ea0")
-    implementation("org.rocksdb:rocksdbjni:10.0.1")
+    implementation("org.rocksdb:rocksdbjni:10.2.1")
     compileOnly("org.projectlombok:lombok:1.18.38")
     implementation("org.projectlombok:lombok:1.18.38")
     implementation("org.web3j:crypto:4.14.0")
@@ -49,9 +49,9 @@ dependencies {
     implementation("com.github.luben:zstd-jni:1.5.7-3")
 
     // Prometheus
-    implementation("io.prometheus:prometheus-metrics-core:1.3.6")
-    implementation("io.prometheus:prometheus-metrics-instrumentation-jvm:1.3.6")
-    implementation("io.prometheus:prometheus-metrics-exporter-httpserver:1.3.6")
+    implementation("io.prometheus:prometheus-metrics-core:1.3.7")
+    implementation("io.prometheus:prometheus-metrics-instrumentation-jvm:1.3.7")
+    implementation("io.prometheus:prometheus-metrics-exporter-httpserver:1.3.7")
 
     // NOTE:
     //  We implicitly rely on Nabu's transitive dependency on Netty's public interfaces.
