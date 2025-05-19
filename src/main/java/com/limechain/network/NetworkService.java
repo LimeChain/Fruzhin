@@ -135,17 +135,17 @@ public class NetworkService implements NodeService {
             Thread.sleep(10000);
         }
 
-        log.info( "Node successfully connected to a peer! Sync can start!");
+        log.info("Node successfully connected to a peer! Sync can start!");
     }
 
     @Override
     @PreDestroy
     public void stop() {
-        log.info( "Stopping network module...");
+        log.info("Stopping network module...");
         started = false;
         connectionManager.removeAllPeers();
         host.stop();
-        log.info( "Stopped network module!");
+        log.info("Stopped network module!");
     }
 
     public boolean updateCurrentSelectedPeerWithNextBootnode() {

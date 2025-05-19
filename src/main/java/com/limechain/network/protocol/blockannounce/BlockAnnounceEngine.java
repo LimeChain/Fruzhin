@@ -100,13 +100,15 @@ public class BlockAnnounceEngine implements BaseEngine {
     private void handleBlockAnnounce(byte[] msg, PeerId peerId) {
         BlockAnnounceMessage announce = ScaleUtils.Decode.decode(msg, BlockAnnounceMessageScaleReader.getInstance());
         connectionManager.updatePeer(peerId, announce);
-        log.fine(String.format("Received block announce for block #%d from %s with hash: %s parentHash: %s StateRoot: %s",
+
+        log.fine(String.format(
+                "Received block announce for block #%d from %s with hash: %s parentHash: %s stateRoot: %s",
                 announce.getHeader().getBlockNumber(),
                 peerId,
                 announce.getHeader().getHash(),
                 announce.getHeader().getParentHash(),
-                announce.getHeader().getStateRoot())
-        );
+                announce.getHeader().getStateRoot()
+        ));
 
         if (AppBean.getBean(BlockState.class).isInitialized()) {
             // TODO Network improvements: Block requests should be sent to the peer that announced the block itself.

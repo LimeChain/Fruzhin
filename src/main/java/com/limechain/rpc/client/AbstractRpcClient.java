@@ -30,7 +30,7 @@ public abstract class AbstractRpcClient extends WebSocketClient {
 
     @Override
     public void onMessage(String message) {
-        log.fine("received message: " + message);
+        log.fine(String.format("received message: %s", message));
     }
 
     @Override
