@@ -17,7 +17,7 @@ public class PreVoteStage implements StageState {
     public void start(GrandpaRound round) {
 
         if (round.isCompletable()) {
-            log.fine(String.format("Round %d is completable.", round.getRoundNumber()));
+            log.fine(String.format("Round %d is completable", round.getRoundNumber()));
             end(round);
             return;
         }

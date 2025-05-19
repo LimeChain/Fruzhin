@@ -1,5 +1,5 @@
 Description: BABE block production test
-Network: ./0004-babe.toml
+Network: ./0004-single-validator.toml
 Creds: config
 
 # metrics

@@ -14,7 +14,7 @@ public class CompletedStage implements StageState {
 
     @Override
     public void end(GrandpaRound round) {
-        log.info(String.format("Round %d completed.", round.getRoundNumber()));
+        log.info(String.format("Round %d completed", round.getRoundNumber()));
     }
 }
 
