@@ -14,8 +14,6 @@ import io.libp2p.core.PeerId;
 import io.libp2p.core.Stream;
 import lombok.extern.java.Log;
 
-import java.util.logging.Level;
-
 /**
  * Engine for handling transactions on BEEFY notification streams
  */
@@ -36,12 +34,12 @@ public class BeefyNotificationEngine implements BaseEngine {
     public void handleHandshake(byte[] message, PeerId peerId, Stream stream) {
 
         if (connectionManager.isBeefyConnected(peerId)) {
-            log.log(Level.INFO, "Received existing beefy handshake from " + peerId);
+            log.info(String.format("Received existing beefy handshake from %s", peerId));
             stream.close();
         } else {
             connectionManager.addBeefyStream(stream);
             connectionManager.getPeerInfo(peerId).setNodeRole(message[0]);
-            log.log(Level.INFO, "Received beefy handshake from " + peerId);
+            log.info(String.format("Received beefy handshake from %s", peerId));
             writeHandshakeToStream(stream, peerId);
         }
     }
@@ -52,7 +50,7 @@ public class BeefyNotificationEngine implements BaseEngine {
         BeefyMessageType messageType = getBeefyMessageType(message);
 
         if (messageType == null) {
-            log.log(Level.WARNING, String.format("Unknown beefy message type \"%d\" from Peer %s",
+            log.warning(String.format("Unknown beefy message type \"%d\" from Peer %s",
                     message[0], stream.remotePeerId()));
             return;
         }
@@ -73,7 +71,7 @@ public class BeefyNotificationEngine implements BaseEngine {
     @Override
     public void writeHandshakeToStream(Stream stream, PeerId peerId) {
         byte[] handshake = new byte[]{};
-        log.log(Level.INFO, "Sending beefy handshake to " + peerId);
+        log.info(String.format("Sending beefy handshake to %s", peerId));
         stream.writeAndFlush(handshake);
     }
 
@@ -83,12 +81,13 @@ public class BeefyNotificationEngine implements BaseEngine {
      * Since both vote messages and signed commitments are transmitted over the same stream,
      * there's no need for separate logic after the message is encoded.
      * </p>
-     * @param stream the responder stream to write the message to.
+     *
+     * @param stream         the responder stream to write the message to.
      * @param encodedMessage the scale encoded BEEFY message to send (either a vote message or a signed commitment).
      */
     public void writeMessage(Stream stream, byte[] encodedMessage) {
         BeefyMessageType type = BeefyMessageType.getByType(encodedMessage[0]);
-        log.log(Level.FINE, "Sending beefy " + type + " to peer " + stream.remotePeerId());
+        log.fine(String.format("Sending beefy %s to peer %s", type, stream.remotePeerId()));
         stream.writeAndFlush(encodedMessage);
     }
 
@@ -97,12 +96,12 @@ public class BeefyNotificationEngine implements BaseEngine {
         PeerId peerId = stream.remotePeerId();
         if (messageType != BeefyMessageType.HANDSHAKE) {
             stream.close();
-            log.log(Level.WARNING, "Non handshake message on initiator beefy steam from peer " + peerId);
+            log.warning(String.format("Non handshake message on initiator beefy steam from peer %s", peerId));
             return;
         }
 
         connectionManager.addBeefyStream(stream);
-        log.log(Level.INFO, "Received beefy handshake from " + peerId);
+        log.info(String.format("Received beefy handshake from %s", peerId));
     }
 
     private void handleResponderStreamMessage(byte[] message, BeefyMessageType messageType, Stream stream) {
@@ -110,7 +109,7 @@ public class BeefyNotificationEngine implements BaseEngine {
         boolean connectedToPeer = connectionManager.isBeefyConnected(peerId);
 
         if (!connectedToPeer && messageType != BeefyMessageType.HANDSHAKE) {
-            log.log(Level.WARNING, "No handshake for beefy message from peer " + peerId);
+            log.warning(String.format("No handshake for beefy message from peer %s", peerId));
             stream.close();
             return;
         }

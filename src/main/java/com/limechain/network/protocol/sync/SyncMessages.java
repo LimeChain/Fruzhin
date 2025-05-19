@@ -11,7 +11,6 @@ import lombok.extern.java.Log;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.logging.Level;
 
 @Log
 public class SyncMessages extends StrictProtocolBinding<SyncController> {
@@ -27,10 +26,10 @@ public class SyncMessages extends StrictProtocolBinding<SyncController> {
                     .sendBlockRequest(blockRequest.getFields(), blockRequest.getHash(), blockRequest.getNumber(),
                             blockRequest.getDirection(), blockRequest.getMaxBlocks())
                     .get(10, TimeUnit.SECONDS);
-            log.log(Level.FINE, "Received blocks: " + response.getBlocksCount());
+            log.fine(String.format("Received blocks: %d", response.getBlocksCount()));
             return response;
         } catch (ExecutionException | TimeoutException | IllegalStateException e) {
-            log.log(Level.SEVERE, "Error while sending remote block request: ", e);
+            log.severe(String.format("Error while sending remote block request: %s", e.getMessage()));
             throw new ExecutionFailedException(e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();

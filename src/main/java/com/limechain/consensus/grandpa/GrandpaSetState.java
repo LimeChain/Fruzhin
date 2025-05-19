@@ -33,7 +33,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.logging.Level;
 
 /**
  * Represents the state information for the current round and authorities that are needed
@@ -165,7 +164,7 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
 
         setChanges.put(Pair.with(pendingChange.getCanonHash(), pendingChange.getCanonHeight()), authoritySet);
 
-        log.log(Level.INFO, "Successfully transitioned to authority set id: " + authoritySet.getSetId());
+        log.info(String.format("Successfully transitioned to authority set id: %d", authoritySet.getSetId()));
 
         peerMessageCoordinator.sendNeighborMessageToPeers();
     }
@@ -180,8 +179,8 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
             case GRANDPA_SCHEDULED_CHANGE -> addScheduledAuthoritySetChange(consensusMessage, blockHeader);
             case GRANDPA_FORCED_CHANGE -> addForcedAuthoritySetChange(consensusMessage, blockHeader);
             case GRANDPA_ON_DISABLED -> disabledAuthority = consensusMessage.getDisabledAuthority();
-            case GRANDPA_PAUSE -> log.log(Level.SEVERE, "'PAUSE' grandpa message not implemented");
-            case GRANDPA_RESUME -> log.log(Level.SEVERE, "'RESUME' grandpa message not implemented");
+            case GRANDPA_PAUSE -> log.severe("'PAUSE' grandpa message not implemented");
+            case GRANDPA_RESUME -> log.severe("'RESUME' grandpa message not implemented");
         }
 
         log.fine(String.format("Updated grandpa set config: %s", consensusMessage.getFormat().toString()));

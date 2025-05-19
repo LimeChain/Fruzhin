@@ -11,7 +11,6 @@ import io.libp2p.protocol.PingController;
 import lombok.extern.java.Log;
 
 import java.util.concurrent.ExecutionException;
-import java.util.logging.Level;
 
 @Log
 public class Ping extends StrictProtocolBinding<PingController> {
@@ -23,10 +22,10 @@ public class Ping extends StrictProtocolBinding<PingController> {
         try {
             PingController controller = dialPeer(us, peer, addrs);
             Long resp = controller.ping().get();
-            log.log(Level.INFO, "Received response: " + resp.toString());
+            log.info(String.format("Received response: %s", resp.toString()));
             return resp;
         } catch (ExecutionException | IllegalStateException e) {
-            log.log(Level.SEVERE, "Error while sending ping request: ", e);
+            log.severe(String.format("Error while sending ping request: %s", e.getMessage()));
             throw new ExecutionFailedException(e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();

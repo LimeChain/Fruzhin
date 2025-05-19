@@ -11,7 +11,6 @@ import lombok.extern.java.Log;
 
 import java.io.IOException;
 import java.util.Optional;
-import java.util.logging.Level;
 
 /**
  * Service used to read/write chain spec(genesis) info to/from the DB
@@ -52,14 +51,14 @@ public class ChainService {
 
         if (cachedChainSpec.isPresent() && !isLocalChain) {
             this.chainSpec = (ChainSpec) cachedChainSpec.get();
-            log.log(Level.INFO, "✅️Loaded chain spec from DB");
+            log.info( "✅️Loaded chain spec from DB");
         } else {
             try {
                 this.chainSpec = ChainSpec.newFromJSON(hostConfig.getGenesisPath());
-                log.log(Level.INFO, "✅️Loaded chain spec from JSON");
+                log.info("✅️Loaded chain spec from JSON");
 
                 repository.save(DBConstants.GENESIS_KEY, this.chainSpec);
-                log.log(Level.INFO, "Saved chain spec to database");
+                log.info("Saved chain spec to database");
             } catch (IOException e) {
                 throw new ChainServiceInitializationException(e);
             }

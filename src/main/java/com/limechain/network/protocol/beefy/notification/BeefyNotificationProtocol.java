@@ -8,8 +8,6 @@ import io.netty.buffer.ByteBuf;
 import lombok.extern.java.Log;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.logging.Level;
-
 /**
  * Handler for BEEFY notification protocol messages and streams
  */
@@ -53,7 +51,7 @@ public class BeefyNotificationProtocol extends BaseProtocol<BeefyNotificationCon
         @Override
         public void onClosed(Stream stream) {
             connectionManager.closeBeefyStream(stream);
-            log.log(Level.INFO, "Beefy stream closed for peer " + stream.remotePeerId());
+            log.info(String.format("Beefy stream closed for peer %s", stream.remotePeerId()));
             ProtocolMessageHandler.super.onClosed(stream);
         }
 
@@ -61,9 +59,9 @@ public class BeefyNotificationProtocol extends BaseProtocol<BeefyNotificationCon
         public void onException(Throwable cause) {
             connectionManager.closeBeefyStream(stream);
             if (cause != null) {
-                log.log(Level.WARNING, "Beefy Exception: " + cause.getMessage());
+                log.warning(String.format("Beefy Exception: %s", cause.getMessage()));
             } else {
-                log.log(Level.WARNING, "Beefy Exception with unknown cause");
+                log.warning("Beefy Exception with unknown cause");
             }
             ProtocolMessageHandler.super.onException(cause);
         }

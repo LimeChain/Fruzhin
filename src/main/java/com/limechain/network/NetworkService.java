@@ -46,7 +46,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
 
 /**
  * A Network class that handles all peer connections and Kademlia
@@ -118,10 +117,10 @@ public class NetworkService implements NodeService {
     @SneakyThrows
     @Override
     public void start() {
-        log.log(Level.INFO, "Starting network module...");
+        log.info("Starting network module...");
         kademliaService.connectBootNodes(this.bootNodes);
         started = true;
-        log.log(Level.INFO, "Started network module!");
+        log.info("Started network module!");
 
         // Wait for peers
         while (true) {
@@ -132,21 +131,21 @@ public class NetworkService implements NodeService {
                 updateCurrentSelectedPeer();
             }
 
-            log.log(Level.INFO, "Waiting for peer connection...");
+            log.info("Waiting for peer connection...");
             Thread.sleep(10000);
         }
 
-        log.log(Level.INFO, "Node successfully connected to a peer! Sync can start!");
+        log.info( "Node successfully connected to a peer! Sync can start!");
     }
 
     @Override
     @PreDestroy
     public void stop() {
-        log.log(Level.INFO, "Stopping network module...");
+        log.info( "Stopping network module...");
         started = false;
         connectionManager.removeAllPeers();
         host.stop();
-        log.log(Level.INFO, "Stopped network module!");
+        log.info( "Stopped network module!");
     }
 
     public boolean updateCurrentSelectedPeerWithNextBootnode() {
@@ -194,8 +193,8 @@ public class NetworkService implements NodeService {
             return;
         }
 
-        log.log(Level.INFO, String.format("findPeers: connected peers: %s", getPeersCount()));
-        log.log(Level.INFO, "findPeers: searching for peers...");
+        log.info(String.format("findPeers: connected peers: %s", getPeersCount()));
+        log.info("findPeers: searching for peers...");
 
         kademliaService.findNewPeers();
 
@@ -216,20 +215,20 @@ public class NetworkService implements NodeService {
     private void pingPeers() {
         // TODO: This needs to by synchronized with the findPeers method
         if (getPeersCount() == 0) {
-            log.log(Level.INFO, "No peers to ping.");
+            log.info("No peers to ping.");
             return;
         }
 
-        log.log(Level.INFO, "Pinging peers...");
+        log.info("Pinging peers...");
         connectionManager.getPeerIds().forEach(this::ping);
     }
 
     private void ping(PeerId peerId) {
         try {
             Long latency = ping.ping(host, host.getAddressBook(), peerId);
-            log.log(Level.INFO, String.format("Pinged peer: %s, latency %s ms", peerId, latency));
+            log.info(String.format("Pinged peer: %s, latency %s ms", peerId, latency));
         } catch (Exception e) {
-            log.log(Level.FINE, String.format("Failed to ping peer: %s. Removing from active connections", peerId));
+            log.fine(String.format("Failed to ping peer: %s. Removing from active connections", peerId));
             if (this.currentSelectedPeer.equals(peerId)) {
                 updateCurrentSelectedPeer();
             }
@@ -326,7 +325,7 @@ public class NetworkService implements NodeService {
         if (cliArgs.nodeKey() != null && !cliArgs.nodeKey().isBlank()) {
             try {
                 privateKey = Ed25519Utils.loadPrivateKey(StringUtils.hexToBytes(cliArgs.nodeKey()));
-                log.log(Level.INFO, "PeerId loaded from arguments!");
+                log.info("PeerId loaded from arguments!");
                 return privateKey;
             } catch (IllegalArgumentException ex) {
                 log.severe("Provided secret key hex is invalid!");
@@ -336,11 +335,11 @@ public class NetworkService implements NodeService {
         Optional<Object> peerIdKeyBytes = repository.find(DBConstants.PEER_ID);
         if (peerIdKeyBytes.isPresent()) {
             privateKey = Ed25519Utils.loadPrivateKey((byte[]) peerIdKeyBytes.get());
-            log.log(Level.INFO, "PeerId loaded from database!");
+            log.info("PeerId loaded from database!");
         } else {
             privateKey = Ed25519Utils.generateKeyPair();
             repository.save(DBConstants.PEER_ID, privateKey.raw());
-            log.log(Level.INFO, "Generated new peerId!");
+            log.info("Generated new peerId!");
         }
         return privateKey;
     }
