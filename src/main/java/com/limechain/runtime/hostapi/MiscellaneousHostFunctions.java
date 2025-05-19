@@ -19,7 +19,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
-import java.util.logging.Level;
+import java.util.function.Consumer;
 
 import static com.limechain.runtime.hostapi.PartialHostApi.newImportObjectPair;
 
@@ -116,7 +116,7 @@ public class MiscellaneousHostFunctions implements PartialHostApi {
 
             versionOption = scaleEncodedOption(runtimeVersionData);
         } catch (UnsatisfiedLinkError e) {
-            log.log(Level.SEVERE, "Error loading wasm module: " + e.getMessage());
+            log.severe(String.format("Error loading wasm module: %s", e.getMessage()));
             versionOption = scaleEncodedOption(null);
         }
 
@@ -139,18 +139,19 @@ public class MiscellaneousHostFunctions implements PartialHostApi {
         final String messageToPrint = new String(message, StandardCharsets.UTF_8);
         final String targetToPrint = new String(target);
 
-        log.log(internalGetLogLevel(level), String.format("Log message from runtime: target=%s, message=%s",
+        var logger = getLoggerForLevel(level);
+        logger.accept(String.format("Log message from runtime: target=%s, message=%s",
                 targetToPrint,
                 messageToPrint));
     }
 
-    private Level internalGetLogLevel(int i) {
-        return switch (i) {
-            case 0 -> Level.SEVERE;
-            case 1 -> Level.WARNING;
-            case 2 -> Level.INFO;
-            case 3 -> Level.FINE;
-            default -> Level.FINEST;
+    private Consumer<String> getLoggerForLevel(int level) {
+        return switch (level) {
+            case 0 -> log::severe;
+            case 1 -> log::warning;
+            case 2 -> log::info;
+            case 3 -> log::fine;
+            default -> log::finest;
         };
     }
 

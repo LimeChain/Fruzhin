@@ -21,7 +21,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.logging.Level;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -52,12 +51,11 @@ public class DBRepository implements KVRepository<String, Object> {
             Files.createDirectories(baseDir.getParentFile().toPath());
             Files.createDirectories(baseDir.getAbsoluteFile().toPath());
             db = RocksDB.open(options, baseDir.getAbsolutePath());
-            log.log(Level.INFO, "\uD83E\uDEA8RocksDB initialized");
+            log.info("\uD83E\uDEA8RocksDB initialized");
         } catch (IOException | RocksDBException e) {
-            log.log(Level.SEVERE, String.format("Error initializing RocksDB. Exception: '%s', message: '%s'",
+            log.severe(String.format("Error initializing RocksDB. Exception: '%s', message: '%s'",
                     e.getCause(),
-                    e.getMessage()),
-                e);
+                    e.getMessage()));
         }
     }
 
@@ -65,14 +63,13 @@ public class DBRepository implements KVRepository<String, Object> {
         try {
             if (file.exists()) {
                 FileUtils.cleanDirectory(file.getAbsoluteFile());
-                log.log(Level.INFO, "\uD83D\uDDD1️DB cleaned");
+                log.info("\uD83D\uDDD1️DB cleaned");
             }
 
         } catch (IOException e) {
-            log.log(Level.SEVERE, String.format("Error deleting db folder. Exception: '%s', message: '%s'",
+            log.severe(String.format("Error deleting db folder. Exception: '%s', message: '%s'",
                     e.getCause(),
-                    e.getMessage()),
-                e);
+                    e.getMessage()));
             throw new DBException(e);
         }
     }
@@ -95,12 +92,11 @@ public class DBRepository implements KVRepository<String, Object> {
 
     @Override
     public synchronized boolean save(String key, Object value) {
-        log.log(Level.FINE, String.format("saving value '%s' with key '%s'", value, key));
+        log.fine(String.format("saving value '%s' with key '%s'", value, key));
         try {
             db.put(key.getBytes(UTF_8), SerializationUtils.serialize(value));
         } catch (RocksDBException e) {
-            log.log(Level.WARNING,
-                String.format("Error saving entry. Cause: '%s', message: '%s'", e.getCause(), e.getMessage()));
+            log.warning(String.format("Error saving entry. Cause: '%s', message: '%s'", e.getCause(), e.getMessage()));
             return false;
         }
         return true;
@@ -116,10 +112,10 @@ public class DBRepository implements KVRepository<String, Object> {
             }
         } catch (RocksDBException e) {
             log.severe(String.format(
-                "Error retrieving the entry with key: %s, cause: %s, message: %s",
-                key,
-                e.getCause(),
-                e.getMessage())
+                    "Error retrieving the entry with key: %s, cause: %s, message: %s",
+                    key,
+                    e.getCause(),
+                    e.getMessage())
             );
         }
         log.fine(String.format("finding key '%s' returns '%s'", Nibbles.fromBytes(key.getBytes()), value));
@@ -135,18 +131,17 @@ public class DBRepository implements KVRepository<String, Object> {
     @Override
     public synchronized List<byte[]> findKeysByPrefix(String prefixSeek, int limit) {
         return findByPrefix(prefixSeek, (long) limit)
-            .stream()
-            .toList();
+                .stream()
+                .toList();
     }
 
     @Override
     public synchronized boolean delete(String key) {
-        log.log(Level.FINE, String.format("deleting key '%s'", key));
+        log.fine(String.format("deleting key '%s'", key));
         try {
             db.delete(key.getBytes(UTF_8));
         } catch (RocksDBException e) {
-            log.log(Level.SEVERE,
-                String.format("Error deleting entry, cause: '%s', message: '%s'", e.getCause(), e.getMessage()));
+            log.severe(String.format("Error deleting entry, cause: '%s', message: '%s'", e.getCause(), e.getMessage()));
             return false;
         }
         return true;
@@ -154,15 +149,15 @@ public class DBRepository implements KVRepository<String, Object> {
 
     @Override
     public synchronized DeleteByPrefixResult deleteByPrefix(String prefix, Long limit) {
-        log.log(Level.FINE, String.format("deleting %s keys with prefix '%s'", limit == null ? "all" : limit, prefix));
+        log.fine(String.format("deleting %s keys with prefix '%s'", limit == null ? "all" : limit, prefix));
         List<byte[]> keysToDelete = findByPrefix(prefix, limit);
 
         keysToDelete.forEach(key -> {
             try {
                 db.delete(key);
             } catch (RocksDBException e) {
-                log.log(Level.SEVERE, String.format("Error deleting entry, cause: '%s', message: '%s'",
-                    e.getCause(), e.getMessage()));
+                log.severe(String.format("Error deleting entry, cause: '%s', message: '%s'",
+                        e.getCause(), e.getMessage()));
             }
         });
 
