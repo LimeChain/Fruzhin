@@ -46,7 +46,8 @@ public class EcdsaUtils {
         byte[] seed = MnemonicUtils.generateSeed(mnemonic, "");
         Bip32ECKeyPair keyPair = Bip32ECKeyPair.generateKeyPair(seed);
 
-        PrivKey privKey = Secp256k1Kt.unmarshalSecp256k1PrivateKey(keyPair.getPrivateKey().toByteArray());
+        byte[] normalizedPrivateKey = normalizeKeyLength(keyPair.getPrivateKey().toByteArray(), PRIVATE_KEY_LEN);
+        PrivKey privKey = Secp256k1Kt.unmarshalSecp256k1PrivateKey(normalizedPrivateKey);
         PubKey pubKey = privKey.publicKey();
 
         return new Pair<>(privKey, pubKey);
