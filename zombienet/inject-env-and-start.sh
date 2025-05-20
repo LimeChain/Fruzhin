@@ -1,5 +1,6 @@
 #!/bin/zsh
 
+# Alice keys generated with `subkey inspect //Alice --scheme sr25519/ed25519/ecdsa`
 export BABE_PUB_KEY=0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d;
 export BABE_SURI=0xe5be9a5092b81bca64be81d212e7f2f9eba183bb7a90954f7b76361f6edb5c0a
 export GRAN_PUB_KEY=0x88dc3417d5058ec4b4503e0c12ea1a0a89be200fe98922423d4334014fa6b0ee

@@ -47,10 +47,6 @@ public class PrometheusServer {
         this.server.stop();
     }
 
-    private void emitStartTime() {
-        this.startTimeGauge.set(System.currentTimeMillis() / 1000.0);
-    }
-
     public void emitBestBlock(BigInteger bestBlockNumber) {
         long longValue = bestBlockNumber.longValueExact();
         this.bestBlockGauge.set(longValue);
@@ -59,6 +55,10 @@ public class PrometheusServer {
     public void emitFinalizedBlock(BigInteger finalizedBlockNumber) {
         long longValue = finalizedBlockNumber.longValueExact();
         this.finalizedBlockGauge.set(longValue);
+    }
+
+    private void emitStartTime() {
+        this.startTimeGauge.set(System.currentTimeMillis() / 1000.0);
     }
 
     private void registerMetrics() {
