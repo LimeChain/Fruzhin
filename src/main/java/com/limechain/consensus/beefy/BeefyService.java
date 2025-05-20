@@ -480,7 +480,6 @@ public class BeefyService implements FinalizedBlockChangeListener {
 
         BeefySession session = beefyState.getSessions().peekFirst();
         if (!session.isMandatoryBlockFinalized()) {
-            //TODO: check if that isn't spamming
             log.info(String.format("requestMandatoryJustification: Session %s is not mandatory.", session.getMandatoryBlock()));
             beefyState.requestJustification(session.getMandatoryBlock());
         }
