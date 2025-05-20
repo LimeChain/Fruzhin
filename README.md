@@ -52,6 +52,37 @@ java -jar build/libs/Fruzhin-0.1.0.jar -n polkadot --node-mode full --sync-mode 
 - `--node-mode` could be `full` or `light`
 - `--sync-mode` could be `full` or `warp`
 
+### Running as a Validator
+If you're running a Fruzhin node as a validator, you need to inject the required session keys (`babe`, `gran`, `beef`) 
+so the node can actively participate in all consensuses.
+
+There are two main ways to provide these keys:
+1. Use author_insertKey via RPC after the node is started:
+```shell
+curl -X POST http://127.0.0.1:9922 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "author_insertKey",
+    "params": [
+        "gran",
+        "<suri>",
+        "<public-key>"
+    ]
+}'
+```
+2. Use Environment variables (Not Recommended for Production)
+You can set the keys via environment variables before starting the node. This may be convenient for local 
+testing or quick setups.
+```shell
+export BABE_PUB_KEY=<key>
+export BABE_SURI=<suri>
+export GRAN_PUB_KEY=<key>
+export GRAN_SURI=<suri>
+export BEEF_PUB_KEY=<key>
+export BEEF_SURI=<suri>
+```
 
 ## Get docker image
 
