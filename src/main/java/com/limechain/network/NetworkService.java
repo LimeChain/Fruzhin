@@ -168,7 +168,7 @@ public class NetworkService implements NodeService {
         if (connectionManager.getPeerIds().isEmpty()) return;
         this.currentSelectedPeer = connectionManager.getPeerIds().stream()
                 .skip(RANDOM.nextInt(connectionManager.getPeerIds().size())).findAny().orElse(null);
-        log.log(Level.INFO, "Current selected peer: " + this.currentSelectedPeer);
+        log.info(String.format("Current selected peer: %s", this.currentSelectedPeer));
     }
 
     public String getPeerId() {
