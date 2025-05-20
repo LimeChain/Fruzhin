@@ -14,7 +14,7 @@ public class PreCommitStage implements StageState {
     @Override
     public void start(GrandpaRound round) {
 
-        log.info(String.format("Round %d started pre-commit stage", round.getRoundNumber()));
+        log.fine(String.format("Round %d started pre-commit stage", round.getRoundNumber()));
 
         if (round.isCompletable()) {
             end(round);
@@ -22,7 +22,7 @@ public class PreCommitStage implements StageState {
         }
 
         round.setOnFinalizeHandler(() -> {
-            log.info(String.format("Round %d is completable", round.getRoundNumber()));
+            log.fine(String.format("Round %d is completable", round.getRoundNumber()));
             if (round.isCompletable()) {
                 end(round);
             }
@@ -33,7 +33,7 @@ public class PreCommitStage implements StageState {
 
         round.setOnStageTimerHandler(Executors.newScheduledThreadPool(1));
         round.getOnStageTimerHandler().schedule(() -> {
-            log.info(String.format("Round %d timer triggered", round.getRoundNumber()));
+            log.fine(String.format("Round %d timer triggered", round.getRoundNumber()));
             end(round);
         }, timeRemaining, TimeUnit.MILLISECONDS);
     }
@@ -46,14 +46,14 @@ public class PreCommitStage implements StageState {
         try {
 
             Vote grandpaGhost = Vote.fromBlockHeader(round.getGrandpaGhost());
-            log.info(String.format("Round %d ended pre-commit stage", round.getRoundNumber()));
+            log.fine(String.format("Round %d ended pre-commit stage", round.getRoundNumber()));
 
             round.setOnFinalizeHandler(null);
             round.broadcastVoteMessage(grandpaGhost, SubRound.PRE_COMMIT);
             round.switchStage();
 
         } catch (GrandpaGenericException e) {
-            log.info(String.format("Round %d cannot end now: %s", round.getRoundNumber(), e.getMessage()));
+            log.fine(String.format("Round %d cannot end now: %s", round.getRoundNumber(), e.getMessage()));
         }
     }
 }

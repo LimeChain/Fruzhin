@@ -10,7 +10,7 @@ public class FinalizeStage implements StageState {
     @Override
     public void start(GrandpaRound round) {
 
-        log.info(String.format("Round %d entered the Finalize stage", round.getRoundNumber()));
+        log.fine(String.format("Round %d entered the Finalize stage", round.getRoundNumber()));
 
         if (isRoundReadyToBeFinalized(round)) {
             end(round);
@@ -26,10 +26,10 @@ public class FinalizeStage implements StageState {
 
     @Override
     public void end(GrandpaRound round) {
-        log.info(String.format("Round %d met finalization conditions and will be finalized", round.getRoundNumber()));
+        log.fine(String.format("Round %d met finalization conditions and will be finalized", round.getRoundNumber()));
         round.setOnFinalizeHandler(null);
         round.attemptToFinalize();
-        log.info(String.format("Round %d exits Finalize stage", round.getRoundNumber()));
+        log.fine(String.format("Round %d exits Finalize stage", round.getRoundNumber()));
 
         round.complete();
     }

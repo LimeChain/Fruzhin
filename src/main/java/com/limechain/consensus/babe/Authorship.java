@@ -98,7 +98,7 @@ public class Authorship {
             var isBelowThreshold = LittleEndianUtils.fromLittleEndianByteArray(vrfBytes).compareTo(threshold) < 0;
 
             if (isBelowThreshold) {
-                log.info(String.format("Primary slot successfully claimed for slot number: %d", slotNumber));
+                log.fine(String.format("Primary slot successfully claimed for slot number: %d", slotNumber));
 
                 return new BabePreDigest(
                         PreDigestType.BABE_PRIMARY,
@@ -135,7 +135,7 @@ public class Authorship {
             }
 
             if (authorSecondaryVrfSlot) {
-                log.info(String.format("Secondary VRF slot successfully claimed for slot number: %d", slotNumber));
+                log.fine(String.format("Secondary VRF slot successfully claimed for slot number: %d", slotNumber));
 
                 return buildSecondaryVrfPreDigest(
                         randomness,
@@ -145,7 +145,7 @@ public class Authorship {
                         authorityIndex
                 );
             } else {
-                log.info(String.format("Secondary Plain slot successfully claimed for slot number: %d", slotNumber));
+                log.fine(String.format("Secondary Plain slot successfully claimed for slot number: %d", slotNumber));
 
                 return new BabePreDigest(
                         PreDigestType.BABE_SECONDARY_PLAIN,

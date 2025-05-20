@@ -451,7 +451,7 @@ public class GrandpaRound {
         SyncState syncState = stateManager.getSyncState();
 
         if (stage instanceof CompletedStage) {
-            log.info("attemptToFinalize: round is already complete.");
+            log.fine("attemptToFinalize: round is already complete.");
             return;
         }
 
