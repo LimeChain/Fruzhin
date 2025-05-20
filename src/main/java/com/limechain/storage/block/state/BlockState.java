@@ -188,13 +188,13 @@ public class BlockState extends AbstractState {
      * @return the block hash as byte array
      */
     private Hash256 getHashByNumberFromDb(BigInteger blockNum) {
-        byte[] hash = (byte[]) db.find(BlockStateHelper.headerHashKey(blockNum)).orElse(null);
+        Hash256 hash = (Hash256) db.find(BlockStateHelper.headerHashKey(blockNum)).orElse(null);
 
         if (hash == null) {
             throw new BlockNotFoundException("Block " + blockNum + " not found");
         }
 
-        return new Hash256(hash);
+        return hash;
     }
 
     /**
@@ -776,6 +776,7 @@ public class BlockState extends AbstractState {
         finalizeBlock(header, setId, justification == null
                 ? BigInteger.ZERO
                 : justification.getRoundNumber());
+        log.info(String.format("Finalized block in block state: %s %d", header.getHash(), header.getBlockNumber()));
     }
 
     /**

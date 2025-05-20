@@ -418,16 +418,6 @@ public class GrandpaRound {
         return Optional.ofNullable(finalizeEstimate).orElse(lastFinalizedBlock);
     }
 
-    public BlockHeader getGrandpaGhost() {
-        if (grandpaGhost == null) throw new GrandpaGenericException("Grandpa GHOST has not been set.");
-        return grandpaGhost;
-    }
-
-    public BlockHeader getFinalizeEstimate() {
-        if (finalizeEstimate == null) throw new GrandpaGenericException("Finalize estimate has not been set.");
-        return finalizeEstimate;
-    }
-
     public BlockHeader getFinalizedBlock() {
         if (finalizedBlock == null) throw new GrandpaGenericException("Finalized block has not been set.");
         return finalizedBlock;
