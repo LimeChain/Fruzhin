@@ -72,7 +72,7 @@ public class JustificationVerifier {
             return false;
         }
 
-        log.info("All signatures were verified successfully");
+        log.fine("All signatures were verified successfully");
 
         return true;
     }
