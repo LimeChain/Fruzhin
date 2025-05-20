@@ -9,7 +9,6 @@ import org.springframework.beans.factory.annotation.Value;
 
 import java.math.BigInteger;
 import java.nio.file.FileSystems;
-import java.util.logging.Level;
 
 /**
  * Configuration class used to hold and information used by the system rpc methods
@@ -47,15 +46,15 @@ public class SystemInfo {
         String floppyEmoji = new String(Character.toChars(0x1F4BE));
         String absoluteDbPath = FileSystems.getDefault().getPath(dbPath).normalize().toAbsolutePath().toString();
 
-        log.log(Level.INFO, lemonEmoji + "LimeChain Fruzhin");
-        log.log(Level.INFO, pinEmoji + "Version: " + hostVersion);
-        log.log(Level.INFO, clipboardEmoji + "Chain specification: " + chain.getValue());
-        log.log(Level.INFO, labelEmoji + "Host name: " + hostName);
-        log.log(Level.INFO, authEmoji + "Role: " + role);
-        log.log(Level.INFO, floppyEmoji + "Database: RocksDb at " + absoluteDbPath);
-        log.log(Level.INFO, "Local node identity is: " + hostIdentity);
-        log.log(Level.INFO, "Operating System: " + System.getProperty("os.name"));
-        log.log(Level.INFO, "CPU architecture: " + System.getProperty("os.arch"));
-        log.log(Level.INFO, "Highest known block at #" + highestBlock);
+        log.info(String.format("%s LimeChain Fruzhin", lemonEmoji));
+        log.info(String.format("%s Version: %s", pinEmoji, hostVersion));
+        log.info(String.format("%s Chain specification: %s", clipboardEmoji, chain.getValue()));
+        log.info(String.format("%s Host name: %s", labelEmoji, hostName));
+        log.info(String.format("%s Role: %s", authEmoji, role));
+        log.info(String.format("%s Database: RocksDb at %s", floppyEmoji, absoluteDbPath));
+        log.info(String.format("Local node identity is: %s", hostIdentity));
+        log.info(String.format("Operating System: %s", System.getProperty("os.name")));
+        log.info(String.format("CPU architecture: %s", System.getProperty("os.arch")));
+        log.info(String.format("Highest known block at #%d", highestBlock));
     }
 }

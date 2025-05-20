@@ -27,7 +27,6 @@ import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.logging.Level;
 
 @Log
 @Getter
@@ -86,7 +85,7 @@ public class WarpSyncMachine {
         final Hash256 initStateHash = syncState.getLastFinalizedBlockHash();
 
         // Always start with requesting fragments
-        log.log(Level.INFO, "Requesting fragments...");
+        log.info("Requesting fragments...");
         this.warpSyncAction = new RequestFragmentsAction(initStateHash);
 
         executor.submit(() -> {

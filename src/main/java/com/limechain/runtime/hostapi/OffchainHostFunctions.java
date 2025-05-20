@@ -39,7 +39,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
 
 import static com.limechain.runtime.hostapi.PartialHostApi.newImportObjectPair;
 
@@ -73,89 +72,89 @@ public class OffchainHostFunctions implements PartialHostApi {
     @Override
     public Map<Endpoint, ImportObject.FuncImport> getFunctionImports() {
         return Map.ofEntries(
-            newImportObjectPair(Endpoint.ext_offchain_is_validator_version_1, argv -> {
-                return extOffchainIsValidator();
-            }),
-            newImportObjectPair(Endpoint.ext_offchain_submit_transaction_version_1, argv -> {
-                return extOffchainSubmitTransaction(new RuntimePointerSize(argv.get(0))).pointerSize();
-            }),
-            newImportObjectPair(Endpoint.ext_offchain_network_state_version_1, argv -> {
-                return extOffchainNetworkState().pointerSize();
-            }),
-            newImportObjectPair(Endpoint.ext_offchain_timestamp_version_1, argv -> {
-                return extOffchainTimestamp();
-            }),
-            newImportObjectPair(Endpoint.ext_offchain_sleep_until_version_1, argv -> {
-                extOffchainSleepUntil(argv.get(0).longValue());
-            }),
-            newImportObjectPair(Endpoint.ext_offchain_random_seed_version_1, argv -> {
-                return extOffchainRandomSeed();
-            }),
-            newImportObjectPair(Endpoint.ext_offchain_local_storage_set_version_1, argv -> {
-                extOffchainLocalStorageSet(
-                    argv.get(0).intValue(),
-                    new RuntimePointerSize(argv.get(1)),
-                    new RuntimePointerSize(argv.get(2))
-                );
-            }),
-            newImportObjectPair(Endpoint.ext_offchain_local_storage_clear_version_1, argv -> {
-                extOffchainLocalStorageClear(argv.get(0).intValue(), new RuntimePointerSize(argv.get(1)));
-            }),
-            newImportObjectPair(Endpoint.ext_offchain_local_storage_compare_and_set_version_1, argv -> {
-                return extOffchainLocalStorageCompareAndSet(
-                    argv.get(0).intValue(),
-                    new RuntimePointerSize(argv.get(1)),
-                    new RuntimePointerSize(argv.get(2)),
-                    new RuntimePointerSize(argv.get(3))
-                );
-            }),
-            newImportObjectPair(Endpoint.ext_offchain_local_storage_get_version_1, argv -> {
-                return extOffchainLocalStorageGet(argv.get(0).intValue(), new RuntimePointerSize(argv.get(1)))
-                    .pointerSize();
-            }),
-            newImportObjectPair(Endpoint.ext_offchain_http_request_start_version_1, argv -> {
-                return extOffchainHttpRequestStart(
-                    new RuntimePointerSize(argv.get(0)),
-                    new RuntimePointerSize(argv.get(1)),
-                    new byte[0]
-                ).pointerSize();
-            }),
-            newImportObjectPair(Endpoint.ext_offchain_http_request_add_header_version_1, argv -> {
-                return extOffchainHttpRequestAddHeader(
-                    argv.get(0).intValue(),
-                    new RuntimePointerSize(argv.get(1)),
-                    new RuntimePointerSize(argv.get(2))
-                ).pointerSize();
-            }),
-            newImportObjectPair(Endpoint.ext_offchain_http_request_write_body_version_1, argv -> {
-                return extOffchainHttpRequestWriteBody(
-                    argv.get(0).intValue(),
-                    new RuntimePointerSize(argv.get(1)),
-                    new RuntimePointerSize(argv.get(2))
-                ).pointerSize();
-            }),
-            newImportObjectPair(Endpoint.ext_offchain_http_response_wait_version_1, argv -> {
-                return extOffchainHttpResponseWaitVersion1(
-                    new RuntimePointerSize(argv.get(1)),
-                    new RuntimePointerSize(argv.get(2))
-                ).pointerSize();
-            }),
-            newImportObjectPair(Endpoint.ext_offchain_http_response_headers_version_1, argv -> {
-                return extOffchainHttpResponseHeadersVersion1(argv.get(0).intValue()).pointerSize();
-            }),
-            newImportObjectPair(Endpoint.ext_offchain_http_response_read_body_version_1, argv -> {
-                return extOffchainHttpResponseReadBodyVersion1(
-                    argv.get(0).intValue(),
-                    new RuntimePointerSize(argv.get(1)),
-                    new RuntimePointerSize(argv.get(2))
-                ).pointerSize();
-            }),
-            newImportObjectPair(Endpoint.ext_offchain_index_set_version_1, argv -> {
-                offchainIndexSet(new RuntimePointerSize(argv.get(0)), new RuntimePointerSize(argv.get(1)));
-            }),
-            newImportObjectPair(Endpoint.ext_offchain_index_clear_version_1, argv -> {
-                offchainIndexClear(new RuntimePointerSize(argv.get(0)));
-            })
+                newImportObjectPair(Endpoint.ext_offchain_is_validator_version_1, argv -> {
+                    return extOffchainIsValidator();
+                }),
+                newImportObjectPair(Endpoint.ext_offchain_submit_transaction_version_1, argv -> {
+                    return extOffchainSubmitTransaction(new RuntimePointerSize(argv.get(0))).pointerSize();
+                }),
+                newImportObjectPair(Endpoint.ext_offchain_network_state_version_1, argv -> {
+                    return extOffchainNetworkState().pointerSize();
+                }),
+                newImportObjectPair(Endpoint.ext_offchain_timestamp_version_1, argv -> {
+                    return extOffchainTimestamp();
+                }),
+                newImportObjectPair(Endpoint.ext_offchain_sleep_until_version_1, argv -> {
+                    extOffchainSleepUntil(argv.get(0).longValue());
+                }),
+                newImportObjectPair(Endpoint.ext_offchain_random_seed_version_1, argv -> {
+                    return extOffchainRandomSeed();
+                }),
+                newImportObjectPair(Endpoint.ext_offchain_local_storage_set_version_1, argv -> {
+                    extOffchainLocalStorageSet(
+                            argv.get(0).intValue(),
+                            new RuntimePointerSize(argv.get(1)),
+                            new RuntimePointerSize(argv.get(2))
+                    );
+                }),
+                newImportObjectPair(Endpoint.ext_offchain_local_storage_clear_version_1, argv -> {
+                    extOffchainLocalStorageClear(argv.get(0).intValue(), new RuntimePointerSize(argv.get(1)));
+                }),
+                newImportObjectPair(Endpoint.ext_offchain_local_storage_compare_and_set_version_1, argv -> {
+                    return extOffchainLocalStorageCompareAndSet(
+                            argv.get(0).intValue(),
+                            new RuntimePointerSize(argv.get(1)),
+                            new RuntimePointerSize(argv.get(2)),
+                            new RuntimePointerSize(argv.get(3))
+                    );
+                }),
+                newImportObjectPair(Endpoint.ext_offchain_local_storage_get_version_1, argv -> {
+                    return extOffchainLocalStorageGet(argv.get(0).intValue(), new RuntimePointerSize(argv.get(1)))
+                            .pointerSize();
+                }),
+                newImportObjectPair(Endpoint.ext_offchain_http_request_start_version_1, argv -> {
+                    return extOffchainHttpRequestStart(
+                            new RuntimePointerSize(argv.get(0)),
+                            new RuntimePointerSize(argv.get(1)),
+                            new byte[0]
+                    ).pointerSize();
+                }),
+                newImportObjectPair(Endpoint.ext_offchain_http_request_add_header_version_1, argv -> {
+                    return extOffchainHttpRequestAddHeader(
+                            argv.get(0).intValue(),
+                            new RuntimePointerSize(argv.get(1)),
+                            new RuntimePointerSize(argv.get(2))
+                    ).pointerSize();
+                }),
+                newImportObjectPair(Endpoint.ext_offchain_http_request_write_body_version_1, argv -> {
+                    return extOffchainHttpRequestWriteBody(
+                            argv.get(0).intValue(),
+                            new RuntimePointerSize(argv.get(1)),
+                            new RuntimePointerSize(argv.get(2))
+                    ).pointerSize();
+                }),
+                newImportObjectPair(Endpoint.ext_offchain_http_response_wait_version_1, argv -> {
+                    return extOffchainHttpResponseWaitVersion1(
+                            new RuntimePointerSize(argv.get(1)),
+                            new RuntimePointerSize(argv.get(2))
+                    ).pointerSize();
+                }),
+                newImportObjectPair(Endpoint.ext_offchain_http_response_headers_version_1, argv -> {
+                    return extOffchainHttpResponseHeadersVersion1(argv.get(0).intValue()).pointerSize();
+                }),
+                newImportObjectPair(Endpoint.ext_offchain_http_response_read_body_version_1, argv -> {
+                    return extOffchainHttpResponseReadBodyVersion1(
+                            argv.get(0).intValue(),
+                            new RuntimePointerSize(argv.get(1)),
+                            new RuntimePointerSize(argv.get(2))
+                    ).pointerSize();
+                }),
+                newImportObjectPair(Endpoint.ext_offchain_index_set_version_1, argv -> {
+                    offchainIndexSet(new RuntimePointerSize(argv.get(0)), new RuntimePointerSize(argv.get(1)));
+                }),
+                newImportObjectPair(Endpoint.ext_offchain_index_clear_version_1, argv -> {
+                    offchainIndexClear(new RuntimePointerSize(argv.get(0)));
+                })
         );
     }
 
@@ -214,8 +213,9 @@ public class OffchainHostFunctions implements PartialHostApi {
                     .writeResult(writer, ScaleCodecWriter::writeByteArray, null, result);
             return buf.toByteArray();
         } catch (IOException e) {
-            log.log(Level.WARNING, "Could not encode network state.");
-            log.log(Level.WARNING, e.getMessage(), e.getStackTrace());
+            log.warning(String.format("Could not encode network state. %s %s",
+                    e.getMessage(),
+                    Arrays.toString(e.getStackTrace())));
             return scaleEncodedEmptyResult(false);
         }
     }
@@ -278,7 +278,7 @@ public class OffchainHostFunctions implements PartialHostApi {
         String uri = new ScaleCodecReader(sharedMemory.readData(uriPointer)).readString();
 
         if (!method.equals("GET") && !method.equals("POST")) {
-            log.log(Level.WARNING, "Method not allowed: " + method);
+            log.warning(String.format("Method not allowed: %s", method));
             return sharedMemory.writeData(scaleEncodedEmptyResult(false));
         }
 
@@ -292,7 +292,7 @@ public class OffchainHostFunctions implements PartialHostApi {
 
             return sharedMemory.writeData(buf.toByteArray());
         } catch (IOException e) {
-            log.log(Level.WARNING, e.getMessage(), e.getStackTrace());
+            log.warning(String.format("%s %s", e.getMessage(), Arrays.toString(e.getStackTrace())));
             return sharedMemory.writeData(scaleEncodedEmptyResult(false));
         }
     }
@@ -317,7 +317,7 @@ public class OffchainHostFunctions implements PartialHostApi {
             requests.addHeader(requestId, name, value);
             return sharedMemory.writeData(scaleEncodedEmptyResult(true));
         } catch (InvalidRequestId e) {
-            log.log(Level.WARNING, "Invalid request id: " + requestId);
+            log.warning(String.format("Invalid request id: %d", requestId));
             return sharedMemory.writeData(scaleEncodedEmptyResult(false));
         }
     }
@@ -344,10 +344,10 @@ public class OffchainHostFunctions implements PartialHostApi {
         } catch (InvalidRequestId e) {
             return sharedMemory.writeData(HttpErrorType.INVALID_ID.scaleEncodedResult());
         } catch (SocketTimeoutException e) {
-            log.log(Level.WARNING, e.getMessage(), e.getStackTrace());
+            log.warning(String.format("%s %s", e.getMessage(), Arrays.toString(e.getStackTrace())));
             return sharedMemory.writeData(HttpErrorType.DEADLINE_REACHED.scaleEncodedResult());
         } catch (IOException e) {
-            log.log(Level.WARNING, e.getMessage(), e.getStackTrace());
+            log.warning(String.format("%s %s", e.getMessage(), Arrays.toString(e.getStackTrace())));
             return sharedMemory.writeData(HttpErrorType.IO_ERROR.scaleEncodedResult());
         }
     }
@@ -493,10 +493,10 @@ public class OffchainHostFunctions implements PartialHostApi {
      * Sets a value in the local storage. This storage is not part of the consensus,
      * it’s only accessible by the offchain worker tasks running on the same machine and is persisted between runs.
      *
-     * @param kind          an i32 integer indicating the storage kind. A value equal to 1 is used for
-     *                      a persistent storage and a value equal to 2 for local storage
-     * @param keyPointer    a pointer-size to the key.
-     * @param valuePointer  a pointer-size to the value.
+     * @param kind         an i32 integer indicating the storage kind. A value equal to 1 is used for
+     *                     a persistent storage and a value equal to 2 for local storage
+     * @param keyPointer   a pointer-size to the key.
+     * @param valuePointer a pointer-size to the value.
      */
     public void extOffchainLocalStorageSet(int kind, RuntimePointerSize keyPointer, RuntimePointerSize valuePointer) {
         BasicStorage store = storageByKind(kind);
@@ -509,9 +509,9 @@ public class OffchainHostFunctions implements PartialHostApi {
     /**
      * Remove a value from the local storage.
      *
-     * @param kind          an i32 integer indicating the storage kind. A value equal to 1 is used for
-     *                      a persistent storage and a value equal to 2 for local storage
-     * @param keyPointer    a pointer-size to the key.
+     * @param kind       an i32 integer indicating the storage kind. A value equal to 1 is used for
+     *                   a persistent storage and a value equal to 2 for local storage
+     * @param keyPointer a pointer-size to the key.
      */
     public void extOffchainLocalStorageClear(int kind, RuntimePointerSize keyPointer) {
         BasicStorage store = storageByKind(kind);
@@ -523,11 +523,11 @@ public class OffchainHostFunctions implements PartialHostApi {
     /**
      * Sets a new value in the local storage if the condition matches the current value.
      *
-     * @param kind              an i32 integer indicating the storage kind. A value equal to 1 is used for
-     *                          a persistent storage and a value equal to 2 for local storage
-     * @param keyPointer        a pointer-size to the key.
-     * @param oldValuePointer   a pointer-size to the SCALE encoded Option value containing the old key.
-     * @param newValuePointer   a pointer-size to the new value.
+     * @param kind            an i32 integer indicating the storage kind. A value equal to 1 is used for
+     *                        a persistent storage and a value equal to 2 for local storage
+     * @param keyPointer      a pointer-size to the key.
+     * @param oldValuePointer a pointer-size to the SCALE encoded Option value containing the old key.
+     * @param newValuePointer a pointer-size to the new value.
      * @return an i32 integer equal to 1 if the new value has been set or a value equal to 0 if otherwise.
      */
     public int extOffchainLocalStorageCompareAndSet(int kind,
@@ -551,9 +551,9 @@ public class OffchainHostFunctions implements PartialHostApi {
     /**
      * Gets a value from the local storage.
      *
-     * @param kind              an i32 integer indicating the storage kind. A value equal to 1 is used for
-     *                          a persistent storage and a value equal to 2 for local storage
-     * @param keyPointer        a pointer-size to the key.
+     * @param kind       an i32 integer indicating the storage kind. A value equal to 1 is used for
+     *                   a persistent storage and a value equal to 2 for local storage
+     * @param keyPointer a pointer-size to the key.
      * @return a pointer-size to the SCALE encoded Option value containing the value or the corresponding key.
      */
     public RuntimePointerSize extOffchainLocalStorageGet(int kind, RuntimePointerSize keyPointer) {
@@ -573,8 +573,8 @@ public class OffchainHostFunctions implements PartialHostApi {
     }
 
     private byte[] scaleEncodedOption(byte[] value) {
-        try(ByteArrayOutputStream buf = new ByteArrayOutputStream();
-            ScaleCodecWriter writer = new ScaleCodecWriter(buf)
+        try (ByteArrayOutputStream buf = new ByteArrayOutputStream();
+             ScaleCodecWriter writer = new ScaleCodecWriter(buf)
         ) {
             writer.writeOptional(ScaleCodecWriter::writeByteArray, value);
             return buf.toByteArray();
@@ -586,8 +586,8 @@ public class OffchainHostFunctions implements PartialHostApi {
     /**
      * Write a key-value pair to the Offchain DB in a buffered fashion.
      *
-     * @param keyPointer    a pointer-size containing the key.
-     * @param valuePointer  a pointer-size containing the value.
+     * @param keyPointer   a pointer-size containing the key.
+     * @param valuePointer a pointer-size containing the value.
      */
     public void offchainIndexSet(RuntimePointerSize keyPointer, RuntimePointerSize valuePointer) {
         byte[] key = sharedMemory.readData(keyPointer);

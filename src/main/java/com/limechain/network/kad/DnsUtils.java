@@ -6,7 +6,6 @@ import lombok.extern.java.Log;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.logging.Level;
 
 @Log
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -31,8 +30,8 @@ public class DnsUtils {
                 InetAddress address = InetAddress.getByName(domain);
                 newBootNode = "/ip4/" + address.getHostAddress() + postfix;
             } catch (UnknownHostException e) {
-                log.log(Level.WARNING, "Unknown domain for bootstrap node address: " + domain);
-                log.log(Level.FINE, "Domain exception: ", e);
+                log.warning(String.format("Unknown domain for bootstrap node address: %s", domain));
+                log.fine(String.format("Domain exception: %s", e.getMessage()));
             }
         }
         return newBootNode;
