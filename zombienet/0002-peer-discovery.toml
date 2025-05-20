@@ -3,7 +3,7 @@ timeout = 65
 
 [relaychain]
 chain = "westend-local"
-default_command = "java -jar build/libs/fruzhin-0.1.0.jar"
+default_command = "zombienet/start-node.sh"
 default_args = ["-n westend --node-mode authoring --sync-mode warp -dbc"]
 chain_spec_path = "genesis/westend-raw.json"
 

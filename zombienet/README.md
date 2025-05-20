@@ -12,5 +12,5 @@ nix run github:paritytech/zombienet -- test -p native ./zombienet/0001-light-cli
 ```
 
 Although the `chain_spec_path` is specified in the TOML file, the actual chain spec used by the node is determined by 
-the application's configuration in `application.properties`. Additionally, the `start-node.sh` script injects the BABE,
-GRANDPA, and BEEFY keys for the Alice as environment variables before starting the node.
+the value of `-Dgenesis.path.local` argument in the `start-node.sh`. Additionally, the `inject-env-and-start.sh` script
+injects the BABE, GRANDPA, and BEEFY keys for the Alice as environment variables before starting the node.

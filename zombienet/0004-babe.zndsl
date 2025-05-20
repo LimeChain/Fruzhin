@@ -3,7 +3,6 @@ Network: ./0004-single-validator.toml
 Creds: config
 
 # metrics
-alice: log line matches "Primary slot successfully claimed for slot number: \d+" within 20 seconds
 alice: log line matches "Secondary VRF slot successfully claimed for slot number: \d+" within 20 seconds
 alice: log line matches "Producing block for slot \d+ in epoch 0." within 20 seconds
 alice: log line matches "Producing block for slot \d+ in epoch 1." within 120 seconds

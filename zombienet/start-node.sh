@@ -1,10 +1,6 @@
 #!/bin/zsh
 
-export BABE_PUB_KEY=0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d;
-export BABE_SURI=0xe5be9a5092b81bca64be81d212e7f2f9eba183bb7a90954f7b76361f6edb5c0a
-export GRAN_PUB_KEY=0x88dc3417d5058ec4b4503e0c12ea1a0a89be200fe98922423d4334014fa6b0ee
-export GRAN_SURI=0xabf8e5bdbe30c65656c0a3cbd181ff8a56294a69dfedd27982aace4a76909115
-export BEEF_PUB_KEY=0x020a1091341fe5664bfa1782d5e04779689068c916b04cb365ec3153755684d9a1
-export BEEF_SURI=0xcb6df9de1efca7a3998a8ead4e02159d5fa99c3e0d4fd6432667390bb4726854
-
-exec java -jar build/libs/fruzhin-0.1.0.jar "$@"
+exec java \
+  -Dlogging.level.root=DEBUG \
+  -Dgenesis.path.local=genesis/zombienet/westend-local-single-auth.json \
+  -jar build/libs/fruzhin-0.1.0.jar "$@"

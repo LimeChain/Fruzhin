@@ -123,13 +123,13 @@ public class BeefyNotificationEngine implements BaseEngine {
 
     private void handleVoteMessage(byte[] message, PeerId peerId) {
         BeefyVoteMessage voteMessage = ScaleUtils.Decode.decode(message, BeefyVoteMessageScaleReader.getInstance());
-        log.fine("Beefy: Received vote message from Peer " + peerId + "\n" + voteMessage);
+        log.fine(String.format("Beefy: Received vote message from Peer %s %n %s", peerId, voteMessage));
         beefyMessageHandler.handleVoteMessage(voteMessage);
     }
 
     private void handleJustificationMessage(byte[] message, PeerId peerId) {
         SignedCommitment signedCommitment = ScaleUtils.Decode.decode(message, SignedCommitmentScaleReader.getInstance());
-        log.fine("Beefy: Received justification from Peer " + peerId + "\n" + signedCommitment);
+        log.fine(String.format("Beefy: Received justification from Peer %s %n %s", peerId, signedCommitment));
         beefyMessageHandler.handleSignedCommitment(signedCommitment);
     }
 
