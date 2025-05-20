@@ -11,7 +11,6 @@ import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Value;
 
 import java.util.Optional;
-import java.util.logging.Level;
 
 import static com.limechain.chain.Chain.WESTEND;
 import static com.limechain.chain.Chain.fromString;
@@ -82,7 +81,7 @@ public class HostConfig {
 
         this.prometheusPort = cliArguments.prometheusPort();
 
-        log.log(Level.INFO, String.format("✅️Loaded app config for chain %s%n", chain));
+        log.info(String.format("✅️Loaded app config for chain %s%n", chain));
     }
 
     /**

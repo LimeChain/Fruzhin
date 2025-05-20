@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.util.logging.Level;
 
 @Log
 @Component
@@ -41,7 +40,7 @@ public class PrometheusServer {
         }
 
         this.emitStartTime();
-        log.log(Level.INFO, "Prometheus listening on port: " + this.port);
+        log.info(String.format("Prometheus listening on port: %d", this.port));
     }
 
     public void stop() {

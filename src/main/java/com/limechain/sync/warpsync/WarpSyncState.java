@@ -20,7 +20,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.java.Log;
 
-import java.util.logging.Level;
+import java.util.Arrays;
 
 /**
  * Singleton class, holds and handles the synced state of the Host.
@@ -77,7 +77,7 @@ public class WarpSyncState {
                 throw new RuntimeCodeException("Couldn't retrieve runtime code from trie");
             }
             //TODO Heap pages should be fetched from out storage
-            log.log(Level.INFO, "Runtime and heap pages downloaded");
+            log.info("Runtime and heap pages downloaded");
             return code;
 
         } catch (TrieDecoderException e) {
@@ -129,11 +129,11 @@ public class WarpSyncState {
         try {
             runtime = runtimeBuilder.buildRuntime(runtimeCode);
         } catch (UnsatisfiedLinkError e) {
-            log.log(Level.SEVERE, "Error loading wasm module");
-            log.log(Level.SEVERE, e.getMessage(), e.getStackTrace());
+            log.severe(String.format("Error loading wasm module %s %s",
+                    e.getMessage(), Arrays.toString(e.getStackTrace())));
         } catch (Exception e) {
-            log.log(Level.SEVERE, "Error building runtime");
-            log.log(Level.SEVERE, e.getMessage(), e.getStackTrace());
+            log.severe(String.format("Error building runtime %s %s",
+                    e.getMessage(), Arrays.toString(e.getStackTrace())));
         }
     }
 

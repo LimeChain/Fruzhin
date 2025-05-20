@@ -14,7 +14,6 @@ import lombok.extern.java.Log;
 import sun.misc.Signal;
 
 import java.io.IOException;
-import java.util.logging.Level;
 
 @Log
 public class Main {
@@ -46,7 +45,7 @@ public class Main {
                 return;
             }
             default -> {
-                log.log(Level.SEVERE, "Node role {0} not yet implemented.", nodeRole);
+                log.severe(String.format("Node role %s not yet implemented.", nodeRole));
                 return;
             }
         }
@@ -54,7 +53,7 @@ public class Main {
         // Start the client
         // NOTE: This starts the beans the client would need - mutates the global context
         client.start();
-        log.log(Level.INFO, "\uD83D\uDE80Started {0} client!", nodeRole);
+        log.info(String.format("\uD83D\uDE80Started %s client!", nodeRole));
 
         Signal.handle(new Signal("INT"), signal -> {
             prometheusServer.stop();

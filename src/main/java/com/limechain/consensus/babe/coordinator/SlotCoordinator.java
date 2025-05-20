@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
 
 @Log
 @Component
@@ -68,7 +67,7 @@ public class SlotCoordinator {
     private void triggerEvent(BigInteger currentSlotNumber, BigInteger currentEpochIndex) {
         boolean isLastSlot = isLastSlotFromCurrentEpoch(currentSlotNumber);
 
-        log.log(Level.FINE, String.format("Slot Number: %d | Epoch Index: %d | Is Last Slot: %s",
+        log.fine(String.format("Slot Number: %d | Epoch Index: %d | Is Last Slot: %s",
                 currentSlotNumber, currentEpochIndex, isLastSlot));
 
         Slot slot = new Slot(epochState.getSlotStartTime(currentSlotNumber),

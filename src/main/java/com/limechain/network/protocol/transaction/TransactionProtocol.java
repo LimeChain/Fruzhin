@@ -8,8 +8,6 @@ import io.netty.buffer.ByteBuf;
 import lombok.extern.java.Log;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.logging.Level;
-
 /**
  * Handler for Transactions protocol messages and streams.
  */
@@ -53,7 +51,7 @@ public class TransactionProtocol extends BaseProtocol<TransactionController, Tra
         @Override
         public void onClosed(Stream stream) {
             connectionManager.closeTransactionsStream(stream);
-            log.log(Level.INFO, "Transactions stream closed for peer " + stream.remotePeerId());
+            log.info(String.format("Transactions stream closed for peer %s", stream.remotePeerId()));
             ProtocolMessageHandler.super.onClosed(stream);
         }
 
@@ -61,9 +59,9 @@ public class TransactionProtocol extends BaseProtocol<TransactionController, Tra
         public void onException(Throwable cause) {
             connectionManager.closeTransactionsStream(stream);
             if (cause != null) {
-                log.log(Level.WARNING, "Transactions Exception: " + cause.getMessage());
+                log.warning(String.format("Transactions Exception: %s", cause.getMessage()));
             } else {
-                log.log(Level.WARNING, "Transactions Exception with unknown cause");
+                log.warning("Transactions Exception with unknown cause");
             }
             ProtocolMessageHandler.super.onException(cause);
         }

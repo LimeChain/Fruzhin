@@ -8,8 +8,6 @@ import com.limechain.sync.warpsync.WarpSyncState;
 import lombok.AllArgsConstructor;
 import lombok.extern.java.Log;
 
-import java.util.logging.Level;
-
 @Log
 @AllArgsConstructor
 public class RuntimeDownloadAction implements WarpSyncAction {
@@ -25,7 +23,7 @@ public class RuntimeDownloadAction implements WarpSyncAction {
     @Override
     public void next(WarpSyncMachine sync) {
         if (this.error != null) {
-            log.log(Level.SEVERE, "Error occurred during runtime download state: " + this.error.getMessage());
+            log.severe(String.format("Error occurred during runtime download state: %s", this.error.getMessage()));
             sync.setWarpSyncAction(new RequestFragmentsAction(syncState.getLastFinalizedBlockHash()));
             return;
         }
@@ -36,7 +34,7 @@ public class RuntimeDownloadAction implements WarpSyncAction {
     @Override
     public void handle(WarpSyncMachine sync) {
         try {
-            log.log(Level.INFO, "Loading saved runtime...");
+            log.info("Loading saved runtime...");
             warpSyncState.loadSavedRuntimeCode();
         } catch (RuntimeCodeException e) {
             handleDownloadRuntime();
@@ -45,7 +43,7 @@ public class RuntimeDownloadAction implements WarpSyncAction {
 
     private void handleDownloadRuntime() {
         try {
-            log.log(Level.INFO, "Downloading runtime...");
+            log.info("Downloading runtime...");
             warpSyncState.updateRuntimeCode();
         } catch (RuntimeCodeException e) {
             this.error = e;

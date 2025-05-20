@@ -25,7 +25,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.logging.Level;
 
 @Component
 @Log
@@ -54,13 +53,13 @@ public class RpcWsHandler extends TextWebSocketHandler {
     public void handleTextMessage(WebSocketSession session, TextMessage message) throws IOException {
         InputStream messageStream = new ByteArrayInputStream(message.asBytes());
         RpcRequest rpcRequest = mapper.readValue(messageStream, RpcRequest.class);
-        log.log(Level.INFO, "SESSION ID: " + session.getId());
-        log.log(Level.INFO, "METHOD: " + rpcRequest.getMethod());
-        log.log(Level.INFO, "PARAMS: " + String.join(",", rpcRequest.getParams()));
+        log.info(String.format("SESSION ID: %s", session.getId()));
+        log.info(String.format("METHOD: %s", rpcRequest.getMethod()));
+        log.info(String.format("PARAMS: %s", String.join(",", rpcRequest.getParams())));
 
         SubscriptionName method = SubscriptionName.fromString(rpcRequest.getMethod());
         if (method == null) {
-            log.log(Level.INFO, "Handling the WS request using the normal RPC routes");
+            log.info("Handling the WS request using the normal RPC routes");
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             Request request = this.buildHttpLikeRequest(message.asBytes());
             server.handleRequest(request.getInputStream(), outputStream);
@@ -82,63 +81,63 @@ public class RpcWsHandler extends TextWebSocketHandler {
                     handleDefaultUnsubscribe(Topic.CHAIN_FINALIZED_HEAD, rpcRequest, session);
 
             case CHAIN_HEAD_UNSTABLE_FOLLOW -> {
-                log.log(Level.INFO, "Subscribing for follow event");
+                log.info("Subscribing for follow event");
                 pubSubService.addSubscriber(Topic.UNSTABLE_FOLLOW, session);
                 // This is temporary in order to simulate that our node "processes" blocks
                 this.chainHeadRpc.chainUnstableFollow(Boolean.parseBoolean(rpcRequest.getParams()[0]));
             }
             case CHAIN_HEAD_UNSTABLE_UNFOLLOW -> {
-                log.log(Level.INFO, "Unsubscribing from follow event");
+                log.info("Unsubscribing from follow event");
                 this.chainHeadRpc.chainUnstableUnfollow(rpcRequest.getParams()[0]);
                 pubSubService.removeSubscriber(Topic.UNSTABLE_FOLLOW, rpcRequest.getParams()[0]);
             }
             case CHAIN_HEAD_UNSTABLE_UNPIN -> {
-                log.log(Level.INFO, "Unpinning block");
+                log.info("Unpinning block");
                 this.chainHeadRpc.chainUnstableUnpin(rpcRequest.getParams()[0], rpcRequest.getParams()[1]);
             }
             case CHAIN_HEAD_UNSTABLE_STORAGE -> {
-                log.log(Level.INFO, "Querying storage");
+                log.info("Querying storage");
                 this.chainHeadRpc.chainUnstableStorage(rpcRequest.getParams()[0], rpcRequest.getParams()[1],
                         rpcRequest.getParams()[2]);
             }
             case CHAIN_HEAD_UNSTABLE_CALL -> {
-                log.log(Level.INFO, "Executing unstable_call");
+                log.info("Executing unstable_call");
                 this.chainHeadRpc.chainUnstableCall(rpcRequest.getParams()[0], rpcRequest.getParams()[1],
                         rpcRequest.getParams()[2], rpcRequest.getParams()[3]);
             }
             case CHAIN_HEAD_UNSTABLE_STOP_CALL -> {
-                log.log(Level.INFO, "Executing unstable_stopCall");
+                log.info("Executing unstable_stopCall");
                 this.chainHeadRpc.chainUnstableStopCall(rpcRequest.getParams()[0]);
             }
             case TRANSACTION_UNSTABLE_SUBMIT_AND_WATCH -> {
-                log.log(Level.INFO, "Executing submitAndWatch");
+                log.info("Executing submitAndWatch");
                 pubSubService.addSubscriber(Topic.UNSTABLE_TRANSACTION_WATCH, session);
                 this.transactionRpc.transactionUnstableSubmitAndWatch(rpcRequest.getParams()[0]);
             }
             case TRANSACTION_UNSTABLE_UNWATCH -> {
-                log.log(Level.INFO, "Executing unstable_unwatch");
+                log.info("Executing unstable_unwatch");
                 this.transactionRpc.transactionUnstableUnwatch(rpcRequest.getParams()[0]);
                 pubSubService.removeSubscriber(Topic.UNSTABLE_TRANSACTION_WATCH, rpcRequest.getParams()[0]);
             }
             case AUTHOR_SUBMIT_AND_WATCH_EXTRINSIC -> {
-                log.log(Level.INFO, "Executing author_submitAndWatchExtrinsic");
+                log.info("Executing author_submitAndWatchExtrinsic");
                 pubSubService.addSubscriber(Topic.AUTHOR_EXTRINSIC_UPDATE, session);
                 this.authorRpc.authorSubmitAndWatchExtrinsic(rpcRequest.getParams()[0]);
             }
             case AUTHOR_UNWATCH_EXTRINSIC -> handleDefaultUnsubscribe(Topic.AUTHOR_EXTRINSIC_UPDATE, rpcRequest, session);
 
-            default -> log.log(Level.WARNING, "Unknown method: " + rpcRequest.getMethod());
+            default -> log.warning(String.format("Unknown method: %s", rpcRequest.getMethod()));
         }
     }
 
     private void handleDefaultUnsubscribe(Topic topic, RpcRequest rpcRequest, WebSocketSession session) {
-        log.log(Level.INFO, "Unsubscribing for " + topic.getValue());
+        log.info(String.format("Unsubscribing for %s", topic.getValue()));
         boolean remove = pubSubService.removeSubscriber(topic, rpcRequest.getParams()[0]);
         pubSubService.sendResultMessage(session, Boolean.toString(remove));
     }
 
     private void handleDefaultSubscribe(Topic topic, WebSocketSession session) throws IOException {
-        log.log(Level.INFO, "Subscribing for " + topic.getValue());
+        log.info(String.format("Subscribing for %s", topic.getValue()));
         Subscriber subscriber = pubSubService.addSubscriber(topic, session);
         if (subscriber != null) pubSubService.sendResultMessage(session, subscriber.getSubscriptionId());
         else {

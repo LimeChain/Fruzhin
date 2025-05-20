@@ -12,7 +12,6 @@ import java.math.BigInteger;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.logging.Level;
 
 @Log
 public class BeefyJustificationMessages extends StrictProtocolBinding<BeefyJustificationController> {
@@ -28,7 +27,7 @@ public class BeefyJustificationMessages extends StrictProtocolBinding<BeefyJusti
                     .sendJustificationRequest(from)
                     .get(3, TimeUnit.SECONDS);
         } catch (ExecutionException | TimeoutException | IllegalStateException e) {
-            log.log(Level.SEVERE, "Error while sending remote state: ", e);
+            log.severe(String.format("Error while sending remote state: %s", e.getMessage()));
             throw new ExecutionFailedException(e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();

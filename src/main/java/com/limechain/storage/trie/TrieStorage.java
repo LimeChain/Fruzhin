@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.logging.Level;
 
 /**
  * A wrapper around a KVRepository that provides a public interface for trie-related DB queries.
@@ -182,7 +181,7 @@ public class TrieStorage {
 
         if (prefix.equals(rootNode.getPartialKey())) {
             return Optional.of(new StorageNode(rootNode.getPartialKey(),
-                new NodeData(rootNode.getValue(), rootMerkleValue)));
+                    new NodeData(rootNode.getValue(), rootMerkleValue)));
         }
 
         return Optional.ofNullable(searchForNextBranch(rootNode, prefix, rootNode.getPartialKey()));
@@ -280,7 +279,7 @@ public class TrieStorage {
 
         Nibbles fullPath = currentPath.addAll(node.getPartialKey());
         if (node.getValue() != null && fullPath.startsWith(prefix) &&
-            startKey == null || startKeyFound[0] || Objects.equals(startKey, fullPath)) {
+                startKey == null || startKeyFound[0] || Objects.equals(startKey, fullPath)) {
             if (!startKeyFound[0]) {
                 startKeyFound[0] = true;
             } else {
@@ -308,9 +307,9 @@ public class TrieStorage {
      */
     public List<StorageNode> loadChildren(Nibbles parentKey, byte[] parentMerkleValue) {
         List<byte[]> childrenMerkleValues = Optional.ofNullable(parentMerkleValue)
-            .map(this::getTrieNodeFromMerkleValue)
-            .map(TrieNodeData::getChildrenMerkleValues)
-            .orElseGet(Collections::emptyList);
+                .map(this::getTrieNodeFromMerkleValue)
+                .map(TrieNodeData::getChildrenMerkleValues)
+                .orElseGet(Collections::emptyList);
 
         List<StorageNode> childrenNodes = new ArrayList<>(Collections.nCopies(childrenMerkleValues.size(), null));
         for (int i = 0; i < childrenMerkleValues.size(); i++) {
@@ -364,7 +363,7 @@ public class TrieStorage {
                 insertTrieNodeStorage(trieNode);
             }
         } catch (Exception e) {
-            log.log(Level.SEVERE, "Failed to insert trie structure to db storage", e);
+            log.severe(String.format("Failed to insert trie structure to db storage %s", e.getMessage()));
         }
     }
 
@@ -402,12 +401,12 @@ public class TrieStorage {
         List<byte[]> childrenMerkleValues = insertTrieNode.childrenMerkleValues();
 
         return new TrieNodeData(
-            insertTrieNode.isBranch(),
-            insertTrieNode.partialKeyNibbles(),
-            childrenMerkleValues,
-            insertTrieNode.isReferenceValue() ? null : insertTrieNode.storageValue(),
-            insertTrieNode.isReferenceValue() ? insertTrieNode.storageValue() : null,
-            (byte) insertTrieNode.stateVersion());
+                insertTrieNode.isBranch(),
+                insertTrieNode.partialKeyNibbles(),
+                childrenMerkleValues,
+                insertTrieNode.isReferenceValue() ? null : insertTrieNode.storageValue(),
+                insertTrieNode.isReferenceValue() ? insertTrieNode.storageValue() : null,
+                (byte) insertTrieNode.stateVersion());
     }
 
     /**
@@ -455,9 +454,9 @@ public class TrieStorage {
             trie.insertBranch(currentPath, new NodeData(null, merkleValue), stateVersion);
         } else {
             byte[] value =
-                currentNodeData.getValue() == null
-                    ? currentNodeData.getTrieRootRef()
-                    : currentNodeData.getValue();
+                    currentNodeData.getValue() == null
+                            ? currentNodeData.getTrieRootRef()
+                            : currentNodeData.getValue();
             trie.insertNode(currentPath, new NodeData(value, merkleValue), stateVersion);
         }
 

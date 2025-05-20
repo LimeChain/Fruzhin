@@ -52,7 +52,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -226,7 +225,7 @@ public class GrandpaMessageHandler {
 
             // Check if needed to catch-up peer
             if (neighbourMessage.getRoundNumber().compareTo(latestRoundNumber.add(CATCH_UP_THRESHOLD)) >= 0) {
-                log.log(Level.FINE, "Neighbor message indicates that the round of Peer " + peerId + " is ahead.");
+                log.fine(String.format("Neighbor message indicates that the round of Peer %s is ahead.", peerId));
 
                 CatchUpReqMessage catchUpReqMessage = CatchUpReqMessage.builder()
                         .round(neighbourMessage.getRoundNumber())

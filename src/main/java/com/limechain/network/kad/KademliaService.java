@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.logging.Level;
 
 /**
  * Service used for operating the Kademlia distributed hash table.
@@ -72,10 +71,10 @@ public class KademliaService extends NetworkService<Kademlia> {
 
         Stream stream = peerStream.get();
         if (stream == null) {
-            log.log(Level.WARNING, "Failed to connect to reserved peer");
+            log.warning("Failed to connect to reserved peer");
         } else {
             ConnectionManager.getInstance().addNewPeer(addrWithPeer.getPeerId());
-            log.log(Level.INFO, "Successfully connected to reserved peer");
+            log.info("Successfully connected to reserved peer");
         }
     }
 
@@ -94,8 +93,8 @@ public class KademliaService extends NetworkService<Kademlia> {
         successfulBootNodes = protocol.bootstrapRoutingTable(host, bootstrapMultiAddress,
                 addr -> !addr.contains("wss") && !addr.contains("ws"));
         if (successfulBootNodes > 0)
-            log.log(Level.INFO, "Successfully connected to " + successfulBootNodes + " boot nodes");
-        else log.log(Level.SEVERE, "Failed to connect to boot nodes");
+            log.info(String.format("Successfully connected to %d boot nodes", successfulBootNodes));
+        else log.severe("Failed to connect to boot nodes");
         return successfulBootNodes;
     }
 

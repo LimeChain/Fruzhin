@@ -15,7 +15,6 @@ import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -93,7 +92,7 @@ class ChainSpecTest {
 
             assertEquals(expectedProperties, actualProperties);
         } catch (IOException e) {
-            log.log(Level.SEVERE, "Error loading chain spec from json", e);
+            log.severe(String.format("Error loading chain spec from json %s", e.getMessage()));
             fail();
         }
     }

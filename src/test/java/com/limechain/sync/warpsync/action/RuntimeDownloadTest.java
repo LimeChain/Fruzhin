@@ -24,7 +24,6 @@ import org.junit.jupiter.api.Test;
 import org.peergos.HostBuilder;
 
 import java.util.List;
-import java.util.logging.Level;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -95,7 +94,7 @@ class RuntimeDownloadTest {
             //Build runtime
             RuntimeFactory.buildRuntime(code, RuntimeFactory.Config.EMPTY);
 
-            log.log(Level.INFO, "Runtime and heap pages downloaded");
+            log.info("Runtime and heap pages downloaded");
         } catch (UnsatisfiedLinkError e) {
             throw new RuntimeException(e);
         } finally {

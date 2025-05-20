@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,7 +21,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
 
 @Log
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -124,10 +124,10 @@ public class OffchainHttpRequests {
         } catch (InvalidRequestId e) {
             return HttpStatusCode.error(HttpErrorType.INVALID_ID);
         } catch (SocketTimeoutException e) {
-            log.log(Level.WARNING, e.getMessage(), e.getStackTrace());
+            log.warning(String.format("%s %s", e.getMessage(), Arrays.toString(e.getStackTrace())));
             return HttpStatusCode.error(HttpErrorType.DEADLINE_REACHED);
         } catch (IOException e) {
-            log.log(Level.WARNING, e.getMessage(), e.getStackTrace());
+            log.warning(String.format("%s %s", e.getMessage(), Arrays.toString(e.getStackTrace())));
             return HttpStatusCode.error(HttpErrorType.IO_ERROR);
         }
     }

@@ -8,8 +8,6 @@ import io.netty.buffer.ByteBuf;
 import lombok.extern.java.Log;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.logging.Level;
-
 /**
  * Handler for BlockAnnounce protocol messages and streams
  */
@@ -30,6 +28,7 @@ public class BlockAnnounceProtocol extends BaseProtocol<BlockAnnounceController,
 
     static class NotificationHandler extends BlockAnnounceController implements ProtocolMessageHandler<ByteBuf> {
         ConnectionManager connectionManager = ConnectionManager.getInstance();
+
         public NotificationHandler(Stream stream) {
             super(stream);
         }
@@ -44,7 +43,7 @@ public class BlockAnnounceProtocol extends BaseProtocol<BlockAnnounceController,
         @Override
         public void onClosed(@NotNull Stream stream) {
             connectionManager.closeBlockAnnounceStream(stream);
-            log.log(Level.INFO, "Block announce stream closed for peer " + stream.remotePeerId());
+            log.info(String.format("Block announce stream closed for peer %s", stream.remotePeerId()));
             ProtocolMessageHandler.super.onClosed(stream);
         }
 
@@ -52,9 +51,9 @@ public class BlockAnnounceProtocol extends BaseProtocol<BlockAnnounceController,
         public void onException(Throwable cause) {
             connectionManager.closeBlockAnnounceStream(stream);
             if (cause != null) {
-                log.log(Level.WARNING, "Block Announce Exception: " + cause.getMessage());
+                log.warning(String.format("Block Announce Exception: %s", cause.getMessage()));
             } else {
-                log.log(Level.WARNING, "Block Announce Exception with unknown cause");
+                log.warning("Block Announce Exception with unknown cause");
             }
             ProtocolMessageHandler.super.onException(cause);
         }
