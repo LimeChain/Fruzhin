@@ -11,7 +11,6 @@ import lombok.extern.java.Log;
 
 import java.util.Arrays;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.logging.Level;
 
 @Log
 public class RequestFragmentsAction implements WarpSyncAction {
@@ -39,15 +38,15 @@ public class RequestFragmentsAction implements WarpSyncAction {
                 return;
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                log.log(Level.SEVERE, "Retry warp sync request fragment exception: "
-                        + e.getMessage(), e.getStackTrace());
+                log.severe(String.format("Retry warp sync request fragment exception: %s %s",
+                        e.getMessage(), Arrays.toString(e.getStackTrace())));
             }
         }
         if (this.result != null) {
             sync.setWarpSyncAction(new VerifyJustificationAction());
             return;
         }
-        log.log(Level.WARNING, "RequestFragmentsState.next() called without result or error set.");
+        log.warning("RequestFragmentsState.next() called without result or error set.");
     }
 
     @Override
@@ -69,10 +68,10 @@ public class RequestFragmentsAction implements WarpSyncAction {
                 throw new MissingObjectException("No response received.");
             }
 
-            log.log(Level.INFO, "Successfully received fragments from peer "
+            log.info("Successfully received fragments from peer "
                     + sync.getNetworkService().getCurrentSelectedPeer());
             if (resp.getFragments().length == 0) {
-                log.log(Level.WARNING, "No fragments received.");
+                log.warning("No fragments received.");
                 return;
             }
             warpSyncState.setWarpSyncFragmentsFinished(resp.isFinished());
@@ -84,7 +83,7 @@ public class RequestFragmentsAction implements WarpSyncAction {
         } catch (Exception e) {
             // TODO: Set error state, next() will use to transition to correct next state.
             // This error state could be either recoverable or irrecoverable.
-            log.log(Level.WARNING, "Error while requesting fragments: " + e.getMessage());
+            log.warning(String.format("Error while requesting fragments: %s", e.getMessage()));
             this.error = e;
         }
     }

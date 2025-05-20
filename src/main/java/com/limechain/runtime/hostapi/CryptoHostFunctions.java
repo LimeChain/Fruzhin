@@ -38,9 +38,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Level;
 
 import static com.limechain.runtime.hostapi.PartialHostApi.newImportObjectPair;
+import static com.limechain.utils.EcdsaUtils.PRIVATE_KEY_LEN;
+import static com.limechain.utils.EcdsaUtils.PUBLIC_KEY_COMPRESSED_LEN;
 
 /**
  * Implementations of the Crypto HostAPI functions
@@ -196,7 +197,7 @@ public class CryptoHostFunctions implements PartialHostApi {
      * @return a pointer-size to the SCALE encoded array of 256bit public keys.
      */
     public RuntimePointerSize ed25519PublicKeysV1(int keyTypeId) {
-        log.log(Level.FINEST, "ed25519PublicKeysV1");
+        log.finest("ed25519PublicKeysV1");
         byte[] keyTypeBytes = sharedMemory.readData(new RuntimePointerSize(keyTypeId, KeyType.KEY_TYPE_LEN));
         final KeyType keyType = KeyType.getByBytes(keyTypeBytes);
 
@@ -219,7 +220,7 @@ public class CryptoHostFunctions implements PartialHostApi {
      *                              seed was provided.
      */
     public int ed25519GenerateV1(int keyTypeId, RuntimePointerSize seed) {
-        log.log(Level.FINEST, "ed25519GenerateV1");
+        log.finest("ed25519GenerateV1");
         var pair = getSeedStringAndKeyType(keyTypeId, seed);
         final Ed25519PrivateKey ed25519PrivateKey;
         if (pair.getSeed() != null) {
@@ -239,7 +240,7 @@ public class CryptoHostFunctions implements PartialHostApi {
     }
 
     private SeedStringKeyTypePair getSeedStringAndKeyType(int keyTypeId, RuntimePointerSize seed) {
-        log.log(Level.FINEST, "getSeedStringAndKeyType");
+        log.finest("getSeedStringAndKeyType");
 
         byte[] keyTypeBytes = sharedMemory.readData(new RuntimePointerSize(keyTypeId, KeyType.KEY_TYPE_LEN));
         final KeyType keyType = KeyType.getByBytes(keyTypeBytes);
@@ -263,7 +264,7 @@ public class CryptoHostFunctions implements PartialHostApi {
      * This function returns if the public key cannot be found in the key store.
      */
     public long ed25519SignV1(int keyTypeId, int publicKey, RuntimePointerSize message) {
-        log.log(Level.FINEST, "ed25519SignV1");
+        log.finest("ed25519SignV1");
         final Signature sig = internalGetSignData(keyTypeId, publicKey, message, Key.ED25519);
 
         byte[] signed = null;
@@ -296,7 +297,7 @@ public class CryptoHostFunctions implements PartialHostApi {
      * @return a i32 integer value equal to 1 if the signature is valid or a value equal to 0 if otherwise.
      */
     public int ed25519VerifyV1(int signature, RuntimePointerSize message, int publicKey) {
-        log.log(Level.FINEST, "ed25519VerifyV1");
+        log.finest("ed25519VerifyV1");
         VerifySignature verifySig = internalGetVerifySignature(signature, message, publicKey, Key.ED25519);
         return Ed25519Utils.verifySignature(verifySig) ? 1 : 0;
     }
@@ -312,7 +313,7 @@ public class CryptoHostFunctions implements PartialHostApi {
      * @return an i32 integer value equal to 1 if the signature is valid or batched or a value equal 0 to if otherwise.
      */
     public int ed25519BatchVerifyV1(int signature, RuntimePointerSize message, int publicKey) {
-        log.log(Level.FINEST, "ed25519BatchVerifyV1");
+        log.finest("ed25519BatchVerifyV1");
 
         VerifySignature verifySig = internalGetVerifySignature(signature, message, publicKey, Key.ED25519);
 
@@ -331,7 +332,7 @@ public class CryptoHostFunctions implements PartialHostApi {
      * @return a pointer-size to the SCALE encoded array of 256bit public keys.
      */
     public RuntimePointerSize sr25519PublicKeysV1(int keyTypeId) {
-        log.log(Level.FINEST, "sr25519PublicKeysV1");
+        log.finest("sr25519PublicKeysV1");
 
         byte[] keyTypeBytes = sharedMemory.readData(new RuntimePointerSize(keyTypeId, KeyType.KEY_TYPE_LEN));
         final KeyType keyType = KeyType.getByBytes(keyTypeBytes);
@@ -355,7 +356,7 @@ public class CryptoHostFunctions implements PartialHostApi {
      *                              seed was provided.
      */
     public int sr25519GenerateV1(int keyTypeId, RuntimePointerSize seed) {
-        log.log(Level.FINEST, "sr25519GenerateV1");
+        log.finest("sr25519GenerateV1");
 
         var pair = getSeedStringAndKeyType(keyTypeId, seed);
         final Schnorrkel.KeyPair keyPair;
@@ -385,7 +386,7 @@ public class CryptoHostFunctions implements PartialHostApi {
      * This function returns if the public key cannot be found in the key store.
      */
     public int sr25519SignV1(int keyTypeId, int publicKey, RuntimePointerSize message) {
-        log.log(Level.FINEST, "sr25519SignV1");
+        log.finest("sr25519SignV1");
 
         final Signature sig = internalGetSignData(keyTypeId, publicKey, message, Key.SR25519);
 
@@ -407,7 +408,7 @@ public class CryptoHostFunctions implements PartialHostApi {
      * @return a i32 integer value equal to 1 if the signature is valid or a value equal to 0 if otherwise.
      */
     public int sr25519VerifyV1(int signature, RuntimePointerSize message, int publicKey) {
-        log.log(Level.FINEST, "sr25519VerifyV1");
+        log.finest("sr25519VerifyV1");
 
         VerifySignature verifiedSignature = internalGetVerifySignature(signature, message, publicKey, Key.SR25519);
 
@@ -423,7 +424,7 @@ public class CryptoHostFunctions implements PartialHostApi {
      * @return a i32 integer value equal to 1 if the signature is valid or a value equal to 0 if otherwise.
      */
     public int sr25519VerifyV2(int signature, RuntimePointerSize message, int publicKey) {
-        log.log(Level.FINEST, "sr25519VerifyV2");
+        log.finest("sr25519VerifyV2");
 
         VerifySignature verifiedSignature = internalGetVerifySignature(signature, message, publicKey, Key.SR25519);
 
@@ -441,7 +442,7 @@ public class CryptoHostFunctions implements PartialHostApi {
      * @return an i32 integer value equal to 1 if the signature is valid or batched or a value equal 0 to if otherwise.
      */
     public int sr25519BatchVerifyV1(int signature, RuntimePointerSize message, int publicKey) {
-        log.log(Level.FINEST, "sr25519BatchVerifyV1");
+        log.finest("sr25519BatchVerifyV1");
 
         VerifySignature verifiedSignature = internalGetVerifySignature(signature, message, publicKey, Key.SR25519);
 
@@ -461,7 +462,7 @@ public class CryptoHostFunctions implements PartialHostApi {
      * @return a pointer-size to the SCALE encoded array of 33byte compressed public keys.
      */
     public RuntimePointerSize ecdsaPublicKeysV1(int keyTypeId) {
-        log.log(Level.FINEST, "ecdsaPublicKeysV1");
+        log.finest("ecdsaPublicKeysV1");
 
         byte[] keyTypeBytes = sharedMemory.readData(new RuntimePointerSize(keyTypeId, KeyType.KEY_TYPE_LEN));
         final KeyType keyType = KeyType.getByBytes(keyTypeBytes);
@@ -500,7 +501,7 @@ public class CryptoHostFunctions implements PartialHostApi {
      *                              seed was provided.
      */
     public int ecdsaGenerateV1(int keyTypeId, RuntimePointerSize seed) {
-        log.log(Level.FINEST, "ecdsaGenerateV1");
+        log.finest("ecdsaGenerateV1");
 
         var pair = getSeedStringAndKeyType(keyTypeId, seed);
 
@@ -515,7 +516,13 @@ public class CryptoHostFunctions implements PartialHostApi {
             keyPair = EcdsaUtils.generateKeyPair();
         }
 
-        keyStore.put(pair.getKeyType(), keyPair.getSecond().raw(), keyPair.getFirst().raw());
+        byte[] publicKey = keyPair.getSecond().raw();
+        byte[] privateKey = keyPair.getFirst().raw();
+
+        publicKey = EcdsaUtils.normalizeKeyLength(publicKey, PUBLIC_KEY_COMPRESSED_LEN);
+        privateKey = EcdsaUtils.normalizeKeyLength(privateKey, PRIVATE_KEY_LEN);
+
+        keyStore.put(pair.getKeyType(), publicKey, privateKey);
         return sharedMemory.writeData(keyPair.getSecond().raw()).pointer();
     }
 
@@ -531,7 +538,7 @@ public class CryptoHostFunctions implements PartialHostApi {
      * represent the recovery ID. This function returns if the public key cannot be found in the key store.
      */
     public int ecdsaSignV1(int keyTypeId, int publicKey, RuntimePointerSize message) {
-        log.log(Level.FINEST, "ecdsaSignV1");
+        log.finest("ecdsaSignV1");
 
         final Signature sig = internalGetSignData(keyTypeId, publicKey, message, Key.ECDSA);
         sig.setMessageData(HashUtils.hashWithBlake2b(sig.getMessageData()));
@@ -556,7 +563,7 @@ public class CryptoHostFunctions implements PartialHostApi {
      * represent the recovery ID. This function returns if the public key cannot be found in the key store.
      */
     public int ecdsaSignPrehashedV1(int keyTypeId, int publicKey, RuntimePointerSize message) {
-        log.log(Level.FINEST, "ecdsaSignPrehashedV1");
+        log.finest("ecdsaSignPrehashedV1");
 
         final Signature sig = internalGetSignData(keyTypeId, publicKey, message, Key.ECDSA);
 
@@ -578,7 +585,7 @@ public class CryptoHostFunctions implements PartialHostApi {
      * @return a i32 integer value equal 1 to if the signature is valid or a value equal to 0 if otherwise.
      */
     public int ecdsaVerifyV1(int signature, RuntimePointerSize message, int publicKey) {
-        log.log(Level.FINEST, "ecdsaVerifyV1");
+        log.finest("ecdsaVerifyV1");
 
         final VerifySignature verifySig = internalGetVerifySignature(signature, message, publicKey, Key.ECDSA);
         verifySig.setMessageData(HashUtils.hashWithBlake2b(verifySig.getMessageData()));
@@ -595,7 +602,7 @@ public class CryptoHostFunctions implements PartialHostApi {
      * @return a i32 integer value equal 1 to if the signature is valid or a value equal to 0 if otherwise.
      */
     public int ecdsaVerifyPrehashedV1(int signature, int message, int publicKey) {
-        log.log(Level.FINEST, "ecdsaVerifyPrehashedV1");
+        log.finest("ecdsaVerifyPrehashedV1");
 
         final byte[] signatureData = sharedMemory.readData(new RuntimePointerSize(signature, SIGNATURE_LEN));
         final byte[] messageData = sharedMemory.readData(
@@ -618,7 +625,7 @@ public class CryptoHostFunctions implements PartialHostApi {
      * @return an i32 integer value equal to 1 if the signature is valid or batched or a value equal 0 to if otherwise.
      */
     public int ecdsaBatchVerifyV1(int signature, RuntimePointerSize message, int publicKey) {
-        log.log(Level.FINEST, "ecdsaBatchVerifyV1");
+        log.finest("ecdsaBatchVerifyV1");
 
         final VerifySignature verifySig = internalGetVerifySignature(signature, message, publicKey, Key.ECDSA);
         verifySig.setMessageData(HashUtils.hashWithBlake2b(verifySig.getMessageData()));
@@ -641,7 +648,7 @@ public class CryptoHostFunctions implements PartialHostApi {
      * an error type on failure.
      */
     public long secp256k1EcdsaRecoverV1(int signature, int message) {
-        log.log(Level.FINEST, "secp256k1EcdsaRecoverV1");
+        log.finest("secp256k1EcdsaRecoverV1");
 
         byte[] ecdsaPublicKey = internalSecp256k1RecoverKey(signature, message, false);
         return secp2561kScaleKeyResult(ecdsaPublicKey);
@@ -657,7 +664,7 @@ public class CryptoHostFunctions implements PartialHostApi {
      * recovered public key in compressed form on success or an error type on failure.
      */
     public long secp256k1EcdsaRecoverCompressedV1(int signature, int message) {
-        log.log(Level.FINEST, "secp256k1EcdsaRecoverCompressedV1");
+        log.finest("secp256k1EcdsaRecoverCompressedV1");
 
         byte[] rawBytes = internalSecp256k1RecoverKey(signature, message, true);
         return secp2561kScaleKeyResult(rawBytes);

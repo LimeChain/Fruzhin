@@ -61,7 +61,6 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
-import java.util.logging.Level;
 
 @Log
 @AllArgsConstructor(access = AccessLevel.PACKAGE)
@@ -349,7 +348,7 @@ public class RuntimeImpl implements Runtime {
     @Nullable
     private byte[] callInner(RuntimeEndpoint function, RuntimePointerSize parameterPtrSize) {
         String functionName = function.getName();
-        log.log(Level.FINE, "Making a runtime call: " + functionName);
+        log.fine(String.format("Making a runtime call: %s", functionName));
         try {
             Object[] response = instance.exports.getFunction(functionName)
                     .apply(parameterPtrSize.pointer(), parameterPtrSize.size());

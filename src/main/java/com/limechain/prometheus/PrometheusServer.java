@@ -7,7 +7,6 @@ import io.prometheus.metrics.model.snapshots.Unit;
 import lombok.extern.java.Log;
 
 import java.io.IOException;
-import java.util.logging.Level;
 
 @Log
 public class PrometheusServer {
@@ -26,7 +25,7 @@ public class PrometheusServer {
                 .port(this.port)
                 .buildAndStart();
 
-        log.log(Level.INFO, "Prometheus listening on port: " + this.port);
+        log.info(String.format("Prometheus listening on port: %d", this.port));
 
         return this.server;
     }

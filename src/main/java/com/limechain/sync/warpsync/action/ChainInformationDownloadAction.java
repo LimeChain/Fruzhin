@@ -3,7 +3,7 @@ package com.limechain.sync.warpsync.action;
 import com.limechain.sync.warpsync.WarpSyncMachine;
 import lombok.extern.java.Log;
 
-import java.util.logging.Level;
+import java.util.Arrays;
 
 /**
  * Performs some runtime calls in order to obtain the current consensus-related parameters
@@ -33,7 +33,7 @@ public class ChainInformationDownloadAction implements WarpSyncAction {
         // TODO: After runtime is downloaded, we are downloading and computing the information of the chain
         // This information is retrieved using remoteCallRequests
 
-        log.log(Level.INFO, "Downloading chain information...");
+        log.info("Downloading chain information...");
         Object[] responses = new Object[runtimeFunctionCalls.length];
 
         //Make a call for every runtime function we need
@@ -41,11 +41,11 @@ public class ChainInformationDownloadAction implements WarpSyncAction {
             try {
                 //TODO Make runtime calls here
                 //responses[i] = sync.getRuntime().call(runtimeFunctionCalls[i]);
-                log.log(Level.INFO, "Made a runtime call \"" + runtimeFunctionCalls[i] + "\" : " + responses[i]);
+                log.info(String.format("Made a runtime call \" %s \" : %s", runtimeFunctionCalls[i], responses[i]));
             } catch (Exception e) {
-                log.log(Level.WARNING, e.getMessage(), e.getStackTrace());
+                log.warning(String.format("%s %s", e.getMessage(), Arrays.toString(e.getStackTrace())));
             }
         }
-        log.log(Level.INFO, "Downloaded chain information");
+        log.info("Downloaded chain information");
     }
 }

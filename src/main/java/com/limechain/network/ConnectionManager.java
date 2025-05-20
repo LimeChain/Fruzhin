@@ -18,7 +18,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.logging.Level;
 
 /**
  * Singleton class that controls connected peer info and streams.
@@ -149,7 +148,7 @@ public class ConnectionManager {
     private void closeStream(Stream stream, ProtocolStreamType type) {
         PeerInfo peerInfo = peers.get(stream.remotePeerId());
         if (peerInfo == null) {
-            log.log(Level.WARNING, "Trying to close a missing stream for peer " + stream.remotePeerId());
+            log.warning(String.format("Trying to close a missing stream for peer %s", stream.remotePeerId()));
             return;
         }
 
@@ -172,7 +171,7 @@ public class ConnectionManager {
     public void updatePeer(PeerId peerId, BlockAnnounceHandshake blockAnnounceHandshake) {
         PeerInfo peerInfo = peers.get(peerId);
         if (peerInfo == null) {
-            log.log(Level.WARNING, "Trying to update missing peer " + peerId);
+            log.warning(String.format("Trying to update missing peer %s", peerId));
             return;
         }
         peerInfo.setNodeRole(blockAnnounceHandshake.getNodeRole());
@@ -190,7 +189,7 @@ public class ConnectionManager {
     public void updatePeer(PeerId peerId, BlockAnnounceMessage blockAnnounceMessage) {
         PeerInfo peerInfo = peers.get(peerId);
         if (peerInfo == null) {
-            log.log(Level.WARNING, "Trying to update missing peer " + peerId);
+            log.warning(String.format("Trying to update missing peer %s", peerId));
             return;
         }
 
@@ -213,7 +212,7 @@ public class ConnectionManager {
     public void updatePeer(PeerId peerId, NeighbourMessage neighbourMessage) {
         PeerInfo peerInfo = peers.get(peerId);
         if (peerInfo == null) {
-            log.log(Level.WARNING, "Trying to update missing peer " + peerId);
+            log.warning(String.format("Trying to update missing peer %s", peerId));
             return;
         }
 

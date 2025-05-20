@@ -15,8 +15,6 @@ import io.libp2p.core.PeerId;
 import io.libp2p.core.Stream;
 import lombok.extern.java.Log;
 
-import java.util.logging.Level;
-
 /**
  * Engine for handling transactions on Transactions streams.
  */
@@ -40,12 +38,12 @@ public class TransactionEngine implements BaseEngine {
     @Override
     public void handleHandshake(byte[] message, PeerId peerId, Stream stream) {
         if (connectionManager.isTransactionsConnected(peerId)) {
-            log.log(Level.INFO, "Received existing transactions handshake from " + peerId);
+            log.info(String.format("Received existing transactions handshake from %s", peerId));
             stream.close();
         }
 
         connectionManager.addTransactionsStream(stream);
-        log.log(Level.INFO, "Received transactions handshake from " + peerId);
+        log.info(String.format("Received transactions handshake from %s", peerId));
 
         writeHandshakeToStream(stream, peerId);
     }
@@ -68,11 +66,10 @@ public class TransactionEngine implements BaseEngine {
     @Override
     public void receiveRequest(byte[] message, Stream stream) {
         if (message == null || message.length == 0) {
-            log.log(Level.WARNING,
-                    String.format("Transactions message is null from Peer %s", stream.remotePeerId()));
+            log.warning(String.format("Transactions message is null from Peer %s", stream.remotePeerId()));
             return;
         }
-        log.log(Level.FINE, "Transaction message length:" + message.length);
+        log.fine(String.format("Transaction message length: %d", message.length));
 
         if (stream.isInitiator()) {
             handleInitiatorStreamMessage(message, stream);
@@ -90,7 +87,7 @@ public class TransactionEngine implements BaseEngine {
     @Override
     public void writeHandshakeToStream(Stream stream, PeerId peerId) {
         byte[] handshake = new byte[]{};
-        log.log(Level.INFO, "Sending transactions handshake to " + peerId);
+        log.info(String.format("Sending transactions handshake to %s", peerId));
         stream.writeAndFlush(handshake);
     }
 
@@ -101,7 +98,7 @@ public class TransactionEngine implements BaseEngine {
      * @param encodedTransactionMessage scale encoded transaction message
      */
     public void writeTransactionsMessage(Stream stream, byte[] encodedTransactionMessage) {
-        log.log(Level.INFO, "Sending transaction message to peer " + stream.remotePeerId());
+        log.info(String.format("Sending transaction message to peer %s", stream.remotePeerId()));
         stream.writeAndFlush(encodedTransactionMessage);
     }
 
@@ -110,12 +107,12 @@ public class TransactionEngine implements BaseEngine {
 
         if (!isHandshake(message)) {
             stream.close();
-            log.log(Level.WARNING, "Non handshake message on initiator transactions stream from peer " + peerId);
+            log.warning(String.format("Non handshake message on initiator transactions stream from peer %s", peerId));
             return;
         }
 
         connectionManager.addTransactionsStream(stream);
-        log.log(Level.INFO, "Received transactions handshake from " + peerId);
+        log.info(String.format("Received transactions handshake from %s", peerId));
         stream.writeAndFlush(new byte[]{});
     }
 
@@ -124,7 +121,7 @@ public class TransactionEngine implements BaseEngine {
         boolean connectedToPeer = connectionManager.isTransactionsConnected(peerId);
 
         if (!connectedToPeer && !isHandshake(message)) {
-            log.log(Level.WARNING, "No handshake for transactions message from Peer " + peerId);
+            log.warning(String.format("No handshake for transactions message from Peer %s", peerId));
             stream.close();
             return;
         }
@@ -144,8 +141,9 @@ public class TransactionEngine implements BaseEngine {
         }
 
         ExtrinsicArray transactions = ScaleUtils.Decode.decode(message, TransactionReader.getInstance());
-        log.log(Level.FINE, "Received " + transactions.getExtrinsics().length + " transactions from Peer "
-                + stream.remotePeerId());
+        log.fine(String.format("Received %d transactions from Peer %s",
+                transactions.getExtrinsics().length,
+                stream.remotePeerId()));
 
         transactionProcessor.handleExternalTransactions(transactions.getExtrinsics(), stream.remotePeerId());
     }
