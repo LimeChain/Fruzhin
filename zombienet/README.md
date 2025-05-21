@@ -11,6 +11,6 @@ _Tests have to be run from the root of the repository._
 nix run github:paritytech/zombienet -- test -p native ./zombienet/0001-light-client-header-verification.zndsl
 ```
 
-Although the `chain_spec_path` is specified in the TOML file, the actual chain spec used by the node is determined by 
-the value of `-Dgenesis.path.local` argument in the `start-node.sh`. Additionally, the `inject-env-and-start.sh` script
+Although the `chain_spec_path` is specified in the TOML file, the actual chain spec used by the node is determined by
+the values in the `application.properties` file. Additionally, the `inject-env-and-start.sh` script
 injects the BABE, GRANDPA, and BEEFY keys for the Alice as environment variables before starting the node.
