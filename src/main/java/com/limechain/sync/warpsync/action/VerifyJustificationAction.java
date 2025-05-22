@@ -10,6 +10,7 @@ import com.limechain.sync.JustificationVerifier;
 import com.limechain.sync.state.SyncState;
 import com.limechain.sync.warpsync.WarpSyncMachine;
 import com.limechain.sync.warpsync.WarpSyncState;
+import com.limechain.utils.HashUtils;
 import lombok.extern.java.Log;
 
 // VerifyJustificationState is going to be instantiated a lot of times
@@ -94,9 +95,9 @@ public class VerifyJustificationAction implements WarpSyncAction {
                 .forEach(cm -> stateManager.getEpochState().updateNextEpochConfig(cm));
 
         SyncState syncState = stateManager.getSyncState();
-        log.info(String.format("Verified justification. Block hash is now at #%d: %s with state root %s",
+        log.info(String.format("Verified justification. Block #%d (%s) with state root %s",
                 syncState.getLastFinalizedBlockNumber(),
-                syncState.getLastFinalizedBlockHash().toString(),
+                HashUtils.getPrintableHash(syncState.getLastFinalizedBlockHash()),
                 syncState.getStateRoot()));
     }
 }

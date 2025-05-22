@@ -58,7 +58,7 @@ public class TrieHostFunctions implements PartialHostApi {
     }
 
     Number ext_trie_blake2_256_root_version_1(List<Number> args) {
-        log.fine("ext_trie_blake2_256_root_version_1");
+        log.finest("ext_trie_blake2_256_root_version_1");
         ArgParser argParser = new ArgParser(args);
 
         List<Pair<byte[], byte[]>> kvps = argParser.parseKeyValuePairs(0);
@@ -69,7 +69,7 @@ public class TrieHostFunctions implements PartialHostApi {
     }
 
     Number ext_trie_blake2_256_root_version_2(List<Number> argv) {
-        log.fine("ext_trie_blake2_256_root_version_2");
+        log.finest("ext_trie_blake2_256_root_version_2");
         ArgParser argParser = new ArgParser(argv);
 
         List<Pair<byte[], byte[]>> kvps = argParser.parseKeyValuePairs(0);
@@ -81,7 +81,7 @@ public class TrieHostFunctions implements PartialHostApi {
     }
 
     Number ext_trie_blake2_256_ordered_root_version_1(List<Number> argv) {
-        log.fine("ext_trie_blake2_256_ordered_root_version_1");
+        log.finest("ext_trie_blake2_256_ordered_root_version_1");
         ArgParser argParser = new ArgParser(argv);
 
         List<byte[]> values = argParser.parseOrderedValues(0);
@@ -92,7 +92,7 @@ public class TrieHostFunctions implements PartialHostApi {
     }
 
     Number ext_trie_blake2_256_ordered_root_version_2(List<Number> argv) {
-        log.fine("ext_trie_blake2_256_ordered_root_version_2");
+        log.finest("ext_trie_blake2_256_ordered_root_version_2");
         ArgParser argParser = new ArgParser(argv);
 
         List<byte[]> values = argParser.parseOrderedValues(0);
@@ -104,7 +104,7 @@ public class TrieHostFunctions implements PartialHostApi {
     }
 
     Number ext_trie_keccak_256_root_version_1(List<Number> argv) {
-        log.fine("ext_trie_keccak_256_root_version_1");
+        log.finest("ext_trie_keccak_256_root_version_1");
         ArgParser argParser = new ArgParser(argv);
 
         List<Pair<byte[], byte[]>> kvps = argParser.parseKeyValuePairs(0);
@@ -115,7 +115,7 @@ public class TrieHostFunctions implements PartialHostApi {
     }
 
     Number ext_trie_keccak_256_root_version_2(List<Number> argv) {
-        log.fine("ext_trie_keccak_256_root_version_2");
+        log.finest("ext_trie_keccak_256_root_version_2");
         ArgParser argParser = new ArgParser(argv);
 
         List<Pair<byte[], byte[]>> kvps = argParser.parseKeyValuePairs(0);
@@ -127,7 +127,7 @@ public class TrieHostFunctions implements PartialHostApi {
     }
 
     Number ext_trie_keccak_256_ordered_root_version_1(List<Number> argv) {
-        log.fine("ext_trie_keccak_256_ordered_root_version_1");
+        log.finest("ext_trie_keccak_256_ordered_root_version_1");
         ArgParser argParser = new ArgParser(argv);
 
         List<byte[]> values = argParser.parseOrderedValues(0);
@@ -138,7 +138,7 @@ public class TrieHostFunctions implements PartialHostApi {
     }
 
     Number ext_trie_keccak_256_ordered_root_version_2(List<Number> argv) {
-        log.fine("ext_trie_keccak_256_ordered_root_version_2");
+        log.finest("ext_trie_keccak_256_ordered_root_version_2");
         ArgParser argParser = new ArgParser(argv);
 
         List<byte[]> values = argParser.parseOrderedValues(0);
@@ -150,7 +150,7 @@ public class TrieHostFunctions implements PartialHostApi {
     }
 
     Number ext_trie_blake2_256_verify_proof_version_1(List<Number> args) {
-        log.fine("ext_trie_blake2_256_verify_proof_version_1");
+        log.finest("ext_trie_blake2_256_verify_proof_version_1");
         ArgParser argParser = new ArgParser(args);
         byte[] trieRoot = argParser.parseTrieRoot(0);
         byte[][] encodedProofNodes = argParser.parseProofNodes(1);
@@ -164,7 +164,7 @@ public class TrieHostFunctions implements PartialHostApi {
     }
 
     Number ext_trie_blake2_256_verify_proof_version_2(List<Number> argv) {
-        log.fine("ext_trie_blake2_256_verify_proof_version_2");
+        log.finest("ext_trie_blake2_256_verify_proof_version_2");
         ArgParser argParser = new ArgParser(argv);
         byte[] trieRoot = argParser.parseTrieRoot(0);
         byte[][] encodedProofNodes = argParser.parseProofNodes(1);
@@ -178,7 +178,7 @@ public class TrieHostFunctions implements PartialHostApi {
     }
 
     Number ext_trie_keccak_256_verify_proof_version_1(List<Number> argv) {
-        log.fine("ext_trie_keccak_256_verify_proof_version_1");
+        log.finest("ext_trie_keccak_256_verify_proof_version_1");
         ArgParser argParser = new ArgParser(argv);
         byte[] trieRoot = argParser.parseTrieRoot(0);
         byte[][] encodedProofNodes = argParser.parseProofNodes(1);
@@ -192,7 +192,7 @@ public class TrieHostFunctions implements PartialHostApi {
     }
 
     Number ext_trie_keccak_256_verify_proof_version_2(List<Number> args) {
-        log.fine("ext_trie_keccak_256_verify_proof_version_2");
+        log.finest("ext_trie_keccak_256_verify_proof_version_2");
         ArgParser argParser = new ArgParser(args);
         byte[] trieRoot = argParser.parseTrieRoot(0);
         byte[][] encodedProofNodes = argParser.parseProofNodes(1);

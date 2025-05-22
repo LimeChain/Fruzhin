@@ -16,7 +16,6 @@ import com.limechain.state.AbstractState;
 import com.limechain.storage.block.state.BlockState;
 import com.limechain.storage.crypto.KeyStore;
 import com.limechain.storage.crypto.KeyType;
-import com.limechain.utils.StringUtils;
 import io.micrometer.common.lang.Nullable;
 import jakarta.annotation.PreDestroy;
 import lombok.Getter;
@@ -28,7 +27,6 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
 import java.util.ArrayDeque;
-import java.util.Arrays;
 import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -140,7 +138,7 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
 
     public void setupPostWarpSync() {
         if (sessions.isEmpty()) {
-            log.fine("Beefy state has no sessions.");
+            log.info("Beefy state has no sessions.");
             return;
         }
 
@@ -148,23 +146,27 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
         sessions.clear();
         sessions.addLast(last);
 
-        requestJustification(last.getMandatoryBlock());
+        requestJustification(last.getMandatoryBlock(), true);
     }
 
-    public void requestJustification(BigInteger blockNumber) {
+    public void requestJustification(BigInteger blockNumber, boolean withLogs) {
         try {
             AppBean.getBean(PeerRequester.class).makeBeefyJustificationRequest(blockNumber)
                     .thenAccept(r ->
                             AppBean.getBean(BeefyMessageHandler.class).handleSignedCommitment(r));
-            log.fine(String.format("requestJustification: Requested justification for block %s.", blockNumber));
+            if (withLogs) {
+                log.info(String.format("requestJustification: Requested justification for block %s.", blockNumber));
+            }
         } catch (ExecutionFailedException e) {
-            log.warning(String.format("requestJustification: Failed request %s", e.getMessage()));
+            if (withLogs) {
+                log.warning(String.format("requestJustification: Failed request %s", e.getMessage()));
+            }
         }
     }
 
     public void handleChangedBeefyAuthorities(List<byte[]> authorityPublicKeys,
-                                               BigInteger authoritySetId,
-                                               BigInteger blockNumber) {
+                                              BigInteger authoritySetId,
+                                              BigInteger blockNumber) {
 
         Pair<byte[], byte[]> keyPair = keyStore.findKeyPair(
                 authorityPublicKeys,
@@ -172,9 +174,8 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
         ).orElse(null);
 
         if (keyPair == null) {
-            log.info(
-                    String.format("BEEFY: We are not chosen to vote in current session, block number: %s", blockNumber)
-            );
+            log.info(String.format("BEEFY: We are not chosen to vote in current session, block #%s",
+                    blockNumber));
         }
 
         BeefySession beefySession = new BeefySession(

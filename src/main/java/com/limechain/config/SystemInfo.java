@@ -55,6 +55,6 @@ public class SystemInfo {
         log.info(String.format("Local node identity is: %s", hostIdentity));
         log.info(String.format("Operating System: %s", System.getProperty("os.name")));
         log.info(String.format("CPU architecture: %s", System.getProperty("os.arch")));
-        log.info(String.format("Highest known block at #%d", highestBlock));
+        log.info(String.format("Highest known block at #%d", (highestBlock != null ? highestBlock : BigInteger.ZERO)));
     }
 }

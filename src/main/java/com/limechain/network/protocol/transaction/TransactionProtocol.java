@@ -51,7 +51,7 @@ public class TransactionProtocol extends BaseProtocol<TransactionController, Tra
         @Override
         public void onClosed(Stream stream) {
             connectionManager.closeTransactionsStream(stream);
-            log.info(String.format("Transactions stream closed for peer %s", stream.remotePeerId()));
+            log.finest(String.format("Transactions stream closed for peer %s", stream.remotePeerId()));
             ProtocolMessageHandler.super.onClosed(stream);
         }
 
@@ -59,9 +59,9 @@ public class TransactionProtocol extends BaseProtocol<TransactionController, Tra
         public void onException(Throwable cause) {
             connectionManager.closeTransactionsStream(stream);
             if (cause != null) {
-                log.warning(String.format("Transactions Exception: %s", cause.getMessage()));
+                log.fine(String.format("Transactions Exception: %s", cause.getMessage()));
             } else {
-                log.warning("Transactions Exception with unknown cause");
+                log.fine("Transactions Exception with unknown cause");
             }
             ProtocolMessageHandler.super.onException(cause);
         }

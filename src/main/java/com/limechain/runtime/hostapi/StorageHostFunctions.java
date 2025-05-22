@@ -125,11 +125,11 @@ public class StorageHostFunctions implements PartialHostApi {
         Nibbles key = Nibbles.fromBytes(sharedMemory.readData(keyPointer));
         byte[] value = sharedMemory.readData(valuePointer);
 
-        log.fine("");
-        log.fine("extStorageSetVersion1 with ");
-        log.fine("key: " + key);
-        log.fine("value: " + Arrays.toString(value));
-        log.fine("");
+        log.finest("");
+        log.finest("extStorageSetVersion1 with ");
+        log.finest("key: " + key);
+        log.finest("value: " + Arrays.toString(value));
+        log.finest("");
         trieAccessor.upsertNode(key, value);
     }
 
@@ -143,10 +143,10 @@ public class StorageHostFunctions implements PartialHostApi {
         Nibbles key = Nibbles.fromBytes(sharedMemory.readData(keyPointer));
         byte[] value = trieAccessor.findStorageValue(key).orElse(null);
 
-        log.fine("");
-        log.fine("extStorageGetVersion1");
-        log.fine("key: " + key);
-        log.fine("");
+        log.finest("");
+        log.finest("extStorageGetVersion1");
+        log.finest("key: " + key);
+        log.finest("");
 
         return sharedMemory.writeData(scaleEncodedOption(value));
     }
@@ -165,7 +165,7 @@ public class StorageHostFunctions implements PartialHostApi {
      */
     public RuntimePointerSize extStorageReadVersion1(RuntimePointerSize keyPointer, RuntimePointerSize valueOutPointer,
                                                      int offset) {
-        log.fine("extStorageReadVersion1");
+        log.finest("extStorageReadVersion1");
         Nibbles key = Nibbles.fromBytes(sharedMemory.readData(keyPointer));
         byte[] value = trieAccessor.findStorageValue(key).orElse(null);
 
@@ -192,10 +192,10 @@ public class StorageHostFunctions implements PartialHostApi {
     public void extStorageClearVersion1(RuntimePointerSize keyPointer) {
         Nibbles key = Nibbles.fromBytes(sharedMemory.readData(keyPointer));
 
-        log.fine("");
-        log.fine("extStorageClearVersion1");
-        log.fine("key: " + key);
-        log.fine("");
+        log.finest("");
+        log.finest("extStorageClearVersion1");
+        log.finest("key: " + key);
+        log.finest("");
 
         trieAccessor.deleteNode(key);
     }
@@ -207,7 +207,7 @@ public class StorageHostFunctions implements PartialHostApi {
      * @return integer value equal to 1 if the key exists or a value equal to 0 if otherwise.
      */
     public int extStorageExistsVersion1(RuntimePointerSize keyPointer) {
-        log.fine("extStorageExistsVersion1");
+        log.finest("extStorageExistsVersion1");
         Nibbles key = Nibbles.fromBytes(sharedMemory.readData(keyPointer));
         return trieAccessor.findStorageValue(key).isPresent() ? 1 : 0;
     }
@@ -218,7 +218,7 @@ public class StorageHostFunctions implements PartialHostApi {
      * @param prefixPointer a pointer-size containing the prefix.
      */
     public void extStorageClearPrefixVersion1(RuntimePointerSize prefixPointer) {
-        log.fine("extStorageClearPrefixVersion1");
+        log.finest("extStorageClearPrefixVersion1");
         Nibbles prefix = Nibbles.fromBytes(sharedMemory.readData(prefixPointer));
         trieAccessor.deleteMultipleNodesByPrefix(prefix, null);
     }
@@ -236,7 +236,7 @@ public class StorageHostFunctions implements PartialHostApi {
      */
     public RuntimePointerSize extStorageClearPrefixVersion2(RuntimePointerSize prefixPointer,
                                                             RuntimePointerSize limitPointer) {
-        log.fine("extStorageClearPrefixVersion2");
+        log.finest("extStorageClearPrefixVersion2");
         Nibbles prefix = Nibbles.fromBytes(sharedMemory.readData(prefixPointer));
 
         byte[] limitBytes = sharedMemory.readData(limitPointer);
@@ -256,7 +256,7 @@ public class StorageHostFunctions implements PartialHostApi {
      * @param valuePointer a pointer-size containing the value to be appended.
      */
     public void extStorageAppendVersion1(RuntimePointerSize keyPointer, RuntimePointerSize valuePointer) {
-        log.fine("extStorageAppendVersion1");
+        log.finest("extStorageAppendVersion1");
 
         Nibbles key = Nibbles.fromBytes(sharedMemory.readData(keyPointer));
         byte[] sequence = trieAccessor.findStorageValue(key).orElse(null);
@@ -312,7 +312,7 @@ public class StorageHostFunctions implements PartialHostApi {
      * @return a pointer-size to a buffer containing the 256-bit Blake2 storage root.
      */
     public RuntimePointerSize extStorageRootVersion1() {
-        log.fine("extStorageRootVersion1");
+        log.finest("extStorageRootVersion1");
         byte[] rootHash = trieAccessor.getMerkleRoot(null);
 
         return sharedMemory.writeData(rootHash);
@@ -325,7 +325,7 @@ public class StorageHostFunctions implements PartialHostApi {
      * @return a pointer-size to a buffer containing the 256-bit Blake2 storage root.
      */
     public RuntimePointerSize extStorageRootVersion2(int version) {
-        log.fine("extStorageRootVersion2");
+        log.finest("extStorageRootVersion2");
         byte[] rootHash = trieAccessor.getMerkleRoot(StateVersion.fromInt(version));
 
         return sharedMemory.writeData(rootHash);
@@ -338,7 +338,7 @@ public class StorageHostFunctions implements PartialHostApi {
      * @return a pointer-size to an Option type (Definition 185) that’s always None.
      */
     public RuntimePointerSize extStorageChangesRootVersion1(RuntimePointerSize parentHashPointer) {
-        log.fine("extStorageChangesRootVersion1");
+        log.finest("extStorageChangesRootVersion1");
 
         return sharedMemory.writeData(scaleEncodedOption(null));
     }
@@ -353,10 +353,10 @@ public class StorageHostFunctions implements PartialHostApi {
     public RuntimePointerSize extStorageNextKeyVersion1(RuntimePointerSize keyPointer) {
         Nibbles key = Nibbles.fromBytes(sharedMemory.readData(keyPointer));
 
-        log.fine("");
-        log.fine("extStorageNextKeyVersion1");
-        log.fine("key: " + key);
-        log.fine("");
+        log.finest("");
+        log.finest("extStorageNextKeyVersion1");
+        log.finest("key: " + key);
+        log.finest("");
 
         byte[] nextKey = trieAccessor.getNextKey(key)
                 .map(NibblesUtils::toBytesAppending)
@@ -381,7 +381,7 @@ public class StorageHostFunctions implements PartialHostApi {
      * It’s legal to call this function multiple times in a row.
      */
     public void extStorageStartTransactionVersion1() {
-        log.fine("extStorageStartTransactionVersion1");
+        log.finest("extStorageStartTransactionVersion1");
         trieAccessor.startTransaction();
     }
 
@@ -390,7 +390,7 @@ public class StorageHostFunctions implements PartialHostApi {
      * Any changes made during that transaction are discarded. It’s legal to call this function multiple times in a row.
      */
     public void extStorageRollbackTransactionVersion1() {
-        log.fine("extStorageRollbackTransactionVersion1");
+        log.finest("extStorageRollbackTransactionVersion1");
         try {
             trieAccessor.rollbackTransaction();
         } catch (TrieTransactionException e) {
@@ -404,7 +404,7 @@ public class StorageHostFunctions implements PartialHostApi {
      * It’s legal to call this function multiple times in a row.
      */
     public void extStorageCommitTransactionVersion1() {
-        log.fine("extStorageCommitTransactionVersion1");
+        log.finest("extStorageCommitTransactionVersion1");
         try {
             trieAccessor.commitTransaction();
         } catch (TrieTransactionException e) {

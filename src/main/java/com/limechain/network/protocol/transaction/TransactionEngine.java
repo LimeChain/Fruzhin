@@ -38,12 +38,12 @@ public class TransactionEngine implements BaseEngine {
     @Override
     public void handleHandshake(byte[] message, PeerId peerId, Stream stream) {
         if (connectionManager.isTransactionsConnected(peerId)) {
-            log.info(String.format("Received existing transactions handshake from %s", peerId));
+            log.finest(String.format("Received existing transactions handshake from %s", peerId));
             stream.close();
         }
 
         connectionManager.addTransactionsStream(stream);
-        log.info(String.format("Received transactions handshake from %s", peerId));
+        log.finest(String.format("Received transactions handshake from %s", peerId));
 
         writeHandshakeToStream(stream, peerId);
     }
@@ -66,10 +66,10 @@ public class TransactionEngine implements BaseEngine {
     @Override
     public void receiveRequest(byte[] message, Stream stream) {
         if (message == null || message.length == 0) {
-            log.warning(String.format("Transactions message is null from Peer %s", stream.remotePeerId()));
+            log.fine(String.format("Transactions message is null from Peer %s", stream.remotePeerId()));
             return;
         }
-        log.fine(String.format("Transaction message length: %d", message.length));
+        log.finest(String.format("Transaction message length: %d", message.length));
 
         if (stream.isInitiator()) {
             handleInitiatorStreamMessage(message, stream);
@@ -87,7 +87,7 @@ public class TransactionEngine implements BaseEngine {
     @Override
     public void writeHandshakeToStream(Stream stream, PeerId peerId) {
         byte[] handshake = new byte[]{};
-        log.info(String.format("Sending transactions handshake to %s", peerId));
+        log.finest(String.format("Sending transactions handshake to %s", peerId));
         stream.writeAndFlush(handshake);
     }
 
@@ -98,7 +98,7 @@ public class TransactionEngine implements BaseEngine {
      * @param encodedTransactionMessage scale encoded transaction message
      */
     public void writeTransactionsMessage(Stream stream, byte[] encodedTransactionMessage) {
-        log.info(String.format("Sending transaction message to peer %s", stream.remotePeerId()));
+        log.finest(String.format("Sending transaction message to peer %s", stream.remotePeerId()));
         stream.writeAndFlush(encodedTransactionMessage);
     }
 
@@ -112,7 +112,7 @@ public class TransactionEngine implements BaseEngine {
         }
 
         connectionManager.addTransactionsStream(stream);
-        log.info(String.format("Received transactions handshake from %s", peerId));
+        log.finest(String.format("Received transactions handshake from %s", peerId));
         stream.writeAndFlush(new byte[]{});
     }
 
@@ -121,7 +121,7 @@ public class TransactionEngine implements BaseEngine {
         boolean connectedToPeer = connectionManager.isTransactionsConnected(peerId);
 
         if (!connectedToPeer && !isHandshake(message)) {
-            log.warning(String.format("No handshake for transactions message from Peer %s", peerId));
+            log.fine(String.format("No handshake for transactions message from Peer %s", peerId));
             stream.close();
             return;
         }
@@ -136,12 +136,12 @@ public class TransactionEngine implements BaseEngine {
     private void handleTransactionMessage(byte[] message, Stream stream) {
 
         if (!SyncMode.HEAD.equals(AbstractState.getSyncMode())) {
-            log.fine("Skipping transaction message before we reach head of chain.");
+            log.finest("Skipping transaction message before we reach head of chain.");
             return;
         }
 
         ExtrinsicArray transactions = ScaleUtils.Decode.decode(message, TransactionReader.getInstance());
-        log.fine(String.format("Received %d transactions from Peer %s",
+        log.finest(String.format("Received %d transactions from Peer %s",
                 transactions.getExtrinsics().length,
                 stream.remotePeerId()));
 

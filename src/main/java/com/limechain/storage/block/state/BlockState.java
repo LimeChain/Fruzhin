@@ -376,6 +376,12 @@ public class BlockState extends AbstractState {
         blockTree.addBlock(block.getHeader(), arrivalTime);
 
         if (!unfinalizedBlocks.containsKey(block.getHeader().getHash())) {
+
+            log.info(String.format("Best block updated: #%d (%s)",
+                    block.getHeader().getBlockNumber(),
+                    block.getHeader().getPrintableHash()
+            ));
+
             ChainSub.getInstance().notifyNewChainHead(block.getHeader());
             prometheusServer.emitBestBlock(block.getHeader().getBlockNumber());
         }
@@ -781,8 +787,11 @@ public class BlockState extends AbstractState {
         finalizeBlock(header, setId, justification == null
                 ? BigInteger.ZERO
                 : justification.getRoundNumber());
-        log.info(String.format("Finalized block in block state. Number: %d Hash: %s",
-                header.getBlockNumber(), header.getHash()));
+
+        log.info(String.format("Last finalized block in BlockState updated: #%d (%s)",
+                header.getBlockNumber(),
+                header.getPrintableHash()
+        ));
     }
 
     /**
@@ -801,8 +810,9 @@ public class BlockState extends AbstractState {
 
         if (!hash.equals(genesisBlockHash.getGenesisHash())
                 && getHighestFinalizedNumber().compareTo(header.getBlockNumber()) >= 0) {
-            throw new LowerThanRootException("Finalized block with number "
-                    + header.getBlockNumber() + " is lower than root");
+
+            throw new LowerThanRootException(
+                    String.format("Block #%d is lower than root", header.getBlockNumber()));
         }
 
         handleFinalizedBlock(hash);

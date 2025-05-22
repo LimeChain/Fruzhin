@@ -6,7 +6,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.protobuf.ByteString;
 import com.limechain.config.HostConfig;
 import com.limechain.rpc.client.SyncStateRpcClient;
+import com.limechain.utils.HashUtils;
 import com.limechain.utils.StringUtils;
+import io.emeraldpay.polkaj.types.Hash256;
 import lombok.extern.java.Log;
 import org.java_websocket.client.WebSocketClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -86,7 +88,7 @@ public class SyncStateRequesterRpc {
      *
      * @param blockHash is the last finalized block hash for which we want the full state
      */
-    public Map<ByteString, ByteString> requestState(String blockHash) {
+    public Map<ByteString, ByteString> requestState(Hash256 blockHash) {
         try {
             initializeWebSocketPool();
             return startStateRetrieval(blockHash);
@@ -109,7 +111,7 @@ public class SyncStateRequesterRpc {
      * Retry behavior:
      * - If a batch fetch fails, we retry up to MAX_KEY_RETRIES times before aborting.
      */
-    public Map<ByteString, ByteString> startStateRetrieval(String blockHash) {
+    public Map<ByteString, ByteString> startStateRetrieval(Hash256 blockHash) {
         ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
         Map<String, String> stateData = new ConcurrentHashMap<>();
         String lastKey = null;
@@ -117,7 +119,8 @@ public class SyncStateRequesterRpc {
 
         try {
             List<String> keys;
-            log.info("startStateRetrieval: Starting state retrieval for block: " + blockHash);
+            log.info(String.format("startStateRetrieval: Starting state retrieval for block (%s)",
+                    HashUtils.getPrintableHash(blockHash)));
 
             while (true) {
                 try {
@@ -143,7 +146,7 @@ public class SyncStateRequesterRpc {
                     long now = System.currentTimeMillis();
 
                     if (now - lastLogTime >= LOG_INTERVAL) {
-                        log.info(String.format("Progress: %d keys processed with values.",
+                        log.info(String.format("startStateRetrieval: Progress: %d keys processed with values.",
                                 stateData.size()));
                         lastLogTime = now;
                     }
@@ -205,7 +208,7 @@ public class SyncStateRequesterRpc {
     private void processKeysBatch(List<String> keys,
                                   ExecutorService executor,
                                   Map<String, String> stateData,
-                                  String blockHash) {
+                                  Hash256 blockHash) {
 
         List<CompletableFuture<Void>> futures = new ArrayList<>();
 
@@ -226,7 +229,7 @@ public class SyncStateRequesterRpc {
      * Retries if null response received or any error occurs.
      * Aborts program if retrieval fails after MAX_VALUE_RETRIES.
      */
-    private void retrieveAndStoreValue(String key, String blockHash, Map<String, String> stateData) {
+    private void retrieveAndStoreValue(String key, Hash256 blockHash, Map<String, String> stateData) {
         int attempts = 0;
         String value = null;
 
@@ -293,10 +296,15 @@ public class SyncStateRequesterRpc {
     /**
      * RPC call to retrieve a batch of keys.
      */
-    private List<String> getKeysPaged(String startKey, String blockHash) throws Exception {
+    private List<String> getKeysPaged(String startKey, Hash256 blockHash) throws Exception {
         String response = sendRequestWithPooledClient(
                 GET_KEYS_PAGED_METHOD_NAME,
-                new String[]{PREFIX, String.valueOf(BATCH_SIZE), startKey, blockHash}
+                new String[]{
+                        PREFIX,
+                        String.valueOf(BATCH_SIZE),
+                        startKey,
+                        blockHash.toString()
+                }
         );
         JsonNode result = getJsonNode(response);
 
@@ -306,10 +314,10 @@ public class SyncStateRequesterRpc {
     /**
      * RPC call to retrieve the value of a single key.
      */
-    private String getStorage(String key, String blockHash) throws Exception {
+    private String getStorage(String key, Hash256 blockHash) throws Exception {
         String response = sendRequestWithPooledClient(
                 GET_STORAGE_METHOD_NAME,
-                new String[]{key, blockHash}
+                new String[]{key, blockHash.toString()}
         );
         JsonNode result = getJsonNode(response);
 

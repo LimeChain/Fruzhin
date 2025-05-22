@@ -44,7 +44,7 @@ public class BlockAnnounceEngine implements BaseEngine {
     @Override
     public void handleHandshake(byte[] message, PeerId peerId, Stream stream) {
         if (connectionManager.isBlockAnnounceConnected(peerId)) {
-            log.info(String.format("Received existing handshake from %s", peerId));
+            log.finest(String.format("Received existing handshake from %s", peerId));
             stream.close();
         }
 
@@ -55,7 +55,7 @@ public class BlockAnnounceEngine implements BaseEngine {
 
         connectionManager.addBlockAnnounceStream(stream);
         connectionManager.updatePeer(peerId, handshake);
-        log.info(String.format("Received handshake from %s %n %s", peerId, handshake));
+        log.finest(String.format("Received handshake from %s %n %s", peerId, handshake));
 
         writeHandshakeToStream(stream, peerId);
     }
@@ -67,7 +67,7 @@ public class BlockAnnounceEngine implements BaseEngine {
         boolean isHandshake = message.length == HANDSHAKE_LENGTH;
 
         if (!connectedToPeer && !isHandshake) {
-            log.warning(String.format("No handshake for block announce message from Peer %s", peerId));
+            log.fine(String.format("No handshake for block announce message from Peer %s", peerId));
             return;
         }
 
@@ -88,12 +88,12 @@ public class BlockAnnounceEngine implements BaseEngine {
                 handshakeBuilder.getBlockAnnounceHandshake()
         );
 
-        log.info(String.format("Sending handshake to %s", peerId));
+        log.finest(String.format("Sending handshake to %s", peerId));
         stream.writeAndFlush(encoded);
     }
 
     public void writeBlockAnnounceMessage(Stream stream, PeerId peerId, byte[] encodedBlockAnnounceMessage) {
-        log.fine(String.format("Sending Block Announce message to peer %s", peerId));
+        log.finest(String.format("Sending Block Announce message to peer %s", peerId));
         stream.writeAndFlush(encodedBlockAnnounceMessage);
     }
 
@@ -101,7 +101,7 @@ public class BlockAnnounceEngine implements BaseEngine {
         BlockAnnounceMessage announce = ScaleUtils.Decode.decode(msg, BlockAnnounceMessageScaleReader.getInstance());
         connectionManager.updatePeer(peerId, announce);
 
-        log.fine(String.format(
+        log.finest(String.format(
                 "Received block announce for block #%d from %s with hash: %s parentHash: %s stateRoot: %s",
                 announce.getHeader().getBlockNumber(),
                 peerId,

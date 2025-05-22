@@ -51,7 +51,7 @@ public class GrandpaProtocol extends BaseProtocol<GrandpaController, GrandpaProt
         @Override
         public void onClosed(Stream stream) {
             connectionManager.closeGrandpaStream(stream);
-            log.info(String.format("Grandpa stream closed for peer %s", stream.remotePeerId()));
+            log.finest(String.format("Grandpa stream closed for peer %s", stream.remotePeerId()));
             ProtocolMessageHandler.super.onClosed(stream);
         }
 
@@ -59,9 +59,9 @@ public class GrandpaProtocol extends BaseProtocol<GrandpaController, GrandpaProt
         public void onException(Throwable cause) {
             connectionManager.closeGrandpaStream(stream);
             if (cause != null) {
-                log.warning(String.format("Grandpa Exception: %s", cause.getMessage()));
+                log.fine(String.format("Grandpa Exception: %s", cause.getMessage()));
             } else {
-                log.warning("Grandpa Exception with unknown cause");
+                log.fine("Grandpa Exception with unknown cause");
             }
             ProtocolMessageHandler.super.onException(cause);
         }

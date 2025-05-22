@@ -45,4 +45,8 @@ public class BlockHeader implements Serializable {
                 this);
         return HashUtils.hashWithBlake2b(scaleEncoded);
     }
+
+    public String getPrintableHash() {
+        return HashUtils.getPrintableHash(getHash());
+    }
 }

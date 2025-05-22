@@ -43,7 +43,7 @@ public class BlockAnnounceProtocol extends BaseProtocol<BlockAnnounceController,
         @Override
         public void onClosed(@NotNull Stream stream) {
             connectionManager.closeBlockAnnounceStream(stream);
-            log.info(String.format("Block announce stream closed for peer %s", stream.remotePeerId()));
+            log.finest(String.format("Block announce stream closed for peer %s", stream.remotePeerId()));
             ProtocolMessageHandler.super.onClosed(stream);
         }
 
@@ -51,9 +51,9 @@ public class BlockAnnounceProtocol extends BaseProtocol<BlockAnnounceController,
         public void onException(Throwable cause) {
             connectionManager.closeBlockAnnounceStream(stream);
             if (cause != null) {
-                log.warning(String.format("Block Announce Exception: %s", cause.getMessage()));
+                log.fine(String.format("Block Announce Exception: %s", cause.getMessage()));
             } else {
-                log.warning("Block Announce Exception with unknown cause");
+                log.fine("Block Announce Exception with unknown cause");
             }
             ProtocolMessageHandler.super.onException(cause);
         }

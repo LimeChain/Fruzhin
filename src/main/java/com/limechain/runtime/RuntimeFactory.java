@@ -137,7 +137,7 @@ public class RuntimeFactory {
         // If we couldn't get the data from the wasm custom sections,
         // we must fall back to calling Core_version
         if (runtimeVersion == null) {
-            log.info("Couldn't fetch runtime version from custom section, calling 'Core_version'.");
+            log.fine("Couldn't fetch runtime version from custom section, calling 'Core_version'.");
             runtimeVersion = runtime.getVersion();
         }
 
