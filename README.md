@@ -10,7 +10,7 @@ authoring and relaying node, increasing security of the Polkadot Protocol. It's 
 
 - [x] Light Client
 - [x] Full Node
-- [ ] Authoring Node
+- [x] Authoring Node
 - [ ] Relaying Node
 
 # Getting started
@@ -48,10 +48,51 @@ export JAVA_HOME=`/usr/libexec/java_home -v 22`
 java -jar build/libs/Fruzhin-0.1.0.jar -n polkadot --node-mode full --sync-mode full
 ```
 
-- `-n`(network) could be `westend`, `polkadot` or `kusama`
+- `-n`(network) could be `westend`, `polkadot`, `kusama` or `local`
 - `--node-mode` could be `full` or `light`
 - `--sync-mode` could be `full` or `warp`
 
+Optional program arguments:
+- `-dbc` cleans database
+- `-prometheus-port` can specify custom port for running prometheus server [default: 9090]
+
+Optional environment variables:
+- When `SHORT_HASH_LOGS` is set without a value, block hashes in logs are abbreviated from full form
+`0xb94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9` to a shortened format like `0xb94...efcde9`
+- `BABE_PUB_KEY`, `BABE_SURI`, `GRAN_PUB_KEY`, `GRAN_SURI`, `BEEF_PUB_KEY`, `BEEF_SURI` are available 
+(not recommended for production) for injecting keys into the keystore.
+
+### Running as a Validator
+If you're running a Fruzhin node as a validator, you need to inject the required session keys (`babe`, `gran`, `beef`) 
+so the node can actively participate in all consensuses.
+
+There are two main ways to provide these keys:
+1. Use author_insertKey via RPC after the node is started:
+```shell
+curl -X POST http://127.0.0.1:9922 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "author_insertKey",
+    "params": [
+        "gran",
+        "<suri>",
+        "<public-key>"
+    ]
+}'
+```
+2. Use Environment variables (Not Recommended for Production)
+You can set the keys via environment variables before starting the node. This may be convenient for local 
+testing or quick setups.
+```shell
+export BABE_PUB_KEY=<key>
+export BABE_SURI=<suri>
+export GRAN_PUB_KEY=<key>
+export GRAN_SURI=<suri>
+export BEEF_PUB_KEY=<key>
+export BEEF_SURI=<suri>
+```
 
 ## Get docker image
 
