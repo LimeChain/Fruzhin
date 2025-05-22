@@ -45,7 +45,10 @@ public class PreCommitStage implements StageState {
 
         try {
 
-            if (round.getGrandpaGhost() == null) return;
+            if (round.getGrandpaGhost() == null) {
+                log.fine(String.format("Round %d has no grandpa ghost yet", round.getRoundNumber()));
+                return;
+            }
 
             Vote grandpaGhost = Vote.fromBlockHeader(round.getGrandpaGhost());
             log.fine(String.format("Round %d ended pre-commit stage", round.getRoundNumber()));
