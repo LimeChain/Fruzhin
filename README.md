@@ -94,6 +94,31 @@ export BEEF_PUB_KEY=<key>
 export BEEF_SURI=<suri>
 ```
 
+### Running Validators on Local Network
+Fruzhin supports running validators on a local network using the provided chainspecs in the `genesis/zombienet` 
+directory. There are two chainspecs available:
+
+1. **Single Validator (Alice)**: This chainspec is configured with only Alice as a validator. 
+It's designed for single-validator setups where Alice can make progress independently since it meets the 2/3 + 1 
+threshold requirement. The bootnodes array is empty in this configuration.
+
+2. **Multiple Validators (Alice and Bob)**: This chainspec includes both Alice and Bob as validators. Before 
+using this configuration:
+   - Start another node first
+   - Make an RPC call to get the node's address:
+     ```bash
+     curl -H "Content-Type: application/json" -d '{"id":1, "jsonrpc":"2.0", "method": "system_localListenAddresses"}' http://localhost:9944
+     ```
+   - Add the returned address to the bootnodes array in the chainspec
+   - Then start Fruzhin, which will connect to the other node
+
+You can specify which chainspec to use by configuring the `application.properties` file.
+
+The keys for Alice and Bob in these chainspecs are generated using the `subkey` tool with the following command:
+```bash
+subkey inspect <seed> --scheme (sr25519 | ed25519 | ecdsa)
+```
+
 ## Get docker image
 
 ```bash
