@@ -107,6 +107,7 @@ public class GrandpaEngine implements BaseEngine {
 
         log.finest(String.format("Sending grandpa handshake to %s", peerId));
         stream.writeAndFlush(handshake);
+        writeNeighbourMessage(stream, peerId);
     }
 
     /**
