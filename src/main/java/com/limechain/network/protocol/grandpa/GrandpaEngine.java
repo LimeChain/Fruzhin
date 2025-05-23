@@ -49,12 +49,12 @@ public class GrandpaEngine implements BaseEngine {
     @Override
     public void handleHandshake(byte[] message, PeerId peerId, Stream stream) {
         if (connectionManager.isGrandpaConnected(peerId)) {
-            log.info(String.format("Received existing grandpa handshake from %s", peerId));
+            log.finest(String.format("Received existing grandpa handshake from %s", peerId));
             stream.close();
         } else {
             connectionManager.addGrandpaStream(stream);
             connectionManager.getPeerInfo(peerId).setNodeRole(message[0]);
-            log.info(String.format("Received grandpa handshake from %s", peerId));
+            log.finest(String.format("Received grandpa handshake from %s", peerId));
             writeHandshakeToStream(stream, peerId);
         }
     }
@@ -79,7 +79,7 @@ public class GrandpaEngine implements BaseEngine {
         GrandpaMessageType messageType = getGrandpaMessageType(message);
 
         if (messageType == null) {
-            log.warning(String.format("Unknown grandpa message type \"%d\" from Peer %s",
+            log.fine(String.format("Unknown grandpa message type \"%d\" from Peer %s",
                     message[0], stream.remotePeerId()));
             return;
         }
@@ -105,8 +105,9 @@ public class GrandpaEngine implements BaseEngine {
                 nodeRole.getValue().byteValue()
         };
 
-        log.info(String.format("Sending grandpa handshake to %s", peerId));
+        log.finest(String.format("Sending grandpa handshake to %s", peerId));
         stream.writeAndFlush(handshake);
+        writeNeighbourMessage(stream, peerId);
     }
 
     /**
@@ -118,7 +119,7 @@ public class GrandpaEngine implements BaseEngine {
     public void writeNeighbourMessage(Stream stream, PeerId peerId) {
         PeerInfo peerInfo = connectionManager.getPeerInfo(peerId);
         if (peerInfo == null) {
-            log.info(String.format("writeNeighbourMessage: Peer %s is missing.", peerId));
+            log.finest(String.format("writeNeighbourMessage: Peer %s is missing.", peerId));
             return;
         }
 
@@ -135,7 +136,7 @@ public class GrandpaEngine implements BaseEngine {
                 neighbourMessage
         );
 
-        log.fine(String.format("Sending neighbour message to Peer %s", peerId));
+        log.finest(String.format("Sending neighbour message to Peer %s", peerId));
         stream.writeAndFlush(encoded);
     }
 
@@ -146,7 +147,7 @@ public class GrandpaEngine implements BaseEngine {
      * @param encodedCommitMessage scale encoded CommitMessage object
      */
     public void writeCommitMessage(Stream stream, byte[] encodedCommitMessage) {
-        log.fine(String.format("Sending commit message to Peer %s", stream.remotePeerId()));
+        log.finest(String.format("Sending commit message to Peer %s", stream.remotePeerId()));
         stream.writeAndFlush(encodedCommitMessage);
     }
 
@@ -157,7 +158,7 @@ public class GrandpaEngine implements BaseEngine {
      * @param encodedCatchUpReqMessage scale encoded CatchUpRequestMessage object
      */
     public void writeCatchUpRequest(Stream stream, byte[] encodedCatchUpReqMessage) {
-        log.fine(String.format("Sending catch up request to Peer %s", stream.remotePeerId()));
+        log.info(String.format("Sending catch up request to Peer %s", stream.remotePeerId()));
         stream.writeAndFlush(encodedCatchUpReqMessage);
     }
 
@@ -168,7 +169,7 @@ public class GrandpaEngine implements BaseEngine {
      * @param encodedCatchUpResMessage scale encoded CatchUpResMessage object
      */
     public void writeCatchUpResponse(Stream stream, byte[] encodedCatchUpResMessage) {
-        log.fine(String.format("Sending catch up response to Peer %s", stream.remotePeerId()));
+        log.info(String.format("Sending catch up response to Peer %s", stream.remotePeerId()));
         stream.writeAndFlush(encodedCatchUpResMessage);
     }
 
@@ -179,7 +180,7 @@ public class GrandpaEngine implements BaseEngine {
      * @param encodedVoteMessage scale encoded VoteMessage object
      */
     public void writeVoteMessage(Stream stream, byte[] encodedVoteMessage) {
-        log.fine(String.format("Sending vote message to peer %s", stream.remotePeerId()));
+        log.finest(String.format("Sending vote message to peer %s", stream.remotePeerId()));
         stream.writeAndFlush(encodedVoteMessage);
     }
 
@@ -187,12 +188,12 @@ public class GrandpaEngine implements BaseEngine {
         PeerId peerId = stream.remotePeerId();
         if (messageType != GrandpaMessageType.HANDSHAKE) {
             stream.close();
-            log.warning(String.format("Non handshake message on initiator grandpa stream from peer %s", peerId));
+            log.fine(String.format("Non handshake message on initiator grandpa stream from peer %s", peerId));
             return;
         }
 
         connectionManager.addGrandpaStream(stream);
-        log.info(String.format("Received grandpa handshake from %s", peerId));
+        log.finest(String.format("Received grandpa handshake from %s", peerId));
         writeNeighbourMessage(stream, peerId);
     }
 
@@ -201,7 +202,7 @@ public class GrandpaEngine implements BaseEngine {
         boolean connectedToPeer = connectionManager.isGrandpaConnected(peerId);
 
         if (!connectedToPeer && messageType != GrandpaMessageType.HANDSHAKE) {
-            log.warning(String.format("No handshake for grandpa message from Peer %s", peerId));
+            log.fine(String.format("No handshake for grandpa message from Peer %s", peerId));
             stream.close();
             return;
         }
@@ -239,7 +240,7 @@ public class GrandpaEngine implements BaseEngine {
         PeerId peerId = stream.remotePeerId();
         PeerInfo peerInfo = connectionManager.getPeerInfo(peerId);
         if (peerInfo == null) {
-            log.info(String.format("handleNeighbourMessage: Peer %s is missing.", peerId));
+            log.finest(String.format("handleNeighbourMessage: Peer %s is missing.", peerId));
             return;
         }
 
@@ -248,7 +249,7 @@ public class GrandpaEngine implements BaseEngine {
                 NeighbourMessageScaleReader.getInstance()
         );
 
-        log.fine(String.format("Received neighbour message from Peer %s %n %s.", peerId, neighbourMessage));
+        log.finest(String.format("Received neighbour message from Peer %s %n %s.", peerId, neighbourMessage));
 
         if (peerInfo.getSetId() != null && peerInfo.getRoundNumber() != null) {
             if (neighbourMessage.getSetId().compareTo(peerInfo.getSetId()) < 0) {
@@ -270,13 +271,13 @@ public class GrandpaEngine implements BaseEngine {
 
     private void handleVoteMessage(byte[] message, PeerId peerId) {
         VoteMessage voteMessage = ScaleUtils.Decode.decode(message, VoteMessageScaleReader.getInstance());
-        log.info(String.format("Received vote message from Peer %s %n %s", peerId, voteMessage));
+        log.finest(String.format("Received vote message from Peer %s %n %s", peerId, voteMessage));
         grandpaMessageHandler.handleVoteMessage(voteMessage);
     }
 
     private void handleCommitMessage(byte[] message, PeerId peerId) {
         CommitMessage commitMessage = ScaleUtils.Decode.decode(message, CommitMessageScaleReader.getInstance());
-        log.info(String.format("Received commit message from Peer %s %d %d",
+        log.finest(String.format("Received commit message from peer: %s round: %d setId: %d",
                 peerId,
                 commitMessage.getRoundNumber(),
                 commitMessage.getSetId()));

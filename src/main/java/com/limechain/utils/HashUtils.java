@@ -13,9 +13,12 @@ import java.nio.ByteOrder;
 
 @UtilityClass
 public class HashUtils {
+
     public static final int HASH256_HASH_LENGTH = Hash256.SIZE_BYTES * Byte.SIZE;
     public static final int HASH_128_SIZE_BYTES = 16;
     public static final int HASH_64_SIZE_BYTES = 8;
+
+    private static final String ENV_SHORT_HASH_LOGS = "SHORT_HASH_LOGS";
 
     /**
      * Conducts a 256-bit Blake2b hash.
@@ -140,5 +143,18 @@ public class HashUtils {
         buffer.put(hash3);
 
         return buffer.array();
+    }
+
+    public static String getPrintableHash(Hash256 hash) {
+        if (!System.getenv().containsKey(ENV_SHORT_HASH_LOGS)) return hash.toString();
+
+        String fullHash = hash.toString();
+        int prefixLength = 5;
+        int suffixLength = 6;
+
+        String prefix = fullHash.substring(0, prefixLength);
+        String suffix = fullHash.substring(fullHash.length() - suffixLength);
+
+        return String.format("%s...%s", prefix, suffix);
     }
 }

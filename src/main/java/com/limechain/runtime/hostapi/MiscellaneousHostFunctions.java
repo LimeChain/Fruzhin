@@ -65,7 +65,7 @@ public class MiscellaneousHostFunctions implements PartialHostApi {
      * @param number the number to be printed
      */
     public void printNumV1(Number number) {
-        log.fine("Printing number from runtime: " + number);
+        log.finest("Printing number from runtime: " + number);
     }
 
     /**
@@ -77,7 +77,7 @@ public class MiscellaneousHostFunctions implements PartialHostApi {
         byte[] data = sharedMemory.readData(strPointer);
 
         final String strToPrint = new String(data, StandardCharsets.UTF_8);
-        log.fine("Printing utf8 from runtime: " + strToPrint);
+        log.finest("Printing utf8 from runtime: " + strToPrint);
     }
 
     /**
@@ -89,7 +89,7 @@ public class MiscellaneousHostFunctions implements PartialHostApi {
         byte[] data = sharedMemory.readData(pointer);
 
         final String hexString = HexUtils.toHexString(data);
-        log.fine("Printing hex from runtime: " + hexString);
+        log.finest("Printing hex from runtime: " + hexString);
     }
 
     /**

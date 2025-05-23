@@ -28,6 +28,8 @@ public class SlotCoordinator {
     }
 
     public void start(List<SlotChangeListener> listeners) {
+        log.info("start: Started Babe slot coordinator");
+
         this.slotChangeListenerList.addAll(listeners);
 
         lastSlotNumber = epochState.getCurrentSlotNumber();

@@ -31,7 +31,7 @@ public class LightMessages extends StrictProtocolBinding<LightMessagesController
             LightClientMessage.Response resp = controller
                     .remoteCallRequest(StringUtils.remove0xPrefix(blockHash), method, data)
                     .get();
-            log.info(String.format("Received response with length: %d", resp.toByteArray().length));
+            log.finest(String.format("Received response with length: %d", resp.toByteArray().length));
             return resp;
         } catch (ExecutionException | IllegalStateException e) {
             log.severe(String.format("%s %s", GENERIC_REMOTE_CALL_ERROR_MESSAGE, e.getMessage()));
@@ -51,7 +51,7 @@ public class LightMessages extends StrictProtocolBinding<LightMessagesController
                             StringUtils.remove0xPrefix(blockHash),
                             hexKeys)
                     .get(10, TimeUnit.SECONDS);
-            log.info(String.format("Received light client message response with length: %d", resp.toByteArray().length));
+            log.finest(String.format("Received light client message response with length: %d", resp.toByteArray().length));
             return resp;
         } catch (ExecutionException | TimeoutException | IllegalStateException e) {
             log.severe(String.format("%s %s", GENERIC_REMOTE_CALL_ERROR_MESSAGE, e.getMessage()));
@@ -71,7 +71,7 @@ public class LightMessages extends StrictProtocolBinding<LightMessagesController
             LightClientMessage.Response resp = controller
                     .remoteReadChildRequest(StringUtils.remove0xPrefix(blockHash), childStorageKey, keys)
                     .get();
-            log.info(String.format("Received response: %s", resp.toString()));
+            log.finest(String.format("Received response: %s", resp.toString()));
             return resp;
         } catch (ExecutionException | IllegalStateException e) {
             log.severe(String.format("%s %s", GENERIC_REMOTE_CALL_ERROR_MESSAGE, e.getMessage()));
