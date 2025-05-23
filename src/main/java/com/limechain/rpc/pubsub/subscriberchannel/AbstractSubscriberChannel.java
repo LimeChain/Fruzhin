@@ -85,12 +85,12 @@ public abstract class AbstractSubscriberChannel {
      * @throws IOException when subscriber(session) fails to send the message to the client
      */
     public synchronized void notifySubscribers() throws IOException {
-        log.fine("Sending messages to subscribers...");
+        log.finest("Sending messages to subscribers...");
         ArrayList<Message> messagesToProcess = new ArrayList<>(pendingMessages);
         pendingMessages.clear();
         for (Message message : messagesToProcess) {
             TextMessage wsMessage = new TextMessage(message.payload().getBytes());
-            log.fine(String.format("Notifying %d subscribers about message topic -> %s : %s",
+            log.finest(String.format("Notifying %d subscribers about message topic -> %s : %s",
                     subscribers.size(), message.topic(), message.payload()));
             for (Subscriber subscriber : subscribers.values()) {
                 subscriber.getSession().sendMessage(wsMessage);

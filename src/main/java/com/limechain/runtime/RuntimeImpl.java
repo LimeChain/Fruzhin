@@ -348,7 +348,7 @@ public class RuntimeImpl implements Runtime {
     @Nullable
     private byte[] callInner(RuntimeEndpoint function, RuntimePointerSize parameterPtrSize) {
         String functionName = function.getName();
-        log.fine(String.format("Making a runtime call: %s", functionName));
+        log.finest(String.format("Making a runtime call: %s", functionName));
         try {
             Object[] response = instance.exports.getFunction(functionName)
                     .apply(parameterPtrSize.pointer(), parameterPtrSize.size());

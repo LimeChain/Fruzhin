@@ -100,7 +100,13 @@ public class BabeService implements SlotChangeListener {
         try {
             BlockHeader parentHeader = getParentBlockHeader(slot.getNumber());
             block = produceBlock(parentHeader, slot, preDigest);
-            log.info(String.format("Producing block for slot %s in epoch %s.", slot.getNumber(), slot.getEpochIndex()));
+
+            log.info(String.format("Block produced: #%s (%s) slot=%d epoch=%d",
+                    block.getHeader().getBlockNumber(),
+                    block.getHeader().getPrintableHash(),
+                    slot.getNumber(),
+                    slot.getEpochIndex())
+            );
 
         } catch (Exception e) {
             log.warning(String.format("Exception producing block: %s", e.getMessage()));

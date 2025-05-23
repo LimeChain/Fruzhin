@@ -76,7 +76,7 @@ public class DBRepository implements KVRepository<String, Object> {
 
     @Override
     public synchronized void saveBatch(Map<String, Object> kvMap) {
-        log.fine("Saving batch of key value pairs.");
+        log.finest("Saving batch of key value pairs.");
         try (final WriteBatch batch = new WriteBatch()) {
             for (Map.Entry<String, Object> e : kvMap.entrySet()) {
                 batch.put(e.getKey().getBytes(UTF_8), SerializationUtils.serialize(e.getValue()));
@@ -92,7 +92,7 @@ public class DBRepository implements KVRepository<String, Object> {
 
     @Override
     public synchronized boolean save(String key, Object value) {
-        log.fine(String.format("saving value '%s' with key '%s'", value, key));
+        log.finest(String.format("saving value '%s' with key '%s'", value, key));
         try {
             db.put(key.getBytes(UTF_8), SerializationUtils.serialize(value));
         } catch (RocksDBException e) {
@@ -118,7 +118,7 @@ public class DBRepository implements KVRepository<String, Object> {
                     e.getMessage())
             );
         }
-        log.fine(String.format("finding key '%s' returns '%s'", Nibbles.fromBytes(key.getBytes()), value));
+        log.finest(String.format("finding key '%s' returns '%s'", Nibbles.fromBytes(key.getBytes()), value));
         return Optional.ofNullable(value);
     }
 
@@ -137,7 +137,7 @@ public class DBRepository implements KVRepository<String, Object> {
 
     @Override
     public synchronized boolean delete(String key) {
-        log.fine(String.format("deleting key '%s'", key));
+        log.finest(String.format("deleting key '%s'", key));
         try {
             db.delete(key.getBytes(UTF_8));
         } catch (RocksDBException e) {
@@ -149,7 +149,7 @@ public class DBRepository implements KVRepository<String, Object> {
 
     @Override
     public synchronized DeleteByPrefixResult deleteByPrefix(String prefix, Long limit) {
-        log.fine(String.format("deleting %s keys with prefix '%s'", limit == null ? "all" : limit, prefix));
+        log.finest(String.format("deleting %s keys with prefix '%s'", limit == null ? "all" : limit, prefix));
         List<byte[]> keysToDelete = findByPrefix(prefix, limit);
 
         keysToDelete.forEach(key -> {

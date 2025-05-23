@@ -34,12 +34,12 @@ public class BeefyNotificationEngine implements BaseEngine {
     public void handleHandshake(byte[] message, PeerId peerId, Stream stream) {
 
         if (connectionManager.isBeefyConnected(peerId)) {
-            log.info(String.format("Received existing beefy handshake from %s", peerId));
+            log.finest(String.format("Received existing beefy handshake from %s", peerId));
             stream.close();
         } else {
             connectionManager.addBeefyStream(stream);
             connectionManager.getPeerInfo(peerId).setNodeRole(message[0]);
-            log.info(String.format("Received beefy handshake from %s", peerId));
+            log.finest(String.format("Received beefy handshake from %s", peerId));
             writeHandshakeToStream(stream, peerId);
         }
     }
@@ -50,7 +50,7 @@ public class BeefyNotificationEngine implements BaseEngine {
         BeefyMessageType messageType = getBeefyMessageType(message);
 
         if (messageType == null) {
-            log.warning(String.format("Unknown beefy message type \"%d\" from Peer %s",
+            log.fine(String.format("Unknown beefy message type \"%d\" from Peer %s",
                     message[0], stream.remotePeerId()));
             return;
         }
@@ -71,7 +71,7 @@ public class BeefyNotificationEngine implements BaseEngine {
     @Override
     public void writeHandshakeToStream(Stream stream, PeerId peerId) {
         byte[] handshake = new byte[]{};
-        log.info(String.format("Sending beefy handshake to %s", peerId));
+        log.finest(String.format("Sending beefy handshake to %s", peerId));
         stream.writeAndFlush(handshake);
     }
 
@@ -87,7 +87,7 @@ public class BeefyNotificationEngine implements BaseEngine {
      */
     public void writeMessage(Stream stream, byte[] encodedMessage) {
         BeefyMessageType type = BeefyMessageType.getByType(encodedMessage[0]);
-        log.fine(String.format("Sending beefy %s to peer %s", type, stream.remotePeerId()));
+        log.finest(String.format("Sending beefy %s to peer %s", type, stream.remotePeerId()));
         stream.writeAndFlush(encodedMessage);
     }
 
@@ -96,12 +96,12 @@ public class BeefyNotificationEngine implements BaseEngine {
         PeerId peerId = stream.remotePeerId();
         if (messageType != BeefyMessageType.HANDSHAKE) {
             stream.close();
-            log.warning(String.format("Non handshake message on initiator beefy steam from peer %s", peerId));
+            log.fine(String.format("Non handshake message on initiator beefy steam from peer %s", peerId));
             return;
         }
 
         connectionManager.addBeefyStream(stream);
-        log.info(String.format("Received beefy handshake from %s", peerId));
+        log.finest(String.format("Received beefy handshake from %s", peerId));
     }
 
     private void handleResponderStreamMessage(byte[] message, BeefyMessageType messageType, Stream stream) {
@@ -109,7 +109,7 @@ public class BeefyNotificationEngine implements BaseEngine {
         boolean connectedToPeer = connectionManager.isBeefyConnected(peerId);
 
         if (!connectedToPeer && messageType != BeefyMessageType.HANDSHAKE) {
-            log.warning(String.format("No handshake for beefy message from peer %s", peerId));
+            log.fine(String.format("No handshake for beefy message from peer %s", peerId));
             stream.close();
             return;
         }
@@ -123,13 +123,13 @@ public class BeefyNotificationEngine implements BaseEngine {
 
     private void handleVoteMessage(byte[] message, PeerId peerId) {
         BeefyVoteMessage voteMessage = ScaleUtils.Decode.decode(message, BeefyVoteMessageScaleReader.getInstance());
-        log.fine(String.format("Beefy: Received vote message from Peer %s %n %s", peerId, voteMessage));
+        log.finest(String.format("Beefy: Received vote message from Peer %s %n %s", peerId, voteMessage));
         beefyMessageHandler.handleVoteMessage(voteMessage);
     }
 
     private void handleJustificationMessage(byte[] message, PeerId peerId) {
         SignedCommitment signedCommitment = ScaleUtils.Decode.decode(message, SignedCommitmentScaleReader.getInstance());
-        log.fine(String.format("Beefy: Received justification from Peer %s %n %s", peerId, signedCommitment));
+        log.finest(String.format("Beefy: Received justification from Peer %s %n %s", peerId, signedCommitment));
         beefyMessageHandler.handleSignedCommitment(signedCommitment);
     }
 

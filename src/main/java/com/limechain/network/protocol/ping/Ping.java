@@ -22,7 +22,7 @@ public class Ping extends StrictProtocolBinding<PingController> {
         try {
             PingController controller = dialPeer(us, peer, addrs);
             Long resp = controller.ping().get();
-            log.info(String.format("Received response: %s", resp.toString()));
+            log.finest(String.format("Received response: %s ms", resp.toString()));
             return resp;
         } catch (ExecutionException | IllegalStateException e) {
             log.severe(String.format("Error while sending ping request: %s", e.getMessage()));
@@ -32,5 +32,4 @@ public class Ping extends StrictProtocolBinding<PingController> {
             throw new ThreadInterruptedException(e);
         }
     }
-
 }

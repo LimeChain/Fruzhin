@@ -85,8 +85,11 @@ public class SyncState extends AbstractState {
         this.lastFinalizedBlockHash = header.getHash();
         this.stateRoot = header.getStateRoot();
         persistState();
-        log.info(String.format("Finalized block in sync state. Number: %d Hash: %s",
-                header.getBlockNumber(), header.getHash()));
+
+        log.fine(String.format("Last finalized block in SyncState updated: #%d (%s)",
+                header.getBlockNumber(),
+                header.getPrintableHash()
+        ));
     }
 
     public void setLightSyncState(LightSyncState initState) {

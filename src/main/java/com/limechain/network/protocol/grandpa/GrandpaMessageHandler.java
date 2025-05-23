@@ -164,7 +164,7 @@ public class GrandpaMessageHandler {
 
         if (commitMessage.getVote().getBlockNumber().compareTo(
                 stateManager.getSyncState().getLastFinalizedBlockNumber()) <= 0) {
-            log.fine(String.format("Received commit message for finalized block %d from peer %s",
+            log.fine(String.format("Received commit message for finalized block #%d from peer %s",
                     commitMessage.getVote().getBlockNumber(), peerId));
             return;
         }

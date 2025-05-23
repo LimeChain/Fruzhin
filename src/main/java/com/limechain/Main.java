@@ -33,8 +33,9 @@ public class Main {
         // Figure out what client role we want to start
         HostConfig hostConfig = AppBean.getBean(HostConfig.class);
         final NodeRole nodeRole = hostConfig.getNodeRole();
-        HostNode client;
+        log.info(String.format("\uD83D\uDE80Started %s client!", nodeRole));
 
+        HostNode client;
         switch (nodeRole) {
             case FULL -> client = new FullNode();
             case LIGHT -> client = new LightClient();
@@ -53,7 +54,6 @@ public class Main {
         // Start the client
         // NOTE: This starts the beans the client would need - mutates the global context
         client.start();
-        log.info(String.format("\uD83D\uDE80Started %s client!", nodeRole));
 
         Signal.handle(new Signal("INT"), signal -> {
             prometheusServer.stop();

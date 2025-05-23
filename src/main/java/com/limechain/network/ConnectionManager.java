@@ -148,7 +148,7 @@ public class ConnectionManager {
     private void closeStream(Stream stream, ProtocolStreamType type) {
         PeerInfo peerInfo = peers.get(stream.remotePeerId());
         if (peerInfo == null) {
-            log.warning(String.format("Trying to close a missing stream for peer %s", stream.remotePeerId()));
+            log.finest(String.format("Trying to close a missing stream for peer %s", stream.remotePeerId()));
             return;
         }
 
@@ -304,14 +304,14 @@ public class ConnectionManager {
             peers.remove(peerId);
         }
 
-        log.info(String.format("removePeer: removed %s", peerId));
+        log.fine(String.format("removePeer: removed %s", peerId));
     }
 
     public boolean checkIfPeerIsAuthorNode(PeerId peerId) {
         return Optional.ofNullable(getPeerInfo(peerId))
                 .map(peerInfo -> NodeRole.AUTHORING.getValue().equals(peerInfo.getNodeRole()))
                 .orElseGet(() -> {
-                    log.info(String.format("checkIfPeerIsAuthorNode: Peer %s is missing.", peerId));
+                    log.fine(String.format("checkIfPeerIsAuthorNode: Peer %s is missing.", peerId));
                     return false;
                 });
     }
@@ -320,7 +320,7 @@ public class ConnectionManager {
         return Optional.ofNullable(getPeerInfo(peerId))
                 .map(peerInfo -> NodeRole.LIGHT.getValue().equals(peerInfo.getNodeRole()))
                 .orElseGet(() -> {
-                    log.info(String.format("checkIfPeerIsLightNode: Peer %s is missing.", peerId));
+                    log.fine(String.format("checkIfPeerIsLightNode: Peer %s is missing.", peerId));
                     return false;
                 });
     }

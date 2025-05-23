@@ -42,9 +42,11 @@ import org.springframework.stereotype.Component;
 
 import java.security.SecureRandom;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -174,7 +176,7 @@ public class NetworkService implements NodeService {
         if (connectionManager.getPeerIds().isEmpty()) return;
         this.currentSelectedPeer = connectionManager.getPeerIds().stream()
                 .skip(RANDOM.nextInt(connectionManager.getPeerIds().size())).findAny().orElse(null);
-        log.info(String.format("Current selected peer: %s", this.currentSelectedPeer));
+        log.finest(String.format("Current selected peer: %s", this.currentSelectedPeer));
     }
 
     public String getPeerId() {
@@ -227,13 +229,14 @@ public class NetworkService implements NodeService {
         }
 
         log.info("Pinging peers...");
-        connectionManager.getPeerIds().forEach(this::ping);
+        Set<PeerId> peersCopy = new HashSet<>(connectionManager.getPeerIds());
+        peersCopy.forEach(this::ping);
     }
 
     private void ping(PeerId peerId) {
         try {
             Long latency = ping.ping(host, host.getAddressBook(), peerId);
-            log.info(String.format("Pinged peer: %s, latency %s ms", peerId, latency));
+            log.finest(String.format("Pinged peer: %s, latency %s ms", peerId, latency));
         } catch (Exception e) {
             log.fine(String.format("Failed to ping peer: %s. Removing from active connections", peerId));
             if (this.currentSelectedPeer.equals(peerId)) {
@@ -254,7 +257,7 @@ public class NetworkService implements NodeService {
 
         // The peerId is generated from the privateKey of the node
         hostBuilder.setPrivKey(loadPrivateKeyFromDB(repository, cliArgs));
-        log.info("Current peerId " + hostBuilder.getPeerId().toString());
+        log.finest("Current peerId " + hostBuilder.getPeerId().toString());
         Multihash hostId = Multihash.deserialize(hostBuilder.getPeerId().getBytes());
 
         boolean legacyProtocol = cliArgs.useLegacyProtocols();
