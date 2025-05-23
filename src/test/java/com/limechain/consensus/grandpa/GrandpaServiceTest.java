@@ -57,8 +57,10 @@ class GrandpaServiceTest {
     private final Hash256 HASH_0 = new Hash256(generateHash(0));
     private final Hash256 HASH_1 = new Hash256(generateHash(1));
     private final Hash256 HASH_2 = new Hash256(generateHash(2));
+
     private final BigInteger BLOCK_1_NUM = BigInteger.ONE;
     private final BigInteger BLOCK_2_NUM = BigInteger.TWO;
+
     private final Authority authority1 = new Authority(generateHash(1), BigInteger.ONE);
     private final Authority authority2 = new Authority(generateHash(2), BigInteger.TEN);
     private final GrandpaAuthoritySet authoritySet = new GrandpaAuthoritySet(
