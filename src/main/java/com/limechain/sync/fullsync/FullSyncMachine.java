@@ -110,22 +110,25 @@ public class FullSyncMachine {
 
         stateManager.getBlockState().storeRuntime(lastFinalizedBlockHash, runtime);
 
-        int startNumber = syncState.getLastFinalizedBlockNumber()
-                .add(BigInteger.ONE)
-                .intValueExact();
+        if (networkService.isStarted()) {
 
-        messageCoordinator.handshakeBootNodes();
-        messageCoordinator.handshakePeers();
+            messageCoordinator.handshakeBootNodes();
+            messageCoordinator.handshakePeers();
 
-        int blocksToFetch = 100;
-        List<Block> receivedBlocks = requester.requestBlocks(BlockRequestField.ALL, startNumber, blocksToFetch).join();
+            int startNumber = syncState.getLastFinalizedBlockNumber()
+                    .add(BigInteger.ONE)
+                    .intValueExact();
 
-        while (!receivedBlocks.isEmpty()) {
-            executeBlocks(receivedBlocks, trieAccessor);
-            log.info("Executed blocks from " + receivedBlocks.getFirst().getHeader().getBlockNumber()
-                    + " to " + receivedBlocks.getLast().getHeader().getBlockNumber());
-            startNumber += receivedBlocks.size();
-            receivedBlocks = requester.requestBlocks(BlockRequestField.ALL, startNumber, blocksToFetch).join();
+            int blocksToFetch = 100;
+            List<Block> receivedBlocks = requester.requestBlocks(BlockRequestField.ALL, startNumber, blocksToFetch).join();
+
+            while (!receivedBlocks.isEmpty()) {
+                executeBlocks(receivedBlocks, trieAccessor);
+                log.info("Executed blocks from " + receivedBlocks.getFirst().getHeader().getBlockNumber()
+                        + " to " + receivedBlocks.getLast().getHeader().getBlockNumber());
+                startNumber += receivedBlocks.size();
+                receivedBlocks = requester.requestBlocks(BlockRequestField.ALL, startNumber, blocksToFetch).join();
+            }
         }
 
         BlockState blockState = stateManager.getBlockState();

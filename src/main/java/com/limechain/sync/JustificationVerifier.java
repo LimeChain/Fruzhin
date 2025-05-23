@@ -137,7 +137,9 @@ public class JustificationVerifier {
                     return false;
                 }
 
-                if (!blockState.isDescendantOf(targetBlockHash, signedVote.getVote().getBlockHash())) {
+                if (blockState.isInitialized() &&
+                        !blockState.isDescendantOf(targetBlockHash, signedVote.getVote().getBlockHash())) {
+
                     log.warning("Vote block is not a descendant of the target block");
                     return false;
                 }

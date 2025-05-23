@@ -14,6 +14,7 @@ import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.network.protocol.warp.dto.Justification;
 import com.limechain.network.protocol.warp.scale.reader.BlockBodyReader;
 import com.limechain.network.protocol.warp.scale.writer.BlockBodyWriter;
+import com.limechain.prometheus.PrometheusServer;
 import com.limechain.rpc.server.AppBean;
 import com.limechain.rpc.subscriptions.chainsub.ChainSub;
 import com.limechain.runtime.Runtime;
@@ -56,13 +57,16 @@ public class BlockState extends AbstractState {
     private final Map<Hash256, Block> unfinalizedBlocks;
     private final LinkedHashMap<Hash256, Justification> justifications;
     private final GenesisBlockHash genesisBlockHash;
+    private final PrometheusServer prometheusServer;
     private BlockTree blockTree;
     private Hash256 lastFinalized;
 
     public BlockState(KVRepository<String, Object> db,
-                      GenesisBlockHash genesisBlockHash) {
+                      GenesisBlockHash genesisBlockHash,
+                      PrometheusServer prometheusServer) {
 
         this.db = db;
+        this.prometheusServer = prometheusServer;
         this.unfinalizedBlocks = new HashMap<>();
         this.justifications = new LinkedHashMap<>();
         this.genesisBlockHash = genesisBlockHash;
@@ -373,6 +377,7 @@ public class BlockState extends AbstractState {
 
         if (!unfinalizedBlocks.containsKey(block.getHeader().getHash())) {
             ChainSub.getInstance().notifyNewChainHead(block.getHeader());
+            prometheusServer.emitBestBlock(block.getHeader().getBlockNumber());
         }
 
         // Store block in unfinalized blocks
@@ -776,7 +781,8 @@ public class BlockState extends AbstractState {
         finalizeBlock(header, setId, justification == null
                 ? BigInteger.ZERO
                 : justification.getRoundNumber());
-        log.info(String.format("Finalized block in block state: %s %d", header.getHash(), header.getBlockNumber()));
+        log.info(String.format("Finalized block in block state. Number: %d Hash: %s",
+                header.getBlockNumber(), header.getHash()));
     }
 
     /**
