@@ -139,9 +139,7 @@ class GrandpaServiceTest {
 
             asyncMock.when(AsyncExecutor::withSingleThread).thenReturn(mockExecutor);
 
-            GrandpaAuthoritySet authoritySet = new GrandpaAuthoritySet();
             authoritySet.setSetId(BigInteger.ONE);
-            authoritySet.setAuthorities(List.of(authority1, authority2));
             LinkedHashMap<Pair<Hash256, BigInteger>, GrandpaAuthoritySet> changes = new LinkedHashMap<>();
 
             when(stateManager.getBlockState()).thenReturn(blockState);
@@ -171,11 +169,9 @@ class GrandpaServiceTest {
             }).when(mockExecutor).executeAndForget(any(Runnable.class));
             asyncMock.when(AsyncExecutor::withSingleThread).thenReturn(mockExecutor);
 
-            Justification mockJustification = mock(Justification.class);
+            Justification justification = new Justification();
+            justification.setRoundNumber(BigInteger.TEN);
 
-            GrandpaAuthoritySet authoritySet = new GrandpaAuthoritySet();
-            authoritySet.setSetId(BigInteger.ZERO);
-            authoritySet.setAuthorities(List.of(authority1, authority2));
             LinkedHashMap<Pair<Hash256, BigInteger>, GrandpaAuthoritySet> changes = getSetChanges(authoritySet);
 
             when(stateManager.getBlockState()).thenReturn(blockState);
@@ -188,9 +184,8 @@ class GrandpaServiceTest {
             when(grandpaSetState.getCurrentGrandpaRound()).thenReturn(currentRound);
             when(currentRound.getRoundNumber()).thenReturn(BigInteger.ONE);
             when(blockHeader.getHash()).thenReturn(HASH_0);
-            when(blockState.getJustification(any(Hash256.class))).thenReturn(Optional.of(mockJustification));
+            when(blockState.getJustification(any(Hash256.class))).thenReturn(Optional.of(justification));
             abstractStateMock.when(AbstractState::isActiveAuthority).thenReturn(true);
-            when(mockJustification.getRoundNumber()).thenReturn(BigInteger.TEN);
             when(grandpaSetState.getThreshold(anyList())).thenReturn(BigInteger.TEN);
 
             mockGrandpaRoundRequiredObjects(mockedAppBean);
@@ -214,9 +209,6 @@ class GrandpaServiceTest {
 
     @Test
     void testGetAuthoritiesForBlock() {
-        GrandpaAuthoritySet authoritySet = new GrandpaAuthoritySet();
-        authoritySet.setSetId(BigInteger.ZERO);
-        authoritySet.setAuthorities(List.of(authority1, authority2));
         LinkedHashMap<Pair<Hash256, BigInteger>, GrandpaAuthoritySet> changes = getSetChanges(authoritySet);
 
         when(grandpaSetState.getAuthoritySet()).thenReturn(authoritySet);
@@ -236,10 +228,6 @@ class GrandpaServiceTest {
              MockedStatic<AppBean> mockedAppBean = mockStatic(AppBean.class)) {
 
             GrandpaRound prevRound = mock(GrandpaRound.class);
-
-            GrandpaAuthoritySet authoritySet = new GrandpaAuthoritySet();
-            authoritySet.setSetId(BigInteger.ZERO);
-            authoritySet.setAuthorities(List.of(authority1, authority2));
             LinkedHashMap<Pair<Hash256, BigInteger>, GrandpaAuthoritySet> changes = getSetChanges(authoritySet);
 
             when(prevRound.getRoundNumber()).thenReturn(BigInteger.ONE);
@@ -273,10 +261,7 @@ class GrandpaServiceTest {
     @Test
     void testTryStartFromPreviousRoundWithNoAuthoritySet() {
         GrandpaRound prevRound = mock(GrandpaRound.class);
-
-        GrandpaAuthoritySet authoritySet = new GrandpaAuthoritySet();
         authoritySet.setSetId(BigInteger.ONE);
-        authoritySet.setAuthorities(List.of(authority1, authority2));
         LinkedHashMap<Pair<Hash256, BigInteger>, GrandpaAuthoritySet> changes = new LinkedHashMap<>();
 
         when(grandpaSetState.getCurrentGrandpaRound()).thenReturn(prevRound);
@@ -296,9 +281,7 @@ class GrandpaServiceTest {
         justification.setTargetBlock(BigInteger.ONE);
         justification.setRoundNumber(BigInteger.ONE);
 
-        GrandpaAuthoritySet authoritySet = new GrandpaAuthoritySet();
         authoritySet.setSetId(BigInteger.ONE);
-        authoritySet.setAuthorities(List.of(authority1, authority2));
         LinkedHashMap<Pair<Hash256, BigInteger>, GrandpaAuthoritySet> changes = new LinkedHashMap<>();
 
         when(grandpaSetState.getAuthoritySet()).thenReturn(authoritySet);
@@ -312,10 +295,6 @@ class GrandpaServiceTest {
         Justification justification = new Justification();
         justification.setTargetBlock(BigInteger.ONE);
         justification.setRoundNumber(BigInteger.ONE);
-
-        GrandpaAuthoritySet authoritySet = new GrandpaAuthoritySet();
-        authoritySet.setSetId(BigInteger.ZERO);
-        authoritySet.setAuthorities(List.of(authority1, authority2));
 
         LinkedHashMap<Pair<Hash256, BigInteger>, GrandpaAuthoritySet> changes = getSetChanges(authoritySet);
 
@@ -337,9 +316,7 @@ class GrandpaServiceTest {
         justification.setTargetBlock(BigInteger.TEN);
         justification.setRoundNumber(BigInteger.ONE);
 
-        GrandpaAuthoritySet authoritySet = new GrandpaAuthoritySet();
         authoritySet.setSetId(BigInteger.TWO);
-        authoritySet.setAuthorities(List.of(authority1, authority2));
         LinkedHashMap<Pair<Hash256, BigInteger>, GrandpaAuthoritySet> changes = getSetChanges(authoritySet);
 
         GrandpaAuthoritySet currAuthSet = new GrandpaAuthoritySet(BigInteger.TEN, List.of());
@@ -361,9 +338,7 @@ class GrandpaServiceTest {
         justification.setTargetBlock(BigInteger.TEN);
         justification.setRoundNumber(BigInteger.ONE);
 
-        GrandpaAuthoritySet authoritySet = new GrandpaAuthoritySet();
         authoritySet.setSetId(BigInteger.TWO);
-        authoritySet.setAuthorities(List.of(authority1, authority2));
         LinkedHashMap<Pair<Hash256, BigInteger>, GrandpaAuthoritySet> changes = getSetChanges(authoritySet);
 
         when(grandpaSetState.getAuthoritySet()).thenReturn(authoritySet);
@@ -388,9 +363,7 @@ class GrandpaServiceTest {
             BlockHeader highestFinalizedHeader = new BlockHeader();
             highestFinalizedHeader.setBlockNumber(BigInteger.TEN);
 
-            GrandpaAuthoritySet authoritySet = new GrandpaAuthoritySet();
             authoritySet.setSetId(BigInteger.ONE);
-            authoritySet.setAuthorities(List.of(authority1, authority2));
             LinkedHashMap<Pair<Hash256, BigInteger>, GrandpaAuthoritySet> changes = getSetChanges(authoritySet);
 
             when(stateManager.getGrandpaSetState()).thenReturn(grandpaSetState);
