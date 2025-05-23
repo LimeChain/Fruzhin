@@ -277,7 +277,7 @@ public class GrandpaEngine implements BaseEngine {
 
     private void handleCommitMessage(byte[] message, PeerId peerId) {
         CommitMessage commitMessage = ScaleUtils.Decode.decode(message, CommitMessageScaleReader.getInstance());
-        log.finest(String.format("Received commit message from Peer %s %d %d",
+        log.finest(String.format("Received commit message from peer: %s round: %d setId: %d",
                 peerId,
                 commitMessage.getRoundNumber(),
                 commitMessage.getSetId()));
