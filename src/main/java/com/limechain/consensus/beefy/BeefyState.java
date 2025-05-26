@@ -5,6 +5,7 @@ import com.limechain.consensus.beefy.dto.BeefyAuthoritySet;
 import com.limechain.consensus.beefy.dto.BeefySession;
 import com.limechain.consensus.beefy.dto.message.BeefyConsensusMessage;
 import com.limechain.exception.beefy.BeefyGenericException;
+import com.limechain.exception.global.ExecutionFailedException;
 import com.limechain.network.PeerRequester;
 import com.limechain.network.protocol.beefy.BeefyMessageHandler;
 import com.limechain.network.protocol.beefy.messages.justification.SignedCommitment;
@@ -15,6 +16,7 @@ import com.limechain.state.AbstractState;
 import com.limechain.storage.block.state.BlockState;
 import com.limechain.storage.crypto.KeyStore;
 import com.limechain.storage.crypto.KeyType;
+import com.limechain.utils.StringUtils;
 import io.micrometer.common.lang.Nullable;
 import jakarta.annotation.PreDestroy;
 import lombok.Getter;
@@ -26,6 +28,7 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
 import java.util.ArrayDeque;
+import java.util.Arrays;
 import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -57,8 +60,7 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
     @Nullable
     private BigInteger beefyGenesis;
 
-    @Nullable
-    private BigInteger beefyFinalized;
+    private BigInteger beefyFinalized = BigInteger.ZERO;
 
     @Nullable
     private BigInteger grandpaFinalized;
@@ -71,7 +73,9 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
     private BigInteger nextDigest;
 
     @Nullable
-    private BigInteger lastVoted;
+    private BigInteger lastVoted = BigInteger.ZERO;
+
+    private BigInteger targetVoteBlockNumber = BigInteger.ZERO;
 
     // TODO: Remove lastVote or remove this comment
     @Nullable
@@ -83,10 +87,8 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
 
     @Override
     public void populateDataFromRuntime(Runtime runtime) {
-        this.authoritySet = runtime.getBeefyValidatorSet().orElseGet(() -> {
-            log.warning("BeefyValidatorSet is not available from runtime, setting authoritySet to null.");
-            return null;
-        });
+        this.beefyGenesis = runtime.getBeefyGenesis().orElse(null);
+        this.authoritySet = runtime.getBeefyValidatorSet().orElse(null);
     }
 
     @Override
@@ -122,14 +124,13 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
 
     public void handleBeefyConsensusMessage(BeefyConsensusMessage consensusMessage, BigInteger blockNumber) {
         switch (consensusMessage.getFormat()) {
-            case BEEFY_CHANGED_AUTHORITIES -> handleChangedBeefyAuthorities(consensusMessage, blockNumber);
+            case BEEFY_CHANGED_AUTHORITIES -> handleChangedBeefyAuthorities(
+                    consensusMessage.getAuthorityPublicKeys(),
+                    consensusMessage.getAuthoritySetId(),
+                    blockNumber
+            );
             case BEEFY_ON_DISABLED -> disabledAuthority = consensusMessage.getDisabledAuthority();
         }
-    }
-
-    public BigInteger getBeefyFinalized() {
-        if (beefyFinalized == null) throw new BeefyGenericException("Beefy finalized is not initialized yet.");
-        return beefyFinalized;
     }
 
     public BigInteger getGrandpaFinalized() {
@@ -147,14 +148,26 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
         sessions.clear();
         sessions.addLast(last);
 
-        AppBean.getBean(PeerRequester.class).makeBeefyJustificationRequest(last.getMandatoryBlock())
-                .thenAccept(r ->
-                        AppBean.getBean(BeefyMessageHandler.class).handleSignedCommitment(r));
+        requestJustification(last.getMandatoryBlock());
     }
 
-    private void handleChangedBeefyAuthorities(BeefyConsensusMessage consensusMessage, BigInteger blockNumber) {
+    public void requestJustification(BigInteger blockNumber) {
+        try {
+            AppBean.getBean(PeerRequester.class).makeBeefyJustificationRequest(blockNumber)
+                    .thenAccept(r ->
+                            AppBean.getBean(BeefyMessageHandler.class).handleSignedCommitment(r));
+            log.fine(String.format("requestJustification: Requested justification for block %s.", blockNumber));
+        } catch (ExecutionFailedException e) {
+            log.warning(String.format("requestJustification: Failed request %s", e.getMessage()));
+        }
+    }
+
+    public void handleChangedBeefyAuthorities(List<byte[]> authorityPublicKeys,
+                                               BigInteger authoritySetId,
+                                               BigInteger blockNumber) {
+
         Pair<byte[], byte[]> keyPair = keyStore.findKeyPair(
-                consensusMessage.getAuthorityPublicKeys(),
+                authorityPublicKeys,
                 KeyType.BEEFY
         ).orElse(null);
 
@@ -165,7 +178,7 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
         }
 
         BeefySession beefySession = new BeefySession(
-                new BeefyAuthoritySet(consensusMessage.getAuthorityPublicKeys(), consensusMessage.getAuthoritySetId()),
+                new BeefyAuthoritySet(authorityPublicKeys, authoritySetId),
                 blockNumber,
                 keyPair
         );

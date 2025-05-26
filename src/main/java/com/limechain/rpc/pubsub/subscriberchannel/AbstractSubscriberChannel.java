@@ -15,7 +15,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
 
 /**
  * Subscriber channels are the entities who aggregate messages for a topic and propagate them to subscribers.
@@ -86,14 +85,13 @@ public abstract class AbstractSubscriberChannel {
      * @throws IOException when subscriber(session) fails to send the message to the client
      */
     public synchronized void notifySubscribers() throws IOException {
-        log.log(Level.FINE, "Sending messages to subscribers...");
+        log.fine("Sending messages to subscribers...");
         ArrayList<Message> messagesToProcess = new ArrayList<>(pendingMessages);
         pendingMessages.clear();
         for (Message message : messagesToProcess) {
             TextMessage wsMessage = new TextMessage(message.payload().getBytes());
-            log.log(Level.FINE,
-                    "Notifying " + subscribers.size() + " subscribers about message topic -> " + message.topic() +
-                    " : " + message.payload());
+            log.fine(String.format("Notifying %d subscribers about message topic -> %s : %s",
+                    subscribers.size(), message.topic(), message.payload()));
             for (Subscriber subscriber : subscribers.values()) {
                 subscriber.getSession().sendMessage(wsMessage);
             }

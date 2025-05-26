@@ -9,8 +9,6 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.extern.java.Log;
 
-import java.util.logging.Level;
-
 /**
  * Sets consensus protocol versions
  */
@@ -25,7 +23,7 @@ public class ChainInformationBuildAction implements WarpSyncAction {
 
     @Override
     public void next(WarpSyncMachine sync) {
-        log.log(Level.INFO, "Done with runtime build");
+        log.info("Done with runtime build");
         sync.setWarpSyncAction(new ChainInformationDownloadAction());
     }
 
@@ -38,12 +36,13 @@ public class ChainInformationBuildAction implements WarpSyncAction {
                 versions.getApiVersion(ApiVersionName.BABE_API.getHashedName()));
         sync.getChainInformation().setRuntimeGrandpaVersion(
                 versions.getApiVersion(ApiVersionName.GRANDPA_API.getHashedName()));
-        log.log(Level.INFO, "Aura Api version: " + sync.getChainInformation().getRuntimeAuraVersion()
-                + " Babe api version: " + sync.getChainInformation().getRuntimeBabeVersion() +
-                " Grandpa Api Version: " + sync.getChainInformation().getRuntimeGrandpaVersion());
-        log.log(Level.INFO, "Runtime supports aura: " + sync.getChainInformation().runtimeHasAura());
-        log.log(Level.INFO, "Runtime babe api is v1: " + sync.getChainInformation().runtimeBabeApiIsV1());
-        log.log(Level.INFO, "Runtime grandpa supports current setId: "
-                + sync.getChainInformation().runtimeGrandpaSupportsCurrentSetId());
+        log.info(String.format("Aura Api version: %d Babe api version: %d Grandpa Api Version: %d ",
+                sync.getChainInformation().getRuntimeAuraVersion(),
+                sync.getChainInformation().getRuntimeBabeVersion(),
+                sync.getChainInformation().getRuntimeGrandpaVersion()));
+        log.info(String.format("Runtime supports aura: %b", sync.getChainInformation().runtimeHasAura()));
+        log.info(String.format("Runtime babe api is v1: %b", sync.getChainInformation().runtimeBabeApiIsV1()));
+        log.info(String.format("Runtime grandpa supports current setId: %b",
+                sync.getChainInformation().runtimeGrandpaSupportsCurrentSetId()));
     }
 }

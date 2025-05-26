@@ -24,9 +24,11 @@ public class EcdsaUtils {
     public static final int PUBLIC_KEY_TRIM_LEN = 64;
     public static final int PUBLIC_KEY_COMPRESSED_LEN = 33;
     public static final int HASHED_MESSAGE_LEN = 32;
+    public static final int PRIVATE_KEY_LEN = 32;
 
     /**
      * Generates Secp256k1 key pair using the Secp256k1 library from libp2p
+     *
      * @return Secp256k1 Private key (32 bytes) and Public key (33 or 65 bytes)
      */
     public static Pair<PrivKey, PubKey> generateKeyPair() {
@@ -36,6 +38,7 @@ public class EcdsaUtils {
     /**
      * Generates Secp256k1 key pair from mnemonic phrase using the Bip32ECKeyPair library from web3j and then
      * converting it to Secp256k1 key pair using the Secp256k1 library from libp2p to get the KeyPair
+     *
      * @param mnemonic BIP-39 12 or 24 word mnemonic phrase
      * @return Secp256k1 Private key (32 bytes) and Public key (33 or 65 bytes)
      */
@@ -43,7 +46,8 @@ public class EcdsaUtils {
         byte[] seed = MnemonicUtils.generateSeed(mnemonic, "");
         Bip32ECKeyPair keyPair = Bip32ECKeyPair.generateKeyPair(seed);
 
-        PrivKey privKey = Secp256k1Kt.unmarshalSecp256k1PrivateKey(keyPair.getPrivateKey().toByteArray());
+        byte[] normalizedPrivateKey = normalizeKeyLength(keyPair.getPrivateKey().toByteArray(), PRIVATE_KEY_LEN);
+        PrivKey privKey = Secp256k1Kt.unmarshalSecp256k1PrivateKey(normalizedPrivateKey);
         PubKey pubKey = privKey.publicKey();
 
         return new Pair<>(privKey, pubKey);
@@ -52,8 +56,9 @@ public class EcdsaUtils {
     /**
      * Signs message with Secp256k1 private key using the Bip32ECKeyPair library from web3j and splitting the signature
      * data to R S and V
+     *
      * @param privateKey 32 bytes Secp256k1 private key
-     * @param message message to be signed
+     * @param message    message to be signed
      * @return 65 bytes Secp256k1 signature {R (32 bytes), S (32 bytes), V (1 byte)}
      */
     public static byte[] signMessage(final byte[] privateKey, final byte[] message) {
@@ -73,6 +78,7 @@ public class EcdsaUtils {
     /**
      * Verifies Secp256k1 signature using the Bip32ECKeyPair library from web3j to recover public key from signature
      * and then comparing it to the public key from the verify signature object
+     *
      * @param sig signature to be verified
      * @return true if the signature is valid, false otherwise
      */
@@ -85,9 +91,10 @@ public class EcdsaUtils {
 
     /**
      * Recovers public key from signature
+     *
      * @param signatureData 65 bytes Secp256k1 signature {R (32 bytes), S (32 bytes), V (1 byte)}
-     * @param messageData signed message
-     * @param compressed true if the public key should be compressed, false otherwise
+     * @param messageData   signed message
+     * @param compressed    true if the public key should be compressed, false otherwise
      * @return 33 or 65 bytes Secp256k1 public key
      */
     public static byte[] recoverPublicKeyFromSignature(byte[] signatureData, byte[] messageData, boolean compressed) {
@@ -103,30 +110,64 @@ public class EcdsaUtils {
                 new ECDSASignature(new BigInteger(1, r), new BigInteger(1, s));
 
         byte[] fullPubKey = Sign.recoverFromSignature(recId, sig, messageData).toByteArray();
+        fullPubKey = normalizeKeyLength(fullPubKey, PUBLIC_KEY_TRIM_LEN);
 
         if (compressed) {
             return compressPublicKey(fullPubKey);
         } else {
-            if(fullPubKey.length == PUBLIC_KEY_PURE_LEN){
-                return Arrays.copyOfRange(fullPubKey, 1, fullPubKey.length);
-            }
             return fullPubKey;
         }
     }
 
     /**
+     * Normalizes a byte array to a fixed length.
+     * <p>
+     * If the input is longer, it means leading bytes are stripped.
+     * If shorter, it is left-padded with 0x00, toByteArray() minimizes size by dropping unnecessary leading zeros
+     *
+     * @param key            The input byte array.
+     * @param expectedLength The desired fixed length.
+     * @return A new byte array of exactly {@code expectedLength} bytes.
+     */
+    public static byte[] normalizeKeyLength(byte[] key, int expectedLength) {
+        if (key.length == expectedLength) {
+            return key;
+        }
+
+        byte[] normalized = new byte[expectedLength];
+
+        if (key.length > expectedLength) {
+            // Strip leading bytes
+            System.arraycopy(
+                    key,
+                    key.length - expectedLength,
+                    normalized,
+                    0,
+                    expectedLength
+            );
+        } else {
+            // Pad with leading zeros
+            System.arraycopy(
+                    key,
+                    0,
+                    normalized,
+                    expectedLength - key.length,
+                    key.length
+            );
+        }
+
+        return normalized;
+    }
+
+    /**
      * Compresses public key
+     *
      * @param publicKey 64 or 65 bytes Secp256k1 public key (web3j generates 64 public key because it is always 4 and
      *                  not needed, but Secp256k1 requires 65 bytes public key to be able to compress it)
      * @return 33 bytes Secp256k1 public key
      */
     private static byte[] compressPublicKey(byte[] publicKey) {
-        byte[] key = new byte[PUBLIC_KEY_PURE_LEN];
-        if (publicKey.length == PUBLIC_KEY_TRIM_LEN) {
-            System.arraycopy(publicKey, 0, key, 1, 64);
-        } else {
-            key = publicKey;
-        }
+        byte[] key = normalizeKeyLength(publicKey, PUBLIC_KEY_PURE_LEN);
         key[0] = 4;
         ECPoint point = Sign.CURVE_PARAMS.getCurve().decodePoint(key);
 

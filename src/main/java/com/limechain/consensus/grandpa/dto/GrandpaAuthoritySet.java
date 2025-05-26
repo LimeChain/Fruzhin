@@ -14,6 +14,6 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class GrandpaAuthoritySet {
-    BigInteger setId;
+    BigInteger setId = BigInteger.ZERO;
     List<Authority> authorities;
 }

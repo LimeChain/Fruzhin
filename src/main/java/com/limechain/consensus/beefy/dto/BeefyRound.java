@@ -4,12 +4,13 @@ import com.limechain.network.protocol.beefy.messages.vote.BeefyVoteMessage;
 import io.emeraldpay.polkaj.types.Hash264;
 import lombok.Value;
 
+import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Value
-public class BeefyRound {
+public class BeefyRound implements Serializable {
     Map<Hash264, BeefyVoteMessage> signedVotes = new ConcurrentHashMap<>();
 
     public boolean addVote(Hash264 authorityId, BeefyVoteMessage voteMessage) {

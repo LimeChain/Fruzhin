@@ -12,8 +12,6 @@ import com.limechain.sync.warpsync.WarpSyncMachine;
 import com.limechain.sync.warpsync.WarpSyncState;
 import lombok.extern.java.Log;
 
-import java.util.logging.Level;
-
 // VerifyJustificationState is going to be instantiated a lot of times
 // Maybe we can make it a singleton in order to reduce performance overhead?
 @Log
@@ -58,7 +56,7 @@ public class VerifyJustificationAction implements WarpSyncAction {
                     );
 
             WarpSyncFragment fragment = sync.getFragmentsQueue().poll();
-            log.log(Level.INFO, "Verifying justification...");
+            log.info("Verifying justification...");
 
             if (fragment == null) {
                 throw new JustificationVerificationException("No such fragment");
@@ -74,7 +72,7 @@ public class VerifyJustificationAction implements WarpSyncAction {
             handleConsensusMessages(fragment);
 
         } catch (Exception e) {
-            log.log(Level.WARNING, "Error while verifying justification: " + e.getMessage());
+            log.warning(String.format("Error while verifying justification: %s", e.getMessage()));
             this.error = e;
         }
     }
@@ -96,9 +94,9 @@ public class VerifyJustificationAction implements WarpSyncAction {
                 .forEach(cm -> stateManager.getEpochState().updateNextEpochConfig(cm));
 
         SyncState syncState = stateManager.getSyncState();
-        log.log(Level.INFO, "Verified justification. Block hash is now at #"
-                + syncState.getLastFinalizedBlockNumber() + ": "
-                + syncState.getLastFinalizedBlockHash().toString()
-                + " with state root " + syncState.getStateRoot());
+        log.info(String.format("Verified justification. Block hash is now at #%d: %s with state root %s",
+                syncState.getLastFinalizedBlockNumber(),
+                syncState.getLastFinalizedBlockHash().toString(),
+                syncState.getStateRoot()));
     }
 }

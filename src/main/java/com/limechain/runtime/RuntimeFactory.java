@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
-import java.util.logging.Level;
 
 /**
  * Builds a runtime instance with an explicit context configuration.
@@ -138,7 +137,7 @@ public class RuntimeFactory {
         // If we couldn't get the data from the wasm custom sections,
         // we must fall back to calling Core_version
         if (runtimeVersion == null) {
-            log.log(Level.INFO, "Couldn't fetch runtime version from custom section, calling 'Core_version'.");
+            log.info("Couldn't fetch runtime version from custom section, calling 'Core_version'.");
             runtimeVersion = runtime.getVersion();
         }
 

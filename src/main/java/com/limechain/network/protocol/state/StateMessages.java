@@ -13,7 +13,6 @@ import lombok.extern.java.Log;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.logging.Level;
 
 @Log
 public class StateMessages extends StrictProtocolBinding<StateController> {
@@ -28,9 +27,9 @@ public class StateMessages extends StrictProtocolBinding<StateController> {
 
             return controller
                     .sendStateRequest(StringUtils.remove0xPrefix(blockHash), after)
-                    .get(10, TimeUnit.SECONDS);
+                    .get(20, TimeUnit.SECONDS);
         } catch (ExecutionException | TimeoutException | IllegalStateException e) {
-            log.log(Level.SEVERE, "Error while sending remote state: ", e);
+            log.severe(String.format("Error while sending remote state: %s", e.getMessage()));
             throw new ExecutionFailedException(e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();

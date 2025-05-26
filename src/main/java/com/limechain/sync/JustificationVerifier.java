@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 @Log
@@ -34,7 +33,7 @@ public class JustificationVerifier {
     public static boolean verify(Justification justification) {
 
         if (justification == null) {
-            log.log(Level.WARNING, "Empty justification provided for verification");
+            log.warning("Empty justification provided for verification");
             return false;
         }
 
@@ -47,7 +46,7 @@ public class JustificationVerifier {
         // Implementation from: https://github.com/smol-dot/smoldot
         // lib/src/finality/justification/verify.rs
         if (BigInteger.valueOf(justification.getSignedVotes().length).compareTo(threshold) < 0) {
-            log.log(Level.WARNING, "Not enough signatures");
+            log.warning("Not enough signatures");
             return false;
         }
 
@@ -69,11 +68,11 @@ public class JustificationVerifier {
                                 )
                         )
         ) {
-            log.log(Level.WARNING, "Ancestry vote block is not a descendant of the target block");
+            log.warning("Ancestry vote block is not a descendant of the target block");
             return false;
         }
 
-        log.log(Level.INFO, "All signatures were verified successfully");
+        log.fine("All signatures were verified successfully");
 
         return true;
     }
@@ -110,12 +109,12 @@ public class JustificationVerifier {
             List<SignedVote> signedVotes = entry.getValue();
 
             if (signedVotes.size() > 3) {
-                log.log(Level.WARNING, "Authority submitted more than 1 valid vote and 2 equivocatory votes");
+                log.warning("Authority submitted more than 1 valid vote and 2 equivocatory votes");
                 return false;
             }
 
             if (!authorityKeys.contains(authorityKey)) {
-                log.log(Level.WARNING, "Invalid Authority for vote");
+                log.warning("Invalid Authority for vote");
                 return false;
             }
 
@@ -134,12 +133,12 @@ public class JustificationVerifier {
                 );
 
                 if (!validSignature) {
-                    log.log(Level.WARNING, "Failed to verify signature");
+                    log.warning("Failed to verify signature");
                     return false;
                 }
 
                 if (!blockState.isDescendantOf(targetBlockHash, signedVote.getVote().getBlockHash())) {
-                    log.log(Level.WARNING, "Vote block is not a descendant of the target block");
+                    log.warning("Vote block is not a descendant of the target block");
                     return false;
                 }
             }

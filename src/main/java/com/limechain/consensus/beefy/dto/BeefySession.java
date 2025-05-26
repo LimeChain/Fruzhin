@@ -37,7 +37,7 @@ public class BeefySession implements Serializable {
 
     @Setter
     @Nullable
-    private BigInteger highestFinalized;
+    private BigInteger highestFinalized = BigInteger.ZERO;
 
     @Nullable
     private final Pair<byte[], byte[]> beefyKeyPair;
@@ -59,7 +59,7 @@ public class BeefySession implements Serializable {
             return new VoteImportResult.Invalid();
         } else if (!authoritySet.getPublicKeys().contains(authorityId)) {
             log.fine(String.format("addVote: received vote {%s} from validator that is not in the" +
-                            " validator set, ignoring", voteMessage));
+                    " validator set, ignoring", voteMessage));
             return new VoteImportResult.Invalid();
         }
 
@@ -131,7 +131,9 @@ public class BeefySession implements Serializable {
         // remove rounds <= block number(round number)
         rounds.keySet().removeIf(commitment -> commitment.getBlockNumber().compareTo(blockNumber) <= 0);
 
-        highestFinalized = (highestFinalized == null) ? blockNumber : highestFinalized.max(blockNumber);
+        highestFinalized = (highestFinalized == null)
+                ? blockNumber
+                : highestFinalized.max(blockNumber);
 
         if (blockNumber.equals(mandatoryBlock)) {
             isMandatoryBlockFinalized = true;
