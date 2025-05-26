@@ -29,7 +29,7 @@ dependencies {
     implementation("com.dylibso.chicory:wasm:0.0.12")
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.12.2")
-    testImplementation("org.mockito:mockito-core:5.17.0")
+    testImplementation("org.mockito:mockito-core:5.18.0")
 
     // CLI
     implementation("commons-cli:commons-cli:1.9.0")
