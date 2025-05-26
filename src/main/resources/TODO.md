@@ -30,14 +30,8 @@ HostService interface. Need to refactor the service architecture to properly int
 - [RpcWsHandler.java] Implement cleanup of PubSubService subscribers when WebSocket sessions are closed to prevent memory leaks
 - [SyncRPCImpl.java] Consider whether to send non-raw genesis if raw is false
 - [SyncRPCImpl.java] Update local genesis with the Trie and save it
-- [StateRPCImpl.java] Implement systemAccountNextIndex()
-TODO:
-- [StateRPCImpl.java] Fix trie traversal to go deeper than a single level
 - [StateRPCImpl.java] Determine if incoming requests will only ask for state in finalized block
 - [StateRPCImpl.java] Fix RPC implementation to properly find state (runtime)
-- [TransactionRpcImpl.java] Move connect outside constructor
-- [AuthorRpcImpl.java] Move connect outside constructor
-- [ChainHeadRpcImpl.java] Move connect outside constructor
 
 ## Sync and State TODOs
 - [ChainInformationDownloadAction.java] After runtime is downloaded, download and compute chain information
@@ -49,10 +43,8 @@ TODO:
 - [FullSyncMachine.java] Fix sync improvements for polkadot chain
 
 ## Trie and Storage TODOs
-- [NibblesUtils.java] Add unit tests
 - [NibblesCollector.java] Consider useful characteristics
 - [TrieChanges.java] Optimize to avoid traversing until end of map if missing
-- [DBConstants.java] Store more than just the latest loaded in sync
 - [BlockHandler.java] Implement handleBeefyConsensusMessage
 - [BlockState.java] Discuss what needs to be saved for block state
 - [BlockState.java] Implement tries.delete for blockheader.StateRoot
@@ -98,11 +90,6 @@ TODO:
 - [OffchainHostFunctions.java] Add to transaction pool when implemented
 - [AsyncExecutor.java] Create centralized retry function
 - [HostConfig.java] Complete implementation
-
-## Testing TODOs
-- [PubSubServiceTest.java] Instantiate more subscriber channels in the future if needed
-- [GrandpaEngineTest.java] Find and fix problem condition in test
-- [LightMessagesTest.java] Make connectBootNodes return number of successful connections
 
 ## Build TODOs
 - [build.gradle.kts] Publish imported packages to maven repository and import them

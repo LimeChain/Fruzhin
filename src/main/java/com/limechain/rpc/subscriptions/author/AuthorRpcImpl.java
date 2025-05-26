@@ -29,7 +29,6 @@ public class AuthorRpcImpl implements AuthorRpc {
         try {
             this.rpcClient = new SubscriptionRpcClient(new URI(forwardNodeAddress), new PublisherImpl(),
                     Topic.AUTHOR_EXTRINSIC_UPDATE);
-            // TODO: Move connect outside constructor
             rpcClient.connectBlocking();
         } catch (URISyntaxException e) {
             throw new InvalidURIException(e);
