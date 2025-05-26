@@ -51,7 +51,7 @@ dependencies {
     // Prometheus
     implementation("io.prometheus:prometheus-metrics-core:1.3.8")
     implementation("io.prometheus:prometheus-metrics-instrumentation-jvm:1.3.8")
-    implementation("io.prometheus:prometheus-metrics-exporter-httpserver:1.3.7")
+    implementation("io.prometheus:prometheus-metrics-exporter-httpserver:1.3.8")
 
     // NOTE:
     //  We implicitly rely on Nabu's transitive dependency on Netty's public interfaces.
