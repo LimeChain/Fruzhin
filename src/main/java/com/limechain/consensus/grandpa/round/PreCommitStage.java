@@ -13,7 +13,8 @@ public class PreCommitStage implements StageState {
 
     @Override
     public void start(GrandpaRound round) {
-        log.fine(String.format("Round %d started pre-commit stage.", round.getRoundNumber()));
+
+        log.fine(String.format("Round %d started pre-commit stage", round.getRoundNumber()));
 
         if (round.isCompletable()) {
             end(round);
@@ -32,7 +33,7 @@ public class PreCommitStage implements StageState {
 
         round.setOnStageTimerHandler(Executors.newScheduledThreadPool(1));
         round.getOnStageTimerHandler().schedule(() -> {
-            log.fine(String.format("Round %d timer triggered.", round.getRoundNumber()));
+            log.fine(String.format("Round %d timer triggered", round.getRoundNumber()));
             end(round);
         }, timeRemaining, TimeUnit.MILLISECONDS);
     }
@@ -44,8 +45,13 @@ public class PreCommitStage implements StageState {
 
         try {
 
+            if (round.getGrandpaGhost() == null) {
+                log.fine(String.format("Round %d has no grandpa ghost yet", round.getRoundNumber()));
+                return;
+            }
+
             Vote grandpaGhost = Vote.fromBlockHeader(round.getGrandpaGhost());
-            log.fine(String.format("Round %d ended pre-commit stage.", round.getRoundNumber()));
+            log.fine(String.format("Round %d ended pre-commit stage", round.getRoundNumber()));
 
             round.setOnFinalizeHandler(null);
             round.broadcastVoteMessage(grandpaGhost, SubRound.PRE_COMMIT);

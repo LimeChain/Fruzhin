@@ -19,12 +19,12 @@ public abstract class AbstractRpcClient extends WebSocketClient {
 
     @Override
     public void onOpen(ServerHandshake handshake) {
-        log.fine("new WS connection opened");
+        log.finest("new WS connection opened");
     }
 
     @Override
     public void onClose(int code, String reason, boolean remote) {
-        log.info(String.format("closed with exit code %d additional info: %s", code, reason));
+        log.finest(String.format("closed with exit code %d additional info: %s", code, reason));
     }
 
     @Override

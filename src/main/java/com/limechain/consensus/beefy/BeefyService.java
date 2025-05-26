@@ -234,7 +234,9 @@ public class BeefyService implements FinalizedBlockChangeListener {
             }
             case VoteImportResult.DoubleVoting voteImportResult ->
                     reportDoubleVoting(voteImportResult.doubleVotingProof());
-            case VoteImportResult.Invalid _ -> log.info("handleVote: received an invalid/stale vote: " + voteMessage);
+            case VoteImportResult.Invalid _ ->
+                    log.fine(String.format("handleVote: received an invalid/stale vote for block #%d",
+                            voteMessage.getCommitment().getBlockNumber()));
         }
         return Optional.empty();
     }
@@ -249,8 +251,8 @@ public class BeefyService implements FinalizedBlockChangeListener {
                                 runtime.submitReportBeefyDoubleVotingUnsignedExtrinsic(
                                         doubleVotingProof, key.getProof()
                                 ),
-                        () -> log.warning(String.format(
-                                "reportDoubleVoting: Failed to report Beefy double voting for block number: %s.",
+                        () -> log.fine(
+                                String.format("reportDoubleVoting: Failed to report Beefy double voting for block #%d.",
                                 doubleVotingProof.getFirst().getCommitment().getBlockNumber()
                         ))
                 );
@@ -282,8 +284,8 @@ public class BeefyService implements FinalizedBlockChangeListener {
         try {
             blockHeader = blockState.getHeaderByNumber(blockNumber);
         } catch (BlockStorageGenericException e) {
-            log.warning(String.format("getCommitment: Failed to retrieve block header for block number: %d. " +
-                    "Exception: %s", blockNumber, e.getMessage()));
+            log.warning(String.format("getCommitment: Failed to retrieve block header for block #%d. Exception: %s",
+                    blockNumber, e.getMessage()));
             return null;
         }
 
@@ -408,7 +410,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
             return;
         }
 
-        log.info(String.format("finalizeJustification: Round: %d has been finalized.", blockNumber));
+        log.info(String.format("Beefy round #{%d} has been finalized.", blockNumber));
         beefyState.setBeefyFinalized(blockNumber);
         beefyState.persistState();
 
@@ -480,8 +482,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
 
         BeefySession session = beefyState.getSessions().peekFirst();
         if (!session.isMandatoryBlockFinalized()) {
-            log.info(String.format("requestMandatoryJustification: Session %s is not mandatory.", session.getMandatoryBlock()));
-            beefyState.requestJustification(session.getMandatoryBlock());
+            beefyState.requestJustification(session.getMandatoryBlock(), false);
         }
     }
 

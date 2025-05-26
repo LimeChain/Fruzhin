@@ -51,7 +51,7 @@ public class BeefyNotificationProtocol extends BaseProtocol<BeefyNotificationCon
         @Override
         public void onClosed(Stream stream) {
             connectionManager.closeBeefyStream(stream);
-            log.info(String.format("Beefy stream closed for peer %s", stream.remotePeerId()));
+            log.finest(String.format("Beefy stream closed for peer %s", stream.remotePeerId()));
             ProtocolMessageHandler.super.onClosed(stream);
         }
 
@@ -59,9 +59,9 @@ public class BeefyNotificationProtocol extends BaseProtocol<BeefyNotificationCon
         public void onException(Throwable cause) {
             connectionManager.closeBeefyStream(stream);
             if (cause != null) {
-                log.warning(String.format("Beefy Exception: %s", cause.getMessage()));
+                log.fine(String.format("Beefy Exception: %s", cause.getMessage()));
             } else {
-                log.warning("Beefy Exception with unknown cause");
+                log.fine("Beefy Exception with unknown cause");
             }
             ProtocolMessageHandler.super.onException(cause);
         }

@@ -79,7 +79,10 @@ public class BlockHandler {
 
         BlockState blockState = stateManager.getBlockState();
         if (blockHeaders.containsKey(header.getHash()) || blockState.hasHeader(header.getHash())) {
-            log.fine("Skipping announced block: " + header.getBlockNumber() + " " + header.getHash());
+
+            log.fine(String.format("Skipping announced block #%d (%s)",
+                    header.getBlockNumber(),
+                    header.getPrintableHash()));
             return;
         }
 
@@ -134,8 +137,9 @@ public class BlockHandler {
             }
 
             newRuntime.executeBlock(block);
-            log.info(String.format("Executed block No: %s with hash: %s.",
-                    block.getHeader().getBlockNumber(), header.getHash()));
+            log.info(String.format("Executed block #%d %s.",
+                    block.getHeader().getBlockNumber(), header.getPrintableHash()));
+
             blockState.storeRuntime(header.getHash(), newRuntime);
 
             asyncExecutor.executeAndForget(() -> transactionProcessor.maintainTransactionPool(block));
@@ -149,8 +153,9 @@ public class BlockHandler {
         BlockHeader header = block.getHeader();
 
         stateManager.getBlockState().addBlockWithArrivalTime(block, arrivalTime);
-        log.fine(String.format("Added block No: %s with hash: %s to block tree.",
-                block.getHeader().getBlockNumber(), header.getHash()));
+        log.fine(String.format("Added block #%d (%s) to block tree.",
+                block.getHeader().getBlockNumber(),
+                header.getPrintableHash()));
 
         EpochState epochState = stateManager.getEpochState();
         if (epochState.isInitialized()) {
@@ -187,7 +192,9 @@ public class BlockHandler {
         asyncExecutor.executeAndForget(() -> {
             Block block = requestBlock(blockHeader);
             pendingBlocksQueue.add(Pair.with(arrivalTime, block));
-            log.fine("Added block to queue " + block.getHeader().getBlockNumber() + " " + block.getHeader().getHash());
+            log.fine(String.format("Added block to queue #%d (%s)",
+                    block.getHeader().getBlockNumber(),
+                    block.getHeader().getPrintableHash()));
         });
     }
 
@@ -208,7 +215,7 @@ public class BlockHandler {
             try {
                 processBlock(block, arrivalTime);
             } catch (BlockStorageGenericException ex) {
-                log.fine(String.format("[%s] %s", block.getHeader().getHash().toString(), ex.getMessage()));
+                log.fine(String.format("(%s) %s", block.getHeader().getPrintableHash(), ex.getMessage()));
             }
         }
     }
@@ -224,7 +231,10 @@ public class BlockHandler {
             blocks = responseFuture.join();
         }
 
-        log.fine("Request successful " + blocks.getFirst().getHeader().getHash());
+        log.fine(String.format("Successful request for block #%d (%s)",
+                blocks.getFirst().getHeader().getBlockNumber(),
+                blocks.getFirst().getHeader().getPrintableHash()));
+
         return blocks.getFirst();
     }
 }

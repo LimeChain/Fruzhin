@@ -1,0 +1,31 @@
+Description: GRANDPA finalization and round transitions test
+Network: ./0004-single-validator.toml
+Creds: config
+
+# metrics
+
+alice: log line matches "Grandpa service started with round #\d+" within 20 seconds
+
+alice: log line matches "Round 1 started" within 20 seconds
+alice: log line matches "Round 1 ended start stage" within 20 seconds
+alice: log line matches "Round 1 Start prevote stage" within 20 seconds
+alice: log line matches "Round 1 Time of prevote stage is out" within 20 seconds
+alice: log line matches "Round 1 ended pre-vote stage" within 20 seconds
+alice: log line matches "Round 1 started pre-commit stage" within 20 seconds
+alice: log line matches "Round 1 timer triggered" within 20 seconds
+alice: log line matches "Round 1 ended pre-commit stage" within 20 seconds
+alice: log line matches "Round 1 entered the Finalize stage" within 20 seconds
+alice: log line matches "Round 1 met finalization conditions and will be finalized" within 20 seconds
+
+alice: log line matches "Round 2 started" within 20 seconds
+alice: log line matches "Round 2 ended start stage" within 20 seconds
+alice: log line matches "Round 2 Start prevote stage" within 20 seconds
+alice: log line matches "Round 2 Time of prevote stage is out" within 20 seconds
+alice: log line matches "Round 2 ended pre-vote stage" within 20 seconds
+alice: log line matches "Round 2 started pre-commit stage" within 20 seconds
+alice: log line matches "Round 2 timer triggered" within 20 seconds
+alice: log line matches "Round 2 ended pre-commit stage" within 20 seconds
+alice: log line matches "Round 2 entered the Finalize stage" within 20 seconds
+alice: log line matches "Round 2 met finalization conditions and will be finalized" within 20 seconds
+
+alice: log line matches "Finalized block in (block|sync) state. Number: ([1-9]\d*) Hash: 0x[a-fA-F0-9]+" within 120 seconds

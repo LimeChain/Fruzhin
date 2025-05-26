@@ -1,7 +1,7 @@
 plugins {
     id("java")
     id("io.freefair.lombok") version "8.13.1"
-    id("org.springframework.boot") version "3.4.5"
+    id("org.springframework.boot") version "3.5.0"
     id("io.spring.dependency-management") version "1.1.7"
     id("application")
 }
@@ -29,7 +29,7 @@ dependencies {
     implementation("com.dylibso.chicory:wasm:0.0.12")
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.12.2")
-    testImplementation("org.mockito:mockito-core:5.17.0")
+    testImplementation("org.mockito:mockito-core:5.18.0")
 
     // CLI
     implementation("commons-cli:commons-cli:1.9.0")
@@ -49,9 +49,9 @@ dependencies {
     implementation("com.github.luben:zstd-jni:1.5.7-3")
 
     // Prometheus
-    implementation("io.prometheus:prometheus-metrics-core:1.3.7")
-    implementation("io.prometheus:prometheus-metrics-instrumentation-jvm:1.3.7")
-    implementation("io.prometheus:prometheus-metrics-exporter-httpserver:1.3.7")
+    implementation("io.prometheus:prometheus-metrics-core:1.3.8")
+    implementation("io.prometheus:prometheus-metrics-instrumentation-jvm:1.3.8")
+    implementation("io.prometheus:prometheus-metrics-exporter-httpserver:1.3.8")
 
     // NOTE:
     //  We implicitly rely on Nabu's transitive dependency on Netty's public interfaces.

@@ -17,7 +17,7 @@ public class FinishedAction implements WarpSyncAction {
     public void next(WarpSyncMachine sync) {
         warpSyncState.getRuntime().close();
         log.info("Closed sync runtime instance.");
-        log.info("Finished! Finished with warp sync! Nothing to execute.");
+        log.info("Finished with warp sync! Nothing to execute.");
     }
 
     @Override

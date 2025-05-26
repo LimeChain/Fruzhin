@@ -17,7 +17,7 @@ public class PreVoteStage implements StageState {
     public void start(GrandpaRound round) {
 
         if (round.isCompletable()) {
-            log.fine(String.format("Round %d is completable.", round.getRoundNumber()));
+            log.fine(String.format("Round %d is completable", round.getRoundNumber()));
             end(round);
             return;
         }
@@ -29,12 +29,12 @@ public class PreVoteStage implements StageState {
             }
         });
 
-        log.info(String.format("Round %d Start prevote stage", round.getRoundNumber()));
+        log.fine(String.format("Round %d Start prevote stage", round.getRoundNumber()));
         long delay = (DURATION * 2) - (System.currentTimeMillis() - round.getStartTime().toEpochMilli());
 
         round.setOnStageTimerHandler(Executors.newScheduledThreadPool(1));
         round.getOnStageTimerHandler().schedule(() -> {
-            log.info(String.format("Round %d Time of prevote stage is out", round.getRoundNumber()));
+            log.fine(String.format("Round %d Time of prevote stage is out", round.getRoundNumber()));
             end(round);
         }, delay, TimeUnit.MILLISECONDS);
     }
@@ -45,7 +45,7 @@ public class PreVoteStage implements StageState {
         round.clearOnStageTimerHandler();
 
         try {
-            log.info(String.format("Round %d ended pre-vote stage", round.getRoundNumber()));
+            log.fine(String.format("Round %d ended pre-vote stage", round.getRoundNumber()));
             Vote bestPreVoteCandidate = round.findBestPreVoteCandidate();
             round.broadcastVoteMessage(bestPreVoteCandidate, SubRound.PRE_VOTE);
             round.switchStage();

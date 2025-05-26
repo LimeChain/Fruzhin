@@ -60,7 +60,7 @@ public class HashingHostFunctions implements PartialHostApi {
      * @return a pointer to the buffer containing the 256-bit hash result.
      */
     public int keccak256V1(RuntimePointerSize data) {
-        log.fine("keccak256V1");
+        log.finest("keccak256V1");
         byte[] dataToHash = sharedMemory.readData(data);
 
         byte[] hash = HashUtils.hashWithKeccak256(dataToHash);
@@ -75,7 +75,7 @@ public class HashingHostFunctions implements PartialHostApi {
      * @return a pointer to the buffer containing the 512-bit hash result.
      */
     public int keccak512V1(RuntimePointerSize data) {
-        log.fine("keccak512V1");
+        log.finest("keccak512V1");
 
         byte[] dataToHash = sharedMemory.readData(data);
 
@@ -91,7 +91,7 @@ public class HashingHostFunctions implements PartialHostApi {
      * @return a pointer to the buffer containing the 256-bit hash result.
      */
     public int sha2256V1(RuntimePointerSize data) {
-        log.fine("sha2256V1");
+        log.finest("sha2256V1");
 
         byte[] dataToHash = sharedMemory.readData(data);
 
@@ -107,7 +107,7 @@ public class HashingHostFunctions implements PartialHostApi {
      * @return a pointer to the buffer containing the 128-bit hash result.
      */
     public int blake2128V1(RuntimePointerSize data) {
-        log.fine("blake2128V1");
+        log.finest("blake2128V1");
         byte[] dataToHash = sharedMemory.readData(data);
 
         byte[] hash = HashUtils.hashWithBlake2b128(dataToHash);
@@ -122,7 +122,7 @@ public class HashingHostFunctions implements PartialHostApi {
      * @return a pointer to the buffer containing the 256-bit hash result.
      */
     public int blake2256V1(RuntimePointerSize data) {
-        log.fine("blake2256V1");
+        log.finest("blake2256V1");
 
         byte[] dataToHash = sharedMemory.readData(data);
 
@@ -138,7 +138,7 @@ public class HashingHostFunctions implements PartialHostApi {
      * @return a pointer to the buffer containing the 64-bit hash result.
      */
     public int twox64V1(final RuntimePointerSize data) {
-        log.fine("twox64V1");
+        log.finest("twox64V1");
 
         byte[] dataToHash = sharedMemory.readData(data);
 
@@ -154,10 +154,10 @@ public class HashingHostFunctions implements PartialHostApi {
      * @return a pointer to the buffer containing the 128-bit hash result.
      */
     public int twox128V1(final RuntimePointerSize data) {
-        log.fine("twox128V1");
+        log.finest("twox128V1");
 
         byte[] dataToHash = sharedMemory.readData(data);
-        log.fine("with data to hash: " + new String(dataToHash));
+        log.finest("with data to hash: " + new String(dataToHash));
 
 
         byte[] hash = HashUtils.hashXx128(0, dataToHash);
@@ -172,7 +172,7 @@ public class HashingHostFunctions implements PartialHostApi {
      * @return a pointer to the buffer containing the 256-bit hash result.
      */
     public int twox256V1(final RuntimePointerSize data) {
-        log.fine("twox256V1");
+        log.finest("twox256V1");
 
         byte[] dataToHash = sharedMemory.readData(data);
 

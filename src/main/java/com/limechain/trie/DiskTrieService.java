@@ -521,7 +521,7 @@ public class DiskTrieService {
                 getCurrentTrieChanges().updateCache(mergeDeletionUpdatesWithTraversed(
                         executionUpdates, traversalResult.traversedNodes));
             }
-            case TraversalResult.NotFound ignored -> log.fine("DELETE: Node not found at key " + key);
+            case TraversalResult.NotFound ignored -> log.finest("DELETE: Node not found at key " + key);
             case TraversalResult.Unfinished ignored -> throw new IllegalStateException(UNFINISHED_TRAVERSAL_ERROR);
         }
     }
@@ -576,7 +576,7 @@ public class DiskTrieService {
                 return new DeleteByPrefixResult(deleted.get(), true);
             }
             case TraversalResult.NotFound ignored -> {
-                log.fine("DELETE: Node not found at key " + prefix);
+                log.finest("DELETE: Node not found at key " + prefix);
                 return new DeleteByPrefixResult(0, true);
             }
             case TraversalResult.Unfinished ignored -> throw new IllegalStateException(UNFINISHED_TRAVERSAL_ERROR);

@@ -21,7 +21,7 @@ public class BlockAnnounceService extends NetworkService<BlockAnnounce> {
             BlockAnnounceController controller = this.protocol.dialPeer(us, peer, us.getAddressBook());
             controller.sendHandshake();
         } catch (IllegalStateException e) {
-            log.warning("Error sending handshake request to peer " + peer);
+            log.fine("Error sending handshake request to peer " + peer);
         }
     }
 

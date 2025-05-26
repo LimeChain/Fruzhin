@@ -108,22 +108,28 @@ public class FullSyncMachine {
 
         stateManager.getBlockState().storeRuntime(lastFinalizedBlockHash, runtime);
 
-        int startNumber = syncState.getLastFinalizedBlockNumber()
-                .add(BigInteger.ONE)
-                .intValueExact();
+        if (networkService.isStarted()) {
 
-        messageCoordinator.handshakeBootNodes();
-        messageCoordinator.handshakePeers();
+            messageCoordinator.handshakeBootNodes();
+            messageCoordinator.handshakePeers();
 
-        int blocksToFetch = 100;
-        List<Block> receivedBlocks = requester.requestBlocks(BlockRequestField.ALL, startNumber, blocksToFetch).join();
+            int startNumber = syncState.getLastFinalizedBlockNumber()
+                    .add(BigInteger.ONE)
+                    .intValueExact();
 
-        while (!receivedBlocks.isEmpty()) {
-            executeBlocks(receivedBlocks, trieAccessor);
-            log.info("Executed blocks from " + receivedBlocks.getFirst().getHeader().getBlockNumber()
-                    + " to " + receivedBlocks.getLast().getHeader().getBlockNumber());
-            startNumber += receivedBlocks.size();
-            receivedBlocks = requester.requestBlocks(BlockRequestField.ALL, startNumber, blocksToFetch).join();
+            int blocksToFetch = 100;
+            List<Block> receivedBlocks = requester.requestBlocks(BlockRequestField.ALL, startNumber, blocksToFetch).join();
+
+            while (!receivedBlocks.isEmpty()) {
+                executeBlocks(receivedBlocks, trieAccessor);
+
+                log.info(String.format("Executed blocks from #%d to #%d",
+                        receivedBlocks.getFirst().getHeader().getBlockNumber(),
+                        receivedBlocks.getLast().getHeader().getBlockNumber()));
+
+                startNumber += receivedBlocks.size();
+                receivedBlocks = requester.requestBlocks(BlockRequestField.ALL, startNumber, blocksToFetch).join();
+            }
         }
 
         BlockState blockState = stateManager.getBlockState();
@@ -202,7 +208,7 @@ public class FullSyncMachine {
     private void executeBlocks(List<Block> receivedBlockDatas, TrieAccessor trieAccessor) {
         BlockState blockState = stateManager.getBlockState();
         for (Block block : receivedBlockDatas) {
-            log.info("Block number to be executed is " + block.getHeader().getBlockNumber());
+            log.info(String.format("Block #%d to be executed", block.getHeader().getBlockNumber()));
 
             BlockHeader blockHeader = block.getHeader();
             Runtime newRuntime = runtimeBuilder.copyRuntime(runtime);
@@ -228,8 +234,8 @@ public class FullSyncMachine {
             try {
                 blockHandler.addBlockToTree(block, Instant.now());
             } catch (BlockNodeNotFoundException ex) {
-                log.fine("Executing block with number " + block.getHeader().getBlockNumber()
-                        + " which has no parent in block state.");
+                log.fine(String.format("Executing block #%d which has no parent in block state",
+                        block.getHeader().getBlockNumber()));
             }
 
             blockState.storeRuntime(blockHeader.getHash(), newRuntime);
@@ -274,9 +280,9 @@ public class FullSyncMachine {
                             cm, blockHeader.getBlockNumber())
                     );
 
-            log.fine(String.format("finalizeIfNeeded: Finalizing block #%d with hash %s",
+            log.fine(String.format("finalizeIfNeeded: Finalizing block #%d (%s)",
                     blockHeader.getBlockNumber(),
-                    blockHeader.getHash()));
+                    blockHeader.getPrintableHash()));
         }
     }
 

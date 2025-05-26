@@ -5,4 +5,4 @@ Creds: config
 # metrics
 alice: log line matches "Successfully connected to ([1-9]\d*) boot nodes" within 30 seconds
 alice: log line matches "Node successfully connected to a peer! Sync can start" within 30 seconds
-alice: log line matches "Connected peers: ([1-9]\d*)" within 60 seconds
+alice: log line matches "Bootstrap connected to ([1-9]\d*) nodes close to us" within 60 seconds

@@ -20,7 +20,9 @@ public class LightClient extends HostNode {
                         Objects.requireNonNull(AppBean.getBean(NetworkService.class)),
                         Objects.requireNonNull(AppBean.getBean(SyncService.class))
                 ),
-                List.of(Objects.requireNonNull(AppBean.getBean(SyncState.class)))
+                List.of(
+                        Objects.requireNonNull(AppBean.getBean(SyncState.class))
+                )
         );
     }
 }
