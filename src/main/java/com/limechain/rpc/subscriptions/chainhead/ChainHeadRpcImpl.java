@@ -30,7 +30,6 @@ public class ChainHeadRpcImpl implements ChainHeadRpc {
         try {
             this.rpcClient = new SubscriptionRpcClient(new URI(forwardNodeAddress), new PublisherImpl(),
                     Topic.UNSTABLE_FOLLOW);
-            //TODO: Move connect outside constructor
             rpcClient.connectBlocking();
         } catch (URISyntaxException e) {
             throw new InvalidURIException(e);

@@ -71,11 +71,8 @@ public class RpcApp {
      */
     //TODO change stop to use services
     public void stop() {
-        // TODO: This is untestable with our current design... but do we need to test it really?
-        //  (I mean verifying that everything necessary has been stopped)
         if (this.springCtx != null) {
             this.springCtx.close();
         }
     }
-
 }
