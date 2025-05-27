@@ -20,11 +20,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 
-// TODO:
-//  This is currently a helper utility class
-//  planned to grow into a unified scale encode/decode util class with whatever methods are useful
-//  WIP
-// Currently trying out different approaches to spare some of the boilerplate around SCALE en/decoding
 @UtilityClass
 public class ScaleUtils {
 

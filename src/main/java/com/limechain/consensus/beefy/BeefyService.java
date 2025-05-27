@@ -159,6 +159,10 @@ public class BeefyService implements FinalizedBlockChangeListener {
         byte[] privateKey = keyPair.getValue1();
 
         Commitment commitment = getCommitment(targetVoteBlockNumber, authoritySet.getSetId());
+        if (commitment == null) {
+            throw new BeefyGenericException("createVoteMessage: Failed to create commitment for block number: " +
+                    targetVoteBlockNumber);
+        }
         byte[] encodedCommitment = ScaleUtils.Encode.encode(CommitmentScaleWriter.getInstance(), commitment);
         byte[] hashedCommitment = HashUtils.hashWithKeccak256(encodedCommitment);
 

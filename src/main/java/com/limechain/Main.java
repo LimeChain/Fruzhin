@@ -41,8 +41,7 @@ public class Main {
             case LIGHT -> client = new LightClient();
             case AUTHORING -> client = new AuthoringNode();
             case NONE -> {
-                // This shouldn't happen.
-                // TODO: don't use this enum for the CLI NodeRole option
+                log.warning("Node role NONE is reserved for peer information and should not be used as a CLI argument");
                 return;
             }
             default -> {

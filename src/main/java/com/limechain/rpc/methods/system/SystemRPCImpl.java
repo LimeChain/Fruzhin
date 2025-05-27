@@ -207,7 +207,7 @@ public class SystemRPCImpl {
      * @param accountAddress the address of the account
      */
     public String systemAccountNextIndex(String accountAddress) {
-        //TODO: Transcation pool and Trie needs to be implemented first.
+        //TODO: Implement.
         throw new UnsupportedOperationException("Not implemented.");
     }
 

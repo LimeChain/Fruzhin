@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.stream.Collector;
 import java.util.stream.StreamSupport;
 
-// TODO: Add unit tests
 @UtilityClass
 public class NibblesUtils {
     /**
