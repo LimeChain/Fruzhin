@@ -167,7 +167,7 @@ public class GrandpaService {
     }
 
     @NotNull
-    private GrandpaRound initRoundFromJustification(Justification justification,
+    protected GrandpaRound initRoundFromJustification(Justification justification,
                                                     BlockHeader lastFinalized,
                                                     GrandpaAuthoritySet authoritiesForBlock) {
 
