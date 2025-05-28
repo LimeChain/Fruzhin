@@ -131,9 +131,6 @@ public class FullSyncMachine {
 
         if (networkService.isStarted()) {
 
-            messageCoordinator.handshakeBootNodes();
-            messageCoordinator.handshakePeers();
-
             int startNumber = syncState.getLastFinalizedBlockNumber()
                     .add(BigInteger.ONE)
                     .intValueExact();
