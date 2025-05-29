@@ -112,7 +112,7 @@ public class WarpSyncMachine {
 
         this.warpState.setWarpSyncFinished(true);
 
-        blockState.setupPostWarpSync(syncState.getLastFinalizedBlockHash(), syncState.getLastFinalizedBlockNumber());
+        blockState.initBlockTree(syncState.getLastFinalizedBlockHash(), syncState.getLastFinalizedBlockNumber());
         beefyState.setupPostWarpSync();
 
         log.info("Warp sync finished.");

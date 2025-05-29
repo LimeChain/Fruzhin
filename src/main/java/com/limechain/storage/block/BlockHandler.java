@@ -178,12 +178,6 @@ public class BlockHandler {
 
             // Grandpa consensus message may include forced changes that should be applied immediately
             grandpaSetState.applyForcedAuthoritySetChange(header.getHash(), header.getBlockNumber());
-
-            DigestHelper.getBeefyConsensusMessages(header.getDigest())
-                    .forEach(cm -> {
-                                //Todo: handleBeefyConsensusMessage
-                            }
-                    );
         }
     }
 

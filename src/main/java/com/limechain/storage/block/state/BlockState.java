@@ -118,6 +118,7 @@ public class BlockState extends AbstractState {
         final BlockHeader lastHeader = getHighestFinalizedHeader();
         this.lastFinalized = lastHeader.getHash();
         this.blockTree = new BlockTree(lastHeader);
+        finalizeBlock(lastHeader, BigInteger.ZERO, BigInteger.ZERO);
     }
 
     @Override
@@ -125,7 +126,7 @@ public class BlockState extends AbstractState {
         //TODO: Discuss what needs to be saved for block state.
     }
 
-    public void setupPostWarpSync(Hash256 lastFinalizedBlockHash, BigInteger lastFinalizedBlockNumber) {
+    public void initBlockTree(Hash256 lastFinalizedBlockHash, BigInteger lastFinalizedBlockNumber) {
         BlockNode parentBlock = new BlockNode(
                 lastFinalizedBlockHash,
                 null,
@@ -963,7 +964,10 @@ public class BlockState extends AbstractState {
             setHeader(block.getHeader());
             setBlockBody(subchainHash, block.getBody());
 
-            getRuntime(subchainHash).persistsChanges(block.getHeader());
+            Runtime runtime = getRuntime(subchainHash);
+            if (runtime == null) {
+                log.finest(String.format("handleFinalizedBlock: runtime is null for hash %s", subchainHash));
+            } else getRuntime(subchainHash).persistsChanges(block.getHeader());
 
             Instant arrivalTime = blockTree.getArrivalTime(subchainHash);
             setArrivalTime(subchainHash, arrivalTime);

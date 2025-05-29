@@ -200,7 +200,7 @@ public class NetworkService implements NodeService {
      * Periodically searches for new peers, connects to them and sends a block announce handshake so that we start
      * communication.
      */
-    @Scheduled(fixedDelay = 10, initialDelay = 15, timeUnit = TimeUnit.SECONDS)
+    @Scheduled(fixedDelay = 30, initialDelay = 15, timeUnit = TimeUnit.SECONDS)
     private void updatePeers() {
         if (!started) {
             return;
