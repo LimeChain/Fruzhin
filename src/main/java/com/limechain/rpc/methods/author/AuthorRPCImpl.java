@@ -48,7 +48,7 @@ public class AuthorRPCImpl {
         }
 
         // The runtime injects the generated keys into the keystore.
-        byte[] response = runtime.generateSessionKeys(null);
+        byte[] response = runtime.generateSessionKeys(blockState.bestBlockHeader(), null);
         return StringUtils.toHexWithPrefix(response);
     }
 
@@ -100,7 +100,7 @@ public class AuthorRPCImpl {
             throw new ExecutionFailedException("Failed to executed has_session_keys call: " + e.getMessage());
         }
 
-        List<DecodedKey> decodedKeys = runtime.decodeSessionKeys(sessionKeys);
+        List<DecodedKey> decodedKeys = runtime.decodeSessionKeys(blockState.bestBlockHeader(), sessionKeys);
 
         for (DecodedKey decodedKey : decodedKeys) {
             var key = StringUtils.toHexWithPrefix(decodedKey.getData());

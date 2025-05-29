@@ -17,6 +17,7 @@ import com.limechain.transaction.dto.Extrinsic;
 import com.limechain.transaction.dto.ExtrinsicArray;
 import com.limechain.transaction.dto.TransactionValidationRequest;
 import com.limechain.transaction.dto.TransactionValidationResponse;
+import org.jetbrains.annotations.Nullable;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -24,57 +25,58 @@ import java.util.Optional;
 
 public interface Runtime {
 
-    BabeApiConfiguration getBabeApiConfiguration();
+    BabeApiConfiguration getBabeApiConfiguration(@Nullable BlockHeader header);
 
-    Optional<OpaqueKeyOwnershipProof> generateBabeKeyOwnershipProof(BigInteger slotNumber, byte[] authorityPublicKey);
+    Optional<OpaqueKeyOwnershipProof> generateBabeKeyOwnershipProof(@Nullable BlockHeader header, BigInteger slotNumber, byte[] authorityPublicKey);
 
-    void submitReportBabeEquivocationUnsignedExtrinsic(BlockEquivocationProof blockEquivocationProof, byte[] keyOwnershipProof);
+    void submitReportBabeEquivocationUnsignedExtrinsic(@Nullable BlockHeader header, BlockEquivocationProof blockEquivocationProof, byte[] keyOwnershipProof);
 
-    List<Authority> getGrandpaApiAuthorities();
+    List<Authority> getGrandpaApiAuthorities(@Nullable BlockHeader header);
 
-    Optional<OpaqueKeyOwnershipProof> generateGrandpaKeyOwnershipProof(BigInteger authoritySetId, byte[] authorityPublicKey);
+    Optional<OpaqueKeyOwnershipProof> generateGrandpaKeyOwnershipProof(@Nullable BlockHeader header, BigInteger authoritySetId, byte[] authorityPublicKey);
 
-    void submitReportGrandpaEquivocationUnsignedExtrinsic(GrandpaEquivocation grandpaEquivocation, byte[] keyOwnershipProof);
+    void submitReportGrandpaEquivocationUnsignedExtrinsic(@Nullable BlockHeader header, GrandpaEquivocation grandpaEquivocation, byte[] keyOwnershipProof);
 
-    Optional<OpaqueKeyOwnershipProof> generateBeefyKeyOwnershipProof(BigInteger authoritySetId, byte[] authorityPublicKey);
+    Optional<OpaqueKeyOwnershipProof> generateBeefyKeyOwnershipProof(@Nullable BlockHeader header, BigInteger authoritySetId, byte[] authorityPublicKey);
 
-    void submitReportBeefyDoubleVotingUnsignedExtrinsic(DoubleVotingProof doubleVotingProof, byte[] keyOwnershipProof);
+    void submitReportBeefyDoubleVotingUnsignedExtrinsic(@Nullable BlockHeader header, DoubleVotingProof doubleVotingProof, byte[] keyOwnershipProof);
 
-    Optional<BeefyAuthoritySet> getBeefyValidatorSet();
+    Optional<BigInteger> getBeefyGenesis(@Nullable BlockHeader header);
 
-    Optional<BigInteger> getBeefyGenesis();
+    Optional<BeefyAuthoritySet> getBeefyValidatorSet(@Nullable BlockHeader header);
 
-    List<DecodedKey> decodeSessionKeys(String sessionKeys);
+    List<DecodedKey> decodeSessionKeys(@Nullable BlockHeader header, String sessionKeys);
 
     RuntimeVersion getCachedVersion();
 
-    RuntimeVersion getVersion();
+    RuntimeVersion getVersion(@Nullable BlockHeader header);
 
-    TransactionValidationResponse validateTransaction(TransactionValidationRequest request);
+    TransactionValidationResponse validateTransaction(@Nullable BlockHeader header, TransactionValidationRequest request);
 
-    BlockHeader finalizeBlock();
+    BlockHeader finalizeBlock(@Nullable BlockHeader header);
 
-    byte[] checkInherents(Block block, InherentData inherentData);
+    byte[] checkInherents(@Nullable BlockHeader header, Block block, InherentData inherentData);
 
-    ApplyExtrinsicResult applyExtrinsic(Extrinsic extrinsic);
+    ApplyExtrinsicResult applyExtrinsic(@Nullable BlockHeader header, Extrinsic extrinsic);
 
-    ExtrinsicArray inherentExtrinsics(com.limechain.consensus.babe.dto.InherentData inherentData);
+    ExtrinsicArray inherentExtrinsics(@Nullable BlockHeader header, com.limechain.consensus.babe.dto.InherentData inherentData);
 
-    byte[] generateSessionKeys(byte[] scaleSeed);
+    byte[] generateSessionKeys(@Nullable BlockHeader header, byte[] scaleSeed);
 
-    byte[] getMetadata();
+    byte[] getMetadata(@Nullable BlockHeader header);
 
-    void executeBlock(Block block);
+    void executeBlock(@Nullable BlockHeader header, Block block);
 
-    void initializeBlock(BlockHeader blockHeader);
+    void initializeBlock(@Nullable BlockHeader contextHeader, BlockHeader newBlockHeader);
 
-    BigInteger getGenesisSlotNumber();
+    BigInteger getGenesisSlotNumber(@Nullable BlockHeader header);
+
+    Optional<byte[]> getRuntimeCode(BlockHeader header);
 
     /**
      * Saves the runtime instance's {@link com.limechain.trie.cache.TrieChanges} to the disk storage.
      */
-    void persistsChanges();
+    void persistsChanges(BlockHeader header);
 
     void close();
-
 }

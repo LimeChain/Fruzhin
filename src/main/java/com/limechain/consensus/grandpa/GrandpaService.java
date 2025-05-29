@@ -97,6 +97,10 @@ public class GrandpaService {
             }
         }
 
+        if (authorities == null) {
+            authorities = grandpaSetState.getAuthoritySet();
+        }
+
         return Optional.ofNullable(authorities);
     }
 
@@ -168,8 +172,8 @@ public class GrandpaService {
 
     @NotNull
     protected GrandpaRound initRoundFromJustification(Justification justification,
-                                                    BlockHeader lastFinalized,
-                                                    GrandpaAuthoritySet authoritiesForBlock) {
+                                                      BlockHeader lastFinalized,
+                                                      GrandpaAuthoritySet authoritiesForBlock) {
 
         GrandpaSetState grandpaSetState = stateManager.getGrandpaSetState();
         BlockState blockState = stateManager.getBlockState();
@@ -215,20 +219,17 @@ public class GrandpaService {
         if (lastFinalized.getBlockNumber().compareTo(BigInteger.ZERO) > 0) {
             Optional<Justification> justificationOpt = blockState.getJustification(lastFinalized.getHash());
 
-            if (justificationOpt.isEmpty()) {
-                playCurrentRound();
-                return;
-            }
-
-            Justification justification = justificationOpt.get();
-            if (!isFirstBlockOfSet(lastFinalized.getBlockNumber())) {
-                stateBuilder.roundNumber(justification.getRoundNumber().add(BigInteger.ONE));
+            if (justificationOpt.isPresent()) {
+                Justification justification = justificationOpt.get();
+                if (!isFirstBlockOfSet(lastFinalized.getBlockNumber())) {
+                    stateBuilder.roundNumber(justification.getRoundNumber().add(BigInteger.ONE));
+                }
             }
         }
 
         RoundState roundState = stateBuilder.build();
         GrandpaRound currentRound = grandpaSetState.getCurrentGrandpaRound();
-        if (currentRound != null && currentRound.getRoundNumber().compareTo(roundState.getRoundNumber()) == 0) {
+        if (currentRound != null && currentRound.getRoundNumber().compareTo(roundState.getRoundNumber()) >= 0) {
             return;
         }
 

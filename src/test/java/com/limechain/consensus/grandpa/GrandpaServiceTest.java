@@ -45,7 +45,6 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -124,34 +123,6 @@ class GrandpaServiceTest {
             verify(blockState).getHighestFinalizedHeader();
             verify(grandpaSetState, times(2)).getCurrentGrandpaRound();
             verify(blockState).getJustification(any());
-        }
-    }
-
-    @Test
-    void testStartWithNoAuthoritySetFound() {
-        try (MockedStatic<AsyncExecutor> asyncMock = mockStatic(AsyncExecutor.class)) {
-            AsyncExecutor mockExecutor = mock(AsyncExecutor.class);
-            doAnswer(invocation -> {
-                Runnable task = invocation.getArgument(0);
-                task.run();
-                return null;
-            }).when(mockExecutor).executeAndForget(any(Runnable.class));
-
-            asyncMock.when(AsyncExecutor::withSingleThread).thenReturn(mockExecutor);
-
-            authoritySet.setSetId(BigInteger.ONE);
-            LinkedHashMap<Pair<Hash256, BigInteger>, GrandpaAuthoritySet> changes = new LinkedHashMap<>();
-
-            when(stateManager.getBlockState()).thenReturn(blockState);
-            when(blockState.getHighestFinalizedHeader()).thenReturn(blockHeader);
-            when(blockHeader.getBlockNumber()).thenReturn(BLOCK_2_NUM);
-            when(grandpaSetState.getAuthoritySet()).thenReturn(authoritySet);
-            when(grandpaSetState.getSetChanges()).thenReturn(changes);
-
-            grandpaService.start();
-
-            verify(blockState, never()).getJustification(any());
-            verify(grandpaSetState, never()).getCurrentGrandpaRound();
         }
     }
 
@@ -256,38 +227,6 @@ class GrandpaServiceTest {
             assertEquals(prevRound.getRoundNumber().add(BigInteger.ONE), nextRound.getRoundNumber());
             assertThat(prevRound.getAuthoritySet()).usingRecursiveComparison().isEqualTo(nextRound.getAuthoritySet());
         }
-    }
-
-    @Test
-    void testTryStartFromPreviousRoundWithNoAuthoritySet() {
-        GrandpaRound prevRound = mock(GrandpaRound.class);
-        authoritySet.setSetId(BigInteger.ONE);
-        LinkedHashMap<Pair<Hash256, BigInteger>, GrandpaAuthoritySet> changes = new LinkedHashMap<>();
-
-        when(grandpaSetState.getCurrentGrandpaRound()).thenReturn(prevRound);
-        when(prevRound.getFinalizedBlock()).thenReturn(blockHeader);
-        when(prevRound.getFinalizedBlock().getBlockNumber()).thenReturn(BLOCK_1_NUM);
-        when(grandpaSetState.getAuthoritySet()).thenReturn(authoritySet);
-        when(grandpaSetState.getSetChanges()).thenReturn(changes);
-
-        grandpaService.tryStartFromPreviousRound(prevRound);
-
-        verify(grandpaSetState, never()).addNewGrandpaRound(any());
-    }
-
-    @Test
-    void testFinalizeJustificationWithNoAuthoritySet() {
-        Justification justification = new Justification();
-        justification.setTargetBlock(BigInteger.ONE);
-        justification.setRoundNumber(BigInteger.ONE);
-
-        authoritySet.setSetId(BigInteger.ONE);
-        LinkedHashMap<Pair<Hash256, BigInteger>, GrandpaAuthoritySet> changes = new LinkedHashMap<>();
-
-        when(grandpaSetState.getAuthoritySet()).thenReturn(authoritySet);
-        when(grandpaSetState.getSetChanges()).thenReturn(changes);
-
-        assertThrows(GrandpaJustificationException.class, () -> grandpaService.finalizeJustification(justification));
     }
 
     @Test

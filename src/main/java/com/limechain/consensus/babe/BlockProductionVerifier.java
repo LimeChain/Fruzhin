@@ -24,6 +24,7 @@ import io.emeraldpay.polkaj.schnorrkel.VrfOutputAndProof;
 import lombok.extern.java.Log;
 import org.apache.tomcat.util.buf.HexUtils;
 import org.javatuples.Pair;
+import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -32,6 +33,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Log
+@Component
 public class BlockProductionVerifier implements SlotChangeListener {
     private final Map<String, BlockHeader> currentSlotAuthorBlockMap = new ConcurrentHashMap<>();
 
@@ -188,9 +190,9 @@ public class BlockProductionVerifier implements SlotChangeListener {
     }
 
     private boolean isBlockEquivocationExist(byte[] authorityPublicKey,
-                                           BlockHeader blockHeader,
-                                           Runtime runtime,
-                                           BigInteger currentSlotNumber) {
+                                             BlockHeader blockHeader,
+                                             Runtime runtime,
+                                             BigInteger currentSlotNumber) {
         String hexPublicKey = HexUtils.toHexString(authorityPublicKey);
         if (currentSlotAuthorBlockMap.containsKey(hexPublicKey)) {
             BlockHeader firstBlockHeader = currentSlotAuthorBlockMap.get(hexPublicKey);
@@ -202,9 +204,10 @@ public class BlockProductionVerifier implements SlotChangeListener {
                 blockEquivocationProof.setSecondBlockHeader(blockHeader);
 
                 Optional<OpaqueKeyOwnershipProof> opaqueKeyOwnershipProof = runtime.generateBabeKeyOwnershipProof(
-                        currentSlotNumber, authorityPublicKey);
+                        null, currentSlotNumber, authorityPublicKey);
                 opaqueKeyOwnershipProof.ifPresentOrElse(
-                        key -> runtime.submitReportBabeEquivocationUnsignedExtrinsic(blockEquivocationProof, key.getProof()),
+                        key -> runtime.submitReportBabeEquivocationUnsignedExtrinsic(
+                                null, blockEquivocationProof, key.getProof()),
                         () -> log.warning(String.format(
                                 "Failure to report equivocation for authority: %s. Authorship verification marked as failure.",
                                 hexPublicKey)));
@@ -216,6 +219,7 @@ public class BlockProductionVerifier implements SlotChangeListener {
 
     @Override
     public void slotChanged(SlotChangeEvent event) {
+        log.finest("SlotChanged event " + event.getSlot().getNumber());
         currentSlotAuthorBlockMap.clear();
     }
 }

@@ -124,20 +124,19 @@ public class BabeService implements SlotChangeListener {
 
         BlockState blockState = stateManager.getBlockState();
         Runtime runtime = blockState.getRuntime(parentHeader.getHash());
-        Runtime newRuntime = runtimeBuilder.copyRuntime(runtime);
-        newRuntime.initializeBlock(newBlockHeader);
+        runtime.initializeBlock(parentHeader, newBlockHeader);
 
         log.fine("Initialized block via runtime call.");
 
-        ExtrinsicArray inherents = produceBlockInherents(slot, newRuntime, parentHeader);
+        ExtrinsicArray inherents = produceBlockInherents(slot, runtime, parentHeader);
         log.fine("Finished with inherents for block.");
 
-        List<ValidTransaction> transactions = produceBlockTransactions(slot, newRuntime);
+        List<ValidTransaction> transactions = produceBlockTransactions(slot, runtime, parentHeader);
         log.fine("Finished with extrinsics for block.");
 
         BlockHeader finalizedHeader;
         try {
-            finalizedHeader = newRuntime.finalizeBlock();
+            finalizedHeader = runtime.finalizeBlock(newBlockHeader);
         } catch (Exception e) {
             transactions.forEach(stateManager.getTransactionState()::pushTransaction);
             throw new BabeGenericException("Block finalization failed. Pushed transaction back to queue.");
@@ -155,7 +154,7 @@ public class BabeService implements SlotChangeListener {
 
         BlockBody body = new BlockBody(bodyExtrinsics);
 
-        blockState.storeRuntime(finalizedHeader.getHash(), newRuntime);
+        blockState.storeRuntime(finalizedHeader.getHash(), runtime);
 
         return new Block(finalizedHeader, body);
     }
@@ -204,7 +203,7 @@ public class BabeService implements SlotChangeListener {
         return updatedDigests;
     }
 
-    private List<ValidTransaction> produceBlockTransactions(Slot slot, Runtime runtime) {
+    private List<ValidTransaction> produceBlockTransactions(Slot slot, Runtime runtime, BlockHeader parentHeader) {
         List<ValidTransaction> toAdd = new ArrayList<>();
 
         // Keep 1/3 of the slot duration for validating and importing block.
@@ -229,7 +228,7 @@ public class BabeService implements SlotChangeListener {
 
             Extrinsic extrinsic = transaction.getExtrinsic();
 
-            ApplyExtrinsicResult applyExtrinsicResponse = runtime.applyExtrinsic(extrinsic);
+            ApplyExtrinsicResult applyExtrinsicResponse = runtime.applyExtrinsic(parentHeader, extrinsic);
 
             if (applyExtrinsicResponse.getOutcome() != null && applyExtrinsicResponse.getOutcome().isValid()) {
                 toAdd.add(transaction);
@@ -274,10 +273,10 @@ public class BabeService implements SlotChangeListener {
         inherentData.getData().put(InherentType.PARACHN0, encodedParachainInherentData);
         inherentData.getData().put(InherentType.NEWHEADS, new byte[]{0});
 
-        ExtrinsicArray inherentExtrinsics = runtime.inherentExtrinsics(inherentData);
+        ExtrinsicArray inherentExtrinsics = runtime.inherentExtrinsics(parentHeader, inherentData);
 
         for (int i = 0; i < inherentExtrinsics.getExtrinsics().length; i++) {
-            ApplyExtrinsicResult result = runtime.applyExtrinsic(inherentExtrinsics.getExtrinsics()[i]);
+            ApplyExtrinsicResult result = runtime.applyExtrinsic(parentHeader, inherentExtrinsics.getExtrinsics()[i]);
             if (result.getOutcome() != null && result.getOutcome().isValid()) {
                 continue;
             }

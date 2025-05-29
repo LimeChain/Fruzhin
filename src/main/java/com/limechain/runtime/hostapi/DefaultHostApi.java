@@ -18,18 +18,21 @@ public class DefaultHostApi extends HostApi {
     @Override
     protected Map<Endpoint, ImportObject.FuncImport> buildFunctionImports() {
         List<PartialHostApi> impls = List.of(
-            new AllocatorHostFunctions(sharedMemory),
-            new HashingHostFunctions(sharedMemory),
-            new StorageHostFunctions(sharedMemory, context.getTrieAccessor()),
-            new TrieHostFunctions(sharedMemory),
-            new MiscellaneousHostFunctions(sharedMemory),
-            new OffchainHostFunctions(sharedMemory, context.getOffchainStorages(), context.getOffchainNetworkState(), context.isValidator()),
-            new CryptoHostFunctions(sharedMemory, context.getKeyStore()),
-            new ChildStorageHostFunctions(sharedMemory, context.getTrieAccessor())
+                new AllocatorHostFunctions(sharedMemory),
+                new HashingHostFunctions(sharedMemory),
+                new StorageHostFunctions(sharedMemory, context),
+                new TrieHostFunctions(sharedMemory),
+                new MiscellaneousHostFunctions(sharedMemory),
+                new OffchainHostFunctions(sharedMemory,
+                        context.getOffchainStorages(),
+                        context.getOffchainNetworkState(),
+                        context.isValidator()),
+                new CryptoHostFunctions(sharedMemory, context.getKeyStore()),
+                new ChildStorageHostFunctions(sharedMemory, context)
         );
 
         return impls.stream()
-            .flatMap(impl -> impl.getFunctionImports().entrySet().stream())
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                .flatMap(impl -> impl.getFunctionImports().entrySet().stream())
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 }

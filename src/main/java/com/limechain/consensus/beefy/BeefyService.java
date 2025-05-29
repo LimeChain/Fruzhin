@@ -72,7 +72,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
         }
 
         Runtime runtime = blockState.getRuntime(event.getGrandpaFinalized().getHash());
-        BigInteger newGenesis = runtime.getBeefyGenesis().orElse(null);
+        BigInteger newGenesis = runtime.getBeefyGenesis(event.getGrandpaFinalized()).orElse(null);
 
         if (!Objects.equals(newGenesis, beefyState.getBeefyGenesis())) {
 
@@ -249,16 +249,16 @@ public class BeefyService implements FinalizedBlockChangeListener {
 
         BlockState blockState = stateManager.getBlockState();
         Runtime runtime = blockState.getRuntime(blockState.getHighestFinalizedHash());
-        runtime.generateBeefyKeyOwnershipProof(doubleVotingProof.getFirst().getCommitment().getAuthoritySetId(),
+        runtime.generateBeefyKeyOwnershipProof(null, doubleVotingProof.getFirst().getCommitment().getAuthoritySetId(),
                         doubleVotingProof.getFirst().getAuthorityId())
                 .ifPresentOrElse(key ->
                                 runtime.submitReportBeefyDoubleVotingUnsignedExtrinsic(
-                                        doubleVotingProof, key.getProof()
+                                        null, doubleVotingProof, key.getProof()
                                 ),
                         () -> log.fine(
                                 String.format("reportDoubleVoting: Failed to report Beefy double voting for block #%d.",
-                                doubleVotingProof.getFirst().getCommitment().getBlockNumber()
-                        ))
+                                        doubleVotingProof.getFirst().getCommitment().getBlockNumber()
+                                ))
                 );
     }
 
@@ -497,7 +497,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
 
         BigInteger mandatoryBlock = currentSession.getMandatoryBlock();
         if (blockNumber.compareTo(mandatoryBlock) < 0) {
-            log.fine(String.format(
+            log.finest(String.format(
                     "isBeefyMessageAcceptable: " +
                             "Rejected beefy message — block %d is earlier than current session's mandatory block %d.",
                     blockNumber, mandatoryBlock
@@ -509,7 +509,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
         BigInteger setId = currentSession.getAuthoritySet().getSetId();
         BigInteger commitmentSetId = commitment.getAuthoritySetId();
         if (!setId.equals(commitmentSetId)) {
-            log.fine(String.format(
+            log.finest(String.format(
                     "isBeefyMessageAcceptable: Rejected beefy message — authority set ID mismatch. Expected: %d, got: %d.",
                     setId, commitmentSetId
             ));
@@ -525,7 +525,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
         BigInteger end = cachedAcceptedInterval.getValue1();
 
         if (blockNumber.compareTo(start) < 0 || blockNumber.compareTo(end) > 0) {
-            log.fine(String.format(
+            log.finest(String.format(
                     "isBeefyMessageAcceptable: Rejected beefy message — block %d outside accepted round range [%d, %d].",
                     blockNumber, start, end
             ));

@@ -39,14 +39,14 @@ public class EpochState extends AbstractState implements ServiceConsensusState {
 
     @Override
     public void populateDataFromRuntime(Runtime runtime) {
-        var babeApiConfiguration = runtime.getBabeApiConfiguration();
+        var babeApiConfiguration = runtime.getBabeApiConfiguration(null);
         this.slotDuration = babeApiConfiguration.getSlotDuration();
         this.epochLength = babeApiConfiguration.getEpochLength();
         this.currentEpochData = new EpochData(
                 babeApiConfiguration.getAuthorities(), babeApiConfiguration.getRandomness());
         this.currentEpochDescriptor = new EpochDescriptor(
                 babeApiConfiguration.getConstant(), babeApiConfiguration.getAllowedSlots());
-        setGenesisSlotNumber(runtime.getGenesisSlotNumber());
+        setGenesisSlotNumber(runtime.getGenesisSlotNumber(null));
     }
 
     @Override

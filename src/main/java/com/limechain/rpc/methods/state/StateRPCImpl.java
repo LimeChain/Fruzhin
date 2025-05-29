@@ -180,7 +180,7 @@ public class StateRPCImpl {
         final Hash256 blockHash = getHash256FromHex(blockHashHex);
 
         final Runtime runtime = blockState.getRuntime(blockHash);
-        byte[] metadataBytes = runtime.getMetadata();
+        byte[] metadataBytes = runtime.getMetadata(null);
 
         return StringUtils.toHexWithPrefix(metadataBytes);
     }

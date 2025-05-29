@@ -20,6 +20,7 @@ public class Context {
     /**
      * Used by storage related endpoints for accessing the trie storage for a block.
      */
+    @Setter(AccessLevel.PACKAGE)
     TrieAccessor trieAccessor;
 
     /**

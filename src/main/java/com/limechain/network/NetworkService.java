@@ -105,8 +105,11 @@ public class NetworkService implements NodeService {
      * @param cliArgs          command line arguments
      * @param genesisBlockHash genesis block hash
      */
-    public NetworkService(ChainService chainService, HostConfig hostConfig, KVRepository<String, Object> repository,
-                          CliArguments cliArgs, GenesisBlockHash genesisBlockHash) {
+    public NetworkService(ChainService chainService,
+                          HostConfig hostConfig,
+                          KVRepository<String, Object> repository,
+                          CliArguments cliArgs,
+                          GenesisBlockHash genesisBlockHash) {
         this.bootNodes = chainService.getChainSpec().getBootNodes();
         this.chain = hostConfig.getChain();
         this.nodeRole = hostConfig.getNodeRole();
@@ -134,6 +137,7 @@ public class NetworkService implements NodeService {
         while (true) {
             if (!kademliaService.getBootNodePeerIds().isEmpty()) {
                 if (kademliaService.getSuccessfulBootNodes() > 0) {
+                    blockAnnounceHandshakeBootNodes();
                     break;
                 }
                 updateCurrentSelectedPeer();
@@ -196,11 +200,13 @@ public class NetworkService implements NodeService {
      * Periodically searches for new peers, connects to them and sends a block announce handshake so that we start
      * communication.
      */
-    @Scheduled(fixedDelay = 10, initialDelay = 30, timeUnit = TimeUnit.SECONDS)
+    @Scheduled(fixedDelay = 10, initialDelay = 15, timeUnit = TimeUnit.SECONDS)
     private void updatePeers() {
         if (!started) {
             return;
         }
+
+        connectionManager.getPeerIds().forEach(this::handshakeConsensusProtocols);
 
         log.info(String.format("findPeers: connected peers: %s", getPeersCount()));
         log.info("findPeers: searching for peers...");
@@ -352,6 +358,28 @@ public class NetworkService implements NodeService {
             log.info("Generated new peerId!");
         }
         return privateKey;
+    }
+
+    private void blockAnnounceHandshakeBootNodes() {
+        kademliaService.getBootNodePeerIds()
+                .stream()
+                .distinct()
+                .forEach(p -> asyncExecutor.executeAndForget(() -> {
+                    blockAnnounceService.sendHandshake(kademliaService.getHost(), p);
+                }));
+    }
+
+    private void handshakeConsensusProtocols(PeerId peerId) {
+        asyncExecutor.executeAndForget(() ->
+                grandpaService.sendHandshake(host, peerId));
+
+        asyncExecutor.executeAndForget(() ->
+                beefyNotificationService.sendHandshake(host, peerId));
+
+        if (nodeRole.equals(NodeRole.AUTHORING)) {
+            asyncExecutor.executeAndForget(() ->
+                    transactionsService.sendHandshake(host, peerId));
+        }
     }
 }
 

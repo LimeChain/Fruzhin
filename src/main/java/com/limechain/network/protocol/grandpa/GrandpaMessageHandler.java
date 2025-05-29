@@ -52,6 +52,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -121,7 +122,7 @@ public class GrandpaMessageHandler {
         GrandpaRound grandpaRound = grandpaSetState.getGrandpaRound(voteMessageRoundNumber);
         SubRound subround = signedMessage.getStage();
         if (isVoteEquivocationDetected(receivedSignedVote, grandpaRound, subround, voteMessageSetId)) {
-            log.warning(String.format(
+            log.fine(String.format(
                     "Detected vote equivocation or duplication for round %s, set %s, block hash %s, block number %s",
                     voteMessageRoundNumber, voteMessageSetId, signedMessage.getBlockHash(), signedMessage.getBlockNumber()
             ));
@@ -169,7 +170,7 @@ public class GrandpaMessageHandler {
             return;
         }
 
-        log.fine("Received commit message from peer " + peerId
+        log.info("Received commit message from peer " + peerId
                 + " for block #" + commitMessage.getVote().getBlockNumber()
                 + " with hash " + commitMessage.getVote().getBlockHash()
                 + " with setId " + commitMessage.getSetId() + " and round " + commitMessage.getRoundNumber()
@@ -414,7 +415,7 @@ public class GrandpaMessageHandler {
         Hash256 receivedVoteBlockHash = receivedSignedVote.getVote().getBlockHash();
 
         if (foundVoteBlockHash.equals(receivedVoteBlockHash)) {
-            log.warning(String.format(
+            log.fine(String.format(
                     "Voter : %s sent duplicated vote with block hash: %s",
                     authorityPublicKey, receivedVoteBlockHash));
             return true;
@@ -450,10 +451,10 @@ public class GrandpaMessageHandler {
                         .secondSignature(receivedSignedVote.getSignature())
                         .build();
 
-        runtime.generateGrandpaKeyOwnershipProof(voteMessageSetId, authorityPublicKey.getBytes())
+        runtime.generateGrandpaKeyOwnershipProof(null, voteMessageSetId, authorityPublicKey.getBytes())
                 .ifPresentOrElse(
                         key -> runtime.submitReportGrandpaEquivocationUnsignedExtrinsic(
-                                grandpaEquivocation, key.getProof()
+                                null, grandpaEquivocation, key.getProof()
                         ),
                         () -> log.warning(String.format(
                                 "Failure to report Grandpa vote equivocation for authority: %s.", authorityPublicKey

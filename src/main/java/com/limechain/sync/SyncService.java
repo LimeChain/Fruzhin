@@ -29,8 +29,6 @@ public class SyncService implements NodeService {
             case LIGHT -> {
                 warpSyncMachine.onFinish(() -> {
                     AbstractState.setSyncMode(SyncMode.HEAD);
-                    messageCoordinator.handshakeBootNodes();
-                    messageCoordinator.handshakePeers();
                 });
                 warpSyncMachine.start();
             }

@@ -1,5 +1,6 @@
 package com.limechain.runtime.hostapi;
 
+import com.limechain.runtime.Context;
 import com.limechain.runtime.SharedMemory;
 import com.limechain.runtime.hostapi.dto.RuntimePointerSize;
 import com.limechain.runtime.version.StateVersion;
@@ -30,83 +31,83 @@ import static com.limechain.runtime.hostapi.StorageHostFunctions.scaleEncodedOpt
 @AllArgsConstructor(access = AccessLevel.PACKAGE)
 public class ChildStorageHostFunctions implements PartialHostApi {
     private final SharedMemory sharedMemory;
-    private final TrieAccessor trieAccessor;
+    private final Context context;
 
     @Override
     public Map<Endpoint, ImportObject.FuncImport> getFunctionImports() {
         return Map.ofEntries(
-            newImportObjectPair(Endpoint.ext_default_child_storage_set_version_1, argv -> {
-                extDefaultChildStorageSetVersion1(
-                    new RuntimePointerSize(argv.get(0)),
-                    new RuntimePointerSize(argv.get(1)),
-                    new RuntimePointerSize(argv.get(2)));
-            }),
-            newImportObjectPair(Endpoint.ext_default_child_storage_get_version_1, argv -> {
-                return extDefaultChildStorageGetVersion1(
-                    new RuntimePointerSize(argv.get(0)),
-                    new RuntimePointerSize(argv.get(1))).pointerSize();
-            }),
-            newImportObjectPair(Endpoint.ext_default_child_storage_read_version_1, argv -> {
-                return extDefaultChildStorageReadVersion1(
-                    new RuntimePointerSize(argv.get(0)),
-                    new RuntimePointerSize(argv.get(1)),
-                    new RuntimePointerSize(argv.get(2)),
-                    argv.get(2).intValue()
-                ).pointerSize();
-            }),
-            newImportObjectPair(Endpoint.ext_default_child_storage_clear_version_1, argv -> {
-                extDefaultChildStorageClearVersion1(
-                    new RuntimePointerSize(argv.get(0)),
-                    new RuntimePointerSize(argv.get(1)));
-            }),
-            newImportObjectPair(Endpoint.ext_default_child_storage_storage_kill_version_1, argv -> {
-                extDefaultChildStorageKillVersion1(new RuntimePointerSize(argv.get(0)));
-            }),
-            newImportObjectPair(Endpoint.ext_default_child_storage_storage_kill_version_2, argv -> {
-                return extDefaultChildStorageKillVersion2(
-                    new RuntimePointerSize(argv.get(0)),
-                    new RuntimePointerSize(argv.get(1))).size();
-            }),
-            newImportObjectPair(Endpoint.ext_default_child_storage_storage_kill_version_3, argv -> {
-                return extDefaultChildStorageKillVersion3(
-                    new RuntimePointerSize(argv.get(0)),
-                    new RuntimePointerSize(argv.get(1))).pointerSize();
-            }),
-            newImportObjectPair(Endpoint.ext_default_child_storage_exists_version_1, argv -> {
-                return extDefaultChildStorageExistsVersion1(
-                    new RuntimePointerSize(argv.get(0)),
-                    new RuntimePointerSize(argv.get(1)));
-            }),
-            newImportObjectPair(Endpoint.ext_default_child_storage_clear_prefix_version_1, argv -> {
-                extDefaultChildStorageClearPrefixVersion1(
-                    new RuntimePointerSize(argv.get(0)),
-                    new RuntimePointerSize(argv.get(1)));
-            }),
-            newImportObjectPair(Endpoint.ext_default_child_storage_clear_prefix_version_2, argv -> {
-                return extDefaultChildStorageClearPrefixVersion2(
-                    new RuntimePointerSize(argv.get(0)),
-                    new RuntimePointerSize(argv.get(1)),
-                    new RuntimePointerSize(argv.get(2))
-                ).pointerSize();
-            }),
-            newImportObjectPair(Endpoint.ext_default_child_storage_root_version_1, argv -> {
-                return extDefaultChildStorageRoot(
-                    new RuntimePointerSize(argv.get(0)),
-                    null
-                ).pointerSize();
-            }),
-            newImportObjectPair(Endpoint.ext_default_child_storage_root_version_2, argv -> {
-                return extDefaultChildStorageRoot(
-                    new RuntimePointerSize(argv.get(0)),
-                    StateVersion.fromInt(argv.get(1).intValue())
-                ).pointerSize();
-            }),
-            newImportObjectPair(Endpoint.ext_default_child_storage_next_key_version_1, argv -> {
-                return extDefaultChildStorageStorageNextKeyVersion1(
-                    new RuntimePointerSize(argv.get(0)),
-                    new RuntimePointerSize(argv.get(1))
-                ).pointerSize();
-            })
+                newImportObjectPair(Endpoint.ext_default_child_storage_set_version_1, argv -> {
+                    extDefaultChildStorageSetVersion1(
+                            new RuntimePointerSize(argv.get(0)),
+                            new RuntimePointerSize(argv.get(1)),
+                            new RuntimePointerSize(argv.get(2)));
+                }),
+                newImportObjectPair(Endpoint.ext_default_child_storage_get_version_1, argv -> {
+                    return extDefaultChildStorageGetVersion1(
+                            new RuntimePointerSize(argv.get(0)),
+                            new RuntimePointerSize(argv.get(1))).pointerSize();
+                }),
+                newImportObjectPair(Endpoint.ext_default_child_storage_read_version_1, argv -> {
+                    return extDefaultChildStorageReadVersion1(
+                            new RuntimePointerSize(argv.get(0)),
+                            new RuntimePointerSize(argv.get(1)),
+                            new RuntimePointerSize(argv.get(2)),
+                            argv.get(2).intValue()
+                    ).pointerSize();
+                }),
+                newImportObjectPair(Endpoint.ext_default_child_storage_clear_version_1, argv -> {
+                    extDefaultChildStorageClearVersion1(
+                            new RuntimePointerSize(argv.get(0)),
+                            new RuntimePointerSize(argv.get(1)));
+                }),
+                newImportObjectPair(Endpoint.ext_default_child_storage_storage_kill_version_1, argv -> {
+                    extDefaultChildStorageKillVersion1(new RuntimePointerSize(argv.get(0)));
+                }),
+                newImportObjectPair(Endpoint.ext_default_child_storage_storage_kill_version_2, argv -> {
+                    return extDefaultChildStorageKillVersion2(
+                            new RuntimePointerSize(argv.get(0)),
+                            new RuntimePointerSize(argv.get(1))).size();
+                }),
+                newImportObjectPair(Endpoint.ext_default_child_storage_storage_kill_version_3, argv -> {
+                    return extDefaultChildStorageKillVersion3(
+                            new RuntimePointerSize(argv.get(0)),
+                            new RuntimePointerSize(argv.get(1))).pointerSize();
+                }),
+                newImportObjectPair(Endpoint.ext_default_child_storage_exists_version_1, argv -> {
+                    return extDefaultChildStorageExistsVersion1(
+                            new RuntimePointerSize(argv.get(0)),
+                            new RuntimePointerSize(argv.get(1)));
+                }),
+                newImportObjectPair(Endpoint.ext_default_child_storage_clear_prefix_version_1, argv -> {
+                    extDefaultChildStorageClearPrefixVersion1(
+                            new RuntimePointerSize(argv.get(0)),
+                            new RuntimePointerSize(argv.get(1)));
+                }),
+                newImportObjectPair(Endpoint.ext_default_child_storage_clear_prefix_version_2, argv -> {
+                    return extDefaultChildStorageClearPrefixVersion2(
+                            new RuntimePointerSize(argv.get(0)),
+                            new RuntimePointerSize(argv.get(1)),
+                            new RuntimePointerSize(argv.get(2))
+                    ).pointerSize();
+                }),
+                newImportObjectPair(Endpoint.ext_default_child_storage_root_version_1, argv -> {
+                    return extDefaultChildStorageRoot(
+                            new RuntimePointerSize(argv.get(0)),
+                            null
+                    ).pointerSize();
+                }),
+                newImportObjectPair(Endpoint.ext_default_child_storage_root_version_2, argv -> {
+                    return extDefaultChildStorageRoot(
+                            new RuntimePointerSize(argv.get(0)),
+                            StateVersion.fromInt(argv.get(1).intValue())
+                    ).pointerSize();
+                }),
+                newImportObjectPair(Endpoint.ext_default_child_storage_next_key_version_1, argv -> {
+                    return extDefaultChildStorageStorageNextKeyVersion1(
+                            new RuntimePointerSize(argv.get(0)),
+                            new RuntimePointerSize(argv.get(1))
+                    ).pointerSize();
+                })
         );
     }
 
@@ -131,7 +132,7 @@ public class ChildStorageHostFunctions implements PartialHostApi {
         Nibbles childStorageKey = Nibbles.fromBytes(sharedMemory.readData(childStorageKeyPointer));
         Nibbles key = Nibbles.fromBytes(sharedMemory.readData(keyPointer));
 
-        TrieAccessor childTrie = trieAccessor.getChildTrie(childStorageKey);
+        TrieAccessor childTrie = context.getTrieAccessor().getChildTrie(childStorageKey);
 
         byte[] value = childTrie.findStorageValue(key).orElse(null);
 
@@ -164,7 +165,7 @@ public class ChildStorageHostFunctions implements PartialHostApi {
         Nibbles key = Nibbles.fromBytes(sharedMemory.readData(keyPointer));
         byte[] value = sharedMemory.readData(valuePointer);
 
-        TrieAccessor childTrie = trieAccessor.getChildTrie(childStorageKey);
+        TrieAccessor childTrie = context.getTrieAccessor().getChildTrie(childStorageKey);
         childTrie.upsertNode(key, value);
     }
 
@@ -181,7 +182,7 @@ public class ChildStorageHostFunctions implements PartialHostApi {
         Nibbles childStorageKey = Nibbles.fromBytes(sharedMemory.readData(childStorageKeyPointer));
         Nibbles key = Nibbles.fromBytes(sharedMemory.readData(keyPointer));
 
-        TrieAccessor childTrie = trieAccessor.getChildTrie(childStorageKey);
+        TrieAccessor childTrie = context.getTrieAccessor().getChildTrie(childStorageKey);
         childTrie.deleteNode(key);
     }
 
@@ -198,7 +199,7 @@ public class ChildStorageHostFunctions implements PartialHostApi {
         Nibbles childStorageKey = Nibbles.fromBytes(sharedMemory.readData(childStorageKeyPointer));
         Nibbles prefix = Nibbles.fromBytes(sharedMemory.readData(prefixPointer));
 
-        TrieAccessor childTrie = trieAccessor.getChildTrie(childStorageKey);
+        TrieAccessor childTrie = context.getTrieAccessor().getChildTrie(childStorageKey);
         childTrie.deleteMultipleNodesByPrefix(prefix, null);
     }
 
@@ -225,7 +226,7 @@ public class ChildStorageHostFunctions implements PartialHostApi {
         byte[] limitBytes = sharedMemory.readData(limitPointer);
         Long limit = new ScaleCodecReader(limitBytes).readOptional(ScaleCodecReader.UINT32).orElse(null);
 
-        TrieAccessor childTrie = trieAccessor.getChildTrie(childStorageKey);
+        TrieAccessor childTrie = context.getTrieAccessor().getChildTrie(childStorageKey);
         DeleteByPrefixResult result = childTrie.deleteMultipleNodesByPrefix(prefix, limit);
 
         return sharedMemory.writeData(result.scaleEncoded());
@@ -245,7 +246,7 @@ public class ChildStorageHostFunctions implements PartialHostApi {
         Nibbles childStorageKey = Nibbles.fromBytes(sharedMemory.readData(childStorageKeyPointer));
         Nibbles key = Nibbles.fromBytes(sharedMemory.readData(keyPointer));
 
-        TrieAccessor childTrie = trieAccessor.getChildTrie(childStorageKey);
+        TrieAccessor childTrie = context.getTrieAccessor().getChildTrie(childStorageKey);
         return childTrie.findStorageValue(key).isPresent() ? 1 : 0;
     }
 
@@ -263,7 +264,7 @@ public class ChildStorageHostFunctions implements PartialHostApi {
         Nibbles childStorageKey = Nibbles.fromBytes(sharedMemory.readData(childStorageKeyPointer));
         Nibbles key = Nibbles.fromBytes(sharedMemory.readData(keyPointer));
 
-        TrieAccessor childTrie = trieAccessor.getChildTrie(childStorageKey);
+        TrieAccessor childTrie = context.getTrieAccessor().getChildTrie(childStorageKey);
         byte[] value = childTrie.findStorageValue(key).orElse(null);
 
         return sharedMemory.writeData(scaleEncodedOption(value));
@@ -284,12 +285,12 @@ public class ChildStorageHostFunctions implements PartialHostApi {
         Nibbles childStorageKey = Nibbles.fromBytes(sharedMemory.readData(childStorageKeyPointer));
         Nibbles key = Nibbles.fromBytes(sharedMemory.readData(keyPointer));
 
-        TrieAccessor childTrie = trieAccessor.getChildTrie(childStorageKey);
+        TrieAccessor childTrie = context.getTrieAccessor().getChildTrie(childStorageKey);
 
         byte[] nextKey = childTrie.getNextKey(key)
-            .map(NibblesUtils::toBytesAppending)
-            .map(this::asByteArray)
-            .orElse(null);
+                .map(NibblesUtils::toBytesAppending)
+                .map(this::asByteArray)
+                .orElse(null);
 
         return sharedMemory.writeData(scaleEncodedOption(nextKey));
     }
@@ -312,7 +313,7 @@ public class ChildStorageHostFunctions implements PartialHostApi {
         log.fine("extDefaultChildStorageRootVersion1");
 
         Nibbles childStorageKey = Nibbles.fromBytes(sharedMemory.readData(childStorageKeyPointer));
-        TrieAccessor childTrie = trieAccessor.getChildTrie(childStorageKey);
+        TrieAccessor childTrie = context.getTrieAccessor().getChildTrie(childStorageKey);
 
         byte[] rootHash = childTrie.getMerkleRoot(v0);
 
@@ -328,8 +329,8 @@ public class ChildStorageHostFunctions implements PartialHostApi {
         log.fine("extDefaultChildStorageKillVersion1");
 
         Nibbles childStorageKey = Nibbles.fromBytes(sharedMemory.readData(childStorageKeyPointer));
-        DiskChildTrieAccessor childTrie = (DiskChildTrieAccessor) trieAccessor.getChildTrie(childStorageKey);
-        trieAccessor.deleteNode(childTrie.getChildTrieKey());
+        DiskChildTrieAccessor childTrie = (DiskChildTrieAccessor) context.getTrieAccessor().getChildTrie(childStorageKey);
+        context.getTrieAccessor().deleteNode(childTrie.getChildTrieKey());
     }
 
     /**
@@ -347,7 +348,7 @@ public class ChildStorageHostFunctions implements PartialHostApi {
         byte[] limitBytes = sharedMemory.readData(limitPointer);
         Long limit = new ScaleCodecReader(limitBytes).readOptional(ScaleCodecReader.UINT32).orElse(null);
 
-        TrieAccessor childTrie = trieAccessor.getChildTrie(childStorageKey);
+        TrieAccessor childTrie = context.getTrieAccessor().getChildTrie(childStorageKey);
         DeleteByPrefixResult result = childTrie.deleteMultipleNodesByPrefix(Nibbles.EMPTY, limit);
 
         return sharedMemory.writeData(result.scaleEncoded());

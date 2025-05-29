@@ -67,7 +67,7 @@ public class GrandpaSetState extends AbstractState implements ServiceConsensusSt
 
     @Override
     public void populateDataFromRuntime(Runtime runtime) {
-        this.authoritySet.setAuthorities(runtime.getGrandpaApiAuthorities());
+        this.authoritySet.setAuthorities(runtime.getGrandpaApiAuthorities(null));
         updateAuthorityStatus();
     }
 

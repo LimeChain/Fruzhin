@@ -85,8 +85,8 @@ public class BeefyState extends AbstractState implements ServiceConsensusState {
 
     @Override
     public void populateDataFromRuntime(Runtime runtime) {
-        this.beefyGenesis = runtime.getBeefyGenesis().orElse(null);
-        this.authoritySet = runtime.getBeefyValidatorSet().orElse(null);
+        this.beefyGenesis = runtime.getBeefyGenesis(null).orElse(null);
+        this.authoritySet = runtime.getBeefyValidatorSet(null).orElse(null);
     }
 
     @Override

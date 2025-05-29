@@ -13,6 +13,7 @@ import java.math.BigInteger;
 import java.time.Instant;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -30,7 +31,7 @@ public class EpochStateTest {
     @Test
     public void testGetCurrentSlotNumber() {
         BigInteger slotDuration = BigInteger.valueOf(6000);
-        when(runtime.getBabeApiConfiguration()).thenReturn(babeApiConfiguration);
+        when(runtime.getBabeApiConfiguration(any())).thenReturn(babeApiConfiguration);
         when(babeApiConfiguration.getSlotDuration()).thenReturn(slotDuration);
         epochState.populateDataFromRuntime(runtime);
 

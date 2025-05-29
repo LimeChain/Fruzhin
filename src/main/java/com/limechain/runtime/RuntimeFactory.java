@@ -138,7 +138,7 @@ public class RuntimeFactory {
         // we must fall back to calling Core_version
         if (runtimeVersion == null) {
             log.fine("Couldn't fetch runtime version from custom section, calling 'Core_version'.");
-            runtimeVersion = runtime.getVersion();
+            runtimeVersion = runtime.getVersion(null);
         }
 
         context.setRuntimeVersion(runtimeVersion);
