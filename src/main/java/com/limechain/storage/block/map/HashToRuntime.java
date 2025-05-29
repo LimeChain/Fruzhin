@@ -84,7 +84,8 @@ public class HashToRuntime {
                 break;
             }
 
-            current.getValue().close();
+            //TODO: Urgent!! Think of a way to close this appropriately.
+//            current.getValue().close();
             iterator.remove();
         }
     }
