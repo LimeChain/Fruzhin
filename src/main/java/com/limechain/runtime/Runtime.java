@@ -17,6 +17,7 @@ import com.limechain.transaction.dto.Extrinsic;
 import com.limechain.transaction.dto.ExtrinsicArray;
 import com.limechain.transaction.dto.TransactionValidationRequest;
 import com.limechain.transaction.dto.TransactionValidationResponse;
+import com.limechain.trie.TrieAccessor;
 import org.jetbrains.annotations.Nullable;
 
 import java.math.BigInteger;
@@ -79,4 +80,6 @@ public interface Runtime {
     void persistsChanges(BlockHeader header);
 
     void close();
+
+    void setTrieAccessor(TrieAccessor trieAccessor);
 }

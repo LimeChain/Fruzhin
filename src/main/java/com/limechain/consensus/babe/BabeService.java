@@ -21,8 +21,8 @@ import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.network.protocol.warp.dto.ConsensusEngine;
 import com.limechain.network.protocol.warp.dto.DigestType;
 import com.limechain.network.protocol.warp.dto.HeaderDigest;
+import com.limechain.runtime.CodeChangeChecker;
 import com.limechain.runtime.Runtime;
-import com.limechain.runtime.RuntimeBuilder;
 import com.limechain.state.StateManager;
 import com.limechain.storage.block.BlockHandler;
 import com.limechain.storage.block.state.BlockState;
@@ -35,6 +35,9 @@ import com.limechain.transaction.dto.ExtrinsicArray;
 import com.limechain.transaction.dto.InvalidTransactionType;
 import com.limechain.transaction.dto.TransactionValidityError;
 import com.limechain.transaction.dto.ValidTransaction;
+import com.limechain.trie.DiskTrieAccessor;
+import com.limechain.trie.TrieAccessor;
+import com.limechain.trie.TrieAccessorStorage;
 import com.limechain.utils.async.AsyncExecutor;
 import com.limechain.utils.scale.ScaleUtils;
 import io.emeraldpay.polkaj.scale.writer.UInt64Writer;
@@ -57,20 +60,22 @@ public class BabeService implements SlotChangeListener {
 
     private final StateManager stateManager;
     private final KeyStore keyStore;
-    private final RuntimeBuilder runtimeBuilder;
+    private final CodeChangeChecker codeChangeChecker;
     private final BlockHandler blockHandler;
+    private final TrieAccessorStorage trieAccessorStorage;
 
     private final Map<BigInteger, BabePreDigest> slotToPreRuntimeDigest = new HashMap<>();
     private final AsyncExecutor asyncExecutor = AsyncExecutor.withSingleThread();
 
     public BabeService(StateManager stateManager,
                        KeyStore keyStore,
-                       RuntimeBuilder runtimeBuilder,
-                       BlockHandler blockHandler) {
+                       CodeChangeChecker codeChangeChecker,
+                       BlockHandler blockHandler, TrieAccessorStorage trieAccessorStorage) {
         this.stateManager = stateManager;
         this.keyStore = keyStore;
-        this.runtimeBuilder = runtimeBuilder;
+        this.codeChangeChecker = codeChangeChecker;
         this.blockHandler = blockHandler;
+        this.trieAccessorStorage = trieAccessorStorage;
     }
 
     private void executeEpochLottery(BigInteger epochIndex, BigInteger currentSlotNumber) {
@@ -124,19 +129,23 @@ public class BabeService implements SlotChangeListener {
 
         BlockState blockState = stateManager.getBlockState();
         Runtime runtime = blockState.getRuntime(parentHeader.getHash());
-        runtime.initializeBlock(parentHeader, newBlockHeader);
+        TrieAccessor newBlockAccessor = new DiskTrieAccessor(trieAccessorStorage.get(parentHeader.getHash()));
+
+        runtime.setTrieAccessor(newBlockAccessor);
+        runtime.initializeBlock(null, newBlockHeader);
 
         log.fine("Initialized block via runtime call.");
 
-        ExtrinsicArray inherents = produceBlockInherents(slot, runtime, parentHeader);
+        ExtrinsicArray inherents = produceBlockInherents(slot, runtime, parentHeader, newBlockAccessor);
         log.fine("Finished with inherents for block.");
 
-        List<ValidTransaction> transactions = produceBlockTransactions(slot, runtime, parentHeader);
+        List<ValidTransaction> transactions = produceBlockTransactions(slot, runtime, newBlockAccessor);
         log.fine("Finished with extrinsics for block.");
 
         BlockHeader finalizedHeader;
         try {
-            finalizedHeader = runtime.finalizeBlock(newBlockHeader);
+            runtime.setTrieAccessor(newBlockAccessor);
+            finalizedHeader = runtime.finalizeBlock(null);
         } catch (Exception e) {
             transactions.forEach(stateManager.getTransactionState()::pushTransaction);
             throw new BabeGenericException("Block finalization failed. Pushed transaction back to queue.");
@@ -154,7 +163,10 @@ public class BabeService implements SlotChangeListener {
 
         BlockBody body = new BlockBody(bodyExtrinsics);
 
-        blockState.storeRuntime(finalizedHeader.getHash(), runtime);
+        trieAccessorStorage.appendStorage(finalizedHeader.getHash(), newBlockAccessor);
+        codeChangeChecker.checkRuntimeCodeChange(finalizedHeader).ifPresent(_ ->
+                log.fine(String.format(
+                        "Runtime update detected during block production: %s", finalizedHeader.getBlockNumber())));
 
         return new Block(finalizedHeader, body);
     }
@@ -203,7 +215,9 @@ public class BabeService implements SlotChangeListener {
         return updatedDigests;
     }
 
-    private List<ValidTransaction> produceBlockTransactions(Slot slot, Runtime runtime, BlockHeader parentHeader) {
+    private List<ValidTransaction> produceBlockTransactions(Slot slot,
+                                                            Runtime runtime,
+                                                            TrieAccessor newBlockAccessor) {
         List<ValidTransaction> toAdd = new ArrayList<>();
 
         // Keep 1/3 of the slot duration for validating and importing block.
@@ -228,7 +242,8 @@ public class BabeService implements SlotChangeListener {
 
             Extrinsic extrinsic = transaction.getExtrinsic();
 
-            ApplyExtrinsicResult applyExtrinsicResponse = runtime.applyExtrinsic(parentHeader, extrinsic);
+            runtime.setTrieAccessor(newBlockAccessor);
+            ApplyExtrinsicResult applyExtrinsicResponse = runtime.applyExtrinsic(null, extrinsic);
 
             if (applyExtrinsicResponse.getOutcome() != null && applyExtrinsicResponse.getOutcome().isValid()) {
                 toAdd.add(transaction);
@@ -254,7 +269,10 @@ public class BabeService implements SlotChangeListener {
         return toAdd;
     }
 
-    private ExtrinsicArray produceBlockInherents(Slot slot, Runtime runtime, BlockHeader parentHeader) {
+    private ExtrinsicArray produceBlockInherents(Slot slot,
+                                                 Runtime runtime,
+                                                 BlockHeader parentHeader,
+                                                 TrieAccessor newBlockAccessor) {
         InherentData inherentData = new InherentData();
 
         BigInteger timestamp = BigInteger.valueOf(slot.getStart().toEpochMilli());
@@ -273,10 +291,12 @@ public class BabeService implements SlotChangeListener {
         inherentData.getData().put(InherentType.PARACHN0, encodedParachainInherentData);
         inherentData.getData().put(InherentType.NEWHEADS, new byte[]{0});
 
-        ExtrinsicArray inherentExtrinsics = runtime.inherentExtrinsics(parentHeader, inherentData);
+        runtime.setTrieAccessor(newBlockAccessor);
+        ExtrinsicArray inherentExtrinsics = runtime.inherentExtrinsics(null, inherentData);
 
         for (int i = 0; i < inherentExtrinsics.getExtrinsics().length; i++) {
-            ApplyExtrinsicResult result = runtime.applyExtrinsic(parentHeader, inherentExtrinsics.getExtrinsics()[i]);
+            runtime.setTrieAccessor(newBlockAccessor);
+            ApplyExtrinsicResult result = runtime.applyExtrinsic(null, inherentExtrinsics.getExtrinsics()[i]);
             if (result.getOutcome() != null && result.getOutcome().isValid()) {
                 continue;
             }

@@ -36,6 +36,7 @@ import com.limechain.transaction.dto.ExtrinsicArray;
 import com.limechain.transaction.dto.TransactionValidationRequest;
 import com.limechain.transaction.dto.TransactionValidationResponse;
 import com.limechain.trie.DiskTrieAccessor;
+import com.limechain.trie.TrieAccessor;
 import com.limechain.trie.TrieAccessorStorage;
 import com.limechain.trie.structure.nibble.Nibbles;
 import com.limechain.utils.ByteArrayUtils;
@@ -347,6 +348,11 @@ public class RuntimeImpl implements Runtime {
         } catch (Exception e) {
             throw new RuntimeCallException(e.getMessage());
         }
+    }
+
+    @Override
+    public synchronized void setTrieAccessor(TrieAccessor trieAccessor) {
+        this.context.setTrieAccessor(trieAccessor);
     }
 
     private synchronized Optional<byte[]> findStorageValue(@Nullable BlockHeader header, Nibbles key) {

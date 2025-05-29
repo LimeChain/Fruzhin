@@ -106,8 +106,9 @@ public class FullSyncMachine {
         Hash256 stateRoot = syncState.getStateRoot();
         Hash256 lastFinalizedBlockHash = syncState.getLastFinalizedBlockHash();
 
-        // Start backwards block request process
-        syncBlockTreeBackwards(lastFinalizedBlockHash);
+        if (networkService.isStarted()) {
+            syncBlockTreeBackwards(lastFinalizedBlockHash);
+        }
 
         if (!trieStorage.merkleValueExists(stateRoot)) {
             //TODO Sync improvements: This does not work on polkadot chain.
