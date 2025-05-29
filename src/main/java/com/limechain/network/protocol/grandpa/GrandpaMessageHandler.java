@@ -122,7 +122,7 @@ public class GrandpaMessageHandler {
         GrandpaRound grandpaRound = grandpaSetState.getGrandpaRound(voteMessageRoundNumber);
         SubRound subround = signedMessage.getStage();
         if (isVoteEquivocationDetected(receivedSignedVote, grandpaRound, subround, voteMessageSetId)) {
-            log.fine(String.format(
+            log.finest(String.format(
                     "Detected vote equivocation or duplication for round %s, set %s, block hash %s, block number %s",
                     voteMessageRoundNumber, voteMessageSetId, signedMessage.getBlockHash(), signedMessage.getBlockNumber()
             ));
@@ -415,7 +415,7 @@ public class GrandpaMessageHandler {
         Hash256 receivedVoteBlockHash = receivedSignedVote.getVote().getBlockHash();
 
         if (foundVoteBlockHash.equals(receivedVoteBlockHash)) {
-            log.fine(String.format(
+            log.finest(String.format(
                     "Voter : %s sent duplicated vote with block hash: %s",
                     authorityPublicKey, receivedVoteBlockHash));
             return true;

@@ -21,8 +21,11 @@ import lombok.extern.java.Log;
 import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 @Log
 @Component
@@ -45,7 +48,9 @@ public class PeerRequester {
     public CompletableFuture<List<SyncMessage.BlockData>> requestBlockData(BlockRequestField field,
                                                                            int startNumber,
                                                                            int amount) {
-        return asyncExecutor.executeAsync(() -> requestBlocks(field, startNumber, null, amount))
+        Supplier<List<SyncMessage.BlockData>> supplier = () ->
+                requestBlocks(field, startNumber, null, amount, SyncMessage.Direction.Ascending);
+        return asyncExecutor.executeAsync(supplier)
                 .exceptionally(e -> {
                     log.fine(BLOCK_REQUEST_ERROR + e.getMessage());
                     throw new ExecutionFailedException(e);
@@ -55,7 +60,9 @@ public class PeerRequester {
     public CompletableFuture<List<SyncMessage.BlockData>> requestBlockData(BlockRequestField field,
                                                                            Hash256 startHash,
                                                                            int amount) {
-        return asyncExecutor.executeAsync(() -> requestBlocks(field, null, startHash, amount))
+        Supplier<List<SyncMessage.BlockData>> supplier = () ->
+                requestBlocks(field, null, startHash, amount, SyncMessage.Direction.Ascending);
+        return asyncExecutor.executeAsync(supplier)
                 .exceptionally(e -> {
                     log.fine(BLOCK_REQUEST_ERROR + e.getMessage());
                     throw new ExecutionFailedException(e);
@@ -63,23 +70,42 @@ public class PeerRequester {
     }
 
     public CompletableFuture<List<Block>> requestBlocks(BlockRequestField field, int startNumber, int amount) {
-        return asyncExecutor.executeAsync(() -> requestBlocks(field, startNumber, null, amount).stream()
-                        .map(PeerRequester::protobufDecodeBlock)
-                        .toList())
-                .exceptionally(e -> {
-                    log.fine(BLOCK_REQUEST_ERROR + e.getMessage());
-                    throw new ExecutionFailedException(e);
-                });
+        Supplier<List<Block>> supplier = () -> {
+            List<SyncMessage.BlockData> blocks = requestBlocks(field, startNumber, null, amount, SyncMessage.Direction.Ascending);
+            return blocks.stream().map(PeerRequester::protobufDecodeBlock).toList();
+        };
+        return asyncExecutor.executeAsync(supplier).exceptionally(e -> {
+            log.fine(BLOCK_REQUEST_ERROR + e.getMessage());
+            throw new ExecutionFailedException(e);
+        });
     }
 
     public CompletableFuture<List<Block>> requestBlocks(BlockRequestField field, Hash256 startHash, int amount) {
-        return asyncExecutor.executeAsync(() -> requestBlocks(field, null, startHash, amount).stream()
-                        .map(PeerRequester::protobufDecodeBlock)
-                        .toList())
-                .exceptionally(e -> {
-                    log.fine(BLOCK_REQUEST_ERROR + e.getMessage());
-                    throw new ExecutionFailedException(e);
-                });
+        Supplier<List<Block>> supplier = () -> {
+            List<SyncMessage.BlockData> blocks = requestBlocks(field, null, startHash, amount, SyncMessage.Direction.Ascending);
+            return blocks.stream().map(PeerRequester::protobufDecodeBlock).toList();
+        };
+        return asyncExecutor.executeAsync(supplier).exceptionally(e -> {
+            log.fine(BLOCK_REQUEST_ERROR + e.getMessage());
+            throw new ExecutionFailedException(e);
+        });
+    }
+
+    public CompletableFuture<List<Block>> requestBlocksDescending(BlockRequestField field, Hash256 startHash, int amount) {
+        Supplier<List<Block>> supplier = () -> {
+            List<SyncMessage.BlockData> blocks = requestBlocks(field,
+                    null,
+                    startHash,
+                    amount,
+                    SyncMessage.Direction.Descending);
+            return blocks.stream()
+                    .map(PeerRequester::protobufDecodeBlock)
+                    .collect(Collectors.toCollection(ArrayList::new));
+        };
+        return asyncExecutor.executeAsync(supplier).exceptionally(e -> {
+            log.fine(BLOCK_REQUEST_ERROR + e.getMessage());
+            throw new ExecutionFailedException(e);
+        });
     }
 
     /**
@@ -87,18 +113,20 @@ public class PeerRequester {
      * @param startNumber The block number to start fetching from.
      * @param startHash   The block hash to start fetching from.
      * @param amount      The number of blocks to fetch.
+     * @param direction   The direction to fetch blocks in (Ascending or Descending).
      * @return A list of BlockData received from the network.
      */
     private List<SyncMessage.BlockData> requestBlocks(BlockRequestField field,
                                                       Integer startNumber,
                                                       Hash256 startHash,
-                                                      int amount) {
+                                                      int amount,
+                                                      SyncMessage.Direction direction) {
         try {
             BlockRequestDto request = new BlockRequestDto(
                     field.getValue(),
                     startHash,
                     startNumber,
-                    SyncMessage.Direction.Ascending,
+                    direction,
                     amount
             );
 
@@ -113,7 +141,7 @@ public class PeerRequester {
                 this.network.updateCurrentSelectedPeer();
             }
             this.network.updateCurrentSelectedPeer();
-            return requestBlocks(field, startNumber, startHash, amount);
+            return requestBlocks(field, startNumber, startHash, amount, direction);
         }
     }
 

@@ -5,6 +5,7 @@ import com.limechain.config.HostConfig;
 import com.limechain.consensus.babe.coordinator.SlotChangeListener;
 import com.limechain.consensus.babe.coordinator.SlotCoordinator;
 import com.limechain.consensus.beefy.BeefyService;
+import com.limechain.consensus.beefy.dto.message.BeefyConsensusMessageFormat;
 import com.limechain.consensus.grandpa.GrandpaService;
 import com.limechain.exception.global.RuntimeCodeException;
 import com.limechain.exception.storage.BlockNodeNotFoundException;
@@ -49,6 +50,7 @@ import org.apache.commons.lang3.ArrayUtils;
 
 import java.math.BigInteger;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -60,6 +62,8 @@ import java.util.Map;
 @Getter
 @Log
 public class FullSyncMachine {
+
+    private static final int BLOCK_FETCH_SIZE = 100;
 
     private final HostConfig hostConfig;
     private final NetworkService networkService;
@@ -102,6 +106,9 @@ public class FullSyncMachine {
         Hash256 stateRoot = syncState.getStateRoot();
         Hash256 lastFinalizedBlockHash = syncState.getLastFinalizedBlockHash();
 
+        // Start backwards block request process
+        syncBlockTreeBackwards(lastFinalizedBlockHash);
+
         if (!trieStorage.merkleValueExists(stateRoot)) {
             //TODO Sync improvements: This does not work on polkadot chain.
             loadStateAtBlockFromPeer(lastFinalizedBlockHash);
@@ -135,8 +142,8 @@ public class FullSyncMachine {
                     .add(BigInteger.ONE)
                     .intValueExact();
 
-            int blocksToFetch = 100;
-            List<Block> receivedBlocks = requester.requestBlocks(BlockRequestField.ALL, startNumber, blocksToFetch).join();
+            List<Block> receivedBlocks = requester.requestBlocks(
+                    BlockRequestField.ALL, startNumber, BLOCK_FETCH_SIZE).join();
 
             while (!receivedBlocks.isEmpty()) {
                 executeBlocks(receivedBlocks, trieAccessor);
@@ -146,7 +153,7 @@ public class FullSyncMachine {
                         receivedBlocks.getLast().getHeader().getBlockNumber()));
 
                 startNumber += receivedBlocks.size();
-                receivedBlocks = requester.requestBlocks(BlockRequestField.ALL, startNumber, blocksToFetch).join();
+                receivedBlocks = requester.requestBlocks(BlockRequestField.ALL, startNumber, BLOCK_FETCH_SIZE).join();
             }
         }
 
@@ -364,5 +371,81 @@ public class FullSyncMachine {
             goodToExecute = true;
         }
         return goodToExecute;
+    }
+
+    /**
+     * Requests blocks backwards from the given hash until either finding beefy authority changes
+     * or reaching genesis block.
+     *
+     * @param startHash The hash to start requesting blocks from
+     */
+    private void syncBlockTreeBackwards(Hash256 startHash) {
+
+        boolean isFinished = false;
+        Hash256 currentHash = startHash;
+
+        List<Block> result = new ArrayList<>();
+
+        while (!isFinished) {
+            try {
+                List<Block> blocks = requester.requestBlocksDescending(
+                        BlockRequestField.ALL, currentHash, BLOCK_FETCH_SIZE).join();
+
+                if (blocks.isEmpty()) {
+                    log.info("requestBlocksBackwards: No more blocks to process backwards");
+                    isFinished = true;
+                    continue;
+                }
+
+                // Process blocks in reverse order (since we got them in descending order)
+                for (int i = blocks.size() - 1; i >= 0; i--) {
+                    Block block = blocks.get(i);
+                    BlockHeader blockHeader = block.getHeader();
+
+                    // Check for beefy authority changes
+                    if (DigestHelper.getBeefyConsensusMessages(blockHeader.getDigest()).stream()
+                            .anyMatch(cm ->
+                                    cm.getFormat() == BeefyConsensusMessageFormat.BEEFY_CHANGED_AUTHORITIES)) {
+
+                        DigestHelper.getBeefyConsensusMessages(blockHeader.getDigest()).forEach(
+                                cm ->
+                                        stateManager.getBeefyState().handleBeefyConsensusMessage(
+                                                cm, blockHeader.getBlockNumber())
+                        );
+                        isFinished = true;
+                    }
+
+                    // If we reach block 0, we're done
+                    if (block.getHeader().getBlockNumber().equals(BigInteger.ZERO)) {
+                        log.info("requestBlocksBackwards: Reached genesis block");
+                        isFinished = true;
+                    }
+                }
+
+                result.addAll(0, blocks.reversed());
+
+                // Update current hash for next batch
+                if (!isFinished && !blocks.isEmpty()) {
+                    currentHash = blocks.get(blocks.size() - 1).getHeader().getHash();
+                }
+
+            } catch (Exception e) {
+                log.warning("Error during backwards block request: " + e.getMessage());
+                // Continue with the same hash on next iteration
+            }
+        }
+
+        BlockHeader firstHeader = result.removeFirst().getHeader();
+        stateManager.getBlockState().initBlockTree(firstHeader.getHash(), firstHeader.getBlockNumber());
+
+        result.forEach(b -> {
+            try {
+                blockHandler.addBlockToTree(b, Instant.now());
+            } catch (Exception e) {
+                log.warning("syncBlockTreeBackwards: Error during block import: " + e.getMessage());
+            }
+        });
+
+        log.info("Finished backwards block request process. Earliest block reached: " + firstHeader.getHash() + " " + firstHeader.getBlockNumber());
     }
 }

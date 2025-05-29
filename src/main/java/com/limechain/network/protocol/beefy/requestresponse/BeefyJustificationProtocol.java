@@ -38,7 +38,7 @@ public class BeefyJustificationProtocol extends ProtocolHandler<BeefyJustificati
 
     static class Sender implements ProtocolMessageHandler<SignedCommitment>, BeefyJustificationController {
         public static final int MAX_QUEUE_SIZE = 1;
-        private final LinkedBlockingDeque<CompletableFuture<SignedCommitment>> queue =
+        private static final LinkedBlockingDeque<CompletableFuture<SignedCommitment>> queue =
                 new LinkedBlockingDeque<>(MAX_QUEUE_SIZE);
 
         private final Stream stream;

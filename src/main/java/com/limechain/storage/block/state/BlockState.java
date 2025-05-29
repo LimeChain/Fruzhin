@@ -963,7 +963,10 @@ public class BlockState extends AbstractState {
             setHeader(block.getHeader());
             setBlockBody(subchainHash, block.getBody());
 
-            getRuntime(subchainHash).persistsChanges(block.getHeader());
+            Runtime runtime = getRuntime(subchainHash);
+            if (runtime == null) {
+                log.finest(String.format("handleFinalizedBlock: runtime is null for hash %s", subchainHash));
+            } else getRuntime(subchainHash).persistsChanges(block.getHeader());
 
             Instant arrivalTime = blockTree.getArrivalTime(subchainHash);
             setArrivalTime(subchainHash, arrivalTime);

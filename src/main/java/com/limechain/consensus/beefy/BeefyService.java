@@ -198,7 +198,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
 
             targetVoteBlockNumber = beefyFinalized.add(BigInteger.valueOf(adjustedDiff));
 
-            log.fine(String.format("Vote BEEFY: vote target - diff: %d, next_power_of_two: %d, target block: #%s",
+            log.finest(String.format("Vote BEEFY: vote target - diff: %d, next_power_of_two: %d, target block: #%s",
                     diffInt, nextPowerOfTwo, targetVoteBlockNumber));
         }
 
@@ -486,7 +486,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
 
         BeefySession session = beefyState.getSessions().peekFirst();
         if (!session.isMandatoryBlockFinalized()) {
-            beefyState.requestJustification(session.getMandatoryBlock(), false);
+            beefyState.requestJustification(session.getMandatoryBlock(), true);
         }
     }
 
@@ -548,6 +548,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
         scheduler.scheduleWithFixedDelay(() -> {
             try {
                 if (shouldRun()) {
+                    removeFinishedSessions();
                     applyPendingJustifications();
                     vote();
                     requestMandatoryJustification();

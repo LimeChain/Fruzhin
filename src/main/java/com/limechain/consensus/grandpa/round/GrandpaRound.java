@@ -630,7 +630,7 @@ public class GrandpaRound {
                 try {
                     lowestCommonAncestor = blockState.lowestCommonAncestor(blockHash, borderBlock.getHash());
                 } catch (IllegalArgumentException e) {
-                    log.warning("Error finding the lowest common ancestor: " + e.getMessage());
+                    log.fine("Error finding the lowest common ancestor: " + e.getMessage());
                     continue;
                 }
 
@@ -797,7 +797,7 @@ public class GrandpaRound {
             try {
                 ancestorBlockHash = blockState.lowestCommonAncestor(vote.getBlockHash(), currentBlockHash);
             } catch (IllegalArgumentException | BlockStorageGenericException e) {
-                log.warning("Error finding the lowest common ancestor: " + e.getMessage());
+                log.fine("Error finding the lowest common ancestor: " + e.getMessage());
                 continue;
             }
 

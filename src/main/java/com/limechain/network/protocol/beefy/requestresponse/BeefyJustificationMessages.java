@@ -25,7 +25,7 @@ public class BeefyJustificationMessages extends StrictProtocolBinding<BeefyJusti
 
             return controller
                     .sendJustificationRequest(from)
-                    .get(3, TimeUnit.SECONDS);
+                    .get(1, TimeUnit.SECONDS);
         } catch (ExecutionException | TimeoutException | IllegalStateException e) {
             log.severe(String.format("Error while sending remote state: %s", e.getMessage()));
             throw new ExecutionFailedException(e);
