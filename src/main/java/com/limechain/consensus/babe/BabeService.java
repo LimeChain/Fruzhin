@@ -146,10 +146,6 @@ public class BabeService implements SlotChangeListener {
         try {
             runtime.setTrieAccessor(newBlockAccessor);
             finalizedHeader = runtime.finalizeBlock(null);
-            trieAccessorStorage.appendStorage(finalizedHeader.getHash(), newBlockAccessor);
-            codeChangeChecker.checkRuntimeCodeChange(finalizedHeader).ifPresent(_ ->
-                    log.fine(String.format(
-                            "Runtime update detected during block production: %s", finalizedHeader.getBlockNumber())));
         } catch (Exception e) {
             transactions.forEach(stateManager.getTransactionState()::pushTransaction);
             throw new BabeGenericException("Block finalization failed. Pushed transaction back to queue.");
@@ -167,7 +163,10 @@ public class BabeService implements SlotChangeListener {
 
         BlockBody body = new BlockBody(bodyExtrinsics);
 
-        blockState.storeRuntime(finalizedHeader.getHash(), runtime);
+        trieAccessorStorage.appendStorage(finalizedHeader.getHash(), newBlockAccessor);
+        codeChangeChecker.checkRuntimeCodeChange(finalizedHeader).ifPresent(_ ->
+                log.fine(String.format(
+                        "Runtime update detected during block production: %s", finalizedHeader.getBlockNumber())));
 
         return new Block(finalizedHeader, body);
     }
