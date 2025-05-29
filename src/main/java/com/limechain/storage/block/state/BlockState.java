@@ -118,6 +118,7 @@ public class BlockState extends AbstractState {
         final BlockHeader lastHeader = getHighestFinalizedHeader();
         this.lastFinalized = lastHeader.getHash();
         this.blockTree = new BlockTree(lastHeader);
+        finalizeBlock(lastHeader, BigInteger.ZERO, BigInteger.ZERO);
     }
 
     @Override
@@ -125,7 +126,7 @@ public class BlockState extends AbstractState {
         //TODO: Discuss what needs to be saved for block state.
     }
 
-    public void setupPostWarpSync(Hash256 lastFinalizedBlockHash, BigInteger lastFinalizedBlockNumber) {
+    public void initBlockTree(Hash256 lastFinalizedBlockHash, BigInteger lastFinalizedBlockNumber) {
         BlockNode parentBlock = new BlockNode(
                 lastFinalizedBlockHash,
                 null,
