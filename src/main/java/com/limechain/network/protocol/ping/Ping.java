@@ -25,7 +25,7 @@ public class Ping extends StrictProtocolBinding<PingController> {
             log.finest(String.format("Received response: %s ms", resp.toString()));
             return resp;
         } catch (ExecutionException | IllegalStateException e) {
-            log.severe(String.format("Error while sending ping request: %s", e.getMessage()));
+            log.severe(String.format("Error while sending ping request: %s", e));
             throw new ExecutionFailedException(e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();

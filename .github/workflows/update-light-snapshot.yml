@@ -20,6 +20,7 @@ jobs:
           "wss://rpc.polkadot.io",
           "wss://kusama-rpc.polkadot.io",
           "wss://westend-rpc.polkadot.io",
+          "wss://rpc.ibp.network/paseo"
         ]
       fail-fast: false   # Don't automatically cancel the jobs of the other RPC nodes if one fails
 

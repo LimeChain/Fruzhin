@@ -48,6 +48,8 @@ public class HostConfig {
     private String kusamaGenesisPath;
     @Value("${genesis.path.westend}")
     private String westendGenesisPath;
+    @Value("${genesis.path.paseo}")
+    private String paseoGenesisPath;
     @Value("${genesis.path.local}")
     private String localGenesisPath;
 
@@ -69,6 +71,7 @@ public class HostConfig {
         this.rpcNodeAddress = switch (chain) {
             case POLKADOT, LOCAL -> RpcConstants.POLKADOT_WS_RPC;
             case KUSAMA -> RpcConstants.KUSAMA_WS_RPC;
+            case PASEO -> RpcConstants.PASEO_WS_RPC;
             case WESTEND -> RpcConstants.WESTEND_WS_RPC;
         };
 
@@ -87,6 +90,7 @@ public class HostConfig {
             case POLKADOT -> polkadotGenesisPath;
             case KUSAMA -> kusamaGenesisPath;
             case WESTEND -> westendGenesisPath;
+            case PASEO -> paseoGenesisPath;
             case LOCAL -> localGenesisPath;
         };
     }

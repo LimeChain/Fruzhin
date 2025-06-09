@@ -34,7 +34,7 @@ public class LightMessages extends StrictProtocolBinding<LightMessagesController
             log.finest(String.format("Received response with length: %d", resp.toByteArray().length));
             return resp;
         } catch (ExecutionException | IllegalStateException e) {
-            log.severe(String.format("%s %s", GENERIC_REMOTE_CALL_ERROR_MESSAGE, e.getMessage()));
+            log.severe(String.format("%s %s", GENERIC_REMOTE_CALL_ERROR_MESSAGE, e));
             throw new ExecutionFailedException(e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();

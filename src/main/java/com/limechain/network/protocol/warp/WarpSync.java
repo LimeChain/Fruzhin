@@ -22,11 +22,11 @@ public class WarpSync extends StrictProtocolBinding<WarpSyncController> {
     public WarpSyncResponse warpSyncRequest(Host us, PeerId peer, String blockHash) {
         try {
             WarpSyncController controller = dialPeer(us, peer, us.getAddressBook());
-            WarpSyncResponse resp = controller.warpSyncRequest(blockHash).get(10, TimeUnit.SECONDS);
+            WarpSyncResponse resp = controller.warpSyncRequest(blockHash).get(20, TimeUnit.SECONDS);
             log.info(String.format("Received warp sync response with %d fragments", resp.getFragments().length));
             return resp;
         } catch (ExecutionException | TimeoutException | IllegalStateException e) {
-            log.severe(String.format("Error while sending remote call request: %s", e.getMessage()));
+            log.severe(String.format("Error while sending remote call request: %s", e));
             throw new ExecutionFailedException(e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();

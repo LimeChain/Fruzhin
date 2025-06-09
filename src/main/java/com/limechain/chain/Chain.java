@@ -9,8 +9,9 @@ import lombok.Getter;
 public enum Chain {
     POLKADOT("polkadot"),
     KUSAMA("kusama"),
-    LOCAL("local"),
-    WESTEND("westend");
+    WESTEND("westend"),
+    PASEO("paseo"),
+    LOCAL("local");
 
     /**
      * Holds the name of the chain
