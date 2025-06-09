@@ -387,7 +387,7 @@ public class BlockState extends AbstractState {
 
         if (!unfinalizedBlocks.containsKey(block.getHeader().getHash())) {
 
-            log.info(String.format("Best block updated: #%d (%s)",
+            log.fine(String.format("Best block updated: #%d (%s)",
                     block.getHeader().getBlockNumber(),
                     block.getHeader().getPrintableHash()
             ));

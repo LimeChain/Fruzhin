@@ -11,6 +11,7 @@ import com.limechain.network.protocol.warp.dto.BlockHeader;
 import com.limechain.network.protocol.warp.dto.DigestType;
 import com.limechain.network.protocol.warp.dto.HeaderDigest;
 import com.limechain.runtime.Runtime;
+import com.limechain.state.StateManager;
 import com.limechain.utils.Sr25519Utils;
 import io.emeraldpay.polkaj.merlin.TranscriptData;
 import io.emeraldpay.polkaj.schnorrkel.Schnorrkel;
@@ -41,6 +42,8 @@ import static org.mockito.Mockito.when;
 
 class BlockProductionVerifierTest {
 
+    private static final BigInteger EPOCH_INDEX = BigInteger.ONE;
+
     @Mock
     private EpochData currentEpochData;
 
@@ -65,7 +68,12 @@ class BlockProductionVerifierTest {
     @Mock
     private Runtime runtime;
 
-    private final BigInteger epochIndex = BigInteger.ONE;
+    @Mock
+    private StateManager stateManager;
+
+    @Mock
+    private EpochState epochState;
+
     private final byte[] randomness = new byte[]{0x01, 0x02, 0x03};
     private final byte[] vrfOutput = new byte[]{0x06};
     private final byte[] vrfProof = new byte[]{0x07};
@@ -73,6 +81,10 @@ class BlockProductionVerifierTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
+        when(stateManager.getEpochState()).thenReturn(epochState);
+        when(epochState.getEpochIndexForSlot(any())).thenReturn(EPOCH_INDEX);
+        when(epochState.getPrevEpochData()).thenReturn(currentEpochData);
+        when(epochState.getPrevEpochDescriptor()).thenReturn(epochDescriptor);
     }
 
     @Test
@@ -120,7 +132,7 @@ class BlockProductionVerifierTest {
 
             mockedSr25519.when(() -> Sr25519Utils.verifySignature(any())).thenReturn(true);
 
-            boolean result = verifierSpy.isAuthorshipValid(runtime, blockHeader, currentEpochData, epochDescriptor, epochIndex);
+            boolean result = verifierSpy.isAuthorshipValid(runtime, blockHeader);
 
             assertTrue(result);
 
@@ -200,8 +212,9 @@ class BlockProductionVerifierTest {
             when(secondBlockHeader.getBlake2bHash(true)).thenReturn(new byte[]{0x01, 0x02, 0x03, 0x04});
             when(secondBlockHeader.getHash()).thenReturn(new Hash256(hash2));
 
-            verifierSpy.isAuthorshipValid(runtime, firstBlockHeader, currentEpochData, epochDescriptor, epochIndex);
-            boolean result = verifierSpy.isAuthorshipValid(runtime, secondBlockHeader, currentEpochData, epochDescriptor, epochIndex);
+            verifierSpy.isAuthorshipValid(runtime, firstBlockHeader);
+            boolean result = verifierSpy.isAuthorshipValid(
+                    runtime, secondBlockHeader);
             assertFalse(result);
         }
     }
@@ -216,9 +229,11 @@ class BlockProductionVerifierTest {
             mockedSchnorrkel.when(Schnorrkel::getInstance).thenReturn(schnorrkelMock);
             BlockProductionVerifier verifierSpy = spy(blockProductionVerifier);
 
-            when(schnorrkelMock.makeBytes(any(Schnorrkel.PublicKey.class), any(TranscriptData.class), eq(vrfOutputAndProof)))
+            when(schnorrkelMock.makeBytes(
+                    any(Schnorrkel.PublicKey.class), any(TranscriptData.class), eq(vrfOutputAndProof)))
                     .thenReturn(new byte[32]);
-            when(schnorrkelMock.vrfVerify(any(Schnorrkel.PublicKey.class), any(TranscriptData.class), eq(vrfOutputAndProof)))
+            when(schnorrkelMock.vrfVerify(
+                    any(Schnorrkel.PublicKey.class), any(TranscriptData.class), eq(vrfOutputAndProof)))
                     .thenReturn(false);
 
             HeaderDigest[] headerDigests = new HeaderDigest[]{sealDigest};
@@ -250,7 +265,7 @@ class BlockProductionVerifierTest {
 
             mockedSr25519.when(() -> Sr25519Utils.verifySignature(any())).thenReturn(true);
 
-            boolean result = verifierSpy.isAuthorshipValid(runtime, blockHeader, currentEpochData, epochDescriptor, epochIndex);
+            boolean result = verifierSpy.isAuthorshipValid(runtime, blockHeader);
 
             assertFalse(result);
 
@@ -266,10 +281,9 @@ class BlockProductionVerifierTest {
         when(blockHeader.getDigest()).thenReturn(headerDigests);
         when(sealDigest.getType()).thenReturn(DigestType.PRE_RUNTIME);
 
-        assertThrows(AuthorshipVerificationException.class, () -> blockProductionVerifier.isAuthorshipValid(runtime, blockHeader,
-                currentEpochData,
-                epochDescriptor,
-                BigInteger.ONE)
+        assertThrows(AuthorshipVerificationException.class, () -> blockProductionVerifier.isAuthorshipValid(
+                runtime,
+                blockHeader)
         );
     }
 }

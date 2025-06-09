@@ -127,14 +127,7 @@ public class BlockHandler {
             BlockState blockState = stateManager.getBlockState();
             Runtime runtime = blockState.getRuntime(header.getParentHash());
 
-            EpochState epochState = stateManager.getEpochState();
-            if (!verifier.isAuthorshipValid(runtime,
-                    header,
-                    epochState.getCurrentEpochData(),
-                    epochState.getCurrentEpochDescriptor(),
-                    epochState.getCurrentEpochIndex())) {
-                return;
-            }
+            if (!verifier.isAuthorshipValid(runtime, header)) return;
 
             runtime.executeBlock(header, block);
             log.info(String.format("Executed block #%d %s.",
