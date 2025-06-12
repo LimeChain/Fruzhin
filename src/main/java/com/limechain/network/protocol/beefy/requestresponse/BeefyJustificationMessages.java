@@ -21,13 +21,17 @@ public class BeefyJustificationMessages extends StrictProtocolBinding<BeefyJusti
 
     public SignedCommitment remoteJustificationRequest(Host us, PeerId peer, BigInteger from) {
         try {
+            if (BeefyJustificationProtocol.Sender.isRequestOngoing) {
+                throw new IllegalArgumentException("BeefyJustificationProtocol.Sender is already ongoing.");
+            }
+
             BeefyJustificationController controller = dialPeer(us, peer, us.getAddressBook());
 
             return controller
                     .sendJustificationRequest(from)
                     .get(1, TimeUnit.SECONDS);
         } catch (ExecutionException | TimeoutException | IllegalStateException e) {
-            log.severe(String.format("Error while sending remote state: %s", e.getMessage()));
+            log.warning(String.format("Error while sending remote beefy justification request: %s", e));
             throw new ExecutionFailedException(e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();

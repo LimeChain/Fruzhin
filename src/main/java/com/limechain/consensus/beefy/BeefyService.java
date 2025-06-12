@@ -486,7 +486,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
 
         BeefySession session = beefyState.getSessions().peekFirst();
         if (!session.isMandatoryBlockFinalized()) {
-            beefyState.requestJustification(session.getMandatoryBlock(), true);
+            beefyState.requestJustification(session.getMandatoryBlock(), false);
         }
     }
 
@@ -554,7 +554,7 @@ public class BeefyService implements FinalizedBlockChangeListener {
                     requestMandatoryJustification();
                 }
             } catch (Exception e) {
-                log.warning("Exception in Beefy main loop, restarting in 1 second " + e.getMessage());
+                log.finest("Exception in Beefy main loop, restarting in 1 second " + e.getMessage());
                 //TODO: handle restarting of main loop
             }
         }, 0, 1, TimeUnit.MILLISECONDS);

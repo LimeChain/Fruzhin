@@ -56,15 +56,15 @@ public class BlockProductionVerifier implements SlotChangeListener {
         }
 
         EpochState epochState = stateManager.getEpochState();
+        BabePreDigest preDigest = preDigestOptional.get();
+        BigInteger slotNumber = preDigest.getSlotNumber();
+        BigInteger epochIndex = epochState.getEpochIndexForSlot(slotNumber);
 
-        EpochData epochData = epochState.getPrevEpochData();
-        EpochDescriptor epochDescriptor = epochState.getPrevEpochDescriptor();
+        EpochData epochData = epochState.getCurrentEpochData();
+        EpochDescriptor epochDescriptor = epochState.getCurrentEpochDescriptor();
+
         List<Authority> authorities = epochData.getAuthorities();
         byte[] randomness = epochData.getRandomness();
-
-        BabePreDigest preDigest = preDigestOptional.get();
-
-        BigInteger epochIndex = epochState.getEpochIndexForSlot(preDigest.getSlotNumber());
 
         if (!isSlotWinnerValid(preDigest, epochIndex, authorities, randomness, epochDescriptor.getConstant())) {
             log.warning(String.format("Author of block No: %s with hash %s is not a valid winner of %s for slot %s",

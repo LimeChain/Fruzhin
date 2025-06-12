@@ -60,6 +60,7 @@ public class NetworkService implements NodeService {
     public static final String LOCAL_IPV4_TCP_ADDRESS = "/ip4/127.0.0.1/tcp/";
     private static final int HOST_PORT = 30333;
     private static final int THREAD_POOL_SIZE = 5;
+    private static final int PEER_THRESHOLD = 25;
 
     private static final Random RANDOM = new SecureRandom();
 
@@ -200,9 +201,14 @@ public class NetworkService implements NodeService {
      * Periodically searches for new peers, connects to them and sends a block announce handshake so that we start
      * communication.
      */
-    @Scheduled(fixedDelay = 30, initialDelay = 15, timeUnit = TimeUnit.SECONDS)
+    @Scheduled(fixedDelay = 10, initialDelay = 30, timeUnit = TimeUnit.SECONDS)
     private void updatePeers() {
         if (!started) {
+            return;
+        }
+
+        if (connectionManager.getPeerIds().size() > PEER_THRESHOLD) {
+            log.finest("Peers at threshold.");
             return;
         }
 
@@ -370,15 +376,30 @@ public class NetworkService implements NodeService {
     }
 
     private void handshakeConsensusProtocols(PeerId peerId) {
-        asyncExecutor.executeAndForget(() ->
-                grandpaService.sendHandshake(host, peerId));
+        asyncExecutor.executeAndForget(() -> {
+            if (!connectionManager.isBlockAnnounceConnected(peerId)) {
+                blockAnnounceService.sendHandshake(host, peerId);
+            }
+        });
 
-        asyncExecutor.executeAndForget(() ->
-                beefyNotificationService.sendHandshake(host, peerId));
+        asyncExecutor.executeAndForget(() -> {
+            if (!connectionManager.isGrandpaConnected(peerId)) {
+                grandpaService.sendHandshake(host, peerId);
+            }
+        });
+
+        asyncExecutor.executeAndForget(() -> {
+            if (!connectionManager.isBeefyConnected(peerId)) {
+                beefyNotificationService.sendHandshake(host, peerId);
+            }
+        });
 
         if (nodeRole.equals(NodeRole.AUTHORING)) {
-            asyncExecutor.executeAndForget(() ->
-                    transactionsService.sendHandshake(host, peerId));
+            asyncExecutor.executeAndForget(() -> {
+                if (!connectionManager.isTransactionsConnected(peerId)) {
+                    transactionsService.sendHandshake(host, peerId);
+                }
+            });
         }
     }
 }

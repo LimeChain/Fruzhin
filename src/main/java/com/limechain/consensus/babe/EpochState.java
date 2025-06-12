@@ -1,6 +1,7 @@
 package com.limechain.consensus.babe;
 
 import com.limechain.ServiceConsensusState;
+import com.limechain.chain.lightsyncstate.BabeEpoch;
 import com.limechain.consensus.babe.dto.message.BabeConsensusMessage;
 import com.limechain.consensus.babe.dto.message.EpochData;
 import com.limechain.consensus.babe.dto.message.EpochDescriptor;
@@ -31,9 +32,6 @@ public class EpochState extends AbstractState implements ServiceConsensusState {
     private BigInteger epochLength;
     private BigInteger genesisSlotNumber;
 
-    private EpochData prevEpochData;
-    private EpochDescriptor prevEpochDescriptor;
-
     private EpochData currentEpochData;
     private EpochDescriptor currentEpochDescriptor;
 
@@ -49,8 +47,8 @@ public class EpochState extends AbstractState implements ServiceConsensusState {
                 babeApiConfiguration.getAuthorities(), babeApiConfiguration.getRandomness());
         this.currentEpochDescriptor = new EpochDescriptor(
                 babeApiConfiguration.getConstant(), babeApiConfiguration.getAllowedSlots());
-        this.prevEpochData = currentEpochData;
-        this.prevEpochDescriptor = currentEpochDescriptor;
+        BabeEpoch nextEpoch = runtime.getNextBabeEpoch(null);
+        this.nextEpochData = new EpochData(nextEpoch.getAuthorities(), nextEpoch.getRandomness());
         setGenesisSlotNumber(runtime.getGenesisSlotNumber(null));
     }
 
@@ -74,11 +72,9 @@ public class EpochState extends AbstractState implements ServiceConsensusState {
 
     public void switchEpoch() {
         if (nextEpochData != null) {
-            prevEpochData = currentEpochData;
             currentEpochData = nextEpochData;
         }
         if (nextEpochDescriptor != null) {
-            prevEpochDescriptor = currentEpochDescriptor;
             currentEpochDescriptor = nextEpochDescriptor;
         }
     }

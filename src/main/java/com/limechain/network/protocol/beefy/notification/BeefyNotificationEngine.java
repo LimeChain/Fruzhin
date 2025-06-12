@@ -129,7 +129,7 @@ public class BeefyNotificationEngine implements BaseEngine {
 
     private void handleJustificationMessage(byte[] message, PeerId peerId) {
         SignedCommitment signedCommitment = ScaleUtils.Decode.decode(message, SignedCommitmentScaleReader.getInstance());
-        log.finest(String.format("Beefy: Received justification from Peer %s %n %s", peerId, signedCommitment));
+        log.fine(String.format("Beefy: Received justification from Peer %s %n %s", peerId, signedCommitment));
         beefyMessageHandler.handleSignedCommitment(signedCommitment);
     }
 

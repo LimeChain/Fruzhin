@@ -37,7 +37,10 @@ public class BeefyJustificationProtocol extends ProtocolHandler<BeefyJustificati
     }
 
     static class Sender implements ProtocolMessageHandler<SignedCommitment>, BeefyJustificationController {
-        public static final int MAX_QUEUE_SIZE = 1;
+
+        private static final int MAX_QUEUE_SIZE = 1;
+
+        public static boolean isRequestOngoing;
         private static final LinkedBlockingDeque<CompletableFuture<SignedCommitment>> queue =
                 new LinkedBlockingDeque<>(MAX_QUEUE_SIZE);
 
@@ -57,6 +60,12 @@ public class BeefyJustificationProtocol extends ProtocolHandler<BeefyJustificati
         public CompletableFuture<SignedCommitment> send(BigInteger req) {
             byte[] encodedReq = ScaleUtils.Encode.encode(ScaleCodecWriter.UINT32, req.intValueExact());
             CompletableFuture<SignedCommitment> res = new CompletableFuture<>();
+
+            isRequestOngoing = true;
+
+            res.whenComplete((_, _) -> {
+                isRequestOngoing = false;
+            });
 
             if (!queue.offer(res)) {
                 throw new IllegalStateException("Queue is full. Skipping...");

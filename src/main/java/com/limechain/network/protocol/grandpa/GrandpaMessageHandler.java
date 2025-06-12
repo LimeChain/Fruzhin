@@ -57,8 +57,8 @@ import java.util.stream.Stream;
 
 
 @Log
-@RequiredArgsConstructor
 @Component
+@RequiredArgsConstructor
 public class GrandpaMessageHandler {
 
     private static final BigInteger CATCH_UP_THRESHOLD = BigInteger.TWO;

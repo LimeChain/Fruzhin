@@ -1,6 +1,7 @@
 package com.limechain.consensus.babe;
 
 
+import com.limechain.chain.lightsyncstate.BabeEpoch;
 import com.limechain.consensus.babe.dto.runtime.BabeApiConfiguration;
 import com.limechain.runtime.Runtime;
 import org.junit.jupiter.api.Test;
@@ -26,12 +27,16 @@ public class EpochStateTest {
     private BabeApiConfiguration babeApiConfiguration;
 
     @Mock
+    private BabeEpoch babeEpoch;
+
+    @Mock
     private Runtime runtime;
 
     @Test
     public void testGetCurrentSlotNumber() {
         BigInteger slotDuration = BigInteger.valueOf(6000);
         when(runtime.getBabeApiConfiguration(any())).thenReturn(babeApiConfiguration);
+        when(runtime.getNextBabeEpoch(any())).thenReturn(babeEpoch);
         when(babeApiConfiguration.getSlotDuration()).thenReturn(slotDuration);
         epochState.populateDataFromRuntime(runtime);
 

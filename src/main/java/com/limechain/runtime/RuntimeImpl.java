@@ -1,6 +1,8 @@
 package com.limechain.runtime;
 
+import com.limechain.chain.lightsyncstate.BabeEpoch;
 import com.limechain.chain.lightsyncstate.scale.AuthorityReader;
+import com.limechain.chain.lightsyncstate.scale.BabeEpochReader;
 import com.limechain.consensus.babe.dto.runtime.BabeApiConfiguration;
 import com.limechain.consensus.babe.dto.runtime.BlockEquivocationProof;
 import com.limechain.consensus.babe.scale.runtime.BabeApiConfigurationReader;
@@ -77,7 +79,8 @@ public class RuntimeImpl implements Runtime {
 
     @Override
     public synchronized BabeApiConfiguration getBabeApiConfiguration(BlockHeader header) {
-        return ScaleUtils.Decode.decode(call(header, RuntimeEndpoint.BABE_API_CONFIGURATION), BabeApiConfigurationReader.getInstance());
+        return ScaleUtils.Decode.decode(
+                call(header, RuntimeEndpoint.BABE_API_CONFIGURATION), BabeApiConfigurationReader.getInstance());
     }
 
     @Override
@@ -87,6 +90,12 @@ public class RuntimeImpl implements Runtime {
                 new UInt64Writer(), slotNumber), authorityPublicKey);
         byte[] encodedResponse = call(header, RuntimeEndpoint.BABE_API_GENERATE_KEY_OWNERSHIP_PROOF, encodedProof);
         return new ScaleCodecReader(encodedResponse).readOptional(OpaqueKeyOwnershipProofReader.getInstance());
+    }
+
+    @Override
+    public synchronized BabeEpoch getNextBabeEpoch(@Nullable BlockHeader header) {
+        return ScaleUtils.Decode.decode(
+                call(header, RuntimeEndpoint.BABE_API_NEXT_EPOCH), BabeEpochReader.getInstance());
     }
 
     @Override

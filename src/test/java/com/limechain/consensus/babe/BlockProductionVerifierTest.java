@@ -83,8 +83,8 @@ class BlockProductionVerifierTest {
         MockitoAnnotations.openMocks(this);
         when(stateManager.getEpochState()).thenReturn(epochState);
         when(epochState.getEpochIndexForSlot(any())).thenReturn(EPOCH_INDEX);
-        when(epochState.getPrevEpochData()).thenReturn(currentEpochData);
-        when(epochState.getPrevEpochDescriptor()).thenReturn(epochDescriptor);
+        when(epochState.getCurrentEpochData()).thenReturn(currentEpochData);
+        when(epochState.getCurrentEpochDescriptor()).thenReturn(epochDescriptor);
     }
 
     @Test

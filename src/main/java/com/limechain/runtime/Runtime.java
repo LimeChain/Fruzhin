@@ -1,5 +1,6 @@
 package com.limechain.runtime;
 
+import com.limechain.chain.lightsyncstate.BabeEpoch;
 import com.limechain.consensus.babe.dto.runtime.BabeApiConfiguration;
 import com.limechain.consensus.babe.dto.runtime.BlockEquivocationProof;
 import com.limechain.consensus.beefy.dto.BeefyAuthoritySet;
@@ -29,6 +30,8 @@ public interface Runtime {
     BabeApiConfiguration getBabeApiConfiguration(@Nullable BlockHeader header);
 
     Optional<OpaqueKeyOwnershipProof> generateBabeKeyOwnershipProof(@Nullable BlockHeader header, BigInteger slotNumber, byte[] authorityPublicKey);
+
+    BabeEpoch getNextBabeEpoch(@Nullable BlockHeader header);
 
     void submitReportBabeEquivocationUnsignedExtrinsic(@Nullable BlockHeader header, BlockEquivocationProof blockEquivocationProof, byte[] keyOwnershipProof);
 

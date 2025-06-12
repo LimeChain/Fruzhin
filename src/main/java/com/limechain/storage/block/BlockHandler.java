@@ -71,7 +71,7 @@ public class BlockHandler {
         this.verifier = verifier;
         this.codeChangeChecker = codeChangeChecker;
 
-        asyncExecutor = AsyncExecutor.withPoolSize(10);
+        asyncExecutor = AsyncExecutor.withSingleThread("block-handler");
         blockHeaders = new HashMap<>();
         pendingBlocksQueue = new ArrayDeque<>();
     }
