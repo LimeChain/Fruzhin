@@ -28,4 +28,4 @@ alice: log line matches "Round 2 ended pre-commit stage" within 20 seconds
 alice: log line matches "Round 2 entered the Finalize stage" within 20 seconds
 alice: log line matches "Round 2 met finalization conditions and will be finalized" within 20 seconds
 
-alice: log line matches "Finalized block in (block|sync) state. Number: ([1-9]\d*) Hash: 0x[a-fA-F0-9]+" within 120 seconds
+alice: log line matches "Last finalized block in (BlockState|SyncState) updated: #\d+ \(0x[a-f0-9]+\)" within 120 seconds

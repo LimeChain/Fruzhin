@@ -4,5 +4,5 @@ Creds: config
 
 # metrics
 alice: log line matches "Secondary VRF slot successfully claimed for slot number: \d+" within 20 seconds
-alice: log line matches "Producing block for slot \d+ in epoch 0." within 20 seconds
-alice: log line matches "Producing block for slot \d+ in epoch 1." within 120 seconds
+alice: log line matches "Block produced: #\d+ \(0x[a-f0-9]+\) slot=\d+ epoch=0" within 20 seconds
+alice: log line matches "Block produced: #\d+ \(0x[a-f0-9]+\) slot=\d+ epoch=1" within 120 seconds
