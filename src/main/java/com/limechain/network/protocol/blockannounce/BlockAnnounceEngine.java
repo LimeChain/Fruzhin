@@ -101,7 +101,7 @@ public class BlockAnnounceEngine implements BaseEngine {
         BlockAnnounceMessage announce = ScaleUtils.Decode.decode(msg, BlockAnnounceMessageScaleReader.getInstance());
         connectionManager.updatePeer(peerId, announce);
 
-        log.finest(String.format(
+        log.fine(String.format(
                 "Received block announce for block #%d from %s with hash: %s parentHash: %s stateRoot: %s",
                 announce.getHeader().getBlockNumber(),
                 peerId,

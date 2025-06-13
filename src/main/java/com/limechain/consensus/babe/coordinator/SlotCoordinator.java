@@ -2,6 +2,7 @@ package com.limechain.consensus.babe.coordinator;
 
 import com.limechain.consensus.babe.EpochState;
 import com.limechain.consensus.babe.dto.Slot;
+import com.limechain.utils.async.AsyncExecutor;
 import lombok.extern.java.Log;
 import org.springframework.stereotype.Component;
 
@@ -16,6 +17,8 @@ import java.util.concurrent.TimeUnit;
 @Log
 @Component
 public class SlotCoordinator {
+
+    private static final AsyncExecutor EXECUTOR = AsyncExecutor.withSingleThread("slot-coordinator");
 
     private final List<SlotChangeListener> slotChangeListenerList = new ArrayList<>();
     private final EpochState epochState;
@@ -36,7 +39,7 @@ public class SlotCoordinator {
         lastSlotOfCurrentEpoch = epochState.getCurrentEpochEndSlotNumber();
 
         ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-        scheduler.scheduleAtFixedRate(this::checkAndTriggerEvent, 0, 1, TimeUnit.MILLISECONDS);
+        scheduler.scheduleWithFixedDelay(this::checkAndTriggerEvent, 0, 100, TimeUnit.MILLISECONDS);
     }
 
     private void notifySlotChangeListeners(SlotChangeEvent event) {
@@ -50,10 +53,13 @@ public class SlotCoordinator {
         BigInteger currentEpochIndex = epochState.getCurrentEpochIndex();
 
         if (hasSlotChanged(currentSlotNumber)) {
-            if (currentSlotNumber.compareTo(lastSlotOfCurrentEpoch) > 0) {
+
+            boolean isFirstSlot = currentSlotNumber.compareTo(lastSlotOfCurrentEpoch) > 0;
+            EXECUTOR.executeAndForget(() -> triggerEvent(currentSlotNumber, currentEpochIndex));
+
+            if (isFirstSlot) {
                 epochState.switchEpoch();
             }
-            triggerEvent(currentSlotNumber, currentEpochIndex);
             updateSlotCoordinatorFields(currentSlotNumber);
         }
     }

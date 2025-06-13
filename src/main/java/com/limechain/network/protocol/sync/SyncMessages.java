@@ -25,11 +25,11 @@ public class SyncMessages extends StrictProtocolBinding<SyncController> {
             SyncMessage.BlockResponse response = controller
                     .sendBlockRequest(blockRequest.getFields(), blockRequest.getHash(), blockRequest.getNumber(),
                             blockRequest.getDirection(), blockRequest.getMaxBlocks())
-                    .get(10, TimeUnit.SECONDS);
+                    .get(15, TimeUnit.SECONDS);
             log.fine(String.format("Received blocks: %d", response.getBlocksCount()));
             return response;
         } catch (ExecutionException | TimeoutException | IllegalStateException e) {
-            log.severe(String.format("Error while sending remote block request: %s", e.getMessage()));
+            log.severe(String.format("Error while sending remote block request: %s", e));
             throw new ExecutionFailedException(e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();

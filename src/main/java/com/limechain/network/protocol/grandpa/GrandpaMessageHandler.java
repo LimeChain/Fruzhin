@@ -52,14 +52,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 
 @Log
-@RequiredArgsConstructor
 @Component
+@RequiredArgsConstructor
 public class GrandpaMessageHandler {
 
     private static final BigInteger CATCH_UP_THRESHOLD = BigInteger.TWO;
@@ -160,6 +159,12 @@ public class GrandpaMessageHandler {
         if (!commitMessage.getSetId().equals(stateManager.getGrandpaSetState().getAuthoritySet().getSetId())) {
             log.fine(String.format("handleCommitMessage: Received commit set id, %d, doesn't match local set id, %d",
                     commitMessage.getSetId(), stateManager.getGrandpaSetState().getAuthoritySet().getSetId()));
+            return;
+        }
+
+        if (stateManager.getBlockState().getJustification(commitMessage.getVote().getBlockHash()).isPresent()) {
+            log.fine(String.format("Received commit message for block #%d has already been stored in justifications",
+                    commitMessage.getVote().getBlockNumber()));
             return;
         }
 

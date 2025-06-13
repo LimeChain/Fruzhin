@@ -26,9 +26,10 @@ import java.util.List;
 import java.util.Optional;
 
 @Log
-@RequiredArgsConstructor
 @Component
+@RequiredArgsConstructor
 public class BeefyMessageHandler {
+
     private final Object lock = new Object();
 
     private final BeefyService beefyService;

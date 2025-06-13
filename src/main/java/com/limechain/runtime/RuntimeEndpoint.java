@@ -17,6 +17,7 @@ public enum RuntimeEndpoint {
     CORE_INITIALIZE_BLOCK("Core_initialize_block"),
     BABE_API_CONFIGURATION("BabeApi_configuration"),
     BABE_API_GENERATE_KEY_OWNERSHIP_PROOF("BabeApi_generate_key_ownership_proof"),
+    BABE_API_NEXT_EPOCH("BabeApi_next_epoch"),
     BABE_API_SUBMIT_REPORT_EQUIVOCATION_UNSIGNED_EXTRINSIC("BabeApi_submit_report_equivocation_unsigned_extrinsic"),
     BEEFY_API_GENERATE_KEY_OWNERSHIP_PROOF("BeefyApi_generate_key_ownership_proof"),
     BEEFY_API_SUBMIT_REPORT_DOUBLE_VOTING_UNSIGNED_EXTRINSIC("BeefyApi_submit_report_double_voting_unsigned_extrinsic"),

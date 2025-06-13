@@ -15,7 +15,7 @@ public class SlotChangeEvent extends EventObject {
      * Constructs a prototypical Event.
      *
      * @param source                     the object on which the Event initially occurred
-     * @param slot                  The new slot that triggered the event.
+     * @param slot                       The new slot that triggered the event.
      * @param isLastSlotFromCurrentEpoch A boolean flag that indicates whether the current slot is the last slot
      *                                   of the current epoch.
      * @throws IllegalArgumentException if source is null

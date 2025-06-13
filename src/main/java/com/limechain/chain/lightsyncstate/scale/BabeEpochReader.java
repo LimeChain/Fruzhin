@@ -25,7 +25,9 @@ public class BabeEpochReader implements ScaleReader<BabeEpoch> {
         epoch.setDuration(new UInt64Reader().read(reader));
         epoch.setAuthorities(reader.read(new ListReader<>(AuthorityReader.getInstance())));
         epoch.setRandomness(reader.readUint256());
-        epoch.setNextConfig(reader.read(BabeConfigReader.getInstance()));
+        if (reader.hasNext()) {
+            epoch.setNextConfig(reader.read(BabeConfigReader.getInstance()));
+        }
         return epoch;
     }
 }

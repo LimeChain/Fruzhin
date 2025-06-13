@@ -25,10 +25,12 @@ import com.limechain.utils.StringUtils;
 import com.limechain.utils.async.AsyncExecutor;
 import io.ipfs.multiaddr.MultiAddress;
 import io.ipfs.multihash.Multihash;
+import io.libp2p.core.Connection;
 import io.libp2p.core.Host;
 import io.libp2p.core.PeerId;
 import io.libp2p.core.Stream;
 import io.libp2p.core.multiformats.Multiaddr;
+import io.libp2p.core.security.SecureChannel;
 import io.libp2p.crypto.keys.Ed25519PrivateKey;
 import io.libp2p.protocol.PingProtocol;
 import jakarta.annotation.PreDestroy;
@@ -60,6 +62,7 @@ public class NetworkService implements NodeService {
     public static final String LOCAL_IPV4_TCP_ADDRESS = "/ip4/127.0.0.1/tcp/";
     private static final int HOST_PORT = 30333;
     private static final int THREAD_POOL_SIZE = 5;
+    private static final int PEER_THRESHOLD = 25;
 
     private static final Random RANDOM = new SecureRandom();
 
@@ -192,23 +195,32 @@ public class NetworkService implements NodeService {
         return this.host.listenAddresses().stream().map(Multiaddr::toString).toArray(String[]::new);
     }
 
-    public int getPeersCount() {
+    public int getPeerCount() {
         return connectionManager.getPeerIds().size();
+    }
+
+    public int getActivePeerCount() {
+        return (int) connectionManager.getPeerIds().stream()
+                .filter(connectionManager::isBlockAnnounceConnected)
+                .count();
     }
 
     /**
      * Periodically searches for new peers, connects to them and sends a block announce handshake so that we start
      * communication.
      */
-    @Scheduled(fixedDelay = 30, initialDelay = 15, timeUnit = TimeUnit.SECONDS)
+    @Scheduled(fixedDelay = 10, initialDelay = 30, timeUnit = TimeUnit.SECONDS)
     private void updatePeers() {
         if (!started) {
             return;
         }
 
-        connectionManager.getPeerIds().forEach(this::handshakeConsensusProtocols);
+        if (connectionManager.getPeerIds().size() > PEER_THRESHOLD) {
+            log.info("Peers at threshold.");
+            return;
+        }
 
-        log.info(String.format("findPeers: connected peers: %s", getPeersCount()));
+        log.info(String.format("findPeers: connected peers: %s", getActivePeerCount()));
         log.info("findPeers: searching for peers...");
 
         kademliaService.findNewPeers();
@@ -218,18 +230,18 @@ public class NetworkService implements NodeService {
         }
 
         host.getStreams().stream()
-                .map(Stream::remotePeerId)
+                .map(Stream::getConnection)
+                .map(Connection::secureSession)
+                .map(SecureChannel.Session::getRemoteId)
                 .distinct()
-                .filter(id -> !connectionManager.getPeerIds().contains(id))
-                .forEach(peerId ->
-                        asyncExecutor.executeAndForget(() -> blockAnnounceService.sendHandshake(host, peerId)));
+                .forEach(this::handshakeConsensusProtocols);
     }
 
     // TODO: Fix ping requests being rejected because of the "timeoutScheduler" inside of Ping.kt.
     @Scheduled(fixedDelay = 1, timeUnit = TimeUnit.MINUTES)
     private void pingPeers() {
         // TODO: This needs to by synchronized with the findPeers method
-        if (getPeersCount() == 0) {
+        if (getPeerCount() == 0) {
             log.info("No peers to ping.");
             return;
         }
@@ -370,15 +382,19 @@ public class NetworkService implements NodeService {
     }
 
     private void handshakeConsensusProtocols(PeerId peerId) {
-        asyncExecutor.executeAndForget(() ->
-                grandpaService.sendHandshake(host, peerId));
+        try {
+            if (!connectionManager.isBlockAnnounceConnected(peerId))
+                blockAnnounceService.sendHandshake(host, peerId);
+            if (!connectionManager.isGrandpaConnected(peerId))
+                grandpaService.sendHandshake(host, peerId);
+            if (!connectionManager.isBeefyConnected(peerId))
+                beefyNotificationService.sendHandshake(host, peerId);
 
-        asyncExecutor.executeAndForget(() ->
-                beefyNotificationService.sendHandshake(host, peerId));
-
-        if (nodeRole.equals(NodeRole.AUTHORING)) {
-            asyncExecutor.executeAndForget(() ->
-                    transactionsService.sendHandshake(host, peerId));
+            if (nodeRole.equals(NodeRole.AUTHORING))
+                if (!connectionManager.isTransactionsConnected(peerId))
+                    transactionsService.sendHandshake(host, peerId);
+        } catch (Exception e) {
+            log.warning(e.getMessage());
         }
     }
 }

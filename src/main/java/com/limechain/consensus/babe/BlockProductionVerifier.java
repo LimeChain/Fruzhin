@@ -16,11 +16,13 @@ import com.limechain.network.protocol.warp.dto.HeaderDigest;
 import com.limechain.runtime.Runtime;
 import com.limechain.runtime.hostapi.dto.Key;
 import com.limechain.runtime.hostapi.dto.VerifySignature;
+import com.limechain.state.StateManager;
 import com.limechain.utils.LittleEndianUtils;
 import com.limechain.utils.Sr25519Utils;
 import io.emeraldpay.polkaj.merlin.TranscriptData;
 import io.emeraldpay.polkaj.schnorrkel.Schnorrkel;
 import io.emeraldpay.polkaj.schnorrkel.VrfOutputAndProof;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.java.Log;
 import org.apache.tomcat.util.buf.HexUtils;
 import org.javatuples.Pair;
@@ -34,14 +36,13 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Log
 @Component
+@RequiredArgsConstructor
 public class BlockProductionVerifier implements SlotChangeListener {
-    private final Map<String, BlockHeader> currentSlotAuthorBlockMap = new ConcurrentHashMap<>();
 
-    public boolean isAuthorshipValid(Runtime runtime,
-                                     BlockHeader blockHeader,
-                                     EpochData currentEpochData,
-                                     EpochDescriptor descriptor,
-                                     BigInteger currentEpochIndex) {
+    private final Map<String, BlockHeader> currentSlotAuthorBlockMap = new ConcurrentHashMap<>();
+    private final StateManager stateManager;
+
+    public boolean isAuthorshipValid(Runtime runtime, BlockHeader blockHeader) {
         HeaderDigest[] headerDigests = blockHeader.getDigest();
 
         Optional<BabePreDigest> preDigestOptional = DigestHelper.getBabePreRuntimeDigest(headerDigests);
@@ -54,11 +55,18 @@ public class BlockProductionVerifier implements SlotChangeListener {
             throw new AuthorshipVerificationException("Invalid seal digest in header.");
         }
 
+        EpochState epochState = stateManager.getEpochState();
         BabePreDigest preDigest = preDigestOptional.get();
-        List<Authority> authorities = currentEpochData.getAuthorities();
-        byte[] randomness = currentEpochData.getRandomness();
+        BigInteger slotNumber = preDigest.getSlotNumber();
+        BigInteger epochIndex = epochState.getEpochIndexForSlot(slotNumber);
 
-        if (!isSlotWinnerValid(preDigest, currentEpochIndex, authorities, randomness, descriptor.getConstant())) {
+        EpochData epochData = epochState.getCurrentEpochData();
+        EpochDescriptor epochDescriptor = epochState.getCurrentEpochDescriptor();
+
+        List<Authority> authorities = epochData.getAuthorities();
+        byte[] randomness = epochData.getRandomness();
+
+        if (!isSlotWinnerValid(preDigest, epochIndex, authorities, randomness, epochDescriptor.getConstant())) {
             log.warning(String.format("Author of block No: %s with hash %s is not a valid winner of %s for slot %s",
                     blockHeader.getBlockNumber(),
                     blockHeader.getHash(),
@@ -219,7 +227,7 @@ public class BlockProductionVerifier implements SlotChangeListener {
 
     @Override
     public void slotChanged(SlotChangeEvent event) {
-        log.finest("SlotChanged event " + event.getSlot().getNumber());
+        log.fine("SlotChanged event " + event.getSlot().getNumber());
         currentSlotAuthorBlockMap.clear();
     }
 }

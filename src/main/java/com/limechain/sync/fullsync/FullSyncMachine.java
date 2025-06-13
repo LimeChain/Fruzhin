@@ -437,16 +437,6 @@ public class FullSyncMachine {
         }
 
         BlockHeader firstHeader = result.removeFirst().getHeader();
-        stateManager.getBlockState().initBlockTree(firstHeader.getHash(), firstHeader.getBlockNumber());
-
-        result.forEach(b -> {
-            try {
-                blockHandler.addBlockToTree(b, Instant.now());
-            } catch (Exception e) {
-                log.warning("syncBlockTreeBackwards: Error during block import: " + e.getMessage());
-            }
-        });
-
         log.info("Finished backwards block request process. Earliest block reached: " + firstHeader.getHash() + " " + firstHeader.getBlockNumber());
     }
 }

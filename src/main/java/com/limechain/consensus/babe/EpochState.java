@@ -1,6 +1,7 @@
 package com.limechain.consensus.babe;
 
 import com.limechain.ServiceConsensusState;
+import com.limechain.chain.lightsyncstate.BabeEpoch;
 import com.limechain.consensus.babe.dto.message.BabeConsensusMessage;
 import com.limechain.consensus.babe.dto.message.EpochData;
 import com.limechain.consensus.babe.dto.message.EpochDescriptor;
@@ -46,6 +47,8 @@ public class EpochState extends AbstractState implements ServiceConsensusState {
                 babeApiConfiguration.getAuthorities(), babeApiConfiguration.getRandomness());
         this.currentEpochDescriptor = new EpochDescriptor(
                 babeApiConfiguration.getConstant(), babeApiConfiguration.getAllowedSlots());
+        BabeEpoch nextEpoch = runtime.getNextBabeEpoch(null);
+        this.nextEpochData = new EpochData(nextEpoch.getAuthorities(), nextEpoch.getRandomness());
         setGenesisSlotNumber(runtime.getGenesisSlotNumber(null));
     }
 
@@ -68,8 +71,12 @@ public class EpochState extends AbstractState implements ServiceConsensusState {
     }
 
     public void switchEpoch() {
-        if (nextEpochData != null) currentEpochData = nextEpochData;
-        if (nextEpochDescriptor != null) currentEpochDescriptor = nextEpochDescriptor;
+        if (nextEpochData != null) {
+            currentEpochData = nextEpochData;
+        }
+        if (nextEpochDescriptor != null) {
+            currentEpochDescriptor = nextEpochDescriptor;
+        }
     }
 
     public void setGenesisSlotNumber(BigInteger retrievedGenesisSlotNumber) {
@@ -90,11 +97,15 @@ public class EpochState extends AbstractState implements ServiceConsensusState {
         return Instant.ofEpochMilli(slotNumber.multiply(slotDuration).longValue());
     }
 
+    public BigInteger getCurrentEpochIndex() {
+        return getEpochIndexForSlot(getCurrentSlotNumber());
+    }
+
     // (currentSlotNumber - genesisSlotNumber) / epochLength = epochIndex
     // Dividing BigIntegers results in rounding down when the result is not a whole number,
     // which is the intended behavior for calculating epochIndex.
-    public BigInteger getCurrentEpochIndex() {
-        return getCurrentSlotNumber().subtract(genesisSlotNumber).divide(epochLength);
+    public BigInteger getEpochIndexForSlot(BigInteger slotNumber) {
+        return slotNumber.subtract(genesisSlotNumber).divide(epochLength);
     }
 
     // epochIndex * epochLength + genesisSlot = epochStartSlotNumber
