@@ -39,7 +39,7 @@ public class SlotCoordinator {
         lastSlotOfCurrentEpoch = epochState.getCurrentEpochEndSlotNumber();
 
         ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-        scheduler.scheduleWithFixedDelay(this::checkAndTriggerEvent, 0, 1, TimeUnit.MILLISECONDS);
+        scheduler.scheduleWithFixedDelay(this::checkAndTriggerEvent, 0, 100, TimeUnit.MILLISECONDS);
     }
 
     private void notifySlotChangeListeners(SlotChangeEvent event) {

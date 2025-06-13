@@ -227,7 +227,7 @@ public class BlockProductionVerifier implements SlotChangeListener {
 
     @Override
     public void slotChanged(SlotChangeEvent event) {
-        log.finest("SlotChanged event " + event.getSlot().getNumber());
+        log.fine("SlotChanged event " + event.getSlot().getNumber());
         currentSlotAuthorBlockMap.clear();
     }
 }

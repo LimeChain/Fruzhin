@@ -25,10 +25,12 @@ import com.limechain.utils.StringUtils;
 import com.limechain.utils.async.AsyncExecutor;
 import io.ipfs.multiaddr.MultiAddress;
 import io.ipfs.multihash.Multihash;
+import io.libp2p.core.Connection;
 import io.libp2p.core.Host;
 import io.libp2p.core.PeerId;
 import io.libp2p.core.Stream;
 import io.libp2p.core.multiformats.Multiaddr;
+import io.libp2p.core.security.SecureChannel;
 import io.libp2p.crypto.keys.Ed25519PrivateKey;
 import io.libp2p.protocol.PingProtocol;
 import jakarta.annotation.PreDestroy;
@@ -193,8 +195,14 @@ public class NetworkService implements NodeService {
         return this.host.listenAddresses().stream().map(Multiaddr::toString).toArray(String[]::new);
     }
 
-    public int getPeersCount() {
+    public int getPeerCount() {
         return connectionManager.getPeerIds().size();
+    }
+
+    public int getActivePeerCount() {
+        return (int) connectionManager.getPeerIds().stream()
+                .filter(connectionManager::isBlockAnnounceConnected)
+                .count();
     }
 
     /**
@@ -208,13 +216,11 @@ public class NetworkService implements NodeService {
         }
 
         if (connectionManager.getPeerIds().size() > PEER_THRESHOLD) {
-            log.finest("Peers at threshold.");
+            log.info("Peers at threshold.");
             return;
         }
 
-        connectionManager.getPeerIds().forEach(this::handshakeConsensusProtocols);
-
-        log.info(String.format("findPeers: connected peers: %s", getPeersCount()));
+        log.info(String.format("findPeers: connected peers: %s", getActivePeerCount()));
         log.info("findPeers: searching for peers...");
 
         kademliaService.findNewPeers();
@@ -224,18 +230,18 @@ public class NetworkService implements NodeService {
         }
 
         host.getStreams().stream()
-                .map(Stream::remotePeerId)
+                .map(Stream::getConnection)
+                .map(Connection::secureSession)
+                .map(SecureChannel.Session::getRemoteId)
                 .distinct()
-                .filter(id -> !connectionManager.getPeerIds().contains(id))
-                .forEach(peerId ->
-                        asyncExecutor.executeAndForget(() -> blockAnnounceService.sendHandshake(host, peerId)));
+                .forEach(this::handshakeConsensusProtocols);
     }
 
     // TODO: Fix ping requests being rejected because of the "timeoutScheduler" inside of Ping.kt.
     @Scheduled(fixedDelay = 1, timeUnit = TimeUnit.MINUTES)
     private void pingPeers() {
         // TODO: This needs to by synchronized with the findPeers method
-        if (getPeersCount() == 0) {
+        if (getPeerCount() == 0) {
             log.info("No peers to ping.");
             return;
         }
@@ -376,30 +382,19 @@ public class NetworkService implements NodeService {
     }
 
     private void handshakeConsensusProtocols(PeerId peerId) {
-        asyncExecutor.executeAndForget(() -> {
-            if (!connectionManager.isBlockAnnounceConnected(peerId)) {
+        try {
+            if (!connectionManager.isBlockAnnounceConnected(peerId))
                 blockAnnounceService.sendHandshake(host, peerId);
-            }
-        });
-
-        asyncExecutor.executeAndForget(() -> {
-            if (!connectionManager.isGrandpaConnected(peerId)) {
+            if (!connectionManager.isGrandpaConnected(peerId))
                 grandpaService.sendHandshake(host, peerId);
-            }
-        });
-
-        asyncExecutor.executeAndForget(() -> {
-            if (!connectionManager.isBeefyConnected(peerId)) {
+            if (!connectionManager.isBeefyConnected(peerId))
                 beefyNotificationService.sendHandshake(host, peerId);
-            }
-        });
 
-        if (nodeRole.equals(NodeRole.AUTHORING)) {
-            asyncExecutor.executeAndForget(() -> {
-                if (!connectionManager.isTransactionsConnected(peerId)) {
+            if (nodeRole.equals(NodeRole.AUTHORING))
+                if (!connectionManager.isTransactionsConnected(peerId))
                     transactionsService.sendHandshake(host, peerId);
-                }
-            });
+        } catch (Exception e) {
+            log.warning(e.getMessage());
         }
     }
 }
