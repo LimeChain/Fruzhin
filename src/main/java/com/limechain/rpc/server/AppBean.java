@@ -50,3 +50,4 @@ public class AppBean implements ApplicationContextAware {
         setContext(context);
     }
 }
+
