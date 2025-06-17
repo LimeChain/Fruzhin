@@ -215,7 +215,7 @@ public class NetworkService implements NodeService {
             return;
         }
 
-        if (connectionManager.getPeerIds().size() > PEER_THRESHOLD) {
+        if (getActivePeerCount() > PEER_THRESHOLD) {
             log.info("Peers at threshold.");
             return;
         }

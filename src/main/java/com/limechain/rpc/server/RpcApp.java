@@ -33,7 +33,7 @@ public class RpcApp {
      * Port the Spring app will run on
      */
     private static final String SERVER_PORT = "9922";
-    private static final String SERVER_LOCAL_ADDR = "127.0.0.1";
+    private static final String SERVER_LOCAL_ADDR = "0.0.0.0";
 
     /**
      * The reference to the underlying SpringApplication
