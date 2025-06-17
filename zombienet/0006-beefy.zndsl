@@ -4,5 +4,5 @@ Creds: config
 
 # metrics
 alice: log line contains "Started Beefy Service main loop" within 20 seconds
-alice: log line contains "addVote: Round # \{\d+\} concluded, finality_proof:" within 60 seconds
-alice: log line contains "finalizeJustification: Round: \d+ has been finalized" within 60 seconds
+alice: log line contains "addVote: Beefy round #\{\d+\} concluded" within 60 seconds
+alice: log line contains "Beefy round #\{\d+\} has been finalized." within 60 seconds

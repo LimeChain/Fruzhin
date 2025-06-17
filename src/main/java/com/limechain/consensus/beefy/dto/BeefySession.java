@@ -85,7 +85,7 @@ public class BeefySession implements Serializable {
                 round.isDone(getThreshold())) {
 
             rounds.remove(commitment);
-            log.fine(String.format("addVote: Beefy round #{%s} concluded", blockNumber));
+            log.fine(String.format("addVote: Beefy round #{%d} concluded", blockNumber));
             return new VoteImportResult.RoundConcluded(createSignedCommitment(round, commitment));
         }
 
