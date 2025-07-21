@@ -71,7 +71,7 @@ dependencies {
     implementation("com.google.guava:guava:33.4.8-jre")
 
     // Apache commons
-    implementation("commons-io:commons-io:2.19.0")
+    implementation("commons-io:commons-io:2.20.0")
 
 }
 
